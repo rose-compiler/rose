@@ -12,6 +12,7 @@
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/version.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -93,7 +94,7 @@ private:
 
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF;  /**< Register descriptors initialized during construction. */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
@@ -114,10 +115,12 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(p_registers);
         s & BOOST_SERIALIZATION_NVP(REG_IP);
         s & BOOST_SERIALIZATION_NVP(REG_SS);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(REG_SF);
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
         s & BOOST_SERIALIZATION_NVP(p_name);
@@ -260,6 +263,11 @@ public:
         return REG_SP;
     }
 
+    /** Returns the register that ponts to the stack frame. */
+    virtual RegisterDescriptor stackFrameRegister() const {
+        return REG_SF;                                  // need not be valid
+    }
+
     /** Returns the segment register for accessing the stack.  Not all architectures have this register, in which case the
      * default-constructed register descriptor is returned. */
     virtual RegisterDescriptor stackSegmentRegister() const {
@@ -340,5 +348,8 @@ private:
 
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 1);
 
 #endif
