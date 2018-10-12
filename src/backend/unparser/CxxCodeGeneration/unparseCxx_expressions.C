@@ -1024,7 +1024,8 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
                     // Liao 12/15/2016, we need explicit typename here
-                    unp->u_exprStmt->curprint(" typename ");
+                    // TV (10/02/2018): removed when fixing ROSE-1392
+//                  unp->u_exprStmt->curprint(" typename ");
                     curprint(name);
                   }
 
