@@ -169,7 +169,9 @@ namespace varSets
     if(refVars_initialized.find(func) == refVars_initialized.end())
     {
       //printf("initFuncRefVars\n");
-      getReferencedVars(func.get_definition(), refVars[func]);
+      SgFunctionDefinition* n = func.get_definition();
+      ROSE_ASSERT(n != NULL);
+      getReferencedVars(n, refVars[func]);
       refArrays[func] = arraysFilter(refVars[func]);
       refScalars[func] = scalarsFilter(refVars[func]);
       refVars_initialized[func] = true;
