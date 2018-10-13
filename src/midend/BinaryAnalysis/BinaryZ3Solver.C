@@ -350,12 +350,41 @@ Z3Solver::z3Assertions() const {
     return retval;
 }
 
+static z3::expr
+portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
+#if defined(Z3_MAJOR_VERSION) && defined(Z3_MINOR_VERSION) && defined(Z3_BUILD_NUMBER)
+    #if Z3_MAJOR_VERSION < 4
+        // z3 < 4.0.0
+        #error "Z3 version < 4.x.x are not supported"
+    #elif Z3_MAJOR_VERSION == 4 && Z3_MINOR_VERSION < 7
+        // z3 >= 4.0.0 && z3 < 4.7.0
+        return ctx->bv_val((unsigned long long)value, (unsigned)nBits);
+    #else
+        // z3 >= 4.7.0
+        return ctx->bv_val((uint64_t)value, (unsigned)nBits);
+    #endif
+#else
+    // If you get a compile error here, you're probably using Z3 >= 4.7.0 but a version before compile-time versions were
+    // added. As of 2018-09-18, Z3 has no C preprocessor macros for version portability.  Issue #1833 has been submitted to the
+    // Z3 team. You can view it here: https://github.com/Z3Prover/z3/issues/1833
+    //
+    // As a temporary workaround, after you build and install Z3, copy the contents of the src/util/version.h file from the Z3
+    // source tree into the installed $Z3_ROOT/include/z3.h file.
+    //
+    // An alternative workaround if you didn't compile Z3 from source code or if you don't want to (or can't) modify z3.h, is
+    // to add the following to the ROSE C++ compile commands: -DZ3_MAJOR_VERSION=4 -DZ3_MINOR_VERSION=7 -DZ3_BUILD_NUMBER=1
+    // (adjusting for your actual Z3 version of course). If you're using the Tup build system, edit "tup.config" at the top of
+    // the ROSE build tree (after configuring) and change the CONFIG_CPPFLAGS line and (re)run "tup".
+    return ctx->bv_val((unsigned long long)value, (unsigned)nBits);
+#endif
+}
+
 Z3Solver::Z3ExprTypePair
 Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
     ASSERT_not_null(leaf);
     if (leaf->isNumber()) {
         if (leaf->nBits() <= 64) {
-            z3::expr z3expr = ctx_->bv_val((unsigned long long)leaf->toInt(), (unsigned)leaf->nBits());
+            z3::expr z3expr = portable_z3_bv_val(ctx_, leaf->toInt(), leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         } else {
             // Z3-4.5.0 and 4.6.0 lack an interface for creating a bit vector with more than 64 bits from a hexadecimal
@@ -364,7 +393,7 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             z3::expr z3expr(*ctx_);
             for (size_t offset=0; offset < leaf->bits().size(); offset += 64) {
                 size_t windowSize = std::min((size_t)64, leaf->bits().size() - offset);
-                z3::expr window = ctx_->bv_val((unsigned long long)leaf->bits().toInteger(), (unsigned)windowSize);
+                z3::expr window = portable_z3_bv_val(ctx_, leaf->bits().toInteger(), windowSize);
                 if (0 == offset) {
                     z3expr = window;
                 } else {

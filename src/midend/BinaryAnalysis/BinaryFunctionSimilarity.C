@@ -336,6 +336,10 @@ struct ComparisonFunctor {
             P2::Function::Ptr a = i < rowFunctions.size() ? rowFunctions[i] : P2::Function::Ptr();
             P2::Function::Ptr b = j < colFunctions.size() ? colFunctions[j] : P2::Function::Ptr();
             task.results[k] = self->compare(a, b, dfltCompare);
+            if (++j == matrixSize) {
+                ++i;
+                j = 0;
+            }
         }
         ++progressBar;
         progress->update(progressBar.ratio());

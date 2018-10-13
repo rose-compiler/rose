@@ -23,6 +23,7 @@
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
 #include <Sawyer/FileSystem.h>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -59,7 +60,7 @@ Engine::reset() {
     binaryLoader_ = NULL;
     disassembler_ = NULL;
     map_ = MemoryMap::Ptr();
-    basicBlockWorkList_ = BasicBlockWorkList::instance(this);
+    basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
 }
 
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
@@ -586,6 +587,15 @@ Engine::partitionerSwitches() {
                    "@named{never}{Assume that all functions cannot return to the caller and never run the may-return analysis.}"
                    "@named{yes}{Assume a function returns if the may-return analysis cannot decide. This is the default.}"
                    "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
+
+    sg.insert(Switch("functions-return-sort")
+              .argument("n", nonNegativeIntegerParser(settings_.partitioner.functionReturnAnalysisMaxSorts))
+              .doc("If function return analysis is occurring (@s{functions-return}) then functions are sorted according to "
+                   "their depth in the global control flow graph, arbitrarily removing cycles. The functions are analyzed "
+                   "starting at the leaves in order to minimize forward dependencies. For large specimens, this sorting "
+                   "might occur often and is expensive. Therefore, the sorting is limited to the specified number of "
+                   "occurrences, after which unsorted lists are used. The default is " +
+                   StringUtility::plural(settings_.partitioner.functionReturnAnalysisMaxSorts, "sorting operations") + "."));
 
     sg.insert(Switch("call-branch")
               .intrinsicValue(true, settings_.partitioner.base.checkingCallBranch)
@@ -1220,6 +1230,7 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+    p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
     return p;
 }
 
@@ -1247,6 +1258,7 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
+        p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
         return p;
     }
 
@@ -2349,6 +2361,18 @@ Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &arg
     return chain;
 }
 
+typedef std::pair<rose_addr_t, size_t> AddressOrder;
+
+static bool
+isSecondZero(const AddressOrder &a) {
+    return 0 == a.second;
+}
+
+static bool
+sortBySecond(const AddressOrder &a, const AddressOrder &b) {
+    return a.second < b.second;
+}
+
 // Move pendingCallReturn items into the finalCallReturn list and (re)sort finalCallReturn items according to the CFG so that
 // descendents appear after their ancestors (i.e., descendents will be processed first since we always use popBack).  This is a
 // fairly expensive operation: O((V+E) ln N) where V and E are the number of edges in the CFG and N is the number of addresses
@@ -2360,40 +2384,41 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
     if (processedCallReturn().isEmpty())
         return;                                         // nothing to move, and finalCallReturn list was previously sorted
 
-    std::set<rose_addr_t> pending;
-    BOOST_FOREACH (rose_addr_t va, finalCallReturn_.items())
-        pending.insert(va);
-    BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
-        pending.insert(va);
-    finalCallReturn_.clear();
-    processedCallReturn_.clear();
+    if (maxSorts_ == 0) {
+        BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
+            finalCallReturn().pushBack(va);
+        processedCallReturn_.clear();
 
-    std::vector<bool> seen(partitioner.cfg().nVertices(), false);
-    while (!pending.empty()) {
-        rose_addr_t startVa = *pending.begin();
-        ControlFlowGraph::ConstVertexIterator startVertex = partitioner.findPlaceholder(startVa);
-        if (startVertex == partitioner.cfg().vertices().end()) {
-            pending.erase(pending.begin());             // this worklist item is no longer valid
-        } else {
-            typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
-            for (Traversal t(partitioner.cfg(), startVertex, ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
-                if (t.event()==ENTER_VERTEX) {
-                    // No need to follow this vertex if we processed it in some previous iteration of the "while" loop
-                    if (seen[t.vertex()->id()])
-                        t.skipChildren();
-                    seen[t.vertex()->id()] = true;
-                } else if (t.vertex()->value().type() == V_BASIC_BLOCK) {
-                    rose_addr_t va = t.vertex()->value().address();
-                    std::set<rose_addr_t>::iterator found = pending.find(va);
-                    if (found != pending.end()) {
-                        finalCallReturn().pushFront(va);
-                        pending.erase(found);
-                        if (pending.empty())
-                            return;
-                    }
-                }
+    } else {
+        if (0 == --maxSorts_)
+            mlog[WARN] <<"may-return sort limit reached; reverting to unsorted analysis\n";
+        
+        // Get the list of virtual addresses that need to be processed
+        std::vector<AddressOrder> pending;
+        pending.reserve(finalCallReturn_.size() + processedCallReturn_.size());
+        BOOST_FOREACH (rose_addr_t va, finalCallReturn_.items())
+            pending.push_back(AddressOrder(va, (size_t)0));
+        BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
+            pending.push_back(AddressOrder(va, (size_t)0));
+        finalCallReturn_.clear();
+        processedCallReturn_.clear();
+
+        // Find the CFG vertex for each pending address and insert its "order" value. Blocks that are leaves (after arbitrarily
+        // breaking cycles) have lower numbers than blocks higher up in the global CFG.
+        std::vector<size_t> order = graphDependentOrder(partitioner.cfg());
+        BOOST_FOREACH (AddressOrder &pair, pending) {
+            ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(pair.first);
+            if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
+                pair.second = order[vertex->id()];
             }
         }
+
+        // Sort the pending addresses based on their calculated "order", skipping those that aren't CFG basic blocks, and save
+        // the result.
+        pending.erase(std::remove_if(pending.begin(), pending.end(), isSecondZero), pending.end());
+        std::sort(pending.begin(), pending.end(), sortBySecond);
+        BOOST_FOREACH (const AddressOrder &pair, pending)
+            finalCallReturn().pushBack(pair.first);
     }
 }
 
@@ -2580,17 +2605,15 @@ Engine::makeNextBasicBlock(Partitioner &partitioner) {
             continue;
         }
 
-        // If we've previously tried to add call-return edges and failed then try again but this time assume the block
-        // may return or never returns depending on the assumeFunctionsReturn property.  We use the finalCallReturn list, which
-        // is always sorted so that descendent blocks are analyzed before their ancestors (according to the CFG as it existed
-        // when the sort was performed, and subject to tie breaking for cycles). We only re-sort the finalCallReturn list when
-        // we add something to it, and we add things in batches since the sorting is expensive.
+        // We've added call-return edges everwhere possible, but may have delayed adding them to blocks where the analysis was
+        // indeterminate. If so, sort all those blocks approximately by their height in the global CFG and run may-return
+        // analysis on each one
         if (!basicBlockWorkList_->processedCallReturn().isEmpty() || !basicBlockWorkList_->finalCallReturn().isEmpty()) {
             ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
             if (!basicBlockWorkList_->processedCallReturn().isEmpty())
                 basicBlockWorkList_->moveAndSortCallReturn(partitioner);
-            if (!basicBlockWorkList_->finalCallReturn().isEmpty()) { // moveAndSortCallReturn might have pruned list
-                basicBlockWorkList_->pendingCallReturn().pushBack(basicBlockWorkList_->finalCallReturn().popBack());
+            while (!basicBlockWorkList_->finalCallReturn().isEmpty()) {
+                basicBlockWorkList_->pendingCallReturn().pushBack(basicBlockWorkList_->finalCallReturn().popFront());
                 makeNextCallReturnEdge(partitioner, partitioner.assumeFunctionsReturn());
             }
             continue;
