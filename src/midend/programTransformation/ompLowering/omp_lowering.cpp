@@ -6044,15 +6044,17 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
       cerr <<"prepare to create a map in clause" << endl;
     }
 
-    SgExpressionPtrList & mapto_var_list = map_to->get_variables()->get_expressions();
-    SgExpressionPtrList new_vars = new_var_list->get_expressions();
-    for(size_t i = 0; i < new_vars.size(); i++)
-    {
-      mapto_var_list.push_back(deepCopy(isSgVarRefExp(new_vars[i])));
-    }
+    if (map_to != NULL) {
+      SgExpressionPtrList & mapto_var_list = map_to->get_variables()->get_expressions();
+      SgExpressionPtrList new_vars = new_var_list->get_expressions();
+      for(size_t i = 0; i < new_vars.size(); i++)
+      {
+        mapto_var_list.push_back(deepCopy(isSgVarRefExp(new_vars[i])));
+      }
 
-    // TODO We also have to move the relevant variable declarations to sit in front of the map() clause
-    // Liao 7/9/2014
+      // TODO We also have to move the relevant variable declarations to sit in front of the map() clause
+      // Liao 7/9/2014
+    }
 
   } // end if target
 }//Winnie, end of loop collapse

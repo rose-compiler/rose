@@ -2051,12 +2051,15 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/RaaS/Makefile
-projects/RaaS/scripts/Makefile
 projects/RaaS/src/Makefile
 projects/RaaS/include/nlohmann/Makefile
 projects/RaaS/examples/demo/Makefile
 projects/RaaS/examples/demo/compile_commands.json
-projects/RaaS/examples/kripke/Makefile
+projects/CompilationDB/Makefile
+projects/CompilationDB/scripts/Makefile
+projects/CompilationDB/examples/demo/Makefile
+projects/CompilationDB/examples/demo/compile_commands.json
+projects/CompilationDB/examples/kripke/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
@@ -2378,7 +2381,7 @@ src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/sage/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/Makefile
-src/midend/binaryAnalyses/Makefile
+src/midend/BinaryAnalysis/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
