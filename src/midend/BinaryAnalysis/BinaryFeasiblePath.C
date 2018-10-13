@@ -66,9 +66,8 @@ public:
     typedef BaseSemantics::State Super;
 
 private:
-    // Maps symbolic variable names to additional information about where the variable appears in the path. */
-    typedef Sawyer::Container::Map<std::string /*name*/, FeasiblePath::VarDetail> VarDetails;
-    VarDetails varDetails_;
+    // Maps symbolic variable names to additional information about where the variable appears in the path.
+    FeasiblePath::VarDetails varDetails_;
 
 protected:
     State(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
@@ -103,12 +102,17 @@ public:
         return retval;
     }
 
-    /** Set detail for variable name if none exists. */
+    // Set detail for variable name if none exists.
     void varDetail(const std::string &varName, const FeasiblePath::VarDetail &vdetail) {
         varDetails_.insertMaybe(varName, vdetail);
     }
 
-    /** Detail for variable name. */
+    // All variable details.
+    const FeasiblePath::VarDetails& varDetails() const {
+        return varDetails_;
+    }
+    
+    // Detail for variable name.
     const FeasiblePath::VarDetail& varDetail(const std::string &varName) const {
         return varDetails_.getOrDefault(varName);
     }
@@ -392,11 +396,24 @@ public:
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
             nBytes == partitioner_->memoryMap()->at(addr->get_number()).limit(nBytes).read(buf).size()) {
-            // FIXME[Robb P. Matzke 2015-05-25]: assuming little endian
-            uint64_t value = 0;
-            for (size_t i=0; i<nBytes; ++i)
-                value |= (uint64_t)buf[i] << (8*i);
-            dflt = number_(dflt->get_width(), value);
+            switch (partitioner_->memoryMap()->byteOrder()) {
+                case ByteOrder::ORDER_UNSPECIFIED:
+                case ByteOrder::ORDER_LSB: {
+                    uint64_t value = 0;
+                    for (size_t i=0; i<nBytes; ++i)
+                        value |= (uint64_t)buf[i] << (8*i);
+                    dflt = number_(dflt->get_width(), value);
+                    break;
+                }
+
+                case ByteOrder::ORDER_MSB: {
+                    uint64_t value = 0;
+                    for (size_t i=0; i<nBytes; ++i)
+                        value = (value << 8) | (uint64_t)buf[i];
+                    dflt = number_(dflt->get_width(), value);
+                    break;
+                }
+            }
         }
 
         // Read from the symbolic state, and update the state with the default from real memory if known.
@@ -418,6 +435,11 @@ public:
                                                           detailForVariable(addr, "read", i, nBytes));
             }
         }
+
+        // Callback for the memory access
+        if (pathProcessor_)
+            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::READ, addr, retval, shared_from_this());
+        
         return retval;
     }
 
@@ -448,6 +470,10 @@ public:
                                                           detailForVariable(addr, "read", i, nBytes));
             }
         }
+
+        // Callback for the memory access
+        if (pathProcessor_)
+            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::WRITE, addr, value, shared_from_this());
     }
 };
 
@@ -1322,6 +1348,11 @@ FeasiblePath::functionSummary(rose_addr_t entryVa) const {
 const FeasiblePath::VarDetail&
 FeasiblePath::varDetail(const BaseSemantics::StatePtr &state, const std::string &varName) const {
     return State::promote(state)->varDetail(varName);
+}
+
+const FeasiblePath::VarDetails&
+FeasiblePath::varDetails(const BaseSemantics::StatePtr &state) const {
+    return State::promote(state)->varDetails();
 }
 
 std::string

@@ -32,6 +32,16 @@ public:
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
+/** Basic block callback to add "main" address as a function.
+ *
+ *  If the last instruction of a basic block is a call to __libc_start_main in a shared library, then one of its arguments is
+ *  the address of the C "main" function. */
+class LibcStartMain: public BasicBlockCallback {
+public:
+    static Ptr instance() { return Ptr(new LibcStartMain); } /**< Allocating constructor. */
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+};
+
 /** Adds comments to system call instructions.
  *
  *  Adds a comment to each system call instruction for which the actual system call can be identified. A Linux header file can

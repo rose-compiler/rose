@@ -23,7 +23,7 @@ SMOKE_BLDDIR = $(abspath $(top_builddir))/tests/smoke/functional/BinaryAnalysis
 SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/BinaryAnalysis/libraryIdentification
 AM_LDFLAGS = $(ROSE_RPATHS)
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status

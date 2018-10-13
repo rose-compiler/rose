@@ -21,6 +21,7 @@ public:
         ENTRY_POINT             = 0x00000001,           /**< Vertex is a program entry point. */
         EXPORTED_FUNCTION       = 0x00000002,           /**< Vertex is an exported function. */
         SIGNAL_HANDLER          = 0x00000004,           /**< Vertex is a signal handler. */
+        ASSUMED                 = 0x00000080,           /**< Assumed reachable for cases when the analysis wasn't run. */
         PREDEFINED              = 0x000000ff,           /**< ROSE-defined reachability reasons. */
         USER_DEFINED            = 0xffffff00,           /**< User-defined reachability reasons. */
         USER_DEFINED_0          = 0x00000100,           /**< First user-defined reason bit. */

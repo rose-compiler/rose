@@ -158,9 +158,9 @@ Skipping 1 byte
 0x08048362: c3                      |.       |                     ret    
 
 Skipping 1 byte
-0x08048364: ================================== Function (symbol, graph) <main>
+0x08048364: ================================== Function (function call, symbol, graph) <main>
 
-0x08048364: 8d 4c 24 04             |.L$.    | F08048364 EH....    lea    ecx, [esp + 0x04]
+0x08048364: 8d 4c 24 04             |.L$.    | F08048364 E.....    lea    ecx, [esp + 0x04]
 0x08048368: 83 e4 f0                |...     |                     and    esp, 0xf0<-16>
 0x0804836b: ff 71 fc                |.q.     |                     push   dword ds:[ecx + 0xfc<-4>]
 0x0804836e: 55                      |U       |                     push   ebp

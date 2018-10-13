@@ -2,30 +2,31 @@
 # DO NOT DISABLE without first checking with a ROSE core developer
 
 # Please do not increase this limit! Only decrease it.
-my $allowedFailures = 15;
+my $allowedFailures = 31;
 
 
 
 
 my $desc = <<EOF;
-The following files must not be included in ROSE public header files because
-they pollute the user's global name space with symbols whose names do not begin
-with "ROSE", "Rose", or "rose":
-   rose.h
-   sage3.h
-   sage3basic.h
-   rose_config.h
+The "rose.h" header is intended to be for users that don't want to figure out
+the correct minimal set of header files, but just want all declarations with
+no hassles. Since rose.h includes all declarations, using it within the
+ROSE library source code increases header coupling unecessarily and slows down
+compile times. For a small prototype project this may be acceptible, but
+if we allowed ROSE developers to do this.... well, let's just say there's
+over a thousand translation units that need to be copiled to create librose.
 
-An alternative is to include these (except rose.h) in .C files instead since
-that would prevent any global symbols from leaking into user programs via
-ROSE public header files.
-
-The following header files violate this policy. Some of these violations may have
+The following files violate this policy. Some of these violations may have
 existed prior to this check, and you have triggered this failure by introducing
 at least one new violation. Our goal is to ultimately eliminate all of these
 violations so the list is more relevant to you.  It does not matter which
 violation(s) you fix to get back below the threshold -- if you have time and
 are feeling generous, fix a few! Thank you.
+
+Fix your code by replacing rose.h with sage3basic.h followed by any additional
+headers that are necessary. Please don't include your headers directly in
+sagebasic.h only for convenience; a programming best practice is to minimize
+header coupling.
 EOF
 
 
@@ -42,10 +43,10 @@ my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
     # utility_functionsImpl.C is misnamed--it's actually a header file.
-    if (($filename=~/\.(h|hh|hpp|code2|macro)$/ || $filename=~/\/utility_functionsImpl.C$/) &&
-        !is_disabled($filename) && open FILE, "<", $filename) {
+    if ($filename =~ /\.(C|cpp)$/ && $filename !~ /\/utility_functionsImpl.C$/ &&
+             !is_disabled($filename) && open FILE, "<", $filename) {
 	while (<FILE>) {
-	    if (/^\s*#\s*include\s*["<]((rose|sage3|sage3basic|rose_config)\.h)[>"]/ && !/\bPOLICY_OK\b/) {
+	    if (/^\s*#\s*include\s*["<](rose\.h)[>"]/ && !/\bPOLICY_OK\b/) {
 		print $desc unless $nfail++;
 		printf "  %1s (%1s)\n", $filename, $1;
 		last;

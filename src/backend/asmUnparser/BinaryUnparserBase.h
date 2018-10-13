@@ -4,6 +4,7 @@
 #include <BinaryUnparser.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/FunctionCallGraph.h>
+#include <Sawyer/Map.h>
 #include <Sawyer/SharedObject.h>
 #include <Registers.h>
 
@@ -30,26 +31,57 @@ private:
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
     const Base &frontUnparser_;
+    std::vector<unsigned> cfgVertexReachability_;
+    Sawyer::Container::Map<unsigned, std::string> reachabilityNames_; // map reachability value to name
 
 public:
     State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
     const Partitioner2::Partitioner& partitioner() const;
+
     const Partitioner2::FunctionCallGraph& cg() const;
+
+    const std::vector<unsigned> cfgVertexReachability() const;
+    void cfgVertexReachability(const std::vector<unsigned>&);
+    unsigned isCfgVertexReachable(size_t vertexId) const;
+
+    /** Assign a reachability name to a reachability value.
+     *
+     *  The two-argument version of this function associates a name with a value. An empty name clears the association.
+     *
+     *  The one-argument version returns the name corresponding to the value, or generates a name on the fly. To generate a
+     *  name, the value is first looked up in the mapping and that name is used if present. Otherwise, the value is broken down
+     *  into individual bits and the resulting string is the comma-separated names for each of the bits. If the mapping has a
+     *  name for a bit then it's used. Otherwise, if the bit is greater than or equal to @ref
+     *  Reachability::Reason::USER_DEFINED_0 the string will be "user-defined-x" where @p x is the number of bits to right
+     *  shift the flag to make it equal to USER_DEFINED_0. Otherwise, the name of the bit is obtained by treating the value as
+     *  an enum and obtaining the enum name. If that fails due to the fact that not all bits have corresponding enum constants,
+     *  the name is the hexadecimal string for the bit.
+     *
+     * @{ */
+    void reachabilityName(unsigned value, const std::string &name);
+    std::string reachabilityName(unsigned value) const;
+    /** @} */
+
     Partitioner2::FunctionPtr currentFunction() const;
     void currentFunction(const Partitioner2::FunctionPtr&);
+
     Partitioner2::BasicBlockPtr currentBasicBlock() const;
     void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+
     const std::string& nextInsnLabel() const;
     void nextInsnLabel(const std::string&);
+
     const RegisterNames& registerNames() const;
     void registerNames(const RegisterNames &r);
+
     const AddrString& basicBlockLabels() const;
     AddrString& basicBlockLabels();
+
     const Base& frontUnparser() const;
 };
-    
+
 /** Abstract base class for unparsers.
  *
  *  This defines the interface only. All data that's used during unparsing is provided to each function so that this interface
@@ -76,7 +108,7 @@ private:
 protected:
     Base();
     explicit Base(const Ptr &nextUnparser);
-    
+
 public:
     virtual Ptr copy() const = 0;
     virtual ~Base();
@@ -137,7 +169,7 @@ public:
     /** @} */
 
 
-    
+
 
 public:
     /** High-level unparsing function.
@@ -199,7 +231,7 @@ public:
     virtual void emitDataBlockPrologue(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
     virtual void emitDataBlockBody(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
     virtual void emitDataBlockEpilogue(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
-    
+
     virtual void emitBasicBlock(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockPrologue(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockBody(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
@@ -209,6 +241,7 @@ public:
     virtual void emitBasicBlockSharing(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockPredecessors(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockSuccessors(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
+    virtual void emitBasicBlockReachability(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
 
     virtual void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const;
     virtual void emitInstructionPrologue(std::ostream&, SgAsmInstruction*, State&) const;
@@ -264,7 +297,7 @@ public:
         : base_(base) {
         ASSERT_not_null(base);
     }
-    
+
     std::string unparse(const Partitioner2::Partitioner &p) const {
         return base_->unparse(p);
     }
@@ -274,8 +307,6 @@ public:
     }
 };
 #endif
-    
-
 
 } // namespace
 } // namespace

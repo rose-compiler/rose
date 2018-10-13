@@ -9,7 +9,7 @@ SUBDIRS = \
         astDiagnostics \
         astProcessing \
         astQuery \
-        binaryAnalyses
+        BinaryAnalysis
 else
 SUBDIRS = \
         abstractHandle \
@@ -22,7 +22,7 @@ SUBDIRS = \
         astUtil \
         programAnalysis \
         programTransformation \
-        binaryAnalyses
+        BinaryAnalysis
 endif
 
 EXTRA_DIST = CMakeLists.txt
