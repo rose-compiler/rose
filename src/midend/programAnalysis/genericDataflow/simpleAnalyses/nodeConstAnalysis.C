@@ -373,6 +373,7 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                                 {
                                         varID var(isSgAddressOfOp(arg)->get_operand());
                                         nodeConstLattice* ncLat = dynamic_cast<nodeConstLattice*>(prodLat->getVarLattice(func, var));
+                                        ROSE_ASSERT(ncLat != NULL);
                                         ncLat->set(/*uids.getUID()*/ (unsigned long)n.getNode());
                                 }
                                 // If the current variable is being passed by reference throgh a reference-typed argument
@@ -382,6 +383,7 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
                                         varID var(arg);
                                         //printf("var = %s, func=%s\n", var.str().c_str(), func.get_name().str());
                                         nodeConstLattice* ncLat = dynamic_cast<nodeConstLattice*>(prodLat->getVarLattice(func, var));
+                                        ROSE_ASSERT(ncLat != NULL);
                                         ncLat->set(/*uids.getUID()*/ (unsigned long)n.getNode());
                                 }
                         }
