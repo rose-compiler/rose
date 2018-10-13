@@ -6,7 +6,7 @@ Liao, 10/22/2009
 
 int main(int argc,char *argv[])
 {
-  double a[20UL][20UL];
+  double a[20][20];
   for (int i = 0; i <= 18; i += 1) {
     
 #pragma omp parallel for

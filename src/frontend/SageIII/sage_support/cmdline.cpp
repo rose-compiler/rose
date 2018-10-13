@@ -3840,6 +3840,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        set_no_optimize_flag_for_frontend(true);
      }
 
+  // TV (10/08/2018): ROSE-1392
+     set_unparse_edg_normalized_method_ROSE_1392(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","unparse_edg_normalized_method_ROSE_1392",true) == true ) {
+       set_unparse_edg_normalized_method_ROSE_1392(true);
+     }
+
   // DQ (5/24/2015): Record type of optimization (-Os, -O, -O1, -O2, -O3, -O4, -O5), note -O0 means no optimization.
   // This is required so that when optimization is specified we can turn on the __OPTIMIE__ macro.
   // See test2015_153.c.
@@ -5960,8 +5966,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (04/11/2018): Generates GraphViz from EDG internal representation
      optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
 
-  // TV (04/11/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
+  // TV (10/04/2018): Do not pass -D__OPTIMIZE__ to EDG frontend (ROSE-1424)
      optionCount = sla(argv, "-rose:", "($)", "no_optimize_flag_for_frontend",1);
+
+  // TV (10/09/2018): ROSE-1392
+     optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);

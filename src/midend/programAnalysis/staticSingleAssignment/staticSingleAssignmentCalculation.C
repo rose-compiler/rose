@@ -624,6 +624,7 @@ void StaticSingleAssignment::buildUseTable(const vector<FilteredCfgNode>& cfgNod
                 printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
                 printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
                         node->get_file_info()->get_filename());
+                continue; // FIXME ROSE-1392
                 ROSE_ASSERT(false);
             }
         }
