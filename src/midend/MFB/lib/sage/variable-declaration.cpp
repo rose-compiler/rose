@@ -55,16 +55,41 @@ void  Driver<Sage>::loadSymbols<SgVariableDeclaration>(size_t file_id, SgSourceF
   std::vector<SgVariableDeclaration *>::const_iterator it_variable_decl;
   for (it_variable_decl = variable_decl.begin(); it_variable_decl != variable_decl.end(); it_variable_decl++) {
     SgVariableDeclaration * variable_decl = *it_variable_decl;
-    assert(variable_decl->get_variables().size() == 1);
+#if VERBOSE
+    std::cout << "[Debug] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) variable_decl = " << variable_decl << " (" << variable_decl->get_name().str() << ")" << std::endl;
+#endif
+    ROSE_ASSERT(variable_decl->get_variables().size() == 1);
 
-    if (ignore(variable_decl->get_scope())) continue;
+    SgTemplateVariableDeclaration * tplvar_decl = isSgTemplateVariableDeclaration(variable_decl);
 
     SgInitializedName * init_name = variable_decl->get_variables()[0];
+    ROSE_ASSERT(init_name != NULL);
+    ROSE_ASSERT(init_name->get_scope() != NULL);
+
+    SgInitializedName * prev_init_name = init_name->get_prev_decl_item();
+    ROSE_ASSERT( !( prev_init_name != NULL ) || ( prev_init_name->get_scope() != NULL ) );
+#if 1
+    if (prev_init_name != NULL) {
+      ROSE_ASSERT(init_name->get_scope() == prev_init_name->get_scope());
+    }
+#endif
+    if (prev_init_name != NULL) continue;
+
+    SgScopeStatement * scope = variable_decl->get_scope();
+    ROSE_ASSERT(scope != NULL);
+    if (ignore(scope)) continue;
 
     if (ignore(init_name->get_name().getString())) continue;
 
-    SgVariableSymbol * variable_sym = SageInterface::lookupVariableSymbolInParentScopes(init_name->get_name(), variable_decl->get_scope());
-    assert(variable_sym != NULL);
+    SgVariableSymbol * variable_sym = NULL;
+    if (tplvar_decl == NULL) {
+      variable_sym = SageInterface::lookupVariableSymbolInParentScopes(init_name->get_name(), scope);
+      ROSE_ASSERT(variable_sym != NULL);
+    } else {
+      variable_sym = SageInterface::lookupTemplateVariableSymbolInParentScopes(init_name->get_name(), &(tplvar_decl->get_templateParameters()), &(tplvar_decl->get_templateSpecializationArguments()), scope);
+      ROSE_ASSERT(variable_sym != NULL);
+      ROSE_ASSERT(isSgTemplateVariableSymbol(variable_sym));
+    }
 
     variable_symbols.insert(variable_sym);
   }

@@ -27,6 +27,9 @@ class SgClassDeclaration;
 class SgClassSymbol;
 class SgClassDefinition;
 
+class SgEnumDeclaration;
+class SgEnumSymbol;
+
 class SgMemberFunctionDeclaration;
 class SgMemberFunctionSymbol;
 
@@ -39,7 +42,11 @@ class SgVariableSymbol;
 class SgInitializer;
 class SgInitializedName;
 
+class SgTypedefDeclaration;
 class SgTypedefSymbol;
+
+class SgNonrealDecl;
+class SgNonrealSymbol;
 
 namespace MFB {
 
@@ -80,10 +87,11 @@ class Driver<Sage> {
     std::set<SgNamespaceSymbol *>      p_namespace_symbols;
     std::set<SgFunctionSymbol *>       p_function_symbols;
     std::set<SgClassSymbol *>          p_class_symbols;
+    std::set<SgEnumSymbol *>           p_enum_symbols;
     std::set<SgVariableSymbol *>       p_variable_symbols;
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
-
-    std::set<SgTypedefSymbol *> p_typedef_symbols;
+    std::set<SgTypedefSymbol *>        p_typedef_symbols;
+    std::set<SgNonrealSymbol *>        p_nonreal_symbols;
 
   // Type management
     
@@ -122,6 +130,8 @@ class Driver<Sage> {
     file_id_t getFileID(SgSourceFile * source_file) const;
     file_id_t getFileID(SgScopeStatement * scope) const;
     SgGlobal * getGlobalScope(file_id_t id) const;
+
+    file_id_t getFileID(SgSymbol * sym) const;
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(file_id_t file_id) const;
@@ -219,6 +229,8 @@ template <typename Object>
 void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, size_t target_file_id) {
   assert(false);
 }
+
+Driver<Sage> * SageDriver(bool skip_rose_builtin = true, bool edg_il_to_graphviz = true);
 
 }
 
