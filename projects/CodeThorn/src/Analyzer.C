@@ -703,7 +703,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
               newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
             } else {
-              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              // use the declaration for reporting the error to get a valid line/col information
+              logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(decl)<<": unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
