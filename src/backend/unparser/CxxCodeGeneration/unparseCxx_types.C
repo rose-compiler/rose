@@ -574,7 +574,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseType(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,(nodeReferenceToType != NULL) ? nodeReferenceToType->class_name().c_str() : "null");
 #endif
 
-     if (nodeReferenceToType != NULL)
+     if (nodeReferenceToType != NULL && !isSgAutoType(type))
         {
 #if 0
           printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
