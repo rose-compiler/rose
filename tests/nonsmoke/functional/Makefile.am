@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
+PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
