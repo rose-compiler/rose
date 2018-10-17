@@ -2059,8 +2059,7 @@ bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
-  if (IsVarRef(_s) || IsArrayAccess(_s))
-    return true;
+  if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
   switch (s->variantT()) {
   case V_SgPntrArrRefExp:
   case V_SgPointerDerefExp:
