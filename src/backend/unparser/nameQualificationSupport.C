@@ -3337,7 +3337,10 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                          if (nsp_defn != NULL) {
                            SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
                            ROSE_ASSERT(nsp_decl != NULL);
-                           if (nsp_decl->get_name() == "std" && namedType->get_name().getString().find("allocator") == 0) {
+                           if (nsp_decl->get_name() == "std" && (
+                                  namedType->get_name().getString().find("allocator") == 0 ||
+                                  namedType->get_name().getString().find("less") == 0
+                                )) {
                              amountOfNameQualificationRequiredForTemplateArgument = 1;
                            }
                          }
