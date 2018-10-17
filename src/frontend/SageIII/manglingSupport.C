@@ -1436,6 +1436,11 @@ mangleExpression (const SgExpression* expr)
 
           break;
         }
+        case V_SgPntrArrRefExp: {
+          const SgPntrArrRefExp * e = isSgPntrArrRefExp(expr);
+          mangled_name << "_bPntrArrRefExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_ePntrArrRefExp_";
+          break;
+        }
         case V_SgTypeTraitBuiltinOperator: {
           const SgTypeTraitBuiltinOperator* e = isSgTypeTraitBuiltinOperator (expr);
           mangled_name << "_bTypeTraitBuiltinOperator_" << e->get_name().getString();

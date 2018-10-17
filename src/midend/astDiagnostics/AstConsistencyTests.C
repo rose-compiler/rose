@@ -1438,6 +1438,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 
                     case V_SgNonrealType:
+                    case V_SgAutoType:
                        {
                          break;
                        }

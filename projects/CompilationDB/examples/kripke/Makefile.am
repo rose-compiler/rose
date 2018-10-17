@@ -30,4 +30,4 @@ check-local: $(abs_builddir)/kripke-sequential/report.json $(abs_builddir)/kripk
 clean-local:
 #	rm -rf $(abs_builddir)/kripke-src
 #	rm -rf $(abs_builddir)/kripke-sequential $(abs_builddir)/kripke-openmp
-	rm -rf $(abs_builddir)/kripke-sequential/report.json $(abs_builddir)/kripke-openmp/report.json
+	rm -rf $(abs_builddir)/kripke-sequential/report.* $(abs_builddir)/kripke-openmp/report.*
