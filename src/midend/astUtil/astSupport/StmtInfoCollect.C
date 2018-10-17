@@ -142,9 +142,11 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
          Skip(s);
      }
      if ( fa.IsMemoryAccess(s)) {
-        ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-        if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
-           AppendReadLoc(fa, s);
+        if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
+          ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+          if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
+             AppendReadLoc(fa, s);
+        }
         AstNodeList arglist;
         if (fa.IsArrayAccess(s, 0, &arglist))  {
            for (AstNodeList::const_iterator p = arglist.begin(); 
