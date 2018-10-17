@@ -45,7 +45,7 @@ test2.passed: LoopProcessor.conf LoopProcessor lufac.C lufac.$(EDG).ans funcs.an
 TEST_NAMES += test3
 EXTRA_DIST += lufac.C lufac-split.edg3.ans lufac-split.edg4.ans funcs.annot
 test3.passed: LoopProcessor.conf LoopProcessor lufac.C lufac-split.$(EDG).ans funcs.annot
-	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0 -splitloop -annot $(srcdir)/funcs.annot" \
+	@$(RTH_RUN) SWITCHES="-c -debugvalbound -bk1 -fs0 -splitloop -annot $(srcdir)/funcs.annot" \
 		INPUT=lufac.C ANSWER=lufac-split.$(EDG).ans $< $@
 
 TEST_NAMES += test4
