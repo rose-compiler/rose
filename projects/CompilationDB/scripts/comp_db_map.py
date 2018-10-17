@@ -111,19 +111,35 @@ def generate_report(job):
 		F.write('  <tr><td width="1em">Time (second)</td><td>{}</td></tr>\n'.format(job['elapsed']))
 		F.write('</table>\n\n')
 		for result in job['results']:
+			filename = result['file']
+			if filename.startswith(job['directory']['source']):
+				filename = '$SRCDIR' + filename[len(job['directory']['source']):]
+			if filename.startswith(job['directory']['build']):
+				filename = '$BUILDDIR' + filename[len(job['directory']['build']):]
+
+			workdir = result['directory']
+			if workdir.startswith(job['directory']['source']):
+				workdir = '$srcdir/' + workdir[len(job['directory']['source']):]
+			if workdir.startswith(job['directory']['build']):
+				workdir = '$builddir/' + workdir[len(job['directory']['build']):]
+		
 			F.write('<br><hr><br>\n')
 			F.write('<table width="100%" border=1>\n')
-			F.write('  <td width="1em">Source File</td><td>{}</td></tr>\n'.format(result['file']))
-			F.write('  <td width="1em">Directory</td><td>{}</td></tr>\n'.format(result['directory']))
+			F.write('  <td width="1em">Source File</td><td>{}</td></tr>\n'.format(filename))
+			F.write('  <td width="1em">Directory</td><td>{}</td></tr>\n'.format(workdir))
 			if 'exception' in result:
 				F.write('  <td width="1em">Exception</td><td><textarea rows="20" cols="240">{}</textarea></td></tr>\n'.format(result['exception']))
 			else:
-				F.write('  <td width="1em">Original Command Line</td><td>{}</td></tr>\n'.format('<br/>'.join(result['arguments']['original'])))
-				F.write('  <td width="1em">Tool Command Line</td><td>{}</td></tr>\n'.format('<br/>'.join(result['arguments']['tool'])))
+				ocl = result['arguments']['original']
+				ocl = ' \\\n    '.join(ocl)
+				F.write('  <td width="1em">Original Command Line</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(ocl))
+				tcl = result['arguments']['tool']
+				tcl = ' \\\n    '.join(tcl)
+				F.write('  <td width="1em">Tool Command Line</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(tcl))
 				F.write('  <td width="1em">Return Code</td><td>{}</td></tr>\n'.format(result['returncode']))
 				F.write('  <td width="1em">Elapsed Time</td><td>{}</td></tr>\n'.format(result['elapsed']))
-				F.write('  <td width="1em">Standard Output</td><td><textarea rows="20" cols="240">{}</textarea></td></tr>\n'.format(result['out']))
-				F.write('  <td width="1em">Standard Error</td><td><textarea rows="20" cols="240">{}</textarea></td></tr>\n'.format(result['err']))
+				F.write('  <td width="1em">Standard Output</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(result['out']))
+				F.write('  <td width="1em">Standard Error</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(result['err']))
 			F.write('</table>\n\n')
 
 def build_parser():
