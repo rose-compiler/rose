@@ -10759,7 +10759,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // ROSE_ASSERT(sourcefile != NULL);
      if (sourcefile == NULL)
         {
-#if 1
+#if 0
           printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
         }
