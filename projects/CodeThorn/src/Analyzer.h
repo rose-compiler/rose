@@ -116,6 +116,10 @@ namespace CodeThorn {
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
 
+    int computeNumberOfElements(SgVariableDeclaration* decl);
+    // modifies PState with written initializers
+    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pState, EState currentEState);
+    // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     

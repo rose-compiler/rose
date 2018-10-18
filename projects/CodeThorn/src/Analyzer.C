@@ -634,6 +634,69 @@ void Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
   variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
 }
 
+// for arrays: number of elements (nested arrays not implemented yet)
+// for variable: 1
+// for structs: not implemented yet
+int Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
+      SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
+      ROSE_ASSERT(arrayType);
+      //SgType* arrayElementType=arrayType->get_base_type();
+      SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+      SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+      // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+      return initList.size(); 
+    } else if(isSgAssignInitializer(initializer)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+// returns abstract value to which the aggregate initializer evaluates
+// to. Does not compute the address of the aggregate element.
+PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
+  cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
+  // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
+  PState newPState=pstate;
+  int elemIndex=0;
+  SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+  SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+
+  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+    AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+    SgExpression* exp=*i;
+    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+    if(assignInit==nullptr) {
+      cerr<<"Error: NOT an assign initializer: "<<exp->unparseToString();
+      cerr<<"  AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      ROSE_ASSERT(assignInit);
+    }
+#if 1
+    // initialize element of array initializer in state
+    SgExpression* assignInitExpr=assignInit->get_operand();
+    // currentEState from above, newPState must be the same as in currentEState.
+    AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+    newPState.writeToMemoryLocation(arrayElemId,newVal);
+#else
+    if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
+      int intVal=intValNode->get_value();
+      // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+      newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
+    } else {
+      // use the declaration for reporting the error to get a valid line/col information
+      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(decl)<<": unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      exit(1);
+    }
+#endif
+    elemIndex++;
+  }
+  return newPState;
+}
+
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
 
   /*
@@ -682,33 +745,15 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           exit(1);
         }
         // has aggregate initializer
-        if(isSgAggregateInitializer(initializer)) {
-          // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
-          PState newPState=*currentEState.pstate();
-          int elemIndex=0;
-          SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
-          variableIdMapping.setNumberOfElements(initDeclVarId,initList.size());
-          SgArrayType* arrayType=isSgArrayType(initializer->get_type());
+        if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
+          SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
           ROSE_ASSERT(arrayType);
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-            SgExpression* exp=*i;
-            SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-            ROSE_ASSERT(assignInit);
-            // TODO: model arbitrary RHS values (use:analyzeAssignRhs (see below))
-            if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
-              int intVal=intValNode->get_value();
-              // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
-            } else {
-              // use the declaration for reporting the error to get a valid line/col information
-              logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(decl)<<": unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-              exit(1);
-            }
-            elemIndex++;
-          }
+          // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
+          variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+          PState newPState=*currentEState.pstate();
+          newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
           return createEState(targetLabel,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
           SgExpression* rhs=assignInitializer->get_operand_i();
