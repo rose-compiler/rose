@@ -78,7 +78,8 @@ noinst_PROGRAMS = \
    testGraphGeneration \
    testPDFGeneration \
    testTokenGeneration \
-   testTemplates
+   testTemplates \
+   testBackend
 
 if ROSE_WITH_ATERM
    noinst_PROGRAMS += testAtermGraphGeneration
@@ -160,6 +161,8 @@ KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 
 # DQ (7/2/2015): Added test that marks templates to be output with instantiations.
 testTemplates_SOURCES = testTemplates.C
+
+testBackend_SOURCES = testBackend.C
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.
