@@ -250,8 +250,7 @@ struct IP_b: P {
         assert_args(insn, args, 1);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
-        BaseSemantics::SValuePtr target = ops->add(d->read(args[0], 32), v1);
+        BaseSemantics::SValuePtr target = d->read(args[0], 32); // operand already is sum of insn addr and LI value
         ops->writeRegister(d->REG_IAR, target);
     }
 };
