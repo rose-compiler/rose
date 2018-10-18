@@ -15049,6 +15049,8 @@ SgFile::initialization()
   // DQ (12/11/2007): Added to support debugging of Fortran support in ROSE using OFP.
      p_exit_after_parser = false;
 
+     p_skip_parser = false;
+
   // DQ (1/4/2008): gFortran versions greater than 4.1 have bugs that prevent it from 
   // being used to to syntax checking on Fortran 2003 applications.  To allow Fortran
   // 2003 applications to be processed the syntax checking step done in ROSE using
