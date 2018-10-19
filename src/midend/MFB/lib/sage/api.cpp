@@ -9,39 +9,67 @@
 
 #include "sage3basic.h"
 
+#include <boost/filesystem.hpp>
+
 #include <iostream>
 
 namespace MFB {
 
 void dump_api(const api_t * api) {
-  std::set<SgNamespaceSymbol *>::const_iterator it_namespace_symbol;
   std::cout << "Namespaces:" << std::endl; 
-  for (it_namespace_symbol = api->namespace_symbols.begin(); it_namespace_symbol != api->namespace_symbols.end(); it_namespace_symbol++) {
-    std::cout << "  " << (*it_namespace_symbol)->get_name() << std::endl;
+  for (std::set<SgNamespaceSymbol *>::const_iterator it = api->namespace_symbols.begin(); it != api->namespace_symbols.end(); it++) {
+    SgNamespaceSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
   }
 
-  std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
   std::cout << "Functions:" << std::endl;
-  for (it_function_symbol = api->function_symbols.begin(); it_function_symbol != api->function_symbols.end(); it_function_symbol++) {
-    std::cout << "  " << (*it_function_symbol)->get_name() << std::endl;
+  for (std::set<SgFunctionSymbol *>::const_iterator it = api->function_symbols.begin(); it != api->function_symbols.end(); it++) {
+    SgFunctionSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
   }
 
-  std::set<SgClassSymbol *>::const_iterator it_class_symbol;
   std::cout << "Classes:" << std::endl;
-  for (it_class_symbol = api->class_symbols.begin(); it_class_symbol != api->class_symbols.end(); it_class_symbol++) {
-    std::cout << "  " << (*it_class_symbol)->get_name() << std::endl;
+  for (std::set<SgClassSymbol *>::const_iterator it = api->class_symbols.begin(); it != api->class_symbols.end(); it++) {
+    SgClassSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
   }
 
-  std::set<SgVariableSymbol *>::const_iterator it_variable_symbol;
+  std::cout << "Enumerations:" << std::endl;
+  for (std::set<SgEnumSymbol *>::const_iterator it = api->enum_symbols.begin(); it != api->enum_symbols.end(); it++) {
+    SgEnumSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
+  }
+
   std::cout << "Variables:" << std::endl;
-  for (it_variable_symbol = api->variable_symbols.begin(); it_variable_symbol != api->variable_symbols.end(); it_variable_symbol++) {
-    std::cout << "  " << (*it_variable_symbol)->get_name() << std::endl;
+  for (std::set<SgVariableSymbol *>::const_iterator it = api->variable_symbols.begin(); it != api->variable_symbols.end(); it++) {
+    SgVariableSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
   }
 
-  std::set<SgMemberFunctionSymbol *>::const_iterator it_member_function_symbol;
   std::cout << "Member Functions:" << std::endl;
-  for (it_member_function_symbol = api->member_function_symbols.begin(); it_member_function_symbol != api->member_function_symbols.end(); it_member_function_symbol++) {
-    std::cout << "  " << (*it_member_function_symbol)->get_name() << std::endl;    
+  for (std::set<SgMemberFunctionSymbol *>::const_iterator it = api->member_function_symbols.begin(); it != api->member_function_symbols.end(); it++) {
+    SgMemberFunctionSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;  
+  }
+
+  std::cout << "Typedef:" << std::endl;
+  for (std::set<SgTypedefSymbol *>::const_iterator it = api->typedef_symbols.begin(); it != api->typedef_symbols.end(); it++) {
+    SgTypedefSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
+  }
+
+  std::cout << "Nonreal:" << std::endl;
+  for (std::set<SgNonrealSymbol *>::const_iterator it = api->nonreal_symbols.begin(); it != api->nonreal_symbols.end(); it++) {
+    SgNonrealSymbol * sym = *it;
+    ROSE_ASSERT(sym != NULL);
+    std::cout << "  " << sym->get_name() << " ( " << sym->class_name() << " ) " << std::endl;
   }
 }
 
@@ -49,8 +77,11 @@ void merge_api(api_t * base_api, const api_t * api) {
   base_api->namespace_symbols.insert(api->namespace_symbols.begin(), api->namespace_symbols.end());
   base_api->function_symbols.insert(api->function_symbols.begin(), api->function_symbols.end());
   base_api->class_symbols.insert(api->class_symbols.begin(), api->class_symbols.end());
+  base_api->enum_symbols.insert(api->enum_symbols.begin(), api->enum_symbols.end());
   base_api->variable_symbols.insert(api->variable_symbols.begin(), api->variable_symbols.end());
   base_api->member_function_symbols.insert(api->member_function_symbols.begin(), api->member_function_symbols.end());
+  base_api->typedef_symbols.insert(api->typedef_symbols.begin(), api->typedef_symbols.end());
+  base_api->nonreal_symbols.insert(api->nonreal_symbols.begin(), api->nonreal_symbols.end());
 }
 
 }

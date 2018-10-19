@@ -194,6 +194,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (TemplateInstantiationMemberFunctionDecl,
                          "TemplateInstantiationMemberFunctionDecl", "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT" );
 
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     NEW_TERMINAL_MACRO ( NonrealDecl, "NonrealDecl", "NONREAL_DECL" );
+
   // driscoll6 (6/27/11): Support for Python
      NEW_TERMINAL_MACRO (WithStatement,             "WithStatement",             "WITH_STATEMENT" );
      NEW_TERMINAL_MACRO (PythonGlobalStmt,          "PythonGlobalStmt",          "PYTHON_GLOBAL_STMT" );
@@ -539,7 +542,8 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement            |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
-          StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
+          StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/ |
+          NonrealDecl,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -1306,7 +1310,7 @@ Grammar::setUpStatements ()
   // (see test2007_116.C). This pointer is only valid when the scope can not be set to the SgClassDefinition.
   // MemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
   //                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     MemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
+     MemberFunctionDeclaration.setDataPrototype ( "SgDeclarationStatement*", "associatedClassDeclaration", "= NULL",
                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      CtorInitializerList.setFunctionPrototype ( "HEADER_CTOR_INITIALIZER_LIST", "../Grammar/Statement.code" );
@@ -1785,6 +1789,10 @@ Grammar::setUpStatements ()
      TemplateDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     TemplateDeclaration.setDataPrototype ( "SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
+
   // DQ (6/10/2011): Added support for template class declaration, also template function declaration, 
   // and template member function declaration.  Might also want a TemplateVariableDeclaration (using 
   // a TemplateDeclaration for now).
@@ -1858,6 +1866,10 @@ Grammar::setUpStatements ()
      TemplateClassDeclaration.setDataPrototype("bool","global_qualification_required","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateClassDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // **************************************************************************************************
   // **************************************************************************************************
@@ -1975,6 +1987,10 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateFunctionDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
   // **************************************************************************************************************
   // **************************************************************************************************************
 
@@ -2000,13 +2016,6 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 0
-  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
-  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
-  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
-     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 #else
 
 #error "DEAD CODE!"
@@ -2022,6 +2031,10 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateMemberFunctionDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // **************************************************************************************************************************
   // **************************************************************************************************************************
@@ -2044,6 +2057,11 @@ Grammar::setUpStatements ()
      TemplateVariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateVariableDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
   // *******************************************************************************
 
 
@@ -2056,6 +2074,11 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateTypedefDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     TemplateTypedefDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // DQ (11/4/2014): Adding IR support for the instantiation of a template typedef (for C++11 support).
   // All of these data members are generally required for any template instantiation.
@@ -2282,6 +2305,35 @@ Grammar::setUpStatements ()
      TemplateInstantiationDefn.setDataPrototype ( "SgTemplateInstantiationDecl*",
                                                   "declaration", "= NULL");
 #endif
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     NonrealDecl.setFunctionPrototype ( "HEADER_NONREAL_DECL", "../Grammar/Statement.code");
+
+     NonrealDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ( "SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
+                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+     NonrealDecl.setDataPrototype ( "SgNonrealType*", "type", "= NULL",
+                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TV (04/16/2018):
+     NonrealDecl.setDataPrototype ("int","template_parameter_position","= -1",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("int","template_parameter_depth","= -1",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     NonrealDecl.setDataPrototype ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
+                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     NonrealDecl.setDataPrototype ("SgTemplateArgumentPtrList", "tpl_args", "= SgTemplateArgumentPtrList()",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("SgTemplateParameterPtrList", "tpl_params", "= SgTemplateParameterPtrList()",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     NonrealDecl.setDataPrototype ("bool","is_class_member","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_template_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_nonreal_template","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumDeclaration.setFunctionPrototype ( "HEADER_ENUM_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      EnumDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -3913,6 +3965,8 @@ Grammar::setUpStatements ()
 
      ClassDeclaration.setFunctionSource     ( "SOURCE_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      ClassDeclaration.setFunctionSource     ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
+
+     NonrealDecl.setFunctionSource          ( "SOURCE_NONREAL_DECL", "../Grammar/Statement.code" );
 
      ClassDefinition.setFunctionSource      ( "SOURCE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
