@@ -43,11 +43,11 @@ def apply_tool(tool, comp_unit, args):
 
 	comp_unit['arguments'].update({ 'tool' : arguments })
 
-	rose_proc = subprocess.Popen(arguments, cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	tool_proc = subprocess.Popen(arguments, cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-	out, err = rose_proc.communicate()
+	out, err = tool_proc.communicate()
 
-	result = { 'returncode' : rose_proc.returncode, 'out' : out , 'err' : err, 'elapsed' : time.time() - start_time }
+	result = { 'returncode' : tool_proc.returncode, 'out' : out , 'err' : err, 'elapsed' : time.time() - start_time }
 	result.update(comp_unit)
 
 	return result
@@ -64,7 +64,7 @@ def apply_tool_helper(kwargs):
 def map_tool(job):
 	start_time = time.time()
 
-	workload = map(lambda cu: { 'comp_unit' : cu, 'tool' : job['tool'], 'args' : job['arguments'] }, job['database'])
+	workload = map(lambda cu: { 'comp_unit' : cu, 'tool' : job['tool']['command'], 'args' : job['arguments'] }, job['database'])
 
 	sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds".format(0, len(workload), 0 ))
 	sys.stdout.flush()
@@ -98,57 +98,13 @@ def map_tool(job):
 
 	return job
 
-def generate_report(job):
-	with open('{}/report.json'.format(job['directory']['build']), 'w') as F:
-		json.dump(job, F)
-
-	with open('{}/report.html'.format(job['directory']['build']), 'w') as F:
-		F.write('<table width="100%" border=1>\n')
-		F.write('  <tr><td width="1em">Source Directory</td><td>{}</td></tr>\n'.format(job['directory']['source']))
-		F.write('  <tr><td width="1em">Build Directory</td><td>{}</td></tr>\n'.format(job['directory']['build']))
-		F.write('  <tr><td width="1em">Tool</td><td>{}</td></tr>\n'.format(job['tool']))
-		F.write('  <tr><td width="1em">Number Processors</td><td>{}</td></tr>\n'.format(job['config']['nprocs']))
-		F.write('  <tr><td width="1em">Time (second)</td><td>{}</td></tr>\n'.format(job['elapsed']))
-		F.write('</table>\n\n')
-		for result in job['results']:
-			filename = result['file']
-			if filename.startswith(job['directory']['source']):
-				filename = '$SRCDIR' + filename[len(job['directory']['source']):]
-			if filename.startswith(job['directory']['build']):
-				filename = '$BUILDDIR' + filename[len(job['directory']['build']):]
-
-			workdir = result['directory']
-			if workdir.startswith(job['directory']['source']):
-				workdir = '$srcdir/' + workdir[len(job['directory']['source']):]
-			if workdir.startswith(job['directory']['build']):
-				workdir = '$builddir/' + workdir[len(job['directory']['build']):]
-		
-			F.write('<br><hr><br>\n')
-			F.write('<table width="100%" border=1>\n')
-			F.write('  <td width="1em">Source File</td><td>{}</td></tr>\n'.format(filename))
-			F.write('  <td width="1em">Directory</td><td>{}</td></tr>\n'.format(workdir))
-			if 'exception' in result:
-				F.write('  <td width="1em">Exception</td><td><textarea rows="20" cols="240">{}</textarea></td></tr>\n'.format(result['exception']))
-			else:
-				ocl = result['arguments']['original']
-				ocl = ' \\\n    '.join(ocl)
-				F.write('  <td width="1em">Original Command Line</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(ocl))
-				tcl = result['arguments']['tool']
-				tcl = ' \\\n    '.join(tcl)
-				F.write('  <td width="1em">Tool Command Line</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(tcl))
-				F.write('  <td width="1em">Return Code</td><td>{}</td></tr>\n'.format(result['returncode']))
-				F.write('  <td width="1em">Elapsed Time</td><td>{}</td></tr>\n'.format(result['elapsed']))
-				F.write('  <td width="1em">Standard Output</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(result['out']))
-				F.write('  <td width="1em">Standard Error</td><td><textarea rows="20" cols="160">{}</textarea></td></tr>\n'.format(result['err']))
-			F.write('</table>\n\n')
-
 def build_parser():
 	parser = argparse.ArgumentParser(
 				formatter_class=argparse.RawTextHelpFormatter, add_help=False,
 				usage=textwrap.dedent('''
 					(0) python comp_db_map.py [-h|--help]
 					(1) python comp_db_map.py srcdir builddir tool [--database DATABASE] [--filter FILTER] [--nprocs NPROCS] [ -- toolarg [toolarg ...] ]\
-                	'''),
+				'''),
 				description=textwrap.dedent('''\
 					This utility applies a given tool to each compilation unit in a CLANG-style compilation database.
 					It prevents ROSE's users from having to "hack" into a target applications build system.\
@@ -184,6 +140,12 @@ def build_parser():
 									help=textwrap.dedent('''\
 										Path to the compilation database relative to the utility's working directory (or absolute).
 										(default: $builddir/compile_commands.json).\
+										'''))
+
+	optional.add_argument('--report',
+									help=textwrap.dedent('''\
+										Name of the JSON file used to store the report in builddir ($builddir/$report.json).
+										(default: basename of the tool).\
 										'''))
 
 	optional.add_argument('--filter', action='append', dest='filters',
@@ -246,6 +208,11 @@ def cli_parse_args(argv):
 		print "The database file is not a valid JSON file!"
 		exit(1)
 
+	if args.report is None:
+		args.report = '{}/{}.json'.format(args.builddir, os.path.basename(args.tool))
+	else:
+		args.report = '{}/{}.json'.format(args.builddir, args.report)
+
 	filter_args = list()
 	replace_args = dict()
 	if not args.filters is None:
@@ -259,13 +226,20 @@ def cli_parse_args(argv):
 			else:
 				print 'Invalid filter/replace command: first character must be one of "f" or "r". Probematic command is "{}"'.format(f)
 
+	tool_proc = subprocess.Popen([ args.tool , '--version' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+	tool_version = tool_proc.communicate()[0]
+
 	return {
 		'directory' : {
 			'source' : args.srcdir,
 			'build' : args.builddir
 		},
 		'database' : args.database,
-		'tool' : args.tool,
+		'tool' : {
+			'command' : args.tool,
+			'version' : tool_version
+		},
 		'arguments' : {
 			'filter' : filter_args,
 			'replace' : replace_args,
@@ -273,7 +247,8 @@ def cli_parse_args(argv):
 		},
 		'config' : {
 			'nprocs' : args.nprocs
-		}
+		},
+		'report' : args.report
 	}
 
 if __name__ == "__main__":
@@ -282,5 +257,6 @@ if __name__ == "__main__":
 
 	job = map_tool(job)
 
-	generate_report(job)
+	with open(job['report'], 'w') as F:
+		json.dump(job, F)
 
