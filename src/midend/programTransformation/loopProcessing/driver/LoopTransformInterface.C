@@ -291,7 +291,8 @@ CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList
   ++configIndex;
   args.push_back( fa->CreateConstInt(configIndex).get_ptr() );
   args.push_back( fa->CreateConstInt( args.size() ).get_ptr() );
-  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args.begin(), args.end()); 
+  std::string funname = "DynamicFusionConfig";
+  AstNodePtr invoc = fa->CreateFunctionCall( funname,  args.begin(), args.end()); 
   return fa->CreateAssignment ( groupNum, invoc) ;
 }
 
