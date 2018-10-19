@@ -299,7 +299,8 @@ AstNodePtr LoopTransformInterface::CreateDynamicFusionEnd( int id)
 { assert(fa != 0);
   AstInterface::AstNodeList args;
   args.push_back( fa->CreateConstInt(id).get_ptr());
-  return fa->CreateFunctionCall("DynamicFusionEnd", args.begin(), args.end());
+  std::string funname = "DynamicFusionEnd";
+  return fa->CreateFunctionCall(funname, args.begin(), args.end());
 }
 
 bool LoopTransformInterface::
