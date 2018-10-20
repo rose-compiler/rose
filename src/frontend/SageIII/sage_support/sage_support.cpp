@@ -5733,6 +5733,9 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
   // printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
 
+  // TV (09/24/2018): Skip actually calling the frontend (used to test the backend with ROSE command line processing)
+     if (get_skip_parser()) return 0;
+
   // DXN (01/10/2011): except for building C and Cxx AST, frontend fails when frontend error level > 0.
      int frontendErrorLevel = 0;
      bool frontend_failed = false;
