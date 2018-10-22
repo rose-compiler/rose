@@ -691,6 +691,8 @@ void
 FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
     // Update the path constraint "register"
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -705,6 +707,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
             if (pathInsnIndex != size_t(-1))
                 ops->pathInsnIndex(pathInsnIndex++);
+            SAWYER_MESG(debug) <<"        " <<insn->toString() <<"\n";
             cpu->processInstruction(insn);
         }
     } catch (const BaseSemantics::Exception &e) {
@@ -717,6 +720,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
 void
 FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexIterator &vertex,
                                         const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
+    SAWYER_MESG(mlog[DEBUG]) <<"      processing indeterminate vertex\n";
     mlog[WARN] <<"control flow passes through an indeterminate address at path position #" <<pathInsnIndex <<"\n";
 }
 
@@ -724,14 +728,16 @@ FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexI
 void
 FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                                      const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     ASSERT_require(functionSummaries_.exists(pathsVertex->value().address()));
     const FunctionSummary &summary = functionSummaries_[pathsVertex->value().address()];
+    SAWYER_MESG(debug) <<"      processing function summary " <<summary.name <<"\n";
 
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     if (pathInsnIndex != size_t(-1))
         ops->pathInsnIndex(pathInsnIndex);
 
-    Sawyer::Message::Stream debug(Rose::BinaryAnalysis::InstructionSemantics2::mlog[DEBUG]);
     if (debug) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
         debug <<"summary semantics for " <<summary.name <<"\n";
