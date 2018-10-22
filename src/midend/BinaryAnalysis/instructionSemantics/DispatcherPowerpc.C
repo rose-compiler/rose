@@ -299,8 +299,7 @@ struct IP_bc: P {
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
-        BaseSemantics::SValuePtr target = (ops->add(d->read(args[2], 32), v1));
+        BaseSemantics::SValuePtr target = d->read(args[2], 32);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
         ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
