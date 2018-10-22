@@ -24,48 +24,14 @@ def write_html_head(F, report, title):
 	F.write('''<style>
 		body {
 		    font-family: Arial;
-		    margin-top: 65px
 		}
 
-		section {
-		    margin-bottom: 50px;
+		.card {
+		    margin-bottom: 15px;
 		}
 
-		/* Style the tab */
-		.tab {
-		    overflow: hidden;
-		    border: 1px solid #ccc;
-		    background-color: #f1f1f1;
-		}
-
-		/* Style the buttons inside the tab */
-		.tab button {
-		    background-color: inherit;
-		    float: left;
-		    border: none;
-		    outline: none;
-		    cursor: pointer;
-		    padding: 14px 16px;
-		    transition: 0.3s;
-		    font-size: 17px;
-		}
-
-		/* Change background color of buttons on hover */
-		.tab button:hover {
-		    background-color: #ddd;
-		}
-
-		/* Create an active/current tablink class */
-		.tab button.active {
-		    background-color: #ccc;
-		}
-
-		/* Style the tab content */
-		.tabcontent {
-		    display: none;
-		    padding: 6px 12px;
-		    border: 1px solid #ccc;
-		    border-top: none;
+		.section {
+		    padding-top: 65px;
 		}
 		</style>\n\n''')
 
@@ -79,12 +45,12 @@ def write_navbar(F, report, title):
 
 	F.write('<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary" role="navigation">')
 	F.write('  <div class="container">')
-	F.write('  <a class="navbar-brand" href="#summary">{}</a>\n'.format(title))
+	F.write('  <a class="navbar-brand" href="#summary">Back to summary</a>\n')
 	F.write('  <div class="collapse navbar-collapse">\n')
 	F.write('    <ul class="navbar-nav mr-auto">\n')
 	F.write('      <li class="nav-item dropdown">\n')
 	F.write('        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n')
-	F.write('          Compilation Units\n')
+	F.write('          Jump to a Compilation Unit\n')
 	F.write('        </a>\n')
 	F.write('        <div class="dropdown-menu" aria-labelledby="navbarDropdown">\n')
 
@@ -116,23 +82,23 @@ def write_summary(F, report, title):
 	F.write('<section class="section" id="summary">\n')
 	F.write('  <div class="container-fluid">\n')
 
-	F.write('    <div class="card" style="margin-bottom:15px;">\n')
+	F.write('    <div class="card w-50 mx-auto bg-primary">\n')
 	F.write('      <div class="card-body">\n')
-	F.write('        <center>\n')
-	F.write('          <h1>{}</h1>\n'.format(title))
-	F.write('          <h2>{}</h2>\n'.format(tool))
-	F.write('        </center>\n')
+	F.write('        <table border=0 align=center>\n')
+	F.write('          <tr><td><h5>Project:</h5></td><td> </td><td><h1>{}</h1></td></tr>\n'.format(title))
+	F.write('          <tr><td><h5>Tool:</h5>   </td><td> </td><td><h2>{}</h2></td></tr>\n'.format(tool))
+	F.write('        </table>\n')
 	F.write('      </div>\n')
 	F.write('    </div>\n')
 
 	F.write('    <div class="row">\n')
 
-	F.write('      <div class="col-md-3">\n')
-	F.write('        <div class="card" style="margin-bottom:15px;">\n')
+	F.write('      <div class="col-lg-12">\n')
+	F.write('        <div class="card">\n')
 	F.write('          <div class="card-header">\n')
 	F.write('            <ul class="nav nav-pills card-header-pills">\n')
 	F.write('              <li class="nav-item">')
-	F.write('                <a class="nav-link active" data-toggle="collapse" href="#summary_results_body" aria-expanded="false" aria-controls="summary_results_body">Result Statistics</a>\n')
+	F.write('                <a class="nav-link active" data-toggle="collapse" href="#summary_results_body" aria-expanded="false" aria-controls="summary_results_body">Summary</a>\n')
 	F.write('              </li>\n')
 	F.write('            </ul>\n')
 	F.write('          </div>\n')
@@ -141,7 +107,7 @@ def write_summary(F, report, title):
 	F.write('              <p>\n')
 	F.write('              Applied <code>{}</code> to <b>{} compilation units</b> in <b>{:.1f} seconds</b> using <b>{} processes</b>.\n'.format(tool, len(report['results']), report['elapsed'], report['config']['nprocs']))
 	if failure_cnt > 0:
-		F.write('              The tool failed on <b>{} compilation units</b>, these compilation units are shown in red.\n'.format(failure_cnt))
+		F.write('              It failed on <b>{} compilation units</b>, these compilation units are shown in red.\n'.format(failure_cnt))
 	F.write('              </p>\n')
 	if except_cnt > 0:
 		F.write('              <p>For {} compilation units, the driver script encountered exceptions!!!</p>\n')
@@ -150,19 +116,20 @@ def write_summary(F, report, title):
 	F.write('        </div>\n')
 	F.write('      </div>\n')
 
-	F.write('      <div class="col-md-5">\n')
-	F.write('        <div class="card" style="margin-bottom:15px;">\n')
+#	F.write('    </div>\n')
+#	F.write('    <div class="row">\n')
+
+	F.write('      <div class="col-md-6">\n')
+	F.write('        <div class="card">\n')
 	F.write('          <div class="card-header">\n')
 	F.write('            <ul class="nav nav-pills card-header-pills">\n')
 	F.write('              <li class="nav-item">')
-	F.write('                <a class="nav-link active" data-toggle="collapse" href="#summary_tool_config_body" aria-expanded="false" aria-controls="summary_tool_config_body">Tool Configuration</a>\n')
+	F.write('                <a class="nav-link active" data-toggle="collapse" href="#summary_tool_config_body" aria-expanded="false" aria-controls="summary_tool_config_body">Configuration</a>\n')
 	F.write('              </li>\n')
 	F.write('            </ul>\n')
 	F.write('          </div>\n')
 	F.write('          <div class="collapse" id="summary_tool_config_body">\n')
 	F.write('            <div class="card-body">\n')
-	F.write('              <b>Source directory:</b> <pre>{}</pre><br/>\n'.format(report['directory']['source']))
-	F.write('              <b>Build directory:</b> <pre>{}</pre><br/>\n'.format(report['directory']['build']))
 	F.write('              <b>Filters Arguments:</b> <pre>  {}</pre><br/>\n'.format('\n  '.join(report['arguments']['filter'])))
 	F.write('              <b>Replace Arguments:</b> <pre>  {}</pre><br/>\n'.format('\n  '.join(map(lambda (u,v): '{} -> {}'.format(u,v), report['arguments']['replace'].iteritems()))))
 	F.write('              <b>Extra Arguments:</b> <pre>  {}</pre><br/>\n'.format('\n  '.join(report['arguments']['tool'])))
@@ -171,8 +138,8 @@ def write_summary(F, report, title):
 	F.write('        </div>\n')
 	F.write('      </div>\n')
 
-	F.write('      <div class="col-md-4">\n')
-	F.write('        <div class="card" style="margin-bottom:15px;">\n')
+	F.write('      <div class="col-md-6">\n')
+	F.write('        <div class="card">\n')
 	F.write('          <div class="card-header">\n')
 	F.write('            <ul class="nav nav-pills card-header-pills">\n')
 	F.write('              <li class="nav-item">')
@@ -188,6 +155,26 @@ def write_summary(F, report, title):
 	F.write('          <div class="collapse" id="summary_tool_version_body">\n')
 	F.write('            <div class="card-body">\n')
 	F.write('              <pre id="summary_tool_samp">{}</pre>\n'.format(report['tool']['version']))
+	F.write('            </div>\n')
+	F.write('          </div>\n')
+	F.write('        </div>\n')
+	F.write('      </div>\n')
+
+#	F.write('    </div>\n')
+#	F.write('    <div class="row">\n')
+
+	F.write('      <div class="col-lg-12">\n')
+	F.write('        <div class="card">\n')
+	F.write('          <div class="card-header">\n')
+	F.write('            <ul class="nav nav-pills card-header-pills">\n')
+	F.write('              <li class="nav-item">')
+	F.write('                <a class="nav-link active" data-toggle="collapse" href="#summary_path_body" aria-expanded="false" aria-controls="summary_path_body">Paths</a>\n')
+	F.write('              </li>\n')
+	F.write('            </ul>\n')
+	F.write('          </div>\n')
+	F.write('          <div class="collapse" id="summary_path_body">\n')
+	F.write('            <div class="card-body">\n')
+	F.write('              <pre>Source directory: {}\nBuild directory:  {}\nTool command:     {}</pre>\n'.format(report['directory']['source'], report['directory']['build'], report['tool']['command']))
 	F.write('            </div>\n')
 	F.write('          </div>\n')
 	F.write('        </div>\n')
@@ -210,7 +197,7 @@ def write_summary(F, report, title):
 def write_compilation_unit(F, report, cu_id):
 	cu_report = report['results'][cu_id]
 
-	style = 'btn-dark' if 'exception' in cu_report else ('btn-success' if cu_report['returncode'] == 0 else 'btn-danger')
+	style = 'dark' if 'exception' in cu_report else ('success' if cu_report['returncode'] == 0 else 'danger')
 
 	prefixes = {
 	    "@srcdir@" : report['directory']['source'],
@@ -222,14 +209,15 @@ def write_compilation_unit(F, report, cu_id):
 
 	F.write('<section class="section" id="compilation_unit_{}">\n'.format(cu_id))
 	F.write('  <div class="container-fluid">\n')
-
-
-	F.write('    <div class="card" style="margin-bottom:15px;">\n')
+#	F.write('    <div class="card w-20"></div>\n')
+	F.write('    <div class="card w-50 mx-auto bg-{}">\n'.format(style))
 	F.write('      <div class="card-body">\n')
-	F.write('        <center>\n')
-	F.write('          <h3><b>{}</b> in <b>{}</b></h3>\n'.format(filename, workdir))
-	F.write('          <h5>Returned <b>{}</b> in <b>{:.1f} seconds</b></h5>\n'.format(cu_report['returncode'], cu_report['elapsed']))
-	F.write('        </center>\n')
+	F.write('        <table border=0 align=center>\n')
+	F.write('          <tr><td><h5>File:</h5>          </td><td> </td><td><h3>{}</h3></td></tr>\n'.format(filename))
+	F.write('          <tr><td><h5>Work Directory:</h5></td><td> </td><td><h3>{}</h3></td></tr>\n'.format(workdir))
+	F.write('          <tr><td></td><td colspan=2><h5>Return code is <b>{}</b></h5></td></tr>\n'.format(cu_report['returncode']))
+	F.write('          <tr><td></td><td colspan=2><h5>Processed in <b>{}</b> seconds</h5></td></tr>\n'.format(cu_report['elapsed']))
+	F.write('        </table>\n')
 	F.write('      </div>\n')
 	F.write('    </div>\n')
 
@@ -238,11 +226,11 @@ def write_compilation_unit(F, report, cu_id):
 	ocl = cu_report['arguments']['original']
 	ocl = ' '.join(ocl)
 	F.write('    <div class="col-md-6">\n')
-	F.write('    <div class="card" style="margin-bottom:15px;">\n')
+	F.write('    <div class="card">\n')
 	F.write('      <div class="card-header">\n')
 	F.write('        <ul class="nav nav-pills card-header-pills">\n')
 	F.write('          <li class="nav-item">')
-	F.write('            <a class="nav-link active {0}" data-toggle="collapse" href="#compilation_unit_{1}_ocl_body" aria-expanded="false" aria-controls="compilation_unit_{1}_ocl_body">Original Command Line</a>\n'.format(style, cu_id))
+	F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_ocl_body" aria-expanded="false" aria-controls="compilation_unit_{1}_ocl_body">Original Command Line</a>\n'.format(style, cu_id))
 	F.write('          </li>\n')
 	F.write('          <li class="nav-item">\n')
 	F.write('            <a class="nav-link js-tooltip js-copy" data-toggle="tooltip" data-placement="right" data-copy="compilation_unit_{}_ocl_pre" title="Copy to clipboard">\n'.format(cu_id))
@@ -262,11 +250,11 @@ def write_compilation_unit(F, report, cu_id):
 	tcl = cu_report['arguments']['tool']
 	tcl = ' '.join(tcl)
 	F.write('    <div class="col-md-6">\n')
-	F.write('    <div class="card" style="margin-bottom:15px;">\n')
+	F.write('    <div class="card">\n')
 	F.write('      <div class="card-header">\n')
 	F.write('        <ul class="nav nav-pills card-header-pills">\n')
 	F.write('          <li class="nav-item">')
-	F.write('            <a class="nav-link active {0}" data-toggle="collapse" href="#compilation_unit_{1}_tcl_body" aria-expanded="false" aria-controls="compilation_unit_{1}_tcl_body">Tool Command Line</a>\n'.format(style, cu_id))
+	F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_tcl_body" aria-expanded="false" aria-controls="compilation_unit_{1}_tcl_body">Tool Command Line</a>\n'.format(style, cu_id))
 	F.write('          </li>\n')
 	F.write('          <li class="nav-item">\n')
 	F.write('            <a class="nav-link js-tooltip js-copy" data-toggle="tooltip" data-placement="right" data-copy="compilation_unit_{}_tcl_pre" title="Copy to clipboard">\n'.format(cu_id))
@@ -285,11 +273,11 @@ def write_compilation_unit(F, report, cu_id):
 
 	if 'out' in cu_report and len(cu_report['out']) > 0:
 		F.write('    <div class="col-lg-12">\n')
-		F.write('    <div class="card" style="margin-bottom:15px;">\n')
+		F.write('    <div class="card">\n')
 		F.write('      <div class="card-header">\n')
 		F.write('        <ul class="nav nav-pills card-header-pills">\n')
 		F.write('          <li class="nav-item">')
-		F.write('            <a class="nav-link active {0}" data-toggle="collapse" href="#compilation_unit_{1}_out_body" aria-expanded="false" aria-controls="compilation_unit_{1}_out_body">Standard Output</a>\n'.format(style, cu_id))
+		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_out_body" aria-expanded="false" aria-controls="compilation_unit_{1}_out_body">Standard Output</a>\n'.format(style, cu_id))
 		F.write('          </li>\n')
 		F.write('        </ul>\n')
 		F.write('      </div>\n')
@@ -303,11 +291,11 @@ def write_compilation_unit(F, report, cu_id):
 
 	if 'err' in cu_report and len(cu_report['err']) > 0:
 		F.write('    <div class="col-lg-12">\n')
-		F.write('    <div class="card" style="margin-bottom:15px;">\n')
+		F.write('    <div class="card">\n')
 		F.write('      <div class="card-header">\n')
 		F.write('        <ul class="nav nav-pills card-header-pills">\n')
 		F.write('          <li class="nav-item">')
-		F.write('            <a class="nav-link active {0}" data-toggle="collapse" href="#compilation_unit_{1}_err_body" aria-expanded="false" aria-controls="compilation_unit_{1}_err_body">Standard Error</a>\n'.format(style, cu_id))
+		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_err_body" aria-expanded="false" aria-controls="compilation_unit_{1}_err_body">Standard Error</a>\n'.format(style, cu_id))
 		F.write('          </li>\n')
 		F.write('        </ul>\n')
 		F.write('      </div>\n')
@@ -321,11 +309,11 @@ def write_compilation_unit(F, report, cu_id):
 
 	if 'exception' in cu_report:
 		F.write('    <div class="col-lg-12">\n')
-		F.write('    <div class="card" style="margin-bottom:15px;">\n')
+		F.write('    <div class="card">\n')
 		F.write('      <div class="card-header">\n')
 		F.write('        <ul class="nav nav-pills card-header-pills">\n')
 		F.write('          <li class="nav-item">')
-		F.write('            <a class="nav-link active {0}" data-toggle="collapse" href="#compilation_unit_{1}_exception_body" aria-expanded="false" aria-controls="compilation_unit_{1}_exception_body">Exception Running the Tool!</a>\n'.format(style, cu_id))
+		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_exception_body" aria-expanded="false" aria-controls="compilation_unit_{1}_exception_body">Exception Running the Tool!</a>\n'.format(style, cu_id))
 		F.write('          </li>\n')
 		F.write('        </ul>\n')
 		F.write('      </div>\n')
