@@ -7,7 +7,7 @@ testTranslator.json: $(builddir)/compile_commands.json $(srcdir)/demo-0.c $(srcd
 	python $(MAP_SCRIPT) $(srcdir) $(builddir) $(TOOL)
 
 testTranslator.html: $(builddir)/testTranslator.json $(RENDER_SCRIPT)
-	python $(RENDER_SCRIPT) $(builddir)
+	python $(RENDER_SCRIPT) --report $(builddir)/testTranslator.json --title "Demonstration"
 
 check-local: testTranslator.html
 
