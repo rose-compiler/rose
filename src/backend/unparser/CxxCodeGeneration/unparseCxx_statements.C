@@ -2646,6 +2646,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                return;
              }
 
+// TV (10/15/18): this is an issue when forcing ROSE to unparse the template instantiation in Kripke::Kernel
+#if 0
           bool skipInlinedTemplates = templateInstantiationFunctionDeclaration->get_functionModifier().isInline();
           if (skipInlinedTemplates == true)
              {
@@ -2658,6 +2660,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
                return;
              }
+#endif
 
 #if PRINT_DEVELOPER_WARNINGS
           curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): part of transformation - output the template function declaration */ \n "));
