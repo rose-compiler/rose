@@ -1,5 +1,6 @@
 
 MAP_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_map.py
+RENDER_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_render.py
 TOOL=$(abs_top_builddir)/tests/nonsmoke/functional/testTranslator
 
 $(abs_builddir)/kripke-src:
@@ -19,15 +20,66 @@ $(abs_builddir)/kripke-openmp/compile_commands.json: $(abs_builddir)/kripke-src
 	  cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(abs_builddir)/kripke-src \
 	)
 
-$(abs_builddir)/kripke-sequential/report.json: $(abs_builddir)/kripke-sequential/compile_commands.json
-	python $(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(TOOL) --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+# testTranslator
 
-$(abs_builddir)/kripke-openmp/report.json: $(abs_builddir)/kripke-openmp/compile_commands.json
-	python $(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-openmp $(TOOL) --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+$(abs_top_builddir)/tests/nonsmoke/functional/testTranslator:
+	make -C $(abs_top_builddir)/tests/nonsmoke/functional testTranslator
 
-check-local: $(abs_builddir)/kripke-sequential/report.json $(abs_builddir)/kripke-openmp/report.json
+$(abs_builddir)/kripke-sequential/testTranslator.json: $(abs_builddir)/kripke-sequential/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/tests/nonsmoke/functional/testTranslator
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(abs_top_builddir)/tests/nonsmoke/functional/testTranslator --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+
+$(abs_builddir)/kripke-openmp/testTranslator.json: $(abs_builddir)/kripke-openmp/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/tests/nonsmoke/functional/testTranslator
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-openmp $(abs_top_builddir)/tests/nonsmoke/functional/testTranslator --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+
+$(abs_builddir)/kripke-sequential/testTranslator.html: $(abs_builddir)/kripke-sequential/testTranslator.json $(RENDER_SCRIPT)
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/testTranslator.json --title "Kripke with Sequential"
+
+$(abs_builddir)/kripke-openmp/testTranslator.html: $(abs_builddir)/kripke-openmp/testTranslator.json $(RENDER_SCRIPT)
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/testTranslator.json --title "Kripke with OpenMP"
+
+# rajaChecker
+
+$(abs_top_builddir)/tools/rajaChecker:
+	make -C $(abs_top_builddir)/tools rajaChecker
+
+$(abs_builddir)/kripke-sequential/rajaChecker.json: $(abs_builddir)/kripke-sequential/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/tools/rajaChecker
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(abs_top_builddir)/tools/rajaChecker --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+
+$(abs_builddir)/kripke-openmp/rajaChecker.json: $(abs_builddir)/kripke-openmp/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/tools/rajaChecker
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-openmp $(abs_top_builddir)/tools/rajaChecker --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+
+$(abs_builddir)/kripke-sequential/rajaChecker.html: $(abs_builddir)/kripke-sequential/rajaChecker.json $(RENDER_SCRIPT)
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/rajaChecker.json --title "Kripke with Sequential"
+
+$(abs_builddir)/kripke-openmp/rajaChecker.html: $(abs_builddir)/kripke-openmp/rajaChecker.json $(RENDER_SCRIPT)
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/rajaChecker.json --title "Kripke with OpenMP"
+
+# XXX
+
+$(abs_top_builddir)/YYY/XXX:
+	make -C $(abs_top_builddir)/YYY XXX
+
+$(abs_builddir)/kripke-sequential/XXX.json: $(abs_builddir)/kripke-sequential/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/YYY/XXX
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(abs_top_builddir)/YYY/XXX --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+
+$(abs_builddir)/kripke-sequential/XXX.html: $(abs_builddir)/kripke-sequential/XXX.json $(RENDER_SCRIPT)
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/XXX.json --title "Kripke with Sequential"
+
+########
+
+check-local: \
+  $(abs_builddir)/kripke-sequential/testTranslator.html \
+  $(abs_builddir)/kripke-openmp/testTranslator.html \
+  $(abs_builddir)/kripke-sequential/rajaChecker.html \
+  $(abs_builddir)/kripke-openmp/rajaChecker.html
 
 clean-local:
 #	rm -rf $(abs_builddir)/kripke-src
 #	rm -rf $(abs_builddir)/kripke-sequential $(abs_builddir)/kripke-openmp
-	rm -rf $(abs_builddir)/kripke-sequential/report.* $(abs_builddir)/kripke-openmp/report.*
+	rm -rf $(abs_builddir)/kripke-sequential/testTranslator.json $(abs_builddir)/kripke-openmp/testTranslator.json
+	rm -rf $(abs_builddir)/kripke-sequential/testTranslator.html $(abs_builddir)/kripke-openmp/testTranslator.html
+	rm -rf $(abs_builddir)/kripke-sequential/rajaChecker.json $(abs_builddir)/kripke-openmp/rajaChecker.json
+	rm -rf $(abs_builddir)/kripke-sequential/rajaChecker.html $(abs_builddir)/kripke-openmp/rajaChecker.html
+	rm -rf $(abs_builddir)/kripke-sequential/XXX.json
+	rm -rf $(abs_builddir)/kripke-sequential/XXX.html
+
