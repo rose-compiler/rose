@@ -3336,11 +3336,11 @@ SgUntypedDelayRelativeStatement* SgUntypedDelayRelativeStatement::build_node_fro
    }
 
 
-SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name)
+SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedForStatement* returnNode = NULL;
@@ -3636,11 +3636,11 @@ SgUntypedAsynchronousSelectStatement* SgUntypedAsynchronousSelectStatement::buil
    }
 
 
-SgUntypedWhileStatement* SgUntypedWhileStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedWhileStatement* SgUntypedWhileStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* condition, SgUntypedStatement* body)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedWhileStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedWhileStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* condition, SgUntypedStatement* body): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedWhileStatement* returnNode = NULL;
@@ -4591,11 +4591,7 @@ SgFortranDo* SgFortranDo::build_node_from_nonlist_children ( Sg_File_Info* start
    }
 
 
-/* #line 3762 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+// Static function for building IR nodes for Aterm support (like a constructor).
 SgFortranNonblockedDo* SgFortranNonblockedDo::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* body, SgStatement* end_statement )
    {
 #if 0
@@ -4609,11 +4605,7 @@ SgFortranNonblockedDo* SgFortranNonblockedDo::build_node_from_nonlist_children (
    }
 
 
-/* #line 3780 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+// Static function for building IR nodes for Aterm support (like a constructor).
 SgForAllStatement* SgForAllStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExprListExp* forall_header, SgBasicBlock* body )
    {
 #if 0
@@ -4622,6 +4614,20 @@ SgForAllStatement* SgForAllStatement::build_node_from_nonlist_children ( Sg_File
 #endif
 
      SgForAllStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* then_expression, SgExpression* where_expression, SgBasicBlock* loop_body)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialForThenStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* then_expression, SgExpression* where_expression, SgBasicBlock* loop_body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialForThenStatement* returnNode = NULL;
 
      return returnNode;
    }

@@ -2160,6 +2160,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+       // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
+          case V_SgJovialForThenStatement:
+
           case V_SgMatlabForStatement:
 
        // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
@@ -2325,6 +2328,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // parsing Fortran as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
+          case V_SgUntypedExprListExpression:
              {
                break;
              }

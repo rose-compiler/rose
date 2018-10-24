@@ -258,7 +258,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedCaseStatement* ut_stmt = dynamic_cast<SgUntypedCaseStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedCaseStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedCaseStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedExpressionStatement:
@@ -278,7 +278,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedForStatement* ut_stmt = dynamic_cast<SgUntypedForStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedForStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedForStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedFunctionCallStatement:
@@ -338,6 +338,13 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          sg_node = pConverter->convertSgUntypedStopStatement(ut_stmt, children, currentScope);
          break;
       }
+    case V_SgUntypedWhileStatement:
+      {
+         SgUntypedWhileStatement* ut_stmt = dynamic_cast<SgUntypedWhileStatement*>(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertUntypedWhileStatement(ut_stmt, children, currentScope);
+         break;
+      }
 
  // Declarations that require cleaning up the SageBuilder scope stack
     case V_SgUntypedBlockDataDeclaration:
@@ -393,7 +400,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
    if (node != NULL && !isSgUntypedFile(node))
       {
 #if DEBUG_UNTYPED_TRAVERSAL > 0
-         cout << "-----traverse: deleting node of type ... " << node->class_name() << ": " << node << endl;
+         cout << "-----traverse: deletng node of type ... " << node->class_name() << ": " << node << endl;
          cout << "     checking scope stack " << (currentScope == SageBuilder::topScopeStack())
               << " " << currentScope << ":" << SageBuilder::topScopeStack() << " isa ==> " << currentScope->class_name() << endl;
 #endif

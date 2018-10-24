@@ -2,6 +2,7 @@
 
 #include "ATermToUntypedFortranTraversal.h"
 #include "general_language_translation.h"
+#include "Fortran_to_ROSE_translation.h"
 #include "untypedBuilder.h"
 #include <iostream>
 
@@ -799,7 +800,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExecStmt(ATerm term, SgUntypedSt
       // Matched SyncMemoryStmt
    }
    else if (traverse_SyncTeamStmt(term, stmt_list)) {
-      // Matched SyncMemoryStmt
+      // Matched SyncTeamStmt
    }
    else if (traverse_LockStmt(term, stmt_list)) {
       // Matched LockStmt
@@ -1063,7 +1064,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
 
    ATerm term1, term2;
 
-   General_Language_Translation::ExpressionKind op_enum;
+   int op_enum;
    std::string op_name;
    bool is_unary_op;
    SgUntypedExpression* lhs;
@@ -1160,10 +1161,13 @@ ATbool ATermToUntypedFortranTraversal::traverse_Operator(ATerm term, SgUntypedEx
       // MATCHED Expression
    } else return ATfalse;
 
+   ROSE_ASSERT(lhs);
+   ROSE_ASSERT(rhs);
+
    *var_expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
    setSourcePosition(*var_expr, term);
 
-  return ATtrue;
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1235,7 +1239,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
          ROSE_ASSERT(declared_type);
       } else return ATfalse;
 
-      attr_list = new SgUntypedExprListExpression();
+      attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_type_modifier_list);
       if (traverse_OptAttrSpecList(term3, attr_list)) {
          // MATCHED AttrSpecList
       } else return ATfalse;
@@ -1556,7 +1560,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
    SgUntypedSubscriptExpression *range;
    SgUntypedExpression *lower_bound, *upper_bound, *stride;
    SgUntypedExprListExpression *dim_info;
-   General_Language_Translation::ExpressionKind expr_enum = General_Language_Translation::e_unknown;
+   int expr_enum = General_Language_Translation::e_unknown;
    int rank = 0;
 
    ROSE_ASSERT(base_type != NULL);
@@ -2320,7 +2324,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUnt
       loop_stmt = forall_stmt;
    }
    else {
-      SgUntypedForStatement* for_stmt = new SgUntypedForStatement("", initialization, upper_bound, increment, body, do_construct_name);
+      int stmt_enum = Fortran_ROSE_Translation::e_do_stmt;
+      SgUntypedForStatement* for_stmt = new SgUntypedForStatement("",stmt_enum,initialization,upper_bound,increment,body,do_construct_name);
       ROSE_ASSERT(for_stmt);
       setSourcePosition(for_stmt, term);
 
@@ -2380,7 +2385,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptLoopControl(ATerm term, SgUnt
    ROSE_ASSERT(*upper_bound);
    ROSE_ASSERT(*incr);
 
-   General_Language_Translation::ExpressionKind op_enum = General_Language_Translation::e_operator_assign;
+   int op_enum = General_Language_Translation::e_operator_assign;
    *initialization = new SgUntypedBinaryOperator(op_enum, "=", init_var, lower_bound);
    ROSE_ASSERT(*initialization);
    setSourcePositionIncludingTerm(*initialization, t_init_var, t_lbound);

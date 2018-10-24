@@ -28,6 +28,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseBasicBlockStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt              (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForStatement           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseJovialForThenStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseWhileStmt              (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGotoStmt               (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseIfStmt                 (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSwitchStmt             (SgStatement* stmt, SgUnparse_Info& info);

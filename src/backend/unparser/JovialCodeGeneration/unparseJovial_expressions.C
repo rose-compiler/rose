@@ -52,9 +52,11 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgSubtractOp:          unparseBinaryOperator(expr, "-", info);  break;
           case V_SgMultiplyOp:          unparseBinaryOperator(expr, "*", info);  break;
           case V_SgDivideOp:            unparseBinaryOperator(expr, "/", info);  break;
+          case V_SgLessThanOp:          unparseBinaryOperator(expr, "<", info);  break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
+
 
 #if 0
                 case V_SgAndOp:
@@ -69,7 +71,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                 case V_SgGreaterThanOp:
                 case V_SgJavaUnsignedRshiftOp:
                 case V_SgLessOrEqualOp:
-                case V_SgLessThanOp:
                 case V_SgLshiftOp:
                 case V_SgModOp:
                 case V_SgOrOp:

@@ -81,6 +81,10 @@ namespace Fortran_ROSE_Translation
           e_assumed_shape,
           e_assumed_size,
 
+       // Statements
+       // ----------
+	  e_do_stmt,
+
        // CUDA Attributes
        // ---------------
           e_cuda_device,

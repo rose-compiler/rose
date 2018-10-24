@@ -1645,6 +1645,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
             
+          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -3603,6 +3604,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgJovialForThenStatement:
         case V_SgMatlabForStatement:
           {
             return;

@@ -271,7 +271,6 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
-   SgUntypedInitializedNamePtrList::const_iterator it;
 
 #if 0
    cout << "--- convertSgUntypedVariableDeclaration: ut_decl: " << ut_decl << endl;
@@ -566,7 +565,7 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
    }
 
 SgStatement*
-UntypedFortranConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       ROSE_ASSERT(children.size() == 4);
 

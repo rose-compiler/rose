@@ -13,6 +13,9 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_c.jov               \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 4_2_loop_stmt_a.jov                    \
+ 4_2_loop_stmt_b1.jov                   \
+ 4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
  4_4_case_stmt_a.jov                    \
  4_6_return_stmt_a.jov                  \
@@ -72,9 +75,9 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_h.jov               \
  4_1_assignment_stmt_a.jov              \
  4_1_assignment_stmt_b.jov              \
- 4_2_loop_stmt_a.jov                    \
  4_2_loop_stmt_b.jov                    \
  4_2_loop_stmt_c.jov                    \
+ 4_2_loop_stmt_d.jov                    \
  4_3_if_stmt_a.jov                      \
  4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \

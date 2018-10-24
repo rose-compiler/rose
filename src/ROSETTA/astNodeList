@@ -434,6 +434,7 @@ SgIntrinsicSymbol
 SgIsOp
 SgIsNotOp
 SgIorAssignOp
+SgJovialForThenStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp
