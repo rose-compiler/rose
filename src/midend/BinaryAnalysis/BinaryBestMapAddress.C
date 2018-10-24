@@ -161,5 +161,109 @@ BestMapAddress::bestDeltas() const {
     return results_.isEmpty() ? empty : results_[results_.greatest()];
 }
 
+MemoryMap::Ptr
+BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &settings, const Progress::Ptr &progress) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    if (info) {
+        info <<"memory map before aligning segments:\n";
+        map->dump(info, "  ");
+    }
+
+    MemoryMap::Ptr nonExecutable = map->shallowCopy();
+    nonExecutable->require(MemoryMap::EXECUTABLE).prune();
+    MemoryMap::Ptr retval = nonExecutable->shallowCopy();
+
+    // Process one executable segment (plus all non-executable) at a time.
+    BestMapAddress::AddressSet entryAddresses;
+    size_t nWork = 0, totalWork = 2 * map->nSegments();
+    BOOST_FOREACH (const MemoryMap::Node &mmNode, map->nodes()) {
+        nWork += 2;                                     // incremented early in case of "continue" statements
+
+        // What to align
+        const AddressInterval &interval = mmNode.key();
+        const MemoryMap::Segment &segment = mmNode.value();
+        if (0 == (segment.accessibility() & MemoryMap::EXECUTABLE))
+            continue;
+        MemoryMap::Ptr tmpMap = map->shallowCopy();
+        tmpMap->require(MemoryMap::EXECUTABLE).prune();
+        tmpMap->insert(interval, segment);
+        if (info) {
+            info <<"aligning executable segment using this map:\n";
+            tmpMap->dump(info, "  ");
+        }
+
+        // Partitioning engine used by the BestMapAddress analysis.
+        P2::Engine engine(settings);
+        engine.memoryMap(tmpMap);
+        engine.doingPostAnalysis(false);
+        if (progress)
+            engine.progress(progress);
+
+        // Analyze the tmpMap using the specified partitioning engine.
+        BestMapAddress mapAnalyzer;
+        mapAnalyzer.progress(progress);
+        {
+            ProgressTask t(progress, "disassemble", (double)(nWork-1) / totalWork);
+            mapAnalyzer.gatherAddresses(engine);
+        }
+        mlog[INFO] <<"found " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "entry addresses") <<" and "
+                   <<StringUtility::plural(mapAnalyzer.targetAddresses().size(), "target addresses") <<"\n";
+        BOOST_FOREACH (rose_addr_t entryVa, entryAddresses.values())
+            mapAnalyzer.insertEntryAddress(entryVa);
+        mlog[INFO] <<"using " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "total entry addresses") <<"\n";
+        info <<"performing remap analysis";
+        Sawyer::Stopwatch remapTime;
+        {
+            ProgressTask t(progress, "remap", (double)(nWork-0) / totalWork);
+            mapAnalyzer.analyze();
+        }
+        std::vector<rose_addr_t> deltas = mapAnalyzer.bestDeltas();
+        info <<"; took " <<remapTime <<" seconds\n";
+        mlog[INFO] <<"found " <<StringUtility::plural(deltas.size(), "deltas") <<" with match ratio "
+                    <<(100.0*mapAnalyzer.bestDeltaRatio()) <<"%\n";
+
+        // Find the best deltas by which to shift the executable segment. Try deltas in the order given until we find one that
+        // shifts the executable segment to an area of memory where it doesn't overlap with any non-executable segments.
+        // static const rose_addr_t mask = mapAnalyzer.mask();
+        bool remapped = false;
+        size_t bestDelta = 0;
+        const rose_addr_t mask = mapAnalyzer.mask();
+        BOOST_FOREACH (rose_addr_t delta, deltas) {
+            // Check for overflow: we don't want a delta that would split the executable segment between the highest addresses
+            // and the lowest addresses.
+            rose_addr_t newLo = (interval.least() + delta) & mask;
+            rose_addr_t newHi = (interval.greatest() + delta) & mask;
+            if (newHi < newLo)
+                continue;                               // overflow
+            const AddressInterval newInterval = AddressInterval::hull(newLo, newHi);
+            if (nonExecutable->within(newInterval).exists())
+                continue;                               // new location would overlap with data segments
+
+            if (0 == delta) {
+                info <<"segment " <<StringUtility::addrToString(interval.least()) <<" is good where it is.\n";
+            } else {
+                info <<"segment " <<StringUtility::addrToString(interval.least())
+                     <<" should move to " <<StringUtility::addrToString(newInterval.least()) <<"\n";
+            }
+            retval->insert(newInterval, segment);
+            remapped = true;
+            bestDelta = delta;
+            break;
+        }
+
+        if (!remapped) {
+            mlog[ERROR] <<"cannot find a valid destination address for \"" <<StringUtility::cEscape(segment.name()) <<"\""
+                        <<" originally at " <<StringUtility::addrToString(interval.least()) <<"\n";
+        }
+
+        // Add adjusted entry addresses to the set of all entry addresses.  This is optional, but sometimes helps the remap
+        // analysis by giving it more information.
+        BOOST_FOREACH (rose_addr_t origEntryVa, mapAnalyzer.entryAddresses().values()) {
+            rose_addr_t adjustedEntryVa = (origEntryVa + bestDelta) & mask;
+            entryAddresses.insert(adjustedEntryVa);
+        }
+    }
+    return retval;
+}
 } // namespace
 } // namespace
