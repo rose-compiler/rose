@@ -6,6 +6,9 @@
 #ifdef ROSE_HAVE_Z3
 #include <z3++.h>
 #endif
+#ifdef ROSE_HAVE_Z3_VERSION_H
+#include <z3_version.h>
+#endif
 
 #ifndef ROSE_Z3
 #define ROSE_Z3 ""
