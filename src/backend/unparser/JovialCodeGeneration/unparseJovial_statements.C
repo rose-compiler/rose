@@ -78,6 +78,9 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
+          case V_SgForStatement:               unparseForStatement   (stmt, info);  break;
+          case V_SgJovialForThenStatement:     unparseJovialForThenStatement (stmt, info);  break;
+          case V_SgWhileStmt:                  unparseWhileStmt      (stmt, info);  break;
           case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
           case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
           case V_SgSwitchStatement:            unparseSwitchStmt     (stmt, info);  break;
@@ -96,14 +99,9 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // executable statements, control flow
 
-          case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
-          case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
-
           case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
-
-          case V_SgDoWhileStmt:            unparseDoWhileStmt(stmt, info);      break;
 
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
@@ -209,6 +207,133 @@ void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
         ROSE_ASSERT(sg_stmt);
         UnparseLanguageIndependentConstructs::unparseStatement(sg_stmt, info);
      }
+   }
+
+void
+Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // The SgForStatement is used for the Jovial for statements like:
+  //
+  //     FOR ivar:0 by 1 while ivar<25;
+  //
+  // This choice was made so that it could be treated like a C for statement.
+  // Other forms of the Jovial ForStatement will require different Sage nodes.
+  //
+     SgForStatement* for_stmt = isSgForStatement(stmt);
+     ROSE_ASSERT(for_stmt);
+     ROSE_ASSERT(for_stmt->get_for_init_stmt());
+     ROSE_ASSERT(for_stmt->get_test());
+     ROSE_ASSERT(for_stmt->get_increment());
+     ROSE_ASSERT(for_stmt->get_loop_body());
+
+     curprint("FOR ");
+
+     SgForInitStatement* for_init_stmt = isSgForInitStatement(for_stmt->get_for_init_stmt());
+     ROSE_ASSERT(for_init_stmt);
+
+     SgStatementPtrList init_list = for_init_stmt->get_init_stmt();
+     SgExprStatement* init_stmt = isSgExprStatement(init_list[0]);
+     ROSE_ASSERT(init_stmt);
+
+     SgAssignOp* init_expr = isSgAssignOp(init_stmt->get_expression());
+     ROSE_ASSERT(init_expr);
+
+  // variable
+     unparseExpression(init_expr->get_lhs_operand_i(), info);
+
+  // initial value
+     curprint(":");
+     unparseExpression(init_expr->get_rhs_operand_i(), info);
+
+  // increment
+     curprint(" BY ");
+     unparseExpression(for_stmt->get_increment(), info);
+
+  // while condition
+     SgExprStatement* test_stmt = isSgExprStatement(for_stmt->get_test());
+     ROSE_ASSERT(test_stmt);
+
+     if ( ! isSgNullExpression(test_stmt->get_expression()) )
+        {
+           curprint(" WHILE ");
+           unparseExpression(test_stmt->get_expression(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+  // for body
+     unparseStatement(for_stmt->get_loop_body(), info);
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseJovialForThenStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // The SgJovialForThenStatement is used for Jovial for statements like:
+  //
+  //    FOR ivar:0 THEN 3 WHILE ivar<25;
+  //
+     SgJovialForThenStatement* for_stmt = isSgJovialForThenStatement(stmt);
+     ROSE_ASSERT(for_stmt);
+     ROSE_ASSERT(for_stmt->get_initialization());
+     ROSE_ASSERT(for_stmt->get_then_expression());
+     ROSE_ASSERT(for_stmt->get_while_expression());
+     ROSE_ASSERT(for_stmt->get_loop_body());
+
+     curprint("FOR ");
+
+     SgAssignOp* init_expr = isSgAssignOp(for_stmt->get_initialization());
+     ROSE_ASSERT(init_expr);
+
+  // variable
+     unparseExpression(init_expr->get_lhs_operand_i(), info);
+
+  // initial value
+     curprint(":");
+     unparseExpression(init_expr->get_rhs_operand_i(), info);
+
+  // then increment
+     curprint(" THEN ");
+     unparseExpression(for_stmt->get_then_expression(), info);
+
+  // while condition
+     if ( ! isSgNullExpression(for_stmt->get_while_expression()) )
+        {
+           curprint(" WHILE ");
+           unparseExpression(for_stmt->get_while_expression(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+  // for body
+     unparseStatement(for_stmt->get_loop_body(), info);
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
+     ROSE_ASSERT(while_stmt);
+     ROSE_ASSERT(while_stmt->get_body());
+     ROSE_ASSERT(while_stmt->get_condition());
+
+  // condition
+     curprint("WHILE ");
+     info.set_inConditional(); // prevent printing line and file info
+
+     SgExprStatement* condition_stmt = isSgExprStatement(while_stmt->get_condition());
+     ROSE_ASSERT(condition_stmt);
+
+     unparseExpression(condition_stmt->get_expression(), info);
+     info.unset_inConditional();
+     curprint(" ;");
+     unp->cur.insert_newline(1);
+
+     unparseStatement(while_stmt->get_body(), info);
+     unp->cur.insert_newline(1);
    }
 
 void

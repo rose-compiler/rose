@@ -4,7 +4,10 @@
 namespace Jovial_ROSE_Translation
    {
 
-  // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
+  // TODO - split out the StatementEnums?
+
+  // Enum for different types of expressions (used with untyped IR nodes).
+  //
      enum ExpressionKind
         {
           e_unknown,
@@ -56,9 +59,25 @@ namespace Jovial_ROSE_Translation
           e_literalExpression,
           e_referenceExpression,
 
+       // Expressions for loop control
+       // ----------------------------
+	  e_by_phrase_expr,
+	  e_then_phrase_expr,
+	  e_while_phrase_expr,
+
+       // Statements
+       // ----------
+
+       // For loop control statements
+       // ---------------------------
+	  e_for_while_by_stmt,
+	  e_for_while_then_stmt,
+	  e_for_by_while_stmt,
+	  e_for_then_while_stmt,
+
           e_last
         };
 
-   } // namespace Jovial_ROSE_Translation 
+   } // namespace Jovial_ROSE_Translation
 
 #endif

@@ -782,7 +782,7 @@ Grammar::setUpNodes ()
      UntypedNullDeclaration.setFunctionPrototype       ( "HEADER_UNTYPED_NULL_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedNullStatement.setFunctionPrototype         ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
 
-  // Rasmussen (7/19/2018): Added statement_enum to specify the type if statement, i.e., Fortran if-stmt or if-construct
+  // Rasmussen (7/19/2018): Added statement_enum to specify the type of if statement, i.e., Fortran if-stmt or if-construct
   // Rasmussen (7/06/2018): Added conditional expression and changed true and false bodies to SgUntypedStatement (from
   // SgUntypedScope).  Also made all parameters CONSTRUCTOR_PARAMETER (always the case for untyped node constructors?)
      UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
@@ -808,17 +808,20 @@ Grammar::setUpNodes ()
      UntypedCaseStatement.setDataPrototype             ( "bool", "has_fall_through", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
 
-  // Rasmussen (8/27/2018): Added statement_enum, expression, body, ..., to allow connection to Sage nodes.
-     UntypedForStatement.setFunctionPrototype         ( "HEADER_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedForStatement.setDataPrototype             ( "SgUntypedExpression*", "initialization", "= NULL",
+  // Rasmussen (08/27/2018): Added initialization, increment, ..., to allow connection to Sage nodes.
+  // Rasmussen (10/22/2018): Added statement_enum to specify the type of for statement, i.e., Jovial by or then usage
+     UntypedForStatement.setFunctionPrototype          ( "HEADER_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForStatement.setDataPrototype              ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedForStatement.setDataPrototype              ( "SgUntypedExpression*", "initialization", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedForStatement.setDataPrototype             ( "SgUntypedExpression*",  "bound", "= NULL",
+     UntypedForStatement.setDataPrototype              ( "SgUntypedExpression*",  "bound", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedForStatement.setDataPrototype             ( "SgUntypedExpression*",  "increment", "= NULL",
+     UntypedForStatement.setDataPrototype              ( "SgUntypedExpression*",  "increment", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedForStatement.setDataPrototype             ( "SgUntypedStatement*", "body", "= NULL",
+     UntypedForStatement.setDataPrototype              ( "SgUntypedStatement*", "body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedForStatement.setDataPrototype             ( "std::string", "do_construct_name", "= \"\"",
+     UntypedForStatement.setDataPrototype              ( "std::string", "do_construct_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (10/2/2018): Added to support Fortran DO CONCURRENT construct
@@ -834,8 +837,14 @@ Grammar::setUpNodes ()
      UntypedForAllStatement.setDataPrototype     ( "std::string", "do_construct_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/10/2018): Added condition, and body to allow connection to Sage nodes.
+     UntypedWhileStatement.setFunctionPrototype       ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedWhileStatement.setDataPrototype           ( "SgUntypedExpression*",  "condition", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedWhileStatement.setDataPrototype           ( "SgUntypedStatement*", "body", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedWhileStatement.setFunctionPrototype                ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedExitStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedGotoStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedProcedureCallStatement.setFunctionPrototype        ( "HEADER_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");

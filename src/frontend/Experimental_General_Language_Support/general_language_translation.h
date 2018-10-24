@@ -4,7 +4,10 @@
 namespace General_Language_Translation
    {
 
-  // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
+  // TODO - split out the StatementEnums?
+
+  // Enum for different types of expressions (used with untyped IR nodes).
+  //
      enum ExpressionKind
         {
           e_unknown = 0,
@@ -22,6 +25,7 @@ namespace General_Language_Translation
 
        // Type modifiers
        // --------------
+          e_type_modifier_list,
           e_type_modifier_allocatable,
           e_type_modifier_asynchronous,
           e_type_modifier_const,
