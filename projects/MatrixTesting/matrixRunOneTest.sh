@@ -87,6 +87,7 @@ BUILD_STEPS=(
     tutorial-build
     install
     bindist
+    project
     end
 )
 
@@ -161,6 +162,15 @@ run_install_commands() {
 run_bindist_commands() {
     rmc make --dry-run check-rose-installer-rmc2 >>"$COMMAND_DRIBBLE" 2>&1
     rmc make check-rose-installer-rmc2
+}
+
+run_project_commands() {
+    # Test that a project distributed outside ROSE can be compiled, tested, installed and run using
+    # the installed version of ROSE.  Eventually, this step should use the binary release file created
+    # and unpacked in the previous "bindist" step.
+    cp -pdr installed/share/test-project test-project
+    cp installed/lib/rose-config.cfg test-project/rose.cfg
+    make -C test-project check
 }
 
 run_end_commands() {
