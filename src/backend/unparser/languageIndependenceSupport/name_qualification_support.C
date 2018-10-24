@@ -46,6 +46,13 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
         }
      ROSE_ASSERT(referencedNode != NULL);
 
+  // TV (10/24/2018): (ROSE-1399) unparsing template from AST requires to namequal expressions in template arguments
+     SgExpression* expr = isSgExpression(referencedNode);
+     if (expr != NULL) {
+       nameQualifier = expr->get_qualified_name_prefix_for_referenced_type();
+       return nameQualifier;
+     }
+
 #if 0
      printf ("In Unparser_Nameq::lookup_generated_qualified_name(): referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
 #endif
@@ -89,34 +96,6 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #endif
                SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
                nameQualifier = node->get_qualified_name_prefix_for_type();
-               break;
-             }
-
-       // DQ (7/13/2013): I think we need this here, but wait until we generate the error to drive it to be introduced.
-       // Also this does not permit handling of multiple types requiring different name qualification (same as for throw support).
-       // DQ (7/12/2013): Added support to type trait builtin functions 
-          case V_SgTypeTraitBuiltinOperator:
-
-          case V_SgAssignInitializer:
-
-       // DQ (8/19/2013): Added support for constructor initializers that might have an associated 
-       // qualified name string associated with the templated class or instantiated template class.
-          case V_SgConstructorInitializer:
-
-       // DQ (9/5/2015): I think this is the support we need for test2015_57.C (compound literals used as expressions).
-          case V_SgAggregateInitializer:
-
-       // DQ (9/12/2016): Adding support for whatever types are used within alignOf operators.
-          case V_SgAlignOfOp:
-
-          case V_SgTypeIdOp:
-          case V_SgSizeOfOp:
-          case V_SgNewExp:
-          case V_SgCastExp:
-             {
-            // SgCastExp* node = isSgCastExp(referencedNode);
-               SgExpression* node = isSgExpression(referencedNode);
-               nameQualifier = node->get_qualified_name_prefix_for_referenced_type();
                break;
              }
 
