@@ -142,7 +142,17 @@ std::string InstantiationConstraints::getGraphVizLabel() const {
 //    assert(from->nontype_parameters.find(nrsym) != from->nontype_parameters.end()); // FIXME ROSE-1465
       nrname = nrsym->get_name();
     }
-    oss << "typeof(" << nrname << ") == " << it->second->unparseToString();
+
+    SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
+      inputUnparseInfoPointer->set_SkipComments();
+      inputUnparseInfoPointer->set_SkipWhitespaces();
+      inputUnparseInfoPointer->set_SkipEnumDefinition();
+      inputUnparseInfoPointer->set_SkipClassDefinition();
+      inputUnparseInfoPointer->set_SkipFunctionDefinition();
+      inputUnparseInfoPointer->set_SkipBasicBlock();
+      inputUnparseInfoPointer->set_isTypeFirstPart();
+
+    oss << "typeof(" << nrname << ") == " << globalUnparseToString(it->second, inputUnparseInfoPointer);
   }
 
   return oss.str();
@@ -251,13 +261,22 @@ void SpecializationConstraints::toGraphVizEdges(std::ostream & out) const {
 
 std::string SpecializationConstraints::getGraphVizLabel() const {
   std::ostringstream oss;
+
+  SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
+    inputUnparseInfoPointer->set_SkipComments();
+    inputUnparseInfoPointer->set_SkipWhitespaces();
+    inputUnparseInfoPointer->set_SkipEnumDefinition();
+    inputUnparseInfoPointer->set_SkipClassDefinition();
+    inputUnparseInfoPointer->set_SkipFunctionDefinition();
+    inputUnparseInfoPointer->set_SkipBasicBlock();
+    inputUnparseInfoPointer->set_isTypeFirstPart();
   
   oss << "Specialization: " << order << "\\n\\n";
 
   for (auto it = value_constraints.begin(); it != value_constraints.end(); it++) {
     if (it != value_constraints.begin())
       oss << "\\n";
-    oss << it->first->unparseToString() << " == " << it->second->unparseToString();
+    oss << globalUnparseToString(it->first, inputUnparseInfoPointer) << " == " << globalUnparseToString(it->second, inputUnparseInfoPointer);
   }
   
   if (!value_constraints.empty())
@@ -266,7 +285,7 @@ std::string SpecializationConstraints::getGraphVizLabel() const {
   for (auto it = type_constraints.begin(); it != type_constraints.end(); it++) {
     if (it != type_constraints.begin())
       oss << "\\n";
-    oss << "type_match( " << it->first->unparseToString() << " , " << it->second->unparseToString() << " )";
+    oss << "type_match( " << globalUnparseToString(it->first, inputUnparseInfoPointer) << " , " << globalUnparseToString(it->second, inputUnparseInfoPointer) << " )";
   }
 
   return oss.str();

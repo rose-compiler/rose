@@ -8,6 +8,7 @@
 #ifndef __ROSE_ANALYSIS_TEMPLATE_INSTANTIATION_FLOW_HPP__
 #define __ROSE_ANALYSIS_TEMPLATE_INSTANTIATION_FLOW_HPP__
 
+#include <set>
 #include <iostream>
 
 class SgNode;
@@ -32,7 +33,7 @@ class InstantiationFlow {
 
     static void finalize();
 
-    static void toGraphViz(std::ostream & out);
+    static void toGraphViz(std::ostream & out, const std::set<std::string> & nsp_filter);
 
     static void clear();
 };

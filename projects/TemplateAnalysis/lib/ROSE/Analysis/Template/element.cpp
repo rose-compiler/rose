@@ -153,7 +153,15 @@ std::string TemplateElement::getGraphVizLabel() const {
   if (sym != NULL) {
     oss << sym->get_name().getString();
   } else {
-    oss << node->unparseToString();
+    SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
+      inputUnparseInfoPointer->set_SkipComments();
+      inputUnparseInfoPointer->set_SkipWhitespaces();
+      inputUnparseInfoPointer->set_SkipEnumDefinition();
+      inputUnparseInfoPointer->set_SkipClassDefinition();
+      inputUnparseInfoPointer->set_SkipFunctionDefinition();
+      inputUnparseInfoPointer->set_SkipBasicBlock();
+      inputUnparseInfoPointer->set_isTypeFirstPart();
+    oss << globalUnparseToString(node, inputUnparseInfoPointer);
   }
 
   oss << "\\n\\n";
