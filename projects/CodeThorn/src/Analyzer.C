@@ -675,23 +675,11 @@ PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggre
       cerr<<"  AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
       ROSE_ASSERT(assignInit);
     }
-#if 1
     // initialize element of array initializer in state
     SgExpression* assignInitExpr=assignInit->get_operand();
     // currentEState from above, newPState must be the same as in currentEState.
     AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
     newPState.writeToMemoryLocation(arrayElemId,newVal);
-#else
-    if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
-      int intVal=intValNode->get_value();
-      // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-      newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
-    } else {
-      // use the declaration for reporting the error to get a valid line/col information
-      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(decl)<<": unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      exit(1);
-    }
-#endif
     elemIndex++;
   }
   return newPState;

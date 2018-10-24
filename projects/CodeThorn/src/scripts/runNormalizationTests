@@ -11,7 +11,7 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-testNumbers=`echo {01..14}`
+testNumbers=`echo {01..17}`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/NORM${testNumber};
@@ -19,7 +19,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
         g++ $benchmark
-        ./codethorn ${OPTIONS} $benchmark --normalize-all=yes --unparse=yes #> /dev/null
+        ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
         g++ rose_${benchmarkname} 
         if [ ! $? -eq 0 ]
         then
