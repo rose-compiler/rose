@@ -8726,6 +8726,14 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
         variableType = SageBuilder::buildPointerType(expressionBaseType);
     }
 
+    //MS 10/24/2018: If the expression has array type, we need to use a pointer type referring to the base type for the temporary variable.
+    if (SgArrayType* arrayType=isSgArrayType(expressionType)) {
+      if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
+        variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
+
     // If the expression is a dereferenced pointer, use a reference to hold it.
     if (isSgPointerDerefExp(expression))
         variableType = SageBuilder::buildReferenceType(variableType);
@@ -8784,6 +8792,15 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
+
+    //MS 10/24/2018: If the expression has array type, we need to use a pointer type for the temporary variable.
+    if (SgArrayType* arrayType=isSgArrayType(expressionType))
+    {
+      if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
+        variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
 
     //Generate a unique variable name
     string name = generateUniqueVariableName(scope);
