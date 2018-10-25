@@ -13,39 +13,16 @@ def prefix_path(path, prefixes):
 		if path.startswith(prefix):
 			return tag + path[len(prefix):]
 
-def write_html_head(F, report, title):
+def write_html_head(F, report, title, rscdir):
 	F.write('<head>\n')
 
-	F.write('<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">\n\n')
+	F.write('<link rel="stylesheet" href="{}/css/bootstrap.min.css">\n\n'.format(rscdir))
+
+	F.write('<link rel="stylesheet" href="{}/css/comp_db.css">\n\n'.format(rscdir))
 
 	F.write('<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">\n\n')
 
 	F.write('<title>{}</title>\n\n'.format(title))
-
-	F.write('''<style>
-		body {
-		    font-family: Arial;
-		}
-
-		.card {
-		    margin-bottom: 15px;
-		}
-
-		.section {
-		    padding-top: 65px;
-		}
-
-		.dropdown-menu {
-		    max-height: 500px;
-		    overflow-y: auto;
-		    overflow-x: hidden;
-		}
-
-		svg {
-		    max-width:100%;
-		    max-height:400px;
-		}
-		</style>\n\n''')
 
 	F.write('</head>\n')
 
@@ -376,62 +353,29 @@ def write_html_body(F, report, title, graphviz):
 	F.write('</main>\n')
 	F.write('</body>\n')
 
-def write_scripts(F, report):
-	F.write('<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>')
-	F.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>')
-	F.write('<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>')
+def write_scripts(F, report, rscdir):
+	F.write('<script src="{}/js/jquery-3.3.1.slim.min.js"></script>\n'.format(rscdir))
+	F.write('<script src="{}/js/popper.min.js"></script>\n'.format(rscdir))
+	F.write('<script src="{}/js/bootstrap.min.js"></script>\n\n'.format(rscdir))
 
-	F.write('''\
-<script>
-function copyToClipboard(text, el) {
-  var copyTest = document.queryCommandSupported('copy');
-  var elOriginalText = el.attr('data-original-title');
+	F.write('<script src="{}/js/comp_db.js"></script>\n'.format(rscdir))
 
-  if (copyTest === true) {
-    var copyTextArea = document.createElement("textarea");
-    copyTextArea.value = text;
-    document.body.appendChild(copyTextArea);
-    copyTextArea.select();
-    try {
-      var successful = document.execCommand('copy');
-      var msg = successful ? 'Copied!' : 'Whoops, not copied!';
-      el.attr('data-original-title', msg).tooltip('show');
-    } catch (err) {
-      console.log('Oops, unable to copy');
-    }
-    document.body.removeChild(copyTextArea);
-    el.attr('data-original-title', elOriginalText);
-  } else {
-    // Fallback if browser doesn't support .execCommand('copy')
-    window.prompt("Copy to clipboard: Ctrl+C or Command+C, Enter", text);
-  }
-}
+def generate_html(F, report, title, graphviz, rscdir):
+	F.write('<!doctype html>\n')
+	F.write('<html lang="en">\n')
+	write_html_head(F, report, title, rscdir)
+	write_html_body(F, report, title, graphviz)
+	write_scripts(F, report, rscdir)
+	F.write('</html>\n')
 
-$(document).ready(function() {
-  $('.js-tooltip').tooltip();
-
-  $('.js-copy').click(function() {
-    var targ = $(this).attr('data-copy');
-    var text = document.getElementById(targ).innerHTML 
-    var el = $(this);
-    copyToClipboard(text, el);
-  });
-});
-</script>''')
-
-def generate_html(report, title, graphviz):
+def generate_report(report, title, graphviz, rscdir):
 	if not graphviz is None:
 		pass # TODO generate graph in parallel
 
 	filename = report['report']
 	filename = '{}.html'.format('.'.join((filename.split('.')[:-1])))
 	with open(filename, 'w') as F:
-		F.write('<!doctype html>\n')
-		F.write('<html lang="en">\n')
-		write_html_head(F, report, title)
-		write_html_body(F, report, title, graphviz)
-		write_scripts(F, report)
-		F.write('</html>\n')
+		generate_html(F, report, title, graphviz, rscdir)
 
 def build_parser():
 	parser = argparse.ArgumentParser(
@@ -496,8 +440,10 @@ def cli_parse_args(argv):
 	if args.title is None:
 		args.title = "Compilation Report"
 
-	return { 'report' : args.report, 'title' : args.title, 'graphviz' : args.graphviz }
+	rscdir = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../static')
+
+	return { 'report' : args.report, 'title' : args.title, 'graphviz' : args.graphviz, 'rscdir' : rscdir }
 
 if __name__ == "__main__":
-	generate_html(**cli_parse_args(sys.argv[1:]))
+	generate_report(**cli_parse_args(sys.argv[1:]))
 
