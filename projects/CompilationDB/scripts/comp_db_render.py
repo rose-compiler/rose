@@ -6,6 +6,7 @@ import time
 import json
 import textwrap
 import argparse
+import subprocess
 
 def prefix_path(path, prefixes):
 	for (tag,prefix) in sorted(prefixes.iteritems(), key=lambda x: x[1], reverse=True):
@@ -38,6 +39,11 @@ def write_html_head(F, report, title):
 		    max-height: 500px;
 		    overflow-y: auto;
 		    overflow-x: hidden;
+		}
+
+		svg {
+		    max-width:100%;
+		    max-height:400px;
 		}
 		</style>\n\n''')
 
@@ -200,7 +206,7 @@ def write_summary(F, report, title):
 #	F.write('    <tr><td width="1em">Time (second)</td><td>{}</td></tr>\n'.format(report['elapsed']))
 #	F.write('  </table>\n')
 
-def write_compilation_unit(F, report, cu_id):
+def write_compilation_unit(F, report, cu_id, graphviz):
 	cu_report = report['results'][cu_id]
 
 	style = 'dark' if 'exception' in cu_report else ('success' if cu_report['returncode'] == 0 else 'danger')
@@ -222,7 +228,7 @@ def write_compilation_unit(F, report, cu_id):
 	F.write('          <tr><td><h5>File:</h5>          </td><td> </td><td><h3>{}</h3></td></tr>\n'.format(filename))
 	F.write('          <tr><td><h5>Work Directory:</h5></td><td> </td><td><h3>{}</h3></td></tr>\n'.format(workdir))
 	F.write('          <tr><td></td><td colspan=2><h5>Return code is <b>{}</b></h5></td></tr>\n'.format(cu_report['returncode']))
-	F.write('          <tr><td></td><td colspan=2><h5>Processed in <b>{}</b> seconds</h5></td></tr>\n'.format(cu_report['elapsed']))
+	F.write('          <tr><td></td><td colspan=2><h5>Processed in <b>{:.1f}</b> seconds</h5></td></tr>\n'.format(cu_report['elapsed']))
 	F.write('        </table>\n')
 	F.write('      </div>\n')
 	F.write('    </div>\n')
@@ -331,12 +337,31 @@ def write_compilation_unit(F, report, cu_id):
 		F.write('    </div>\n')
 		F.write('    </div>\n')
 
+	if not graphviz is None:
+		dot_proc = subprocess.Popen([ 'dot' , '-Tsvg' , '{}.dot'.format(os.path.basename(cu_report['file'])) ], cwd=cu_report['directory'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = dot_proc.communicate()
+
+		F.write('    <div class="col-lg-12">\n')
+		F.write('    <div class="card">\n')
+		F.write('      <div class="card-header">\n')
+		F.write('        <ul class="nav nav-pills card-header-pills">\n')
+		F.write('          <li class="nav-item">')
+		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_graphviz_body" aria-expanded="false" aria-controls="compilation_unit_{1}_graphviz_body">{2}</a>\n'.format(style, cu_id, graphviz))
+		F.write('          </li>\n')
+		F.write('        </ul>\n')
+		F.write('      </div>\n')
+		F.write('      <div class="collapse" id="compilation_unit_{}_graphviz_body">\n'.format(cu_id))
+		F.write('        <div class="card-body graphviz-svg">{}</div>\n'.format(out))
+		F.write('      </div>\n')
+		F.write('    </div>\n')
+		F.write('    </div>\n')
+
 	F.write('    </div>\n')
 	F.write('    </div>\n')
 	F.write('  </div>\n')
 	F.write('</section>\n\n')
 
-def write_html_body(F, report, title):
+def write_html_body(F, report, title, graphviz):
 	F.write('<body>\n')
 
 	write_navbar(F, report, title)
@@ -346,7 +371,7 @@ def write_html_body(F, report, title):
 	write_summary(F, report, title)
 
 	for cu_id in range(len(report['results'])):
-		write_compilation_unit(F, report, cu_id)
+		write_compilation_unit(F, report, cu_id, graphviz)
 
 	F.write('</main>\n')
 	F.write('</body>\n')
@@ -394,14 +419,17 @@ $(document).ready(function() {
 });
 </script>''')
 
-def generate_html(report, title):
+def generate_html(report, title, graphviz):
+	if not graphviz is None:
+		pass # TODO generate graph in parallel
+
 	filename = report['report']
 	filename = '{}.html'.format('.'.join((filename.split('.')[:-1])))
 	with open(filename, 'w') as F:
 		F.write('<!doctype html>\n')
 		F.write('<html lang="en">\n')
 		write_html_head(F, report, title)
-		write_html_body(F, report, title)
+		write_html_body(F, report, title, graphviz)
 		write_scripts(F, report)
 		F.write('</html>\n')
 
@@ -428,6 +456,14 @@ def build_parser():
 	optional.add_argument('--title',
 		help=textwrap.dedent('''\
 			Title to use instead of "Compilation Report".\
+			'''))
+
+	optional.add_argument('--graphviz',
+		help=textwrap.dedent('''\
+			Tells the script to look for a GraphViz file for each compilation unit.\
+			The file must be named using the basename of the source file with the "dot" extension and stored in the work directory. \
+			A compilation unit for the source file source/path/somefile.cxx with the working directory build/path must have the GraphViz file build/path/somefile.cxx.dot. \
+			The parameter to this argument is used to label the graph in the rendered report.
 			'''))
 
 	optional.add_argument('-h', '--help', action='help', help='show this help message and exit')
@@ -460,7 +496,7 @@ def cli_parse_args(argv):
 	if args.title is None:
 		args.title = "Compilation Report"
 
-	return { 'report' : args.report, 'title' : args.title }
+	return { 'report' : args.report, 'title' : args.title, 'graphviz' : args.graphviz }
 
 if __name__ == "__main__":
 	generate_html(**cli_parse_args(sys.argv[1:]))
