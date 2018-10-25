@@ -3,10 +3,10 @@ MAP_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_map.py
 RENDER_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_render.py
 TOOL=$(abs_top_builddir)/tests/nonsmoke/functional/testTranslator
 
-$(abs_builddir)/kripke-src:
+$(abs_builddir)/kripke-src/CMakeLists.txt:
 	git clone --recursive -b release/v1.2.0-CORAL2 https://github.com/LLNL/Kripke.git $(abs_builddir)/kripke-src
 
-$(abs_builddir)/kripke-sequential/compile_commands.json: $(abs_builddir)/kripke-src
+$(abs_builddir)/kripke-sequential/compile_commands.json: $(abs_builddir)/kripke-src/CMakeLists.txt
 	( \
 	  mkdir -p $(abs_builddir)/kripke-sequential ; \
 	  cd $(abs_builddir)/kripke-sequential ; \
@@ -60,16 +60,17 @@ $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph:
 	make -C $(abs_top_builddir)/projects/TemplateAnalysis/src genInstFlowGraph
 
 $(abs_builddir)/kripke-sequential/genInstFlowGraph.json: $(abs_builddir)/kripke-sequential/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph
-	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-sequential $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392 --namespace-filter-for-analysis=std  --namespace-filter-for-analysis=camp  --namespace-filter-for-analysis=RAJA  --namespace-filter-for-analysis=__gnu_cxx --namespace-filter-for-graphviz=std --namespace-filter-for-graphviz=__gnu_cxx
+
 
 $(abs_builddir)/kripke-openmp/genInstFlowGraph.json: $(abs_builddir)/kripke-openmp/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph
-	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-openmp $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392 -D_OPENMP
+	$(MAP_SCRIPT) $(abs_builddir)/kripke-src $(abs_builddir)/kripke-openmp $(abs_top_builddir)/projects/TemplateAnalysis/src/genInstFlowGraph --filter r:-std=c++11:-std=c++14 -- -rose:unparse_edg_normalized_method_ROSE_1392 -D_OPENMP --namespace-filter-for-analysis=std  --namespace-filter-for-analysis=camp  --namespace-filter-for-analysis=RAJA  --namespace-filter-for-analysis=__gnu_cxx --namespace-filter-for-graphviz=std --namespace-filter-for-graphviz=__gnu_cxx
 
 $(abs_builddir)/kripke-sequential/genInstFlowGraph.html: $(abs_builddir)/kripke-sequential/genInstFlowGraph.json $(RENDER_SCRIPT)
-	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/genInstFlowGraph.json --title "Kripke with Sequential"
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/genInstFlowGraph.json --title "Kripke with Sequential" --graphviz "Template Instantiation Flow"
 
 $(abs_builddir)/kripke-openmp/genInstFlowGraph.html: $(abs_builddir)/kripke-openmp/genInstFlowGraph.json $(RENDER_SCRIPT)
-	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/genInstFlowGraph.json --title "Kripke with OpenMP"
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/genInstFlowGraph.json --title "Kripke with OpenMP" --graphviz "Template Instantiation Flow"
 
 ########
 
