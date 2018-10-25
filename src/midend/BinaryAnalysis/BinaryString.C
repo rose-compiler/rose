@@ -796,6 +796,7 @@ public:
           discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes") {
         findings_.resize(encoders.size());
         progress_.value(0, nBytesToCheck);
+        progress_.suffix(" addresses");
     }
 
     // anchor the search to a particular address

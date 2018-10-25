@@ -163,6 +163,7 @@ protected:
         : format_(BINARY), progress_(Progress::instance()), isOpen_(false), objectType_(NO_OBJECT),
           progressBar_(mlog[Sawyer::Message::MARCH]), fd_(-1) {
         init();
+        progressBar_.suffix(" bytes");
     }
 
 public:

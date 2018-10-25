@@ -132,6 +132,7 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     for (size_t i=0; i<deltas.size(); ++i)
         tasks.insertVertex(Task(deltas[i], nMatches[i]));
     Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH]);
+    progressBar.suffix(" comparisons");
     Sawyer::workInParallel(tasks, Rose::CommandLine::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
 
     // Sort and cache the results by number of matches.
