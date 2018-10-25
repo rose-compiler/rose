@@ -72,6 +72,7 @@ void AsmUnparser::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::AsmUnparser");
+        mlog.comment("generating assembly listings (vers 1)");
     }
 }
 
