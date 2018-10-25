@@ -327,8 +327,8 @@ def write_compilation_unit(F, report, cu_id, graphviz):
 		F.write('          </li>\n')
 		F.write('        </ul>\n')
 		F.write('      </div>\n')
-		F.write('      <div class="collapse" id="compilation_unit_{}_graphviz_body">\n'.format(cu_id))
-		F.write('        <div class="card-body graphviz-svg">{}</div>\n'.format(out))
+		F.write('      <div class="compilation_unit_graphviz_body collapse" id="compilation_unit_{}_graphviz_body">\n'.format(cu_id))
+		F.write('        <div class="card-body">{}</div>\n'.format(out))
 		F.write('      </div>\n')
 		F.write('    </div>\n')
 		F.write('    </div>\n')
@@ -357,6 +357,8 @@ def write_scripts(F, report, rscdir):
 	F.write('<script src="{}/js/jquery-3.3.1.slim.min.js"></script>\n'.format(rscdir))
 	F.write('<script src="{}/js/popper.min.js"></script>\n'.format(rscdir))
 	F.write('<script src="{}/js/bootstrap.min.js"></script>\n\n'.format(rscdir))
+
+	F.write('<script src="{}/js/svg-pan-zoom.min.js"></script>\n'.format(rscdir))
 
 	F.write('<script src="{}/js/comp_db.js"></script>\n'.format(rscdir))
 
