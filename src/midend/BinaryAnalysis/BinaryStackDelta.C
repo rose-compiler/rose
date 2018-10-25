@@ -27,6 +27,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::StackDelta");
+        mlog.comment("analyzing stack pointer behavior");
     }
 }
 

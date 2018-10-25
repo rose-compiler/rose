@@ -22,6 +22,7 @@ BestMapAddress::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("Rose::BinaryAnalysis::BestMapAddress", Diagnostics::destination);
+        mlog.comment("computing mem mapping based on insns");
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }

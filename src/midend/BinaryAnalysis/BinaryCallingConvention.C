@@ -28,6 +28,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::CallingConvention");
+        mlog.comment("computing function calling conventions");
     }
 }
 

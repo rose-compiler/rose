@@ -24,6 +24,7 @@ SerialIo_initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&SerialIo::mlog, "Rose::BinaryAnalysis::SerialIo");
+        SerialIo::mlog.comment("reading/writing serialized analysis states");
     }
 }
 

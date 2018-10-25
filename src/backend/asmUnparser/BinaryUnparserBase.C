@@ -30,6 +30,7 @@ void initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Unparser");
+        mlog.comment("generating assembly listings (vers 2)");
     }
 }
 

@@ -48,6 +48,7 @@ SmtSolver::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SmtSolver");
+        mlog.comment("invocating a satisfiability modulo theory solver");
     }
 }
 

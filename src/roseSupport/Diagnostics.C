@@ -97,6 +97,7 @@ void initialize() {
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
         initAndRegister(&mlog, "Rose");
+        mlog.comment("top-level ROSE diagnostics");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];

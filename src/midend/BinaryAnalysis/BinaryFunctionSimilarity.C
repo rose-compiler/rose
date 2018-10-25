@@ -40,6 +40,7 @@ FunctionSimilarity::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FunctionSimilarity");
+        mlog.comment("matching function pairs based on similarity");
     }
 }
 

@@ -14,6 +14,7 @@ TaintedFlow::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::TaintedFlow");
+        mlog.comment("analyzing based on tainted-flow");
     }
 }
 

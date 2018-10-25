@@ -61,6 +61,7 @@ initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::SageBuilder");
+          mlog.comment("building abstract syntax trees");
         }
    }
 

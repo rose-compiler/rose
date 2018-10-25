@@ -508,6 +508,7 @@ FeasiblePath::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FeasiblePath");
+        mlog.comment("model checking and path feasibility");
     }
 }
 

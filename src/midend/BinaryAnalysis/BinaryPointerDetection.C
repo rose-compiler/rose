@@ -30,6 +30,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::PointerDetection");
+        mlog.comment("finding pointers to code and data");
     }
 }
 

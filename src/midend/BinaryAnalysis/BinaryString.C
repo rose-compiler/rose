@@ -22,6 +22,7 @@ initDiagnostics(void) {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Strings");
+        mlog.comment("detecting string constants");
     }
 }
     
