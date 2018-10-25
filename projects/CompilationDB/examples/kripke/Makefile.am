@@ -1,7 +1,6 @@
 
 MAP_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_map.py
 RENDER_SCRIPT=$(top_srcdir)/projects/CompilationDB/scripts/comp_db_render.py
-TOOL=$(abs_top_builddir)/tests/nonsmoke/functional/testTranslator
 
 $(abs_builddir)/kripke-src/CMakeLists.txt:
 	git clone --recursive -b release/v1.2.0-CORAL2 https://github.com/LLNL/Kripke.git $(abs_builddir)/kripke-src
