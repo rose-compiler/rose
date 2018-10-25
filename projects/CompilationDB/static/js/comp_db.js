@@ -32,19 +32,20 @@ $(document).ready(function() {
     copyToClipboard(text, el);
   });
 
-  var svgDivs = document.getElementsByClassName('compilation_unit_graphviz_body');
-  for (let svgDiv of svgDivs) {
-
-    var observer = new MutationObserver(function() {
-      if (svgDiv.style.display != 'none') {
-        var svgElem = svgDiv.getElementsByTagName('svg')[0];
+  var observer = new MutationObserver(function(mutL,obs) {
+    for(var mutation of mutL) {
+      if (mutation.target.style.display != 'none') {
+        var svgElem = mutation.target.getElementsByTagName('svg')[0];
         svgPanZoom(svgElem, {
           zoomEnabled: true,
           controlIconsEnabled: true
         });
       }
-    });
+    }
+  });
 
-    observer.observe(svgDiv, { attributes: true, childList: true });
+  var svgDivs = document.getElementsByClassName('compilation_unit_graphviz_body');
+  for (let svgDiv of svgDivs) {
+    observer.observe(svgDiv, { attributes: true });
   }
 });
