@@ -373,7 +373,7 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
             std::cout <<"Logging facilities status\n"
                 //       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
                       <<"  Letters indicate a stream that is enabled; hyphens indicate disabled.\n"
-                      <<"  D=debug, T=trace, H=where, I=info, W=warning, E=error, F=fatal\n";
+                      <<"  D=debug, T=trace, H=where, M=march, I=info, W=warning, E=error, F=fatal\n";
             facilities_.print(std::cout);
             if (exitOnHelp_)
                 exit(0);
