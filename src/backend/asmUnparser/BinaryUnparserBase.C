@@ -5,6 +5,7 @@
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
+#include <Sawyer/ProgressBar.h>
 #include <stringify.h>
 #include <TraceSemantics2.h>
 
@@ -13,12 +14,25 @@
 #include <ctype.h>
 #include <sstream>
 
+using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
+
+Sawyer::Message::Facility mlog;
+
+// class method
+void initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Unparser");
+    }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      State
@@ -463,9 +477,9 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-Base::unparse(const P2::Partitioner &p) const {
+Base::unparse(const P2::Partitioner &p, const Progress::Ptr &progress) const {
     std::ostringstream ss;
-    unparse(ss, p);
+    unparse(ss, p, progress);
     return ss.str();
 }
 
@@ -498,10 +512,16 @@ Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) co
 }
 
 void
-Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p) const {
+Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p, const Progress::Ptr &progress) const {
     State state(p, settings(), *this);
-    BOOST_FOREACH (P2::Function::Ptr f, p.functions())
+    Sawyer::ProgressBar<size_t> progressBar(p.nFunctions(), mlog[MARCH], "unparse");
+    progressBar.suffix(" functions");
+    BOOST_FOREACH (P2::Function::Ptr f, p.functions()) {
+        ++progressBar;
+        if (progress)
+            progress->update(Progress::Report("unparse", progressBar.ratio()));
         emitFunction(out, f, state);
+    }
 }
 
 void
