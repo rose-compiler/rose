@@ -23,12 +23,12 @@ void f()
   int a[10];
   int* x=g(a)+1;
   charVoid structCharVoid;
-  //structCharVoid.voidSecond = (void *)SRC_STR;
-  //printLine((char *)structCharVoid.voidSecond);
-  //  memcpy(structCharVoid.charFirst, SRC_STR, sizeof(structCharVoid));
-  //structCharVoid.charFirst[(sizeof(structCharVoid.charFirst)/sizeof(char))-1] = '\0';
+  structCharVoid.voidSecond = (void *)SRC_STR;
+  printLine((char *)structCharVoid.voidSecond);
+  memcpy(structCharVoid.charFirst, SRC_STR, sizeof(structCharVoid));
+  structCharVoid.charFirst[(sizeof(structCharVoid.charFirst)/sizeof(char))-1] = '\0';
   printLine(((char *)structCharVoid.charFirst)+1);
-  //printLine((char *)structCharVoid.voidSecond);
+  printLine((char *)structCharVoid.voidSecond);
 }
 
 int main() {
