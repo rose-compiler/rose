@@ -1,0 +1,22 @@
+body {
+    font-family: Arial;
+}
+
+.card {
+    margin-bottom: 15px;
+}
+
+.section {
+    padding-top: 65px;
+}
+
+.dropdown-menu {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+svg {
+    max-width:100%;
+    max-height:400px;
+}
