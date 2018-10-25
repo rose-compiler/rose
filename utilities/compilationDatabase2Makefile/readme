@@ -1,0 +1,18 @@
+This is a utility program to convert a compilation database json file into a single makefile.
+The motivation is to avoid hacking into users' build systems in order to invoke a ROSE-based tool.
+With the single makefile, we can freely replace the compiler name and options without understanding the complex build systems.
+
+To generate a compilation database json file:
+* for GNU autoconf/automake build systems: We recommend https://github.com/rizsotto/Bear .
+* for CMake build systems: please use the cmake option -DCMAKE_EXPORT_COMPILE_COMMANDS=1 
+
+To build the tool, please make sure your gcc supports C++11, type 
+  make
+
+To test the tool, type
+  make check
+
+Example usage: 
+ ./cdb2makefile --help // show help information
+
+ ./cdb2makefile --input="tests/amrex_compile_commands.json" --output=makefile-amrx
