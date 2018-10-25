@@ -350,6 +350,7 @@ public:
         std::string errorMessage;
         boost::thread worker(startWorker<T>, this, objectTypeId, object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+        progressBar_.prefix("writing");
         while (!worker.try_join_for(timeout)) {
             off_t cur = ::lseek(fd_, 0, SEEK_CUR);
             if (-1 == cur) {
@@ -499,6 +500,7 @@ public:
 #else
         boost::thread worker(startWorker<T>, this, &object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+        progressBar_.prefix("reading");
         while (!worker.try_join_for(timeout)) {
             if (fileSize_ > 0) {
                 off_t cur = ::lseek(fd_, 0, SEEK_CUR);
