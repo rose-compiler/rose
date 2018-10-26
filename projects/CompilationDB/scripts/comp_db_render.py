@@ -7,6 +7,7 @@ import json
 import textwrap
 import argparse
 import subprocess
+import multiprocessing
 
 def prefix_path(path, prefixes):
 	for (tag,prefix) in sorted(prefixes.iteritems(), key=lambda x: x[1], reverse=True):
@@ -314,7 +315,7 @@ def write_compilation_unit_report(F, report, cu_id):
 		F.write('      <div class="card-header">\n')
 		F.write('        <ul class="nav nav-pills card-header-pills">\n')
 		F.write('          <li class="nav-item">')
-		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_{3}_body" aria-expanded="false" aria-controls="compilation_unit_{1}_{3}_body">{2}</a>\n'.format(style, cu_id, addon['title'], addon['tag']))
+		F.write('            <a class="nav-link active btn-{0}" data-toggle="collapse" href="#compilation_unit_{1}_{3}_body" aria-expanded="false" aria-controls="compilation_unit_{1}_{3}_body">{2}</a>\n'.format(addon['code'] if 'code' in addon else style, cu_id, addon['title'], addon['tag']))
 		F.write('          </li>\n')
 		F.write('        </ul>\n')
 		F.write('      </div>\n')
@@ -363,9 +364,53 @@ def generate_html(F, report, title, rscdir):
 	write_scripts(F, report, rscdir)
 	F.write('</html>\n')
 
-def addons_apply_graphviz(report, addon_id, title, filename):
+def addons_apply_graphviz_worker(addon_id, title, max_size, timeout, cu_id, fid, fpath):
+	if not os.path.isfile(fpath):
+		html = '<p>Cannot find the GraphViz file:</p><pre>{}</pre>'.format(fpath)
+		code = 'danger'
+	elif not max_size is None and os.stat(fpath).st_size > max_size:
+		html = '<p>Provided GraphViz file is larger than {}. You can try manually:</p><pre>{}</pre>'.format(max_size, fpath)
+		code = 'danger'
+	else:
+		dot_cmdline = [ 'dot' , '-Tsvg' , fpath ]
+		if not timeout is None:
+			dot_cmdline = [ 'timeout' , timeout ] + dot_cmdline
+		dot_proc = subprocess.Popen(dot_cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = dot_proc.communicate()
+		rc = dot_proc.returncode
+		html = out if rc == 0 else '<pre>Return Code = {}</pre><pre>{}</pre>'.format(rc,  err)
+		code = 'danger' if rc != 0 else 'success'
+
+	return ( cu_id , {
+	  'tag': 'addon_{}_file_{}'.format(addon_id, fid),
+	  'class' : 'svg_zoom_pan' if code == 'success' else '',
+	  'title' : title,
+	  'html' : html,
+	  'code' : code
+	})
+
+def addons_apply_graphviz_worker_helper(kwargs):
+	try:
+		return addons_apply_graphviz_worker(**kwargs)
+	except Exception as e:
+		traceback.print_exc(file=sys.stdout)
+		return ( kwargs['cu_id'] , {
+		  'tag': 'addon_{}_file_{}'.format(kwargs['addon_id'], kwargs['fid']),
+		  'class' : '',
+		  'title' : kwargs['title'],
+		  'html' : 'GraphViz Renderer Exception: <pre>{}</pre>'.format(e),
+		  'code' : 'dark'
+		})
+
+def addons_apply_graphviz(report, addon_id, title, filename, nprocs, **kwargs):
+
+	max_size = int(kwargs['max-size']) if 'max-size' in kwargs else None
+	timeout = kwargs['timeout'] if 'timeout' in kwargs else None
+
+	workload = list()
+
 	if '%F' in filename or '%f' in filename or '%F%e' in filename or '%f%e' in filename:
-		for cu_report in report['comp-units']:
+		for (cu_id,cu_report) in enumerate(report['comp-units']):
 			cu_filepath_ext = os.path.realpath(cu_report['file'])
 			cu_filepath = '.'.join(cu_filepath_ext.split('.')[:-1])
 			cu_filename_ext = os.path.basename(cu_filepath_ext)
@@ -380,25 +425,39 @@ def addons_apply_graphviz(report, addon_id, title, filename):
 				cu_files = [ ( cu_filename , '' ) ]
 
 			for (fid, ( fpath , fM ) ) in enumerate(cu_files):
-				if not os.path.isfile(fpath):
-					html = '<p>Cannot find the GraphViz file:</p><pre>{}</pre>'.format(fpath)
-				elif os.stat(fpath).st_size > 512*1024:
-					html = '<p>Provided GraphViz file is too large. You can try manually:</p><pre>{}</pre>'.format(fpath)
-				else:
-					dot_proc = subprocess.Popen([ 'dot' , '-Tsvg' , fpath ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-					out, err = dot_proc.communicate()
-					html = out if len(err) == 0 else ( '{}<pre>{}</pre>'.format(out, err) if len(out) > 0 else '<pre>{}</pre>'.format(err) )
-
-				cu_report['addons'].append({
-				  'tag': 'addon_{}_file_{}'.format(addon_id, fid),
-				  'class' : 'svg_zoom_pan',
-				  'title' : title.replace('%M', fM),
-				  'html' : html
-				})
+				workload.append({ 'addon_id' : addon_id, 'title' : title.replace('%M', fM), 'max_size' : max_size, 'timeout' : timeout, 'cu_id' : cu_id, 'fid' : fid, 'fpath' : fpath })
 	else:
-		pass
+		assert False, "NIY!!!" # TODO
 
-def generate_report(report, title, addons, rscdir):
+	if len(workload) > 0:
+		start_time = time.time()
+
+		pool = multiprocessing.Pool(nprocs)
+		future_result = pool.map_async(func=addons_apply_graphviz_worker_helper, iterable=workload, chunksize=1)
+		pool.close()
+
+		while (not future_result.ready()):
+			elapsed_time = time.time() - start_time
+			number_done = len(workload) - future_result._number_left
+			sys.stdout.write("\r                                                 \rGraphViz: {}/{} in {:.1f} seconds".format(number_done, len(workload), elapsed_time ))
+			sys.stdout.flush()
+			time.sleep(.1)
+
+		results = future_result.get()
+		elapsed_time = time.time() - start_time
+
+		sys.stdout.write("\r                                                 \rGraphViz: {}/{} in {:.1f} seconds\n".format(len(results), len(workload), elapsed_time ))
+		sys.stdout.flush()
+	else:
+		results = list()
+
+	for result in results:
+		if result[0] >= 0:
+			report['comp-units'][result[0]]['addons'].append(result[1])
+		else:
+			assert False, "NIY!!!" # TODO
+
+def generate_report(report, title, addons, rscdir, nprocs):
 	for cu_report in report['comp-units']:
 		cu_report.update({ 'addons' : list() })
 
@@ -407,7 +466,7 @@ def generate_report(report, title, addons, rscdir):
 			print "Found invalid add-on descriptor #{}...".format(addon_id)
 			exit(1)
 		if addon_desc['function'] == 'graphviz':
-			addons_apply_graphviz(report=report, addon_id=addon_id, **addon_desc['kwargs'])
+			addons_apply_graphviz(report=report, addon_id=addon_id, nprocs=nprocs, **addon_desc['kwargs'])
 		else:
 			print "Unrecognized add-on function: {}".format(addon_desc['function'])
 
@@ -457,6 +516,12 @@ def build_parser():
 			The "user-defined" function is not implemented yet! It should permit the user to post-process the tools results using his own tools. \
 			One possible use could be to generate a filtered version of the standard output or formating some user-defined output file.
 			'''))
+
+	optional.add_argument('--nprocs', type=int, default=multiprocessing.cpu_count(),
+								 	help=textwrap.dedent('''\
+										Number of proccesses to use to run the tool.
+										(default: number of CPUs)\
+										'''))
 
 	optional.add_argument('-h', '--help', action='help', help='show this help message and exit')
 
@@ -512,7 +577,7 @@ def cli_parse_args(argv):
 
 	rscdir = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../static')
 
-	return { 'report' : args.report, 'title' : args.title, 'addons' : args.addons, 'rscdir' : rscdir }
+	return { 'report' : args.report, 'title' : args.title, 'addons' : args.addons, 'rscdir' : rscdir, 'nprocs' : args.nprocs }
 
 if __name__ == "__main__":
 	generate_report(**cli_parse_args(sys.argv[1:]))

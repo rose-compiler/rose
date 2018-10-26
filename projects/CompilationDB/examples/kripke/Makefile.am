@@ -87,7 +87,7 @@ $(abs_builddir)/kripke-sequential/buildCallGraph.html: $(abs_builddir)/kripke-se
 	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-sequential/buildCallGraph.json --title "Kripke with Sequential" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" } } ]'
 
 $(abs_builddir)/kripke-openmp/buildCallGraph.html: $(abs_builddir)/kripke-openmp/buildCallGraph.json $(RENDER_SCRIPT)
-	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/buildCallGraph.json --title "Kripke with OpenMP" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" } } ]'
+	$(RENDER_SCRIPT) --report $(abs_builddir)/kripke-openmp/buildCallGraph.json --title "Kripke with OpenMP" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" , "timeout" : "30s" } } ]'
 
 ########
 
