@@ -95,7 +95,7 @@ def map_tool(job):
 	sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds\n".format(len(results), len(workload), elapsed_time ))
 	sys.stdout.flush()
 
-	job.update({ 'elapsed' : elapsed_time, 'results' : results })
+	job.update({ 'elapsed' : elapsed_time, 'comp-units' : results })
 
 	return job
 

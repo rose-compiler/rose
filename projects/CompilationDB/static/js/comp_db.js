@@ -37,14 +37,20 @@ $(document).ready(function() {
       if (mutation.target.style.display != 'none') {
         var svgElem = mutation.target.getElementsByTagName('svg')[0];
         svgPanZoom(svgElem, {
+          panEnabled: true,
+          controlIconsEnabled: true,
           zoomEnabled: true,
-          controlIconsEnabled: true
+          dblClickZoomEnabled: true,
+          mouseWheelZoomEnabled: true,
+          zoomScaleSensitivity: 0.2,
+          minZoom: 0.5,
+          maxZoom: 100
         });
       }
     }
   });
 
-  var svgDivs = document.getElementsByClassName('compilation_unit_graphviz_body');
+  var svgDivs = document.getElementsByClassName('svg_zoom_pan');
   for (let svgDiv of svgDivs) {
     observer.observe(svgDiv, { attributes: true });
   }
