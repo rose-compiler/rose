@@ -720,6 +720,9 @@ Engine::specimenNameDocumentation() {
             "@bullet{If the name begins with the string \"map:\" then it is treated as a memory map resource string that "
             "adjusts a memory map by inserting part of a file. " + MemoryMap::insertFileDocumentation() + "}"
 
+            "@bullet{If the name begins with the string \"data:\" then its data portion is parsed as a byte sequence "
+            "which is then inserted into the memory map. " + MemoryMap::insertDataDocumentation() + "}"
+
             "@bullet{If the name begins with the string \"proc:\" then it is treated as a process resource string that "
             "adjusts a memory map by reading the process' memory. " + MemoryMap::insertProcessDocumentation() + "}"
 
@@ -804,6 +807,7 @@ Engine::checkSettings() {
 bool
 Engine::isNonContainer(const std::string &name) {
     return (boost::starts_with(name, "map:") ||         // map file directly into MemoryMap
+            boost::starts_with(name, "data:") ||        // map data directly into MemoryMap
             boost::starts_with(name, "proc:") ||        // map process memory into MemoryMap
             boost::starts_with(name, "run:") ||         // run a process in a debugger, then map into MemoryMap
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
@@ -945,6 +949,9 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
         if (boost::starts_with(fileName, "map:")) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map_->insertFile(resource);
+        } else if (boost::starts_with(fileName, "data:")) {
+            std::string resource = fileName.substr(4);  // remove "data:", leaving colon and the rest of the string
+            map_->insertData(resource);
         } else if (boost::starts_with(fileName, "proc:")) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_->insertProcess(resource);
