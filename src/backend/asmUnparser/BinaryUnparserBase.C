@@ -911,7 +911,7 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         nextUnparser()->emitBasicBlockBody(out, bb, state);
     } else {
         if (0 == bb->nInstructions()) {
-            out <<"no instructions\n";
+            out <<StringUtility::addrToString(bb->address()) <<": no instructions\n";
         } else {
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
