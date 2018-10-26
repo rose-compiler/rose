@@ -10,9 +10,9 @@ To build the tool, please make sure your gcc supports C++11, type
   make
 
 To test the tool, type
-  make check
+  make check  # this will invoke the tool to convert a few example json files and check the output files have expected contents.
 
 Example usage: 
- ./cdb2makefile --help // show help information
+ ./cdb2makefile --help # show help information
 
  ./cdb2makefile --input="tests/amrex_compile_commands.json" --output=makefile-amrx

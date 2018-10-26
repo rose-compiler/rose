@@ -18,6 +18,9 @@ vector<string> targets; // all unique targets to build
 // input and outputfile names, with default values
 string j_file_name="compile_commands.json";
 string mkfile_name="makefile-default";
+string compiler_name="identityTranslator"; // replace the compiler with another one, identityTranslator as the default new compiler
+
+bool replaceCompiler= false;
 
 const char* argp_program_bug_address = "liao6@llnl.gov";
 const char* argp_program_bug_version= "version 0.1";
@@ -28,7 +31,7 @@ static int parse_opt (int key, char* arg, struct argp_state * state)
   {
     case 'i':
       {
-        // arg stores the parsed value followed after the option -d
+        // arg stores the parsed value followed after the option 
         if (arg!=NULL)
         {
           j_file_name =string(arg);
@@ -38,12 +41,21 @@ static int parse_opt (int key, char* arg, struct argp_state * state)
       }
     case 'o':
       {
-        // arg stores the parsed value followed after the option -d
+        // arg stores the parsed value followed after the option
         if (arg!=NULL)
         {
           mkfile_name =string(arg);
-//          cout<<"arg not null:" << arg <<endl;
         }
+        break;
+      }
+    case 'c':
+      {
+        // arg stores the parsed value followed after the option
+        if (arg!=NULL)
+        {
+          compiler_name =string(arg);
+        }
+        replaceCompiler = true; 
         break;
       }
  }
@@ -63,6 +75,7 @@ int main(int argc, char** argv)
     // mandatory option
     {"input", 'i', "String", OPTION_ARG_OPTIONAL, "input file name of compilation database json file, default name if not provided: compile_commands.json"},
     {"output", 'o', "String", OPTION_ARG_OPTIONAL, "output file name for the generated makefile, default name if not provided: makefile-default"},
+    {"compiler", 'c', "String", OPTION_ARG_OPTIONAL, "replace the compiler with a new compiler command, default replacement compiler name if not provided: identityTranslator"},
     {0}
   };
 
@@ -142,9 +155,10 @@ int main(int argc, char** argv)
       json args = element["arguments"]; // arguments are stored in an array
       //cout<< args <<endl; 
       // arrays are vector
-      string args_str; // connect all arguments into a string
+      string args_str; // compose all arguments into a string, representing the full command line
       string target_str; 
       bool found_o= false;
+      int counter =0; 
       for (json::iterator it2 = args.begin(); it2!=args.end(); it2++)
       {
         json opt = (*it2);
@@ -166,8 +180,12 @@ int main(int argc, char** argv)
             if ((target_str.size()==0) && found_o)
               target_str = opt_str; 
           }
-
+          
+          // replace the first word with a new compiler name, if requested.
+          if ( (counter == 0) && replaceCompiler)
+            opt_str = compiler_name; 
           args_str += " " + opt_str;
+          counter ++; 
         }
       }
 
