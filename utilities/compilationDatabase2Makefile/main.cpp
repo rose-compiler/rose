@@ -19,6 +19,7 @@ vector<string> targets; // all unique targets to build
 string j_file_name="compile_commands.json";
 string mkfile_name="makefile-default";
 string compiler_name="identityTranslator"; // replace the compiler with another one, identityTranslator as the default new compiler
+string add_options=""; // additional options to add
 
 bool replaceCompiler= false;
 
@@ -48,7 +49,7 @@ static int parse_opt (int key, char* arg, struct argp_state * state)
         }
         break;
       }
-    case 'c':
+   case 'c':
       {
         // arg stores the parsed value followed after the option
         if (arg!=NULL)
@@ -56,6 +57,20 @@ static int parse_opt (int key, char* arg, struct argp_state * state)
           compiler_name =string(arg);
         }
         replaceCompiler = true; 
+        break;
+      }
+     case 'a':
+      {
+        // arg stores the parsed value followed after the option
+        if (arg!=NULL)
+        {
+          add_options=string(arg);
+        }
+        else
+        {
+          cerr<<"error: you must provide an option string if -a is used."<<endl;
+          return 1;
+        }
         break;
       }
  }
@@ -76,6 +91,8 @@ int main(int argc, char** argv)
     {"input", 'i', "String", OPTION_ARG_OPTIONAL, "input file name of compilation database json file, default name if not provided: compile_commands.json"},
     {"output", 'o', "String", OPTION_ARG_OPTIONAL, "output file name for the generated makefile, default name if not provided: makefile-default"},
     {"compiler", 'c', "String", OPTION_ARG_OPTIONAL, "replace the compiler with a new compiler command, default replacement compiler name if not provided: identityTranslator"},
+    // must provide values for this option
+    {"add_options", 'a', "String", 0, "add additional compiler options to command lines"},
     {0}
   };
 
@@ -185,6 +202,11 @@ int main(int argc, char** argv)
           if ( (counter == 0) && replaceCompiler)
             opt_str = compiler_name; 
           args_str += " " + opt_str;
+
+          // add additional compiler options if provided
+          if ( (counter == 0) && add_options.size() !=0 ) 
+            args_str += " " + add_options;
+
           counter ++; 
         }
       }
