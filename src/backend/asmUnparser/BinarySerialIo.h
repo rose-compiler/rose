@@ -179,6 +179,11 @@ public:
      *  explicitly @ref close an I/O object before destroying it. */
     virtual ~SerialIo();
 
+    /** Create a new Savable enum constant.
+     *
+     *  This is a convenience function to create a new Savable constant which is an @p offset from USER_DEFINED. */
+    static Savable userSavable(unsigned offset);
+
     /** Property: File format.
      *
      *  This property specifies the file format of the data. It can only be set for output, and only before the output
