@@ -66,10 +66,10 @@ $(abs_top_builddir)/tutorial/buildCallGraph:
 	make -C $(abs_top_builddir)/tutorial buildCallGraph
 
 $(abs_builddir)/doxygen-build/buildCallGraph.json: $(abs_builddir)/doxygen-build/compile_commands.json $(MAP_SCRIPT) $(abs_top_builddir)/tutorial/buildCallGraph
-	$(MAP_SCRIPT) $(abs_builddir)/doxygen-src $(abs_builddir)/doxygen-build $(abs_top_builddir)/tutorial/buildCallGraph -- --namespace-filter-for-analysis=std --namespace-filter-for-analysis=__gnu_cxx --namespace-filter-for-graphviz=std --namespace-filter-for-graphviz=__gnu_cxx
+	$(MAP_SCRIPT) $(abs_builddir)/doxygen-src $(abs_builddir)/doxygen-build $(abs_top_builddir)/tutorial/buildCallGraph
 
 $(abs_builddir)/doxygen-build/buildCallGraph.html: $(abs_builddir)/doxygen-build/buildCallGraph.json $(RENDER_SCRIPT)
-	$(RENDER_SCRIPT) --report $(abs_builddir)/doxygen-build/buildCallGraph.json --title "Doxygen" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" } } ]'
+	$(RENDER_SCRIPT) --report $(abs_builddir)/doxygen-build/buildCallGraph.json --title "Doxygen" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" , "timeout" : "30s" } } ]'
 
 ########
 
