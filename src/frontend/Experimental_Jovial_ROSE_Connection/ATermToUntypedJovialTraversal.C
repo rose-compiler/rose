@@ -1461,7 +1461,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_WhileStatement(ATerm term, SgUnty
          // MATCHED WhileClause
          if (traverse_BitFormula(t_formula, &condition)) {
             // MATCHED BitFormula
-	 } else return ATfalse;
+         } else return ATfalse;
       }
 
       while_body_list = new SgUntypedStatementList();
@@ -1469,7 +1469,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_WhileStatement(ATerm term, SgUnty
       // Match ControlledStatement -- it is a Statement
       if (traverse_Statement(t_stmt, while_body_list)) {
          // MATCHED Statement
-	 cout << ".x. matched loop statement \n";
+         cout << ".x. matched loop statement \n";
       } else return ATfalse;
 
       cout << ".x. loop body size is " << while_body_list->get_stmt_list().size() << endl;
@@ -1616,7 +1616,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ForClause(ATerm term, SgUntypedEx
       } else return ATfalse;
 
       if (traverse_ControlClause(t_clause, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
-	 // MATCHED ControlClause
+         // MATCHED ControlClause
       } else return ATfalse;
    }
    else return ATfalse;

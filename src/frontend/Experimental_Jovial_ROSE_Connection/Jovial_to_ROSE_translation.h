@@ -61,19 +61,19 @@ namespace Jovial_ROSE_Translation
 
        // Expressions for loop control
        // ----------------------------
-	  e_by_phrase_expr,
-	  e_then_phrase_expr,
-	  e_while_phrase_expr,
+          e_by_phrase_expr,
+          e_then_phrase_expr,
+          e_while_phrase_expr,
 
        // Statements
        // ----------
 
        // For loop control statements
        // ---------------------------
-	  e_for_while_by_stmt,
-	  e_for_while_then_stmt,
-	  e_for_by_while_stmt,
-	  e_for_then_while_stmt,
+          e_for_while_by_stmt,
+          e_for_while_then_stmt,
+          e_for_by_while_stmt,
+          e_for_then_while_stmt,
 
           e_last
         };

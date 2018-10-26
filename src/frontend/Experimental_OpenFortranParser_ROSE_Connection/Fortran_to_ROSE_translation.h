@@ -83,7 +83,7 @@ namespace Fortran_ROSE_Translation
 
        // Statements
        // ----------
-	  e_do_stmt,
+          e_do_stmt,
 
        // CUDA Attributes
        // ---------------
