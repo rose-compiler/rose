@@ -738,8 +738,11 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           ROSE_ASSERT(arrayType);
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
-          variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+          // only set size from aggregate initializer if not known from type (type size is set when variableidmapping is created)
+          if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+            // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
+            variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+          }
           PState newPState=*currentEState.pstate();
           newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
           return createEState(targetLabel,newPState,cset);
@@ -2415,6 +2418,9 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             int index2=arrayPtrPlusIndexValue.getIndexIntValue();
             if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
+              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
+              cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
             }
           }
           arrayElementId=arrayPtrPlusIndexValue;
