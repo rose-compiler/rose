@@ -3483,15 +3483,15 @@ ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, General_
    printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(term, "TIMES()")) {
+   if (ATmatch(term, "MultiplyOp()")) {
       op_enum = General_Language_Translation::e_operator_multiply;
       op_name = "*";
    }
-   else if (ATmatch(term, "DIV()")) {
+   else if (ATmatch(term, "DivideOp()")) {
       op_enum = General_Language_Translation::e_operator_divide;
       op_name = "/";
    }
-   else if (ATmatch(term, "MOD()")) {
+   else if (ATmatch(term, "ModOp()")) {
       op_enum = General_Language_Translation::e_operator_mod;
       op_name = "MOD";
    }
@@ -3514,34 +3514,25 @@ ATbool ATermToUntypedJovialTraversal::traverse_RelationalOperator(ATerm term, Ge
       op_enum = General_Language_Translation::e_operator_less_than;
       op_name = "<";
    }
-   else if (ATmatch(term, "GT()")) {
-      std::cout << "Matched GT: > " << endl;
+   else if (ATmatch(term, "GreaterThanOp()")) {
       op_enum = General_Language_Translation::e_operator_greater_than;
       op_name = ">";
    }
-   else if (ATmatch(term, "LE()")) {
-      std::cout << "Matched LE: <= " << endl;
+   else if (ATmatch(term, "LessOrEqualOp()")) {
       op_enum = General_Language_Translation::e_operator_less_than_or_equal;
       op_name = "<=";
    }
-   else if (ATmatch(term, "GE()")) {
-      std::cout << "Matched GE: >= " << endl;
+   else if (ATmatch(term, "GreaterOrEqualOp()")) {
       op_enum = General_Language_Translation::e_operator_greater_than_or_equal;
       op_name = ">=";
    }
-   else if (ATmatch(term, "EqOp()")) {
-      std::cout << "Matched EqOp: = " << endl;
+   else if (ATmatch(term, "EqualityOp()")) {
       op_enum = General_Language_Translation::e_operator_equality;
-      op_name = "==";
-      // Should this be the character used in Jovial or in the general langauges?
-      //      op_name = "=";
+      op_name = "=";
    }
-   else if (ATmatch(term, "NotEqOp()")) {
-      std::cout << "Matched NotEqOp: <> " << endl;
+   else if (ATmatch(term, "NotEqualOp()")) {
       op_enum = General_Language_Translation::e_operator_not_equal;
-      // Should this be the character used in Jovial or in the general langauges?
-      op_name = "!=";
-      //      op_name = "<>";
+      op_name = "<>";
    } else return ATfalse;
 
    return ATtrue;
@@ -3562,11 +3553,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_BooleanLiteral(ATerm term, SgUnty
    if (ATmatch(term, "True()")) {
       // MATCHED TRUE
       value += "TRUE";
-      std::cout << "Matched TRUE" << endl;
    } else if (ATmatch(term, "False()")) {
       // MATCHED FALSE
       value += "FALSE";
-      std::cout << "Matched FALSE" << endl;
    } else return ATfalse;
 
    int expression_enum = General_Language_Translation::e_literalExpression;

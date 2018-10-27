@@ -2482,6 +2482,11 @@ UntypedConverter::convertUntypedBinaryOperator(SgUntypedBinaryOperator* untyped_
                op = new SgDivideOp(lhs, rhs, NULL);
                break;
             }
+         case e_operator_mod:
+            {
+               op = new SgModOp(lhs, rhs, NULL);
+               break;
+            }
          case e_operator_and:
             {
                op = new SgAndOp(lhs, rhs, NULL);

@@ -52,7 +52,14 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgSubtractOp:          unparseBinaryOperator(expr, "-", info);  break;
           case V_SgMultiplyOp:          unparseBinaryOperator(expr, "*", info);  break;
           case V_SgDivideOp:            unparseBinaryOperator(expr, "/", info);  break;
+          case V_SgModOp:               unparseBinaryOperator(expr,"MOD",info);  break;
+          case V_SgExponentiationOp:    unparseBinaryOperator(expr,"**", info);  break;
           case V_SgLessThanOp:          unparseBinaryOperator(expr, "<", info);  break;
+          case V_SgLessOrEqualOp:       unparseBinaryOperator(expr,"<=", info);  break;
+          case V_SgGreaterThanOp:       unparseBinaryOperator(expr, ">", info);  break;
+          case V_SgGreaterOrEqualOp:    unparseBinaryOperator(expr,">=", info);  break;
+          case V_SgEqualityOp:          unparseBinaryOperator(expr, "=", info);  break;
+          case V_SgNotEqualOp:          unparseBinaryOperator(expr,"<>", info);  break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
@@ -66,15 +73,9 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                 case V_SgBitXorOp:
                 case V_SgDotExp:
                 case V_SgArrowExp:
-                case V_SgEqualityOp:
-                case V_SgGreaterOrEqualOp:
-                case V_SgGreaterThanOp:
                 case V_SgJavaUnsignedRshiftOp:
-                case V_SgLessOrEqualOp:
                 case V_SgLshiftOp:
-                case V_SgModOp:
                 case V_SgOrOp:
-                case V_SgNotEqualOp:
                 case V_SgRshiftOp:
                 case V_SgCommaOpExp: // charles4 10/14/2011
                      unparseBinaryOp(isSgBinaryOp(expr), info ); break;

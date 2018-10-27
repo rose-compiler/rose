@@ -26,7 +26,10 @@ JOVIAL_TESTCODES = \
  4_9_stop_stmt_c.jov                    \
  4_10_abort_stmt_a.jov                  \
  4_10_abort_stmt_b.jov                  \
- 5_1_1_integer-primary.jov
+ 5_1_1_integer-precedence.jov           \
+ 5_1_1_integer-primary.jov              \
+ 5_1_1_integer-term.jov                 \
+ 5_2_1_relational_expressions_a.jov
 
 # should finish formulas next
 #
@@ -82,9 +85,7 @@ JOVIAL_TESTCODES_WORKING_ON = \
  4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \
- 5_1_1_integer-formula.jov              \
- 5_1_1_integer-precedence.jov           \
- 5_1_1_integer-term.jov
+ 5_1_1_integer-formula.jov
 
 TEST_JOVIAL_Objects = ${JOVIAL_TESTCODES:.jov=.aterm}
 TEST_JOVIAL_Sources = ${JOVIAL_TESTCODES:.jov=.jov.passed}
