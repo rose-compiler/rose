@@ -791,6 +791,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       int index2=arrayPtrPlusIndexValue.getIntValue();
       if(!checkArrayBounds(arrayVarId2,index2)) {
         cerr<<"Read access: "<<node->unparseToString()<<endl;
+        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
       }
       VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
@@ -849,7 +850,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           //cerr<<"AST: "<<node->unparseToString()<<endl;
           //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
-          _nullPointerDereferenceLocations.recordPotentialDereference(estate.label());
+          _nullPointerDereferenceLocations.recordPotentialLocation(estate.label());
         }
       }
     } else {
@@ -1192,8 +1193,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
         VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
         int index2=arrayPtrPlusIndexValue.getIndexIntValue();
         if(!checkArrayBounds(arrayVarId2,index2)) {
-          // TODO: add to analysis report (do not print)
-          cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
+          recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          //cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
         }
       }
 
@@ -1470,6 +1471,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     //cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
     if(memcpyArgs[2].isTop()) {
       cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     }
     bool errorDetected=false;
@@ -1479,18 +1481,22 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       if(memRegionSizeSource==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
         errorDetected=true;
+        recordPotentialOutOfBoundsAccessLocation(estate.label());
       } else {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
         errorDetected=true;
+        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
       }
     }
     if(memRegionSizeTarget<copyRegionSize) {
       if(memRegionSizeTarget==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
         errorDetected=true;
+        recordPotentialOutOfBoundsAccessLocation(estate.label());
       } else {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
         errorDetected=true;
+        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
       }
     }
     if(!errorDetected) {
@@ -1526,18 +1532,33 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   return true; // pass
 }
 
-NullPointerDereferenceLocations ExprAnalyzer::getNullPointerDereferenceLocations() {
+ProgramLocationsReport ExprAnalyzer::getNullPointerDereferenceLocations() {
   return _nullPointerDereferenceLocations;
 }
 
 void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
-  _nullPointerDereferenceLocations.recordDefinitiveDereference(label);
+  _nullPointerDereferenceLocations.recordDefinitiveLocation(label);
 }
 
 void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
-  _nullPointerDereferenceLocations.recordPotentialDereference(label);
+  _nullPointerDereferenceLocations.recordPotentialLocation(label);
+}
+
+ProgramLocationsReport ExprAnalyzer::getOutOfBoundsAccessLocations() {
+  return _outOfBoundsAccessLocations;
+}
+
+void ExprAnalyzer::recordDefinitiveOutOfBoundsAccessLocation(Label label) {
+  _outOfBoundsAccessLocations.recordDefinitiveLocation(label);
+  cout<<"Error detected: definitive out of bounds access at "<<label.toString()<<endl;
+}
+
+void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
+  _outOfBoundsAccessLocations.recordPotentialLocation(label);
+  cout<<"Error detected: potential out of bounds access at "<<label.toString()<<endl;
 }
 
 bool ExprAnalyzer::isStructMember(SPRAY::VariableId varId) {
   return structureAccessLookup.isStructMember(varId);
 }
+

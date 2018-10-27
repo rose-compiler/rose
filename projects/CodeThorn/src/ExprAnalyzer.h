@@ -15,7 +15,7 @@
 #include "VariableIdMapping.h"
 #include "AbstractValue.h"
 #include "AstTerm.h"
-#include "NullPointerDereferenceLocations.h"
+#include "ProgramLocationsReport.h"
 #include "SgTypeSizeMapping.h"
 #include "StructureAccessLookup.h"
 
@@ -92,9 +92,15 @@ namespace CodeThorn {
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
-    NullPointerDereferenceLocations getNullPointerDereferenceLocations();
+
+    // record detected errors in programs
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
+    ProgramLocationsReport getNullPointerDereferenceLocations();
+    void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
+    void recordPotentialOutOfBoundsAccessLocation(Label lab);
+    ProgramLocationsReport getOutOfBoundsAccessLocations();
+
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
@@ -269,7 +275,8 @@ namespace CodeThorn {
 
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
-    NullPointerDereferenceLocations _nullPointerDereferenceLocations;
+    ProgramLocationsReport _nullPointerDereferenceLocations;
+    ProgramLocationsReport _outOfBoundsAccessLocations;
    
     // Options
     bool _skipSelectedFunctionCalls=false;

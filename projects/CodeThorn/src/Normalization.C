@@ -462,10 +462,6 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeSubExpression(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
-    /*    if(SgDotExp* dotExp=isSgDotExp(expr)) {
-      normalizeSubExpression(stmt,dotExp->get_lhs_operand(),subExprTransformationList);
-      normalizeSubExpression(stmt,dotExp->get_rhs_operand(),subExprTransformationList);
-      } else */
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       normalizeSubExpression(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/ if(isSgPntrArrRefExp(expr)) {

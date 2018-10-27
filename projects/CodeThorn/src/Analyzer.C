@@ -2417,6 +2417,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
             int index2=arrayPtrPlusIndexValue.getIndexIntValue();
             if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+              exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
               cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;

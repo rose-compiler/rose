@@ -177,8 +177,8 @@ libcodethorn_la_SOURCES=\
   LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  NullPointerDereferenceLocations.h \
-  NullPointerDereferenceLocations.C \
+  ProgramLocationsReport.h \
+  ProgramLocationsReport.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \
