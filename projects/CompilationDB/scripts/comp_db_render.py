@@ -33,6 +33,12 @@ def write_html_head(F, report, title):
 		.section {
 		    padding-top: 65px;
 		}
+
+		.dropdown-menu {
+		    max-height: 500px;
+		    overflow-y: auto;
+		    overflow-x: hidden;
+		}
 		</style>\n\n''')
 
 	F.write('</head>\n')
