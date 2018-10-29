@@ -2060,6 +2060,7 @@ projects/CompilationDB/scripts/Makefile
 projects/CompilationDB/examples/demo/Makefile
 projects/CompilationDB/examples/demo/compile_commands.json
 projects/CompilationDB/examples/kripke/Makefile
+projects/CompilationDB/examples/doxygen/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile

@@ -59,11 +59,22 @@ std::string
 DOTRepresentation<NodeType>::graphEnd() {
   return "}\n";
 }
-template<class NodeType>
 
+template <class T>
+T escape_double_quotes(const T & input) {
+  std::string result(input);
+  size_t cur = result.find("\"");
+  while (cur < result.size() && cur != std::string::npos) {
+    result.replace(cur, 1, "\\\"");
+    cur = result.find("\"", cur+2);
+  }
+  return result;
+}
+
+template<class NodeType>
 void 
 DOTRepresentation<NodeType>::addNode(NodeType node, std::string nodelabel, std::string option) {
-  (*dotout) << nodeName(node) << "[label=\"" << nodelabel << "\" " << option << "];" << std::endl;
+  (*dotout) << nodeName(node) << "[label=\"" << escape_double_quotes(nodelabel) << "\" " << option << "];" << std::endl;
 }
 
 template<class NodeType>
