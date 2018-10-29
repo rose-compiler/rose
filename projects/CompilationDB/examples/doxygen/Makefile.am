@@ -69,14 +69,13 @@ $(abs_builddir)/doxygen-build/buildCallGraph.json: $(abs_builddir)/doxygen-build
 	$(MAP_SCRIPT) $(abs_builddir)/doxygen-src $(abs_builddir)/doxygen-build $(abs_top_builddir)/tutorial/buildCallGraph
 
 $(abs_builddir)/doxygen-build/buildCallGraph.html: $(abs_builddir)/doxygen-build/buildCallGraph.json $(RENDER_SCRIPT)
-	$(RENDER_SCRIPT) --report $(abs_builddir)/doxygen-build/buildCallGraph.json --title "Doxygen" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" , "timeout" : "30s" } } ]'
+	$(RENDER_SCRIPT) --report $(abs_builddir)/doxygen-build/buildCallGraph.json --title "Doxygen" --addons '[ { "function" : "graphviz" , "kwargs" : { "title" : "Call Graph" , "filename" : "%d/%fe_callGraph.dot" , "timeout" : "2m" } } ]'
 
 ########
 
 check-local: \
   $(abs_builddir)/doxygen-build/testTranslator.html \
-  $(abs_builddir)/doxygen-build/buildCallGraph.html \
-  $(abs_builddir)/doxygen-build/genInstFlowGraph.html
+  $(abs_builddir)/doxygen-build/buildCallGraph.html
 
 clean-local:
 #	rm -rf $(abs_builddir)/doxygen-src

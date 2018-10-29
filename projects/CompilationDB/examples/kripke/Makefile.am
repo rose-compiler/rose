@@ -96,8 +96,6 @@ check-local: \
   $(abs_builddir)/kripke-openmp/testTranslator.html \
   $(abs_builddir)/kripke-sequential/rajaChecker.html \
   $(abs_builddir)/kripke-openmp/rajaChecker.html \
-  $(abs_builddir)/kripke-sequential/genInstFlowGraph.html \
-  $(abs_builddir)/kripke-openmp/genInstFlowGraph.html \
   $(abs_builddir)/kripke-sequential/buildCallGraph.html \
   $(abs_builddir)/kripke-openmp/buildCallGraph.html
 
