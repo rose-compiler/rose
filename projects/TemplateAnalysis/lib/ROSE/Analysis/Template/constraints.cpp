@@ -56,6 +56,7 @@ InstantiationConstraints::InstantiationConstraints(TemplateInstantiation * from_
 InstantiationConstraints::~InstantiationConstraints() {}
 
 void InstantiationConstraints::construct() {
+#if 0
   std::cerr << "InstantiationConstraints::construct(this = " << std::hex << this << "):" << std::endl;
   std::cerr << " -- from = " << std::hex << from << ": " << from->symbol->get_name().getString() << std::endl;
   std::cerr << "   -- arguments_map.size()  = " << from->arguments_map.size()  << std::endl;
@@ -63,42 +64,46 @@ void InstantiationConstraints::construct() {
   std::cerr << " -- to   = " << std::hex << to   << ": " << to->symbol->get_name().getString()   << std::endl;
   std::cerr << "   -- arguments_map.size()  = " << to->arguments_map.size()  << std::endl;
   std::cerr << "   -- parameters_map.size() = " << to->parameters_map.size() << std::endl;
+#endif
 
   if (to->cannonical != NULL) {
-    std::cerr << " -> Non-type parameters:" << std::endl;
-    assert(to->arguments_map.size() == to->cannonical->parameters_map.size());
-    for (auto it = to->cannonical->nontype_parameters.begin(); it != to->cannonical->nontype_parameters.end(); it++) {
-      size_t pos = it->second.first;
-      std::cerr << "   -- pos = " << pos << std::endl;
-      SgType * t = it->second.second;
-      SgExpression * e = isSgExpression(to->arguments_map[pos]->node);
-      assert(e != NULL);
+//  std::cerr << " -> Non-type parameters:" << std::endl;
+    if (to->arguments_map.size() == to->cannonical->parameters_map.size()) {
+      for (auto it = to->cannonical->nontype_parameters.begin(); it != to->cannonical->nontype_parameters.end(); it++) {
+        size_t pos = it->second.first;
+//      std::cerr << "   -- pos = " << pos << std::endl;
+        SgType * t = it->second.second;
+        SgExpression * e = isSgExpression(to->arguments_map[pos]->node);
+        assert(e != NULL);
 
-      std::vector<SgNonrealRefExp *> nrrefs = SageInterface::querySubTree<SgNonrealRefExp>(e);
-      for (auto it = nrrefs.begin(); it != nrrefs.end(); it++) {
-        SgNonrealSymbol * nrsym = (*it)->get_symbol();
-        assert(nrsym != NULL);
-        std::cerr << "     -- nrsym = " << std::hex << nrsym << " : " << nrsym->get_name() << std::endl;
+        std::vector<SgNonrealRefExp *> nrrefs = SageInterface::querySubTree<SgNonrealRefExp>(e);
+        for (auto it = nrrefs.begin(); it != nrrefs.end(); it++) {
+          SgNonrealSymbol * nrsym = (*it)->get_symbol();
+          assert(nrsym != NULL);
+//        std::cerr << "     -- nrsym = " << std::hex << nrsym << " : " << nrsym->get_name() << std::endl;
 
-        SgNode * parent = (*it)->get_parent();
-        std::cerr << "       -- parent = " << std::hex << parent << " (" << parent->class_name() << ")" << std::endl;
+          SgNode * parent = (*it)->get_parent();
+//        std::cerr << "       -- parent = " << std::hex << parent << " (" << parent->class_name() << ")" << std::endl;
 
-//      SgCastExp * cexp = isSgCastExp((*it)->get_parent());
-//      assert(cexp != NULL);
+//        SgCastExp * cexp = isSgCastExp((*it)->get_parent());
+//        assert(cexp != NULL);
 
-        SgExpression * exp = isSgExpression(parent);
-        ROSE_ASSERT(exp != NULL);
-        SgType * req_type = exp->get_type();
-        assert(req_type != NULL);
+          SgExpression * exp = isSgExpression(parent);
+          ROSE_ASSERT(exp != NULL);
+          SgType * req_type = exp->get_type();
+          assert(req_type != NULL);
 
-        nontype_constraints.insert(std::pair<SgNonrealSymbol *, SgType *>(nrsym, req_type));
+          nontype_constraints.insert(std::pair<SgNonrealSymbol *, SgType *>(nrsym, req_type));
+        }
       }
-    }
-    for (auto it = to->cannonical->type_parameters.begin(); it != to->cannonical->type_parameters.end(); it++) {
-      // TODO I feel like that is the "default" (if neither "nontype" nor "template" then it is "type") also the only constraint I can think of is for the difference (if any) between 'class' and 'typename'
-    }
-    for (auto it = to->cannonical->template_parameters.begin(); it != to->cannonical->template_parameters.end(); it++) {
-      // TODO template constraint include the template header
+      for (auto it = to->cannonical->type_parameters.begin(); it != to->cannonical->type_parameters.end(); it++) {
+        // TODO I feel like that is the "default" (if neither "nontype" nor "template" then it is "type") also the only constraint I can think of is for the difference (if any) between 'class' and 'typename'
+      }
+      for (auto it = to->cannonical->template_parameters.begin(); it != to->cannonical->template_parameters.end(); it++) {
+        // TODO template constraint include the template header
+      }
+    } else {
+      // FIXME ROSE-1465
     }
   }
 }
@@ -134,7 +139,7 @@ std::string InstantiationConstraints::getGraphVizLabel() const {
     if (from->field_constraints.find(nrsym) != from->field_constraints.end()) {
       nrname = from->field_constraints[nrsym].second;
     } else {
-      assert(from->nontype_parameters.find(nrsym) != from->nontype_parameters.end());
+//    assert(from->nontype_parameters.find(nrsym) != from->nontype_parameters.end()); // FIXME ROSE-1465
       nrname = nrsym->get_name();
     }
     oss << "typeof(" << nrname << ") == " << it->second->unparseToString();
@@ -174,6 +179,7 @@ SpecializationConstraints::SpecializationConstraints(NonrealInstantiation * from
 SpecializationConstraints::~SpecializationConstraints() {}
 
 void SpecializationConstraints::construct() {
+#if 0
   std::cerr << "SpecializationConstraints::construct(this = " << std::hex << this << "):" << std::endl;
   std::cerr << " -- from = " << std::hex << from << ": " << from->symbol->get_name().getString() << " (" << from->symbol->class_name() << ")" << std::endl;
   std::cerr << "   -- cannonical = " << from->cannonical << std::endl;
@@ -183,39 +189,45 @@ void SpecializationConstraints::construct() {
   std::cerr << "   -- cannonical = " << to->cannonical << std::endl;
   std::cerr << "   -- arguments_map.size()  = " << to->arguments_map.size()  << std::endl;
   std::cerr << "   -- parameters_map.size() = " << to->parameters_map.size() << std::endl;
+#endif
 
   if (to != to->cannonical) {
-    assert(from->arguments_map.size() == to->arguments_map.size());
+    if (from->arguments_map.size() == to->arguments_map.size()) {
+      for (size_t i = 0; i < from->arguments_map.size(); i++) {
+//      std::cerr << " -- from.args[" << i << "] = " << std::hex << from->arguments_map[i]->node << " (" << from->arguments_map[i]->node->class_name() << ")" << std::endl;
+//      std::cerr << " --   to.args[" << i << "] = " << std::hex <<   to->arguments_map[i]->node << " (" <<   to->arguments_map[i]->node->class_name() << ")" << std::endl;
 
-    for (size_t i = 0; i < from->arguments_map.size(); i++) {
-//    std::cerr << " -- from.args[" << i << "] = " << std::hex << from->arguments_map[i]->node << " (" << from->arguments_map[i]->node->class_name() << ")" << std::endl;
-//    std::cerr << " --   to.args[" << i << "] = " << std::hex <<   to->arguments_map[i]->node << " (" <<   to->arguments_map[i]->node->class_name() << ")" << std::endl;
-
-      assert(from->arguments_kind[i] == to->arguments_kind[i]);
-      switch (from->arguments_kind[i]) {
-        case TemplateRelation::e_type_argument: {
-          SgType * type_from = isSgType(from->arguments_map[i]->node);
-          SgType * type_to   = isSgType(to->arguments_map[i]->node);
-          type_constraints.insert(std::pair<SgType *, SgType *>(type_from, type_to));
-          break;
-        }
-        case TemplateRelation::e_nontype_argument: {
-          SgExpression * expr_from = isSgExpression(from->arguments_map[i]->node);
-          SgExpression * expr_to   = isSgExpression(to->arguments_map[i]->node);
-          value_constraints.insert(std::pair<SgExpression *, SgExpression *>(expr_from, expr_to));
-          break;
-        }
-        case TemplateRelation::e_template_argument: {
-//        assert(false); // TODO
-          break;
-        }
-        case TemplateRelation::e_pack_expansion_argument: {
-          assert(false);
-        }
-        default: {
-          assert(false);
+        if (from->arguments_kind[i] == to->arguments_kind[i]) {
+          switch (from->arguments_kind[i]) {
+            case TemplateRelation::e_type_argument: {
+              SgType * type_from = isSgType(from->arguments_map[i]->node);
+              SgType * type_to   = isSgType(to->arguments_map[i]->node);
+              type_constraints.insert(std::pair<SgType *, SgType *>(type_from, type_to));
+              break;
+            }
+            case TemplateRelation::e_nontype_argument: {
+              SgExpression * expr_from = isSgExpression(from->arguments_map[i]->node);
+              SgExpression * expr_to   = isSgExpression(to->arguments_map[i]->node);
+              value_constraints.insert(std::pair<SgExpression *, SgExpression *>(expr_from, expr_to));
+              break;
+            }
+            case TemplateRelation::e_template_argument: {
+//            assert(false); // TODO
+              break;
+            }
+            case TemplateRelation::e_pack_expansion_argument: {
+              assert(false);
+            }
+            default: {
+              assert(false);
+            }
+          }
+        } else {
+          // FIXME ROSE-1465
         }
       }
+    } else {
+      // FIXME ROSE-1465
     }
   } else {
     // FIXME I don't think it creates any constraint as it is the default...

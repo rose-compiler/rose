@@ -35,6 +35,11 @@ void getPotentialFields(SgNonrealSymbol * sym, std::string prefix, std::map<SgNo
   SgSymbol * nrsym_ = nrscope->first_any_symbol();
   while (nrsym_ != NULL) {
     SgNonrealSymbol * nrsym = isSgNonrealSymbol(nrsym_);
+    if (nrsym == NULL) {
+      std::cerr << "ERROR: getPotentialFields(...) nrsym_ = " << std::hex << nrsym_ << " (" << nrsym_->class_name() << "): " << nrsym_->get_name().getString() << ": non-real symbol was expected!" << std::endl;
+      nrsym_ = nrscope->next_any_symbol();
+      continue; // FIXME ROSE‌-1465
+    }
     assert(nrsym != NULL);
 
     getPotentialFields(nrsym, name, results);
@@ -192,16 +197,22 @@ void Instantiation::construct() {
 
         SgSymbol * tsym = tdecl->search_for_symbol_from_symbol_table();
         assert(tsym != NULL);
-        std::cerr << tsym->class_name() << std::endl;
         SgNonrealSymbol * nrsym = isSgNonrealSymbol(tsym);
         SgTemplateClassSymbol * tcsym = isSgTemplateClassSymbol(tsym);
-        assert(tcsym != NULL || nrsym != NULL);
+        SgTemplateTypedefSymbol * ttdsym = isSgTemplateTypedefSymbol(tsym);
+        if (tcsym == NULL && nrsym == NULL && ttdsym == NULL) {
+          std::cerr << "FATAL: Instantiation::construct(...) tsym = " << std::hex << tsym << " (" << tsym->class_name() << "): " << tsym->get_name().getString() << ": non-real symbol or template class symbol or template typedef symbol was expected!" << std::endl;
+        }
+        assert(tcsym != NULL || nrsym != NULL || ttdsym != NULL);
 
         Element * e = NULL;
         if (nrsym != NULL)
           e = TemplateElement::build(nrsym);
-        else
+        else if (tcsym != NULL)
           e = TemplateInstantiation::build(tcsym);
+        else {
+          e = TemplateInstantiation::build(ttdsym); // FIXME ROSE-1465 
+        }
 
         template_arguments.insert(std::pair<SgSymbol *, template_arg_info_t>(tsym, template_arg_info_t(i, NULL)));
 
@@ -211,8 +222,7 @@ void Instantiation::construct() {
         break;
       }
       case SgTemplateArgument::start_of_pack_expansion_argument: {
-        assert(false); // TODO
-        break;
+        break; // FIXME ROSE-1465
       }
       case SgTemplateArgument::argument_undefined: {
         assert(false);
@@ -241,27 +251,39 @@ void TemplateInstantiation::construct() {
       template_parameters.find(sym) == template_parameters.end()
     ) {
       SgNonrealSymbol * nrsym = isSgNonrealSymbol(sym);
+      if (nrsym == NULL) {
+        std::cerr << "ERROR: TemplateInstantiation::construct(...) sym = " << std::hex << sym << " (" << sym->class_name() << "): " << sym->get_name().getString() << ": non-real symbol was expected!" << std::endl;
+        sym = nonreal_scope->next_any_symbol();
+        continue; // FIXME ROSE‌-1465
+      }
       assert(nrsym != NULL);
 
       SgNonrealDecl * nrdecl = nrsym->get_declaration();
       assert(nrdecl != NULL);
 
-      instantiations.insert(NonrealInstantiation::build(nrsym));
+      if (nrdecl->get_is_class_member() || nrdecl->get_is_template_param() || nrdecl->get_is_template_template_param() || nrdecl->get_is_nonreal_template()) {
+        std::cerr << "ERROR: TemplateInstantiation::construct(...) nrsym = " << std::hex << nrsym << " (" << nrsym->class_name() << "): " << nrsym->get_name().getString() << ": building TemplateElement!" << std::endl;
+        TemplateElement * e = TemplateElement::build(nrsym); // FIXME ROSE-1465
+      } else {
+     // std::cout << "DEBUG: TemplateInstantiation::construct(...) nrsym = " << std::hex << nrsym << " (" << nrsym->class_name() << "): " << nrsym->get_name().getString() << ": building NonrealInstantiation!" << std::endl;
+        instantiations.insert(NonrealInstantiation::build(nrsym));
+      }
     }
 
     sym = nonreal_scope->next_any_symbol();
   }
 
   SgClassSymbol * csym = isSgClassSymbol(symbol);
-  assert(csym != NULL);
-  SgClassDeclaration * xdecl = isSgClassDeclaration(csym->get_declaration());
-  assert(xdecl != NULL);
-  SgDeclarationStatement * decl = xdecl->get_definingDeclaration();
-  if (decl != NULL) {
-    xdecl = isSgClassDeclaration(decl);
+  if (csym != NULL) {
+    SgClassDeclaration * xdecl = isSgClassDeclaration(csym->get_declaration());
     assert(xdecl != NULL);
-    assert(xdecl->get_definition() != NULL);
-    is_defined = true;
+    SgDeclarationStatement * decl = xdecl->get_definingDeclaration();
+    if (decl != NULL) {
+      xdecl = isSgClassDeclaration(decl);
+      assert(xdecl != NULL);
+      assert(xdecl->get_definition() != NULL);
+      is_defined = true;
+    }
   }
 }
 
@@ -290,6 +312,8 @@ NonrealInstantiation::NonrealInstantiation(SgSymbol * symbol__) :
   Instantiation(symbol__)
 {}
 
+std::string NonrealInstantiation::getKind() const { return "NonrealInstantiation"; }
+
 TemplateInstantiation::TemplateInstantiation(SgSymbol * symbol__) :
   Instantiation(symbol__),
   specializations(),
@@ -298,6 +322,8 @@ TemplateInstantiation::TemplateInstantiation(SgSymbol * symbol__) :
 {
   specializations.push_back(std::set<TemplateInstantiation *>());
 }
+
+std::string TemplateInstantiation::getKind() const { return "TemplateInstantiation"; }
 
 ////
 
@@ -311,7 +337,7 @@ NonrealInstantiation * NonrealInstantiation::build(SgSymbol * symbol) {
   } else {
     result = dynamic_cast<NonrealInstantiation*>(all[symbol]);
     if (result == NULL) {
-      std::cerr << "FATAL: NonrealInstantiation::build(...) with symbol = " << std::hex << symbol << " (" << symbol->class_name() << "): " << symbol->get_name().getString() << ": Another kind of element already exists for this symbol!" << std::endl;
+      std::cerr << "FATAL: NonrealInstantiation::build(...) with symbol = " << std::hex << symbol << " (" << symbol->class_name() << "): " << symbol->get_name().getString() << ": A " << all[symbol]->getKind() << " already exists for this symbol!" << std::endl;
     }
     assert(result != NULL);
   }

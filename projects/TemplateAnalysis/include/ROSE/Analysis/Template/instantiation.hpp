@@ -58,6 +58,8 @@ class Instantiation : public Element {
   public:
     Instantiation(SgSymbol * sym);
     virtual ~Instantiation();
+
+    virtual std::string getKind() const = 0;
     
     void construct();
     virtual void finalize();
@@ -93,6 +95,8 @@ class NonrealInstantiation : public Instantiation {
 
   protected:
     NonrealInstantiation(SgSymbol * symbol__);
+
+    virtual std::string getKind() const;
     
     void construct();
     virtual void finalize();
@@ -136,6 +140,8 @@ class TemplateInstantiation : public Instantiation {
 
   protected:
     TemplateInstantiation(SgSymbol * symbol__);
+
+    virtual std::string getKind() const;
     
     void construct();
     virtual void finalize();

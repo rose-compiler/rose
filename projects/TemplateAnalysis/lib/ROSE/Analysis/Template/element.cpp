@@ -58,6 +58,8 @@ TemplateElement::TemplateElement(SgNode * node__) :
 
 TemplateElement::~TemplateElement() {}
 
+std::string TemplateElement::getKind() const { return "TemplateElement"; }
+
 void TemplateElement::construct() {
   if (isSgType(node)) {
     SgNamedType *     ntype = isSgNamedType(node);
@@ -83,9 +85,11 @@ void TemplateElement::construct() {
         SgNonrealDecl * nrdecl = nrsym->get_declaration();
         assert(nrdecl != NULL);
 
-        if (nrdecl->get_is_template_param() || nrdecl->get_is_class_member()) {
+        if (nrdecl->get_is_class_member() || nrdecl->get_is_template_param() || nrdecl->get_is_template_template_param() || nrdecl->get_is_nonreal_template()) {
+       // std::cout << "DEBUG: TemplateElement::construct(...) nrsym = " << std::hex << nrsym << " (" << nrsym->class_name() << "): " << nrsym->get_name().getString() << ": building TemplateElement!" << std::endl;
           e = TemplateElement::build(nrsym);
         } else {
+       // std::cout << "DEBUG: TemplateElement::construct(...) nrsym = " << std::hex << nrsym << " (" << nrsym->class_name() << "): " << nrsym->get_name().getString() << ": building NonrealInstantiation!" << std::endl;
           e = NonrealInstantiation::build(nrsym);
         }
       } else {

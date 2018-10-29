@@ -13,7 +13,7 @@
 namespace MFB {
 
 bool ignore(const std::string & name) {
-  return name.find("__builtin") == 0 || name.find("__frontend_specific_variable_to_provide_header_file_path") == 0;
+  return name == "" || name.find("__builtin") == 0 || name.find("__frontend_specific_variable_to_provide_header_file_path") == 0;
 }
 
 bool ignore(SgScopeStatement * scope) {

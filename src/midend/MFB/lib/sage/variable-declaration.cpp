@@ -79,14 +79,34 @@ void  Driver<Sage>::loadSymbols<SgVariableDeclaration>(size_t file_id, SgSourceF
     ROSE_ASSERT(scope != NULL);
     if (ignore(scope)) continue;
 
+    if (init_name->get_name().getString() == "") {
+#if VERBOSE
+      std::cout << "[Debug] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) SgInitializedName with empty name!" << std::endl;
+      std::cout << "[Debug] Parents: " << std::endl;
+      SgNode * p = init_name->get_parent();
+      while (p != NULL && !isSgFile(p)) {
+        std::cout << "[Debug]  - " << std::hex << p << " (" << p->class_name() << ")" << std::endl;
+        p = p->get_parent();
+      }
+#endif
+      continue; // FIXME ROSE‌-1465
+    }
+
     if (ignore(init_name->get_name().getString())) continue;
 
     SgVariableSymbol * variable_sym = NULL;
     if (tplvar_decl == NULL) {
       variable_sym = SageInterface::lookupVariableSymbolInParentScopes(init_name->get_name(), scope);
+      if (variable_sym == NULL) {
+        std::cerr << "[Error] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) Not found: " << init_name->get_name().getString() << std::endl;
+      }
       ROSE_ASSERT(variable_sym != NULL);
     } else {
       variable_sym = SageInterface::lookupTemplateVariableSymbolInParentScopes(init_name->get_name(), &(tplvar_decl->get_templateParameters()), &(tplvar_decl->get_templateSpecializationArguments()), scope);
+      if (variable_sym == NULL) {
+        std::cerr << "[Error] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) Not found: " << init_name->get_name().getString() << " (templated variable)" << std::endl;
+        continue;  // FIXME ROSE‌-1465
+      }
       ROSE_ASSERT(variable_sym != NULL);
       ROSE_ASSERT(isSgTemplateVariableSymbol(variable_sym));
     }

@@ -38,6 +38,8 @@ class Element {
   public:
     virtual ~Element();
 
+    virtual std::string getKind() const = 0;
+
   protected:
     virtual void finalize() = 0;
 
@@ -78,6 +80,8 @@ class TemplateElement : public Element {
 
   public:
     virtual ~TemplateElement();
+
+    virtual std::string getKind() const;
 
   protected:
     void construct();
