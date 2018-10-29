@@ -708,7 +708,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
             if (pathInsnIndex != size_t(-1))
                 ops->pathInsnIndex(pathInsnIndex++);
-            SAWYER_MESG(debug) <<"        " <<insn->toString() <<"\n";
+            SAWYER_MESG(debug) <<"        processing insn " <<insn->toString() <<"\n";
             cpu->processInstruction(insn);
         }
     } catch (const BaseSemantics::Exception &e) {

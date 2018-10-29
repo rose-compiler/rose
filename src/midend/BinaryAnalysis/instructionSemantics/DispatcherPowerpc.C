@@ -704,6 +704,15 @@ struct IP_lwzu: P {
     }
 };
 
+// Move condition register field
+struct IP_mcrf: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr value = d->read(args[1], 4);
+        d->write(args[0], value);
+    }
+};
+
 // Move from condition register
 struct IP_mfcr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1191,6 +1200,7 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_lwz,              new Powerpc::IP_move);
     iproc_set(powerpc_lwzu,             new Powerpc::IP_lwzu);
     iproc_set(powerpc_lwzx,             new Powerpc::IP_move);
+    iproc_set(powerpc_mcrf,             new Powerpc::IP_mcrf);
     iproc_set(powerpc_mfcr,             new Powerpc::IP_mfcr);
     iproc_set(powerpc_mfspr,            new Powerpc::IP_move);
     iproc_set(powerpc_mtcrf,            new Powerpc::IP_mtcrf);
