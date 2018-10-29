@@ -452,11 +452,16 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
                     {
                         SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration(*it_cls_mb);
 
+                     // TV (10/26/2018): cannot expect that all class members would be methods FIXME ROSE-1487
+                        if (cls_mb_decl == NULL) continue;
+
                         if (is_functions_types_equal(isSgMemberFunctionType(memberFunctionDeclaration->get_type()), isSgMemberFunctionType(cls_mb_decl->get_type())))
                         {
                             SgMemberFunctionDeclaration *nonDefDecl = isSgMemberFunctionDeclaration(cls_mb_decl->get_firstNondefiningDeclaration());
                             SgMemberFunctionDeclaration *defDecl = isSgMemberFunctionDeclaration(cls_mb_decl->get_definingDeclaration());
-                            ROSE_ASSERT((!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl));
+
+                         // TV (10/26/2018): this case happens in Doxygen, not sure it is valid... FIXME ROSE-1487
+                         // ROSE_ASSERT((!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl));
 
                             if (nonDefDecl)
                             {
@@ -776,6 +781,11 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                     ROSE_ASSERT(crtClass != NULL);
                 }
 
+                if (crtClass == NULL) {
+               // TV (10/26/2018) : I have leftType = SgFunctionType which make sense: when was buildCallGraph tested last!!
+                  break; // FIXME ROSE-1487
+                }
+
                 memberFunctionDeclaration =
                     isSgMemberFunctionDeclaration(memberFunctionRefExp->get_symbol()->get_declaration());
                 ROSE_ASSERT(memberFunctionDeclaration && crtClass);
@@ -862,6 +872,9 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             while (isSgTypedefType(type))
                 type = isSgTypedefType(type)->get_base_type();
             SgPointerType *functionPointerType = isSgPointerType(type);
+
+            if (functionPointerType == NULL) break; // FIXME ROSE-1487
+
             assert(functionPointerType!=NULL);
             SgFunctionType *fctType = isSgFunctionType(functionPointerType->findBaseType());
             assert(fctType!=NULL);
@@ -871,6 +884,10 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             functionList.insert(functionList.end(), matches.begin(), matches.end());
             break;
         }
+
+        case V_SgPntrArrRefExp:
+        case V_SgCastExp:
+             break; // FIXME ROSE-1487
 
         default: {
             cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
