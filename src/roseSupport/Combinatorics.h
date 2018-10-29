@@ -288,13 +288,13 @@ typedef HasherGcrypt<GCRY_MD_SHA256> HasherSha256;      /**< SHA-256 hasher. Thr
 typedef HasherGcrypt<GCRY_MD_SHA384> HasherSha384;      /**< SHA-384 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<GCRY_MD_SHA512> HasherSha512;      /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<GCRY_MD_CRC32> HasherCrc32;        /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
-#else
-typedef HasherGcrypt<0> HasherMd5;                      // the template argument is arbitrary and they can all be the same
-typedef HasherGcrypt<0> HasherSha1;
-typedef HasherGcrypt<0> HasherSha256;
-typedef HasherGcrypt<0> HasherSha384;
-typedef HasherGcrypt<0> HasherSha512;
-typedef HasherGcrypt<0> HasherCrc32;
+#else // the template argument for the following unimplemented hashers is arbitrary and they can all be the same
+typedef HasherGcrypt<0> HasherMd5;                      /**< MD5 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha1;                     /**< SHA1 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha256;                   /**< SHA-256 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha384;                   /**< SHA-384 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha512;                   /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherCrc32;                    /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
 #endif
 
 /** Fowler-Noll-Vo hashing using the Hasher interface. */
