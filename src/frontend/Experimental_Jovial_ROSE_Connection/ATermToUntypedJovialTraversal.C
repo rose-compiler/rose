@@ -275,6 +275,162 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineDefinitionList(ATerm te
    return ATtrue;
 }
 
+#if NEEDTOFIX
+//Traversing these always cause a seg fault or a bus error
+//when finishing up the traversal after traversing
+//the last aterm (traverse_NonNestedSubroutineList)
+//========================================================================================
+// 1.4 IMPLEMENTATION PARAMETERS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerMachineParameter(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntegerMachineParameter: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
+   SgUntypedExpression *precision, *scale_spec, *frac_spec, *formula;
+
+   if (ATmatch(term, "BITSINBYTE")) {
+      // MATCHED BITSINBYTE
+   }
+   else if (ATmatch(term, "BITSINWORD")) {
+      // MATCHED BITSINWORD
+   }
+   else if (ATmatch(term, "LOCSINWORD")) {
+      // MATCHED LOCSINWORD
+   }
+   else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
+      // MATCHED BYTEPOS
+      if (traverse_NumericFormula(t_formula, &formula)) {
+         // MATCHED CompileTimeNumericFormula
+      } else return ATfalse;
+   }
+
+   //TODO: 'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
+   //      'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
+   //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
+   //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
+   //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
+   //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
+
+
+   else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
+      // MATCHED IMPLFLOATPRECISION
+      if (traverse_NumericFormula(t_precision, &precision)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+      // MATCHED IMPLFIXEDPRECISION
+      if (traverse_NumericFormula(t_scale_spec, &scale_spec)) {
+         // MATCHED ScaleSpecifier
+      } else return ATfalse;
+      if (traverse_NumericFormula(t_frac_spec, &frac_spec)) {
+         // MATCHED FractionSpecifier
+      } else return ATfalse;
+   }
+
+   //TODO:
+   //  'IMPLINTSIZE' '(' IntegerSize ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
+   //  'MAXFLOATPRECISION'                 -> IntegerMachineParameter {cons("MAXFLOATPRECISION")}
+   //  'MAXFIXEDPRECISION'                 -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
+   //  'MAXINTSIZE'                        -> IntegerMachineParameter {cons("MAXINTSIZE")}
+   //  'MAXBYTES'                          -> IntegerMachineParameter {cons("MAXBYTES")}
+   //  'MAXBITS'                           -> IntegerMachineParameter {cons("MAXBITS")}
+   //  'MAXINT'      '(' IntegerSize ')'   -> IntegerMachineParameter {cons("MAXINT")}
+   //  'MININT'      '(' IntegerSize ')'   -> IntegerMachineParameter {cons("MININT")}
+   //  'MAXTABLESIZE'                      -> IntegerMachineParameter {cons("MAXTABLESIZE")}
+   //  'MAXSTOP'                           -> IntegerMachineParameter {cons("MAXSTOP")}
+   //  'MINSTOP'                           -> IntegerMachineParameter {cons("MINSTOP")}
+   //  'MAXSIGNDIGITS'                     -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
+   //  'MINSIZE'
+   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINSIZE")}
+   //  'MINFRACTION'
+   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINFRACTION")}
+   //  'MINSCALE'
+   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINSCALE")}
+   //  'MINRELPRECISION'
+   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINRELPRECISION")}
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FloatingMachineParameter: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_precision;
+   SgUntypedExpression* precision;
+
+   if (ATmatch(term, "MAXFLOAT(<term>)", &t_precision)) {
+      // MATCHED MAXFLOAT
+      if (traverse_NumericFormula(t_precision, &precision)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "MINFLOAT(<term>)", &t_precision)) {
+      // MATCHED MINFLOAT
+      if (traverse_NumericFormula(t_precision, &precision)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "FLOATRELPRECISION(<term>)", &t_precision)) {
+      // MATCHED FLOATRELPRECISION
+      if (traverse_NumericFormula(t_precision, &precision)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "FLOATUNDERFLOW(<term>)", &t_precision)) {
+      // MATCHED FLOATUNDERFLOW
+      if (traverse_NumericFormula(t_precision, &precision)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FixedMachineParameter(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FixedMachineParameter: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_scale_spec, t_frac_spec;
+   SgUntypedExpression *scale_spec, *frac_spec;
+
+   if (ATmatch(term, "MAXFIXED(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+      // MATCHED MAXFIXED
+      if (traverse_NumericFormula(t_scale_spec, &scale_spec)) {
+         // MATCHED ScaleSpecifier
+      } else return ATfalse;
+      if (traverse_NumericFormula(t_frac_spec, &frac_spec)) {
+         // MATCHED FractionSpecifier
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "MINFIXED(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+      // MATCHED MINFIXED
+      if (traverse_NumericFormula(t_scale_spec, &scale_spec)) {
+         // MATCHED ScaleSpecifier
+      } else return ATfalse;
+      if (traverse_NumericFormula(t_frac_spec, &frac_spec)) {
+         // MATCHED FractionSpecifier
+      } else return ATfalse;
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+#endif
+
 //========================================================================================
 // 2.1 DATA DECLARATIONS
 //----------------------------------------------------------------------------------------
@@ -361,6 +517,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    printf("... traverse_ItemTypeDescription: %s\n", ATwriteToString(term));
 #endif
 
+   std::string name;
+
    if (traverse_IntegerItemDescription(term, type, attr_list)) {
       // MATCHED IntegerItemDescription
    }
@@ -381,6 +539,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    }
    else if (traverse_PointerItemDescription(term, type)) {
       // MATCHED PointerItemDescription
+   }
+   else if (traverse_ItemTypeName(term, name)) {
+      // MATCHED ItemTypeName
    }
    else return ATfalse;
 
@@ -495,7 +656,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
       }
    } else return ATfalse;
 
-   if (traverse_FloatingFormula(t_precision, &precision)) {
+   if (traverse_NumericFormula(t_precision, &precision)) {
       (*type)->set_has_kind(true);
       (*type)->set_type_kind(precision);
    } else return ATfalse;
@@ -592,8 +753,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_FractionSpecifier(ATerm term, SgU
    *fraction = NULL;
 
    if (ATmatch(term, "FractionSpecifier(<term>)", &t_fraction)) {
-      if (traverse_FixedFormula(t_fraction, fraction)) {
-        // MATCHED FixedFormula
+      if (traverse_NumericFormula(t_fraction, fraction)) {
+        // MATCHED FixedFormula through NumericFormula
       } else return ATfalse;
    }
    else return ATfalse;
@@ -788,7 +949,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptDefaultSublist(ATerm term)
          std::cout << "Matched no-default-sublist" << endl;
       } else if (traverse_DefaultSublist(t_sublist)) {
          // MATCHED DefaultSublist
-      }
+      } else return ATfalse;
    } else return ATfalse;
 
    return ATtrue;
@@ -1186,6 +1347,23 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term
       attr_list->get_expressions().push_back(attr);
    }
    else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.2 TYPE DECLARATIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeName(ATerm term, std::string & name)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ItemTypeName: %s\n", ATwriteToString(term));
+#endif
+
+   char* str;
+   if (ATmatch(term, "ItemTypeName(<str>)", &str)) {
+      name = str;
+   } else return ATfalse;
 
    return ATtrue;
 }
@@ -2236,12 +2414,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpr
       // MATCHED NumericFormula
    } else if (traverse_BitFormula(term, expr)) {
       // MATCHED BitFormula
-   } else if (traverse_CharacterFormula(term, expr)) {
-      // MATCHED CharacterFormula
-   } else if (traverse_StatusFormula(term, expr)) {
-      // MATCHED StatusFormula
-   } else if (traverse_PointerFormula(term, expr)) {
-      // MATCHED PointerFormula
+   } else if (traverse_GeneralFormula(term, expr)) {
+      // MATCHED GeneralFormula
    } else return ATfalse;
 
    //  TableFormula                -> Formula
@@ -2313,86 +2487,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericFormula(ATerm term, SgUnty
    return ATtrue;
 }
 
-//========================================================================================
-// 5.1.1 INTEGER FORMULAS
-//----------------------------------------------------------------------------------------
-#if DELETE_ME
-ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_IntegerFormula: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
-
-   if (ATmatch(term, "IntegerFormula(<term>,<term>)", &t_sign,&t_expr)) {
-      General_Language_Translation::ExpressionKind op_enum;
-
-      // OptSign IntegerTerm -> IntegerFormula
-
-      if (traverse_OptSign(t_sign, op_enum)) {
-         // MATCHED OptSign
-      } else return ATfalse;
-
-      if (traverse_IntegerTerm(t_expr, expr)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      if (op_enum == General_Language_Translation::e_operator_unary_minus) {
-        *expr = new SgUntypedUnaryOperator(op_enum, "-", *expr);
-        setSourcePosition(*expr, t_sign);
-      }
-      else if (op_enum == General_Language_Translation::e_operator_unary_plus) {
-        *expr = new SgUntypedUnaryOperator(op_enum, "+", *expr);
-        setSourcePosition(*expr, t_sign);
-      }
-   }
-
-   else if (ATmatch(term, "IntegerFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-
-      // IntegerFormula PlusOrMinus NumericTerm -> IntegerFormula
-
-      std::string op_name;
-      General_Language_Translation::ExpressionKind op_enum;
-      SgUntypedExpression * lhs, * rhs;
-
-      if (traverse_IntegerFormula(t_lhs, &lhs)) {
-         // MATCHED IntegerFormula
-      } else return ATfalse;
-
-      if (ATmatch(t_op, "PLUS()")) {
-         op_enum = General_Language_Translation::e_operator_add;
-         op_name = "+";
-      }
-      else if (ATmatch(t_op, "MINUS()")) {
-         op_enum = General_Language_Translation::e_operator_subtract;
-         op_name = "-";
-      } else return ATfalse;
-
-      if (traverse_IntegerTerm(t_rhs, &rhs)) {
-         // MATCHED IntegerTerm
-      } else return ATfalse;
-
-      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      setSourcePosition(*expr, term);
-   }
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-#endif
-
 ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NumericPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_table_item;
+   ATerm t_table_item, t_formula, t_factor, t_num_term, t_conversion;
    char *literal, *name, *variable;
    SgUntypedType* type;
-   SgUntypedExpression* table_item;
+   SgUntypedExpression *table_item, *conv, *num_term, *factor;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
    if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
@@ -2401,6 +2505,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       *expr = new SgUntypedValueExpression(expr_enum,literal,type);
       setSourcePosition(*expr, term);
    }
+
+   else if (traverse_FixedOrFloatingLiteral(term, expr)) {
+         //FixedOrFloatingLiteral
+   }
+
+#if NEEDTOFIXPARAMETERS
+   else if (traverse_NumericMachineParameter(term, expr)) {
+      // MATCHED NumericMachineParameter
+   }
+#endif
 
    // NumericMachineParameter -> NumericPrimary
 
@@ -2410,10 +2524,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       setSourcePosition(*expr, term);
    }
 
-   else if (ATmatch(term, "IntegerVariable(<term>)", &t_table_item)) {
+   else if (ATmatch(term, "NumericVariable(<term>)", &t_table_item)) {
       if (traverse_TableItem(t_table_item, &table_item)){
          //MATCHED TableItem
-      }
+      } else return ATfalse;
       //      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
       //      *expr = new SgUntypedReferenceExpression(expr_enum, table_item);
       //      setSourcePosition(*expr, term);
@@ -2423,70 +2537,45 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
       *expr = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(*expr, term);
-   } else return ATfalse;
+   }
 
-   //  NamedIntegerConstant        -> NumericPrimary
+   else if (ATmatch(term, "NumericPrimary(<term>)", &t_formula)) {
+      if (traverse_NumericFormula(t_formula, expr)) {
+         //  '(' NumericFormula ')'      -> NumericPrimary         {cons("NumericPrimary")}
+      } else return ATfalse;
+   }
+
+   else if (ATmatch(term, "NumericPrimary(<term>,<term>)", &t_conversion, &t_formula)) {
+      if (traverse_IntegerConversion(t_conversion, &conv)) {
+         //  IntegerConversion '(' Formula ')' -> IntegerPrimary  {cons("IntegerPrimary")}
+         // MATCHED IntegerConversion
+      } else if (traverse_FloatingConversion(t_conversion, &conv)) {
+         // MATCHED FloatingConversion
+      } else if (traverse_FixedConversion(t_conversion, &conv)) {
+         // MATCHED FixedConversion
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, expr)) {
+         // MATCHED Formula
+      } else return ATfalse;
+
+   }
+
+   else if (ATmatch(term, "NumericPrimary(<term>,<term>,<term>)", &t_conversion, &t_num_term, &t_factor)) {
+      if (traverse_FixedConversion(t_conversion, &conv)) {
+      } else return ATfalse;
+      if (traverse_NumericTerm(t_num_term, &num_term)) {
+      } else return ATfalse;
+      if (traverse_NumericFactor(t_factor, &factor)) {
+      } else return ATfalse;
+   }
+
+   else return ATfalse;
+
    //  IntegerFunctionCall         -> NumericPrimary
-   //  '(' IntegerFormula ')'      -> NumericPrimary         {cons("NumericPrimary")}
-   //  IntegerConversion
-   //    '(' Formula ')'           -> NumericPrimary         {cons("IntegerPrimary")}
 
    return ATtrue;
 }
-
-#if DELETE_ME
-ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_IntegerPrimary: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_table_item;
-   char *literal, *name, *variable;
-   SgUntypedType* type;
-   SgUntypedExpression* table_item;
-   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-
-   if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
-      type = UntypedBuilder::buildType(SgUntypedType::e_int);
-      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      setSourcePosition(*expr, term);
-      std::cout << "INTEGER LITERAL is " << literal << " type (not deleted) is " << type << "\n";
-   }
-
-   //  IntegerMachineParameter     -> IntegerPrimary
-
-   else if (ATmatch(term, "IntegerVariable(<str>)", &variable)) {
-      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      *expr = new SgUntypedReferenceExpression(expr_enum, variable);
-      setSourcePosition(*expr, term);
-   }
-
-   else if (ATmatch(term, "IntegerVariable(<term>)", &t_table_item)) {
-      if (traverse_TableItem(t_table_item, &table_item)){
-         //MATCHED TableItem
-      }
-      //      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      //      *expr = new SgUntypedReferenceExpression(expr_enum, table_item);
-      //      setSourcePosition(*expr, term);
-   }
-
-   else if (ATmatch(term, "<str>" , &name)) {
-      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      *expr = new SgUntypedReferenceExpression(expr_enum, name);
-      setSourcePosition(*expr, term);
-   } else return ATfalse;
-
-   //  NamedIntegerConstant        -> IntegerPrimary
-   //  IntegerFunctionCall         -> IntegerPrimary
-   //  '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
-   //  IntegerConversion
-   //    '(' Formula ')'           -> IntegerPrimary         {cons("IntegerPrimary")}
-
-   return ATtrue;
-}
-#endif
 
 ATbool ATermToUntypedJovialTraversal::traverse_OptSign(ATerm term, General_Language_Translation::ExpressionKind & op_enum)
 {
@@ -2529,7 +2618,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericTerm(ATerm term, SgUntyped
       } else return ATfalse;
 
       if (traverse_NumericFactor(t_rhs, &rhs)) {
-         // MATCHED NumericTerm
+         // MATCHED NumericFactor
       } else return ATfalse;
 
       *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
@@ -2543,53 +2632,38 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericTerm(ATerm term, SgUntyped
    return ATtrue;
 }
 
-#if DELETE_ME
-ATbool ATermToUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_IntegerTerm: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_lhs, t_op, t_rhs;
-   std::string op_name;
-   General_Language_Translation::ExpressionKind op_enum;
-   SgUntypedExpression * lhs, * rhs;
-
-   if (ATmatch(term, "NumericTerm(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-      if (traverse_NumericTerm(t_lhs, &lhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      if (traverse_MultiplyDivideOrMod(t_op, op_enum, op_name)) {
-         // MATCHED MultiplyDivideOrMod
-      } else return ATfalse;
-
-      if (traverse_IntegerFactor(t_rhs, &rhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      setSourcePosition(*expr, term);
-   }
-   else if (traverse_IntegerFactor(term, expr)) {
-         // MATCHED IntegerFactor
-   }
-   else return ATfalse;
-
-   return ATtrue;
-}
-#endif
-
 ATbool ATermToUntypedJovialTraversal::traverse_NumericFactor(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NumericFactor: %s\n", ATwriteToString(term));
 #endif
 
+   // NEED TO DECIDE: whether to use this or use traverse_ExponentiationOp
+   // or use both
+
+   if (traverse_NumericPrimary(term, expr)) {
+      // MATCHED NumericPrimary
+   } else if (traverse_ExponentiationOp(term, expr)) {
+         // MATCHED ExponentiationOp
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_ExponentiationOp(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ExponentiationOp: %s\n", ATwriteToString(term));
+#endif
+
    ATerm t_lhs, t_rhs;
    SgUntypedExpression * lhs, * rhs;
+   General_Language_Translation::ExpressionKind op_enum;
+   std::string op_name;
 
-   if (ATmatch(term, "NumericFactor(<term>,<term>)", &t_lhs,&t_rhs)) {
+   if (ATmatch(term, "ExponentiationOp(<term>,<term>)", &t_lhs,&t_rhs)) {
       if (traverse_NumericFactor(t_lhs, &lhs)) {
          // MATCHED NumericFactor
       } else return ATfalse;
@@ -2598,44 +2672,31 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericFactor(ATerm term, SgUntyp
          // MATCHED NumericPrimary
       } else return ATfalse;
 
-      // TODO - create the expression
-      // expr = new SgUntypedExpression()
+      op_enum = General_Language_Translation::e_operator_exponentiate;
+      op_name = "**";
+      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
+      setSourcePosition(*expr, term);
    }
 
-   else if (traverse_NumericPrimary(term, expr)) {
+   //   else if (traverse_NumericPrimary(term, expr)) {
       // MATCHED NumericPrimary
-   }
+   //   }
 
    else return ATfalse;
 
    return ATtrue;
 }
 
-#if DELETE_ME
-ATbool ATermToUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntypedExpression** expr)
+#if NEEDTOFIXPARAMETERS
+ATbool ATermToUntypedJovialTraversal::traverse_NumericMachineParameter(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_IntegerFactor: %s\n", ATwriteToString(term));
+   printf("... traverse_NumericMachineParameter: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_lhs, t_rhs;
-   SgUntypedExpression * lhs, * rhs;
-
-   if (ATmatch(term, "IntegerFactor(<term>,<term>)", &t_lhs,&t_rhs)) {
-      if (traverse_IntegerFactor(t_lhs, &lhs)) {
-         // MATCHED IntegerFactor
-      } else return ATfalse;
-
-      if (traverse_IntegerPrimary(t_rhs, &rhs)) {
-         // MATCHED IntegerPrimary
-      } else return ATfalse;
-
-      // TODO - create the expression
-      // expr = new SgUntypedExpression()
-   }
-
-   else if (traverse_IntegerPrimary(term, expr)) {
-      // MATCHED IntegerPrimary
+   if (traverse_IntegerMachineParameter(term, expr)) {
+   } else if (traverse_FloatingMachineParameter(term, expr)) {
+   } else if (traverse_FixedMachineParameter(term, expr)) {
    }
 
    else return ATfalse;
@@ -2643,284 +2704,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntyp
    return ATtrue;
 }
 #endif
-
-//========================================================================================
-// 5.1.2 FLOATING FORMULAS
-//----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingFormula(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingFormula: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_sign, t_expr;
-#if 0
-   ATerm t_lhs, t_op, t_rhs;
-#endif
-
-   if (ATmatch(term, "FloatingFormula(<term>,<term>)", &t_sign,&t_expr)) {
-      General_Language_Translation::ExpressionKind op_enum;
-
-      // OptSign FloatingTerm -> FloatingFormula
-
-      if (traverse_OptSign(t_sign, op_enum)) {
-         // MATCHED OptSign
-      } else return ATfalse;
-
-      if (traverse_FloatingTerm(t_expr, expr)) {
-         // MATCHED FloatingTerm
-      } else return ATfalse;
-
-      if (op_enum == General_Language_Translation::e_operator_unary_minus) {
-        *expr = new SgUntypedUnaryOperator(op_enum, "-", *expr);
-        setSourcePosition(*expr, t_sign);
-      }
-      else if (op_enum == General_Language_Translation::e_operator_unary_plus) {
-        *expr = new SgUntypedUnaryOperator(op_enum, "+", *expr);
-        setSourcePosition(*expr, t_sign);
-      }
-   }
-
-#if 0
-   else if (ATmatch(term, "FloatingFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-
-      // FloatingFormula PlusOrMinus FloatingTerm -> FloatingFormula
-
-      std::string op_name;
-      General_Language_Translation::ExpressionKind op_enum;
-      SgUntypedExpression * lhs, * rhs;
-
-      if (traverse_FloatingFormula(t_lhs, &lhs)) {
-         // MATCHED FloatingFormula
-      } else return ATfalse;
-
-      if (ATmatch(t_op, "PLUS()")) {
-         op_enum = General_Language_Translation::e_operator_add;
-         op_name = "+";
-      }
-      else if (ATmatch(t_op, "MINUS()")) {
-         op_enum = General_Language_Translation::e_operator_subtract;
-         op_name = "-";
-      } else return ATfalse;
-
-      if (traverse_FloatingTerm(t_rhs, &rhs)) {
-         // MATCHED FloatingTerm
-      } else return ATfalse;
-
-      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      setSourcePosition(*expr, term);
-   }
-#endif
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingTerm(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingTerm: %s\n", ATwriteToString(term));
-#endif
-
-#if 0
-   ATerm t_lhs, t_op, t_rhs;
-   std::string op_name;
-   General_Language_Translation::ExpressionKind op_enum;
-   SgUntypedExpression * lhs, * rhs;
-
-   if (ATmatch(term, "FloatingTerm(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-      if (traverse_NumericTerm(t_lhs, &lhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      if (traverse_MultiplyDivideOrMod(t_op, op_enum, op_name)) {
-         // MATCHED MultiplyDivideOrMod
-      } else return ATfalse;
-
-      if (traverse_IntegerFactor(t_rhs, &rhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
-      setSourcePosition(*expr, term);
-   }
-   else if FloatingFactor
-#endif
-
-   if (traverse_FloatingFactor(term, expr)) {
-         // MATCHED FloatingFactor
-   }
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingFactor(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingFactor: %s\n", ATwriteToString(term));
-#endif
-
-#if 0
-   ATerm t_lhs, t_rhs;
-   SgUntypedExpression * lhs, * rhs;
-
-   if (ATmatch(term, "FloatingFactor(<term>,<term>)", &t_lhs,&t_rhs)) {
-      if (traverse_FloatingFactor(t_lhs, &lhs)) {
-         // MATCHED FloatingFactor
-      } else return ATfalse;
-
-      if (traverse_FloatingPrimary(t_rhs, &rhs)) {
-         // MATCHED FloatingPrimary
-      } else return ATfalse;
-
-      // TODO - create the expression
-      // expr = new SgUntypedExpression()
-   }
-   else if FloatingPrimary
-#endif
-
-   if (traverse_FloatingPrimary(term, expr)) {
-      // MATCHED FloatingPrimary
-   }
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingPrimary(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingPrimary: %s\n", ATwriteToString(term));
-#endif
-
-   if (traverse_FloatingLiteral(term, expr)) {
-      // MATCHED FloatingLiteral
-   }
-
-#if 0
-   // TODO - convert this to floating type
-   //  IntegerMachineParameter     -> IntegerPrimary
-   //  IntegerVariable             -> IntegerPrimary
-   else if (ATmatch(term, "<str>" , &name)) {
-      std::cout << "VARIABLE " << name << "\n";
-      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      *expr = new SgUntypedReferenceExpression(expr_enum, name);
-      setSourcePosition(*expr, term);
-   }
-
-   //  NamedIntegerConstant        -> IntegerPrimary
-   //  IntegerFunctionCall         -> IntegerPrimary
-   //  '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
-   //  IntegerConversion
-   //    '(' Formula ')'           -> IntegerPrimary         {cons("IntegerPrimary")}
-#endif
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToUntypedJovialTraversal::traverse_FloatingLiteral(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingLiteral: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_frac_form, t_num1, t_num2, t_opt_exp;
-   std::string literal;
-   char* number;
-
-   SgUntypedType* type;
-   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-
-// FractionalForm OptExponent -> RealLiteral
-   if (ATmatch(term, "RealLiteralFF(<term>,<term>)", &t_frac_form, &t_opt_exp)) {
-
-      if (ATmatch(t_frac_form, "FractionalForm(<term>,<term>)", &t_num1, &t_num2)) {
-
-         // NOTE: reconstruct the integer, ".", fractional part, exponent into one string
-
-         // integer part
-         if (ATmatch(t_num1, "no-number()")) {
-            // no integer part
-         }
-         else if (ATmatch(t_num1, "<str>", &number)) {
-            literal += number;
-         }
-         else return ATfalse;
-
-         // fractional part
-         if (ATmatch(t_num2, "no-number()")) {
-            // no fractional part
-            literal += ".";
-         }
-         else if (ATmatch(t_num2, "<str>", &number)) {
-            literal += ".";
-            literal += number;
-         }
-         else return ATfalse;
-
-         // optional exponent
-         if (ATmatch(t_opt_exp, "no-exponent()")) {
-            // no exponent
-         }
-
-#if 0
-         // TODO add exponent
-         else if (traverse_Exponent(t_opt_exp, ...)) {
-            literal += ...;
-         }
-#endif
-         else return ATfalse;
-      }
-
-      if (literal == ".") {
-         cerr << "ERROR in traverse_FloatingLiteral, no literal, contains only: " << literal << endl;
-         return ATfalse;
-      }
-
-      type = UntypedBuilder::buildType(SgUntypedType::e_float);
-      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      cout << "FLOATING LITERAL is " << literal << endl;
-      setSourcePosition(*expr, term);
-   }
-
-#if 0
-// Icon Exponent              -> RealLiteral
-
-   else if (ATmatch(term, "RealLiteralIE(<str>,<term>)", &literal)) {
-      type = UntypedBuilder::buildType(SgUntypedType::e_float);
-      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      std::cout << "REAL LITERAL is " << literal << "\n";
-      setSourcePosition(*expr, term);
-   }
-#endif
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-//========================================================================================
-// 5.1.3 FIXED FORMULAS
-//----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_FixedFormula(ATerm term, SgUntypedExpression** expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FixedFormula: %s\n", ATwriteToString(term));
-#endif
-
-   *expr = NULL;
-
-   cerr << "FIXED Formula expressions are not yet implemented! \n";
-
-   return ATfalse;
-}
 
 //========================================================================================
 // 5.2 BIT FORMULAS
@@ -2996,7 +2779,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_LogicalContinuation(ATerm term, S
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
       } else return ATfalse;
-   } else if (ATmatch(term, " OrContinuation(<term>)", &t_operand)) {
+   } else if (ATmatch(term, "OrContinuation(<term>)", &t_operand)) {
       std::cout << "Matched OrContinuation" << endl;
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
@@ -3103,6 +2886,36 @@ ATbool ATermToUntypedJovialTraversal::traverse_RelationalExpression(ATerm term, 
 }
 
 //========================================================================================
+// 5.3.0 GENERAL FORMULA
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_GeneralFormula(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_GeneralFormula: %s\n", ATwriteToString(term));
+#endif
+
+   char* variable;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+
+   if (ATmatch(term, "GeneralFormula(<str>)", &variable)) {
+      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+      *expr = new SgUntypedReferenceExpression(expr_enum, variable);
+      setSourcePosition(*expr, term);
+
+      std::cout << ".x. matched GeneralFormula(<str>)" << endl;
+      std::cout << ".x. variable is " << variable << endl;
+   } else if (traverse_CharacterFormula(term, expr)) {
+      // MATCHED CharacterFormula
+   } else if (traverse_StatusFormula(term, expr)) {
+      // MATCHED StatusFormula
+   } else if (traverse_PointerFormula(term, expr)) {
+      // MATCHED PointerFormula
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 5.3 CHARACTER FORMULAS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_CharacterFormula(ATerm term, SgUntypedExpression** expr)
@@ -3137,8 +2950,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterFormula(ATerm term, SgUn
          // MATCHED Formula
       }
    } else return ATfalse;
-
-   std::cout << "Got through CharacterFormula" << endl;
 
    return ATtrue;
 }
@@ -3175,8 +2986,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusFormula(ATerm term, SgUntyp
          // MATCHED Formula
       }
    } else return ATfalse;
-
-   std::cout << "Got through StatusFormula" << endl;
 
    return ATtrue;
 }
@@ -3216,8 +3025,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerFormula(ATerm term, SgUnty
          // MATCHED Formula
       }
    } else return ATfalse;
-
-   std::cout << "Got through PointerFormula" << endl;
 
    return ATtrue;
 }
@@ -3285,14 +3092,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableItem(ATerm term, SgUntypedEx
    char* name;
    std::vector<SgUntypedExpression*> subscript;
 
-   if (ATmatch(term, "TableItem<term>,<term>,<term>" , &t_name, &t_subscript, &t_tblderef)) {
+   if (ATmatch(term, "TableItem(<term>,<term>,<term>)" , &t_name, &t_subscript, &t_tblderef)) {
       if (ATmatch(t_name, "<str>" , &name)) {
          // MATCHED TableItemName
-      } else if (traverse_Subscript(t_subscript, subscript)) {
+         std::cout << ".x. TableItemName is " << name  << endl;
+      } else return ATfalse;
+
+      if (traverse_Subscript(t_subscript, subscript)) {
          // MATCHED Subscript
-      } else if (traverse_TableDereference(t_tblderef, var)) {
+      } else return ATfalse;
+
+      if (traverse_TableDereference(t_tblderef, var)) {
          // MATCHED TableDereference
       } else return ATfalse;
+
    } else return ATfalse;
 
    return ATtrue;
@@ -3365,11 +3178,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_Dereference(ATerm term, SgUntyped
    char* name;
    //   SgUntypedExpression* formula;
 
-   if (ATmatch(term, "Dereference<term>", &t_deref)) {
+   if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
          // MATCHED PointerItemName
-   } else if (traverse_PointerFormula(t_deref, formula)) {
-         // MATCHED PointerFormula
+      } else if (traverse_GeneralFormula(t_deref, formula)) {
+         // MATCHED PointerFormula through GeneralFormula
       } else return ATfalse;
    } else return ATfalse;
 
@@ -3377,8 +3190,141 @@ ATbool ATermToUntypedJovialTraversal::traverse_Dereference(ATerm term, SgUntyped
 }
 
 //========================================================================================
+// 6.2 NAMED CONSTANTS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_NamedConstant(ATerm term, SgUntypedExpression** var)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NamedConstant: %s\n", ATwriteToString(term));
+#endif
+
+   char* letter;
+
+   if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
+      // MATCHED ControlLetter
+
+      std::cout << ".x. ControlLetter is " << letter << endl;
+
+   } else return ATfalse;
+
+   std::cout << ".x. successfully matched ControlLetter" << endl;
+      //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
+      //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
+      //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 //----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerConversion(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntegerConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+   SgUntypedType* type; // TODO - QUICK DO SOMETHING!
+   SgUntypedExprListExpression* attr_list = NULL;
+
+   *expr = NULL;
+
+   if (ATmatch(term, "IntegerConversion(<term>)", &t_next)) {
+
+      attr_list = new SgUntypedExprListExpression();
+
+      if (traverse_IntegerItemDescription(t_next, &type, attr_list)) {
+         // MATCHED IntegerItemDescription
+      } else return ATfalse;
+
+#if 0
+      // Should be IntegerTypeDescription
+      // No traversal of this yet
+      // In Main.sdf, prefer on IntegerItemDescription -> IntegerTypeDescription
+      if (traverse_IntegerTypeDescription(t_next, &type)) {
+         // MATCHED IntegerTypeDescription
+      } else return ATfalse;
+#endif
+
+   } else if (ATmatch(term, "IntegerConversionS()")) {
+      // MATCHED IntegerConversionS
+   } else if (ATmatch(term, "IntegerConversionU()")) {
+      // MATCHED IntegerConversionU
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FloatingConversion(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FloatingConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+   SgUntypedType* type; // TODO - QUICK DO SOMETHING!
+   SgUntypedExprListExpression* attr_list = NULL;
+
+   *expr = NULL;
+
+   if (ATmatch(term, "FloatingConversion(<term>)", &t_next)) {
+
+      attr_list = new SgUntypedExprListExpression();
+
+      if (traverse_FloatingItemDescription(t_next, &type, attr_list)) {
+         // MATCHED FloatingItemDescription
+      } else return ATfalse;
+
+#if 0
+      // Should be FloatingTypeDescription
+      // No traversal of this yet
+      // In Main.sdf, prefer on FloatingItemDescription -> FloatingTypeDescription
+      if (traverse_FloatingTypeDescription(t_next, &type)) {
+         // MATCHED FloatingTypeDescription
+      } else return ATfalse;
+#endif
+
+   } else if (ATmatch(term, "FloatingConversionF()")) {
+      // MATCHED FloatingConversionF
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FixedConversion(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FixedConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_next;
+   SgUntypedType* type; // TODO - QUICK DO SOMETHING!
+   SgUntypedExprListExpression* attr_list = NULL;
+
+   *expr = NULL;
+
+   if (ATmatch(term, "FixedConversion(<term>)", &t_next)) {
+
+      attr_list = new SgUntypedExprListExpression();
+
+      if (traverse_FixedItemDescription(t_next, &type, attr_list)) {
+         // MATCHED FixedItemDescription
+      } else return ATfalse;
+   } else return ATfalse;
+
+#if 0
+      // Should be FixedTypeDescription
+      // No traversal of this yet
+      // In Main.sdf, prefer on FixedItemDescription -> FixedTypeDescription
+      if (traverse_FixedTypeDescription(t_next, &type)) {
+         // MATCHED FixedTypeDescription
+      } else return ATfalse;
+#endif
+
+   return ATtrue;
+}
+
 ATbool ATermToUntypedJovialTraversal::traverse_CharacterConversion(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -3534,6 +3480,120 @@ ATbool ATermToUntypedJovialTraversal::traverse_RelationalOperator(ATerm term, Ge
       op_enum = General_Language_Translation::e_operator_not_equal;
       op_name = "<>";
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 8.3.1 NUMERIC LITERAL
+//----------------------------------------------------------------------------------------
+
+ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FixedOrFloatingLiteral: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_frac_form, t_num1, t_num2, t_opt_exp, t_sign, t_num3;
+   std::string literal;
+   char* number;
+
+   SgUntypedType* type;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
+
+// FractionalForm OptExponent -> RealLiteral
+   if (ATmatch(term, "RealLiteralFF(<term>,<term>)", &t_frac_form, &t_opt_exp)) {
+
+      if (ATmatch(t_frac_form, "FractionalForm(<term>,<term>)", &t_num1, &t_num2)) {
+
+         // NOTE: reconstruct the integer, ".", fractional part, exponent into one string
+
+         // integer part
+         if (ATmatch(t_num1, "no-number()")) {
+            // no integer part
+         }
+         else if (ATmatch(t_num1, "<str>", &number)) {
+            literal += number;
+         }
+         else return ATfalse;
+
+         // fractional part
+         if (ATmatch(t_num2, "no-number()")) {
+            // no fractional part
+            literal += ".";
+         }
+         else if (ATmatch(t_num2, "<str>", &number)) {
+            literal += ".";
+            literal += number;
+         }
+         else return ATfalse;
+
+         // optional exponent
+         if (ATmatch(t_opt_exp, "no-exponent()")) {
+            // no exponent
+         }
+
+#if EXPONENT
+         else if (traverse_Exponent(t_opt_exp, &opt_exp)) {
+            literal += opt_exp;
+         }
+#endif
+
+         // Dealing with exponent here, not in a separate function
+         // Once RealLiteralIE is implemented, may need to create traverse_Exponent
+         else if (ATmatch(t_opt_exp, "Exponent(<term>,<term>)", &t_sign, &t_num3)) {
+            General_Language_Translation::ExpressionKind op_enum;
+            if (traverse_OptSign(t_sign, op_enum)) {
+               // MATCHED OptSign
+            } else return ATfalse;
+
+            // move all of the addition of "E" here?
+            // literal += "E";
+
+            if (op_enum == General_Language_Translation::e_operator_unary_minus) {
+               literal += "E";
+               literal += "-";
+            }
+            else if (op_enum == General_Language_Translation::e_operator_unary_plus) {
+               literal += "E";
+               literal += "+";
+            }
+            else if (op_enum == General_Language_Translation::e_operator_unity) {
+               literal += "E";
+            }
+
+            if (ATmatch(t_num3, "<str>", &number)) {
+               literal += number;
+            } else return ATfalse;
+         }
+
+         else return ATfalse;
+      }
+
+      if (literal == ".") {
+         cerr << "ERROR in traverse_FixedOrFloatingLiteral, no literal, contains only: " << literal << endl;
+         return ATfalse;
+      }
+
+      type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
+      cout << "FLOATING LITERAL is " << literal << endl;
+      setSourcePosition(*expr, term);
+   }
+
+#if 0
+// Icon Exponent              -> RealLiteral
+
+   else if (ATmatch(term, "RealLiteralIE(<str>,<term>)", &literal)) {
+      type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
+      *expr = new SgUntypedValueExpression(expr_enum,literal,type);
+      std::cout << "REAL LITERAL is " << literal << "\n";
+      setSourcePosition(*expr, term);
+   }
+#endif
+
+   else return ATfalse;
 
    return ATtrue;
 }
