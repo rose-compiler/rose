@@ -113,7 +113,7 @@ public:
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const std::vector<SymbolicExpr::Ptr> &pathConditions,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                             const SmtSolverPtr &solver) { return CONTINUE; };
+                             const SmtSolverPtr &solver) { return CONTINUE; }
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
@@ -399,8 +399,8 @@ public:
 public:
     /** Find all feasible paths.
      *
-     *  Searches for paths and calls the @p pathProcessor each time a feasible path is found. The space explored using a depth
-     *  first search, and the search can be limited with various @ref settings. */
+     *  Searches for paths and calls the @p pathProcessor each time a feasible path is found. The space is explored using a
+     *  depth first search, and the search can be limited with various @ref settings. */
     void depthFirstSearch(PathProcessor &pathProcessor);
 
 
