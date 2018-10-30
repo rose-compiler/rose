@@ -16,20 +16,22 @@ namespace CodeThorn {
     void addLabel(SPRAY::Label lab);
     void removeLabel();
     size_t getLength() const;
-    friend bool operator==(const CallString& c1, const CallString& c2);
     std::string toString() const;
-    // is true if this call string is a lower value-substring of the string 'other'
-    // examples: [1,2] < [1,3]; [1,3]<[1,2,3] (based on size);
-    bool isLowerValueSubstring(const CodeThorn::CallString& other) const;
+
+    /** Establish an ordering of call strings as required for ordered STL containers.
+        For same length all values must be lower, otherwise the length must be shorter.
+        Examples: [1,2] < [2,3]; [1,3]<[1,2,3]; 
+        Compares this string with 'other'.
+    */
+    bool operator<(const CallString& other) const;
+    bool operator==(const CallString& other) const;
+    bool operator!=(const CallString& other) const;
 
   private:
     typedef std::vector<SPRAY::Label> CallStringType;
     CallStringType _callString;
   };
 
-  bool operator<(const CodeThorn::CallString& c1, const CodeThorn::CallString& c2);
-  bool operator==(const CallString& c1, const CallString& c2);
-  bool operator!=(const CallString& c1, const CallString& c2);
 }
 
 #endif

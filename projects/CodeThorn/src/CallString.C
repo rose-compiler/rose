@@ -32,7 +32,17 @@ namespace CodeThorn {
     return ss.str();
   }
 
-  bool CallString::isLowerValueSubstring(const CodeThorn::CallString& other) const {
+  bool CallString::operator==(const CodeThorn::CallString& other) const {
+    if(this==&other)
+      return true;
+    return this->_callString==other._callString;
+  }
+
+  bool CallString::operator!=(const CodeThorn::CallString& other) const {
+    return !(*this==other);
+  }
+
+  bool CallString::operator<(const CodeThorn::CallString& other) const {
     if(this==&other)
       return false;
     if(_callString.size()==other._callString.size()) {
@@ -49,39 +59,5 @@ namespace CodeThorn {
     } else {
       return _callString.size()<other._callString.size();
     }
-  }
-
-  bool operator==(const CodeThorn::CallString& c1, const CodeThorn::CallString& c2) {
-    if(&c1==&c2)
-      return true;
-#if 0
-    cout<<"DEBUG: "<<c1.getLength()<<" vs "<<c2.getLength()<<endl;
-    if(c1.getLength()==c2.getLength()) {
-      //cout<<"DEBUG: Checking callstrings: "<<c1.toString()<<" : "<<c2.toString()<<endl;
-      return true;
-      auto i1=c1._callString.begin();
-      auto i2=c2._callString.begin();
-      while(i1!=c1._callString.end()) {
-        if(*i2!=*i1) {
-          return false;
-        }
-        ++i1;
-        ++i2;
-      }
-      return true;
-    } else {
-      return false;
-    }
-#else
-    // reusing overloaded operator == from std::vector
-    return c1._callString==c2._callString;
-#endif
-  }
-
-  bool operator!=(const CodeThorn::CallString& c1, const CodeThorn::CallString& c2) {
-    return !(c1==c2);
-  }
-  bool operator<(const CodeThorn::CallString& c1, const CodeThorn::CallString& c2) {
-    return c1.isLowerValueSubstring(c2);
   }
 }
