@@ -15,7 +15,7 @@ namespace CodeThorn {
   public:
     void addLabel(SPRAY::Label lab);
     void removeLabel();
-    size_t getLength();
+    size_t getLength() const;
     friend bool operator==(const CallString& c1, const CallString& c2);
     std::string toString() const;
     // is true if this call string is a lower value-substring of the string 'other'

@@ -72,8 +72,10 @@ namespace CodeThorn {
     const CodeThorn::PState* _pstate;
     const CodeThorn::ConstraintSet* _constraints;
   public:
-    CallString callString;
     CodeThorn::InputOutput io;
+    //#ifdef USE_CALLSTRINGS
+    CallString callString;
+    //#endif
   };
 
   // define order for EState elements (necessary for EStateSet)
