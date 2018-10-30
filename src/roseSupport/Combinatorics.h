@@ -307,6 +307,25 @@ public:
     uint64_t partial() const { return partial_; }
 };
 
+/** Built-in SHA-256 hasher.
+ *
+ *  This algorithm is built into ROSE and doesn't depend on any external libraries. */
+class ROSE_DLL_API HasherSha256Builtin: public Hasher {
+    static const uint32_t roundConstants_[64];          // statically-generated constants for the algorithm
+    uint32_t state_[8];                                 // 256 bits of state information
+    size_t processedBytes_;                             // number of message bytes hashed (excludes padding)
+    std::vector<uint8_t> leftoverBytes_;                // message bytes inserted but not yet hashed
+public:
+    HasherSha256Builtin();
+    void clear() ROSE_OVERRIDE;
+    const Digest& digest() ROSE_OVERRIDE;
+    void append(const uint8_t *message, size_t messageSize);
+private:
+    uint8_t messageByte(size_t index, const uint8_t *message, size_t messageSize);
+    bool getNextChunk(const uint8_t* &message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/);
+    void accumulateChunk(const uint32_t chunk[16]);
+};
+
 /** Convert two vectors to a vector of pairs.
  *
  *  If the two input vectors are not the same length, then the length of the result is the length of the shorter input vector. */
