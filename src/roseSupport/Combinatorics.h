@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <istream>
 #include <list>
 #include <ostream>
 #include <rose_override.h>
@@ -176,6 +177,15 @@ public:
     void insert(const std::string &x) { append((const uint8_t*)x.c_str(), x.size()); }
     void insert(uint64_t x) { append((uint8_t*)&x, sizeof x); }
     void insert(const uint8_t *x, size_t size) { append(x, size); }
+    void insert(std::istream &stream) {
+        char buf[4096];                                 // multiple of 64
+        while (stream.good()) {
+            stream.read(buf, sizeof buf);
+            append((const uint8_t*)buf, stream.gcount());
+        }
+        if (!stream.eof())
+            throw Hasher::Exception("failed to read data from file");
+    }
     /** @} */
     
     /** Insert data into the digest.
