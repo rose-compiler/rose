@@ -82,14 +82,19 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.pstate()<e2.pstate());
   if(e1.constraints()!=e2.constraints())
     return (e1.constraints()<e2.constraints());
-  return e1.io<e2.io;
+  if(e1.io!=e2.io) {
+    return e1.io<e2.io;
+  }
+  return e1.callString<e2.callString;
 }
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   return (c1.label()==c2.label())
     && (c1.pstate()==c2.pstate())
     && (c1.constraints()==c2.constraints())
-    && (c1.io==c2.io);
+    && (c1.io==c2.io)
+    && (c1.callString==c2.callString)
+    ;
 }
 
 bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
@@ -208,7 +213,9 @@ int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
-  ss << "("<<label()<<", ";
+  ss << "("
+     <<label()<<", "
+     <<callString.toString()<<", ";
   if(pstate())
     ss <<pstate()->toString();
   else

@@ -19,6 +19,7 @@
 
 #include "PState.h"
 #include "InputOutput.h"
+#include "CallString.h"
 
 using namespace CodeThorn;
 
@@ -71,6 +72,7 @@ namespace CodeThorn {
     const CodeThorn::PState* _pstate;
     const CodeThorn::ConstraintSet* _constraints;
   public:
+    CallString callString;
     CodeThorn::InputOutput io;
   };
 

@@ -129,6 +129,8 @@ libcodethorn_la_SOURCES=\
   IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
+  CallString.h \
+  CallString.C \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \

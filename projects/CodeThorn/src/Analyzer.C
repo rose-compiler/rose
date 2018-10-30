@@ -659,7 +659,7 @@ int Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
 // returns abstract value to which the aggregate initializer evaluates
 // to. Does not compute the address of the aggregate element.
 PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
-  cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
+  //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
   // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
   PState newPState=pstate;
   int elemIndex=0;
