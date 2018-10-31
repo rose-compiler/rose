@@ -1237,7 +1237,7 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
-    p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
+    p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
     return p;
 }
 
@@ -1265,7 +1265,7 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
-        p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
+        p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
         return p;
     }
 
@@ -1447,6 +1447,9 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         SAWYER_MESG(where) <<"demangling names\n";
         Modules::demangleFunctionNames(partitioner);
     }
+
+    if (libcStartMain_)
+        libcStartMain_->nameMainFunction(partitioner);
 }
 
 void

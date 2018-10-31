@@ -142,7 +142,7 @@ CFG dominators for function 0x08048dec:
   function 0x08048dec dominator of 0x08048e46<4> is 0x08048e39<3>
   function 0x08048dec dominator of 0x08048e53<5> is 0x08048e46<4>
   function 0x08048dec dominator of 0x08048e5f<6> is 0x08048e53<5>
-CFG dominators for function 0x08048e6c:
+CFG dominators for function 0x08048e6c "main":
   function 0x08048e6c dominator of 0x08048fd7<0> is none
   function 0x08048e6c dominator of 0x08048f56<1> is none
   function 0x08048e6c dominator of 0x08048f7b<2> is 0x08048f6e<63>
