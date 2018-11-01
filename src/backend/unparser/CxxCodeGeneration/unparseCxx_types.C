@@ -493,6 +493,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      printf ("In Unparse_Type::unparseType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
+  // DQ (10/31/2018): Adding assertion.
+  // ROSE_ASSERT(info.get_current_source_file() != NULL);
+
 #if 0
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
@@ -1700,6 +1703,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      printf ("Inside of Unparse_Type::unparseClassType type = %p \n",type);
      curprint("/* Inside of Unparse_Type::unparseClassType */ \n");
 #endif
+
+  // DQ (10/31/2018): Adding assertion.
+  // ROSE_ASSERT(info.get_current_source_file() != NULL);
 
 #if 0
      info.display("Inside of Unparse_Type::unparseClassType");

@@ -112,6 +112,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (Options, "Options", "OptionsTag" );
      NEW_TERMINAL_MACRO (Unparse_Info, "Unparse_Info", "Unparse_InfoTag" );
 
+  // DQ (9/18/2018): Adding suport for IncludeFile tree to the SgSourceFile
+     NEW_TERMINAL_MACRO (IncludeFile, "IncludeFile", "IncludeFileTag" );
+
      NEW_TERMINAL_MACRO (FuncDecl_attr, "FuncDecl_attr", "FuncDecl_attrTag" );
      NEW_TERMINAL_MACRO (ClassDecl_attr, "ClassDecl_attr", "ClassDecl_attrTag" );
 
@@ -219,6 +222,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (JavaImportStatementList,  "JavaImportStatementList", "JavaImportStatementListTag" );
      NEW_TERMINAL_MACRO (JavaClassDeclarationList, "JavaClassDeclarationList", "JavaClassDeclarationListTag" );
 
+  // DQ (9/15/2018): Adding support for header file usage report (for unparsing).
+     NEW_TERMINAL_MACRO (HeaderFileReport, "HeaderFileReport", "HeaderFileReportTag" );
 
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
@@ -250,8 +255,8 @@ Grammar::setUpSupport ()
           Graph                 | GraphNode                 | GraphEdge                |
           GraphNodeList         | GraphEdgeList             | TypeTable                |
           NameGroup             | DimensionObject           | FormatItem               |
-          FormatItemList        | DataStatementGroup        | DataStatementObject      | 
-          DataStatementValue    | JavaImportStatementList   | JavaClassDeclarationList,
+          FormatItemList        | DataStatementGroup        | DataStatementObject      | IncludeFile          |
+          DataStatementValue    | JavaImportStatementList   | JavaClassDeclarationList | HeaderFileReport,
           "Support", "SupportTag", false);
 //#endif
 
@@ -812,10 +817,76 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
 
+  // DQ (8/7/2018): Mark files explicitly as header files (support for unparse headers and unparse tokens).
+     SourceFile.setDataPrototype   ( "bool", "isHeaderFile", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     SourceFile.setDataPrototype   ( "bool", "isHeaderFileIncludedMoreThanOnce", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/15/2018): Adding support for accumulating data to support a report on header file handling (for unparsing of header files).
+     SourceFile.setDataPrototype   ( "SgHeaderFileReport*", "headerFileReport", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
+  // DQ (9/18/2018): Adding support for building the include file tree for each source file.
+     SourceFile.setDataPrototype   ( "SgIncludeFilePtrList", "include_file_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
 #endif
+
+  // DQ (9/18/2018): Adding support for building the include file tree for each source file.
+     IncludeFile.setFunctionPrototype          ( "HEADER_INCLUDE_FILE", "../Grammar/Support.code");
+
+  // DQ (9/18/2018): Added source file which is initialized when unparsing headers.
+  // IncludeFile.setDataPrototype ( "SgName", "filename", "",
+  //                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     IncludeFile.setDataPrototype ( "SgName", "filename", "= \"\"",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/18/2018): Added source file which is initialized when unparsing headers.
+     IncludeFile.setDataPrototype ( "SgSourceFile*", "source_file", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     IncludeFile.setDataPrototype ( "SgIncludeFilePtrList", "include_file_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (9/18/2018): Added source file which is initialized when unparsing headers.
+     IncludeFile.setDataPrototype ( "unsigned int", "first_source_sequence_number", " = 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     IncludeFile.setDataPrototype ( "unsigned int", "last_source_sequence_number", " = 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     IncludeFile.setDataPrototype   ( "bool", "isIncludedMoreThanOnce", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/28/2018): Where a header file is used more than once we introduce the simplifying concept of
+  // a primary use.  The first use is the primary use, and this provides for an initial implementation.
+  // Note that multiple uses of the same header file may be transformed differently, so rewriting the 
+  // header file might not be well defined (unless we output all versions).
+     IncludeFile.setDataPrototype   ( "bool", "isPrimaryUse", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/28/2018): Add the hash for the file (to provide error checking to JIT mechanisms).
+     IncludeFile.setDataPrototype   ( "std::string", "file_hash", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
+  // (though this one is computed from the EDG/ROSE translation instead of from the CPP include directives).
+  // DQ (9/15/2018): Adding support for report on header file handling (for unparsing).
+     HeaderFileReport.setFunctionPrototype ( "HEADER_HEADER_FILE_REPORT", "../Grammar/Support.code");
+
+     HeaderFileReport.setDataPrototype ( "SgSourceFile*", "source_file", " = NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+#if 1
+  // DQ (9/15/2018): Comment this out while we get the rest of the new IR nodes implementation into place.
+     HeaderFileReport.setDataPrototype ( "SgSourceFilePtrList", "include_file_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
+
 
   // DQ (10/16/2005): Added to support C++ style argument handling in SgFile
   // File.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
@@ -962,6 +1033,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Cobol_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/7/2018): By default for C/C++ I now think this should be false (and it is set this way for source files.
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
@@ -2111,6 +2183,12 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/15/2018): Added support for a report on the internal use of header file unparsing.
+  // This is to support the header file unparsing when used with and without the token based unparsing.
+     Project.setDataPrototype("bool", "reportOnHeaderFileUnparsing", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);
@@ -2696,8 +2774,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 
+  // DQ (9/18/2-18): Adding support for the include file tree into the SgSourceFile.
+     IncludeFile.setFunctionSource      ( "SOURCE_INCLUDE_FILE", "../Grammar/Support.code");
+
      JavaImportStatementList.setFunctionSource  ( "SOURCE_JAVA_IMPORT_STATEMENT_LIST", "../Grammar/Support.code");
      JavaClassDeclarationList.setFunctionSource ( "SOURCE_JAVA_CLASS_DECLARATION_LIST", "../Grammar/Support.code");
+
+     HeaderFileReport.setFunctionSource      ( "SOURCE_HEADER_FILE_REPORT", "../Grammar/Support.code");
 
      Project.setFunctionSource         ( "SOURCE_APPLICATION_PROJECT", "../Grammar/Support.code");
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");

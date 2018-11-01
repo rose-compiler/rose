@@ -135,6 +135,17 @@ HEADER_START
           void setOutputInCodeGeneration();
           void unsetOutputInCodeGeneration();
 
+      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be queried for there physical file ID.
+
+          Since the value for the physical_file_id is stored in the Sg_File_Info, and because there
+          are up to three of these for the source position information to be comprehensive, this 
+          function permits a mechanism to have them be queried uniformally.  Warnings are issued if
+          they are not set uniformally.
+
+          \internal This function marks the Sg_File_Info objects that must already be present.
+       */
+          int get_physical_file_id();
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
@@ -1216,6 +1227,26 @@ SgLocatedNode::unsetOutputInCodeGeneration()
           ROSE_ASSERT(expression->get_operatorPosition() != NULL);
           expression->get_operatorPosition()->unsetOutputInCodeGeneration();
         }
+   }
+
+// DQ (10/25/20018): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+int
+SgLocatedNode::get_physical_file_id()
+   {
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     ROSE_ASSERT(get_startOfConstruct()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          expression->get_operatorPosition()->setOutputInCodeGeneration();
+          ROSE_ASSERT(expression->get_operatorPosition()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
+        }
+
+  // Return any one of these since they are all checked to be equal.
+     return get_startOfConstruct()->get_physical_file_id();
    }
 
 

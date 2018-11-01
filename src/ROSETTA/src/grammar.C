@@ -4550,7 +4550,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << "return (size_t) -1;\n";
                   }
              }
-          else
+            else
              {
             // There are no successors, so calling this function was an error. Complain.
                outputFile << "cout << \"error: get_childIndex called on node of type \" << \""

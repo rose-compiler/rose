@@ -1736,6 +1736,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // DQ (10/31/2018): previously unhandled case ...this implementation makes each IR node unique (we might not want that later).
+               case V_SgIncludeFile:
+                  {
+                    key = "__include_file_";
+                 // Make the key unique for each SgTemplateParameter object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in generateUniqueName() node = %p = %s \n",node,node->class_name().c_str());
