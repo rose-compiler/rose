@@ -110,26 +110,16 @@ void Solver5::run() {
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
-#if 1
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"PSTATE-IN :"<<currentEStatePtr->label().toString()<<":"<<currentEStatePtr->pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==40) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"PSTATE-OUT:"<<newEState.pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
                 fout<<endl;
                 fout<<endl;
                 fout.close();
-                // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
-#else
-                logger[TRACE]<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
-                string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
-                if(sourceString.size()==40) sourceString+="...";
-                logger[TRACE]<<sourceString<<endl;
-                logger[TRACE]<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
-                logger[TRACE]<<endl;
-#endif                
               }
             }
 

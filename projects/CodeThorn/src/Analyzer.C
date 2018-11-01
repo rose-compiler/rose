@@ -147,7 +147,7 @@ Analyzer::Analyzer():
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0),
   _svCompFunctionSemantics(false),
-  _contextSensitiveAnalysis(false)
+  _contextSensitiveAnalysis(true)
 {
   initDiagnostics();
   _analysisTimer.start();
