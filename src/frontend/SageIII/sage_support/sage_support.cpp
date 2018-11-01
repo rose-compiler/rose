@@ -789,6 +789,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
    {
      SgFile* file = NULL;
+#if 0
+     printf("In determineFileType():\n");
+     size_t cnt = 0;
+     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++) {
+       printf("  argv[%zd] = %s\n", cnt++, i->c_str());
+     }
+#endif
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
@@ -5824,6 +5831,9 @@ int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
   // printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
+
+  // TV (09/24/2018): Skip actually calling the frontend (used to test the backend with ROSE command line processing)
+     if (get_skip_parser()) return 0;
 
   // DXN (01/10/2011): except for building C and Cxx AST, frontend fails when frontend error level > 0.
      int frontendErrorLevel = 0;

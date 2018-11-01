@@ -14,7 +14,8 @@ JOVIAL_TESTCODES = \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
  4_3_if_else_stmt.jov                   \
- 4_6_return_stmt.jov                    \
+ 4_4_case_stmt_a.jov                    \
+ 4_6_return_stmt_a.jov                  \
  4_7_goto_stmt_a.jov                    \
  4_8_exit_stmt.jov                      \
  4_9_stop_stmt_a.jov                    \
@@ -23,6 +24,31 @@ JOVIAL_TESTCODES = \
  4_10_abort_stmt_a.jov                  \
  4_10_abort_stmt_b.jov                  \
  5_1_1_integer-primary.jov
+
+# should finish formulas next
+#
+JOVIAL_TESTCODES_PASS_TRAVERSE = \
+ 4_0_compound_stmt_a.jov                \
+ 4_0_compound_stmt_b.jov                \
+ 4_0_null_block_stmt.jov                \
+ 4_3_if_stmt_b.jov                      \
+ 4_3_if_stmt_c.jov                      \
+ 4_3_if_stmt_d.jov                      \
+ 4_3_if_stmt_e.jov                      \
+ 4_7_goto_stmt_b.jov                    \
+ 5_3_character_formula_a.jov            \
+ 5_3_character_formula_b.jov            \
+ 5_3_character_formula_c.jov            \
+ 5_3_character_formula_d.jov            \
+ 5_4_status_formula_a.jov               \
+ 5_4_status_formula_b.jov               \
+ 5_4_status_formula_c.jov               \
+ 5_4_status_formula_d.jov               \
+ 5_5_pointer_formula_a.jov              \
+ 5_5_pointer_formula_b.jov              \
+ 5_5_pointer_formula_c.jov              \
+ 5_5_pointer_formula_d.jov
+
 
 JOVIAL_TESTCODES_WORKING_ON = \
  tiny.jov                               \
@@ -44,6 +70,13 @@ JOVIAL_TESTCODES_WORKING_ON = \
  1_2_3_program-body_f.jov               \
  1_2_3_program-body_g.jov               \
  1_2_3_program-body_h.jov               \
+ 4_1_assignment_stmt_a.jov              \
+ 4_1_assignment_stmt_b.jov              \
+ 4_2_loop_stmt_a.jov                    \
+ 4_2_loop_stmt_b.jov                    \
+ 4_2_loop_stmt_c.jov                    \
+ 4_3_if_stmt_a.jov                      \
+ 4_6_return_stmt_b.jov                  \
  4_10_abort_stmt_c.jov                  \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov              \

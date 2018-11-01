@@ -352,13 +352,13 @@ define_schema(sqlite3x::sqlite3_connection& gDB)
 
 // install boost database graph property map types
 namespace boost {
-        enum vertex_dbg_data_t { vertex_dbg_data };
+        enum vertex_dbg_data_t { vertex_dbg_data };     // NO_STRINGIFY
         BOOST_INSTALL_PROPERTY( vertex, dbg_data );
 
-        enum edge_dbg_data_t { edge_dbg_data };
+        enum edge_dbg_data_t { edge_dbg_data };         // NO_STRINGIFY
         BOOST_INSTALL_PROPERTY( edge, dbg_data );
 
-        enum graph_dbg_data_t { graph_dbg_data };
+        enum graph_dbg_data_t { graph_dbg_data };       // NO_STRINGIFY
         BOOST_INSTALL_PROPERTY( graph, dbg_data );
 };
 

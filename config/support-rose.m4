@@ -623,6 +623,9 @@ AC_SUBST(ROSE_HOME)
 
 AC_LANG(C++)
 
+# Python check must occur before boost check since -lboost_python depends on python
+ROSE_SUPPORT_PYTHON
+
 ROSE_SUPPORT_BOOST
 
 # Rasmussen (12/16/2017): Added test for Bison version (Mac OSX Bison version may be too old)
@@ -1032,8 +1035,6 @@ ROSE_SUPPORT_POCC
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
-
-ROSE_SUPPORT_PYTHON
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -1890,6 +1891,8 @@ fi
 ROSE_SUPPORT_BINARY
 # ****************************************************
 
+ROSE_SUPPORT_PYTHON_API
+
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
 AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
 
@@ -2033,7 +2036,6 @@ exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 projects/ArithmeticMeasureTool/Makefile
-projects/ArithmeticMeasureTool/src/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
@@ -2048,6 +2050,16 @@ projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/RaaS/Makefile
+projects/RaaS/src/Makefile
+projects/RaaS/include/nlohmann/Makefile
+projects/RaaS/examples/demo/Makefile
+projects/RaaS/examples/demo/compile_commands.json
+projects/CompilationDB/Makefile
+projects/CompilationDB/scripts/Makefile
+projects/CompilationDB/examples/demo/Makefile
+projects/CompilationDB/examples/demo/compile_commands.json
+projects/CompilationDB/examples/kripke/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
@@ -2286,6 +2298,11 @@ projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
 projects/xgenTranslator/Makefile
+python/Makefile
+python/Rose/Makefile
+python/Rose/BinaryAnalysis/Makefile
+python/Rose/BinaryAnalysis/Partitioner2/Makefile
+python/Rose/BinaryAnalysis/Unparser/Makefile
 scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
@@ -2364,7 +2381,7 @@ src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/sage/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/Makefile
-src/midend/binaryAnalyses/Makefile
+src/midend/BinaryAnalysis/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
@@ -2587,6 +2604,7 @@ tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/Makefile
+tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile
 tests/nonsmoke/functional/testSupport/Makefile
 tests/nonsmoke/functional/testSupport/gtest/Makefile
 tests/nonsmoke/functional/translatorTests/Makefile

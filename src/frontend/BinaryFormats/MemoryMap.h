@@ -13,28 +13,39 @@
 #include <Sawyer/StaticBuffer.h>
 
 #include <boost/config.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/type_traits/is_integral.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
- *  Returns the largest multiple of alignment which is less than or equal to address. */
-template<typename T>
-T alignUp(T address, T alignment) {
-    return ((address + alignment - 1) / alignment) * alignment;
+ *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the same
+ *  type as the address before any calculations are performed. Both arguments must be integral types. An alignment less than
+ *  one has undefined behavior. */
+template<typename T, typename U>
+typename boost::enable_if_c<boost::is_integral<T>::value && boost::is_integral<U>::value, T>::type
+alignUp(T address, U alignment) {
+    ASSERT_require(alignment > 0);
+    T almt = static_cast<T>(alignment);
+    return ((address + almt - 1) / almt) * almt;
 }
 
 /** Align address upward to boundary.
  *
- *  Returns the smallest multiple of alignment which is greater than or equal to address. Returns zero if no such value can be
- *  returned due to overflow. */
-template<typename T>
-T alignDown(T address, T alignment) {
-    return (address / alignment) * alignment;
+ *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the
+ *  same type as the address before any calculations are performed. Both arguments must be integral types. An alignment less
+ *  than one has undefined behavior. Returns zero if no such value can be returned due to overflow. */
+template<typename T, typename U>
+typename boost::enable_if_c<boost::is_integral<T>::value && boost::is_integral<U>::value, T>::type
+alignDown(T address, U alignment) {
+    ASSERT_require(alignment > 0);
+    T almt = static_cast<T>(alignment);
+    return (address / almt) * almt;
 }
 
 /** An efficient mapping from an address space to stored data.

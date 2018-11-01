@@ -1024,7 +1024,8 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                     printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
 #endif
                     // Liao 12/15/2016, we need explicit typename here
-                    unp->u_exprStmt->curprint(" typename ");
+                    // TV (10/02/2018): removed when fixing ROSE-1392
+//                  unp->u_exprStmt->curprint(" typename ");
                     curprint(name);
                   }
 
@@ -1413,6 +1414,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
      printf ("In unparseTemplateArgument(): templateArgument->get_global_qualification_required() = %s \n",(templateArgument->get_global_qualification_required() == true) ? "true" : "false");
      printf ("In unparseTemplateArgument(): templateArgument->get_type_elaboration_required()     = %s \n",(templateArgument->get_type_elaboration_required() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.get_name_qualification_length()     = %d \n",newInfo.get_name_qualification_length());
+     printf ("In unparseTemplateArgument(): newInfo.get_global_qualification_required() = %s \n",(newInfo.get_global_qualification_required() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.get_type_elaboration_required()     = %s \n",(newInfo.get_type_elaboration_required() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.requiresGlobalNameQualification()   = %s \n",(newInfo.requiresGlobalNameQualification() == true) ? "true" : "false");
 #endif
 
   // DQ (5/14/2011): Added support for newer name qualification implementation.
@@ -1424,6 +1429,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // DQ (5/30/2011): Added support for name qualification.
      newInfo.set_reference_node_for_qualification(templateArgument);
      ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+
+     if (newInfo.requiresGlobalNameQualification()) {
+       newInfo.set_global_qualification_required(true);
+       newInfo.set_reference_node_for_qualification(NULL);
+     }
 
 #if 0
      printf ("Exiting in unparseTemplateArgument() to see where this is called \n");
@@ -1707,8 +1717,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
            case SgTemplateArgument::start_of_pack_expansion_argument:
              {
-               printf ("Error start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (should never be reach)\n");
-               ROSE_ABORT();
+               printf ("WARNING: start_of_pack_expansion_argument in Unparse_ExprStmt::unparseTemplateArgument (can happen from some debug output)\n");
                break;
              }
 
@@ -6676,13 +6685,26 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (4/12/2018): Check if this is a C++11 file (just to make sure), see C_tests/test2018_35.c).
      SgSourceFile* sourceFile = info.get_current_source_file();
-     ROSE_ASSERT(sourceFile != NULL);
+  // ROSE_ASSERT(sourceFile != NULL);
 
-     bool isCxx11 = sourceFile->get_Cxx11_only();
-     if (isCxx11 == false)
+#if 0
+     printf("In Unparse_ExprStmt::unparseAggrInit\n");
+     printf("  -- sourceFile = %p\n", sourceFile);
+     printf("     -- Cxx11_only = %s\n", sourceFile->get_Cxx11_only() ? "true" : "false");
+     printf("     -- Cxx14_only = %s\n", sourceFile->get_Cxx14_only() ? "true" : "false");
+     printf("  -- need_cxx11_class_specifier = %s\n", need_cxx11_class_specifier ? "true" : "false");
+#endif
+
+  // TV (08/17/2018): sourceFile is NULL when called from unparseToString
+  //                  FIXME will it be needed with C++ 14 and 17 ???
+     if ( (sourceFile != NULL) && !( sourceFile->get_Cxx11_only() || sourceFile->get_Cxx14_only() ) )
         {
           need_cxx11_class_specifier = false;
         }
+
+#if 0
+     printf("  -- need_cxx11_class_specifier = %s\n", need_cxx11_class_specifier ? "true" : "false");
+#endif
 
 #if 0
      printf ("DONE: Calling uses_cxx11_initialization: expr = %p type = %p = %s need_cxx11_class_specifier = %s \n",
@@ -7141,13 +7163,14 @@ isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, Sg
 #if 0
                     printf ("Found special type used in C++ to indicate special syntax for C++11 initiazation list support \n");
 #endif
+#if 0
+                 // TV (07/18/18): happens in C++ 14 . With Kripke, EDG auto-detect C++14 (forcing C++11 causes C++14 related errors)
                  // Check if this is a C++11 file (just to make sure).
                     SgSourceFile* sourceFile = info.get_current_source_file();
                     ROSE_ASSERT(sourceFile != NULL);
-
                     bool isCxx11 = sourceFile->get_Cxx11_only();
                     ROSE_ASSERT(isCxx11 == true);
-
+#endif
                     is_cxx11_initialization_list = true;
 #if 0
                     printf ("Exiting as a test! \n");

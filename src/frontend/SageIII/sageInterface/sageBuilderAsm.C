@@ -260,6 +260,17 @@ buildTypeU1() {
 }
 
 SgAsmIntegerType*
+buildTypeU4() {
+    static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!cached)
+        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 4, false /*unsigned*/));
+    return cached;
+}
+
+SgAsmIntegerType*
 buildTypeU8() {
     static SgAsmIntegerType *cached = NULL;
     static SAWYER_THREAD_TRAITS::Mutex mutex;
@@ -578,11 +589,17 @@ makeAdd(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryAdd*
-buildAddExpression(SgAsmExpression *lhs, SgAsmExpression *rhs)
-{
+buildAddExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryAdd *a = new SgAsmBinaryAdd(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -593,10 +610,17 @@ makeSubtract(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinarySubtract*
-buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtract *a = new SgAsmBinarySubtract(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -607,10 +631,17 @@ makeAddPreupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryAddPreupdate*
-buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryAddPreupdate *a = new SgAsmBinaryAddPreupdate(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -621,10 +652,17 @@ makeSubtractPreupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinarySubtractPreupdate*
-buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtractPreupdate *a = new SgAsmBinarySubtractPreupdate(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -635,10 +673,17 @@ makeAddPostupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryAddPostupdate*
-buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryAddPostupdate *a = new SgAsmBinaryAddPostupdate(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -649,10 +694,17 @@ makeSubtractPostupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinarySubtractPostupdate*
-buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtractPostupdate *a = new SgAsmBinarySubtractPostupdate(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -663,10 +715,17 @@ makeMul(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryMultiply*
-buildMultiplyExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildMultiplyExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryMultiply *a = new SgAsmBinaryMultiply(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -677,10 +736,17 @@ makeLsl(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryLsl*
-buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryLsl *a = new SgAsmBinaryLsl(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -691,10 +757,17 @@ makeLsr(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryLsr*
-buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryLsr *a = new SgAsmBinaryLsr(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -705,10 +778,17 @@ makeAsr(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryAsr*
-buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryAsr *a = new SgAsmBinaryAsr(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -719,10 +799,17 @@ makeRor(SgAsmExpression *lhs, SgAsmExpression *rhs) {
 }
 
 SgAsmBinaryRor*
-buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs) {
+buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryRor *a = new SgAsmBinaryRor(lhs, rhs);
     lhs->set_parent(a);
     rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
     return a;
 }
 
@@ -733,9 +820,14 @@ makeRrx(SgAsmExpression *lhs) {
 }
 
 SgAsmUnaryRrx*
-buildRrxExpression(SgAsmExpression *lhs) {
+buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type) {
     SgAsmUnaryRrx *a = new SgAsmUnaryRrx(lhs);
     lhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else {
+        a->set_type(lhs->get_type());
+    }
     return a;
 }
 

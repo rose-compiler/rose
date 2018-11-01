@@ -19,13 +19,25 @@ ExprAnalyzer::ExprAnalyzer() {
   initDiagnostics();
 }
 
+void ExprAnalyzer::setVariableIdMapping(VariableIdMapping* variableIdMapping) {
+  _variableIdMapping=variableIdMapping; 
+}
+
+
 void ExprAnalyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
     logger = Sawyer::Message::Facility("CodeThorn::ExprAnalyzer", Rose::Diagnostics::destination);
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
-  }
+    }
+}
+
+void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
+  ROSE_ASSERT(node);
+  ROSE_ASSERT(_variableIdMapping);
+  structureAccessLookup.initializeOffsets(_variableIdMapping,node);
+  cout<<"INFO: Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -100,7 +112,7 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
-    assert(_variableIdMapping);
+    ROSE_ASSERT(_variableIdMapping);
     varId=_variableIdMapping->variableId(varref);
     return true;
   } else {
@@ -192,24 +204,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt re
   return resList;
 }
 
-void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AbstractValue result) {
+void SingleEvalResultConstInt::init(EState estate, AbstractValue result) {
   this->estate=estate;
-  this->exprConstraints=exprConstraints;
   this->result=result;
 }
 
-#define CASE_EXPR_ANALYZER_EVAL(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),lhsResult,rhsResult,estate,useConstraints));break
+#define CASE_EXPR_ANALYZER_EVAL(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),lhsResult,rhsResult,estate,mode));break
 
-#define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,useConstraints));break
+#define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,mode));break
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,EState estate) {
   list<SingleEvalResultConstInt> resList;
   AbstractValue result;
   if(SgVarRefExp* varExp=isSgVarRefExp(node)) {
 #if 0
     result=computeAbstractAddress(varExp);
 #else
-    return evalLValueVarRefExp(varExp,estate,useConstraints);
+    return evalLValueVarRefExp(varExp,estate);
 #endif
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
@@ -217,8 +228,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
     exit(1);
   }
   SingleEvalResultConstInt res;
-  ConstraintSet cset;
-  res.init(estate,cset,result);
+  res.init(estate,result);
   resList.push_back(res);
   return resList;
 }
@@ -231,7 +241,60 @@ bool ExprAnalyzer::isLValueOp(SgNode* node) {
     ;
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode) {
+  SgNode* lhs=SgNodeHelper::getLhs(node);
+  list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,mode);
+  list<SingleEvalResultConstInt> resultList;
+  for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
+      liter!=lhsResultList.end();
+      ++liter) {
+    switch(node->variantT()) {
+    case V_SgAndOp: {
+      SingleEvalResultConstInt lhsResult=*liter;
+      // short circuit semantics
+      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
+        for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+            riter!=rhsResultList.end();
+            ++riter) {
+          SingleEvalResultConstInt rhsResult=*riter;
+          resultList.splice(resultList.end(),evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode));
+        }
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isFalse());
+        resultList.push_back(lhsResult);
+      }
+      break;
+    }
+    case V_SgOrOp: {
+      SingleEvalResultConstInt lhsResult=*liter;
+      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
+        for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+            riter!=rhsResultList.end();
+            ++riter) {
+          SingleEvalResultConstInt rhsResult=*riter;
+          resultList.splice(resultList.end(),evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode));
+        }
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isTrue());
+        resultList.push_back(lhsResult);
+      }
+      break;
+    }
+    default:
+      cerr << "Binary short circuit op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+      throw CodeThorn::Exception("Error: evaluateExpression::unknown binary short circuit operation.");
+    }
+  }
+  return resultList;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
@@ -245,14 +308,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
 #endif
 
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
-    return evalConditionalExpr(condExp,estate,useConstraints);
+    return evalConditionalExpr(condExp,estate);
   }
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
+    // special handling of short-circuit operators
+    if(isSgAndOp(node)||isSgOrOp(node)) {
+      return evaluateShortCircuitOperators(node,estate,mode);
+    }
     SgNode* lhs=SgNodeHelper::getLhs(node);
-    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,useConstraints);
+    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,mode);
     SgNode* rhs=SgNodeHelper::getRhs(node);
-    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,useConstraints);
+    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,mode);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
         liter!=lhsResultList.end();
@@ -263,11 +330,21 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         SingleEvalResultConstInt lhsResult=*liter;
         SingleEvalResultConstInt rhsResult=*riter;
 
+        // handle binary pointer operators
+        switch(node->variantT()) {
+          CASE_EXPR_ANALYZER_EVAL(SgArrowExp,evalArrowOp);
+          CASE_EXPR_ANALYZER_EVAL(SgDotExp,evalDotOp);
+        default:
+          // fall through;
+          ;
+        }
+        if(node->variantT()==V_SgArrowExp||node->variantT()==V_SgDotExp) {
+          return resultList;
+        }
+        
         switch(node->variantT()) {
           CASE_EXPR_ANALYZER_EVAL(SgEqualityOp,evalEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgNotEqualOp,evalNotEqualOp);
-          CASE_EXPR_ANALYZER_EVAL(SgAndOp,evalAndOp);
-          CASE_EXPR_ANALYZER_EVAL(SgOrOp,evalOrOp);
           CASE_EXPR_ANALYZER_EVAL(SgAddOp,evalAddOp);
           CASE_EXPR_ANALYZER_EVAL(SgSubtractOp,evalSubOp);
           CASE_EXPR_ANALYZER_EVAL(SgMultiplyOp,evalMulOp);
@@ -295,7 +372,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   
   if(isLValueOp(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
-    list<SingleEvalResultConstInt> operandResultList=evaluateLExpression(child,estate,useConstraints);
+    list<SingleEvalResultConstInt> operandResultList=evaluateLExpression(child,estate);
     //assert(operandResultList.size()==1);
     list<SingleEvalResultConstInt> resultList;
     for(auto oiter:operandResultList) {
@@ -305,6 +382,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPlusPlusOp,evalPlusPlusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusMinusOp,evalMinusMinusOp);
+        // SgPointerDerefExp??
       default:
         ; // nothing to do, fall through to next loop on unary ops
       }
@@ -314,7 +392,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
 
   if(dynamic_cast<SgUnaryOp*>(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
-    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,useConstraints);
+    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,mode);
     list<SingleEvalResultConstInt> resultList;
     for(auto oiter:operandResultList) {
       SingleEvalResultConstInt operandResult=oiter;
@@ -341,18 +419,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
 
   // special case sizeof operator (operates on types and types of expressions)
   if(SgSizeOfOp* sizeOfOp=isSgSizeOfOp(node)) {
-    return evalSizeofOp(sizeOfOp,estate,useConstraints);
+    return evalSizeofOp(sizeOfOp,estate);
   }
   if(SgValueExp* exp=isSgValueExp(node)) {
     ROSE_ASSERT(exp!=nullptr);
-    return evalValueExp(exp,estate,useConstraints);
+    return evalValueExp(exp,estate);
   }
   switch(node->variantT()) {
   case V_SgVarRefExp:
-    return evalRValueVarRefExp(isSgVarRefExp(node),estate,useConstraints);
+    return evalRValueVarRefExp(isSgVarRefExp(node),estate);
   case V_SgFunctionCallExp: {
     //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
-    return evalFunctionCall(isSgFunctionCallExp(node),estate,useConstraints);
+    return evalFunctionCall(isSgFunctionCallExp(node),estate);
   }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
@@ -365,10 +443,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 // evaluation functions
-list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalExp* condExp, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalExp* condExp, EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SgExpression* cond=condExp->get_conditional_exp();
-  list<SingleEvalResultConstInt> condResultList=evaluateExpression(cond,estate,useConstraints);
+  list<SingleEvalResultConstInt> condResultList=evaluateExpression(cond,estate);
   if(condResultList.size()==0) {
     cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
     exit(1);
@@ -389,19 +467,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
   SingleEvalResultConstInt singleResult=*condResultList.begin();
   if(singleResult.result.isTop()) {
     SgExpression* trueBranch=condExp->get_true_exp();
-    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate);
     SgExpression* falseBranch=condExp->get_false_exp();
-    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate);
     // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
     trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
     return trueBranchResultList;
   } else if(singleResult.result.isTrue()) {
     SgExpression* trueBranch=condExp->get_true_exp();
-    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate);
     return trueBranchResultList;
   } else if(singleResult.result.isFalse()) {
     SgExpression* falseBranch=condExp->get_false_exp();
-    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate);
     return falseBranchResultList;
   } else {
     cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
@@ -412,46 +490,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
 list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
                                                          SingleEvalResultConstInt lhsResult, 
                                                          SingleEvalResultConstInt rhsResult,
-                                                         EState estate, bool useConstraints) {
+                                                         EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorEq(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-  // record new constraint
-  if(useConstraints) {
-    VariableId varId;
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    SgNode* rhs=SgNodeHelper::getRhs(node);
-    if(variable(lhs,varId) && rhsResult.isConstInt()) {
-      // if var is top add two states with opposing constraints
-      if(!res.estate.pstate()->varIsConst(varId)) {
-        SingleEvalResultConstInt tmpres1=res;
-        SingleEvalResultConstInt tmpres2=res;
-        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-        tmpres1.result=true;
-        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
-        tmpres2.result=false;
-        resultList.push_back(tmpres1);
-        resultList.push_back(tmpres2);
-        return resultList;
-      }
-    }
-    if(lhsResult.isConstInt() && variable(rhs,varId)) {
-      // only add the equality constraint if no constant is bound to the respective variable
-      if(!res.estate.pstate()->varIsConst(varId)) {
-        SingleEvalResultConstInt tmpres1=res;
-        SingleEvalResultConstInt tmpres2=res;
-        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
-        tmpres1.result=true;
-        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
-        tmpres2.result=false;
-        resultList.push_back(tmpres1);
-        resultList.push_back(tmpres2);
-        return resultList;
-      }
-    }
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -459,46 +502,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
                                                             SingleEvalResultConstInt lhsResult, 
                                                             SingleEvalResultConstInt rhsResult,
-                                                            EState estate, bool useConstraints) {
+                                                            EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  if(useConstraints) {
-    res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-    // record new constraint
-    VariableId varId;
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    SgNode* rhs=SgNodeHelper::getRhs(node);
-    if(variable(lhs,varId) && rhsResult.isConstInt()) {
-      // only add the equality constraint if no constant is bound to the respective variable
-      if(!res.estate.pstate()->varIsConst(varId)) {
-        SingleEvalResultConstInt tmpres1=res;
-        SingleEvalResultConstInt tmpres2=res;
-        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,rhsResult.value()));
-        tmpres1.result=true;
-        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,rhsResult.value()));
-        tmpres2.result=false;
-        resultList.push_back(tmpres1);
-        resultList.push_back(tmpres2);
-        return resultList;
-      }
-    }
-    if(lhsResult.isConstInt() && variable(rhs,varId)) {
-      // only add the equality constraint if no constant is bound to the respective variable
-      if(!res.estate.pstate()->varIsConst(varId)) {
-        SingleEvalResultConstInt tmpres1=res;
-        SingleEvalResultConstInt tmpres2=res;
-        tmpres1.exprConstraints.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,varId,lhsResult.value()));
-        tmpres1.result=true;
-        tmpres2.exprConstraints.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,lhsResult.value()));
-        tmpres2.result=false;
-        resultList.push_back(tmpres1);
-        resultList.push_back(tmpres2);
-        return resultList;
-      }
-    }
-  }
+  res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
   resultList.push_back(res);
   return resultList;
 }
@@ -506,32 +514,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAndOp(SgAndOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
   res.result=(lhsResult.result.operatorAnd(rhsResult.result));
-  //cout << res.result.toString()<<endl;
-  if(lhsResult.result.isFalse()) {
-    res.exprConstraints=lhsResult.exprConstraints;
-    // rhs is not considered due to short-circuit CPP-AND-semantics
-  }
-  if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-    // nothing to do
-  }
-  if(lhsResult.result.isTrue() && rhsResult.result.isTrue()) {
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-  }
-  
-  // in case of top we do not propagate constraints [imprecision]
-  if(!lhsResult.result.isTop()) {
-    res.exprConstraints+=lhsResult.exprConstraints;
-  }
-  if(!rhsResult.result.isTop()) {
-    res.exprConstraints+=rhsResult.exprConstraints;
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -539,7 +527,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAndOp(SgAndOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalOrOp(SgOrOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -548,23 +536,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalOrOp(SgOrOp* node,
   // encode short-circuit CPP-OR-semantics
   if(lhsResult.result.isTrue()) {
     res.result=lhsResult.result;
-    res.exprConstraints=lhsResult.exprConstraints;
   } 
-  if(lhsResult.result.isFalse() && rhsResult.result.isFalse()) {
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-  } 
-  if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-  }
-
-  // in case of top do not propagate constraints [imprecision]
-  if(!lhsResult.result.isTop()) {
-    res.exprConstraints+=lhsResult.exprConstraints;
-  }
-  if(!rhsResult.result.isTop()) {
-    res.exprConstraints+=rhsResult.exprConstraints;
-  }
-
   resultList.push_back(res);
   return resultList;
 }
@@ -572,50 +544,46 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalOrOp(SgOrOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAddOp(SgAddOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result+rhsResult.result);
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSubOp(SgSubtractOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result-rhsResult.result);
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalMulOp(SgMultiplyOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
 
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result*rhsResult.result);
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalDivOp(SgDivideOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
 
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result/rhsResult.result);
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -623,13 +591,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDivOp(SgDivideOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
                                                       SingleEvalResultConstInt lhsResult, 
                                                       SingleEvalResultConstInt rhsResult,
-                                                      EState estate, bool useConstraints) {
+                                                      EState estate, EvalMode mode) {
 
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result%rhsResult.result);
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -637,12 +604,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseAndOp(SgBitAndOp* node,
                                                               SingleEvalResultConstInt lhsResult, 
                                                               SingleEvalResultConstInt rhsResult,
-                                                              EState estate, bool useConstraints) {
+                                                              EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -650,12 +616,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseAndOp(SgBitAndOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseOrOp(SgBitOrOp* node,
                                                              SingleEvalResultConstInt lhsResult, 
                                                              SingleEvalResultConstInt rhsResult,
-                                                             EState estate, bool useConstraints) {
+                                                             EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -663,12 +628,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseOrOp(SgBitOrOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseXorOp(SgBitXorOp* node,
                                                               SingleEvalResultConstInt lhsResult, 
                                                               SingleEvalResultConstInt rhsResult,
-                                                              EState estate, bool useConstraints) {
+                                                              EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -677,7 +641,7 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
                                    SingleEvalResultConstInt lhsResult, 
                                    SingleEvalResultConstInt rhsResult,
-                                   EState estate, bool useConstraints) {
+                                   EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -686,7 +650,6 @@ ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -695,7 +658,7 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
                                 SingleEvalResultConstInt lhsResult, 
                                 SingleEvalResultConstInt rhsResult,
-                                EState estate, bool useConstraints) {
+                                EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -704,7 +667,6 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -713,7 +675,7 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
                                 SingleEvalResultConstInt lhsResult, 
                                 SingleEvalResultConstInt rhsResult,
-                                EState estate, bool useConstraints) {
+                                EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -722,7 +684,6 @@ ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -731,7 +692,7 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
                              SingleEvalResultConstInt lhsResult, 
                              SingleEvalResultConstInt rhsResult,
-                             EState estate, bool useConstraints) {
+                             EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -740,7 +701,6 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -749,12 +709,11 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalBitwiseShiftLeftOp(SgLshiftOp* node,
                              SingleEvalResultConstInt lhsResult, 
                              SingleEvalResultConstInt rhsResult,
-                             EState estate, bool useConstraints) {
+                             EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorBitwiseShiftLeft(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -763,12 +722,11 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalBitwiseShiftRightOp(SgRshiftOp* node,
                              SingleEvalResultConstInt lhsResult, 
                              SingleEvalResultConstInt rhsResult,
-                             EState estate, bool useConstraints) {
+                             EState estate, EvalMode mode) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorBitwiseShiftRight(rhsResult.result));
-  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;
 }
@@ -777,7 +735,7 @@ list<SingleEvalResultConstInt>
 ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                  SingleEvalResultConstInt arrayExprResult, 
                                  SingleEvalResultConstInt indexExprResult,
-                                 EState estate, bool useConstraints) {
+                                 EState estate, EvalMode mode) {
   //cout<<"DEBUG: evalArrayReferenceOp: "<<node->unparseToString()<<endl;
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
@@ -788,7 +746,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
     res.result=CodeThorn::Top();
-    res.exprConstraints=arrayExprResult.exprConstraints+indexExprResult.exprConstraints;
     resultList.push_back(res);
     return resultList;
   } else {
@@ -834,12 +791,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
+        // return address of denoted memory location
         res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
-        if(res.result.isTop() && useConstraints) {
-          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayPtrPlusIndexValue);
-          res.result=val;
-        }
         return listify(res);
       } else {
         // array variable NOT in state. Special space optimization case for constant array.
@@ -903,78 +857,53 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalNotOp(SgNotOp* node, 
                                                        SingleEvalResultConstInt operandResult, 
-                                                       EState estate, bool useConstraints) {
+                                                       EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=operandResult.result.operatorNot();
   // do *not* invert the constraints, instead negate the operand result (TODO: investigate)
-  res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node, 
                                                               SingleEvalResultConstInt operandResult, 
-                                                              EState estate, bool useConstraints) {
+                                                              EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=operandResult.result.operatorUnaryMinus();
-  res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
-                                                              EState estate, bool useConstraints) {
+                                                              EState estate, EvalMode mode) {
   
-  SPRAY::TypeSize typeSize=_sgTypeSizeMapping.determineTypeSize(node->get_operand_type());
+  SgType* operandType=node->get_operand_type();
+  ROSE_ASSERT(operandType);
+  SPRAY::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
   AbstractValue sizeValue=AbstractValue(typeSize); 
+  //AbstractValue sizeValue=AbstractValue(4); 
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),sizeValue);
+  res.init(estate,sizeValue);
   return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
                                                         SingleEvalResultConstInt operandResult, 
-                                                        EState estate, bool useConstraints) {
+                                                        EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   // TODO: model effect of cast when sub language is extended
   //SgCastExp* castExp=isSgCastExp(node);
   //res.estate=estate;
   //res.result=operandResult.result;
-  //res.exprConstraints=operandResult.exprConstraints;
-  res.init(estate,operandResult.exprConstraints,operandResult.result);
+  res.init(estate,operandResult.result);
   return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseComplementOp(SgBitComplementOp* node, 
                                                                      SingleEvalResultConstInt operandResult, 
-                                                                     EState estate, bool useConstraints) {
+                                                                     EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=operandResult.result.operatorBitwiseComplement();
-  res.exprConstraints=operandResult.exprConstraints;
-  return listify(res);
-}
-
-list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
-                                                              SingleEvalResultConstInt operandResult, 
-                                                              EState estate, bool useConstraints) {
-  SingleEvalResultConstInt res;
-  res.estate=estate;
-  AbstractValue derefOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-#if 1
-  // null pointer check
-  if(derefOperandValue.isTop()) {
-    recordPotentialNullPointerDereferenceLocation(estate.label());
-  }
-  if(derefOperandValue.isConstInt()) {
-    int ptrIntVal=derefOperandValue.getIntValue();
-    if(ptrIntVal==0) {
-      recordDefinitiveNullPointerDereferenceLocation(estate.label());
-    }
-  }
-#endif
-  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
@@ -983,17 +912,124 @@ AbstractValue ExprAnalyzer::computeAbstractAddress(SgVarRefExp* varRefExp) {
   return AbstractValue(varId);
 }
   
+list<SingleEvalResultConstInt> ExprAnalyzer::evalArrowOp(SgArrowExp* node,
+                                                         SingleEvalResultConstInt lhsResult, 
+                                                         SingleEvalResultConstInt rhsResult,
+                                                         EState estate, EvalMode mode) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
+  //AbstractValue address=lhsResult.result;
+  //cout<<"DEBUG: ArrowOp: address(lhs):"<<address.toString(_variableIdMapping)<<endl;
+  //AbstractValue referencedAddress=estate.pstate()->readFromMemoryLocation(address);
+  AbstractValue referencedAddress=lhsResult.result;
+  bool continueExec=checkAndRecordNullPointer(referencedAddress, estate.label());
+  if(continueExec) {
+    logger[TRACE]<<"ArrowOp: referencedAddress(lhs):"<<referencedAddress.toString(_variableIdMapping)<<endl;
+    AbstractValue offset=rhsResult.result;
+    AbstractValue denotedAddress=AbstractValue::operatorAdd(referencedAddress,offset);
+    logger[TRACE]<<"ArrowOp: denoted Address(lhs):"<<denotedAddress.toString(_variableIdMapping)<<endl;
+    switch(mode) {
+    case MODE_VALUE:
+    logger[TRACE]<<"Arrow op: reading value from arrowop-struct location."<<denotedAddress.toString(_variableIdMapping)<<endl;
+    res.result=estate.pstate()->readFromMemoryLocation(denotedAddress);
+    break;
+    case MODE_ADDRESS:
+      res.result=denotedAddress;
+      break;
+    } 
+    resultList.push_back(res);
+    return resultList;
+  } else {
+    list<SingleEvalResultConstInt> empty;
+    return empty;
+  }
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
+                                                       SingleEvalResultConstInt lhsResult, 
+                                                       SingleEvalResultConstInt rhsResult,
+                                                       EState estate, EvalMode mode) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
+  logger[DEBUG]<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  checkAndRecordNullPointer(lhsResult.result, estate.label()); // source of dot-op cannot be null.
+  AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
+  // only if rhs is *not* a dot-operator, needs the value be
+  // read. Otherwise this is not the end of the access path and only the address is computed.
+  if(!isSgDotExp(SgNodeHelper::getRhs(node))) {
+    // reached end of dot sequence (a.b.<here>c)
+    switch(mode) {
+    case MODE_VALUE:
+      logger[TRACE]<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
+      res.result=estate.pstate()->readFromMemoryLocation(address);
+      break;
+    case MODE_ADDRESS:
+      res.result=address;
+      break;
+    } 
+  } else {
+    // evaluation of dot sequence (a.<here>b.c)
+    res.result=address;
+  }
+  resultList.push_back(res);
+  return resultList;
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node, 
                                                              SingleEvalResultConstInt operandResult, 
-                                                             EState estate, bool useConstraints) {
+                                                             EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue operand=operandResult.result;
-  //cout<<"DEBUG: addressOfOpValue: "<<addressOfOperandValue.toRhsString(_variableIdMapping);
-  // AbstractValue of a VariableId is a pointer to this variable.
-  res.result=AbstractValue(operand.getVariableId());
-  res.exprConstraints=operandResult.exprConstraints;
+  logger[TRACE]<<"AddressOfOp: "<<node->unparseToString()<<" - operand: "<<operand.toString(_variableIdMapping)<<endl;
+  if(operand.isTop()||operand.isBot()) {
+    res.result=operand;
+  } else {
+    res.result=AbstractValue(operand.getVariableId());
+  }
   return listify(res);
+}
+
+bool ExprAnalyzer::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
+  if(derefOperandValue.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(label);
+    return true;
+  } else if(derefOperandValue.isConstInt()) {
+    int ptrIntVal=derefOperandValue.getIntValue();
+    if(ptrIntVal==0) {
+      recordDefinitiveNullPointerDereferenceLocation(label);
+      return false;
+    }
+  }
+  return true;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult, 
+                                                                       EState estate, EvalMode mode) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  // null pointer check
+  bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate.label());
+  if(continueExec) {
+    res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+    return listify(res);
+  } else {
+    // TODO: build proper error state and check error state in solver.
+    list<SingleEvalResultConstInt> empty;
+    return empty;
+  }
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
+                                                              SingleEvalResultConstInt operandResult, 
+                                                              EState estate, EvalMode mode) {
+  return semanticEvalDereferenceOp(operandResult,estate);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
@@ -1004,7 +1040,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,newValue);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),newValue);
   return listify(res);
   }
 
@@ -1017,13 +1053,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),cset,oldValue);
+  res.init(_analyzer->createEState(estate.label(),newPState,cset),oldValue);
   return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* node, 
 								SingleEvalResultConstInt operandResult, 
-								EState estate, bool useConstraints) {
+								EState estate, EvalMode mode) {
   AbstractValue address=operandResult.result;
   ROSE_ASSERT(address.isPtr());
   AbstractValue change=1;
@@ -1032,7 +1068,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreIncrementOp(SgPlusPlusOp* no
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreDecrementOp(SgMinusMinusOp* node, 
 								SingleEvalResultConstInt operandResult, 
-								EState estate, bool useConstraints) {
+								EState estate, EvalMode mode) {
   AbstractValue address=operandResult.result;
   ROSE_ASSERT(address.isPtr());
   AbstractValue change=-1;
@@ -1041,7 +1077,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreDecrementOp(SgMinusMinusOp* 
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* node, 
 								 SingleEvalResultConstInt operandResult, 
-								 EState estate, bool useConstraints) {
+								 EState estate, EvalMode mode) {
   AbstractValue address=operandResult.result;
   ROSE_ASSERT(address.isPtr());
   AbstractValue change=1;
@@ -1051,7 +1087,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostIncrementOp(SgPlusPlusOp* n
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostDecrementOp(SgMinusMinusOp* node, 
 								 SingleEvalResultConstInt operandResult, 
-								 EState estate, bool useConstraints) {
+								 EState estate, EvalMode mode) {
   AbstractValue address=operandResult.result;
   ROSE_ASSERT(address.isPtr());
   AbstractValue change=-1;
@@ -1060,43 +1096,42 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostDecrementOp(SgMinusMinusOp*
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPlusPlusOp(SgPlusPlusOp* node, 
                                                             SingleEvalResultConstInt operandResult, 
-                                                            EState estate, bool useConstraints) {
+                                                            EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
     // preincrement ++E
-    return evalPreIncrementOp(node,operandResult,estate,useConstraints);
+    return evalPreIncrementOp(node,operandResult,estate);
    } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
     // postincrement E++
-    return evalPostIncrementOp(node,operandResult,estate,useConstraints);
+    return evalPostIncrementOp(node,operandResult,estate);
   }
   throw CodeThorn::Exception("Interal error: ExprAnalyzer::evalPlusPlusOp: "+node->unparseToString());
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* node, 
                                                               SingleEvalResultConstInt operandResult, 
-                                                              EState estate, bool useConstraints) {
+                                                              EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
   res.estate=estate;
   if(SgNodeHelper::isPrefixIncDecOp(node)) {
     // predecrement --E
-    return evalPreDecrementOp(node,operandResult,estate,useConstraints);
+    return evalPreDecrementOp(node,operandResult,estate);
   } else if(SgNodeHelper::isPostfixIncDecOp(node)) {
     // postdecrement E--
-    return evalPostDecrementOp(node,operandResult,estate,useConstraints);
+    return evalPostDecrementOp(node,operandResult,estate);
   }
   throw CodeThorn::Exception("Internal error: ExprAnalyzer::evalMinusMinusOp: "+node->unparseToString());
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode) {
   // for now we ignore array refs on lhs
   // TODO: assignments in index computations of ignored array ref
   // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
   // since nothing can change (because of being ignored) state remains the same
   PState oldPState=*estate.pstate();
-  ConstraintSet oldcset=*estate.constraints();
   SingleEvalResultConstInt res;
-  res.init(estate,oldcset,AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   if(getSkipArrayAccesses()) {
     // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
     res.result=CodeThorn::Top();
@@ -1135,7 +1170,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
       }
       AbstractValue arrayElementAddress;
       //AbstractValue aValue=(*i).value();
-      list<SingleEvalResultConstInt> resIntermediate=evaluateExpression(indexExp,estate,useConstraints);
+      list<SingleEvalResultConstInt> resIntermediate=evaluateExpression(indexExp,estate);
       ROSE_ASSERT(resIntermediate.size()==1); // TODO: temporary restriction
       AbstractValue indexValue=(*(resIntermediate.begin())).value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
@@ -1174,12 +1209,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   ROSE_ASSERT(false);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints) {
-  logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" EState label:"<<estate.label().toString()<<endl;
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
+  logger[TRACE]<<"DEBUG: evalLValueVarRefExp: "<<node->unparseToString()<<" label:"<<estate.label().toString()<<endl;
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
+  if(isStructMember(varId)) {
+    int offset=structureAccessLookup.getOffset(varId);
+    ROSE_ASSERT(_variableIdMapping);
+    cout<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    //res.result=AbstractValue(offset);
+    //return listify(res);
+  }
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
       logger[TRACE]<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
@@ -1200,30 +1242,37 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
       return listify(res);
     } else {
       res.result=CodeThorn::Top();
-      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
   }
   // unreachable
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
   //cout<<"DEBUG: evalRValueVarRefExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
+  ROSE_ASSERT(varId.isValid());
+  if(_variableIdMapping->hasClassType(varId)) {
+    res.result=AbstractValue::createAddressOfVariable(varId);
+    return listify(res);
+  }
+  // check if var is a struct member. if yes return struct-offset.
+  if(isStructMember(varId)) {
+    int offset=structureAccessLookup.getOffset(varId);
+    ROSE_ASSERT(_variableIdMapping);
+    logger[TRACE]<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    res.result=AbstractValue(offset);
+    return listify(res);
+  }
   if(pstate->varExists(varId)) {
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
       res.result=const_cast<PState*>(pstate)->readFromMemoryLocation(varId);
-    }
-    if(res.result.isTop() && useConstraints) {
-      // in case of TOP we try to extract a possibly more precise value from the constraints
-      AbstractValue val=res.estate.constraints()->varAbstractValue(varId);
-      // TODO: TOPIFY-MODE: most efficient here
-      res.result=val;
     }
     return listify(res);
   } else {
@@ -1244,55 +1293,55 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   // unreachable
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate) {
   ROSE_ASSERT(node);
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate) {
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   for (auto arg : argsList) {
     //cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
     // Requirement: code is normalized, does not contain state modifying operations in function arguments
-    list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate);
     //cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
   }
   SingleEvalResultConstInt res;
   AbstractValue evalResultValue=CodeThorn::Top();
-  res.init(estate,*estate.constraints(),evalResultValue);
+  res.init(estate,evalResultValue);
  
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
+  res.init(estate,AbstractValue(CodeThorn::Top()));
   if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
-      return evalFunctionCallMalloc(funCall,estate,useConstraints);
+      return evalFunctionCallMalloc(funCall,estate);
     } else if(funName=="memcpy") {
-      return evalFunctionCallMemCpy(funCall,estate,useConstraints);
+      return evalFunctionCallMemCpy(funCall,estate);
     } else if(funName=="free") {
-      return evalFunctionCallFree(funCall,estate,useConstraints);
+      return evalFunctionCallFree(funCall,estate);
     } else if(funName=="fflush") {
       // ignoring fflush
       // res initialized above
-      return evalFunctionCallArguments(funCall,estate,useConstraints);
+      return evalFunctionCallArguments(funCall,estate);
     }
   }
   if(getSkipSelectedFunctionCalls()) {
-    return evalFunctionCallArguments(funCall,estate,useConstraints);
+    return evalFunctionCallArguments(funCall,estate);
   } else {
     string s=funCall->unparseToString();
     throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
   }
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate) {
   // create two cases: (i) allocation successful, (ii) allocation fails (null pointer is returned, and no memory is allocated).
   SingleEvalResultConstInt res;
   static int memorylocid=0; // to be integrated in VariableIdMapping
@@ -1305,7 +1354,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
     // (i) create state for successful allocation of memory (do not reserve memory yet, only pointer is reserved and size of memory is recorded)
     // memory is allocated when written to it. Otherwise it is assumed to be uninitialized
     SgExpression* arg1=*argsList.begin();
-    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate);
     if(resList.size()!=1) {
       cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
       exit(1);
@@ -1320,20 +1369,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
       // unknown size
       memoryRegionSize=0;
     }
+    list<SingleEvalResultConstInt> resList2;
     memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
-    res.init(estate,*estate.constraints(),allocatedMemoryPtr);
+    res.init(estate,allocatedMemoryPtr);
     //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
     //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-    // (ii) add memory allocation case with null pointer.
+    // create resList with two states now
+    resList2.push_back(res);
+
+#if 0
+    // (ii) add memory allocation case: null pointer (allocation failed)
     SingleEvalResultConstInt resNullPtr;
     AbstractValue nullPtr=AbstractValue::createNullPtr();
-    resNullPtr.init(estate,*estate.constraints(),nullPtr);
-    // create resList with two states now
-    list<SingleEvalResultConstInt> resList2;
-    resList2.push_back(res);
+    resNullPtr.init(estate,nullPtr);
     resList2.push_back(resNullPtr);
+#endif
     return resList2;
   } else {
     // this will become an error in future
@@ -1342,12 +1394,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   return listify(res);
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate) {
   SingleEvalResultConstInt res;
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==1) {
     SgExpression* arg1=*argsList.begin();
-    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate);
     if(resList.size()!=1) {
       cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
       exit(1);
@@ -1360,7 +1412,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
       //variableIdMapping->setSize(arg1Val.getVariableId(),-1);
       ROSE_ASSERT(memoryRegionSize>=0);
     }
-    res.init(estate,*estate.constraints(),AbstractValue(Top())); // void result (using top here)
+    res.init(estate,AbstractValue(Top())); // void result (using top here)
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown free function "<<funCall->unparseToString()<<endl;
@@ -1376,18 +1428,18 @@ int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
   return size;
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate) {
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   // memcpy is a void function, no return value
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top())); 
+  res.init(estate,AbstractValue(CodeThorn::Top())); 
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==3) {
     AbstractValue memcpyArgs[3];
     int i=0;
     for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
       SgExpression* arg=*argIter;
-      list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
+      list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate);
       if(resList.size()!=1) {
         cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
         exit(1);
@@ -1473,4 +1525,8 @@ void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
 
 void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
   _nullPointerDereferenceLocations.recordPotentialDereference(label);
+}
+
+bool ExprAnalyzer::isStructMember(SPRAY::VariableId varId) {
+  return structureAccessLookup.isStructMember(varId);
 }

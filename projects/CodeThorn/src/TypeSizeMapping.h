@@ -31,7 +31,7 @@ namespace SPRAY {
     SPRAY::TypeSize getTypeSize(SPRAY::BuiltInType bitype);
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();
-  private:
+  protected:
     // default setting LP64 data model
     std::vector<SPRAY::TypeSize> _mapping={1,
                                            1,1,2,2,4,4,

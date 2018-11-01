@@ -1,9 +1,7 @@
 
 ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 
-# DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
-# ROSE__CXX_TESTS = 
-ROSE__CXX_TESTS_WITHOUT_2013_241 = \
+ROSE__CXX_TESTS = \
 	test_CplusplusMacro_Cpp.C \
 	test2001_01.C \
 	test2001_02.C \
@@ -1302,25 +1300,25 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2013_250.C \
 	test2013_251.C \
 	test2013_252.C \
-   test2013_300.C \
-   test2013_301.C \
-   test2013_302.C \
-   test2013_303.C \
-   test2013_305.C \
-   test2013_306.C \
-   test2013_307.C \
-   test2013_308.C \
-   test2013_310.C \
-   test2013_311.C \
-   test2013_312.C \
-   test2013_313.C \
-   test2013_314.C \
-   test2013_315.C \
-   test2013_316.C \
-   test2013_317.C \
-   test2013_318.C \
-   test2013_319.C \
-   test2013_320.C \
+	test2013_300.C \
+	test2013_301.C \
+	test2013_302.C \
+	test2013_303.C \
+	test2013_305.C \
+	test2013_306.C \
+	test2013_307.C \
+	test2013_308.C \
+	test2013_310.C \
+	test2013_311.C \
+	test2013_312.C \
+	test2013_313.C \
+	test2013_314.C \
+	test2013_315.C \
+	test2013_316.C \
+	test2013_317.C \
+	test2013_318.C \
+	test2013_319.C \
+	test2013_320.C \
 	test_int_lexemes.C \
 	test_int_lexemes_donot_pass.C \
 	test_simple_int.C \
@@ -1338,94 +1336,3 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2012_59.C \
         test2013_milind_01.C 
 
-# DQ (4/16/2016): Removed this test and put it into the Cxx_tests directory since it is 
-# a specific problem for Clang testing only.
-# test2005_50.C 
-# test2007_141.C 
-# test2012_188.C 
-# test2013_243.C 
-
-# DQ (11/17/2017): These were not previously being tested by the Intel and were part of a large number that were missed from Intel (and GNU 6.1) testing.
-if !USING_INTEL_COMPILER
-ROSE__CXX_TESTS_WITHOUT_2013_241 += \
-	test2006_08.C \
-        test2006_37.C
-endif
-
-# ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
-
-# DQ (1/16/2017): If using Clang on Mac OSX we can't test test2013_09.C because header files used are
-# implemented using C++11 language features and will not compile in the Cxx_tests which
-# assume C++98 langauge standard.  This test code must be compilied using the -std=c++11 option.
-# Note: test2004_77.C requires C++11 mode, but also failes in an assertion (in name qualification).
-# Note: test2006_20.C requires C++11 mode, and also references bits/stl_algobase.h not present on a Mac.
-
-# DQ (1/18/2017): Changed this to use the proper macro for Mac OSX instead of for Clang.
-# if !USING_CLANG_COMPILER
-if !OS_MACOSX
-ROSE__CXX_TESTS_WITHOUT_2013_241 += \
-	test2004_77.C \
-	test2006_20.C \
-	test2011_141.C \
-	test2011_142.C \
-	test2012_09.C \
-	test2013_09.C \
-	test2013_164.C \
-	test2013_212.C 
-endif
-
-ROSE__CXX_TESTS__BOOST = \
-	test2013_236.C
-
-if !USING_CLANG_COMPILER
-# DQ (3/25/2014): These work now with the GNU 4.7 and 4.8 compilers.
-# Previously the use if 128 bit integers was not supported in ROSE
-# and was a problem for these codes using the GNU 4.7 and 4.8 compilers.
-# if !ROSE_USE_EDG_VERSION_4_8
-# if !ROSE_USING_GCC_VERSION_LATER_4_6
-ROSE__CXX_TESTS_WITHOUT_2013_241 += \
-	test2005_42.C \
-	test2012_90.C \
-	test2013_63.C \
-	#EXPECTED FAILURE: test2013_242.C 
-	test2013_246.C 
-
-# DQ (1/19/2017): This normalization of "const char*" literal strings to "char*" is a problem for GNU 6.1 (6.x and later) compilers.
-if !ROSE_USING_GCC_VERSION_LATER_6_1
-# DQ (5/26/2014): Separate out test2014_241.C from use in the normalization tests.
-ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) \
-	test2013_241.C 
-
-ROSE__CXX_TESTS_WITHOUT_2013_241 += \
-	test2013_234.C \
-	test2013_240.C 
-else
-# DQ (11/17/2017): We want to include the test codes test2001_xx.C through test2013_xx.C and there were being droped by mistake (I think).
-# ROSE__CXX_TESTS =
-ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241)
-endif
-
-ROSE__CXX_TESTS__BOOST += \
-	test2013_235.C 
-
-else
-# DQ (1/16/2017): We need to include this to get the larger list of older test codes as well.
-ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241) 
-endif
-
-# DQ (2/18/2017): Moved test2004_143.C and test2004_149.C to be excluded from CLANG using EDG 4.9.
-# DQ (1/28/2017): This fails in EDG for EDG 4.9 using Clang 3.8 header files.
-# EDG 4.9 can't handle the header files from later versions of GNU and Clang 
-# is using the later version GNU header files (need to configure ROSE with 
-# version EDG 4.12 or later).
-if USING_CLANG_COMPILER
-if !ROSE_USE_EDG_VERSION_4_9
-ROSE__CXX_TESTS += \
-	test2004_85.C
-endif
-else
-ROSE__CXX_TESTS += \
-   test2004_85.C 
-endif
-
-# endif

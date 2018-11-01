@@ -484,6 +484,12 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -766,6 +772,14 @@ void Grammar::setUpBinaryInstructions() {
 
         // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
+
+        /** Number of operands. */
+        size_t nOperands() const;
+
+        /** Nth operand.
+         *
+         *  If the operand index is out of range, then null is returned. */
+        SgAsmExpression* operand(size_t) const;
 
         /** Determines if this instruction normally terminates a basic block.
          *
@@ -1050,6 +1064,12 @@ void Grammar::setUpBinaryInstructions() {
          *  }
          * @endcode */
         virtual unsigned get_anyKind() const;
+
+        /** Converts the instruction to a string.
+         *
+         *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
+        virtual std::string toString() const;
+
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2747,6 +2767,19 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Returns the width of the expression in bits according to its data type. The "type" property must be non-null. */
         size_t get_nBits() const;
+
+        /** Return a constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit unsigned type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<uint64_t> asUnsigned() const;
+
+        /** Return a signed constant if possible.
+         *
+         *  If this expression is an integer expression with a constant that fits in a 64-bit signed type, then return it,
+         *  otherwise return nothing. */
+        Sawyer::Optional<int64_t> asSigned() const;
+
 #endif // SgAsmExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3177,6 +3210,22 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        /** Property: Additional function existance reason comment.
+         *
+         *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
+         *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+         *  property.
+         *
+         * @{ */
+        const std::string& get_reasonComment() const;
+        void set_reasonComment(const std::string&);
+        /** @} */
+#else
+        AsmFunction.setDataPrototype("std::string", "reasonComment", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
         /** Property: Kind of function.
          *
          *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details.
@@ -3321,6 +3370,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
             s & BOOST_SERIALIZATION_NVP(p_name);
             s & BOOST_SERIALIZATION_NVP(p_reason);
+            s & BOOST_SERIALIZATION_NVP(p_reasonComment);
             s & BOOST_SERIALIZATION_NVP(p_function_kind);
             s & BOOST_SERIALIZATION_NVP(p_may_return);
             s & BOOST_SERIALIZATION_NVP(p_name_md5);
@@ -3446,9 +3496,15 @@ void Grammar::setUpBinaryInstructions() {
                                                  *   be stored at a time.  These are not used to control which partitioning
                                                  *   heuristics to use, but rather to indicate which one (of possibly many)
                                                  *   that detected the function. */
-                FUNC_INTERPADFUNC = 0x00000001  /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
+                FUNC_INTERPADFUNC = 1,          /**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
                                                  *   space between two inter-function padding blocks and makes the first such
                                                  *   address the beginning of one of these functions. */
+                FUNC_PESCRAMBLER_DISPATCH = 2, /**<  Dispatcher function for code generated by pescrambler. */
+                FUNC_CONFIGURED = 3,           /**<  Function is defined in a configuration file. */
+                FUNC_CMDLINE = 4,              /**<  Function mentioned on the command-line. */
+                FUNC_SCAN_RO_DATA = 5,         /**<  Address was found in read-only data area by scanning the data. */
+                FUNC_INSN_RO_DATA = 6,         /**<  Address was found in read-only data referenced by an existing
+                                                *    instruction. */
         };
 
         /** Multi-line description of function reason keys from unparser.

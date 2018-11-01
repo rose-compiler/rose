@@ -7,6 +7,7 @@
 #include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
+#include "DisassemblerPowerpc.h"
 #include "DisassemblerX86.h"
 #include "SRecord.h"
 #include <boost/algorithm/string/classification.hpp>
@@ -14,12 +15,15 @@
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
+#include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
+#include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
 #include <Sawyer/FileSystem.h>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -56,7 +60,7 @@ Engine::reset() {
     binaryLoader_ = NULL;
     disassembler_ = NULL;
     map_ = MemoryMap::Ptr();
-    basicBlockWorkList_ = BasicBlockWorkList::instance(this);
+    basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
 }
 
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
@@ -391,19 +395,18 @@ Engine::partitionerSwitches() {
                    "address to zero disables this module (which is the default)."));
 
     sg.insert(Switch("intra-function-code")
-              .intrinsicValue(true, settings_.partitioner.findingIntraFunctionCode)
-              .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                   "followed by the same single function then a basic block is create at the beginning of that region and "
-                   "added as a member of the surrounding function.  A function block discover phase follows in order to "
-                   "find the instructions for the new basic blocks and to follow their control flow to add additional "
-                   "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
-                   "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
-                   "switch turns this off. The default is to " +
-                   std::string(settings_.partitioner.findingIntraFunctionCode?"":"not ") +
-                   "perform this analysis."));
+              .argument("npasses", nonNegativeIntegerParser(settings_.partitioner.findingIntraFunctionCode), "10")
+              .doc("Near the end of processing, a pass is made over the entire address space to find executable memory "
+                   "that doesn't yet belong to any known function but is surrounded by a single function. A basic block "
+                   "is created for each such region after which a recursive basic block discover phase ensues in order "
+                   "find additional blocks reachable by the control flow. This process is repeated up to @v{npasses} "
+                   "times, or until no new addresses are found. For backward compatibility, this switch also acts as "
+                   "a boolean: @s{intra-function-code} and @s{no-intra-function-code} are equivalent to setting the "
+                   "number of passes to ten and zero, respectively. The default is " +
+                   StringUtility::plural(settings_.partitioner.findingIntraFunctionCode, "passes") + "."));
     sg.insert(Switch("no-intra-function-code")
               .key("intra-function-code")
-              .intrinsicValue(false, settings_.partitioner.findingIntraFunctionCode)
+              .intrinsicValue((size_t)0, settings_.partitioner.findingIntraFunctionCode)
               .hidden(true));
 
     sg.insert(Switch("intra-function-data")
@@ -482,6 +485,23 @@ Engine::partitionerSwitches() {
               .key("name-strings")
               .intrinsicValue(false, settings_.partitioner.namingStrings)
               .hidden(true));
+
+    sg.insert(Switch("name-syscalls")
+              .intrinsicValue(true, settings_.partitioner.namingSyscalls)
+              .doc("Scans all instructions and tries to give names to system calls.  The names are assigned as comments "
+                   "to the instruction that performs the system call. The system call names are parsed from the Linux header "
+                   "files on the system running the analysis (not necessarily where ROSE was compiled); this can be adjusted "
+                   "with the @s{syscall-header} switch.  The @s{no-name-syscalls} turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.namingSyscalls?"":"not ") + "do this step."));
+    sg.insert(Switch("no-name-syscalls")
+              .key("name-syscalls")
+              .intrinsicValue(false, settings_.partitioner.namingSyscalls)
+              .hidden(true));
+
+    sg.insert(Switch("syscall-header")
+              .argument("filename", anyParser(settings_.partitioner.syscallHeader))
+              .doc("Name of the header file from which to obtain the system call ID-name mapping. The default is to look "
+                   "in standard places such as /usr/include/asm/unistd_32.h."));
 
     sg.insert(Switch("post-analysis")
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
@@ -568,6 +588,15 @@ Engine::partitionerSwitches() {
                    "@named{yes}{Assume a function returns if the may-return analysis cannot decide. This is the default.}"
                    "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
 
+    sg.insert(Switch("functions-return-sort")
+              .argument("n", nonNegativeIntegerParser(settings_.partitioner.functionReturnAnalysisMaxSorts))
+              .doc("If function return analysis is occurring (@s{functions-return}) then functions are sorted according to "
+                   "their depth in the global control flow graph, arbitrarily removing cycles. The functions are analyzed "
+                   "starting at the leaves in order to minimize forward dependencies. For large specimens, this sorting "
+                   "might occur often and is expensive. Therefore, the sorting is limited to the specified number of "
+                   "occurrences, after which unsorted lists are used. The default is " +
+                   StringUtility::plural(settings_.partitioner.functionReturnAnalysisMaxSorts, "sorting operations") + "."));
+
     sg.insert(Switch("call-branch")
               .intrinsicValue(true, settings_.partitioner.base.checkingCallBranch)
               .doc("When determining whether a basic block is a function call, also check whether the callee discards "
@@ -596,6 +625,7 @@ Sawyer::CommandLine::SwitchGroup
 Engine::engineSwitches() {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg = Rose::CommandLine::genericSwitches();
+    sg.name("global");
 
     sg.insert(Switch("config")
               .argument("names", listParser(anyParser(settings_.engine.configurationNames), ":"))
@@ -1178,7 +1208,7 @@ Engine::createBarePartitioner() {
         p.basicBlockCallbacks().append(cb);
         p.attachFunction(Function::instance(settings_.partitioner.peScramblerDispatcherVa,
                                             p.addressName(settings_.partitioner.peScramblerDispatcherVa),
-                                            SgAsmFunction::FUNC_USERDEF));
+                                            SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH));
     }
 
     return p;
@@ -1192,6 +1222,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
+    p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
         p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
@@ -1199,6 +1230,7 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+    p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
     return p;
 }
 
@@ -1225,6 +1257,15 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+        p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
+        p.basicBlockCallbacks().append(ModulesLinux::LibcStartMain::instance());
+        return p;
+    }
+
+    if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
+        checkCreatePartitionerPrerequisites();
+        Partitioner p = createBarePartitioner();
+        p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return p;
     }
 
@@ -1277,6 +1318,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         Function::Ptr function = Function::instance(funcAst->get_entry_va(), funcAst->get_name());
         function->comment(funcAst->get_comment());
         function->reasons(funcAst->get_reason());
+        function->reasonComment(funcAst->get_reasonComment());
 
         BOOST_FOREACH (SgAsmBlock *blockAst, SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
             if (blockAst->has_instructions())
@@ -1302,54 +1344,102 @@ Engine::createPartitioner() {
 
 void
 Engine::runPartitionerInit(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
+    SAWYER_MESG(where) <<"labeling addresses\n";
     labelAddresses(partitioner);
+
+    SAWYER_MESG(where) <<"marking configured basic blocks\n";
     makeConfiguredDataBlocks(partitioner, partitioner.configuration());
+
+    SAWYER_MESG(where) <<"marking configured functions\n";
     makeConfiguredFunctions(partitioner, partitioner.configuration());
+
+    SAWYER_MESG(where) <<"marking ELF/PE container functions\n";
     makeContainerFunctions(partitioner, interp_);
+
+    SAWYER_MESG(where) <<"marking interrupt functions\n";
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
+
+    SAWYER_MESG(where) <<"marking user-defined functions\n";
     makeUserFunctions(partitioner, settings_.partitioner.startingVas);
 }
 
 void
 Engine::runPartitionerRecursive(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
     // Start discovering instructions and forming them into basic blocks and functions
+    SAWYER_MESG(where) <<"discovering and populating functions\n";
     discoverFunctions(partitioner);
 
+    // Try to attach basic blocks to functions
+    SAWYER_MESG(where) <<"marking function call targets\n";
+    makeCalledFunctions(partitioner);
+
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
+    attachBlocksToFunctions(partitioner);
+
     // Additional work
-    if (settings_.partitioner.findingDeadCode)
+    if (settings_.partitioner.findingDeadCode) {
+        SAWYER_MESG(where) <<"attaching dead code to functions\n";
         attachDeadCodeToFunctions(partitioner);
-    if (settings_.partitioner.findingFunctionPadding)
+    }
+    if (settings_.partitioner.findingFunctionPadding) {
+        SAWYER_MESG(where) <<"attaching function padding\n";
         attachPaddingToFunctions(partitioner);
-    if (settings_.partitioner.findingIntraFunctionCode)
+    }
+    if (settings_.partitioner.findingIntraFunctionCode > 0) {
+        // WHERE message is emitted in the call
         attachAllSurroundedCodeToFunctions(partitioner);
-    if (settings_.partitioner.findingIntraFunctionData)
+    }
+    if (settings_.partitioner.findingIntraFunctionData) {
+        SAWYER_MESG(where) <<"searching for inter-function code\n";
         attachSurroundedDataToFunctions(partitioner);
+    }
 
     // Another pass to attach blocks to functions
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
 }
 
 void
 Engine::runPartitionerFinal(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
+
     if (settings_.partitioner.splittingThunks) {
         // Splitting thunks off the front of a basic block causes the rest of the basic block to be discarded and then
         // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
         // single blocks at a time -- splitting the block may have broken the opaque predicate.
+        SAWYER_MESG(where) <<"splitting thunks from functions\n";
         ModulesX86::splitThunkFunctions(partitioner);
         discoverBasicBlocks(partitioner);
     }
 
     // Perform a final pass over all functions.
+    SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
 
-    if (interp_)
+    if (interp_) {
+        SAWYER_MESG(where) <<"naming imports\n";
         ModulesPe::nameImportThunks(partitioner, interp_);
-    if (settings_.partitioner.namingConstants)
+    }
+    if (settings_.partitioner.namingConstants) {
+        SAWYER_MESG(where) <<"naming constants\n";
         Modules::nameConstants(partitioner);
-    if (settings_.partitioner.namingStrings)
+    }
+    if (settings_.partitioner.namingStrings) {
+        SAWYER_MESG(where) <<"naming strings\n";
         Modules::nameStrings(partitioner);
-    if (settings_.partitioner.demangleNames)
+    }
+    if (settings_.partitioner.namingSyscalls) {
+        SAWYER_MESG(where) <<"naming system calls\n";
+        ModulesLinux::nameSystemCalls(partitioner, settings_.partitioner.syscallHeader);
+    }
+    if (settings_.partitioner.demangleNames) {
+        SAWYER_MESG(where) <<"demangling names\n";
         Modules::demangleFunctionNames(partitioner);
+    }
 }
 
 void
@@ -1421,7 +1511,7 @@ Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &c
     BOOST_FOREACH (const FunctionConfig &fconfig, configuration.functionConfigsByAddress().values()) {
         rose_addr_t entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
-            Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_USERDEF);
+            Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
             function->comment(fconfig.comment());
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
         }
@@ -1550,7 +1640,7 @@ std::vector<Function::Ptr>
 Engine::makeUserFunctions(Partitioner &partitioner, const std::vector<rose_addr_t> &vas) {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (rose_addr_t va, vas) {
-        Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_USERDEF);
+        Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_CMDLINE);
         insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
     }
     return retval;
@@ -1609,7 +1699,9 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(targetVa)
                    <<" found at read-only address " <<StringUtility::addrToString(readVa) <<"\n";
         readVa = incrementAddress(readVa, wordSize, maxaddr);
-        return Function::instance(targetVa, SgAsmFunction::FUNC_USERDEF);
+        Function::Ptr function = Function::instance(targetVa, SgAsmFunction::FUNC_SCAN_RO_DATA);
+        function->reasonComment("at ro-data address " + StringUtility::addrToString(readVa));
+        return function;
     }
     readVa = maxaddr;
     return Function::Ptr();
@@ -1621,19 +1713,25 @@ Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
     // function examines them, it moves them to an already-examined set.
     rose_addr_t constant = 0;
     while (codeFunctionPointers_ && codeFunctionPointers_->nextConstant(partitioner).assignTo(constant)) {
+        rose_addr_t srcVa = codeFunctionPointers_->inProgress();
+        SgAsmInstruction *srcInsn = partitioner.instructionProvider()[srcVa];
+        ASSERT_not_null(srcInsn);
 
-        SgAsmInstruction *insn = partitioner.discoverInstruction(constant);
-        if (!insn || insn->isUnknown())
+        SgAsmInstruction *targetInsn = partitioner.discoverInstruction(constant);
+        if (!targetInsn || targetInsn->isUnknown())
             continue;                                   // no instruction
 
-        AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
+        AddressInterval insnInterval = AddressInterval::baseSize(targetInsn->get_address(), targetInsn->get_size());
         if (!partitioner.instructionsOverlapping(insnInterval).empty())
             continue;                                   // would overlap with existing instruction
 
         // All seems okay, so make a function there
         // FIXME[Robb P Matzke 2017-04-13]: USERDEF is not the best, most descriptive reason, but it's what we have for now
         mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
-        return Function::instance(constant, SgAsmFunction::FUNC_USERDEF);
+        Function::Ptr function = Function::instance(constant, SgAsmFunction::FUNC_INSN_RO_DATA);
+
+        function->reasonComment("from " + srcInsn->toString() + ", ro-data address " + StringUtility::addrToString(constant));
+        return function;
     }
     return Function::Ptr();
 }
@@ -1756,7 +1854,8 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
                 SAWYER_MESG(debug) <<me <<"candidate basic block overlaps with another; skipping\n";
                 continue;
             }
-            if (!partitioner.basicBlockIsFunctionCall(bb)) {
+
+            if (!partitioner.basicBlockIsFunctionCall(bb, Precision::LOW)) {
                 SAWYER_MESG(debug) <<me <<"candidate basic block is not a function call; skipping\n";
                 continue;
             }
@@ -1764,7 +1863,8 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             // Look at the basic block successors to find those which appear to be function calls. Note that the edge types are
             // probably all E_NORMAL at this point rather than E_FUNCTION_CALL, and the call-return edges are not yet present.
             std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
-            BOOST_FOREACH (const BasicBlock::Successor &succ, partitioner.basicBlockSuccessors(bb)) {
+            BasicBlock::Successors successors = partitioner.basicBlockSuccessors(bb, Precision::LOW);
+            BOOST_FOREACH (const BasicBlock::Successor &succ, successors) {
                 if (succ.expr()->is_number() && succ.expr()->get_width() <= 64) {
                     rose_addr_t targetVa = succ.expr()->get_number();
                     if (targetVa == bb->fallthroughVa()) {
@@ -1797,6 +1897,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
                 std::vector<Function::Ptr> newFunctions;
                 BOOST_FOREACH (rose_addr_t functionVa, candidateFunctionVas) {
                     Function::Ptr newFunction = Function::instance(functionVa, SgAsmFunction::FUNC_CALL_INSN);
+                    newFunction->reasonComment("from " + bb->instructions().back()->toString());
                     newFunctions.push_back(partitioner.attachOrMergeFunction(newFunction));
                     SAWYER_MESG(debug) <<me <<"created " <<newFunction->printableName() <<" from " <<bb->printableName() <<"\n";
                 }
@@ -1856,10 +1957,6 @@ Engine::discoverFunctions(Partitioner &partitioner) {
         // Nothing more to do
         break;
     }
-
-    // Try to attach basic blocks to functions
-    makeCalledFunctions(partitioner);
-    attachBlocksToFunctions(partitioner);
 }
 
 std::set<rose_addr_t>
@@ -1918,8 +2015,13 @@ Engine::attachPaddingToFunctions(Partitioner &partitioner) {
 
 size_t
 Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
+    Sawyer::Message::Stream where(mlog[WHERE]);
     size_t retval = 0;
-    while (size_t n = attachSurroundedCodeToFunctions(partitioner)) {
+    for (size_t i = 0; i < settings_.partitioner.findingIntraFunctionCode; ++i) {
+        SAWYER_MESG(where) <<"searching for intra-function code (pass " <<(i+1) <<")\n";
+        size_t n = attachSurroundedCodeToFunctions(partitioner);
+        if (0 == n)
+            break;
         retval += n;
         discoverBasicBlocks(partitioner);
         makeCalledFunctions(partitioner);
@@ -2259,6 +2361,18 @@ Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &arg
     return chain;
 }
 
+typedef std::pair<rose_addr_t, size_t> AddressOrder;
+
+static bool
+isSecondZero(const AddressOrder &a) {
+    return 0 == a.second;
+}
+
+static bool
+sortBySecond(const AddressOrder &a, const AddressOrder &b) {
+    return a.second < b.second;
+}
+
 // Move pendingCallReturn items into the finalCallReturn list and (re)sort finalCallReturn items according to the CFG so that
 // descendents appear after their ancestors (i.e., descendents will be processed first since we always use popBack).  This is a
 // fairly expensive operation: O((V+E) ln N) where V and E are the number of edges in the CFG and N is the number of addresses
@@ -2270,40 +2384,41 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
     if (processedCallReturn().isEmpty())
         return;                                         // nothing to move, and finalCallReturn list was previously sorted
 
-    std::set<rose_addr_t> pending;
-    BOOST_FOREACH (rose_addr_t va, finalCallReturn_.items())
-        pending.insert(va);
-    BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
-        pending.insert(va);
-    finalCallReturn_.clear();
-    processedCallReturn_.clear();
+    if (maxSorts_ == 0) {
+        BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
+            finalCallReturn().pushBack(va);
+        processedCallReturn_.clear();
 
-    std::vector<bool> seen(partitioner.cfg().nVertices(), false);
-    while (!pending.empty()) {
-        rose_addr_t startVa = *pending.begin();
-        ControlFlowGraph::ConstVertexIterator startVertex = partitioner.findPlaceholder(startVa);
-        if (startVertex == partitioner.cfg().vertices().end()) {
-            pending.erase(pending.begin());             // this worklist item is no longer valid
-        } else {
-            typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
-            for (Traversal t(partitioner.cfg(), startVertex, ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
-                if (t.event()==ENTER_VERTEX) {
-                    // No need to follow this vertex if we processed it in some previous iteration of the "while" loop
-                    if (seen[t.vertex()->id()])
-                        t.skipChildren();
-                    seen[t.vertex()->id()] = true;
-                } else if (t.vertex()->value().type() == V_BASIC_BLOCK) {
-                    rose_addr_t va = t.vertex()->value().address();
-                    std::set<rose_addr_t>::iterator found = pending.find(va);
-                    if (found != pending.end()) {
-                        finalCallReturn().pushFront(va);
-                        pending.erase(found);
-                        if (pending.empty())
-                            return;
-                    }
-                }
+    } else {
+        if (0 == --maxSorts_)
+            mlog[WARN] <<"may-return sort limit reached; reverting to unsorted analysis\n";
+        
+        // Get the list of virtual addresses that need to be processed
+        std::vector<AddressOrder> pending;
+        pending.reserve(finalCallReturn_.size() + processedCallReturn_.size());
+        BOOST_FOREACH (rose_addr_t va, finalCallReturn_.items())
+            pending.push_back(AddressOrder(va, (size_t)0));
+        BOOST_FOREACH (rose_addr_t va, processedCallReturn_.items())
+            pending.push_back(AddressOrder(va, (size_t)0));
+        finalCallReturn_.clear();
+        processedCallReturn_.clear();
+
+        // Find the CFG vertex for each pending address and insert its "order" value. Blocks that are leaves (after arbitrarily
+        // breaking cycles) have lower numbers than blocks higher up in the global CFG.
+        std::vector<size_t> order = graphDependentOrder(partitioner.cfg());
+        BOOST_FOREACH (AddressOrder &pair, pending) {
+            ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(pair.first);
+            if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
+                pair.second = order[vertex->id()];
             }
         }
+
+        // Sort the pending addresses based on their calculated "order", skipping those that aren't CFG basic blocks, and save
+        // the result.
+        pending.erase(std::remove_if(pending.begin(), pending.end(), isSecondZero), pending.end());
+        std::sort(pending.begin(), pending.end(), sortBySecond);
+        BOOST_FOREACH (const AddressOrder &pair, pending)
+            finalCallReturn().pushBack(pair.first);
     }
 }
 
@@ -2490,17 +2605,15 @@ Engine::makeNextBasicBlock(Partitioner &partitioner) {
             continue;
         }
 
-        // If we've previously tried to add call-return edges and failed then try again but this time assume the block
-        // may return or never returns depending on the assumeFunctionsReturn property.  We use the finalCallReturn list, which
-        // is always sorted so that descendent blocks are analyzed before their ancestors (according to the CFG as it existed
-        // when the sort was performed, and subject to tie breaking for cycles). We only re-sort the finalCallReturn list when
-        // we add something to it, and we add things in batches since the sorting is expensive.
+        // We've added call-return edges everwhere possible, but may have delayed adding them to blocks where the analysis was
+        // indeterminate. If so, sort all those blocks approximately by their height in the global CFG and run may-return
+        // analysis on each one
         if (!basicBlockWorkList_->processedCallReturn().isEmpty() || !basicBlockWorkList_->finalCallReturn().isEmpty()) {
             ASSERT_require(basicBlockWorkList_->pendingCallReturn().isEmpty());
             if (!basicBlockWorkList_->processedCallReturn().isEmpty())
                 basicBlockWorkList_->moveAndSortCallReturn(partitioner);
-            if (!basicBlockWorkList_->finalCallReturn().isEmpty()) { // moveAndSortCallReturn might have pruned list
-                basicBlockWorkList_->pendingCallReturn().pushBack(basicBlockWorkList_->finalCallReturn().popBack());
+            while (!basicBlockWorkList_->finalCallReturn().isEmpty()) {
+                basicBlockWorkList_->pendingCallReturn().pushBack(basicBlockWorkList_->finalCallReturn().popFront());
                 makeNextCallReturnEdge(partitioner, partitioner.assumeFunctionsReturn());
             }
             continue;
@@ -2542,6 +2655,35 @@ SgAsmBlock*
 Engine::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Python API support
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+template<class T>
+std::vector<T>
+pythonListToVector(boost::python::list &list) {
+    std::vector<T> retval;
+    for (int i = 0; i < len(list); ++i)
+        retval.push_back(boost::python::extract<T>(list[i]));
+    return retval;
+}
+
+Partitioner
+Engine::pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description) {
+    reset();
+    std::vector<std::string> args = pythonListToVector<std::string>(pyArgs);
+    std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
+    return partition(specimenNames);
+}
+
+Partitioner
+Engine::pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description) {
+    return partition(std::vector<std::string>(1, specimen));
+}
+
+#endif
 
 } // namespace
 } // namespace

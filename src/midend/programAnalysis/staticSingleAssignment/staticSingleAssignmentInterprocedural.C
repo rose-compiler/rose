@@ -117,6 +117,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
     if (functionIter == graphNodeToFunction.end())
     {
         printf("The function %s has no vertex in the call graph!\n", targetFunction->get_declaration()->get_name().str());
+        return; // FIXME ROSE-1392
         ROSE_ASSERT(false);
     }
 

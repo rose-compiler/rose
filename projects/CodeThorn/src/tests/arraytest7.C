@@ -11,7 +11,7 @@ int main() {
   mpvoid=std::malloc(16);
   intp=(int*)mpvoid;
   (*intp)=100;
-  *(intp+1)=101;
+  *(intp+1)=120;
   a[0]=(int*)std::malloc(8);
   a[1]=intp;
   *a[1]=4000;

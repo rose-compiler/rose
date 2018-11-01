@@ -63,7 +63,7 @@
 #include "SprayException.h"
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -727,8 +727,8 @@ int main(int argc, char* argv[]) {
       ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
       ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
       ("csv-stable", "only output csv data that is stable/portable across environments.")
-      ("normalize", "normalize program (transform into lower-level IR).")
-      ("normalizefcalls", "normalize only function calls.")
+      ("normalize-fcalls", "normalize only expressions with function calls [default].")
+      ("normalize-all", "normalize program (transform all expressions).")
       ("inline", "inline functions (can increase precision of analysis).")
       ("unparse", "generate source code from internal representation.")
       ;
@@ -857,24 +857,20 @@ int main(int argc, char* argv[]) {
       SPRAY::ProgramStatistics::printBasicCodeInfo(root);
     }
 
-  if(args.count("normalizefcalls")) {
-    Lowering lowering;
-    bool normalizeOnlyFunctionCalls=true;
-    lowering.normalizeExpressions(root,normalizeOnlyFunctionCalls);
-    lowering.normalizeAllVariableDeclarations(root);
-    cout<<"INFO: normalized function calls."<<endl;
-  }
-
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
   if(args.count("inline")) {
     programAbstractionLayer->setInliningOption(true);
   }
-  if(args.count("normalize")) {
-    programAbstractionLayer->setLoweringOption(true);
+  if(args.count("normalize-fcalls")) {
+    programAbstractionLayer->setNormalizationLevel(1);
   }
-  if(programAbstractionLayer->getInliningOption() && !programAbstractionLayer->getLoweringOption()) {
-    cerr<<"WARNING: inlining option selected without normalization option."<<endl;
+  if(args.count("normalize-all")) {
+    programAbstractionLayer->setNormalizationLevel(2);
+  }
+  if(programAbstractionLayer->getInliningOption() && programAbstractionLayer->getNormalizationLevel()==0) {
+    cerr<<"Error: inlining option selected without option 'normalize'."<<endl;
+    exit(1);
   }
   programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {

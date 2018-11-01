@@ -284,8 +284,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         cerr<<"Error: CppExprEvaluator: ++/-- operation: unknown operand."<<endl;
         exit(1);
       } else {
-        cerr<<"Error: CppExprEvaluator: ++/-- operation: only variables are supported as operand."<<endl;
-        exit(1);
+        return NumberIntervalLattice::top();
       }
     }
     default: // generates top element

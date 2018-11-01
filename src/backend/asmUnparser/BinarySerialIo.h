@@ -9,6 +9,9 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Synchronization.h>
 
+// Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
+//#define ROSE_DEBUG_SERIAL_IO
+
 #if defined(BOOST_WINDOWS)
     // Lacks POSIX file system, so we can't monitor the I/O progress
     #undef ROSE_SUPPORTS_SERIAL_IO
@@ -339,6 +342,9 @@ public:
 
 #ifndef ROSE_SUPPORTS_SERIAL_IO
         throw Exception("binary state files are not supported in this configuration");
+#elif defined(ROSE_DEBUG_SERIAL_IO)
+        std::string errorMessage;
+        asyncSave(objectTypeId, object, &errorMessage);
 #else
         // A different thread saves the object while this thread updates the progress
         std::string errorMessage;
@@ -372,7 +378,9 @@ private:
 #ifndef ROSE_SUPPORTS_SERIAL_IO
         ASSERT_not_reachable("not supported in this configuration");
 #else
+#if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
+#endif
             objectType(ERROR);
             switch (format()) {
                 case BINARY:
@@ -392,11 +400,13 @@ private:
                     break;
             }
             objectType(objectTypeId);
+#if !defined(ROSE_DEBUG_SERIAL_IO)
         } catch (const Exception &e) {
             *errorMessage = e.what();
         } catch (...) {
             *errorMessage = "failed to write object to output stream";
         }
+#endif
 #endif
     }
 };
@@ -484,6 +494,9 @@ public:
         objectType(ERROR); // in case of exception
         T object;
         std::string errorMessage;
+#ifdef ROSE_DEBUG_SERIAL_IO
+        asyncLoad(object, &errorMessage);
+#else
         boost::thread worker(startWorker<T>, this, &object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
         while (!worker.try_join_for(timeout)) {
@@ -500,6 +513,7 @@ public:
         }
         if (!errorMessage.empty())
             throw Exception(errorMessage);
+#endif
         advanceObjectType();
         return object;
 #endif
@@ -518,7 +532,9 @@ private:
 #ifndef ROSE_SUPPORTS_SERIAL_IO
         ASSERT_not_reachable("not supported in this configuration");
 #else
+#if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
+#endif
             switch (format()) {
                 case BINARY:
                     ASSERT_not_null(binary_archive_);
@@ -533,11 +549,13 @@ private:
                     *xml_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
             }
+#if !defined(ROSE_DEBUG_SERIAL_IO)
         } catch (const Exception &e) {
             *errorMessage = e.what();
         } catch (...) {
             *errorMessage = "failed to read object from input stream";
         }
+#endif
 #endif
     }
 

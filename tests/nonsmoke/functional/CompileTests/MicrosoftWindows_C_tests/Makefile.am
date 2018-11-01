@@ -41,88 +41,70 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2013_93.c  test2014_12.c   test2014_21.c   test2014_40.c   test2014_84.c \
    hello.c
 
+TESTCODE_CURRENTLY_FAILING = 
 
 TESTCODES_REQUIRED_TO_RUN =
 
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
+TESTCODES = \
+   $(TESTCODES_REQUIRED_TO_PASS) 
 
-# QMTest allows both passing and failing tests.
-# ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING) $(OLD_TESTCODES_REQUIRED_TO_PASS)
-ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
+ALL_TESTCODES = \
+   $(TESTCODES_REQUIRED_TO_PASS) \
+   $(TESTCODE_CURRENTLY_FAILING)
 
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-# DQ (2/4/2014): Unparse the asm commands as a test.
-SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
-
-# DQ (8/18/2014): When unparsing Microsoft extensions we can't pass this the generated code to the GNU g++ compiler.
-# DQ (3/28/2013): Now that we have changed the default C behavior to C99 (from C89), we need 
-# to explicitly specify the C89 behavior for make of the C test codes in this directory.
-# ROSE_FLAGS = -rose:C
-# ROSE_FLAGS = -rose:C89 -pedantic-errors
-# ROSE_FLAGS = -rose:C89 --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors
-ROSE_FLAGS = -rose:C89 --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors
-
-if !ROSE_USE_CLANG_FRONTEND
-   ROSE_FLAGS += --edg:no_warnings --edg:restrict
-endif
-ROSE_FLAGS += -w
-
 # TOO1 (2013-09-17): Required by test2005_168.o to find "rosedll.h",
 #                    introduced by CMake work.
-ROSE_FLAGS += -I$(top_srcdir)/src/frontend/SageIII/
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII/
 
-PASSING_TEST_Objects = ${TESTCODES:.c=.o}
-PASSING_TEST_Objects_passed = ${TESTCODES:.c=.o.passed}
+#########
+# Targets lists
+
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
-TEST_Objects = ${ALL_TESTCODES:.c=.o}
-TEST_Objects_passed = ${ALL_TESTCODES:.c=.o.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
-TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
-PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
-
-# if !ROSE_USE_EDG_VERSION_4_4
-# if !ROSE_USE_EDG_VERSION_4_7
-# if !ROSE_USE_EDG_VERSION_4_8
-# if !ROSE_USE_EDG_VERSION_4_9
-# # any programs needed by your tests that does not need to be built by make all.
-# check_PROGRAMS = $(PASSING_TEST_Executables)
-# # a list of programs or scripts to run in order to do the testing 
-# TESTS= $(check_PROGRAMS) caller.out 
-# endif
-# endif
-# endif
-# endif
-
-testTranslator = ../../testTranslator
-
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-#$(TEST_Objects): ../../testTranslator
-#	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
-
-# DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
-$(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
-
-$(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
-	$(testTranslator) $(ROSE_FLAGS) -c $<
-
+#########
+# Translator to be used: calling "make TEST_TRANSLATOR=../../testBackend" uses the backend compiler only
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+
+../../testBackend:
+	cd ../..; $(MAKE) testBackend
+
+../../testCompiler:
+	ln -s `which $(CC)` ../../testCompiler
+
+TEST_TRANSLATOR=../../testTranslator
+
+#########
+# ROSE_FLAGS
+
+ROSE_FLAGS = -rose:C89 -pedantic-errors
+if !ROSE_USE_CLANG_FRONTEND
+   ROSE_FLAGS += --edg:no_warnings --edg:restrict
+endif
+ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipfinalCompileStep
+
+#########
+# RTH test targets
+
+$(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+	@$(RTH_RUN) \
+	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.c.passed=.c)" \
+	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
+	   $(top_srcdir)/scripts/test_exit_status $@
+
+#
+############
 
 EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
 if ROSE_USING_GCC_VERSION_LATER_4_4
 	@echo "Tests for C."
-#  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
-#	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-#	@$(MAKE) $(PASSING_TEST_Objects_passed)
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 else
 	@echo "Microsoft C tests require GNU version 4.4 (or greater) backend compilers."
@@ -139,4 +121,6 @@ clean-local:
 	rm -f *.err *.passed *.failed
 	rm -f token_trailing_*.c token_leading_*.c
 
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

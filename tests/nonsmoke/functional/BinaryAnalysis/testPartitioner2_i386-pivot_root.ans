@@ -84,7 +84,7 @@
 0x0804836b: 68 fc 83 04 08          |h....   |<sp-28>   push   0x080483fc<<Func>>
 0x08048370: e8 cf ff ff ff          |.....   |<sp-32>   call   0x08048344<__libc_start_main@plt>
 0x08048370: Outgoing stack delta: -36
-0x08048370: Successor blocks: 0x08048344<__libc_start_main@plt>, 0x08048375
+0x08048370: Successor blocks: 0x08048344<__libc_start_main@plt>, 0x08048375, 0x080483fc<<Func>>
 
 0x08048375: Basic block reasons: 
 0x08048375: f4                      |.       |<sp-32>   hlt    
@@ -207,10 +207,10 @@
 0x080483f9: Outgoing stack delta: +4
 0x080483f9: Successor blocks: unknown
 
-0x080483fc: ================================== Function (pattern, graph) unknown name
+0x080483fc: ================================== Function (function call, graph) unknown name
 0x080483fc: Function stack delta: +4
 
-0x080483fc: Basic block reasons: entry point, CFG head
+0x080483fc: Basic block reasons: entry point
 0x080483fc: 55                      |U       |<sp+0 >   push   ebp
 0x080483fd: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
 0x080483ff: 83 ec 18                |...     |<sp-4 >   sub    esp, 0x18

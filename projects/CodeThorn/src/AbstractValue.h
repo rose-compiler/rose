@@ -141,8 +141,10 @@ class AbstractValue {
   // union required
   long long int intValue=0;
   double floatValue=0.0;
-  TypeSize typeSize=0; // size of value in bytes
+
+  TypeSize typeSize=0;
   static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
+
 };
 
 // arithmetic operators

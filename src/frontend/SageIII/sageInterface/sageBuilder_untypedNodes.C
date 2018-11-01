@@ -218,7 +218,10 @@ SageBuilder::buildUntypedIfStatement(std::string label, SgUntypedExpression* con
       ROSE_ASSERT(true_body);
    // false_body may (allowed to) be NULL
 
-      SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement(label,conditional,true_body,false_body);
+   // This works for the general case, specify after building if needed
+      int statement_enum = 0;
+
+      SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement(label,statement_enum,conditional,true_body,false_body);
       ROSE_ASSERT(if_stmt);
 
       conditional->set_parent(if_stmt);

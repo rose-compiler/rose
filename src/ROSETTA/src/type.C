@@ -929,6 +929,9 @@ Grammar::setUpTypes ()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      ArrayType.setDataPrototype ("int", "rank" , "= 0",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TV (09/21/2018): (ROSE-1391) to be used in unparser when referenced symbol is not accessible
+     ArrayType.setDataPrototype ("int", "number_of_elements" , "= 0",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/12/2016): Adding support for Variable Length Arrays.
      ArrayType.setDataPrototype ("bool", "is_variable_length_array" , "= false",

@@ -24,6 +24,7 @@ MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
             (rre=isSgAsmDirectRegisterExpression(args[0])) && rre->get_descriptor()==REG_A6 &&
             (offset=isSgAsmIntegerValueExpression(args[1])) && offset->get_signedValue()<=0) {
             function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+            function_->reasonComment("matched LINK A6, <non_positive_integer>");
             return true;
         }
     }
@@ -267,6 +268,8 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
             }
                         
             Function::Ptr function = Function::instance(functionVa, name, reasons);
+            function->reasonComment("vector " + StringUtility::addrToString(vectorVa) +
+                                    " entry " + StringUtility::numberToString(i));
             if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {
                 // Multiple vector entries point to the same function, so give it a rather generic name
                 found.get()->name("interrupt_vector_function");

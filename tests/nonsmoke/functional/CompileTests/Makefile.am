@@ -214,3 +214,10 @@ test_new_languages:
 	cd experimental_jovial_tests; $(MAKE) test
 	cd experimental_cobol_tests;  $(MAKE) test
 
+# TV (08/07/2018): Added `status` target which generate `status.csv`
+status:
+	$(srcdir)/status.sh compiler
+	$(srcdir)/status.sh backend
+	$(srcdir)/status.sh translator
+
+
