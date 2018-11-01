@@ -4,20 +4,51 @@
 #include <sstream>
 
 using namespace std;
+#include <limits>
+#include <cstddef>
 
 namespace CodeThorn {
 
-  void CallString::addLabel(SPRAY::Label lab) {
-    _callString.push_back((int)lab.getId());
+  // use maximum value for default call string length
+  size_t CallString::_maxLength=std::numeric_limits<size_t>::max();
+
+  bool CallString::addLabel(SPRAY::Label lab) {
+    if(getLength()<=getMaxLength()) {
+      _callString.push_back(lab);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void CallString::removeLabel() {
-    _callString.pop_back();
+    if(_callString.size()>0) {
+      _callString.pop_back();
+    }
+  }
+
+  bool CallString::removeIfLastLabel(SPRAY::Label lab) {
+    if(_callString.size()>0) {
+      if(lab==_callString.back()) {
+        _callString.pop_back();
+        return true;
+      }
+    }
+    return false;
   }
 
   size_t CallString::getLength() const {
     return _callString.size();
   }
+
+  size_t CallString::getMaxLength() {
+    return _maxLength;
+  }
+
+  void CallString::setMaxLength(size_t maxLength) {
+    _maxLength=maxLength;
+  }
+
 
   std::string CallString::toString() const {
     stringstream ss;

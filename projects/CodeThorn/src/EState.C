@@ -230,9 +230,7 @@ string EState::toString() const {
   ss << "EState";
   ss << "("
      <<label()<<", "
-#ifdef USE_CALLSTRINGS
      <<callString.toString()<<", "
-#endif
     ;
   if(pstate())
     ss <<pstate()->toString();
@@ -256,6 +254,7 @@ string EState::toString(VariableIdMapping* vim) const {
   stringstream ss;
   ss << "EState";
   ss << "("<<label()<<", ";
+  ss <<callString.toString()<<", ";
   if(pstate())
     ss <<pstate()->toString(vim);
   else

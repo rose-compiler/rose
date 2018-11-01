@@ -378,6 +378,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
+    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -1274,6 +1275,12 @@ int main( int argc, char * argv[] ) {
       lowering.normalizeAst(sageProject,2);
       logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
+
+    /* Set call stringlength as provided on command line. If none is
+       provided use the default value is used (see command line
+       argument definition).
+    */
+    CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */

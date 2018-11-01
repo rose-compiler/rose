@@ -146,7 +146,8 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0),
-  _svCompFunctionSemantics(false)
+  _svCompFunctionSemantics(false),
+  _contextSensitiveAnalysis(false)
 {
   initDiagnostics();
   _analysisTimer.start();
@@ -681,6 +682,19 @@ PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggre
     AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
     newPState.writeToMemoryLocation(arrayElemId,newVal);
     elemIndex++;
+  }
+  // initialize remaining elements (if there are any) with default value
+  int aggregateSize=(int)getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+  // if array size is not 0 then it was determined from the type and remaining elements are initialized
+  // otherwise the size is determined from the aggregate initializer itself (done above)
+  if(aggregateSize!=0) {
+    for(int i=elemIndex;i<aggregateSize;i++) {
+      AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+      AbstractValue defaultVal=AbstractValue(0); // TODO: float default values
+      newPState.writeToMemoryLocation(arrayElemId,defaultVal);
+    }
+  } else {
+    getVariableIdMapping()->setNumberOfElements(initDeclVarId,initList.size());
   }
   return newPState;
 }
@@ -1661,6 +1675,10 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
 
+  if(_contextSensitiveAnalysis) {
+    currentEState.callString.addLabel(currentEState.label());
+  }
+
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
@@ -1707,7 +1725,12 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     // Consequently, formalparam=actualparam remains top, even if constraints are available, which
     // would allow to extract a constant value (or a range (when relational constraints are added)).
     list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
-    ROSE_ASSERT(evalResultList.size()>0);
+    if(evalResultList.size()==0) {
+      cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+      cerr<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+      cerr<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+      exit(1);
+    }
     list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
     SingleEvalResultConstInt evalResult=*resultListIter;
     if(evalResultList.size()>1) {
@@ -1832,6 +1855,15 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
+
+  // determine functionCallLabel corresponding to functioncallReturnLabel.
+  Label functionCallReturnLabel=edge.source();
+  SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
+  Label functionCallLabel=getLabeler()->functionCallLabel(node);
+
+  if(_contextSensitiveAnalysis) {
+    currentEState.callString.removeIfLastLabel(functionCallLabel);
+  }
 
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
@@ -2638,6 +2670,14 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
       estateSet.insert((*j)->source);
   }
   return estateSet;
+}
+
+void Analyzer::setContextSensitiveAnalysisFlag(bool flag) {
+  _contextSensitiveAnalysis=flag;
+}
+
+bool Analyzer::getContextSensitiveAnalysisFlag() {
+  return _contextSensitiveAnalysis;
 }
 
 #endif

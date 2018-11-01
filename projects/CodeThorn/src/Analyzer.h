@@ -234,7 +234,15 @@ namespace CodeThorn {
 
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    // temporary option
     bool optionStringLiteralsInState=false;
+
+    /** allows to enable context sensitive analysis. Currently only
+        call strings of arbitrary length are supported (recursion is
+        not supported yet) */
+    void setOptionContextSensitiveAnalysis(bool flag);
+    bool getOptionContextSensitiveAnalysis();
+
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -386,6 +394,7 @@ namespace CodeThorn {
 
     std::vector<string> _commandLineOptions;
     SgTypeSizeMapping _typeSizeMapping;
+    bool _contextSensitiveAnalysis;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 
