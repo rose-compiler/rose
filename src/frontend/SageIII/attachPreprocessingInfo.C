@@ -657,7 +657,17 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
 
      bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
+
+#if 0
+     printf ("In attachPreprocessingInfo(): processAllFiles = %s \n",processAllFiles ? "true" : "false");
+#endif
+
      AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
+
+#if 0
+     printf ("Exiting as a test after AttachPreprocessingInfoTreeTrav constructor call! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // When using Wave get all the preprocessing dirctives for all the files.
      if ( sageFilePtr->get_wave() == true )
@@ -677,6 +687,10 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // marked with a source position from the filename with the "_preprocessed" suffix).
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
+#if 0
+     printf ("In attachPreprocessingInfo(): processAllFiles = %s requiresCPP = %s \n",processAllFiles ? "true" : "false",requiresCPP ? "true" : "false");
+#endif
+
      if (processAllFiles == true || requiresCPP == true)
         {
 #if 0
@@ -693,6 +707,11 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
         }
 
   // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
+
+#if 0
+     printf ("Exiting as a test after either call to sageFilePtr or traverseWithinFile \n");
+     ROSE_ASSERT(false);
 #endif
 
 #if 0

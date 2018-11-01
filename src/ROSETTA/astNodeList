@@ -417,6 +417,7 @@ SgImportStatement
 SgIncidenceDirectedGraph
 SgIncidenceUndirectedGraph
 SgIncludeDirectiveStatement
+SgIncludeFile
 SgIncludeNextDirectiveStatement
 SgInitializedName
 SgInitializer
@@ -427,6 +428,7 @@ SgIntegerDivideOp
 SgIntegerDivideAssignOp
 SgInterfaceBody
 SgHeaderFileBody
+SgHeaderFileReport
 SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol

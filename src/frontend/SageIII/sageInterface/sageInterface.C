@@ -1129,12 +1129,59 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
           return 0;
         }
 
+#if 0
   // Set the p_name to the new_name
-     printf ("Reset initializedNameNode->get_name() = %s to new_name = %s \n",initializedNameNode->get_name().str(),new_name.str());
+     printf ("Reset initializedNameNode->get_name() = %s to new_name = %s \n",new_name.str(),initializedNameNode->get_name().str(),new_name.str());
+#endif
+
   // p_name = new_name;
      initializedNameNode->set_name(new_name);
 
   // Invalidate the p_iterator, p_no_name and p_name data members in the Symbol table
+
+#if 1
+  // Search the AST for references to this SgInitializedName (SgVarRefExp), check if the symbol matches 
+  // (we can do this since we only reused the exisitng symbol), and mark those expressions as modified.
+     class RoseVisitor : public ROSE_VisitTraversal
+        {
+          public:
+               int counter;
+               SgSymbol* symbol;
+
+           //! Required traversal function
+               void visit (SgNode* node)
+                  {
+                    SgVarRefExp*      varRefExp      = isSgVarRefExp(node);
+                    SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
+
+                    ROSE_ASSERT(varRefExp      != NULL);
+                    ROSE_ASSERT(variableSymbol != NULL);
+
+                    if (varRefExp->get_symbol() == variableSymbol)
+                       {
+#if 0
+                         printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                         varRefExp->set_isModified(true);
+                       }
+                  }
+
+               RoseVisitor(SgSymbol* symbol_parmeter) : counter(0), symbol(symbol_parmeter)
+                 {
+                // printf ("roseVisitor::visit: counter %4d node = %s \n",counter,node->class_name().c_str());
+                   counter++;
+                 }
+        };
+
+  // RoseVisitor visitor;
+  // visitor.traverseMemoryPool();
+     RoseVisitor t1(associated_symbol);
+     SgVarRefExp::traverseMemoryPoolNodes(t1);
+#endif
 
      return 1;
    }
@@ -21199,6 +21246,45 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
      traversal.traverse(node, preorder);
 
      return traversal.returnset;
+   }
+
+
+void
+SageInterface::reportModifiedStatements( const string & label, SgNode* node )
+   {
+  // DQ (10/23/2018): This reports the nodes in the AST that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     printf ("\n\n##################################################### \n");
+     printf ("Report on modified statements: label = %s \n",label.c_str());
+
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+          printf ("   --- (SgSourceFile) filename = %s \n",sourceFile->getFileName().c_str());
+        }
+       else
+        {
+          SgGlobal* globalScope = isSgGlobal(node);
+          if (globalScope != NULL)
+             {
+               sourceFile = isSgSourceFile(globalScope->get_parent());
+               printf ("   --- (SgGlobal) filename = %s \n",sourceFile->getFileName().c_str());
+             }
+        }
+
+     ROSE_ASSERT(node != NULL);
+     std::set<SgStatement*> collection = collectModifiedStatements(node);
+
+     std::set<SgStatement*>::iterator i = collection.begin();
+     while (i != collection.end())
+        {
+          printf ("   --- modified statement = %p = %s \n",(*i),(*i)->class_name().c_str());
+
+          i++;
+        }
+
+     printf ("##################################################### \n\n\n");
    }
 
 

@@ -1535,6 +1535,8 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
+  // printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives() \n");
+
   // printf ("Inside of lex file: getPreprocessorDirectives() \n");
   // ROSE_ASSERT(false);
 
@@ -1609,7 +1611,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
 
-#if DEBUG_LEX_PASS
+#if DEBUG_LEX_PASS || 0
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
 #endif

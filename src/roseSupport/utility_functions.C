@@ -145,25 +145,38 @@ void Rose::Options::set_backend_warnings(bool flag)
 #define DEBUG_COPY_EDIT false
 
 
+// DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
+// such as what is required when using the unparsing header files feature).
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
+// std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
+// std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
+std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
-std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
+// std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
+std::map<int,std::map<SgStatement*,FrontierNode*>*> Rose::frontierNodesMapOfMaps;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
+// std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
+std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> Rose::previousAndNextNodeMapOfMaps;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
-std::set<int> Rose::redundantTokenEndingsSet;
+// std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
+// std::set<int> Rose::redundantTokenEndingsSet;
+std::map<int,std::multimap<int,SgStatement*>*> Rose::redundantlyMappedTokensToStatementMapOfMultimaps;
+std::map<int,std::set<int>*> Rose::redundantTokenEndingsMapOfSets;
 
 // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
+// std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
+std::map<int,std::map<SgScopeStatement*,SgStatement*>*> Rose::representativeWhitespaceStatementMapOfMaps;
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
+// std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
+std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfMaps;
+
+// DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
+std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
@@ -1039,7 +1052,10 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
   // This used to be the default, but it would output too much data (from include files).
   // It is particularly useful when handling multiple files on the command line and 
   // traversing the files included from each file.
-     astdotgen.generate(&nonconstProject);
+  // astdotgen.generate(&nonconstProject);
+  // DOTGeneration::traversalType tt = TOPDOWNBOTTOMUP;
+     AstDOTGeneration::traversalType tt = AstDOTGeneration::TOPDOWNBOTTOMUP;
+     astdotgen.generate(&nonconstProject,tt,filenamePostfix);
 #else
   // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
   // is not being processed (which appears to be a bug). This is because in the implementation

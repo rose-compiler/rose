@@ -133,9 +133,28 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
      SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute returnAttribute;
 
 #if 0
-     static int random_counter = 0;
-     printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
+  // static int random_counter = 0;
+  // printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
+     SgStatement* statement = isSgStatement(n);
+     if (statement != NULL)
+        {
+          Sg_File_Info* fileInfo = statement->get_file_info();
+          ROSE_ASSERT(fileInfo != NULL);
+          printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): n = %p = %s filename = %s \n",n,n->class_name().c_str(),fileInfo->get_filenameString().c_str());
+        }
 #endif
+
+     if (isSgGlobal(n) != NULL)
+        {
+          SgGlobal* globalScope = isSgGlobal(n);
+#if 0
+          printf ("In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): globalScope = %p globalScope->get_parent() = %p \n",globalScope,globalScope->get_parent());
+#endif
+
+       // DQ (8/13/2018): Bot of these should be true.
+          ROSE_ASSERT(globalScope->get_parent() != NULL);
+       // ROSE_ASSERT(globalScope->get_parent() == sourceFile);
+        }
 
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if (locatedNode != NULL)
@@ -172,10 +191,29 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #if 0
                     printf ("Marking statement = %p = %s to be a transformation and output in code generation \n",statement,statement->class_name().c_str());
 #endif
+#if 0
+                    printf ("BEFORE: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+#endif
 #if 1
                  // Note that both of these must be set.
                     statement->setTransformation();
                     statement->setOutputInCodeGeneration();
+#endif
+#if 0
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                    string physicalFile = statement->get_startOfConstruct()->get_physical_filename();
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): physicalFile = %s \n",physicalFile.c_str());
+                    string raw_filename = statement->get_startOfConstruct()->get_raw_filename();
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): raw_filename = %s \n",raw_filename.c_str());
+                    statement->get_startOfConstruct()->display("startOfConstruct: AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): debug");
+                    statement->get_endOfConstruct()  ->display("endOfConstruct: AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): debug");
+                    printf ("statement->get_startOfConstruct()->get_raw_filename() = %s \n",statement->get_startOfConstruct()->get_raw_filename().c_str());
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                   }
                  else
@@ -185,12 +223,6 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #endif
                   }
              }
-        }
-
-     SgStatement* statement = isSgStatement(n);
-     if (statement != NULL)
-        {
-
         }
 
      return returnAttribute;
@@ -339,8 +371,24 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      SimpleFrontierDetectionForTokenStreamMapping fdTraversal(sourceFile);
 
 #if 0
-     printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p \n",sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+     printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
+     printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
+#if 0
+  // printf ("   --- global scope NOT present in tokenSubsequenceMap \n");
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) == sourceFile->get_tokenSubsequenceMap().end());
+
+     printf ("   --- global scope IS present in tokenSubsequenceMap \n");
+     ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
+
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
+  // TokenStreamSequenceToNodeMapping* tmp_tokenSequence = sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()];
+  // ROSE_ASSERT(tmp_tokenSequence != NULL);
+  // tmp_tokenSequence->display("token sequence for global scope");
+#endif
+
+     ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 
 #if 0
   // Debugging (this set in the constructor).
@@ -401,7 +449,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      SgProject* project = sourceFile->get_project();
      ROSE_ASSERT(project != NULL);
 
-     generateDOTforMultipleFile(*project);
+     generateDOTforMultipleFile(*project,"in_simpleFrontierDetectionForTokenStreamMapping");
 #endif
 #if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
@@ -414,4 +462,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     printf ("Leaving simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
    }

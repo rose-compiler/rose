@@ -1491,6 +1491,15 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_astMerge = true;
         }
 
+  // DQ (9/15/2018): Adding support for output of report on the header file unparsing (for debugging).
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(headerFileUnparsingReport)",true) == true )
+        {
+#if 0
+          printf ("-rose:headerFileUnparsingReport option found \n");
+#endif
+          set_reportOnHeaderFileUnparsing(true);
+        }
+
   // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
   //
   // specify AST merge command file option
@@ -2497,6 +2506,8 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
 
   std::string target = "";
 
+#if 0
+  // DQ (9/20/2018): This is an unused variable now (and a compiler warning).
   bool has_java_target =
       // -target
       CommandlineProcessing::isOptionWithParameter(
@@ -2518,6 +2529,7 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
   //{
   //    target = "1.6";
   //}
+#endif
 
   project->set_Java_target(target);
 }// Cmdline::Java::Processtarget
@@ -5938,6 +5950,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (30/8/2017): Removing option to specify Cobol language support.
      optionCount = sla(argv, "-rose:", "($)", "(cobol|cobol_only)",1);
+
+  // DQ (9/20/2018): Removing option to specify support for header file unparsing report.
+     optionCount = sla(argv, "-rose:", "($)", "(headerFileUnparsingReport)",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);

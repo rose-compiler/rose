@@ -46,7 +46,8 @@ operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bo
    }
 #endif
 
-
+// DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
+#include "tokenStreamMapping.h"
 
 using namespace std;
 using namespace Rose;
@@ -915,6 +916,9 @@ cout.flush();
 #endif
                       );
 
+#if 1
+               printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to %s (test 1) \n",requires_C_preprocessor ? "true" : "false");
+#endif
                file->set_requires_C_preprocessor(requires_C_preprocessor);
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
@@ -1297,12 +1301,12 @@ cout.flush();
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                                else
-                                 {
+                               else
+                                {
                                 // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
-
-                                // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-
+#if 1
+                                   printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
+#endif
                                 // Detect if this is a binary (executable) file!
                                    bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
                                    bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
@@ -1344,6 +1348,9 @@ cout.flush();
                                       // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
                                       file->set_binary_only(true);
 
+#if 1
+                                      printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 2) \n");
+#endif
                                       // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
                                       file->set_requires_C_preprocessor(false);
 
@@ -1421,33 +1428,37 @@ cout.flush();
 #endif /* _MSC_VER */
                                       }
 #if 0
-                                      printf ("Processed as a binary file! \n");
+                                   printf ("Processed as a binary file! \n");
 #endif
-                                  }
-                                  else
-                                  {
-                                      file = new SgUnknownFile ( argv,  project );
+                                 }
+                                else
+                                 {
+                                   file = new SgUnknownFile ( argv,  project );
 
-                                      // This should have already been setup!
-                                      // file->initializeSourcePosition();
+                                // This should have already been setup!
+                                // file->initializeSourcePosition();
 
-                                      ROSE_ASSERT(file->get_parent() != NULL);
-                                      ROSE_ASSERT(file->get_parent() == project);
+                                   ROSE_ASSERT(file->get_parent() != NULL);
+                                   ROSE_ASSERT(file->get_parent() == project);
 
-                                      // If all else fails, then output the type of file and exit.
-                                      file->set_sourceFileTypeIsUnknown(true);
-                                      file->set_requires_C_preprocessor(false);
+                                // If all else fails, then output the type of file and exit.
+                                   file->set_sourceFileTypeIsUnknown(true);
 
-                                      ROSE_ASSERT(file->get_file_info() != NULL);
-                                      // file->set_parent(project);
+#if 1
+                                   printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 3) \n");
+#endif
+                                   file->set_requires_C_preprocessor(false);
 
-                                      // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
-                                      // outputTypeOfFileAndExit(sourceFilename);
-                                      printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
-                                      outputTypeOfFileAndExit(sourceFilename);
-                                  }
-                              }
+                                   ROSE_ASSERT(file->get_file_info() != NULL);
+                                // file->set_parent(project);
+
+                                // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
+                                // outputTypeOfFileAndExit(sourceFilename);
+                                   printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+                                   outputTypeOfFileAndExit(sourceFilename);
+                                 }
                             }
+                       }
                        }
                   }
 
@@ -2285,7 +2296,7 @@ SgProject::parse()
 #else
   // The goal in this version of the code is to seperate the construction of the SgFile objects 
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
-  // the comilation to reference the other SgFile objects on an as needed basis as part of running
+  // the compilation to reference the other SgFile objects on an as needed basis as part of running
   // the frontend.  This is importnat from the optimization of Java.
      std::vector<SgFile*> vectorOfFiles;
      while (nameIterator != p_sourceFileNameList.end())
@@ -2310,7 +2321,7 @@ SgProject::parse()
 #endif
        // DQ (11/13/2008): Removed overly complex logic here!
 #if 0
-          printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
+          printf ("In SgProject::parse(): Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ROSE_ASSERT (newFile != NULL);
@@ -2421,9 +2432,8 @@ SgProject::parse()
   // secondary pass over each file runs after all fixes have been done. This
   // is relevant where the AstPostProcessing mechanism must first mark nodes
   // to be output before preprocessing information is attached.
-     SgFilePtrList &files = get_fileList();
+     SgFilePtrList & files = get_fileList();
 
-// {
      BOOST_FOREACH(SgFile* file, files)
         {
           ROSE_ASSERT(file != NULL);
@@ -2469,9 +2479,25 @@ SgProject::parse()
                if (file->get_disable_edg_backend() == false)
                   {
 #if 0
-                    printf ("Calling secondaryPassOverSourceFile() \n");
+                 // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
+                 // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
+                 // generateDOT ( *globalProject );
+                    printf ("\n\nGenerating a dot file of the secondaryPassOverSourceFile AST (could be very large) \n");
+                    generateDOT_withIncludes ( *this, "before_secondaryPassOverSourceFileAST" );
+                    printf ("DONE: Generating a dot file of the secondaryPassOverSourceFile AST \n");
+#endif
+#if 0
+                    printf ("Exiting after test! \n");
+                    ROSE_ASSERT(false);
+#endif
+#if 0
+                    printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+                    printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
                     file->secondaryPassOverSourceFile();
+#if 0
+                    printf ("DONE: Calling secondaryPassOverSourceFile() \n");
+#endif
                   }
                  else
                   {
@@ -2490,7 +2516,11 @@ SgProject::parse()
         {
           return errorCode;
         }
-//  }
+
+#if 0
+     printf ("Exiting after test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
   // In the second step (after preprocessing infos are already attached), collect the including files map.
@@ -2507,10 +2537,16 @@ SgProject::parse()
          
           if (SgProject::get_verbose() >= 1)
              {
+               printf ("\nOutput info for unparse headers support: \n");
                CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
                CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
              }
         }
+
+#if 0
+     printf ("Exiting after test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after 
   // AST Postprocessing and before any transformations are done. The token steam mapping only
@@ -2532,13 +2568,57 @@ SgProject::parse()
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
-                         printf ("Building token stream mapping map! \n");
+                         printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
                       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
                       // and attaches the toke stream to the SgSourceFile IR node.  
                       // *** Next we have to attached the data base ***
                          buildTokenStreamMapping(sourceFile);
 
+                      // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
+                         ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+                         ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
+#if 0
+                         printf ("Calling display on token sequence for global scope (for *.C file) \n");
+                         ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
+                         TokenStreamSequenceToNodeMapping* tokenSequence = sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()];
+                         ROSE_ASSERT(tokenSequence != NULL);
+                         printf ("sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+                         tokenSequence->display("token sequence for global scope (*.C file)");
+#endif
+                      // Search over the list of include files
+                         SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
+                         for (size_t i = 0; i < include_file_list.size(); i++)
+                            {
+                              SgIncludeFile* includeFile = include_file_list[i];
+                              ROSE_ASSERT(includeFile != NULL);
+#if 0
+                              printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
+#endif
+                           // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
+                           // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the 
+                           // the source (*.C) file.
+                              SgSourceFile* header_file = includeFile->get_source_file();
+                           // ROSE_ASSERT(header_file != NULL);
+                              if (header_file != NULL)
+                                 {
+                                   ROSE_ASSERT(header_file->get_globalScope() != NULL);
+                                   ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
+#if 0
+                                   printf ("Calling display on token sequence for global scope (for *.h file) \n");
+                                   ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
+                                   TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
+                                   ROSE_ASSERT(tokenSequence != NULL);
+                                   printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
+                                   tokenSequence->display("token sequence for global scope (*.h file)");
+#endif
+                                 }
+                            }
+
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
                       // DQ (11/30/2015): Add support to detect macro and include file expansions (can use the token sequence mapping if available).
                       // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the 
                       // token sequence, but usig the token sequence permit us to gather more data.
@@ -2547,7 +2627,7 @@ SgProject::parse()
 #if 1
                     if ( SgProject::get_verbose() > 0 )
                        {
-                         printf ("In parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
+                         printf ("In SgProject::parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
                        }
 #endif
 #if 0
@@ -3137,6 +3217,11 @@ SgFile::secondaryPassOverSourceFile()
   //
   // There is no secondary processing for binaries.
 
+  // DQ (10/27/2018): Added documentation.
+  // Note that this function is called from two locations:
+  // 1) From the sage_support.cpp (for the main source file)
+  // 2) From the attachPreprocessingInfoTraversal.C (for any header files when using the unparse headers option)
+
   // GB (9/4/2009): Factored out the secondary pass. It is now done after
   // the whole project has been constructed and fixed up.
 
@@ -3156,7 +3241,7 @@ SgFile::secondaryPassOverSourceFile()
 
 #if 0
        // This is empty so there is nothing to display!
-          p_preprocessorDirectivesAndCommentsList->display("Seconadary Source File Processing at bottom of SgFile::callFrontEnd()");
+          p_preprocessorDirectivesAndCommentsList->display("Secondary Source File Processing at bottom of SgFile::callFrontEnd()");
 #endif
 
        // DQ (4/19/2006): since they can take a while and includes substantial
@@ -3184,7 +3269,12 @@ SgFile::secondaryPassOverSourceFile()
                   {
                     requiresCPP = get_requires_C_preprocessor();
                     if (requiresCPP == true)
+                       {
+#if 1
+                         printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 4) \n");
+#endif
                          set_requires_C_preprocessor(false);
+                       }
                   }
 #if 1
             // Debugging code (eliminate use of CPP directives from source file so that we
@@ -3193,8 +3283,10 @@ SgFile::secondaryPassOverSourceFile()
                if (requiresCPP == false)
                   {
                     attachPreprocessingInfo(sourceFile);
-                 // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
-                 // ROSE_ASSERT(false);
+#if 0
+                    printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
 #else
             // Normal path calling attachPreprocessingInfo()
@@ -3211,7 +3303,12 @@ SgFile::secondaryPassOverSourceFile()
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
+                  {
+#if 1
+                    printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 5) \n");
+#endif
                     set_requires_C_preprocessor(false);
+                  }
 
 #if 0
                printf ("In SgFile::callFrontEnd(): exiting after attachPreprocessingInfo() \n");
@@ -5482,7 +5579,9 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
           printf ("In build_Jovial_AST(): Before calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
-     int frontendErrorLevel;
+  // DQ (8/22/2018): This was previously uninitialized where the jovial_main() was not called.
+     int frontendErrorLevel = 0;
+
      int jovial_argc = 0;
      char **jovial_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);

@@ -2001,6 +2001,10 @@ ROSE_DLL_API std::set<SgStatement*> collectModifiedStatements( SgNode* node );
 //! This collects the SgLocatedNodes that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
 ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node );
 
+// DQ (10/23/2018): Report nodes that are marked as modified.
+ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);
+
+
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.

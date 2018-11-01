@@ -5,6 +5,6 @@ Simple::Simple(){
   v2_rename_me = 155;
 }
 
-int main(int argc, char* argv[]) {
-
-}
+int main(int argc, char* argv[])
+   {
+   }
