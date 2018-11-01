@@ -14,6 +14,7 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
     dnl number variables should be set wherever we're detecting the dependency, not here.
     AC_MSG_NOTICE([boost version     = $rose_boost_version])
     AC_MSG_NOTICE([frontend compiler = $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR])
+    AC_MSG_NOTICE([binary analysis   = $support_binaries_frontend])
 
     dnl -----------------------
     dnl  Versions we PROHIBIT
@@ -28,6 +29,15 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
                 "$FRONTEND_CXX_VERSION_MAJOR" = 4 -a \
                 "$FRONTEND_CXX_VERSION_MINOR" -ge 8; then
             prohibited="boost 1.54 with gcc >= 4.8 and gcc < 5"
+            break
+        fi
+
+        dnl Boost-1.61 through 1.63 serialization cause link errors when compiled by Intel compilers. Binary analysis
+        dnl is the only thing that uses serialization at this time.
+        if test "$rose_boost_version" -ge 106100 -a "$rose_boost_version" -le 1063000 -a \
+                "$FRONTEND_CXX_COMPILER_VENDOR" = "intel" -a \
+                "$support_binaries_frontend" = "yes"; then
+            prohibited="binary analysis enabled with boost 1.62 with Intel compiler"
             break
         fi
 

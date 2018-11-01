@@ -108,14 +108,14 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
 void
 Unparse_Jovial::unparseStringVal (SgExpression* expr, SgUnparse_Info& info)
-   {
-     printf ("Unparse_Jovial::unparseStringVal(): not implemented! \n");
+  {
+     cerr << "Unparse_Jovial::unparseStringVal(): not implemented! \n";
      ROSE_ASSERT(false);
-   }
+  }
 
 void 
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
-   {
+  {
      SgBinaryOp* op = isSgBinaryOp(expr);
      ROSE_ASSERT(op != NULL);
 
@@ -123,7 +123,7 @@ Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
      curprint(" = ");
      unparseExpression(op->get_rhs_operand(), info);
      curprint(" ;");
-   }
+  }
 
 void
 Unparse_Jovial::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)

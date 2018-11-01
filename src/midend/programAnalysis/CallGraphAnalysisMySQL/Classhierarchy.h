@@ -29,7 +29,7 @@ class chVertexData {
 
 // install boost database graph property map types
 namespace boost {
-        enum vertex_classhierarchy_t { vertex_classhierarchy };
+        enum vertex_classhierarchy_t { vertex_classhierarchy }; // NO_STRINGIFY
         BOOST_INSTALL_PROPERTY( vertex, classhierarchy );
 }
 

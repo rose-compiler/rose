@@ -206,6 +206,12 @@ if ROSE_USE_LLVM
 
 endif
 
+# Python API support
+if ROSE_USE_PYTHON_DEV
+  ROSE_PYTHON_INCLUDES = @PYTHON_CPPFLAGS@
+  ROSE_PYTHON_LIBS_WITH_PATH = @PYTHON_LDFLAGS@
+endif
+
 # SSL support permits use of MD5 checksums internally for binary library identification.
 if ROSE_USE_SSL_SUPPORT
   ROSE_SSL_LIBS = -lssl -lcrypto
@@ -321,7 +327,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astMatching \
      -I$(top_srcdir)/src/midend/astQuery \
-     -I$(top_srcdir)/src/midend/binaryAnalyses \
+     -I$(top_srcdir)/src/midend/BinaryAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
@@ -393,9 +399,9 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/src/midend/astUtil/astSupport \
      -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
-     -I$(top_srcdir)/src/midend/binaryAnalyses \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
+     -I$(top_srcdir)/src/midend/BinaryAnalysis \
+     -I$(top_srcdir)/src/midend/BinaryAnalysis/dataflowanalyses \
+     -I$(top_srcdir)/src/midend/BinaryAnalysis/instructionSemantics \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depInfo \
@@ -406,6 +412,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
      -I$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization \
      -I$(top_srcdir)/src/midend/programAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/arithmeticIntensity \
      -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
      -I$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment \
@@ -522,7 +529,7 @@ ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_CHRONO_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_RANDOM_LIB) $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
+  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PYTHON_LIB)
 
 ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(SQLITE_DATABASE_LIBS) $(QT_LIBS) $(ROSE_BOOST_LIBS) \
@@ -532,7 +539,7 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS)  \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
   $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
-  $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH)
+  $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH) $(ROSE_PYTHON_LIBS_WITH_PATH)
 
 #========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
@@ -568,26 +575,26 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
 # the library location, then DO NOT list an environment variable here--use the directory from configure instead (which
 # goes into ROSE_LIBS above).
 
-ROSE_RPATHS =										\
-	$(addprefix -R ,								\
-	  $(filter-out -l% -pthread %.a %.la /lib% /usr/lib% /usr/local/lib% /var/lib%,	\
-	    $(patsubst -L%,%,								\
-	      $(ROSE_LIBS)								\
-	      $(subst :, , $(GNU_COMPILERS_LIBDIRS))					\
-	      $(subst :, , $(LIBBZ2_LIBDIRS))						\
-	      $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))				\
-	      $(subst :, , $(LIBJPEG_LIBDIRS))						\
-	      $(subst :, , $(LIBLCMS_LIBDIRS))						\
-	      $(subst :, , $(LIBLZMA_LIBDIRS))						\
-	      $(subst :, , $(LIBPNG_LIBDIRS))						\
-	      $(subst :, , $(LIBTIFF_LIBDIRS))						\
-	      $(subst :, , $(PYTHON_LIBDIRS))						\
-	      $(subst :, , $(SPOT_LIBDIRS))						\
-	      $(subst :, , $(ZLIB_LIBDIRS))						\
-	      $(subst :, , $(INTEL_COMPILER_RPATHS))					\
-	    )										\
-	  )										\
-	)
+ROSE_RPATHS =                                                                           \
+          $(patsubst -L%,-R %,                                                          \
+            $(filter-out -L/lib% -L/usr/lib% -L/usr/local/lib% -L/var/lib%,             \
+              $(filter -L%,                                                             \
+                $(ROSE_LIBS)                                                            \
+                $(subst :, , $(GNU_COMPILERS_LIBDIRS))                                  \
+                $(subst :, , $(LIBBZ2_LIBDIRS))                                         \
+                $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))                              \
+                $(subst :, , $(LIBJPEG_LIBDIRS))                                        \
+                $(subst :, , $(LIBLCMS_LIBDIRS))                                        \
+                $(subst :, , $(LIBLZMA_LIBDIRS))                                        \
+                $(subst :, , $(LIBPNG_LIBDIRS))                                         \
+                $(subst :, , $(LIBTIFF_LIBDIRS))                                        \
+                $(subst :, , $(PYTHON_LIBDIRS))                                         \
+                $(subst :, , $(SPOT_LIBDIRS))                                           \
+                $(subst :, , $(ZLIB_LIBDIRS))                                           \
+                $(subst :, , $(INTEL_COMPILER_RPATHS))                                  \
+              )                                                                         \
+            )                                                                           \
+          )
 
 # Rasmussen (3/23/2018): Added ROSE_LINK_RPATHS to enable linking on Mac OSX with ROSE installation
 if OS_MACOSX

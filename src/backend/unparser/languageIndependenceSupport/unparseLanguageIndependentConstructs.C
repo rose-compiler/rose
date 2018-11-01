@@ -468,6 +468,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                          statementInFile = true;
                        }
                   }
+             }
 #if 1
             // DQ (1/4/2014): commented out to test with using token based unparsing.
 
@@ -476,13 +477,15 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
+                    SgSourceFile* sourcefile = info.get_current_source_file();
+                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) {
 #if 0
-                    printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                      printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration
 #endif
-                    statementInFile = false;
+                      statementInFile = false;
+                    }
                   }
 #endif
-             }
 #if 0
           printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
@@ -5939,7 +5942,10 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      ROSE_ASSERT(enum_val != NULL);
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
+     printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
+     printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
+     printf ("  -- enum_val->get_qualified_name_prefix() = %s\n", enum_val->get_qualified_name_prefix().getString().c_str());
 #endif
 #if 0
      curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");

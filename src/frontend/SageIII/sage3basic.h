@@ -473,6 +473,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
 #include <initialize.h>                                 // defines Rose::initialize
 
+// Liao, 2018/6/25, define the actual version value for OpenMP 4.5
+#define OMPVERSION 201511
+
 #endif
 
 
