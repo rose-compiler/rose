@@ -22,8 +22,10 @@ main(int argc, char** argv)
   // Internal AST consistancy tests.
      AstTests::runAllTests(project);
 
+     SgNode* projectNode = isSgNode(project);
+     
   // Build a Library Identification database (in the current directory).
-     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", project );
+     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", projectNode );
 
 #if 0
   // Match functions in AST against Library Identification database.

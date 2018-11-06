@@ -4,6 +4,7 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>
+#include <BinaryDemangler.h>
 
 using namespace std;
 using namespace Rose;
@@ -26,9 +27,10 @@ void
 LibraryIdentification::generateLibraryIdentificationDataBase( const std::string& databaseName, 
                                                               const std::string& libraryName, 
                                                               const std::string& libraryVersion, 
-                                                              SgProject* project,
+                                                              SgNode* root,
                                                               bool replace)
 {
+    Rose::BinaryAnalysis::Demangler demangler;
     // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
     TimingPerformance timer ("AST Library Identification reader : time (sec) = ",true);
     
@@ -36,46 +38,44 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
     
     FunctionIdDatabaseInterface ident(databaseName);
     
-    Rose_STL_Container<SgAsmGenericFile*> fileList = SageInterface::querySubTree<SgAsmGenericFile>(project);
-    if(fileList.size() > 1) {
-        std::cout << "libraryIdentification ERROR, only one library at a time" << std::endl;
-        ASSERT_require(false);
-    }
-    LibraryInfo libraryInfo( libraryName, libraryVersion, fileList[0]);
+    Rose_STL_Container<SgAsmGenericFile*> fileList = SageInterface::querySubTree<SgAsmGenericFile>(root);
+
+    LibraryInfo libraryInfo( libraryName, libraryVersion, fileList[0]); //In a .a, this will just be the name of the first .o
     ident.addLibraryToDB(libraryInfo, replace);
     
-    Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (project,V_SgAsmInterpretation);
-    
-    for (Rose_STL_Container<SgNode*>::iterator j = binaryInterpretationList.begin(); j != binaryInterpretationList.end(); j++)
+    //Now get all the functions in the library
+    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
+            
+    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
         {
-            SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
-            ASSERT_require(asmInterpretation != NULL);
+            // Build a pointer to the current type so that we can call the get_name() member function.
+            SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
+            ROSE_ASSERT(binaryFunction != NULL);
             
-            //Now get all the function for the interpretation
-            Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+            string mangledFunctionName   = binaryFunction->get_name();
             
-            for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
-                {
-                    // Build a pointer to the current type so that we can call the get_name() member function.
-                    SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
-                    ROSE_ASSERT(binaryFunction != NULL);
-                    
-                    FunctionInfo functionInfo(binaryFunction, libraryInfo);
-                    
-                    
-                    string mangledFunctionName   = binaryFunction->get_name();
-                    string demangledFunctionName = StringUtility::demangledName(mangledFunctionName);
-                    printf ("Function %s demangled = %s going into database\n", mangledFunctionName.c_str(), demangledFunctionName.c_str());
-                    
-                    ident.addFunctionToDB(functionInfo, replace);         
-                }
-        }    
+            /*                    if (mangledFunctionName.compare(0,6,"(data)") == 0) 
+                                  {  //This is a data block, don't add it to the database
+                                  continue;
+                                  }
+            */
+            
+            FunctionInfo functionInfo(binaryFunction, libraryInfo);
+            
+            
+            string demangledFunctionName = demangler.demangle(mangledFunctionName);
+            //StringUtility::demangledName(mangledFunctionName);
+            printf ("Function %s demangled = %s going into database\n", mangledFunctionName.c_str(), demangledFunctionName.c_str());
+            
+            ident.addFunctionToDB(functionInfo, replace);         
+        }
+            
 }
 
-/** match functions in project to  Library Identification Database
+/** match functions in root to  Library Identification Database
  *  This is a function to simplify matching functions in a binary
- *  project to library functions in the database.  It will attempt to
- *  match every function defined in the project to a library function.
+ *  root to library functions in the database.  It will attempt to
+ *  match every function defined in the root to a library function.
  *
  *  It returns a LibToFuncsMap that contains every function defined in
  *  the project in the following form: Library->set(Function).  
@@ -90,46 +90,50 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
  **/
 LibraryIdentification::LibToFuncsMap 
 LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& databaseName,
-                                                           SgProject* project)
+                                                           SgNode* root)
 {
     // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
     TimingPerformance timer ("AST Library Identification matcher : time (sec) = ",true);
     LibraryIdentification::LibToFuncsMap libToFuncsMap;
     
     FunctionIdDatabaseInterface ident(databaseName);
+    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
+//     Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (root,V_SgAsmInterpretation);
     
-    Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (project,V_SgAsmInterpretation);
+//     std::cerr << "Queried for Interpretations " << std::endl;
     
-    for (Rose_STL_Container<SgNode*>::iterator j = binaryInterpretationList.begin(); j != binaryInterpretationList.end(); j++)
+
+//     for (Rose_STL_Container<SgNode*>::iterator j = binaryInterpretationList.begin(); j != binaryInterpretationList.end(); j++)
+//         {
+//             std::cerr << "Interpretation " << (size_t)(j - binaryInterpretationList.begin()) << std::endl;
+//             SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
+//             ASSERT_require(asmInterpretation != NULL);
+            
+//             //Now get all the function for the interpretation
+//             Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+            
+    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
         {
-            SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
-            ASSERT_require(asmInterpretation != NULL);
+            // Build a pointer to the current type so that we can call the get_name() member function.
+            SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
+            ROSE_ASSERT(binaryFunction != NULL);
             
-            //Now get all the function for the interpretation
-            Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+            FunctionInfo functionInfo(binaryFunction);
             
-            for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
-                {
-                    // Build a pointer to the current type so that we can call the get_name() member function.
-                    SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
-                    ROSE_ASSERT(binaryFunction != NULL);
-                    
-                    FunctionInfo functionInfo(binaryFunction);
-                    
-                    if(ident.matchFunction(functionInfo)) 
-                        { //match, insert it into the libToFuncsMap
-                            LibraryInfo libraryInfo(functionInfo.libHash);
-                            ident.matchLibrary(libraryInfo);
-                            insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
-                        } 
-                    else 
-                        {  //No match, put it under the UNKNOWN library
-                            LibraryInfo libraryInfo = LibraryInfo::getUnknownLibraryInfo();
-                            functionInfo.libHash = libraryInfo.libHash;
-                            insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);                            
-                        }
+            if(ident.matchFunction(functionInfo)) 
+                { //match, insert it into the libToFuncsMap
+                    LibraryInfo libraryInfo(functionInfo.libHash);
+                    ident.matchLibrary(libraryInfo);
+                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
+                } 
+            else 
+                {  //No match, put it under the UNKNOWN library
+                    LibraryInfo libraryInfo = LibraryInfo::getUnknownLibraryInfo();
+                    functionInfo.libHash = libraryInfo.libHash;
+                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);                            
                 }
-        }    
+        }
+    //}    
     return libToFuncsMap;
 }
 
