@@ -32,26 +32,29 @@ $(document).ready(function() {
     copyToClipboard(text, el);
   });
 
-  var observer = new MutationObserver(function(mutL,obs) {
-    for(var mutation of mutL) {
-      if (mutation.target.style.display != 'none') {
-        var svgElem = mutation.target.getElementsByTagName('svg')[0];
-        svgPanZoom(svgElem, {
-          panEnabled: true,
-          controlIconsEnabled: true,
-          zoomEnabled: true,
-          dblClickZoomEnabled: true,
-          mouseWheelZoomEnabled: true,
-          zoomScaleSensitivity: 0.2,
-          minZoom: 0.5,
-          maxZoom: 100
-        });
-      }
-    }
-  });
 
-  var svgDivs = document.getElementsByClassName('svg_zoom_pan');
-  for (let svgDiv of svgDivs) {
-    observer.observe(svgDiv, { attributes: true });
+  var objDivs = document.getElementsByClassName('svg_zoom_pan');
+  for (let objDiv of objDivs) {
+    objDiv.addEventListener('load', function() {
+      var svgElem = objDiv.contentDocument.getElementsByTagName('svg')[0];
+      svgElem.removeAttribute('height');
+      svgElem.removeAttribute('width');
+//    svgElem.setAttribute('width', "100%");
+//    svgElem.setAttribute('max-width', "100%!important");
+//    svgElem.setAttribute('height', "600px");
+      svgElem.setAttribute('viewBox', "0 0 1500 600");
+//    svgElem.setAttribute('preserveAspectRatio', "xMinYMin meet");
+      svgPanZoom(svgElem, {
+        panEnabled: true,
+        fit: true,
+        controlIconsEnabled: true,
+        zoomEnabled: true,
+        dblClickZoomEnabled: true,
+        mouseWheelZoomEnabled: true,
+        zoomScaleSensitivity: 0.2,
+        minZoom: 0.1,
+        maxZoom: 1000
+      });
+    });
   }
 });
