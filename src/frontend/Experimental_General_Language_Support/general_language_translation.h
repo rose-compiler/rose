@@ -99,6 +99,9 @@ namespace General_Language_Translation
           e_argument_list,
           e_argument_keyword,
 
+          e_variable_reference,
+          e_array_reference,
+
           e_case_range,
           e_case_selector,
 
@@ -111,6 +114,7 @@ namespace General_Language_Translation
 
        // Expressions for array indexing
           e_array_index_triplet,
+          e_section_subscripts,
 
        // Explicitly for Jovial but try to reuse for Fortran
           e_explicit_dimension,
@@ -137,9 +141,13 @@ namespace General_Language_Translation
           e_fortran_else_stmt,
           e_fortran_end_do_stmt,
 
+          e_fortran_do_concurrent_stmt,
           e_fortran_concurrent_header,
           e_fortran_concurrent_control,
           e_fortran_concurrent_locality,
+
+          e_fortran_forall_stmt,
+          e_fortran_end_forall_stmt,
 
           e_fortran_sync_all_stmt,
           e_fortran_sync_images_stmt,
