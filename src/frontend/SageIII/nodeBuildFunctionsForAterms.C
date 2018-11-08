@@ -2972,16 +2972,12 @@ SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_chil
    }
 
 
-/* #line 2880 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string name, SgUntypedExpression* array_subscripts, SgUntypedExpression* coarray_subscripts)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string name, SgUntypedExpression* array_subscripts, SgUntypedExpression* coarray_subscripts): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedArrayReferenceExpression* returnNode = NULL;
@@ -3349,11 +3345,11 @@ SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(S
    }
 
 
-SgUntypedForAllStatement* SgUntypedForAllStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name)
+SgUntypedForAllStatement* SgUntypedForAllStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedForAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedForAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedForAllStatement* returnNode = NULL;

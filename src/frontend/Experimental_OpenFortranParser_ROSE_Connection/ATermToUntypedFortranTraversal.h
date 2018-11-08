@@ -123,9 +123,11 @@ ATbool traverse_DataRef(ATerm term, SgUntypedExpression** var_expr);
 ATbool traverse_PartRef(ATerm term, SgUntypedExpression** var_expr);
 
 // R620
-ATbool traverse_OptSectionSubscripts(ATerm term);
+ATbool traverse_SectionSubscript(ATerm term, SgUntypedExpression** subscript);
+ATbool traverse_OptSectionSubscripts(ATerm term, SgUntypedExprListExpression** subscripts);
+
 // R624
-ATbool traverse_OptImageSelector(ATerm term);
+ATbool traverse_OptImageSelector(ATerm term, SgUntypedExprListExpression** image_selector);
 
 ATbool traverse_ContinueStmt(ATerm term, SgUntypedStatement** continue_stmt);
 
@@ -200,6 +202,21 @@ ATbool traverse_StopStmt      ( ATerm term, SgUntypedStatementList* stmt_list  )
 ATbool traverse_ErrorStopStmt ( ATerm term, SgUntypedStatementList* stmt_list  );
 ATbool traverse_OptStopCode   ( ATerm term, SgUntypedExpression** var_StopCode );
 
+// R1050-2018-N2146
+ATbool traverse_ForallConstruct(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R1051-2018-N2146
+ATbool traverse_ForallConstructStmt(ATerm term, SgUntypedForAllStatement** forall_stmt);
+
+// R1052-2018-N2146
+ATbool traverse_ForallBodyConstruct(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R1054-2018-N2146
+ATbool traverse_EndForallStmt(ATerm term, SgUntypedNamedStatement** end_forall_stmt);
+
+// R1055-2018-N2146
+ATbool traverse_ForallStmt(ATerm term, SgUntypedStatementList* stmt_list);
+
 // R1101
 ATbool traverse_MainProgram(ATerm term, SgUntypedScope* scope);
 ATbool traverse_OptProgramStmt(ATerm term, SgUntypedNamedStatement** program_stmt);
@@ -213,6 +230,15 @@ ATbool traverse_ModuleStmt(ATerm term, SgUntypedNamedStatement** module_stmt);
 
 // R1106
 ATbool traverse_EndModuleStmt(ATerm term, SgUntypedNamedStatement** end_module_stmt);
+
+// R1107-2018-N2146
+ATbool traverse_BlockConstruct(ATerm term, SgUntypedStatementList* stmt_list);
+
+// R1108-2018-N2146
+ATbool traverse_BlockStmt(ATerm term, SgUntypedNamedStatement** block_stmt);
+
+// R1110-2018-N2146
+ATbool traverse_EndBlockStmt(ATerm term, SgUntypedNamedStatement** end_block_stmt);
 
 // R1107
 ATbool traverse_OptModuleSubprogramPart(ATerm term, SgUntypedOtherStatement** contains_stmt, SgUntypedScope* scope);

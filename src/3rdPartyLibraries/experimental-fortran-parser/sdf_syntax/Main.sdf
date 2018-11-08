@@ -437,7 +437,6 @@ sorts
   EndWhereStmt                        %% R749
   ForallConstruct                     %% R750
   ForallConstructStmt                 %% R751
-  ForallHeader                        %% R752
   ForallTripletSpec                   %% R753
   ForallLimit                         %% R754
   ForallStep                          %% R755
@@ -2337,26 +2336,6 @@ context-free syntax
   OptLabel 'END' 'WHERE' WhereConstructName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
   OptLabel 'END' 'WHERE'             NoName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
 
-%%R750
-  ForallConstructStmt
-    ForallBodyConstruct*
-  EndForallStmt                                    -> ForallConstruct     {cons("ForallConstruct")}
-
-%%R751
-  OptLabel ForallConstructName ':'
-          'FORALL' ForallHeader                EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
-  OptLabel              NoName
-          'FORALL' ForallHeader                EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
-
-  Ident                                            -> ForallConstructName
-
-%%752
-%%       mask-expr substituted for scalar-mask-expr
-%%
-  '('
-     OptTypeSpec {ForallTripletSpec ','}+ OptMaskExpr
-  ')'                                              -> ForallHeader        {cons("ForallHeader")}
-
   TypeSpec '::'                                    -> OptTypeSpec         {cons("type-spec-colon")}
   % empty %                                        -> OptTypeSpec         {cons("no-type-spec")}
 
@@ -2396,9 +2375,6 @@ context-free syntax
 %%758
   OptLabel 'END' 'FORALL' ForallConstructName     EOS -> EndForallStmt     {cons("EndForallStmt")}
   OptLabel 'END' 'FORALL'              NoName     EOS -> EndForallStmt     {cons("EndForallStmt")}
-
-%%759
-  OptLabel 'FORALL' ForallHeader ForallAssignmentStmt -> ForallStmt        {cons("ForallStmt")}
 
 %%TODO - what with the following
 %%
@@ -3350,19 +3326,18 @@ context-free syntax
   ContinueStmt                           -> ActionStmt
   CycleStmt                              -> ActionStmt
   DeallocateStmt                         -> ActionStmt
-  EndFunctionStmt                        -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "FUNCTION"
-  EndMpSubprogramStmt                    -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROCEDURE"
-  EndProgramStmt                         -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROGRAM"
-  EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
+%%EndFunctionStmt                        -> ActionStmt  %% not in F2018-N2146
+%%EndMpSubprogramStmt                    -> ActionStmt  %% not in F2018-N2146
+%%EndProgramStmt                         -> ActionStmt  %% not in F2018-N2146
+%%EndSubroutineStmt                      -> ActionStmt  %% not in F2018-N2146
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
   EventPostStmt                          -> ActionStmt  %% R1170-F2018-N2146
   EventWaitStmt                          -> ActionStmt  %% R1172-F2018-N2146
-  FailImageStmt                          -> ActionStmt  %% R1163-F2018-N2146
-  FormTeamStmt                           -> ActionStmt  %% R1175-F2018-N2146
   ExitStmt                               -> ActionStmt
+  FailImageStmt                          -> ActionStmt  %% R1163-F2018-N2146
   FlushStmt                              -> ActionStmt
-  ForallStmt                             -> ActionStmt
+  FormTeamStmt                           -> ActionStmt  %% R1175-F2018-N2146
   GotoStmt                               -> ActionStmt
   IfStmt                                 -> ActionStmt
   InquireStmt                            -> ActionStmt
@@ -3384,8 +3359,9 @@ context-free syntax
   WaitStmt                               -> ActionStmt
   WhereStmt                              -> ActionStmt
   WriteStmt                              -> ActionStmt
-  ArithmeticIfStmt                       -> ActionStmt
   ComputedGotoStmt                       -> ActionStmt
+  ForallStmt                             -> ActionStmt  %% deprecated F2018-N2146
+  ArithmeticIfStmt                       -> ActionStmt
 %% Following added as replacement for DoConstruct (because ambiguous)
   LabelDoStmt                            -> ActionStmt
   NonlabelDoStmt                         -> ActionStmt
@@ -3904,6 +3880,36 @@ context-free syntax
 
   TeamVariable '::'                                -> OptTeamVariable      {cons("TeamVariable")}
   % empty %                                        -> OptTeamVariable      {cons("no-team-variable")}
+
+
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 10 Expressions and assignment
+%% -------------------------------------
+%%%%%%%%%%
+
+%% 10.2.4.1 Form of the FORALL Construct
+%% -------------------------------------
+
+%% R1050-F2018-N2146
+  ForallConstructStmt
+    ForallBodyConstruct*
+  EndForallStmt                                    -> ForallConstruct     {cons("ForallConstruct")}
+
+%% R1051-F2018-N2146
+  OptLabel ForallConstructName ':'
+          'FORALL' ConcurrentHeader            EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
+  OptLabel              NoName
+          'FORALL' ConcurrentHeader            EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
+
+  Ident                                            -> ForallConstructName
+
+%% 10.2.4.3 The FORALL statement
+%% -----------------------------
+
+%% R1055-F2018-N2146
+  OptLabel 'FORALL' ConcurrentHeader
+                    ForallAssignmentStmt           -> ForallStmt          {cons("ForallStmt")}
 
 
 %%%%%%%%%%

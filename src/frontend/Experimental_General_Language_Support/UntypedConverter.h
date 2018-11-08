@@ -109,7 +109,9 @@ class UntypedConverter
       virtual SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr, bool delete_ut_expr=false);
       virtual SgExpression*  convertSgUntypedSubscriptExpression (SgUntypedSubscriptExpression* ut_expr, SgNodePtrList& children);
 
-      virtual SgExpression* convertUntypedReferenceExpression (SgUntypedReferenceExpression* ut_expr, bool delete_ut_expr=false);
+      virtual SgExpression*    convertUntypedReferenceExpression (SgUntypedReferenceExpression* ut_expr, bool delete_ut_expr=false);
+      virtual SgPntrArrRefExp* convertUntypedArrayReferenceExpression (SgUntypedArrayReferenceExpression* ut_expr,
+                                                                       SgNodePtrList& children);
 
    // Operators
    //

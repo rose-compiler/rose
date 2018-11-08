@@ -678,7 +678,14 @@ Grammar::setUpNodes ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/6/2014): TODO: This array reference will require concepts of indexing, triplet notation, index sets, etc.
+  // Rasmussen (11/07/2018): Added variable reference name and array and coarray subscripts
      UntypedArrayReferenceExpression.setFunctionPrototype ( "HEADER_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
+     UntypedArrayReferenceExpression.setDataPrototype     ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedArrayReferenceExpression.setDataPrototype     ( "SgUntypedExpression*", "array_subscripts", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedArrayReferenceExpression.setDataPrototype     ( "SgUntypedExpression*", "coarray_subscripts", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedOtherExpression.setFunctionPrototype          ( "HEADER_UNTYPED_OTHER_EXPRESSION", "../Grammar/LocatedNode.code");
      UntypedFunctionCallOrArrayReferenceExpression.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_OR_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
@@ -824,8 +831,11 @@ Grammar::setUpNodes ()
      UntypedForStatement.setDataPrototype              ( "std::string", "do_construct_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Rasmussen (10/2/2018): Added to support Fortran DO CONCURRENT construct
+  // Rasmussen (10/02/2018): Added to support Fortran DO CONCURRENT construct
+  // Rasmussen (10/28/2018): Added statement_enum to generalize to include Fortran FORALL construct
      UntypedForAllStatement.setFunctionPrototype ( "HEADER_UNTYPED_FORALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForAllStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedForAllStatement.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedForAllStatement.setDataPrototype     ( "SgUntypedExprListExpression*", "iterates", "= NULL",

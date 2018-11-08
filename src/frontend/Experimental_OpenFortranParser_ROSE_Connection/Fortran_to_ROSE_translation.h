@@ -7,7 +7,7 @@ namespace Fortran_ROSE_Translation
   // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
      enum ExpressionKind
         {
-          e_unknown,
+          e_fortran_first = 5000,
 
        // Attributes
        // ----------
@@ -83,6 +83,10 @@ namespace Fortran_ROSE_Translation
 
        // Statements
        // ----------
+          e_program_stmt,
+          e_end_program_stmt,
+          e_block_stmt,
+          e_end_block_stmt,
           e_do_stmt,
 
        // CUDA Attributes
@@ -99,7 +103,7 @@ namespace Fortran_ROSE_Translation
           e_cuda_pinned,
           e_cuda_texture,
 
-          e_last
+          e_fortran_last
         };
 
    } // namespace Fortran_ROSE_Translation

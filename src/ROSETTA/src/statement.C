@@ -3265,6 +3265,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Fortran 95 specific construct (different from C/C++ for loop).
+  // Rasmussen (10/25/2018): Added forall_statement_kind_enum to allow specifying as a DO CONCURRENT statement
      ForAllStatement.setFunctionPrototype ( "HEADER_FORALL_STATEMENT", "../Grammar/Statement.code" );
      ForAllStatement.setDataPrototype ( "SgExprListExp*", "forall_header", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
@@ -3273,10 +3274,12 @@ Grammar::setUpStatements ()
      ForAllStatement.setDataPrototype ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+     ForAllStatement.setDataPrototype ( "SgForAllStatement::forall_statement_kind_enum",
+                                        "forall_statement_kind", "= SgForAllStatement::e_forall_statement",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (10/22/2018): Added JovialForThenStatement; An SgForStatement is used for other
   // forms of Jovial for statements to allow analysis be the same as C.

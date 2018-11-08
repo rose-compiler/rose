@@ -1267,7 +1267,7 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
    // lhs expression now becomes an lvalue
       lhs->set_lvalue(true);
 
-      assign_stmt = new SgExprStatement(assign_expr);
+      assign_stmt = SageBuilder::buildExprStatement(assign_expr);
       ROSE_ASSERT(assign_stmt);
       setSourcePositionFrom(assign_stmt, ut_stmt);
 
@@ -1781,6 +1781,27 @@ UntypedConverter::convertSgUntypedNamedStatement (SgUntypedNamedStatement* ut_st
               scope = SageBuilder::topScopeStack();
               break;
            }
+
+#if 0
+     // Something needs to be done about adding language specific header files for enums
+        case Fortran_ROSE_Translation::e_program_stmt:
+        case Fortran_ROSE_Translation::e_end_program_stmt:
+           {
+           // Nothing to do here
+              break;
+           }
+
+        case Fortran_ROSE_Translation::e_block_stmt:
+        case Fortran_ROSE_Translation::e_end_block_stmt:
+#endif
+
+        case e_end_switch_stmt:
+        case e_fortran_end_forall_stmt:
+           {
+              cout << "Warning: Known UntypedNamedStatement stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
+              break;
+           }
+
         default:
            {
               cout << "Warning: UntypedNamedStatement stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
@@ -2197,6 +2218,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
      {
        case e_argument_list:
        case e_case_selector:
+       case e_section_subscripts:
          {
             sg_expr_list = new SgExprListExp();
             ROSE_ASSERT(sg_expr_list);
@@ -2204,11 +2226,11 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
             setSourcePositionFrom(sg_expr_list, ut_expr_list);
 
             BOOST_FOREACH(SgLocatedNode* sg_node, children)
-               {
-                  SgExpression* sg_expr = dynamic_cast<SgExpression*>(sg_node);
-                  ROSE_ASSERT(sg_expr);
-                  sg_expr_list->append_expression(sg_expr);
-               }
+              {
+                 SgExpression* sg_expr = dynamic_cast<SgExpression*>(sg_node);
+                 ROSE_ASSERT(sg_expr);
+                 sg_expr_list->append_expression(sg_expr);
+              }
             break;
          }
 
@@ -2222,11 +2244,11 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_fortran_stat_acquired_lock:   break;
 
        case e_unknown:
-          {
-             ROSE_ASSERT(children.size() == 0);
-             ROSE_ASSERT(ut_expr_list->get_expressions().size() == 0);
-             break;
-          }
+         {
+            ROSE_ASSERT(children.size() == 0);
+            ROSE_ASSERT(ut_expr_list->get_expressions().size() == 0);
+            break;
+         }
 
        default:
          {
@@ -2389,12 +2411,38 @@ UntypedConverter::convertUntypedReferenceExpression(SgUntypedReferenceExpression
     return sg_expr;
  }
 
+SgPntrArrRefExp*
+UntypedConverter::convertUntypedArrayReferenceExpression (SgUntypedArrayReferenceExpression* ut_expr, SgNodePtrList& children)
+ {
+    ROSE_ASSERT(ut_expr);
+    ROSE_ASSERT(children.size() == 2);
+
+    SgPntrArrRefExp* array_ref = NULL;
+    SgScopeStatement* scope = SageBuilder::topScopeStack();
+
+    SgExpression*   array_subscripts = isSgExpression(children[0]);
+    SgExpression* coarray_subscripts = isSgExpression(children[1]);
+    ROSE_ASSERT(isSgExprListExp(array_subscripts));
+
+ // No coarrays for the moment
+    ROSE_ASSERT(isSgNullExpression(coarray_subscripts));
+    delete coarray_subscripts;
+
+    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(ut_expr->get_name(), scope);
+    ROSE_ASSERT(var_ref);
+    setSourcePositionFrom(var_ref, ut_expr);
+
+    array_ref = SageBuilder::buildPntrArrRefExp(var_ref, array_subscripts);
+    ROSE_ASSERT(array_ref);
+    setSourcePositionFrom(array_ref, ut_expr);
+
+    return array_ref;
+ }
 
 SgUnaryOp*
 UntypedConverter::convertUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_operator, SgExpression* expr)
  {
     using namespace General_Language_Translation;
-
     SgUnaryOp* op = NULL;
 
     switch(untyped_operator->get_expression_enum())

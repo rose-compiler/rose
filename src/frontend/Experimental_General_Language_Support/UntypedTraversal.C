@@ -203,44 +203,51 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
 
    switch (node->variantT())
    {
-     case V_SgUntypedUnaryOperator:
-       {
-          SgUntypedExpression* ut_expr = isSgUntypedUnaryOperator(node);
-          SgNodePtrList children(childAttrs);
-          sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
-          break;
-       }
+    case V_SgUntypedUnaryOperator:
+      {
+         SgUntypedExpression* ut_expr = isSgUntypedUnaryOperator(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
+         break;
+      }
 
-     case V_SgUntypedBinaryOperator:
-       {
-          SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
-          SgNodePtrList children(childAttrs);
-          sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
-          break;
-       }
+    case V_SgUntypedBinaryOperator:
+      {
+         SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
+         break;
+      }
 
-     case V_SgUntypedNullExpression:
-     case V_SgUntypedReferenceExpression:
-     case V_SgUntypedValueExpression:
-       {
-          SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
-          sg_node = pConverter->convertSgUntypedExpression(ut_expr);
-          break;
-       }
+    case V_SgUntypedNullExpression:
+    case V_SgUntypedReferenceExpression:
+    case V_SgUntypedValueExpression:
+      {
+         SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
+         sg_node = pConverter->convertSgUntypedExpression(ut_expr);
+         break;
+      }
+    case V_SgUntypedArrayReferenceExpression:
+      {
+         SgUntypedArrayReferenceExpression* ut_expr = isSgUntypedArrayReferenceExpression(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertUntypedArrayReferenceExpression(ut_expr, children);
+         break;
+      }
     case V_SgUntypedExprListExpression:
-       {
-          SgUntypedExprListExpression* ut_expr = isSgUntypedExprListExpression(node);
-          SgNodePtrList children(childAttrs);
-          sg_node = pConverter->convertSgUntypedExprListExpression(ut_expr, children);
-          break;
-       }
+      {
+         SgUntypedExprListExpression* ut_expr = isSgUntypedExprListExpression(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedExprListExpression(ut_expr, children);
+         break;
+      }
     case V_SgUntypedSubscriptExpression:
-       {
-          SgUntypedSubscriptExpression* ut_expr = isSgUntypedSubscriptExpression(node);
-          SgNodePtrList children(childAttrs);
-          sg_node = pConverter->convertSgUntypedSubscriptExpression(ut_expr, children);
-          break;
-       }
+      {
+         SgUntypedSubscriptExpression* ut_expr = isSgUntypedSubscriptExpression(node);
+         SgNodePtrList children(childAttrs);
+         sg_node = pConverter->convertSgUntypedSubscriptExpression(ut_expr, children);
+         break;
+      }
     case V_SgUntypedAbortStatement:
       {
          SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
