@@ -19,6 +19,41 @@ We demonstrate these tools with two cases:
 
 In the case of Kripke, we demonstrate building two versions of the Compilation DB: sequential configuration and OpenMP configuration.
 
+```
+# The scripts are not installed alongside ROSE yet. We add the proper directory to PATH
+export PATH=$(ROSE_SOURCE_DIRECTORY)/projects/CompilationDB/scripts:$PATH
+
+# Clone Kripke GIT repository
+#   NB1: we use the branch release/v1.2.0-CORAL2 which contains a modern version of Kripke (using C++ and RAJA)
+#   NB2: note the --recursive option: Kripke gets RAJA and other dependencies through GIT submodule
+git clone --recursive -b release/v1.2.0-CORAL2 https://github.com/LLNL/Kripke.git kripke-src
+
+mkdir kripke-build
+cd kripke-build
+
+# Configure Kripke to be built using OpenMP.
+#   NB: "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" triggers the generation of the compilation database (./compile_commands.json). This is a cmake option (not specific to kripke).
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_OPENMP=True ../kripke-src
+
+cd ..
+
+# Run MAP script on the Compilation DB
+#   This python script takes three mandatory arguments:
+#     * the source directory of the application
+#     * one specific build directory (by default the compilation DB is expected to be at the root of the build tree)
+#     * the tool to apply on each of the application compilation units
+#   It also has optionnal arguments. Two of them are used here:
+#     * "--filter" to remove or substitute arguments from each compilation unit command line
+#     * "--" indicates that all following argument must be passed to the tool
+#   In this example, these options are used to prevent issues in the EDG frontend.
+comp_db_map.py kripke-src kripke-build identityTranslator --filter r:-std=c++11:-std=c++14 -- -D_OPENMP
+
+# Run RENDER script on tool's report
+#   The MAP script generates a JSON reports containing the standard output and error streams of the tool for each compilation units.
+#   By default, this report is located at the root of the build tree and named using the basename of the tool.
+comp_db_render.py --report kripke-sequential/identityTranslator.json --title "Sequential built of Kripke with identityTranslator"
+```
+
 ## TODOs
 
 ### Distributed systems
