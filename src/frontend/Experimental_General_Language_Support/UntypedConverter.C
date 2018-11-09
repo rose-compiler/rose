@@ -372,6 +372,9 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
       // TODO - figure out how to handle operators (or anything with children)
          ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
          kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
+
+      // Causes problems in addAssociatedNodes if not deleted
+         delete ut_kind;
       }
 
 // TODO - determine if SageBuilder can be used (or perhaps should be updated)
@@ -500,6 +503,9 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
    if (isSgUntypedArrayType(ut_name->get_type()))
       {
          SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_name->get_type());
+#if 0
+         cout << "--- convertSgUntypedInitializedName:    dim_info is " << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
+#endif
          SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
 
          sg_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
@@ -2132,6 +2138,8 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
                      sg_kind_expr->set_parent(integerType);
                      ROSE_ASSERT(sg_kind_expr->get_parent() != NULL);
 #endif
+                  // Causes problems in addAssociatedNodes if not deleted
+                     delete ut_kind_expr;
                   }
 
                sg_expr = new SgIntVal(atoi(ut_expr->get_value_string().c_str()), constant_text);
@@ -2273,6 +2281,7 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
         << " " << ut_expr->get_upper_bound() << endl;
    cout << "UntypedConverter::convertSgUntypedSubscriptExpression:    st " << ut_expr->get_stride()->class_name()
         << " " << ut_expr->get_stride() << endl;
+   cout << "UntypedConverter::convertSgUntypedSubscriptExpression:   del " << delete_ut_expr << endl;
 #endif
 
    SgExpression* sg_expr = NULL;
@@ -2282,15 +2291,21 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
 
    switch(ut_expr->get_expression_enum())
       {
-        case e_explicit_shape:
-        case e_explicit_dimension:
+        case e_array_index_triplet: // Fortran: stride may be NullExpression
+        case e_explicit_shape:      // Fortran: stride is NullExpression or "1"
+        case e_explicit_dimension:  // Jovial : lower may be and stride is NullExpression
            {
+              // cout << "-x- explicit shape or triplet: expr_enum is " << ut_expr->get_expression_enum() << endl;
               sg_upper_bound = convertSgUntypedExpression(ut_expr->get_upper_bound(), delete_ut_expr);
+              if (!isSgUntypedNullExpression(ut_expr->get_stride()))
+                 {
+                    sg_stride = convertSgUntypedExpression(ut_expr->get_stride(), delete_ut_expr);
+                 }
               break;
            }
-        case e_assumed_shape:
+        case e_assumed_shape: // Fortran: upper and stride are NullExpression (and lower may be)
            {
-              cout << "... assumed shape\n";
+              // cout << "-x- assumed shape\n";
               if (isSgUntypedNullExpression(ut_expr->get_lower_bound()))
                  sg_upper_bound = new SgColonShapeExp();
               else
@@ -2298,22 +2313,13 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
               setSourcePositionUnknown(sg_upper_bound);
               break;
            }
-        case e_assumed_or_implied_shape:
-        case e_assumed_size:
-        case e_star_dimension:
+        case e_assumed_or_implied_shape: // Fortran: upper and stride are NullExpression
+        case e_assumed_size:             // Fortran: upper and stride are NullExpression
+        case e_star_dimension:           // Jovial : lower, upper, and stride are NullExpression
            {
-              cout << "... assumed size\n";
+              // cout << "-x- assumed size\n";
               sg_upper_bound = new SgAsteriskShapeExp();
               setSourcePositionUnknown(sg_upper_bound);
-              break;
-           }
-        case e_array_index_triplet:
-           {
-              sg_upper_bound = convertSgUntypedExpression(ut_expr->get_upper_bound(), delete_ut_expr);
-              if (!isSgUntypedNullExpression(ut_expr->get_stride()))
-                 {
-                    sg_stride = convertSgUntypedExpression(ut_expr->get_stride(), delete_ut_expr);
-                 }
               break;
            }
         default:
@@ -2332,12 +2338,15 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
    else
       {
          sg_lower_bound = convertSgUntypedExpression(ut_expr->get_lower_bound(), delete_ut_expr);
+
+         // cout << "-x- ut_stride " << ut_expr->get_stride() << endl;
          if (sg_stride == NULL)
             {
                // PLEASE clean this up, PLEASE (look at e_array_index_triplet logic)
                sg_stride = new SgIntVal(1,"1");
                setSourcePositionUnknown(sg_stride);
             }
+
          sg_expr = new SgSubscriptExpression(sg_lower_bound, sg_upper_bound, sg_stride);
          setSourcePositionFrom(sg_expr, ut_expr);
 
@@ -2349,6 +2358,7 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
 
    if (delete_ut_expr)
       {
+      // THIS SEEMS BOGUS (lower, upper, and strides are deleted above)
       // The untyped expression should not be deleted yet, but SgUntypedNullExpression members should be.
          if (isSgUntypedNullExpression(ut_expr->get_lower_bound())) delete ut_expr->get_lower_bound();
          if (isSgUntypedNullExpression(ut_expr->get_upper_bound())) delete ut_expr->get_upper_bound();

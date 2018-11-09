@@ -452,8 +452,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecificationPart(ATerm term, Sg
    }
    else return ATfalse;
 
-   setSourcePosition(decl_list, term);
-
    return ATtrue;
 }
 
@@ -1742,6 +1740,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_ExplicitShapeList(ATerm term, Sg
          
                range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
                setSourcePosition(range, head);
+#if 0
+               cout << ".x. ExplicitShape       range " << range << endl;
+               cout << ".x. ExplicitShape lower_bound " << lower_bound << endl;
+               cout << ".x. ExplicitShape upper_bound " << upper_bound << endl;
+               cout << ".x. ExplicitShape      stride " << stride << endl;
+#endif
             }
          
          dim_info->get_expressions().push_back(range);
@@ -1823,6 +1827,12 @@ ATbool ATermToUntypedFortranTraversal::traverse_AssumedSize(ATerm term, SgUntype
       dim_info->get_expressions().push_back(range);
       dim_info->get_expressions().size();
 
+#if 0
+      cout << ".x. AssumedSize    dim_info " << dim_info << endl;
+      cout << ".x. AssumedSize lower_bound " << lower_bound << endl;
+      cout << ".x. AssumedSize upper_bound " << upper_bound << endl;
+      cout << ".x. AssumedSize      stride " << stride << endl;
+#endif
    } else return ATfalse;
 
    ROSE_ASSERT(dim_info != NULL);
@@ -2129,8 +2139,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_SectionSubscript(ATerm term, SgU
    if (traverse_Expression(term, subscript)) {
       // MATCHED Subscript
    }
+   else if (traverse_Triplet(term, subscript)) {
+      // MATCHED Triplet (SubscriptTriplet)
+   }
 
-   // TODO: SubscriptTriplet                                       -> SectionSubscript
    // TODO: Keyword '=' ActualArg                                  -> SectionSubscript     {cons("ActualArgSpec")}
    // TODO: AltReturnSpec                                          -> SectionSubscript
 
@@ -2188,8 +2200,70 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptSectionSubscripts(ATerm term,
       return ATfalse;
    }
 
-   ROSE_ASSERT(section_subscripts);
+// nullptr is ok for "no-section-subscripts"
    *subscripts = section_subscripts;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R621 subscript-triplet
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_Triplet(ATerm term, SgUntypedExpression** range)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_Triplet: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lower_bound, t_upper_bound, t_opt_stride, t_stride;
+
+   SgUntypedExpression* lower_bound = NULL;
+   SgUntypedExpression* upper_bound = NULL;
+   SgUntypedExpression* stride = NULL;
+
+   *range = NULL;
+
+   if (ATmatch(term, "Triplet(<term>,<term>,<term>)", &t_lower_bound, &t_upper_bound, &t_opt_stride)) {
+
+      // Lower bound
+      if (ATmatch(t_lower_bound, "no-subscript()")) {
+         lower_bound = UntypedBuilder::buildUntypedNullExpression();
+         setSourcePositionUnknown(lower_bound);
+      }
+      else if (traverse_Expression(t_lower_bound, &lower_bound)) {
+      } else return ATfalse;
+
+      // Upper bound
+      if (ATmatch(t_upper_bound, "no-subscript()")) {
+         upper_bound = UntypedBuilder::buildUntypedNullExpression();
+         setSourcePositionUnknown(upper_bound);
+      }
+      else if (traverse_Expression(t_upper_bound, &upper_bound)) {
+      } else return ATfalse;
+
+      // Stride
+      if (ATmatch(t_opt_stride, "no-stride()")) {
+         stride = UntypedBuilder::buildUntypedNullExpression();
+         setSourcePositionUnknown(stride);
+      }
+      else if (ATmatch(t_opt_stride, "opt-stride(<term>)", &t_stride)) {
+         if (traverse_Expression(t_stride, &stride)) {
+            // MATCHED stride
+         } else return ATfalse;
+      }
+      else return ATfalse;
+
+      ROSE_ASSERT(lower_bound);
+      ROSE_ASSERT(upper_bound);
+      ROSE_ASSERT(stride);
+
+      int expr_enum = General_Language_Translation::e_array_index_triplet;
+
+      *range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
+      ROSE_ASSERT(*range);
+      setSourcePosition(*range, term);
+
+   } else return ATfalse;
 
    return ATtrue;
 }
@@ -3921,6 +3995,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_BlockConstruct(ATerm term, SgUnt
 
         if (traverse_SpecificationPart(t_spec_part, decl_list)) {
            // MATCHED SpecificationPart
+           setSourcePosition(decl_list, term);
         } else return ATfalse;
 
         if (traverse_EndBlockStmt(t_end_block, &end_block_stmt)) {
@@ -3930,7 +4005,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_BlockConstruct(ATerm term, SgUnt
      // block-stmt and end-block-stmt unused (except for block-construct-name)
         delete block_stmt;
         delete end_block_stmt;
-
      }
    else return ATfalse;
 

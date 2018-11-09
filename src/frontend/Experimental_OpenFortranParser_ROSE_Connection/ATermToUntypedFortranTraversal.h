@@ -126,6 +126,9 @@ ATbool traverse_PartRef(ATerm term, SgUntypedExpression** var_expr);
 ATbool traverse_SectionSubscript(ATerm term, SgUntypedExpression** subscript);
 ATbool traverse_OptSectionSubscripts(ATerm term, SgUntypedExprListExpression** subscripts);
 
+// R621
+ATbool traverse_Triplet(ATerm term, SgUntypedExpression** range);
+
 // R624
 ATbool traverse_OptImageSelector(ATerm term, SgUntypedExprListExpression** image_selector);
 
