@@ -3303,12 +3303,15 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                               amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(), namedType->get_name().str(),counter,recursiveDepth);
                          printf ("xxxxxx --- Must call a function to set the name qualification data in the SgTemplateArgument = %p \n",templateArgument);
 #endif
-                      // TV (10/09/2018): FIXME ROSE-1431
+                      // TV (10/09/2018): FIXME ROSE-1511
                          SgNamespaceDefinitionStatement * nsp_defn = isSgNamespaceDefinitionStatement(currentScope);
                          if (nsp_defn != NULL) {
                            SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
                            ROSE_ASSERT(nsp_decl != NULL);
-                           if (nsp_decl->get_name() == "std" && namedType->get_name().getString().find("allocator") == 0) {
+                           if (nsp_decl->get_name() == "std" && (
+                                  namedType->get_name().getString().find("allocator") == 0 ||
+                                  namedType->get_name().getString().find("less") == 0
+                                )) {
                              amountOfNameQualificationRequiredForTemplateArgument = 1;
                            }
                          }
