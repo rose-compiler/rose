@@ -938,6 +938,18 @@ UntypedConverter::convertSgUntypedBlockStatement (SgUntypedBlockStatement* ut_bl
    //   cout << "--- UntypedConverter:: scope  is : " << sg_basic_block->get_scope() << endl;
 #endif
 
+// I don't understand this (setting parent breaks Jovial compound statement)
+// Because part of a block of another statement (e.g., while statement)
+#if 1
+   if (isSgBasicBlock(scope) && sg_basic_block->get_parent() == NULL)
+      {
+         SgBasicBlock* parent = isSgBasicBlock(scope);
+         sg_basic_block->set_parent(parent);
+         SageInterface::appendStatement(sg_basic_block, parent);
+         cout << "--- UntypedConverter:: WARNING: parent was NULL is : " << sg_basic_block->get_parent() << endl;
+      }
+#endif
+
 // Who sets the parent of this?
 // This definitely needs more work.  Currently hacked to work with case/switch statements I believe
    SageBuilder::pushScopeStack(sg_basic_block);

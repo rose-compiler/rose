@@ -16,7 +16,7 @@ sorts
 % 1.2.3  %  MainProgramModule ProgramName ProgramBody
 
 % 2.0    %  Declaration CompoolDeclaration
-            DeclarationList NonNestedSubroutineList
+            DeclarationList NonNestedSubroutineList CompoolDeclarationList
 % 2.1    %  DataDeclaration
 
 % 3.0    %  SubroutineDeclaration SubroutineDefinition
@@ -475,10 +475,12 @@ context-free syntax
 %%
   'START'
     'COMPOOL' CompoolName ';'
-     CompoolDeclaration*
-  'TERM'                     -> CompoolModule         {cons("CompoolModule")}
+     CompoolDeclarationList
+  'TERM'                     -> CompoolModule          {cons("CompoolModule")}
 
-  Name                       -> CompoolName
+  Name                       -> CompoolName            {cons("Name")}
+
+  CompoolDeclaration*        -> CompoolDeclarationList {cons("DeclarationList")} %% Using DeclarationList traversals
 
 %% 1.2.2 PROCEDURE MODULES
 %%
@@ -612,7 +614,7 @@ context-free syntax
   NullDeclaration            -> CompoolDeclaration
   'BEGIN'
     CompoolDeclaration+
-  'END'                      -> CompoolDeclaration    {cons("CompoolDeclaration")}
+  'END'                      -> CompoolDeclaration    {cons("Declaration")} %% Using Declaration traversals
 
 
 %% 2.1 DATA DECLARATIONS
@@ -809,7 +811,7 @@ context-free syntax
     EntrySpecifier           -> TableDescription         {cons("TableDescription")}
 
   TableTypeName
-    OptTablePreset ';'       -> TableDescription         {cons("TableDescription")}
+    OptTablePreset ';'       -> TableDescription         {prefer, cons("TableDescriptionT")} %% removes ambiguity with other production of TableDescription
 
   OrdinaryEntrySpecifier     -> EntrySpecifier
   SpecifiedEntrySpecifier    -> EntrySpecifier
@@ -985,9 +987,10 @@ context-free syntax
   OptDefaultPresetSublist
     {SpecifiedPresetSublist ','}+ -> TablePresetList         {cons("TablePresetList")}
 
-  PresetValuesOption              -> DefaultPresetSublist
+  {PresetValuesOption ','} +      -> DefaultPresetSublist    {cons("DefaultPresetSublist")}
 
-  DefaultPresetSublist ','        -> OptDefaultPresetSublist {cons("OptDefaultPresetSublist")}
+  DefaultPresetSublist ','        -> OptDefaultPresetSublist
+%%DefaultPresetSublist ','        -> OptDefaultPresetSublist {cons("OptDefaultPresetSublist")}
   % empty %                       -> OptDefaultPresetSublist {cons("no-default-preset-sublist")}
 
   PresetIndexSpecifier
@@ -1048,7 +1051,7 @@ context-free syntax
   OptDimensionList
     TableTypeName ';'             -> TableTypeSpecifier    {cons("TableTypeSpecifier")}
 
-  Name                            -> TableTypeName
+  Name                            -> TableTypeName         {cons("Name")}
 
   'LIKE'  TableTypeName           -> LikeOption            {cons("LikeOption")}
 

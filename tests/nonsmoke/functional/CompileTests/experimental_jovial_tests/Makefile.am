@@ -13,7 +13,7 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_c.jov               \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
- 4_2_loop_stmt_a.jov                    \
+ 4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
@@ -29,7 +29,8 @@ JOVIAL_TESTCODES = \
  5_1_1_integer-precedence.jov           \
  5_1_1_integer-primary.jov              \
  5_1_1_integer-term.jov                 \
- 5_2_1_relational_expressions_a.jov
+ 5_2_1_relational_expressions_a.jov     \
+ name_with_quotes.jov
 
 # should finish formulas next
 #
