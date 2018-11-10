@@ -300,8 +300,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
 
        // Rasmussen (10/02/2018): This is temporary fix (actual ForAllStatements aren't created)
-       // case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
-          case V_SgForAllStatement:            unparseDoConcurrentStatement(stmt, info); break;
+          case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
 
           case V_SgContainsStatement:          unparseContainsStatement(stmt, info); break;
 
@@ -313,7 +312,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgDeallocateStatement:        unparseDeallocateStatement(stmt, info); break;
 
-          case V_SgCAFWithTeamStatement:           unparseWithTeamStatement(stmt, info); break;
+          case V_SgCAFWithTeamStatement:       unparseWithTeamStatement(stmt, info); break;
 
        // Language independent code generation (placed in base class)
        // scope
@@ -2126,7 +2125,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
 void
 FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt \n");
+  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt %p\n", stmt);
 
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
@@ -2372,6 +2371,19 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
    {
      SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
      ROSE_ASSERT(forAllStatement != NULL);
+
+  // The FORALL statement has been deprecated and replaced by a DO CONCURRENT construct.
+  // Since they are very similar they share the same Sage node and are distinguished by an enum.
+  //
+     if (forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_do_concurrent_statement)
+        {
+           unparseDoConcurrentStatement(stmt, info);
+           return;
+        }
+
+  // Note the return in the preceding for DO CONCURRENT.  What follows unparses a FORALL construct.
+  //
+     ROSE_ASSERT(forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_forall_statement);
 
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);

@@ -1349,6 +1349,7 @@ UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_
       std::string name = ut_stmt->get_do_construct_name();
 
 #if 0
+      cout << "-x- convert forall: enum is "       << ut_stmt->get_statement_enum() << endl;
       cout << "-x- convert forall: type is "       << type << endl;
       cout << "-x- convert forall: iterates are "  << iterates << endl;
       cout << "-x- convert forall: locality is "   << locality << endl;
@@ -1383,6 +1384,14 @@ UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_
             sg_expr_list->append_expression(sg_triplet);
          }
 
+   // At the moment can only handle DO CONCURRENT
+   //   - need to get assignment statement from statement_list somehow
+   //   - can this be obtained from the scope, converted, then deleted?
+   //   - this would modify the tree during traversal, perhaps could mark node as converted all ready?
+   //
+      int stmt_enum = ut_stmt->get_statement_enum();
+      ROSE_ASSERT(stmt_enum == General_Language_Translation::e_fortran_do_concurrent_stmt);
+
       SgBasicBlock* body = SageBuilder::buildBasicBlock();
       ROSE_ASSERT(body);
       SageInterface::setSourcePosition(body);
@@ -1398,6 +1407,7 @@ UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_
 
       sg_stmt->setCaseInsensitive(true);
       sg_stmt->set_has_end_statement(true);
+      sg_stmt->set_forall_statement_kind(SgForAllStatement::e_do_concurrent_statement);
 
       SageInterface::appendStatement(sg_stmt, scope);
 

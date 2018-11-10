@@ -10513,6 +10513,7 @@ void c_action_label(Token_t * lbl)
         SgScopeStatement* currentScope = getTopOfScopeStack();
         currentScope->append_statement(forAllStatement);
         forAllStatement->set_parent(currentScope);
+        forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
 
         // Push the if scope (it is a scope in C/C++, even if not in Fortran)
         // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
