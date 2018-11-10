@@ -155,15 +155,11 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgFunctionDefinition* funcdef = isSgFunctionDefinition(stmt);
      ROSE_ASSERT(funcdef != NULL);
 
-     curprint("BEGIN\n");
-
   // unparse the body of the function
      if (funcdef->get_body())
         {
           unparseStatement(funcdef->get_body(), info);
         }
-
-     curprint("END\n");
    }
 
 
@@ -182,11 +178,15 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
 #endif
 
+     curprint("BEGIN\n");
+
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      for ( ; p != basic_stmt->get_statements().end(); ++p)
      {
           unparseStatement((*p), info);
      }
+
+     curprint("END\n");
 
 #if 0
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
