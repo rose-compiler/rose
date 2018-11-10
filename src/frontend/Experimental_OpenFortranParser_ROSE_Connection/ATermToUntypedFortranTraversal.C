@@ -1023,6 +1023,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_LiteralConstant(ATerm term, SgUn
       value += arg1;
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
+   else if (ATmatch(term, "RealVal(<str>)", &arg1)) {
+      value += arg1;
+      type = UntypedBuilder::buildType(SgUntypedType::e_float);
+   }
    else if (ATmatch(term, "TRUE()")) {
       value += "TRUE";
       type = UntypedBuilder::buildType(SgUntypedType::e_bool);
