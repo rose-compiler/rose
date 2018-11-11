@@ -31,7 +31,8 @@ JOVIAL_TESTCODES = \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
  rose-issue-1507.jov                    \
- rose-issue-1516.jov
+ rose-issue-1516.jov                    \
+ rose-issue-1520.cpl
 
 # should finish formulas next
 #
