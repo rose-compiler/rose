@@ -140,7 +140,7 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint("PROGRAM ");
      curprint(prog->get_name().str());
-     curprint(" ;\n");
+     curprint(";\n");
 
      unparseStatement(prog->get_definition(), ninfo);
 
@@ -329,7 +329,7 @@ Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseExpression(condition_stmt->get_expression(), info);
      info.unset_inConditional();
-     curprint(" ;");
+     curprint(";");
      unp->cur.insert_newline(1);
 
      unparseStatement(while_stmt->get_body(), info);
@@ -344,7 +344,7 @@ Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(goto_stmt->get_label() != NULL);
 
      curprint (string("GOTO " ) + goto_stmt->get_label()->get_label().str());
-     curprint (string(" ;"));
+     curprint (string(";"));
      unp->cur.insert_newline(1);
    }
 
@@ -554,11 +554,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint(" = ");
            SgInitializer* initializer = isSgInitializer(init);
            ROSE_ASSERT(initializer != NULL);
-           // TODO
-           // unparseExpression(initializer, info);
+           unparseExpression(initializer, info);
         }
 
-     curprint(" ;\n");
+     curprint(";\n");
    }
 
 void
