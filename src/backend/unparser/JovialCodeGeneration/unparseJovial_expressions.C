@@ -64,6 +64,8 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
 
+       // initializers
+          case V_SgAssignInitializer:   unparseAssnInit  (expr, info);           break;
 
 #if 0
                 case V_SgAndOp:
@@ -124,7 +126,7 @@ Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
      unparseExpression(op->get_lhs_operand(), info);
      curprint(" = ");
      unparseExpression(op->get_rhs_operand(), info);
-     curprint(" ;");
+     curprint(";");
   }
 
 void
@@ -208,4 +210,17 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(var_ref->get_symbol() != NULL);
 
      curprint(var_ref->get_symbol()->get_name().str());
+   }
+
+//----------------------------------------------------------------------------
+//  initializers
+//----------------------------------------------------------------------------
+
+void
+Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
+     ROSE_ASSERT(assn_init != NULL);
+
+     unparseExpression(assn_init->get_operand(), info);
    }

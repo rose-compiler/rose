@@ -519,9 +519,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
 
    ATerm t_name, t_alloc, t_type, t_preset;
    char* name;
-   SgUntypedExpression* preset;
 
    SgUntypedType* declared_type;
+   SgUntypedExpression* preset;
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
@@ -546,12 +546,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    }
    else return ATfalse;
 
-   std::cout << "ITEM DECLARATION " << name << "\n";
-
    std::string label = "";
 
    SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
    setSourcePosition(initialized_name, t_name);
+
+   if (preset) {
+      // This variable has an initializer
+      initialized_name->set_has_initializer(true);
+      initialized_name->set_initializer(preset);
+   }
 
 // There will be only one variable declared in Jovial
    var_name_list->get_name_list().push_back(initialized_name);
@@ -1425,12 +1429,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemPreset(ATerm term, SgUntypedE
 
    ATerm t_preset_value;
 
+   *expr = NULL;
+
    if (ATmatch(term, "no-item-preset()")) {
       // MATCHED no-item-preset
    }
    else if (ATmatch(term, "ItemPreset(<term>)", &t_preset_value)) {
       if (traverse_ItemPresetValue(t_preset_value, expr)) {
          // MATCHED ItemPresetValue
+         ROSE_ASSERT(*expr);
       } else return ATfalse;
    }
    else return ATfalse;
@@ -2873,6 +2880,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
       expr_enum = Jovial_ROSE_Translation::e_literalExpression;
       *expr = new SgUntypedValueExpression(expr_enum,literal,type);
+      ROSE_ASSERT(*expr);
       setSourcePosition(*expr, term);
    }
 

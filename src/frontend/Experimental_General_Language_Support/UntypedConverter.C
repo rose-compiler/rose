@@ -1031,9 +1031,27 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
 
 #if 0
       cout << "--- convertSgUntypedVariableDeclaration: var name is " << ut_init_name->get_name() << endl;
+      cout << "--- convertSgUntypedVariableDeclaration: has init is " << ut_init_name->get_has_initializer() << endl;
       cout << "--- convertSgUntypedVariableDeclaration:  ut_type is " << ut_init_name->get_type()->class_name() << endl;
       cout << "--- convertSgUntypedVariableDeclaration:  sg_type is " << sg_init_name->get_type()->class_name() << endl;
 #endif
+
+      if (ut_init_name->get_has_initializer())
+      {
+         SgUntypedExpression* ut_init_expr = ut_init_name->get_initializer();
+         SgExpression* sg_init_expr = convertSgUntypedExpression(ut_init_expr);
+         ROSE_ASSERT(sg_init_expr);
+
+         SgAssignInitializer* sg_initializer = new SgAssignInitializer(sg_init_expr, sg_init_expr->get_type());
+         ROSE_ASSERT(sg_initializer);
+         setSourcePositionFrom(sg_initializer, ut_init_expr);
+
+         sg_init_name->set_initializer(sg_initializer);
+         sg_initializer->set_parent(sg_init_name);
+
+      // The initialization expression isn't traversed so it needs to be deleted
+         delete ut_init_expr;
+      }
 
    // Finished with the untyped initialized name and associated types.
    // The untyped initialized name will be deleted after the traversal, delete types now.

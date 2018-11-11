@@ -77,6 +77,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseAssignOp       (SgExpression* expr, SgUnparse_Info& info);   
           virtual void unparseVarRef         (SgExpression* expr, SgUnparse_Info& info);
 
+       // Initializers
+          virtual void unparseAssnInit       (SgExpression* expr, SgUnparse_Info& info);
+
 #if 0
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
 

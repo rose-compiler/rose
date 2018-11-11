@@ -30,7 +30,8 @@ JOVIAL_TESTCODES = \
  5_1_1_integer-primary.jov              \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
- name_with_quotes.jov
+ rose-issue-1507.jov                    \
+ rose-issue-1516.jov
 
 # should finish formulas next
 #
