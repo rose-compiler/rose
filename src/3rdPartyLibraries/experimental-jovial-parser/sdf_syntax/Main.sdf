@@ -859,6 +859,10 @@ context-free syntax
     ItemTypeDescription
     OptTablePreset ';'         -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifier")}
 
+  OptPackingSpecifier
+    OptTablePreset ';'
+    OrdinaryTableBody          -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifierT")}
+
   'N'                          -> PackingSpecifier       {cons("PackingSpecifierN")}
   'M'                          -> PackingSpecifier       {cons("PackingSpecifierM")}
   'D'                          -> PackingSpecifier       {cons("PackingSpecifierD")}
@@ -886,7 +890,11 @@ context-free syntax
 
   WordsPerEntry
     SpecifiedItemDescription
-    OptTablePreset               -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifier")}
+    OptTablePreset ';'           -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifier")}
+
+  WordsPerEntry
+    OptTablePreset ';'
+    SpecifiedTableBody           -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifierT")}
 
   'W' OptEntrySize               -> WordsPerEntry            {cons("WordsPerEntryW")}
   'V'                            -> WordsPerEntry            {cons("WordsPerEntryV")}
@@ -987,10 +995,9 @@ context-free syntax
   OptDefaultPresetSublist
     {SpecifiedPresetSublist ','}+ -> TablePresetList         {cons("TablePresetList")}
 
-  {PresetValuesOption ','} +      -> DefaultPresetSublist    {cons("DefaultPresetSublist")}
+  {PresetValuesOption ','}+       -> DefaultPresetSublist    {cons("DefaultPresetSublist")}
 
   DefaultPresetSublist ','        -> OptDefaultPresetSublist
-%%DefaultPresetSublist ','        -> OptDefaultPresetSublist {cons("OptDefaultPresetSublist")}
   % empty %                       -> OptDefaultPresetSublist {cons("no-default-preset-sublist")}
 
   PresetIndexSpecifier
@@ -1186,10 +1193,10 @@ context-free syntax
 %%%%%%%%%%
 
   ProcedureDeclaration            -> SubroutineDeclaration  {prefer}
-  FunctionDeclaration             -> SubroutineDeclaration  %% AMBIBUOUS with ProcedureDeclaration
+  FunctionDeclaration             -> SubroutineDeclaration  %% AMBIGUOUS with ProcedureDeclaration
 
   ProcedureDefinition             -> SubroutineDefinition   {prefer}
-  FunctionDefinition              -> SubroutineDefinition   %% AMBIBUOUS with ProcedureDefinition
+  FunctionDefinition              -> SubroutineDefinition   %% AMBIGUOUS with ProcedureDefinition
 
 %% 3.1 PROCEDURES
 %%
@@ -1207,6 +1214,7 @@ context-free syntax
   'REC'                           -> SubroutineAttribute    {cons("REC")}
   'RENT'                          -> SubroutineAttribute    {cons("RENT")}
 
+  SubroutineAttribute             -> OptSubroutineAttribute
   % empty %                       -> OptSubroutineAttribute {cons("no-subroutine-attribute")}
  
   Name                            -> ProcedureName
@@ -1266,6 +1274,7 @@ context-free syntax
   ParameterBinding                -> OptParameterBinding
   % empty %                       -> OptParameterBinding      {cons("no-parameter-binding")}
 
+  Name                            -> InputParameterName       {prefer} %% added this production and prefer to remove ambiguity within InputParameterName
   DataName                        -> InputParameterName
   StatementName                   -> InputParameterName
   SubroutineName                  -> InputParameterName
