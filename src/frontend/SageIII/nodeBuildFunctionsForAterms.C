@@ -4615,7 +4615,9 @@ SgForAllStatement* SgForAllStatement::build_node_from_nonlist_children ( Sg_File
    }
 
 
-// Static function for building IR nodes for Aterm support (like a constructor).
+// Jovial statements
+//
+
 SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* then_expression, SgExpression* where_expression, SgBasicBlock* loop_body)
    {
 #if 0
@@ -4624,6 +4626,18 @@ SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_chil
 #endif
 
      SgJovialForThenStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialCompoolStatement* returnNode = NULL;
 
      return returnNode;
    }

@@ -95,7 +95,7 @@ UntypedFortranConverter::setFortranNumericLabel(SgStatement* stmt, int label_val
 }
 
 void
-UntypedFortranConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
 {
    if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
       {
@@ -117,7 +117,7 @@ UntypedFortranConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunct
 }
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
    {
       SgName name = ut_function->get_name();
 
@@ -145,7 +145,7 @@ printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name
 
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
    SgName name = ut_function->get_name();
 
@@ -174,7 +174,7 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
    {
    // The block data statement is implemented to build a function (which initializes data)
    // Note that it can be declared with the "EXTERNAL" statement and as such it works much

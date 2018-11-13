@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "UntypedJovialConverter.h"
 #include "Jovial_to_ROSE_translation.h"
+#include "general_language_translation.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 
@@ -54,6 +55,27 @@ UntypedJovialConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* s
      }
 
    return hasLabel;
+}
+
+SgDeclarationStatement*
+UntypedJovialConverter::convertUntypedJovialCompoolStatement(SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
+{
+   ROSE_ASSERT(ut_decl);
+   ROSE_ASSERT(ut_decl->get_statement_enum() == General_Language_Translation::e_jovial_compool_stmt);
+
+   SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
+   ROSE_ASSERT(ut_names.size() == 1);
+
+   SgUntypedName* name = ut_names[0];
+   SgJovialCompoolStatement* compool_decl = new SgJovialCompoolStatement(name->get_name());
+   setSourcePositionFrom(compool_decl, ut_decl);
+
+   compool_decl->set_definingDeclaration(compool_decl);
+   compool_decl->set_firstNondefiningDeclaration(compool_decl);
+
+   SageInterface::appendStatement(compool_decl, scope);
+
+   return compool_decl;
 }
 
 SgStatement*

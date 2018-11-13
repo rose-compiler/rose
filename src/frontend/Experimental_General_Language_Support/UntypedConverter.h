@@ -46,27 +46,27 @@ class UntypedConverter
       virtual SgType*   convertSgUntypedType (SgUntypedType* ut_type,            SgScopeStatement* scope);
       virtual SgType*   convertSgUntypedType (SgUntypedInitializedName* ut_name, SgScopeStatement* scope, bool delete_ut_type=false);
 
-      virtual SgGlobal* convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
+      virtual SgGlobal* convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
 
-      virtual SgModuleStatement*          convertSgUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
-      virtual SgProgramHeaderStatement*   convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
-      virtual SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
-      virtual SgProcedureHeaderStatement* convertSgUntypedBlockDataDeclaration     (SgUntypedBlockDataDeclaration*     ut_decl, SgScopeStatement* scope);
+      virtual SgModuleStatement*          convertUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
+      virtual SgProgramHeaderStatement*   convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedBlockDataDeclaration     (SgUntypedBlockDataDeclaration*     ut_decl, SgScopeStatement* scope);
 
-      virtual SgProcedureHeaderStatement* convertSgUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
-      virtual void                        convertSgUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
+      virtual void                        convertUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
 
    // Declaration statements
    //
-      virtual SgDeclarationStatement* convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
+      virtual SgDeclarationStatement* convertUntypedNameListDeclaration   (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
       virtual SgImplicitStatement*    convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
       virtual SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
       virtual SgBasicBlock*           convertSgUntypedBlockStatement      (SgUntypedBlockStatement*      ut_stmt, SgScopeStatement* scope);
+      virtual SgUseStatement*         convertUntypedUseStatement          (SgUntypedUseStatement*        ut_stmt, SgScopeStatement* scope);
 
    // Used by dimension, codimension, ... statements
       virtual SgDeclarationStatement* convertSgUntypedInitializedNameListDeclaration (SgUntypedInitializedNameListDeclaration* ut_decl,
                                                                                       SgScopeStatement* scope);
-
    // Executable statements
    //
       virtual SgExprStatement* convertSgUntypedFunctionCallStatement (SgUntypedFunctionCallStatement* ut_stmt,
@@ -95,6 +95,11 @@ class UntypedConverter
       virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope);
       virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
                                                                               SgNodePtrList& children, SgScopeStatement* scope);
+
+   // Jovial specific statements
+   //
+      virtual SgDeclarationStatement* convertUntypedJovialCompoolStatement   (SgUntypedNameListDeclaration* ut_decl,
+                                                                              SgScopeStatement* scope);
 
    // Expressions
    //

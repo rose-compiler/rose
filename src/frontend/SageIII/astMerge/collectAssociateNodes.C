@@ -2160,6 +2160,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+       // Rasmussen (11/12/2018): Added support for Jovial COMPOOL module
+          case V_SgJovialCompoolStatement:
+
        // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
           case V_SgJovialForThenStatement:
 

@@ -540,7 +540,7 @@ UntypedConverter::convertSgUntypedInitializedNameList (SgUntypedInitializedNameL
 }
 
 SgGlobal*
-UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
+UntypedConverter::convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
 {
 // The global scope should not have executables
    ROSE_ASSERT(ut_scope->get_statement_list()  -> get_traversalSuccessorContainer().size() == 0);
@@ -552,13 +552,13 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
 }
 
 void
-UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
+UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
    {
    // Only a Fortran specific implementation needed for now
    }
 
 SgModuleStatement*
-UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
+UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
 {
   // This function builds a class declaration and definition 
   // (both the defining and nondefining declarations as required).
@@ -650,9 +650,8 @@ UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration*
      return classDeclaration;
 }
 
-
 SgProgramHeaderStatement*
-UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
+UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
 {
    ROSE_ASSERT(scope->variantT() == V_SgGlobal);
 
@@ -776,7 +775,7 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
+UntypedConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
    {
       SgName name = ut_function->get_name();
 
@@ -804,7 +803,7 @@ printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
+UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
    SgName name = ut_function->get_name();
 
@@ -833,7 +832,7 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 
 
 SgProcedureHeaderStatement*
-UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
+UntypedConverter::convertUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
    {
    // This is implemented in UntypedFortranConverter subclass.  Is there any need for it here?
       ROSE_ASSERT(0);
@@ -955,6 +954,22 @@ UntypedConverter::convertSgUntypedBlockStatement (SgUntypedBlockStatement* ut_bl
    SageBuilder::pushScopeStack(sg_basic_block);
 
    return sg_basic_block;
+}
+
+SgUseStatement*
+UntypedConverter::convertUntypedUseStatement (SgUntypedUseStatement* ut_use_stmt, SgScopeStatement* scope)
+{
+   std::string name = ut_use_stmt->get_module_name();
+
+   cout << "-x- UntypedUseStatement name is " << name << endl;
+
+   SgUseStatement* sg_use_stmt = new SgUseStatement(name, /*only_option*/false);
+   ROSE_ASSERT(sg_use_stmt);
+   setSourcePositionFrom(sg_use_stmt, ut_use_stmt);
+
+   SageInterface::appendStatement(sg_use_stmt, scope);
+
+   return sg_use_stmt;
 }
 
 //TODO-WARNING: This needs help!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1131,7 +1146,7 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
    }
 
 SgDeclarationStatement*
-UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
+UntypedConverter::convertUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
    {
       SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
 
@@ -1160,7 +1175,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 
                  importStatement->get_import_list().push_back(variableReference);
               }
-              scope->append_statement(importStatement);
+              SageInterface::appendStatement(importStatement, scope);
            }
 
         case SgToken::FORTRAN_EXTERNAL:
@@ -1197,6 +1212,10 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
 
              return attr_spec_stmt;
          }
+        case General_Language_Translation::e_jovial_compool_stmt:
+           {
+              return convertUntypedJovialCompoolStatement(ut_decl, scope);
+           }
 
        default:
           {
@@ -1977,6 +1996,27 @@ UntypedConverter::convertSgUntypedStopStatement (SgUntypedStopStatement* ut_stmt
       return stop_stmt;
    }
 
+// Jovial specific
+//
+
+SgDeclarationStatement*
+UntypedConverter::convertUntypedJovialCompoolStatement(SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
+   {
+      switch (ut_decl->get_statement_enum())
+        {
+
+    // Nothing so far for general languages
+       default:
+          {
+             cerr << "UntypedConverter::convertUntypedJovialCompoolStatement: implemented only for Jovial, statement enum, is "
+                  << ut_decl->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+   // Should never reach here.
+      return NULL;
+   }
 
 // Expressions
 //

@@ -41,35 +41,35 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
      case V_SgUntypedGlobalScope:
        {
           SgUntypedGlobalScope* ut_scope = dynamic_cast<SgUntypedGlobalScope*>(node);
-          SgGlobal* sg_scope = pConverter->convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
+          SgGlobal* sg_scope = pConverter->convertUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
           currentScope = sg_scope;
           break;
       }
     case V_SgUntypedModuleDeclaration:
       {
          SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(node);
-         pConverter->convertSgUntypedModuleDeclaration(ut_module,currentScope);
+         pConverter->convertUntypedModuleDeclaration(ut_module,currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
     case V_SgUntypedProgramHeaderDeclaration:
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(node);
-         pConverter->convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
+         pConverter->convertUntypedProgramHeaderDeclaration(ut_program,currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
     case V_SgUntypedSubroutineDeclaration:
       {
          SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(node);
-         pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
+         pConverter->convertUntypedSubroutineDeclaration(ut_function, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
     case V_SgUntypedFunctionDeclaration:
       {
          SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(node);
-         pConverter->convertSgUntypedFunctionDeclaration(ut_function, currentScope);
+         pConverter->convertUntypedFunctionDeclaration(ut_function, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
@@ -78,7 +78,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(node);
 
       // The list is not converted (needed to add a contains statement) but the current scope may be modified
-         pConverter->convertSgUntypedFunctionDeclarationList(ut_list, currentScope);
+         pConverter->convertUntypedFunctionDeclarationList(ut_list, currentScope);
          break;
       }
     case V_SgUntypedInterfaceDeclaration:
@@ -89,8 +89,15 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedBlockDataDeclaration:
       {
          SgUntypedBlockDataDeclaration* ut_block_data = dynamic_cast<SgUntypedBlockDataDeclaration*>(node);
-         pConverter->convertSgUntypedBlockDataDeclaration(ut_block_data, currentScope);
+         pConverter->convertUntypedBlockDataDeclaration(ut_block_data, currentScope);
          currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedUseStatement:
+      {
+         cout << "-x- convert SgUntypedUseStatement node " << node << endl;
+         SgUntypedUseStatement* ut_use_stmt = dynamic_cast<SgUntypedUseStatement*>(node);
+         pConverter->convertUntypedUseStatement(ut_use_stmt, currentScope);
          break;
       }
     case V_SgUntypedVariableDeclaration:
@@ -108,7 +115,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedNameListDeclaration:
       {
          SgUntypedNameListDeclaration* ut_decl = dynamic_cast<SgUntypedNameListDeclaration*>(node);
-         pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
+         pConverter->convertUntypedNameListDeclaration(ut_decl, currentScope);
          break;
       }
     case V_SgUntypedInitializedNameListDeclaration:

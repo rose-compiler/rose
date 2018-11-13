@@ -62,12 +62,32 @@ ATbool ATermToUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntyp
    ATerm t_name, t_decls;
    std::string name;
 
+   SgUntypedNameListDeclaration* compool_decl;
+
+// Compool declarations go in global scope
    SgUntypedDeclarationStatementList* decls = scope->get_declaration_list();
 
-   if (ATmatch(term, "CompoolModule(<term>,<term>)", &t_name,&t_decls)) {
+   if (ATmatch(term, "CompoolModule(<term>,<term>)", &t_name, &t_decls)) {
       if (traverse_Name(t_name, name)) {
          // MATCHED Name
       } else return ATfalse;
+
+      SgUntypedName* ut_name = new SgUntypedName(name);
+      ROSE_ASSERT(ut_name);
+      setSourcePosition(ut_name, t_name);
+
+      SgUntypedNameList* name_list = new SgUntypedNameList();
+      ROSE_ASSERT(name_list);
+      setSourcePosition(name_list, t_name);
+
+      name_list->get_name_list().push_back(ut_name);
+
+      int stmt_enum = General_Language_Translation::e_jovial_compool_stmt;
+      compool_decl = new SgUntypedNameListDeclaration("", stmt_enum, name_list);
+      setSourcePosition(compool_decl, term);
+
+   // Add the compool module before the compool declarations
+      decls->get_decl_list().push_back(compool_decl);
 
       if (traverse_DeclarationList(t_decls, decls)) {
          // MATCHED DeclarationList and CompoolDeclarationList
@@ -471,14 +491,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_Declaration(ATerm term, SgUntyped
       // MATCHED ExternalDeclaration
    }
    else if (traverse_DataDeclaration(term, decl_list)) {
-      // MATCHED NullDeclaration
+      // MATCHED DataDeclaration
+   }
+   else if (traverse_ConstantDeclaration(term, decl_list)) {
+      // MATCHED ConstantDeclaration
    }
    else if (traverse_NullDeclaration(term, decl_list)) {
       // MATCHED NullDeclaration
    }
    else return ATfalse;
 
-//  ConstantDeclaration        -> CompoolDeclaration
 //  TypeDeclaration            -> CompoolDeclaration
 //  DefineDeclaration          -> CompoolDeclaration
 //  OverlayDeclaration         -> CompoolDeclaration
@@ -524,13 +546,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    SgUntypedExpression* preset;
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
-   SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
-   SgUntypedExprListExpression*      attr_list = new SgUntypedExprListExpression();
+   SgUntypedInitializedNameList* var_name_list = NULL;
+   SgUntypedExprListExpression*      attr_list = NULL;
 
    if (ATmatch(term, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
       } else return ATfalse;
+
+      var_name_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(var_name_list);
+      setSourcePosition(var_name_list, t_name);
+
+      attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_type);
 
       if (traverse_OptAllocationSpecifier(t_alloc, attr_list)) {
          // MATCHED OptAllocationSpecifier
@@ -1125,9 +1155,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
    if (ATmatch(term, "TableDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_dim_list,&t_table_desc)) {
       var_name_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(var_name_list);
       setSourcePosition(var_name_list, t_name);
 
       attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
       setSourcePosition(attr_list, t_alloc);
 
       dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
@@ -3224,6 +3256,75 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedE
 }
 
 //========================================================================================
+// 2.1.3 CONSTANT DECLARATIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ConstantDeclaration: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name, t_type, t_preset;
+   char* name;
+
+   SgUntypedType* declared_type;
+   SgUntypedExpression* preset;
+
+   SgUntypedVariableDeclaration* variable_decl = NULL;
+   SgUntypedInitializedNameList* var_name_list = NULL;
+   SgUntypedExprListExpression*      attr_list = NULL;
+
+   if (ATmatch(term, "ConstantDeclaration(<term>,<term>,<term>)", &t_name,&t_type,&t_preset)) {
+      if (ATmatch(t_name, "<str>", &name)) {
+         // MATCHED ItemName
+      } else return ATfalse;
+
+      var_name_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(var_name_list);
+      setSourcePosition(var_name_list, t_name);
+
+      attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_type);
+
+      if (traverse_ItemTypeDescription(t_type, &declared_type, attr_list)) {
+         // MATCHED ItemTypeDescription
+      } else return ATfalse;
+
+      if (traverse_ItemPreset(t_preset, &preset)) {
+         // MATCHED ItemPreset
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   std::string label = "";
+
+   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
+   setSourcePosition(initialized_name, t_name);
+
+   if (preset) {
+      // This variable has an initializer
+      initialized_name->set_has_initializer(true);
+      initialized_name->set_initializer(preset);
+   }
+
+// There will be only one variable declared in Jovial
+   var_name_list->get_name_list().push_back(initialized_name);
+
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
+   setSourcePosition(variable_decl, term);
+
+   SgUntypedOtherExpression* attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_const);
+   ROSE_ASSERT(attr);
+   setSourcePositionUnknown(attr);
+
+   attr_list->get_expressions().push_back(attr);
+   decl_list->get_decl_list().push_back(variable_decl);
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 5.2.1 RELATIONAL EXPRESSIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_RelationalExpression(ATerm term, SgUntypedExpression** expr)
@@ -3611,6 +3712,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerConversion(ATerm term, SgU
    if (ATmatch(term, "IntegerConversion(<term>)", &t_next)) {
 
       attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_next);
 
       if (traverse_IntegerItemDescription(t_next, &type, attr_list)) {
          // MATCHED IntegerItemDescription
@@ -3649,6 +3752,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingConversion(ATerm term, Sg
    if (ATmatch(term, "FloatingConversion(<term>)", &t_next)) {
 
       attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_next);
 
       if (traverse_FloatingItemDescription(t_next, &type, attr_list)) {
          // MATCHED FloatingItemDescription
@@ -3685,6 +3790,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedConversion(ATerm term, SgUnt
    if (ATmatch(term, "FixedConversion(<term>)", &t_next)) {
 
       attr_list = new SgUntypedExprListExpression();
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_next);
 
       if (traverse_FixedItemDescription(t_next, &type, attr_list)) {
          // MATCHED FixedItemDescription

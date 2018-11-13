@@ -65,7 +65,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // program units
-       // case V_SgModuleStatement:            unparseModuleStmt(stmt, info);       break;
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt(stmt, info);      break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt(stmt, info);      break;
        // case V_SgProcedureHeaderStatement:   unparseProcHdrStmt(stmt, info);      break;
 
@@ -131,6 +131,19 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 //----------------------------------------------------------------------------
 
 void 
+Unparse_Jovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialCompoolStatement* compool = isSgJovialCompoolStatement(stmt);
+     ROSE_ASSERT(compool);
+
+     curprint("COMPOOL ");
+     curprint(compool->get_name());
+     curprint(";\n");
+   }
+
+void
 Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
@@ -139,7 +152,7 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(prog);
 
      curprint("PROGRAM ");
-     curprint(prog->get_name().str());
+     curprint(prog->get_name());
      curprint(";\n");
 
      unparseStatement(prog->get_definition(), ninfo);

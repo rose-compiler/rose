@@ -161,6 +161,9 @@ namespace General_Language_Translation
           e_fortran_sync_stat_errmsg,
           e_fortran_stat_acquired_lock,
 
+       // Jovial specific
+          e_jovial_compool_stmt,
+
        // CUDA Attributes
        // ---------------
           e_cuda_host,

@@ -98,6 +98,9 @@ ATbool traverse_Dimension(ATerm term, SgUntypedExprListExpression* dim_info);
 // 2.1.2.2 TABLE STRUCTURE
 ATbool traverse_OptStructureSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 
+// 2.1.3 CONSTANT DECLARATIONS
+ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 

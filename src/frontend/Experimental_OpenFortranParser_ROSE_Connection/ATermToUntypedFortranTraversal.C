@@ -3864,7 +3864,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_Module(ATerm term, SgUntypedScop
 
       label = module_stmt->get_label_string();
       name  = module_stmt->get_statement_name();
+
       module_scope = new SgUntypedModuleScope(label,decl_list,stmt_list,func_list);
+      ROSE_ASSERT(module_scope);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
          // MATCHED SpecificationPart
@@ -3881,6 +3883,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_Module(ATerm term, SgUntypedScop
    } else return ATfalse;
 
    module = new SgUntypedModuleDeclaration(label,name,module_scope,end_module_stmt);
+   ROSE_ASSERT(module);
 
    setSourcePositionIncludingNode(module, term, end_module_stmt);
    setSourcePositionIncludingNode(module->get_scope(), term2, end_module_stmt);
@@ -5428,33 +5431,33 @@ ATbool ATermToUntypedFortranTraversal::traverse_ImportStmt(ATerm term, SgUntyped
    printf("... traverse_ImportStmt: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm term1, term2, eos_term;
+   ATerm t_label, t_name_list, t_eos;
    std::string label;
    std::string eos;
   
    SgUntypedNameList* name_list;
    SgUntypedNameListDeclaration* import_stmt;
 
-   if (ATmatch(term, "ImportStmt(<term>,<term>,<term>)", &term1,&term2,&eos_term))
+   if (ATmatch(term, "ImportStmt(<term>,<term>,<term>)", &t_label,&t_name_list,&t_eos))
    {
-      if (traverse_OptLabel(term1, label)) {
+      if (traverse_OptLabel(t_label, label)) {
          //matched OptLabel
       } else return ATfalse;
 
       name_list = new SgUntypedNameList();
-      setSourcePosition(name_list, term2);
+      setSourcePosition(name_list, t_name_list);
 
-      if (traverse_NameList(term2, name_list)) {
+      if (traverse_NameList(t_name_list, name_list)) {
          //matched NameList
       } else return ATfalse;
-      if (traverse_eos(eos_term, eos)) {
+      if (traverse_eos(t_eos, eos)) {
          //matched EOS
       } else return ATfalse;
    }
    else return ATfalse;
 
    import_stmt = new SgUntypedNameListDeclaration(label, General_Language_Translation::e_fortran_import_stmt, name_list);
-   setSourcePositionExcludingTerm(import_stmt, term, eos_term);
+   setSourcePositionExcludingTerm(import_stmt, term, t_eos);
 
    decl_list->get_decl_list().push_back(import_stmt);
 
