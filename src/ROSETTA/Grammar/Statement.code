@@ -1417,6 +1417,14 @@ HEADER_JOVIAL_FOR_THEN_STATEMENT_START
 #endif*/
 HEADER_JOVIAL_FOR_THEN_STATEMENT_END
 
+HEADER_JOVIAL_COMPOOL_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+
+#endif
+HEADER_JOVIAL_COMPOOL_STATEMENT_END
+
 
 HEADER_MATLAB_FOR_STATEMENT_START
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -6257,6 +6265,9 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
+       // Rasmussen (11/12/2018): Support for Jovial COMPOOL module
+          case V_SgJovialCompoolStatement:
+
        // Rasmussen (10/22/2018): Adding node specific to Jovial for statements with a then construct.
           case V_SgJovialForThenStatement:
 
@@ -10823,6 +10834,21 @@ SgForAllStatement::post_construction_initialization()
 
 SOURCE_FORALL_STATEMENT_END
 
+
+SOURCE_JOVIAL_COMPOOL_STATEMENT_START
+void
+SgJovialCompoolStatement::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJovialCompoolStatement::get_mangled_name(void) const
+   {
+   // Don't believe name mangling required for Jovial
+      return get_name();
+   }
+SOURCE_JOVIAL_COMPOOL_STATEMENT_END
 
 SOURCE_JOVIAL_FOR_THEN_STATEMENT_START
 void
