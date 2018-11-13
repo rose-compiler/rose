@@ -10863,15 +10863,16 @@ generate_type_list (SgType* type)
   // This function generates a list of types for each level of the type structure.
      string returnString;
 
-     unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+     unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE);
 
      SgType* currentType = type;
 
-     SgModifierType*  modType     = NULL;
-     SgPointerType*   pointType   = NULL;
-     SgReferenceType* refType     = NULL;
-     SgArrayType*     arrayType   = NULL;
-     SgTypedefType*   typedefType = NULL;
+     SgModifierType*        modType     = NULL;
+     SgPointerType*         pointType   = NULL;
+     SgReferenceType*       refType     = NULL;
+     SgRvalueReferenceType* rRefType     = NULL;
+     SgArrayType*           arrayType   = NULL;
+     SgTypedefType*         typedefType = NULL;
 
      while (currentType != NULL)
         {
@@ -10879,44 +10880,33 @@ generate_type_list (SgType* type)
 #if 0
           printf ("In generate_type_list(): returnString = %s \n",returnString.c_str());
 #endif
-       // type = type->findBaseType();
           if ( (bit_array & SgType::STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
              }
-            else
+          else if ( (bit_array & SgType::STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
              {
-               if ( (bit_array & SgType::STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
-                  {
-                    currentType = refType->get_base_type();
-                  }
-                 else
-                  {
-                    if ( (bit_array & SgType::STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
-                       {
-                         currentType = pointType->get_base_type();
-                       }
-                      else
-                       {
-                         if ( (bit_array & SgType::STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
-                            {
-                              currentType = arrayType->get_base_type();
-                            }
-                           else
-                            {
-                              if ( (bit_array & SgType::STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
-                                 {
-                                // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
-                                   currentType = typedefType->get_base_type();
-                                 }
-                                else
-                                 {
-                                // Exit the while(true){} loop!
-                                   break;
-                                 }
-                            }
-                       }
-                  }
+               currentType = refType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_RVALUE_REFERENCE_TYPE) &&  (rRefType = isSgRvalueReferenceType(currentType)) )
+             {
+               currentType = rRefType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+             {
+               currentType = pointType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
+             {
+               currentType = arrayType->get_base_type();
+             }
+          else  if ( (bit_array & SgType::STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
+             {
+               currentType = typedefType->get_base_type();
+             }
+          else
+             {
+               break;
              }
 
           if (type != NULL)
