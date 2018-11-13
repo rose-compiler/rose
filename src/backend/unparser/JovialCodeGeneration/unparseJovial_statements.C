@@ -541,8 +541,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(variableDeclaration != NULL);
 
+     if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+        {
+           curprint("CONSTANT ");
+        }
 #if 0
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic() == true)
+     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
         {
            curprint("STATIC ");
         }
