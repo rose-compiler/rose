@@ -520,11 +520,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUnt
 
    if (traverse_ItemDeclaration(term, decl_list)) {
       // MATCHED ItemDeclaration
-   } else if (traverse_TableDeclaration(term, decl_list)) {
+   }
+   else if (traverse_TableDeclaration(term, decl_list)) {
       // MATCHED TableDeclaration -> DataDeclaration
-   } else return ATfalse;
+   }
+   else if (traverse_ConstantDeclaration(term, decl_list)) {
+      // MATCHED ConstantDeclaration
+   }
+   else return ATfalse;
 
-   //  ConstantDeclaration         -> DataDeclaration
    //  BlockDeclaration            -> DataDeclaration
 
    return ATtrue;
@@ -3283,7 +3287,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
       ROSE_ASSERT(var_name_list);
       setSourcePosition(var_name_list, t_name);
 
-      attr_list = new SgUntypedExprListExpression();
+      attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_type_modifier_list);
       ROSE_ASSERT(attr_list);
       setSourcePosition(attr_list, t_type);
 

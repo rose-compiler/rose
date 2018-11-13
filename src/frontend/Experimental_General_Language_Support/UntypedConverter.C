@@ -275,6 +275,11 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
                break;
             }
 #endif
+          case e_type_modifier_const:
+            {
+               decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+               break;
+            }
           case e_type_modifier_save:
             {
                decl->get_declarationModifier().get_typeModifier().setSave();
@@ -999,7 +1004,8 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
 //------------------------ FORTRAN + --------------------------
 
 #else
-   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
+   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition
+            || scope->variantT() == V_SgGlobal);  // global scope used for Jovial
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
    SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
@@ -2333,6 +2339,8 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 
        case e_unknown:
          {
+            cerr << "WARNING: convertSgUntypedExprListExpression: has children and enum is unknown: "
+                 << ut_expr_list->get_expression_enum() << endl;
             ROSE_ASSERT(children.size() == 0);
             ROSE_ASSERT(ut_expr_list->get_expressions().size() == 0);
             break;
@@ -2340,7 +2348,8 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 
        default:
          {
-            cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is " << ut_expr_list->get_expression_enum() << endl;
+            cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is "
+                 << ut_expr_list->get_expression_enum() << endl;
          }
      }
 

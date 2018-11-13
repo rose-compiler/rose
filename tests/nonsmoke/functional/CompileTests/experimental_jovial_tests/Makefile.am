@@ -31,8 +31,13 @@ JOVIAL_TESTCODES = \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
  rose-issue-1507.jov                    \
- rose-issue-1516.jov                    \
+ rose-issue-1516.jov
+
+COMPOOL_TESTCODES = \
+ 1_2_1_compool_a.cpl                    \
+ rose-issue-1518.cpl                    \
  rose-issue-1520.cpl
+
 
 # should finish formulas next
 #
@@ -90,10 +95,15 @@ JOVIAL_TESTCODES_WORKING_ON = \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov
 
-TEST_JOVIAL_Objects = ${JOVIAL_TESTCODES:.jov=.aterm}
-TEST_JOVIAL_Sources = ${JOVIAL_TESTCODES:.jov=.jov.passed}
+TEST_JOVIAL_Objects  = ${JOVIAL_TESTCODES:.jov=.aterm}
+TEST_JOVIAL_Sources  = ${JOVIAL_TESTCODES:.jov=.jov.passed}
 
+TEST_COMPOOL_Objects = ${COMPOOL_TESTCODES:.cpl=.aterm}
+TEST_COMPOOL_Sources = ${COMPOOL_TESTCODES:.cpl=.cpl.passed}
+
+#PASSING_TEST_Objects = $(TEST_JOVIAL_Objects) $(TEST_COMPOOL_Objects)
 PASSING_TEST_Objects = $(TEST_JOVIAL_Objects)
+PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 
 # Go back and build the translator we are using to test Jovial (in case make check
 # is run directly in this directory before make has been run from the root of the 
@@ -107,6 +117,15 @@ $(TEST_JOVIAL_Objects): ../../testParser
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
 endif
+
+check-compool:
+	@echo $(TEST_COMPOOL_Objects)
+	@echo $(PASSING_TEST_COMPOOL_Objects)
+check-jovial:
+	@echo "TEST_JOVIAL_Objects:"
+	@echo $(TEST_JOVIAL_Objects)
+	@echo "PASSING_TEST_Objects:"
+	@echo $(PASSING_TEST_Objects)
 
 clean-local:
 	rm -f rose_*.* *.aterm *.dot
