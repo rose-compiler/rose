@@ -8267,8 +8267,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           ROSE_ASSERT(assignInitializer->get_operand() != NULL);
           ROSE_ASSERT(assignInitializer->get_operand()->get_type() != NULL);
 
-       // Calling SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
-          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
+          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
           bool isClassType = (classType != NULL);
 
 #if DEBUG_DESIGNATED_INITIALIZER

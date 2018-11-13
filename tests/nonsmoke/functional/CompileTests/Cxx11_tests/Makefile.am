@@ -262,7 +262,8 @@ rose-1437-0.C \
    test2014_03.C \
    test2014_82.C \
    test2014_88.C \
-   test2017_10.C
+   test2017_10.C \
+   rose-1522-0.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_07.C \

@@ -358,7 +358,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
      ROSE_ASSERT(type != NULL);
 
   // We want to strip away all by typedef types.
-     SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
   // switch (type->variantT())
@@ -830,7 +830,7 @@ NameQualificationTraversal::processNameQualificationForPossibleArrayType(SgType*
    {
   // DQ (7/23/2011): Refactored support for name qualification of the index expressions used in array types.
 
-     SgType* strippedPossibleArrayType = possibleArrayType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
+     SgType* strippedPossibleArrayType = possibleArrayType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
      ROSE_ASSERT(strippedPossibleArrayType != NULL);
      SgArrayType* arrayType = isSgArrayType(strippedPossibleArrayType);
      if (arrayType != NULL)
@@ -3242,7 +3242,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           if (type != NULL)
              {
             // Reduce the type to the base type stripping off wrappers that would hide the fundamental type inside.
-               SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+               SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                ROSE_ASSERT(strippedType != NULL);
 
             // SgNamedType* namedType = isSgNamedType(type);
@@ -6543,7 +6543,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    printf ("   --- lhs_type = %p = %s \n",lhs_type,lhs_type->class_name().c_str());
 #endif
                                 // Handle the case of reference to pointer type.
-                                   lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                   lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
 
                                    SgPointerType* pointerType = isSgPointerType(lhs_type);
                                 // ROSE_ASSERT(pointerType != NULL);
@@ -6554,7 +6554,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                                      // Handle the case of pointer to reference type.
                                      // Not clear if we have to handle array types
-                                        baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                        baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
                                         ROSE_ASSERT(baseType != NULL);
 #if DEBUG_MEMBER_DATA_QUALIFICATION
                                         printf ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
@@ -6595,7 +6595,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    printf ("   --- lhs_type = %p = %s = %s \n",lhs_type,lhs_type->class_name().c_str(),lhs_type->unparseToString().c_str());
 #endif
                                 // Not clear if we have to handle array types
-                                   SgType* baseType = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+                                   SgType* baseType = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
                                    ROSE_ASSERT(baseType != NULL);
 #if DEBUG_MEMBER_DATA_QUALIFICATION
                                    printf ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
@@ -7420,7 +7420,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
        // DQ (8/2/2012): test2007_06.C and test2012_156.C show that we need to strip past the typedefs.
        // Note that we don't want to strip typedefs, since that could take us past public types and into private types.
        // SgType* possibleClassType = varRefExpType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE); // Excluding SgType::STRIP_TYPEDEF_TYPE
-          SgType* possibleClassType = varRefExpType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+          SgType* possibleClassType = varRefExpType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_TYPEDEF_TYPE);
           classType = isSgClassType(possibleClassType);
         }
 
