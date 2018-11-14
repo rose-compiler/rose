@@ -21,7 +21,7 @@ anf=0
 for d in $DIRS; do
 
   pushd $d > /dev/null
-  make --jobs $nprocs clean > /dev/null
+  make --jobs $nprocs clean &> /dev/null
   ( make --jobs $nprocs --keep-going status &> status-$target.log ) || true
   popd > /dev/null
 
