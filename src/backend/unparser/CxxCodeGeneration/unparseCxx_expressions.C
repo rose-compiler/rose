@@ -316,16 +316,29 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
                   curprint(",");
                 commaCounter ++; 
               }
-              else
+              else {
                 curprint(",");
+              }
 
+              SgExpression * capt_var_expr = lambdaCapture->get_capture_variable();
+              ROSE_ASSERT(capt_var_expr != NULL);
 
+          // TV (11/14/2018): ROSE-1525: Made a separated case when 'this' is captured to properly handle the changes in EDG 4.14
+             if (isSgThisExp(capt_var_expr)) {
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 14) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+               if (lambdaCapture->get_capture_by_reference() == false) {
+                 curprint("*");
+               }
+#endif
+               curprint("this");
+             } else {
                if (lambdaCapture->get_capture_by_reference() == true)
                   {
                     curprint("&");
                   }
+               unp->u_exprStmt->unparseExpression(capt_var_expr,info);
+             }
 
-               unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
              }
 
 #if 0
