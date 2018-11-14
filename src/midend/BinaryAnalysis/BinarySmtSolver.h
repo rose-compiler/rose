@@ -102,6 +102,52 @@ public:
         }
     };
 
+    /** RAII guard for solver stack.
+     *
+     *  This object implements a rudimentary form of SMT transactions. The constructor starts a new transaction by pushing
+     *  a new level onto the specified solver (if the solver is non-null). The destructor pops one level from the solver
+     *  unless this object is in the @ref isCommitted state (see @ref commit).  This guard object makes no attempt to ensure
+     *  that the level popped is the same as the one that was initially pushed by the constructor. */
+    class Transaction {
+        SmtSolver::Ptr solver_;
+        bool committed_;
+    public:
+        /** Constructor pushes level if solver is non-null.
+         *
+         *  It is safe to call this with a null solver. */
+        explicit Transaction(const SmtSolver::Ptr &solver)
+            : solver_(solver), committed_(false) {
+            if (solver)
+                solver->push();
+        }
+
+        /** Destructor pops level unless canceled. */
+        ~Transaction() {
+            if (solver_ && !committed_) {
+                if (solver_->nLevels() > 1) {
+                    solver_->pop();
+                } else {
+                    solver_->reset();
+                }
+            }
+        }
+
+        /** Cancel the popping during the destructor. */
+        void commit(bool b = true) {
+            committed_ = b;
+        }
+
+        /** Whether the guard is canceled. */
+        bool isCommitted() const {
+            return committed_;
+        }
+
+        /** Solver being protected. */
+        SmtSolver::Ptr solver() const {
+            return solver_;
+        }
+    };
+    
     /** Set of variables. */
     typedef Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName> VariableSet;
 
