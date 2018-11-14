@@ -407,6 +407,9 @@ public:
      *
      *  Backtracking levels are numbered starting at zero up to one less than the value returned by @ref nLevels. */
     virtual size_t nAssertions(size_t backtrackingLevel);
+
+    /** Total number of assertions across all backtracking levels. */
+    virtual size_t nAssertions() const;
     
     /** Insert assertions.
      *

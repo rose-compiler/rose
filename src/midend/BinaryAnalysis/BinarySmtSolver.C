@@ -262,6 +262,14 @@ SmtSolver::nAssertions(size_t level) {
     return stack_[level].size();
 }
 
+size_t
+SmtSolver::nAssertions() const {
+    size_t retval = 0;
+    BOOST_FOREACH (const std::vector<SymbolicExpr::Ptr> &level, stack_)
+        retval += level.size();
+    return retval;
+}
+
 std::vector<SymbolicExpr::Ptr>
 SmtSolver::assertions() const {
     std::vector<SymbolicExpr::Ptr> retval;

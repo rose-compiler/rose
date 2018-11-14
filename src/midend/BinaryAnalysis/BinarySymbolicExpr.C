@@ -870,8 +870,8 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
             return result;
     }
 
-    // Two addition operations of the form V + X and V + Y where V is a variable and X and Y are constants, are equal if and
-    // only if X = Y.
+    // Two addition operations of the form V + C1 and V + C2 where V is a variable and C1 and C2 are constants, are equal if
+    // and only if C1 = C2.
     LeafPtr variableA, variableB, constantA, constantB;
     if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/) &&
         other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
@@ -2847,6 +2847,7 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
     if (this==getRawPointer(other)) {
         retval = true;
     } else if (flags() != other_->flags()) {
+        // Expressions with different flags are not considered mustEqual
         retval = false;
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
@@ -2854,12 +2855,20 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
             SmtSolver::Transaction transaction(solver);
             Ptr assertion = makeNe(sharedFromThis(), other_, solver);
             solver->insert(assertion);
-            retval = SmtSolver::SAT_NO==solver->check(); // must equal if there is no soln for inequality
+            retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
         }
-    } else if (isNumber()) {
-        retval = other->isNumber() && 0==bits_.compare(other->bits_);
-    } else {
-        retval = !other->isNumber() && name_==other->name_;
+    } else if (isNumber() && other->isNumber()) {
+        // Both are numbers
+        retval = 0 == bits_.compare(other->bits());
+    } else if (solver && solver->nAssertions() > 0) {
+        // At least one is a variable and the solver has some context that might affect the comparison
+        SmtSolver::Transaction transaction(solver);
+        Ptr assertion = makeNe(sharedFromThis(), other_, solver);
+        solver->insert(assertion);
+        retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
+    } else if (!isNumber() && !other->isNumber()) {
+        // Both are variables, and no solver context. Variables must be equal if they have the same name.
+        retval = name_ == other->name_;
     }
     return retval;
 }
