@@ -30,7 +30,7 @@ FunctionIdDatabaseInterface::createTables()
         con.executenonquery("CREATE TABLE IF NOT EXISTS functions(functionID TEXT PRIMARY KEY, function_name TEXT, libraryID TEXT)");
         //libraries: id hash, name, version, ISA, and time as an int
         //May also want calling convention and compile flags
-        con.executenonquery("CREATE TABLE IF NOT EXISTS libraries(libraryID TEXT PRIMARY KEY, library_name TEXT, library_version TEXT, architecture UNSIGNED INTEGER, time UNSIGNED BIG INTEGER)");
+        con.executenonquery("CREATE TABLE IF NOT EXISTS libraries(libraryID TEXT PRIMARY KEY, library_name TEXT, library_version TEXT, architecture TEXT, time UNSIGNED BIG INTEGER)");
     }
     catch(exception &ex) {
         mlog[ERROR] << "Exception Occurred: " << ex.what() << endl;
@@ -130,7 +130,7 @@ void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool 
     cmd.bind(1, lInfo.libHash );
     cmd.bind(2, lInfo.libName);
     cmd.bind(3, lInfo.libVersion);
-    cmd.bind(4, boost::lexical_cast<unsigned int>(lInfo.architecture));
+    cmd.bind(4, lInfo.architecture);
     cmd.bind(5, boost::lexical_cast<unsigned long int>(lInfo.analysisTime));
     cmd.executenonquery();
     
@@ -153,7 +153,7 @@ bool FunctionIdDatabaseInterface::matchLibrary(LibraryInfo& lInfo)
     if(r.read()) { //entry found in database
         lInfo.libName = (std::string)(r.getstring(0));
         lInfo.libVersion = (std::string)(r.getstring(1));
-        lInfo.architecture = (SgAsmExecutableFileFormat::InsSetArchitecture)r.getint(2);
+        lInfo.architecture = (std::string)(r.getstring(2));
         lInfo.analysisTime = (time_t)r.getint64(3);
 
         //Only one entry should exist

@@ -20,11 +20,10 @@ int main()
 {
 
   FunctionIdDatabaseInterface ident("test.db");
-
   
   std::cerr << "Testing insert library Alexandria" << std::endl;
   //ISA with 1 on the high bit to test sign extension
-  LibraryInfo inLibInfo("Axexandria", "1.0", "libhashlibhash", SgAsmExecutableFileFormat::ISA_Sony_DSP_Processor ); 
+  LibraryInfo inLibInfo("Axexandria", "1.0", "libhashlibhash", "x86" ); 
 
   ident.addLibraryToDB(inLibInfo);
   
