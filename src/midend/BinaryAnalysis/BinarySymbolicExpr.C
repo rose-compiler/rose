@@ -849,8 +849,10 @@ Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
         // is not available.
         retval = true;
     } else if (solver) {
+        SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeNe(sharedFromThis(), other_, solver);
-        retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
+        solver->insert(assertion);
+        retval = SmtSolver::SAT_NO==solver->check(); /*equal if there is no solution for inequality*/
     }
     return retval;
 }
@@ -889,8 +891,10 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
     // equality assertion, we want to assume that they can be equal.  Thus only if the solver can prove that they cannot be
     // equal do we have anything to return here.
     if (solver) {
+        SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeEq(sharedFromThis(), other, solver);
-        if (SmtSolver::SAT_NO == solver->satisfiable(assertion))
+        solver->insert(assertion);
+        if (SmtSolver::SAT_NO == solver->check())
             return false;
     }
 
@@ -2847,8 +2851,10 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
+            SmtSolver::Transaction transaction(solver);
             Ptr assertion = makeNe(sharedFromThis(), other_, solver);
-            retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
+            solver->insert(assertion);
+            retval = SmtSolver::SAT_NO==solver->check(); // must equal if there is no soln for inequality
         }
     } else if (isNumber()) {
         retval = other->isNumber() && 0==bits_.compare(other->bits_);
