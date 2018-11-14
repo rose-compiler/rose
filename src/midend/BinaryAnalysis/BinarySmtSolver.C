@@ -91,6 +91,8 @@ SmtSolver::~SmtSolver() {
     
 void
 SmtSolver::reset() {
+    if (errorIfReset_)
+        throw Exception("reset not allowed for this solver");
     stack_.clear();
     push();
     clearEvidence();

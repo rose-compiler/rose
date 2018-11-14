@@ -180,6 +180,7 @@ public:
 private:
     std::string name_;
     std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
+    bool errorIfReset_;
 
 protected:
     LinkMode linkage_;
@@ -234,7 +235,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
+        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
         init(linkages);
     }
     
@@ -362,6 +363,20 @@ public:
      *  Resets the solver to an initial state containing no assertions.  The evidence of satisfiability is cleared. For
      *  API-based solvers, this function might also create a new solver and/or solver context. */
     virtual void reset();
+
+    /** Property: Throw an exception if the solver is reset.
+     *
+     *  This is used mostly for debugging solvers that are intending to use transactions. If the solver is ever reset, say by
+     *  accidentally invoking its @ref satisfiable method, then an exception is thrown.
+     *
+     * @{ */
+    bool errorIfReset() const {
+        return errorIfReset_;
+    }
+    void errorIfReset(bool b) {
+        errorIfReset_ = b;
+    }
+    /** @} */
 
     /** Create a backtracking point.
      *
