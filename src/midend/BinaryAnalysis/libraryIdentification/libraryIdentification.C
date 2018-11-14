@@ -5,10 +5,20 @@
 
 #include <libraryIdentification.h>
 #include <BinaryDemangler.h>
+#include <Partitioner2/Engine.h>
+#include <Partitioner2/GraphViz.h>
+#include <Partitioner2/ModulesM68k.h>
+#include <Partitioner2/ModulesPe.h>
+#include <Partitioner2/Modules.h>
+#include <Partitioner2/Utility.h>
 
 using namespace std;
 using namespace Rose;
 
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
+
+namespace P2 = Partitioner2;
 
 
 /**  generateLibraryIdentificationDataBase
@@ -27,44 +37,37 @@ void
 LibraryIdentification::generateLibraryIdentificationDataBase( const std::string& databaseName, 
                                                               const std::string& libraryName, 
                                                               const std::string& libraryVersion, 
-                                                              SgNode* root,
+                                                              const std::string& libraryHash, 
+                                                              const P2::Partitioner& partitioner,
                                                               bool replace)
 {
     Rose::BinaryAnalysis::Demangler demangler;
     // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
     TimingPerformance timer ("AST Library Identification reader : time (sec) = ",true);
     
+    //TODO Switch these printfs to mlog
     printf ("Building LibraryIdentification database: %s from AST of library: %s : %s \n", databaseName.c_str(),libraryName.c_str(), libraryVersion.c_str());
     
     FunctionIdDatabaseInterface ident(databaseName);
-    
-    Rose_STL_Container<SgAsmGenericFile*> fileList = SageInterface::querySubTree<SgAsmGenericFile>(root);
 
-    LibraryInfo libraryInfo( libraryName, libraryVersion, fileList[0]); //In a .a, this will just be the name of the first .o
+    const std::string& libraryIsa = partitioner.instructionProvider().disassembler()->name();
+
+    LibraryInfo libraryInfo( libraryName, libraryVersion, libraryHash, libraryIsa); 
     ident.addLibraryToDB(libraryInfo, replace);
     
     //Now get all the functions in the library
-    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
-            
-    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
+    std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
+    
+    for (std::vector< P2::Function::Ptr >::iterator funcIt = binaryFunctionList.begin(); funcIt != binaryFunctionList.end(); funcIt++)
         {
             // Build a pointer to the current type so that we can call the get_name() member function.
-            SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
+            P2::Function::Ptr binaryFunction = *funcIt;
             ROSE_ASSERT(binaryFunction != NULL);
             
-            string mangledFunctionName   = binaryFunction->get_name();
+            FunctionInfo functionInfo(partitioner, binaryFunction, libraryInfo);
             
-            /*                    if (mangledFunctionName.compare(0,6,"(data)") == 0) 
-                                  {  //This is a data block, don't add it to the database
-                                  continue;
-                                  }
-            */
-            
-            FunctionInfo functionInfo(binaryFunction, libraryInfo);
-            
-            
-            string demangledFunctionName = demangler.demangle(mangledFunctionName);
-            //StringUtility::demangledName(mangledFunctionName);
+            string mangledFunctionName = binaryFunction->name();
+            string demangledFunctionName = binaryFunction->demangledName();
             printf ("Function %s demangled = %s going into database\n", mangledFunctionName.c_str(), demangledFunctionName.c_str());
             
             ident.addFunctionToDB(functionInfo, replace);         
@@ -90,14 +93,14 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
  **/
 LibraryIdentification::LibToFuncsMap 
 LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& databaseName,
-                                                           SgNode* root)
+                                                           const P2::Partitioner& partitioner)
 {
     // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
     TimingPerformance timer ("AST Library Identification matcher : time (sec) = ",true);
     LibraryIdentification::LibToFuncsMap libToFuncsMap;
     
     FunctionIdDatabaseInterface ident(databaseName);
-    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
+    //    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
 //     Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (root,V_SgAsmInterpretation);
     
 //     std::cerr << "Queried for Interpretations " << std::endl;
@@ -111,14 +114,24 @@ LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& da
             
 //             //Now get all the function for the interpretation
 //             Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+//
+//    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
+        
             
-    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
-        {
-            // Build a pointer to the current type so that we can call the get_name() member function.
-            SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
+    std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
+    for (std::vector< P2::Function::Ptr >::iterator funcIt = binaryFunctionList.begin(); funcIt != binaryFunctionList.end(); funcIt++)
+        {            
+            P2::Function::Ptr binaryFunction = *funcIt;
             ROSE_ASSERT(binaryFunction != NULL);
+            FunctionInfo functionInfo(partitioner, binaryFunction);
             
-            FunctionInfo functionInfo(binaryFunction);
+            //If the library did not have a name for this function,
+            //might the current binary?
+            if(functionInfo.funcName.empty() &&
+               !binaryFunction->name().empty()) 
+                {  
+                    functionInfo.funcName = binaryFunction->name();                    
+                }
             
             if(ident.matchFunction(functionInfo)) 
                 { //match, insert it into the libToFuncsMap

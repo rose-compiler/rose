@@ -44,7 +44,8 @@ namespace LibraryIdentification
        void generateLibraryIdentificationDataBase    ( const std::string& databaseName, 
                                                        const std::string& libraryName, 
                                                        const std::string& libraryVersion, 
-                                                       SgNode* root,
+                                                       const std::string& libraryHash, 
+                                                       const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner,
                                                        bool replace = false);
 
 
@@ -66,7 +67,7 @@ namespace LibraryIdentification
  * functions under "UNKNOWN"
  **/     
        LibToFuncsMap matchLibraryIdentificationDataBase (const std::string& databaseName,
-                                                          SgNode* root);
+                                                         const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner);
 
 /** 
  * Private helper function for adding idents to the libToFuncsMap.
