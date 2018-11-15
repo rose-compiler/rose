@@ -7656,10 +7656,15 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
      curprint("/* In unparseAssnInit() */ "); 
 #endif
-
-     if (assn_init->get_is_explicit_cast() == true)
+      if (assn_init->get_is_explicit_cast() == true)
         {
-          unparseExpression(assn_init->get_operand(), info);
+       // TV (11/15/2018): fixing weird behavior introduced with EDG 5.0 on Cxx_tests/test2006_70.C
+       //                  happens when unparsing the "parameterList_syntax" for a parameter that has a default value
+          if (assn_init->get_operand()->get_originalExpressionTree() != NULL) {
+            unparseExpression(assn_init->get_operand()->get_originalExpressionTree(), info);
+          } else {
+            unparseExpression(assn_init->get_operand(), info);
+          }
         }
        else
         {
