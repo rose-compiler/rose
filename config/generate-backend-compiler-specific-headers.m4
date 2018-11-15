@@ -202,10 +202,19 @@ echo "build_vendor = $build_vendor"
 
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
-        else
-         # Note that we will likely want to use our mechanism (but with a smaller list of builtins that are still being missed).
-           echo "Future versions of EDG 5.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
-#     fi
+   else
+     if test "x$edg_major_version_number" = "x5"; then
+       echo "Building EDG 5.0 (and later) specific version of rose_generated_builtin_functions.h (same as EDG 4.12)"
+       ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+
+       if test "x$build_vendor" = "xapple"; then
+         sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+       else
+         sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
+       fi
+     else
+        echo "Future versions of EDG 6.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
+     fi
    fi
 
  # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
