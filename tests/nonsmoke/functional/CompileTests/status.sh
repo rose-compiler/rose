@@ -11,8 +11,9 @@ target=$1
 [ $target == "backend" ]     && MOKE_OPTIONS="TEST_TRANSLATOR=../../testBackend"
 [ $target == "translator" ]  && MOKE_OPTIONS=""
 
+fname=status-$target
 
-rm -f status-$target.csv status-$target.log status-$target.tgz
+rm -f $fname.csv $fname.log $fname.tgz
 
 files=
 anp=0
@@ -22,14 +23,14 @@ for d in $DIRS; do
 
   pushd $d > /dev/null
   make --jobs $nprocs clean &> /dev/null
-  ( make --jobs $nprocs --keep-going status &> status-$target.log ) || true
+  ( make --jobs $nprocs --keep-going status &> $fname.log ) || true
   popd > /dev/null
 
   passed=$(echo $d/*.passed | tr ' ' '\n' | grep -v \* || true)
   if [ ! -z "$passed" ]; then
     files="$files  $(echo $passed | paste -sd\ )"
     for f in $(echo "$passed" | cut -d/ -f2- | rev | cut -d. -f2- | rev); do
-      echo $d,$f,0 >> status-$target.csv
+      echo $d,$f,0 >> $fname.csv
     done
   fi
   np=$(echo $passed | tr ' ' '\n' | wc -l)
@@ -39,7 +40,7 @@ for d in $DIRS; do
   if [ ! -z "$failed" ]; then
     files="$files $(echo $failed | paste -sd\ )"
     for f in $(echo "$failed" | cut -d/ -f2- | rev | cut -d. -f2- | rev); do
-      echo "$d,$f,1" >> status-$target.csv
+      echo "$d,$f,1" >> $fname.csv
     done
   fi
   nf=$(echo $failed | tr ' ' '\n' | wc -l)
@@ -51,6 +52,6 @@ done
 
 echo "[STATUS:$target:summary] ALL $anp $anf"
 
-cat status-$target.csv | sed 's/^/[STATUS:'$target':details]/'
-tar czf status-$target.tgz $files &> /dev/null
+cat $fname.csv | sed 's/^/[STATUS:'$target':details]/'
+tar czf $fname.tgz $files &> /dev/null
 
