@@ -7841,6 +7841,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgUnsignedLongVal:        // return 0;
           case V_SgComplexVal:             // return 0;
           case V_SgMatrixExp:
+          case V_SgEnumVal:
                                      precedence_value = 0; break;
 
           case V_SgCAFCoExpression:        // return 16;
