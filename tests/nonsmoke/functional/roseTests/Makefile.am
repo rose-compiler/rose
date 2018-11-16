@@ -8,8 +8,6 @@ if USING_GNU_COMPILER
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-if ROSE_USE_EDG_VERSION_4_9
-
    SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
               programTransformationTests \
@@ -34,22 +32,16 @@ if !USING_XTENSA_BACKEND_COMPILER
 #  SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 if !ROSE_USE_INSURE
    SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
-endif
-
-# DQ (3/23/2017): ROSE Matrix testing confirms that GNU 5.1 in C++11 mode is also a problem for astFileIOTests using EDG 4.9 (at least using Boost 1.59).
-# DQ (3/11/2017): Later version compilers (at least 5.3 and greater have problems with some files in at least the astFileIOTests).
-# Note that later versions of compilers should be have ROSE configured using EDG 4.12 or later (EDG 4.9 is not good enough).
-# if !ROSE_USING_GCC_VERSION_LATER_5_3
-if !ROSE_USING_GCC_VERSION_LATER_5_1
-# DQ (1/28/2014): Commented out astFileIO tests (now uncommented).
-   SUBDIRS += astFileIOTests 
-if !ROSE_USE_INSURE
    SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
-endif 
+   SUBDIRS += astFileIOTests
 endif
 
 endif # !USING_XTENSA_BACKEND_COMPILER
 endif # !USING_GCC_3_4_4_BACKEND_COMPILER
+
+if ROSE_USE_EDG_VERSION_4_9
+
+
 
 endif # ROSE_USE_EDG_VERSION_4_9
 
