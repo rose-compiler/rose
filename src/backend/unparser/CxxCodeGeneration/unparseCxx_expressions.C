@@ -2924,8 +2924,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
 
      SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());
-     ROSE_ASSERT(binary_op != NULL);
-     bool isPartOfArrowOperatorChain = partOfArrowOperatorChain(binary_op);
+  // TV (11/15/2018): With EDG 5.0, it happens inside some STL include (originating from <string>).
+  // ROSE_ASSERT(binary_op != NULL);
+     bool isPartOfArrowOperatorChain = binary_op != NULL ? partOfArrowOperatorChain(binary_op) : false;
 
 #if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
