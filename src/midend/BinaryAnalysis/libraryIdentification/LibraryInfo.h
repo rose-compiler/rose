@@ -32,7 +32,7 @@ namespace LibraryIdentification
          * (Please use Fowler-Noll-Vo HasherFnv class in Combinatorics.h)
          * @param[in] architecture  architecture library was built for
          **/
-    LibraryInfo(const std::string& ilibName, const std::string& ilibVersion, const std::string& ilibHash, SgAsmExecutableFileFormat::InsSetArchitecture iarchitecture) :
+    LibraryInfo(const std::string& ilibName, const std::string& ilibVersion, const std::string& ilibHash, const std::string& iarchitecture) :
         libName(ilibName), libVersion(ilibVersion), libHash(ilibHash), architecture(iarchitecture) {
             analysisTime = time(NULL);
         };
@@ -41,6 +41,7 @@ namespace LibraryIdentification
         /**
          *  LibraryInfo
          *
+         *  WARNING: DEPRECATED.  Doesn't work with the partitioner.
          *  Constructor.  Combines all the information required to
          *  identify a library. 
          *  This constructor constructs the hash, and all other
@@ -48,24 +49,22 @@ namespace LibraryIdentification
          *  name and version of the library is only availible from
          *  dynamic libraries, so it must be passed in here.
          *  WARNING: Currently Elf files only!
+         *  WARNING: DEPRECATED.  Doesn't work with the partitioner.
          *
          * @param[in] libName  Name of the library to add
          * @param[in] libVersion  Version of the library       
          * @param[in] libraryFile The library file we are storing
          **/
-    LibraryInfo(const std::string& ilibName, const std::string& ilibVersion, SgAsmGenericFile* libraryFile) :
+        /*    LibraryInfo(const std::string& ilibName, const std::string& ilibVersion, SgAsmGenericFile* libraryFile) :
         libName(ilibName), libVersion(ilibVersion)
         {
             SgAsmGenericHeader* genericHeader = libraryFile->get_header(SgAsmExecutableFileFormat::ExecFamily::FAMILY_ELF);
             SgAsmElfFileHeader* elfHeader = dynamic_cast<SgAsmElfFileHeader*>(genericHeader);
             ASSERT_require(elfHeader != NULL);
-            
-            //TODO: Check that we have a name and version, if not, see if
-            //the library is dynamic and they can be discovered
-            
 
             //Get the architecture
-            architecture = elfHeader->get_isa();
+            //SgAsmExecutableFileFormat::InsSetArchitecture enumArchitecture = elfHeader->get_isa();
+            architecture = "x86"; //stringify::SgAsmExecutableFileFormat::InsSetArchitecture(enumArchitecture);
             
             //Generate hash of library contents
             //Should make the hash optional via factory method in Combinatorics.h
@@ -75,7 +74,7 @@ namespace LibraryIdentification
             fnvHash.append(&content[0], content.size());
             libHash = fnvHash.toString();
         }
-
+        */
         /**
          *  LibraryInfo
          *
@@ -101,7 +100,7 @@ namespace LibraryIdentification
          **/
         static LibraryInfo getUnknownLibraryInfo() 
         {
-            return LibraryInfo("UNKNOWN", "UNKNOWN", "UNKNOWN",   SgAsmExecutableFileFormat::InsSetArchitecture::ISA_UNSPECIFIED);
+            return LibraryInfo("UNKNOWN", "UNKNOWN", "UNKNOWN",  "UNKNOWN");
         };
         
         
@@ -119,7 +118,7 @@ namespace LibraryIdentification
         std::string libHash;
 
         //@brief Enumeration of instruction set library was build for
-        SgAsmExecutableFileFormat::InsSetArchitecture architecture;
+        std::string architecture;
 
         //@brief The time when this library was processed
         time_t analysisTime;
