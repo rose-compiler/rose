@@ -434,7 +434,10 @@ namespace AbstractHandle{
     buffer.getline(type_str,256,'<');
     buffer.unget(); // put back '<'
     buffer.getline(specifier_str,PATH_MAX+512,'>');
+    // obtain the specifier first from the specifier string
     fromString(mspecifier,specifier_str);
+    
+    // then use the specifier to guide the find
     return findNode(type_str,mspecifier);
 
   }
@@ -528,14 +531,14 @@ namespace AbstractHandle{
 
    // Initialize an empty handle from a handle string (including full parent handles)
    // set up parent pointer accordingly
-   bool abstract_handle::fromString(abstract_handle* root_handle, const std::string& handle_str_full)
+   bool abstract_handle::fromString(abstract_handle* inParent_handle, const std::string& handle_str_full)
     {
-      assert(root_handle!=NULL);
+      assert(inParent_handle!=NULL);
       assert(handle_str_full.size()>0);
       vector<string> handle_str_vec;
       istringstream buffer(handle_str_full);
 
-      abstract_node* root = root_handle->getNode();
+      abstract_node* inParent = inParent_handle->getNode();
        
       char handle_item[256+PATH_MAX+512]; //TODO define max handle length etc in header,
       do {
@@ -552,14 +555,14 @@ namespace AbstractHandle{
       for (int i=0;i<(int)(handle_str_vec.size())-1; i++)
       {
         //cout<<handle_str_vec[i]<<endl;
-        abstract_node* node = root->findNode(handle_str_vec[i]);
+        abstract_node* node = inParent ->findNode(handle_str_vec[i]);
         if(node == NULL) return false;
         //assert (node != NULL);
         if (handle_map[node]==NULL)
         { 
           abstract_handle* phandle = new abstract_handle();
           handle_map[node] = phandle;
-          phandle->fromStringSelf(root_handle,handle_str_vec[i]);
+          phandle->fromStringSelf(inParent_handle,handle_str_vec[i]);
           parent_handle = phandle;
         }
         else
@@ -568,13 +571,13 @@ namespace AbstractHandle{
         if (i==0)  // connect the link between the root and the top parent of the string 
         {
           if (parent_handle->get_parent_handle() == NULL)   
-            parent_handle->set_parent_handle(root_handle);
+            parent_handle->set_parent_handle(inParent_handle);
         }   
       } // end for
 
       // patch up parent handle, if not yet set
       if (parent_handle == NULL)
-        parent_handle=root_handle;
+        parent_handle=inParent_handle;
       // set up the handle for itself
       fromStringSelf(parent_handle,handle_str_vec.back());
       return true;
