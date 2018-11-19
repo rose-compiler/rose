@@ -1507,6 +1507,8 @@ ROSEAttributesList::setFileName(const string & fName)
   // strcpy(fileName,fName);
      fileName = fName;
 
+  // TV (11/19/2018): ROSE-1470: with File I/O, SgFile (and contained ROSEAttributesList) are loaded before Sg_File_Info causing issues....
+#if 0
   // DQ (10/4/2013): This code was not previously exercised and is not an error,
   // commented out the assert to allow the test below to be done. This is 
   // causing tests/nonsmoke/functional/testAstFileIO.C to fail on this input test code.  It might be
@@ -1516,8 +1518,6 @@ ROSEAttributesList::setFileName(const string & fName)
      printf ("In ROSEAttributesList::setFileName(): Verify that the filenames are correct for all comments in this list! \n");
   // ROSE_ASSERT(false);
 
-  // TV (11/19/2018): ROSE-1470: with File I/O, SgFile (and contained ROSEAttributesList) are loaded before Sg_File_Info causing issues....
-#if 0
   // Error checking!
      vector<PreprocessingInfo*>::iterator i = attributeList.begin();
      while( i != attributeList.end() )
