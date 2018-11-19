@@ -4,7 +4,7 @@
 #define SRC_STR "0123456789abcdef0123456789abcde"
 
 void printLine(char* s) {
-  printf(s);
+  printf("%s",s);
 }
 
 int* g(int* x) {
@@ -20,8 +20,6 @@ typedef struct _charVoid
 
 void f()
 {
-  int a[10];
-  int* x=g(a)+1;
   charVoid structCharVoid;
   structCharVoid.voidSecond = (void *)SRC_STR;
   printLine((char *)structCharVoid.voidSecond);

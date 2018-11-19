@@ -7,7 +7,10 @@ static void f()
 {
   char a[16];
   char* ap;
-  printf("Text:",a+1);
+  a[0]='0';
+  a[1]='1';
+  a[2]=0;
+  printf("Text:%s",a+1);
 }
 
 int main(int argc, char * argv[])
