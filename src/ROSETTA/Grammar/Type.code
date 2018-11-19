@@ -69,11 +69,12 @@ HEADER_START
 
        // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
        // PC and AS new variables to support a flexible stripType() which takes an bit array as a paramater
-          static const unsigned char STRIP_MODIFIER_TYPE  = ((unsigned char) 1 << 0); // 0x01
-          static const unsigned char STRIP_REFERENCE_TYPE = ((unsigned char) 1 << 1); // 0x02
-          static const unsigned char STRIP_POINTER_TYPE   = ((unsigned char) 1 << 2); // 0x04
-          static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
-          static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
+          static const unsigned char STRIP_MODIFIER_TYPE         = ((unsigned char) 1 << 0); // 0x01
+          static const unsigned char STRIP_REFERENCE_TYPE        = ((unsigned char) 1 << 1); // 0x02
+          static const unsigned char STRIP_RVALUE_REFERENCE_TYPE = ((unsigned char) 1 << 2); // 0x04
+          static const unsigned char STRIP_POINTER_TYPE          = ((unsigned char) 1 << 3); // 0x08
+          static const unsigned char STRIP_ARRAY_TYPE            = ((unsigned char) 1 << 4); // 0x16
+          static const unsigned char STRIP_TYPEDEF_TYPE          = ((unsigned char) 1 << 5); // 0x32
 
       /*! \brief Some types store internal SgType pointers explicitly while others compute them from other data.  This function is true if it has a data member that is a type (pointer, array, etc.).
 
@@ -116,7 +117,7 @@ HEADER_START
 
        // DQ (6/21/2005): Added to support getting a deeply nested types quickly and easily.
       //! Returns hidden type beneath layers of typedefs, pointers, references, modifiers, array representation, etc.
-          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
 
        // DQ (6/30/2005): Added to support invistigation of hidden types
       //! This only strips away typedefs and modifiers (specialized usage).
@@ -1873,7 +1874,7 @@ SgType::findBaseType() const
 	}
 #else
   // This uses the default value for SgType::stripType(), namely
-  // (bit_array == STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+  // (bit_array == STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
      return stripType();
 #endif
    }
@@ -1883,7 +1884,7 @@ SgType::stripType(unsigned char bit_array) const
    {
   // This function forms the low level support for both SgType::findBaseType()
   // and SgType::stripTypedefsAndModifiers().  It takes a default valued
-  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
   // Alternatively any of these value may be ORed together to for other combinations.
 
   // Cast away const of "this" pointer
@@ -1893,11 +1894,12 @@ SgType::stripType(unsigned char bit_array) const
      printf ("Inside of SgType::stripType(bit_array = %u): this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
 #endif
 
-     SgModifierType*  modType     = NULL;
-     SgPointerType*   pointType   = NULL;
-     SgReferenceType* refType     = NULL;
-     SgArrayType*     arrayType   = NULL;
-     SgTypedefType*   typedefType = NULL;
+     SgModifierType*        modType     = NULL;
+     SgPointerType*         pointType   = NULL;
+     SgReferenceType*       refType     = NULL;
+     SgRvalueReferenceType* rRefType    = NULL;
+     SgArrayType*           arrayType   = NULL;
+     SgTypedefType*         typedefType = NULL;
 
      size_t counter = 0;
      while (true)
@@ -1912,56 +1914,51 @@ SgType::stripType(unsigned char bit_array) const
 #endif
                currentType = modType->get_base_type();
              }
-            else
+          else if ( (bit_array & STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
              {
-               if ( (bit_array & STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
-                  {
 #if 0
-                    printf ("In loop of SgType::stripType(): found SgReferenceType \n");
+               printf ("In loop of SgType::stripType(): found SgReferenceType \n");
 #endif
-                    currentType = refType->get_base_type();
-                  }
-                 else
-                  {
-                    if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
-                       {
+               currentType = refType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_RVALUE_REFERENCE_TYPE) &&  (rRefType = isSgRvalueReferenceType(currentType)) )
+             {
 #if 0
-                         printf ("In loop of SgType::stripType(): found SgPointerType \n");
+               printf ("In loop of SgType::stripType(): found SgRvalueReferenceType \n");
 #endif
-                         currentType = pointType->get_base_type();
-                       }
-                      else
-                       {
-                         if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
-                            {
+               currentType = rRefType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+             {
 #if 0
-                              printf ("In loop of SgType::stripType(): found SgArrayType \n");
+               printf ("In loop of SgType::stripType(): found SgPointerType \n");
 #endif
-                              currentType = arrayType->get_base_type();
-                            }
-                           else
-                            {
-                              if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
-                                 {
+               currentType = pointType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
+             {
 #if 0
-                                   printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
-                                        currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
+               printf ("In loop of SgType::stripType(): found SgArrayType \n");
 #endif
-                                // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
-                                   currentType = typedefType->get_base_type();
-                                 }
-                                else
-                                 {
-                                // Exit the while(true){} loop!
-                                   ROSE_ASSERT(currentType != NULL);
+               currentType = arrayType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
+             {
 #if 0
-                                   printf ("In loop of SgType::stripType(): exiting loop: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(): found SgTypedefType: currentType = %p = %s typedefType->get_base_type() = %p = %s \n",
+                    currentType,currentType->class_name().c_str(),typedefType->get_base_type(),typedefType->get_base_type()->class_name().c_str());
 #endif
-                                   break;
-                                 }
-                            }
-                       }
-                  }
+            // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
+               currentType = typedefType->get_base_type();
+             }
+          else
+             {
+            // Exit the while(true){} loop!
+               ROSE_ASSERT(currentType != NULL);
+#if 0
+               printf ("In loop of SgType::stripType(): exiting loop: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
+               break;
              }
 
        // DQ (7/4/2013): This should be a reasonable limit.
@@ -2287,7 +2284,7 @@ SgType::getAssociatedDeclaration() const
 
   // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
   // we want to avoid expressing typedefs that are private in functions that are public.
-     SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
   // printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
@@ -8194,7 +8191,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        // SgType* root_type = result->stripType();
        // unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE;
        // unsigned char bit_array = STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE;
-          unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE;
+          unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE;
           SgType* root_type = result->stripType(bit_array);
           ROSE_ASSERT(root_type != NULL);
 #if 0

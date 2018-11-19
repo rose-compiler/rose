@@ -8726,7 +8726,7 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     bool isReferenceType = SageInterface::isReferenceType(expressionType);
     if (isReferenceType)
     {
-        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE);
         variableType = SageBuilder::buildPointerType(expressionBaseType);
     }
 
@@ -12914,10 +12914,10 @@ int SageInterface::fixVariableReferences(SgNode* root)
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(arrowExp->get_lhs_operand_i());
             SgType* lhs_type = arrowExp->get_lhs_operand_i()->get_type() ;
-            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
             SgPointerType* ptrType = isSgPointerType(lhs_type);
             ROSE_ASSERT(ptrType);
-            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
+            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -12942,7 +12942,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
             counter += fixVariableReferences(dotExp->get_lhs_operand_i());
 
             SgType* lhs_type = dotExp->get_lhs_operand_i()->get_type() ;
-            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
             SgClassType* clsType = isSgClassType(lhs_type);
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
@@ -16112,7 +16112,7 @@ getDependentDeclarations (SgStatement* stmt, vector<SgDeclarationStatement*> & d
     {
 
       // we don't want to strip of nested typedef declarations
-      base_type = isSgTypedefDeclaration(decl)->get_base_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+      base_type = isSgTypedefDeclaration(decl)->get_base_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
     }
 
     //TODO variable declaration, function declaration: parameter list types,
