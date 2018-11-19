@@ -1,0 +1,270 @@
+[
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "y_solve.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "y_solve.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "solve_subs.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "solve_subs.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "add.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "add.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "set_constants.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "set_constants.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "-o", 
+            "wtime.o", 
+            "wtime.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common", 
+        "file": "wtime.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "print_results.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common", 
+        "file": "print_results.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "exact_solution.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "exact_solution.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "initialize.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "initialize.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "z_solve.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "z_solve.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "x_solve.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "x_solve.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "exact_rhs.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "exact_rhs.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-o", 
+            "setparams", 
+            "setparams.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys", 
+        "file": "setparams.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "adi.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "adi.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "bt.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "bt.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "error.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "error.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "verify.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "verify.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "rhs.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT", 
+        "file": "rhs.c"
+    }, 
+    {
+        "arguments": [
+            "cc", 
+            "-c", 
+            "-I../common", 
+            "-g", 
+            "-Wall", 
+            "-O3", 
+            "-fopenmp", 
+            "-mcmodel=medium", 
+            "c_timers.c"
+        ], 
+        "directory": "/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common", 
+        "file": "c_timers.c"
+    }
+]

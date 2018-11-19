@@ -5022,7 +5022,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      ROSE_ASSERT (get_openmp_parse_only() == true);
      ROSE_ASSERT (get_openmp_ast_only() == false);
      ROSE_ASSERT (get_openmp_lowering() == false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenMP|openmp)",true) == true )
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenMP|openmp)",true) == true 
+         ||CommandlineProcessing::isOption(argv,"-","(openmp|fopenmp)",true) == true
+         )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("OpenMP option specified \n");

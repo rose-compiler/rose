@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_AstHash_H
 
 #include <MemoryMap.h>
+#include <Partitioner2/BasicBlock.h>
 #include "Combinatorics.h"
 
 namespace Rose {
@@ -35,6 +36,9 @@ namespace BinaryAnalysis {
             // @brief Generates the hash. Called by traverse
             void visit(SgNode* n);
             
+            // @brief For the Partitioner Interface, traverses a basic block
+            void appendBasicBlock(Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr bb );
+
             // @brief Gets the Rose::Combinatorics::Hasher
             const Rose::Combinatorics::Hasher& hasher() const { return hasher_; }; 
 
