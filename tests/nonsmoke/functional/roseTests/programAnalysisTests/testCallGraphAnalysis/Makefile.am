@@ -106,7 +106,9 @@ Test04Targets = $(addprefix t4_, $(addsuffix .passed, $(Test04Specimens)))
 # DQ (1/19/2017): These is a problem for GNU 4.9.
 # if !ROSE_USING_GCC_VERSION_LATER_5_1
 if !ROSE_USING_GCC_VERSION_LATER_4_9
+if !ROSE_USE_EDG_VERSION_5_0
 TEST_TARGETS += $(Test04Targets)
+endif
 endif
 
 test04: $(Test04Targets)

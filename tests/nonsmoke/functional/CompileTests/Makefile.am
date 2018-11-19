@@ -216,8 +216,8 @@ test_new_languages:
 
 # TV (08/07/2018): Added `status` target which generate `status.csv`
 status:
-	$(srcdir)/status.sh compiler
-	$(srcdir)/status.sh backend
-	$(srcdir)/status.sh translator
+	@$(srcdir)/status.sh compiler
+	@$(srcdir)/status.sh backend
+	@$(srcdir)/status.sh translator
 
 

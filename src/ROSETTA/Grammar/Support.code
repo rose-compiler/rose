@@ -5305,6 +5305,9 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization() $ROSE_OVERRIDE;
 
+       // ROSE-1499
+          void check_file_id(char * label, bool assertion=true) const;
+
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
           static int addFilenameToMap ( const std::string & filename );
@@ -5610,6 +5613,143 @@ public:
                e_Cobol_language,   /*!< value used to specify output of Cobol  */
                e_last_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
+
+public:
+          enum standard_enum 
+             {
+               e_default_standard,
+               e_c89_standard,
+               e_c90_standard,
+               e_c99_standard,
+               e_c11_standard,
+               e_c14_standard,
+               e_c17_standard,
+               e_upc_standard,
+               e_cxx98_standard,
+               e_cxx03_standard,
+               e_cxx11_standard,
+               e_cxx14_standard,
+               e_cxx17_standard,
+               e_cxx20_standard,
+               e_upcxx_standard,
+               e_f77_standard,
+               e_f90_standard,
+               e_f95_standard,
+               e_f03_standard,
+               e_f08_standard,
+               e_f18_standard
+             };
+
+protected:
+          enum standard_enum p_standard;
+          bool p_is_gnu_standard;
+
+public:
+          enum standard_enum get_standard(void) const;
+          void set_standard(enum standard_enum e_std);
+          void set_default_standard(void);
+
+          bool is_gnu_standard(void) const;
+          void set_gnu_standard();
+          void unset_gnu_standard();
+
+          bool get_C89_only (void) const;
+          void set_C89_only (void);
+
+          bool get_C89_gnu_only (void) const;
+          void set_C89_gnu_only (void);
+
+          bool get_C90_only (void) const;
+          void set_C90_only (void);
+
+          bool get_C90_gnu_only (void) const;
+          void set_C90_gnu_only (void);
+
+          bool get_C99_only (void) const;
+          void set_C99_only (void);
+
+          bool get_C99_gnu_only (void) const;
+          void set_C99_gnu_only (void);
+
+          bool get_C11_only (void) const;
+          void set_C11_only (void);
+
+          bool get_C11_gnu_only (void) const;
+          void set_C11_gnu_only (void);
+
+          bool get_C14_only (void) const;
+          void set_C14_only (void);
+
+          bool get_C14_gnu_only (void) const;
+          void set_C14_gnu_only (void);
+
+          bool get_C17_only (void) const;
+          void set_C17_only (void);
+
+          bool get_C17_gnu_only (void) const;
+          void set_C17_gnu_only (void);
+
+          bool get_UPC_only (void) const;
+          void set_UPC_only (void);
+
+          bool get_Cxx98_only (void) const;
+          void set_Cxx98_only (void);
+
+          bool get_Cxx98_gnu_only (void) const;
+          void set_Cxx98_gnu_only (void);
+
+          bool get_Cxx03_only (void) const;
+          void set_Cxx03_only (void);
+
+          bool get_Cxx03_gnu_only (void) const;
+          void set_Cxx03_gnu_only (void);
+
+          bool get_Cxx11_only (void) const;
+          void set_Cxx11_only (void);
+
+          bool get_Cxx11_gnu_only (void) const;
+          void set_Cxx11_gnu_only (void);
+
+          bool get_Cxx14_only (void) const;
+          void set_Cxx14_only (void);
+
+          bool get_Cxx14_gnu_only (void) const;
+          void set_Cxx14_gnu_only (void);
+
+          bool get_Cxx17_only (void) const;
+          void set_Cxx17_only (void);
+
+          bool get_Cxx17_gnu_only (void) const;
+          void set_Cxx17_gnu_only (void);
+
+          bool get_Cxx20_only (void) const;
+          void set_Cxx20_only (void);
+
+          bool get_Cxx20_gnu_only (void) const;
+          void set_Cxx20_gnu_only (void);
+
+          bool get_UPCxx_only (void) const;
+          void set_UPCxx_only (void);
+
+          bool get_F77_only     (void) const;
+          void set_F77_only     (void);
+
+          bool get_F90_only     (void) const;
+          void set_F90_only     (void);
+
+          bool get_F95_only     (void) const;
+          void set_F95_only     (void);
+
+          bool get_F2003_only   (void) const;
+          void set_F2003_only   (void);
+
+          bool get_F2008_only   (void) const;
+          void set_F2008_only   (void);
+
+          bool get_F2018_only   (void) const;
+          void set_F2018_only   (void);
+
+public:
 
       //! The only useful constructor (the argc and argv are the user's command line inputs and the
       //! errorCode is the return value assembled from the multiple error codes associated with the 
@@ -6161,55 +6301,45 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (12/28/2010): Added to support skipping compilation in backendCompilesUsingOriginalInputFile()
           bool get_skipfinalCompileStep (void) const;
 
+          void set_C_only       (bool value);
           bool get_C_only   (void) const;
 
-       // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-      //! Support for -std=c89.
           bool get_C89_only (void) const;
-
-      //! Support for -std=gnu89 (default for GNU gcc).
           bool get_C89_gnu_only (void) const;
-
-      //! Support for -std=c99.
+          bool get_C90_only (void) const;
+          bool get_C90_gnu_only (void) const;
           bool get_C99_only (void) const;
-
-      //! Support for explicit specification of C++ mode.
-          bool get_Cxx_only (void) const;
-
-       // DQ (8/30/2013): Added support for -std=gnu99 seperate from -std-c99 (required for asm statement handling).
-       // Note that this support also sets C99_only to true.
-      //! Support for -std=gnu99.
           bool get_C99_gnu_only (void) const;
-
-       // DQ (7/21/2012): Adding C++ support from the command line.
           bool get_C11_only (void) const;
-
-       // DQ (7/26/2014): Adding C11 support.
           bool get_C11_gnu_only (void) const;
-
-          bool get_Cxx0x_only (void) const;
-          bool get_Cxx11_only (void) const;
-
-       // DQ (4/20/2014): Adding C14 and C++14 support.
           bool get_C14_only (void) const;
-
-       // DQ (7/26/2014): Adding C14 support.
           bool get_C14_gnu_only (void) const;
 
-          bool get_Cxx14_only (void) const;
+          void set_Cxx_only     (bool value);
+          bool get_Cxx_only (void) const;
 
-       // DQ (8/11/2007): Added Fortran support
+          bool get_Cxx98_only (void) const;
+          bool get_Cxx98_gnu_only (void) const;
+          bool get_Cxx03_only (void) const;
+          bool get_Cxx03_gnu_only (void) const;
+          bool get_Cxx11_only (void) const;
+          bool get_Cxx11_gnu_only (void) const;
+          bool get_Cxx14_only (void) const;
+          bool get_Cxx14_gnu_only (void) const;
+          bool get_Cxx17_only (void) const;
+          bool get_Cxx17_gnu_only (void) const;
+
+          void set_Fortran_only (bool value);
           bool get_Fortran_only (void) const;
+
           bool get_F77_only     (void) const;
           bool get_F90_only     (void) const;
           bool get_F95_only     (void) const;
           bool get_F2003_only   (void) const;
           bool get_F2008_only   (void) const;
+          bool get_F2018_only   (void) const;
           bool get_CoArrayFortran_only (void) const;
 
-          void set_C_only       (bool value);
-          void set_Cxx_only     (bool value);
-          void set_Fortran_only (bool value);
 
           bool get_PHP_only(void) const;
 
@@ -13316,17 +13446,10 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
      printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
 #endif
 
-  // DQ (10/22/2007): Fixed to permit "" to be a valid filename
-  // DQ (5/11/2006): Allow "NULL_FILE" as a name (used within ROSE) to map to the NULL_FILE_ID 
-  // if (filename.empty() == true)
-  // if (filename.empty() == true || filename == "NULL_FILE")
-     if (filename == "NULL_FILE")
+  // ROSE-1499: Set p_file_id to NULL_FILE_ID before calling set_filenameString (if needed)
+     p_file_id = NULL_FILE_ID;
+     if (filename != "NULL_FILE")
         {
-          p_file_id = NULL_FILE_ID;
-        }
-       else 
-        {
-       // DQ (7/25/2005): Refactored to use set_filename()
           set_filenameString(filename);
         }
 
@@ -13445,16 +13568,35 @@ Sg_File_Info::post_construction_initialization()
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-  // assert(this != (Sg_File_Info*) 0x5231b0);
+  // ROSE-1499 check that p_file_id is valid
+     check_file_id("Sg_File_Info::post_construction_initialization");
    }
 
+// ROSE-1499
+void Sg_File_Info::check_file_id(char * label, bool assertion) const {
+  if ( ( (p_file_id >= 0) && (p_fileidtoname_map.count(p_file_id) == 0) ) || ( (p_file_id < -6) || ( p_file_id > (int)p_fileidtoname_map.size() ) ) ) {
+    printf("ERROR from %s:\n", label);
+    printf("  Sg_File_Info::this = %p\n", this);
+    printf("  p_file_id = %d\n", p_file_id);
+    printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
+    printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+    printf("  isTransformation() = %d\n", isTransformation());
+    printf("  isCompilerGenerated() = %d\n", isCompilerGenerated());
+    printf("  isFrontendSpecific() = %d\n", isFrontendSpecific());
+  }
+  if (assertion) {
+     ROSE_ASSERT((p_file_id < 0) || (p_fileidtoname_map.count(p_file_id) > 0));
+     ROSE_ASSERT((p_file_id > -7) && (p_file_id < (int)p_fileidtoname_map.size()));
+  }
+}
 
 int 
 Sg_File_Info::get_file_id () const
    {
   // DQ (10/27/2007): This is custom generated so that it can be consistant with the get_filename() member function
      assert (this != NULL);
-  // return p_file_id;
+
+     check_file_id("Sg_File_Info::get_file_id");
 
   // initialize to bad value
      int returnValue = -99;
@@ -13466,7 +13608,6 @@ Sg_File_Info::get_file_id () const
         }
        else
         {
-#if 1
        // DQ (11/1/2007): This does not allow for isSameFile() to compare properly when testing for "rose_edg_required_macros_and_functions.h"
           if ( isCompilerGenerated() == true )
              {
@@ -13474,6 +13615,19 @@ Sg_File_Info::get_file_id () const
             // returnValue = undefinedValue;
                if ( isFrontendSpecific() == true )
                   {
+#define FAIL_ON_ROSE_1532 0
+#if FAIL_ON_ROSE_1532
+                    if (p_fileidtoname_map.count(p_file_id) == 0 && p_file_id == COMPILER_GENERATED_FILE_ID) {
+                      printf("ERROR: Sg_File_Info::get_file_id(this = %p):\n", this);
+                      printf("  isFrontendSpecific() == true => p_file_id == file_id_of(\"rose_edg_required_macros_and_functions.h\")\n");
+                      printf("  BUT:  p_file_id = %d\n", p_file_id);
+                      printf("  HERE: p_file_id == COMPILER_GENERATED_FILE_ID\n");
+                      printf("  BYPASSED: seen for a SgInitializedName in the parameter list of __builtin_atan2\n");
+                      ROSE_ASSERT(false);
+                    }
+#endif
+                 // ROSE-1499: check that p_file_id is valid
+                    ROSE_ASSERT(p_file_id == COMPILER_GENERATED_FILE_ID || p_fileidtoname_map.count(p_file_id) > 0);
                  // In this case return the file_id of the specific file which indicates this properly ("rose_edg_required_macros_and_functions.h").
                     returnValue = p_file_id;
                   }
@@ -13484,23 +13638,22 @@ Sg_File_Info::get_file_id () const
              }
             else
              {
-               returnValue = p_file_id;
-             }
-#else
-       // Older (previous) code
-
-#error "DEAD CODE!"
-
-          if ( isCompilerGenerated() == true )
-             {
-            // returnValue = undefinedValue;
-               returnValue = COMPILER_GENERATED_FILE_ID;
-             }
-            else
-             {
-               returnValue = p_file_id;
-             }
+#define FAIL_ON_ROSE_1533 0
+#if FAIL_ON_ROSE_1533
+               if (p_fileidtoname_map.count(p_file_id) == 0 && p_file_id == NULL_FILE_ID) {
+                 printf("ERROR: Sg_File_Info::get_file_id(this = %p):\n", this);
+                 printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
+                 printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+                 printf("  p_file_id should represent a valid file.\n", p_file_id);
+                 printf("  HERE: p_file_id == NULL_FILE_ID\n");
+                 printf("  BYPASSED: seen for a SgCtorInitializerList of foo1 in Cxx_tests/test2003_01.C (the SgCtorInitializerList is implicit).\n");
+                 ROSE_ASSERT(false);
+               }
 #endif
+            // ROSE-1499: check that p_file_id is valid
+               ROSE_ASSERT(p_file_id == NULL_FILE_ID || p_fileidtoname_map.count(p_file_id) > 0);
+               returnValue = p_file_id;
+             }
         }
 
   // DQ (12/18/2012): Added assertion.
@@ -13514,6 +13667,8 @@ Sg_File_Info::set_file_id( int file_id )
    {
      assert (this != NULL);
      set_isModified(true);
+
+     check_file_id("Sg_File_Info::set_file_id");
 
 #if 0
      printf ("In Sg_File_Info::set_file_id(file_id = %d) this = %p \n",file_id,this);
@@ -13554,6 +13709,7 @@ void
 Sg_File_Info::set_physical_file_id( int physical_file_id )
    {
      assert (this != NULL);
+
      set_isModified(true);
 
 #if 0
@@ -13574,6 +13730,7 @@ void
 Sg_File_Info::set_physical_source_position_to_match_logical_source_position()
    {
      assert (this != NULL);
+
      set_isModified(true);
 
      p_physical_file_id = p_file_id;
@@ -13614,6 +13771,9 @@ Sg_File_Info::addFilenameToMap ( const std::string & filename )
           returnValue = p_nametofileid_map[filename];
         }
 
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
+
      return returnValue;
    }
 
@@ -13623,6 +13783,8 @@ void
 Sg_File_Info::set_filenameString ( const std::string & filename )
    {
      assert (this != NULL);
+
+     check_file_id("Sg_File_Info::set_filenameString");
 
 #if 0
      printf ("In Sg_File_Info::set_filenameString(filename = %s) this = %p \n",filename.c_str(),this);
@@ -13638,6 +13800,9 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
         {
           p_file_id = p_nametofileid_map[filename];
         }
+
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
 
   // DQ (3/19/2017): Note that this is important for Fortran support (where IR nodes frequently 
   // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
@@ -13681,6 +13846,9 @@ Sg_File_Info::set_physical_filename ( const std::string & filename )
         {
           p_physical_file_id = p_nametofileid_map[filename];
         }
+
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
    }
 
 void
@@ -13688,6 +13856,8 @@ void
 // Sg_File_Info::set_filenameString ( const std::string & filename )
 Sg_File_Info::set_filename(const char* filename)
    {
+     check_file_id("Sg_File_Info::set_filename");
+
   // DQ (9/5/2006): Modified implementation
   // set_filename(filename.c_str());
      assert(filename != NULL);
@@ -13698,7 +13868,7 @@ const std::string &
 Sg_File_Info::get_filenameString() const
    {
      assert (this != NULL);
-  // return p_filename;
+     check_file_id("Sg_File_Info::get_filenameString");
 
      const std::string* returnString = NULL;
 
@@ -13738,6 +13908,9 @@ Sg_File_Info::get_filenameString() const
 const char*
 Sg_File_Info::get_filename() const
    {
+
+     check_file_id("Sg_File_Info::get_filename");
+
   // DQ (10/15/2005): This function is the C string version of the get_filename() 
   // function which has been depricated. At some point the get_filename() function 
   // will be eliminated and later reinfroduced as get_filename() (finally building
@@ -13804,6 +13977,7 @@ void
 Sg_File_Info::set_line(int line)
    {
      assert (this != NULL);
+
      p_line = line;
      if (isTransformation() || isCompilerGenerated())
         {
@@ -13830,6 +14004,7 @@ int
 Sg_File_Info::get_line() const
    { 
      assert (this != NULL);
+
   // return p_line;
   // const int undefinedValue = INT_MAX-1;
      const int undefinedValue = 0;
@@ -14043,7 +14218,6 @@ bool
 Sg_File_Info::hasPositionInSource() const
    {
      assert(this != NULL);
-
   // DQ (1/11/2006): Modified to not use the output function which mixed 
   // concepts of compiler generated with output (deprecated function).
   // bool result = ( ! ( isTransformation() || isCompilerGenerated() || isCompilerGeneratedNodeToBeUnparsed() ) );
@@ -14158,6 +14332,7 @@ bool
 Sg_File_Info::isCompilerGenerated() const
    {
      assert(this != NULL);
+
 #if 0
      printf ("In Sg_File_Info::isCompilerGenerated(): this = %p \n",this);
 #endif
@@ -14272,7 +14447,6 @@ Sg_File_Info::setShared()
    {
   // MK (8/3/05) : We always want to unparse the current file (this is a performance issue)
      assert(this != NULL);
-
   // DQ (10/27/2007): Make sure this is a valid file that we are trying to share.
   // I am unclear as to how important this is.
      int temp_file_id = this->get_file_id();
@@ -14550,7 +14724,6 @@ int
 Sg_File_Info::getIDFromFilename( std::string filename )
    {
   // This is a static function
-
 #if 1
   // DQ (10/22/2007): Should this be commented out?
 
@@ -14641,19 +14814,6 @@ int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> in
   // tps (12/11/2009): Windows error : needs a return value
      return 0;
    }
-
-#if 0
-// DQ (2/5/2009): This is a data member in both the SgProject (records the command line setting, and the SgFile
-// (specifies file type). So we don't need this member function from yesterday.
-// DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
-bool
-SgFile::get_binary_only (void) const
-   {
-     SgProject* project = isSgProject(get_parent());
-     assert(project != NULL);
-     return project->get_binary_only();
-   }
-#endif
 
 Sg_File_Info*
 SgFile::get_file_info() const
@@ -14819,37 +14979,12 @@ SgFile::initialization()
 
   // DQ (7/13/2004): Not previously initialized!
      p_C_only                  = false;
-     p_UPC_only                = false;
      p_upc_threads             = 0;
 
-  // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-     p_C89_only                = false;
-     p_C89_gnu_only            = false;
-
-     p_C99_only                = false;
-     p_C99_gnu_only            = false;
      p_Cxx_only                = false;
-
-  // DQ (7/21/2012): Adding C++11 support.
-     p_C11_only                = false;
-     p_C11_gnu_only            = false;
-
-     p_Cxx0x_only              = false;
-     p_Cxx11_only              = false;
-
-  // DQ (4/20/2014): Adding C14 and C++14 support.
-     p_C14_only                = false;
-     p_C14_gnu_only            = false;
-
-     p_Cxx14_only              = false;
 
   // DQ (8/11/2007): Added support for Fortran
      p_Fortran_only            = false;
-     p_F77_only                = false;
-     p_F90_only                = false;
-     p_F95_only                = false;
-     p_F2003_only              = false;
-     p_F2008_only              = false;
 
   // DQ (1/23/2009): Added CoArray Fortran support.
      p_CoArrayFortran_only     = false;
@@ -14931,6 +15066,9 @@ SgFile::initialization()
 
   // DQ (8/27/2007): Support for alternative langauge code generation (unparsing), useful for testing specific language unparsers.
      p_outputLanguage          = SgFile::e_default_language;
+
+     p_standard = e_default_standard;
+     p_is_gnu_standard = false;
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -15213,6 +15351,110 @@ SgSourceFile::get_root() const
    }
 #endif
 
+enum SgFile::standard_enum SgFile::get_standard(void) const { return p_standard; }
+void SgFile::set_standard(enum standard_enum e_std) { p_standard = e_std; }
+void SgFile::set_default_standard(void) { p_standard = e_default_standard; }
+
+bool SgFile::is_gnu_standard(void) const { return p_is_gnu_standard; }
+void SgFile::set_gnu_standard(void) { p_is_gnu_standard = true; }
+void SgFile::unset_gnu_standard(void) { p_is_gnu_standard = false; }
+
+bool SgFile::get_C89_only (void) const { return p_standard == e_c89_standard; }
+void SgFile::set_C89_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c89_standard; }
+
+bool SgFile::get_C89_gnu_only (void) const { return p_standard == e_c89_standard && p_is_gnu_standard; }
+void SgFile::set_C89_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c89_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_C90_only (void) const { return p_standard == e_c90_standard; }
+void SgFile::set_C90_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c90_standard; }
+
+bool SgFile::get_C90_gnu_only (void) const { return p_standard == e_c90_standard && p_is_gnu_standard; }
+void SgFile::set_C90_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c90_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_C99_only (void) const { return p_standard == e_c99_standard; }
+void SgFile::set_C99_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c99_standard; }
+
+bool SgFile::get_C99_gnu_only (void) const { return p_standard == e_c99_standard && p_is_gnu_standard; }
+void SgFile::set_C99_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c99_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_C11_only (void) const { return p_standard == e_c11_standard; }
+void SgFile::set_C11_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; }
+
+bool SgFile::get_C11_gnu_only (void) const { return p_standard == e_c11_standard && p_is_gnu_standard; }
+void SgFile::set_C11_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_C14_only (void) const { return p_standard == e_c14_standard; }
+void SgFile::set_C14_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; }
+
+bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_is_gnu_standard; }
+void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_C17_only (void) const { return p_standard == e_c17_standard; }
+void SgFile::set_C17_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; }
+
+bool SgFile::get_C17_gnu_only (void) const { return p_standard == e_c17_standard && p_is_gnu_standard; }
+void SgFile::set_C17_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
+void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }
+
+bool SgFile::get_Cxx98_only (void) const { return p_standard == e_cxx98_standard; }
+void SgFile::set_Cxx98_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx98_standard; }
+
+bool SgFile::get_Cxx98_gnu_only (void) const { return p_standard == e_cxx98_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx98_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx98_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_Cxx03_only (void) const { return p_standard == e_cxx03_standard; }
+void SgFile::set_Cxx03_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx03_standard; }
+
+bool SgFile::get_Cxx03_gnu_only (void) const { return p_standard == e_cxx03_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx03_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx03_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_Cxx11_only (void) const { return p_standard == e_cxx11_standard; }
+void SgFile::set_Cxx11_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx11_standard; }
+
+bool SgFile::get_Cxx11_gnu_only (void) const { return p_standard == e_cxx11_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx11_gnu_only (void) {set_C_only(false); set_Cxx_only(true); p_standard = e_cxx11_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_Cxx14_only (void) const { return p_standard == e_cxx14_standard; }
+void SgFile::set_Cxx14_only (void) {set_C_only(false); set_Cxx_only(true);  p_standard = e_cxx14_standard; }
+
+bool SgFile::get_Cxx14_gnu_only (void) const { return p_standard == e_cxx14_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx14_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx14_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_Cxx17_only (void) const { return p_standard == e_cxx17_standard; }
+void SgFile::set_Cxx17_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx17_standard; }
+
+bool SgFile::get_Cxx17_gnu_only (void) const { return p_standard == e_cxx17_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx17_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx17_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_Cxx20_only (void) const { return p_standard == e_cxx20_standard; }
+void SgFile::set_Cxx20_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; }
+
+bool SgFile::get_Cxx20_gnu_only (void) const { return p_standard == e_cxx20_standard && p_is_gnu_standard; }
+void SgFile::set_Cxx20_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; p_is_gnu_standard = true; }
+
+bool SgFile::get_UPCxx_only (void) const { return p_standard == e_upcxx_standard; }
+void SgFile::set_UPCxx_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_upcxx_standard; }
+
+bool SgFile::get_F77_only     (void) const { return p_standard == e_f77_standard; }
+void SgFile::set_F77_only     (void) { set_Fortran_only(true); p_standard = e_f77_standard; }
+
+bool SgFile::get_F90_only     (void) const { return p_standard == e_f90_standard; }
+void SgFile::set_F90_only     (void) { set_Fortran_only(true); p_standard = e_f90_standard; }
+
+bool SgFile::get_F95_only     (void) const { return p_standard == e_f95_standard; }
+void SgFile::set_F95_only     (void) { set_Fortran_only(true); p_standard = e_f95_standard; }
+
+bool SgFile::get_F2003_only   (void) const { return p_standard == e_f03_standard; }
+void SgFile::set_F2003_only   (void) { set_Fortran_only(true); p_standard = e_f03_standard; }
+
+bool SgFile::get_F2008_only   (void) const { return p_standard == e_f08_standard; }
+void SgFile::set_F2008_only   (void) { set_Fortran_only(true); p_standard = e_f08_standard; }
+
+bool SgFile::get_F2018_only   (void) const { return p_standard == e_f18_standard; }
+void SgFile::set_F2018_only   (void) { set_Fortran_only(true); p_standard = e_f18_standard; }
+
 // int SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
 int
 SgFile::compileOutput ( int fileNameIndex )
@@ -15233,33 +15475,14 @@ SgFile::compileOutput ( int fileNameIndex )
   // BP : 10/31/2001, strip out any rose options before passing the command line.
      stripRoseCommandLineOptions( argv );
 
-  // DQ (2/12/2004): strip out edg specific options that 
-  // would cause an error in the backend compiler.
-  // stripEdgCommandLineOptions( argv );
-
-  // DQ (4/20/2014): Added C14 and C++14 support.
-  // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-  // DQ (7/21/2012): Adding C++11 support from the command line.
-  // if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true)
-  // if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true || get_C11_only() == true || get_Cxx0x_only() == true || get_Cxx11_only() == true)
-     if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_Cxx_only() == true || get_C11_only() == true || get_C14_only() == true || get_Cxx0x_only() == true || get_Cxx11_only() == true || get_Cxx14_only() == true)
+     if (get_C_only() || get_Cxx_only() || get_Fortran_only() )
         {
           stripEdgCommandLineOptions( argv );     
         }
-       else
-        {
-          if (get_Fortran_only() == true)
-             {
-            // DQ (4/2/2011): some Fortran tests pass in tests/nonsmoke/functional/roseTests/astInterfaceTests pass in EDG options, we
-            // might want to correct this (for now we will clean up the command line as part of command line handling).
-               stripEdgCommandLineOptions( argv );
 
-               stripFortranCommandLineOptions( argv );
-             }
-            else
-             {
-                 // This is the case of binary analysis or python...(nothing to do there)
-             }
+     if (get_Fortran_only())
+        {
+          stripFortranCommandLineOptions( argv );
         }
 
   // Call the compile
@@ -15581,30 +15804,12 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_output_warnings                           = %s \n",(p_output_warnings == true) ? "true" : "false");
 
      printf ("     p_C_only()                                  = %s \n",(p_C_only == true)   ? "true" : "false");
-     printf ("     p_UPC_only()                                = %s \n",(p_UPC_only == true) ? "true" : "false");
      printf ("     p_upc_threads                               = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
 
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-     printf ("     p_C89_only()                                = %s \n",(p_C89_only == true) ? "true" : "false");
-     printf ("     p_C89_gnu_only()                            = %s \n",(p_C89_gnu_only == true) ? "true" : "false");
-
-     printf ("     p_C99_only()                                = %s \n",(p_C99_only == true) ? "true" : "false");
-     printf ("     p_C99_gnu_only()                            = %s \n",(p_C99_gnu_only == true) ? "true" : "false");
      printf ("     p_Cxx_only()                                = %s \n",(p_Cxx_only == true) ? "true" : "false");
-     printf ("     p_C11_only()                                = %s \n",(p_C11_only == true) ? "true" : "false");
-     printf ("     p_C11_gnu_only()                            = %s \n",(p_C11_gnu_only == true) ? "true" : "false");
-     printf ("     p_Cxx0x_only()                              = %s \n",(p_Cxx0x_only == true) ? "true" : "false");
-     printf ("     p_Cxx11_only()                              = %s \n",(p_Cxx11_only == true) ? "true" : "false");
-     printf ("     p_C14_only()                                = %s \n",(p_C14_only == true) ? "true" : "false");
-     printf ("     p_C14_gnu_only()                            = %s \n",(p_C14_gnu_only == true) ? "true" : "false");
-     printf ("     p_Cxx14_only()                              = %s \n",(p_Cxx14_only == true) ? "true" : "false");
      printf ("     p_Java_only()                               = %s \n",(p_Java_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                            = %s \n",(p_Fortran_only == true) ? "true" : "false");
-     printf ("     p_F77_only()                                = %s \n",(p_F77_only == true) ? "true" : "false");
-     printf ("     p_F90_only()                                = %s \n",(p_F90_only == true) ? "true" : "false");
-     printf ("     p_F95_only()                                = %s \n",(p_F95_only == true) ? "true" : "false");
-     printf ("     p_F2003_only()                              = %s \n",(p_F2003_only == true) ? "true" : "false");
-     printf ("     p_F2008_only()                              = %s \n",(p_F2008_only == true) ? "true" : "false");
      printf ("     p_CoArrayFortran_only()                     = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                                = %s \n",(p_PHP_only == true) ? "true" : "false");
      printf ("     p_Python_only()                             = %s \n",(p_Python_only == true) ? "true" : "false");
@@ -16776,8 +16981,6 @@ SgProject::set_Fortran_only (bool value)
 bool
 SgProject::get_C_only (void) const
    {
-  // look at how the files are set (C here implies C89)
-  // bool result = false;
      bool result = p_C_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16787,12 +16990,9 @@ SgProject::get_C_only (void) const
      return result;
    }
 
-
-// DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
 bool
 SgProject::get_C89_only (void) const
    {
-  // look at how the files are set (C89 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16802,12 +17002,9 @@ SgProject::get_C89_only (void) const
      return result;
    }
 
-
-// DQ (8/30/2013): Added support for -std-gnu99 seperate from -std=c99.
 bool
 SgProject::get_C89_gnu_only (void) const
    {
-  // look at how the files are set (GNU C89 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16817,11 +17014,34 @@ SgProject::get_C89_gnu_only (void) const
      return result;
    }
 
+bool
+SgProject::get_C90_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C90_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_C90_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C90_gnu_only();
+        }
+     return result;
+   }
+
 
 bool
 SgProject::get_C99_only (void) const
    {
-  // look at how the files are set (C99 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16831,11 +17051,9 @@ SgProject::get_C99_only (void) const
      return result;
    }
 
-// DQ (8/30/2013): Added support for -std-gnu99 seperate from -std=c99.
 bool
 SgProject::get_C99_gnu_only (void) const
    {
-  // look at how the files are set (GNU C99 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16846,23 +17064,8 @@ SgProject::get_C99_gnu_only (void) const
    }
 
 bool
-SgProject::get_Cxx_only (void) const
-   {
-  // look at how the files are set (C++ only)
-  // bool result = false;
-     bool result = p_Cxx_only;
-     for (int i = 0; i < numberOfFiles(); i++)
-        {
-          SgFile & file = get_file(i);
-          result = result || (bool) file.get_Cxx_only();
-        }
-     return result;
-   }
-
-bool
 SgProject::get_C11_only (void) const
    {
-  // look at how the files are set (C11 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16875,7 +17078,6 @@ SgProject::get_C11_only (void) const
 bool
 SgProject::get_C11_gnu_only (void) const
    {
-  // look at how the files are set (GNU C99 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16888,7 +17090,6 @@ SgProject::get_C11_gnu_only (void) const
 bool
 SgProject::get_C14_only (void) const
    {
-  // look at how the files are set (C14 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16901,7 +17102,6 @@ SgProject::get_C14_only (void) const
 bool
 SgProject::get_C14_gnu_only (void) const
    {
-  // look at how the files are set (GNU C99 only)
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16912,15 +17112,61 @@ SgProject::get_C14_gnu_only (void) const
    }
 
 bool
-SgProject::get_Cxx0x_only (void) const
+SgProject::get_Cxx_only (void) const
    {
-  // look at how the files are set (C++0x only)
-  // bool result = false;
-     bool result = p_Cxx0x_only;
+     bool result = p_Cxx_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
-          result = result || (bool) file.get_Cxx0x_only();
+          result = result || (bool) file.get_Cxx_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx98_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx98_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx98_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx98_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx03_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx03_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx03_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx03_gnu_only();
         }
      return result;
    }
@@ -16928,9 +17174,7 @@ SgProject::get_Cxx0x_only (void) const
 bool
 SgProject::get_Cxx11_only (void) const
    {
-  // look at how the files are set (C++11 only)
-  // bool result = false;
-     bool result = p_Cxx11_only;
+     bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -16940,11 +17184,21 @@ SgProject::get_Cxx11_only (void) const
    }
 
 bool
+SgProject::get_Cxx11_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx11_gnu_only();
+        }
+     return result;
+   }
+
+bool
 SgProject::get_Cxx14_only (void) const
    {
-  // look at how the files are set (C++11 only)
-  // bool result = false;
-     bool result = p_Cxx14_only;
+     bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
@@ -16954,10 +17208,44 @@ SgProject::get_Cxx14_only (void) const
    }
 
 bool
+SgProject::get_Cxx14_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx14_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx17_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx17_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx17_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx17_gnu_only();
+        }
+     return result;
+   }
+
+bool
 SgProject::get_Fortran_only (void) const
    {
-  // look at how the files are set
-  // bool result = false;
      bool result = p_Fortran_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16970,7 +17258,6 @@ SgProject::get_Fortran_only (void) const
 bool
 SgProject::get_F77_only (void) const
    {
-  // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16983,7 +17270,6 @@ SgProject::get_F77_only (void) const
 bool
 SgProject::get_F90_only (void) const
    {
-  // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -16996,7 +17282,6 @@ SgProject::get_F90_only (void) const
 bool
 SgProject::get_F95_only (void) const
    {
-  // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -17009,7 +17294,6 @@ SgProject::get_F95_only (void) const
 bool
 SgProject::get_F2003_only (void) const
    {
-  // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
@@ -17022,12 +17306,23 @@ SgProject::get_F2003_only (void) const
 bool
 SgProject::get_F2008_only (void) const
    {
-  // look at how the files are set
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_F2008_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_F2018_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_F2018_only();
         }
      return result;
    }

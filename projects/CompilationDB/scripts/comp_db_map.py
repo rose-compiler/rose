@@ -16,7 +16,7 @@ def enforce_abspath(path, bdir):
 	else:
 		return os.path.realpath(bdir + '/' + path)
 
-def normalize_trans_unit(trans_unit):
+def normalize_translation_unit(trans_unit):
 	assert os.path.isabs(trans_unit['directory']), 'Found a "command object" where the workdir ("directory" field) is a relative path.'
 
 	# if argument field is not provided build it from commend field
@@ -52,6 +52,30 @@ def normalize_trans_unit(trans_unit):
 		trans_unit.update({ 'output' : outfile })
 
 	return trans_unit
+
+def remove_duplicate_translation_units(comp_db):
+	tu_map = dict()
+	for tu in comp_db:
+		key = ( tu['file'] , tu['output'] if 'output' in tu else '' , tu['directory'] )
+		if key in tu_map:
+			tu_map[key].append(tu)
+		else:
+			tu_map.update({ key : [ tu ] })
+	res_comp_db = list()
+	for ( ( fin , fout , wdir ) , tus ) in tu_map.iteritems():
+		assert len(tus) > 0
+		if len(tus) == 1:
+			res_comp_db.append(tus[0])
+		else:
+			assert len(tus) == 2, "Found more than two copies of the same translation unit!!!"
+			if len(tus[0]['arguments'][0]) < len(tus[1]['arguments'][0]):
+				res_comp_db.append(tus[0])
+			else:
+				res_comp_db.append(tus[1])
+	return res_comp_db
+
+def normalize_compilation_database(comp_db):
+        return remove_duplicate_translation_units(map(normalize_translation_unit, comp_db))
 
 def transform_original_args(args, filter_args, replace_args):
 	args = filter(lambda arg: not arg in filter_args, args)
@@ -104,7 +128,7 @@ def apply_tool_helper(kwargs):
 def map_tool(job):
 	start_time = time.time()
 
-	workload = map(lambda tu: { 'trans_unit' : normalize_trans_unit(tu), 'tool' : job['tool']['command'], 'args' : job['arguments'] }, job['database'])
+	workload = map(lambda tu: { 'trans_unit' : tu, 'tool' : job['tool']['command'], 'args' : job['arguments'] }, job['database'])
 
 	sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds".format(0, len(workload), 0 ))
 	sys.stdout.flush()
@@ -247,6 +271,8 @@ def cli_parse_args(argv):
 	except:
 		print "The database file is not a valid JSON file!"
 		exit(1)
+
+	args.database = normalize_compilation_database(args.database)
 
 	if args.report is None:
 		args.report = '{}/{}.json'.format(args.builddir, os.path.basename(args.tool))
