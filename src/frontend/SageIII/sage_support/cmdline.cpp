@@ -6562,10 +6562,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          inputCommandLine.push_back("--upc");
          break;
        }
-       case e_cxx98_standard: {
-         inputCommandLine.push_back("--c++98");
-         break;
-       }
+       case e_cxx98_standard: // EDG does not provide an option to specify the C++ 98 standard, we specify the C++ 03 standard instead
        case e_cxx03_standard: {
          inputCommandLine.push_back("--c++03");
          break;
