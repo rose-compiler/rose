@@ -5298,6 +5298,9 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization() $ROSE_OVERRIDE;
 
+       // ROSE-1499
+          void check_file_id(char * label, bool assertion=true) const;
+
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
           static int addFilenameToMap ( const std::string & filename );
@@ -13601,17 +13604,10 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
      printf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
 #endif
 
-  // DQ (10/22/2007): Fixed to permit "" to be a valid filename
-  // DQ (5/11/2006): Allow "NULL_FILE" as a name (used within ROSE) to map to the NULL_FILE_ID 
-  // if (filename.empty() == true)
-  // if (filename.empty() == true || filename == "NULL_FILE")
-     if (filename == "NULL_FILE")
+  // ROSE-1499: Set p_file_id to NULL_FILE_ID before calling set_filenameString (if needed)
+     p_file_id = NULL_FILE_ID;
+     if (filename != "NULL_FILE")
         {
-          p_file_id = NULL_FILE_ID;
-        }
-       else 
-        {
-       // DQ (7/25/2005): Refactored to use set_filename()
           set_filenameString(filename);
         }
 
@@ -13730,16 +13726,35 @@ Sg_File_Info::post_construction_initialization()
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-  // assert(this != (Sg_File_Info*) 0x5231b0);
+  // ROSE-1499 check that p_file_id is valid
+     check_file_id("Sg_File_Info::post_construction_initialization");
    }
 
+// ROSE-1499
+void Sg_File_Info::check_file_id(char * label, bool assertion) const {
+  if ( ( (p_file_id >= 0) && (p_fileidtoname_map.count(p_file_id) == 0) ) || ( (p_file_id < -6) || ( p_file_id > (int)p_fileidtoname_map.size() ) ) ) {
+    printf("ERROR from %s:\n", label);
+    printf("  Sg_File_Info::this = %p\n", this);
+    printf("  p_file_id = %d\n", p_file_id);
+    printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
+    printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+    printf("  isTransformation() = %d\n", isTransformation());
+    printf("  isCompilerGenerated() = %d\n", isCompilerGenerated());
+    printf("  isFrontendSpecific() = %d\n", isFrontendSpecific());
+  }
+  if (assertion) {
+     ROSE_ASSERT((p_file_id < 0) || (p_fileidtoname_map.count(p_file_id) > 0));
+     ROSE_ASSERT((p_file_id > -7) && (p_file_id < (int)p_fileidtoname_map.size()));
+  }
+}
 
 int 
 Sg_File_Info::get_file_id () const
    {
   // DQ (10/27/2007): This is custom generated so that it can be consistant with the get_filename() member function
      assert (this != NULL);
-  // return p_file_id;
+
+     check_file_id("Sg_File_Info::get_file_id");
 
   // initialize to bad value
      int returnValue = -99;
@@ -13751,7 +13766,6 @@ Sg_File_Info::get_file_id () const
         }
        else
         {
-#if 1
        // DQ (11/1/2007): This does not allow for isSameFile() to compare properly when testing for "rose_edg_required_macros_and_functions.h"
           if ( isCompilerGenerated() == true )
              {
@@ -13759,6 +13773,19 @@ Sg_File_Info::get_file_id () const
             // returnValue = undefinedValue;
                if ( isFrontendSpecific() == true )
                   {
+#define FAIL_ON_ROSE_1532 0
+#if FAIL_ON_ROSE_1532
+                    if (p_fileidtoname_map.count(p_file_id) == 0 && p_file_id == COMPILER_GENERATED_FILE_ID) {
+                      printf("ERROR: Sg_File_Info::get_file_id(this = %p):\n", this);
+                      printf("  isFrontendSpecific() == true => p_file_id == file_id_of(\"rose_edg_required_macros_and_functions.h\")\n");
+                      printf("  BUT:  p_file_id = %d\n", p_file_id);
+                      printf("  HERE: p_file_id == COMPILER_GENERATED_FILE_ID\n");
+                      printf("  BYPASSED: seen for a SgInitializedName in the parameter list of __builtin_atan2\n");
+                      ROSE_ASSERT(false);
+                    }
+#endif
+                 // ROSE-1499: check that p_file_id is valid
+                    ROSE_ASSERT(p_file_id == COMPILER_GENERATED_FILE_ID || p_fileidtoname_map.count(p_file_id) > 0);
                  // In this case return the file_id of the specific file which indicates this properly ("rose_edg_required_macros_and_functions.h").
                     returnValue = p_file_id;
                   }
@@ -13769,23 +13796,22 @@ Sg_File_Info::get_file_id () const
              }
             else
              {
-               returnValue = p_file_id;
-             }
-#else
-       // Older (previous) code
-
-#error "DEAD CODE!"
-
-          if ( isCompilerGenerated() == true )
-             {
-            // returnValue = undefinedValue;
-               returnValue = COMPILER_GENERATED_FILE_ID;
-             }
-            else
-             {
-               returnValue = p_file_id;
-             }
+#define FAIL_ON_ROSE_1533 0
+#if FAIL_ON_ROSE_1533
+               if (p_fileidtoname_map.count(p_file_id) == 0 && p_file_id == NULL_FILE_ID) {
+                 printf("ERROR: Sg_File_Info::get_file_id(this = %p):\n", this);
+                 printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
+                 printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+                 printf("  p_file_id should represent a valid file.\n", p_file_id);
+                 printf("  HERE: p_file_id == NULL_FILE_ID\n");
+                 printf("  BYPASSED: seen for a SgCtorInitializerList of foo1 in Cxx_tests/test2003_01.C (the SgCtorInitializerList is implicit).\n");
+                 ROSE_ASSERT(false);
+               }
 #endif
+            // ROSE-1499: check that p_file_id is valid
+               ROSE_ASSERT(p_file_id == NULL_FILE_ID || p_fileidtoname_map.count(p_file_id) > 0);
+               returnValue = p_file_id;
+             }
         }
 
   // DQ (12/18/2012): Added assertion.
@@ -13799,6 +13825,8 @@ Sg_File_Info::set_file_id( int file_id )
    {
      assert (this != NULL);
      set_isModified(true);
+
+     check_file_id("Sg_File_Info::set_file_id");
 
 #if 0
      printf ("In Sg_File_Info::set_file_id(file_id = %d) this = %p \n",file_id,this);
@@ -13839,6 +13867,7 @@ void
 Sg_File_Info::set_physical_file_id( int physical_file_id )
    {
      assert (this != NULL);
+
      set_isModified(true);
 
 #if 0
@@ -13859,6 +13888,7 @@ void
 Sg_File_Info::set_physical_source_position_to_match_logical_source_position()
    {
      assert (this != NULL);
+
      set_isModified(true);
 
      p_physical_file_id = p_file_id;
@@ -13899,6 +13929,9 @@ Sg_File_Info::addFilenameToMap ( const std::string & filename )
           returnValue = p_nametofileid_map[filename];
         }
 
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
+
      return returnValue;
    }
 
@@ -13908,6 +13941,8 @@ void
 Sg_File_Info::set_filenameString ( const std::string & filename )
    {
      assert (this != NULL);
+
+     check_file_id("Sg_File_Info::set_filenameString");
 
 #if 0
      printf ("In Sg_File_Info::set_filenameString(filename = %s) this = %p \n",filename.c_str(),this);
@@ -13923,6 +13958,9 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
         {
           p_file_id = p_nametofileid_map[filename];
         }
+
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
 
   // DQ (3/19/2017): Note that this is important for Fortran support (where IR nodes frequently 
   // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
@@ -13966,6 +14004,9 @@ Sg_File_Info::set_physical_filename ( const std::string & filename )
         {
           p_physical_file_id = p_nametofileid_map[filename];
         }
+
+     // ROSE-1499 check that the maps are the same size
+     ROSE_ASSERT(p_nametofileid_map.size() == p_fileidtoname_map.size());
    }
 
 void
@@ -13973,6 +14014,8 @@ void
 // Sg_File_Info::set_filenameString ( const std::string & filename )
 Sg_File_Info::set_filename(const char* filename)
    {
+     check_file_id("Sg_File_Info::set_filename");
+
   // DQ (9/5/2006): Modified implementation
   // set_filename(filename.c_str());
      assert(filename != NULL);
@@ -13983,7 +14026,7 @@ const std::string &
 Sg_File_Info::get_filenameString() const
    {
      assert (this != NULL);
-  // return p_filename;
+     check_file_id("Sg_File_Info::get_filenameString");
 
      const std::string* returnString = NULL;
 
@@ -14023,6 +14066,9 @@ Sg_File_Info::get_filenameString() const
 const char*
 Sg_File_Info::get_filename() const
    {
+
+     check_file_id("Sg_File_Info::get_filename");
+
   // DQ (10/15/2005): This function is the C string version of the get_filename() 
   // function which has been depricated. At some point the get_filename() function 
   // will be eliminated and later reinfroduced as get_filename() (finally building
@@ -14089,6 +14135,7 @@ void
 Sg_File_Info::set_line(int line)
    {
      assert (this != NULL);
+
      p_line = line;
      if (isTransformation() || isCompilerGenerated())
         {
@@ -14115,6 +14162,7 @@ int
 Sg_File_Info::get_line() const
    { 
      assert (this != NULL);
+
   // return p_line;
   // const int undefinedValue = INT_MAX-1;
      const int undefinedValue = 0;
@@ -14328,7 +14376,6 @@ bool
 Sg_File_Info::hasPositionInSource() const
    {
      assert(this != NULL);
-
   // DQ (1/11/2006): Modified to not use the output function which mixed 
   // concepts of compiler generated with output (deprecated function).
   // bool result = ( ! ( isTransformation() || isCompilerGenerated() || isCompilerGeneratedNodeToBeUnparsed() ) );
@@ -14443,6 +14490,7 @@ bool
 Sg_File_Info::isCompilerGenerated() const
    {
      assert(this != NULL);
+
 #if 0
      printf ("In Sg_File_Info::isCompilerGenerated(): this = %p \n",this);
 #endif
@@ -14557,7 +14605,6 @@ Sg_File_Info::setShared()
    {
   // MK (8/3/05) : We always want to unparse the current file (this is a performance issue)
      assert(this != NULL);
-
   // DQ (10/27/2007): Make sure this is a valid file that we are trying to share.
   // I am unclear as to how important this is.
      int temp_file_id = this->get_file_id();
@@ -14835,7 +14882,6 @@ int
 Sg_File_Info::getIDFromFilename( std::string filename )
    {
   // This is a static function
-
 #if 1
   // DQ (10/22/2007): Should this be commented out?
 
