@@ -1516,7 +1516,8 @@ ROSEAttributesList::setFileName(const string & fName)
      printf ("In ROSEAttributesList::setFileName(): Verify that the filenames are correct for all comments in this list! \n");
   // ROSE_ASSERT(false);
 
-#if 1
+  // TV (11/19/2018): ROSE-1470: with File I/O, SgFile (and contained ROSEAttributesList) are loaded before Sg_File_Info causing issues....
+#if 0
   // Error checking!
      vector<PreprocessingInfo*>::iterator i = attributeList.begin();
      while( i != attributeList.end() )
@@ -1528,8 +1529,6 @@ ROSEAttributesList::setFileName(const string & fName)
        // ROSE_ASSERT( (*i)->get_file_info()->get_filenameString() == getFileName());
           i++;
         }
-#else
-     printf ("ROSEAttributesList::setFileName(fName = %s): Error checking disabled \n",fName.c_str());
 #endif
    }
 
