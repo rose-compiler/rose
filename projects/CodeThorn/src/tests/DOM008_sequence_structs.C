@@ -18,5 +18,6 @@ int main() {
   sp->y=sp->y+1;
   p=&(sp->y);
   *p=*p+1;
+  *&(sp->y)=*p+1;
 }
 
