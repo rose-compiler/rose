@@ -5539,6 +5539,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (10/09/2018): ROSE-1392
      optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
+  // TV (11/20/2018): ROSE-1529: removed non-standard standard selection
+     optionCount = sla(argv, "-std=", "($)", "(c|c++|gnu|gnu++|fortran|upc|upcxx)",1);
+
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
 
@@ -7323,9 +7326,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("   --- get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
-#if 1
-  // DQ (29/8/2017): Newer version of code to support multiple languges.
-
   // For now let's enforce this, for internal testing, but translators will fail for this assertion in the future.
      if (get_inputLanguage() != get_outputLanguage())
         {
@@ -7650,9 +7650,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          break; // FIXME Does the Fortran frontend support -std option?
        }
      }
-
-#else
-#endif
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
