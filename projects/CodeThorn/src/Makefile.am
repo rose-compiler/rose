@@ -766,6 +766,10 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
+check-dev:
+	./codethorn tests/DOM007_sequence.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM007_sequence.C."
+
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)

@@ -142,7 +142,7 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     std::string s=stringVal->get_value();
     VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
     AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
-    //cout<<"DEBUG: Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    logger[TRACE]<<"Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
     return val;
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
@@ -225,16 +225,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
   list<SingleEvalResultConstInt> resList;
   AbstractValue result;
   if(SgVarRefExp* varExp=isSgVarRefExp(node)) {
-#if 0
-    result=computeAbstractAddress(varExp);
-#else
     return evalLValueVarRefExp(varExp,estate);
-#endif
+  } else if(SgPntrArrRefExp* arrRef=isSgPntrArrRefExp(node)) {
+    return evalLValuePntrArrRefExp(arrRef,estate);
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
     cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     exit(1);
   }
+  // not reachable anymore (dead code)
   SingleEvalResultConstInt res;
   res.init(estate,result);
   resList.push_back(res);
@@ -380,7 +379,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   
   if(isLValueOp(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
+#if 1
     list<SingleEvalResultConstInt> operandResultList=evaluateLExpression(child,estate);
+#else
+    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,MODE_ADDRESS);
+#endif
     //assert(operandResultList.size()==1);
     list<SingleEvalResultConstInt> resultList;
     for(auto oiter:operandResultList) {
@@ -753,6 +756,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
+    // Precision: imprecise
     res.result=CodeThorn::Top();
     resultList.push_back(res);
     return resultList;
@@ -800,11 +804,24 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
-        // return address of denoted memory location
-        res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
-        //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
-        return listify(res);
+        // address of denoted memory location
+        switch(mode) {
+        case MODE_VALUE:
+          res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
+          //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
+          return listify(res);
+        case MODE_ADDRESS:
+          res.result=arrayPtrPlusIndexValue;
+          return listify(res);
+        default:
+          cerr<<"Internal error: evalArrayReferenceOp: unsupported EvalMode."<<endl;
+          exit(1);
+        }
       } else {
+        if(mode==MODE_ADDRESS) {
+          cerr<<"Error: evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          exit(1);
+        }
         // array variable NOT in state. Special space optimization case for constant array.
         if(_variableIdMapping->hasArrayType(arrayVarId) && args.getBool("explicit-arrays")==false) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
@@ -998,7 +1015,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node
   if(operand.isTop()||operand.isBot()) {
     res.result=operand;
   } else {
+#if 0
     res.result=AbstractValue(operand.getVariableId());
+#else
+    res.result=operand;
+#endif
   }
   return listify(res);
 }
@@ -1141,6 +1162,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   // TODO: assignments in index computations of ignored array ref
   // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
   // since nothing can change (because of being ignored) state remains the same
+  //cout<<"DEBUG: evalLValuePntrArrRefExp"<<endl;
   PState oldPState=*estate.pstate();
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
@@ -1151,6 +1173,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   } else {
     SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
     SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
+#if 1
+    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
+    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+    list<SingleEvalResultConstInt> resultList;
+    for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+        riter!=rhsResultList.end();
+        ++riter) {
+      for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
+          liter!=lhsResultList.end();
+          ++liter) {
+        //cout<<"DEBUG: lhs-val: "<<(*liter).result.toString()<<endl;
+        //cout<<"DEBUG: rhs-val: "<<(*riter).result.toString()<<endl;
+        list<SingleEvalResultConstInt> intermediateResultList=evalArrayReferenceOp(node,*liter,*riter,estate,MODE_ADDRESS);
+        // move elements from intermediateResultList to resultList
+        resultList.splice(resultList.end(), intermediateResultList);
+      }
+    }
+    return resultList;
+#endif
     if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
       PState pstate2=oldPState;
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
