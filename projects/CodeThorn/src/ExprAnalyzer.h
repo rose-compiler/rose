@@ -263,8 +263,12 @@ namespace CodeThorn {
     // special case of sizeof operator (operates on types and types of expressions)
     list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
                                                 EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    // handles DotExp and ArrowExp
+    list<SingleEvalResultConstInt> evalLValueExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate);
     

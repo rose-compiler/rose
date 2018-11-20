@@ -767,8 +767,11 @@ check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
 check-dev:
-	./codethorn tests/DOM007_sequence.C --stg-trace-file=trace.txt --log-level=trace
-	@echo "Generated trace.txt for DOM007_sequence.C."
+	./codethorn $(srcdir)/tests/DOM007_sequence_arrays.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM007_sequence_arrays.C."
+check-dev2:
+	./codethorn $(srcdir)/tests/DOM008_sequence_structs.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM008_sequence_structs.C."
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

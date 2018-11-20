@@ -228,16 +228,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateLExpression(SgNode* node,ES
     return evalLValueVarRefExp(varExp,estate);
   } else if(SgPntrArrRefExp* arrRef=isSgPntrArrRefExp(node)) {
     return evalLValuePntrArrRefExp(arrRef,estate);
+  } else if(SgDotExp* dotExp=isSgDotExp(node)) {
+    return evalLValueExp(dotExp,estate);
+  } else if(SgArrowExp* arrowExp=isSgArrowExp(node)) {
+    return evalLValueExp(arrowExp,estate);
   } else {
     cerr<<"Error: unsupported lvalue expression: "<<node->unparseToString()<<endl;
     cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     exit(1);
   }
-  // not reachable anymore (dead code)
-  SingleEvalResultConstInt res;
-  res.init(estate,result);
-  resList.push_back(res);
-  return resList;
+  // unreachable
+  ROSE_ASSERT(false);
 }
 
 bool ExprAnalyzer::isLValueOp(SgNode* node) {
@@ -1157,6 +1158,44 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMinusMinusOp(SgMinusMinusOp* no
   throw CodeThorn::Exception("Internal error: ExprAnalyzer::evalMinusMinusOp: "+node->unparseToString());
 }
 
+
+// for evaluating LValue Arrow, Dot, 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueExp(SgNode* node, EState estate, EvalMode mode) {
+  ROSE_ASSERT(isSgDotExp(node)||isSgArrowExp(node));
+  PState oldPState=*estate.pstate();
+  SingleEvalResultConstInt res;
+  res.init(estate,AbstractValue(CodeThorn::Bot()));
+
+  SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
+  SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
+
+  list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
+  list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+  list<SingleEvalResultConstInt> resultList;
+  for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
+      riter!=rhsResultList.end();
+      ++riter) {
+    for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
+	liter!=lhsResultList.end();
+	++liter) {
+      //cout<<"DEBUG: lhs-val: "<<(*liter).result.toString()<<endl;
+      //cout<<"DEBUG: rhs-val: "<<(*riter).result.toString()<<endl;
+      list<SingleEvalResultConstInt> intermediateResultList;
+      if(SgDotExp* dotExp=isSgDotExp(node)) {
+	intermediateResultList=evalDotOp(dotExp,*liter,*riter,estate,MODE_ADDRESS);
+      } else if(SgArrowExp* arrowExp=isSgArrowExp(node)) {
+	intermediateResultList=evalArrowOp(arrowExp,*liter,*riter,estate,MODE_ADDRESS);
+      } else {
+	cerr<<"Internal error: ExprAnalyzer::evalLValueExp: wrong oeprator node type: "<<node->class_name()<<endl;
+	exit(1);
+      }
+      // move elements from intermediateResultList to resultList
+      resultList.splice(resultList.end(), intermediateResultList);
+    }
+  }
+  return resultList;
+}
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode) {
   // for now we ignore array refs on lhs
   // TODO: assignments in index computations of ignored array ref
@@ -1167,13 +1206,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   if(getSkipArrayAccesses()) {
-    // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
     res.result=CodeThorn::Top();
     return listify(res);
   } else {
     SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
     SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
-#if 1
+
     list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
     list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
     list<SingleEvalResultConstInt> resultList;
@@ -1191,7 +1229,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
       }
     }
     return resultList;
-#endif
+
+    // dead code from here on
     if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
       PState pstate2=oldPState;
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);

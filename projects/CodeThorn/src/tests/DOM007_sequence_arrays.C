@@ -22,4 +22,9 @@ int main() {
   a[i+1]=a[i+1]+1;
   int* s;
   s=&a[1];
+  int* b[2];
+  int e1;
+  b[1]=&e1;
+  *b[1]=1;
 }
+
