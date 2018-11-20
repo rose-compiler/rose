@@ -7085,17 +7085,32 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
 
           case SgTemplateArgument::nontype_argument:
              {
-               if (arg1->get_expression() == arg2->get_expression()) 
-                  {
+               SgExpression * expr1 = arg1->get_expression();
+               SgExpression * expr2 = arg2->get_expression();
+               if (expr1 == expr2) {
 #if DEBUG_TEMPLATE_ARG_EQUIVALENCE
                     printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: checking for the same expression: returning true \n");
 #endif
                     return true;
-                  }
-                 else
-                  {
-                    ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
-                  }
+               } else if (expr1->variantT() == expr2->variantT() ) {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: same variant of expression: %s\n", expr1->class_name().c_str());
+#endif
+                    switch (expr1->variantT()) {
+                      case V_SgLongIntVal: {
+                        return ((SgLongIntVal *)expr1)->get_value() == ((SgLongIntVal *)expr2)->get_value();
+                      }
+                      default: {
+                        printf ("FATAL: In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: expression have the same variant %s but comparison is not NIY!\n", expr1->class_name().c_str());
+                        ROSE_ASSERT(false);
+                      }
+                    }
+               } else {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: different variant of expression: returning false \n");
+#endif
+                    return false;
+               }
              }
 
           case SgTemplateArgument::template_template_argument:
