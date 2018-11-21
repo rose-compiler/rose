@@ -73,6 +73,8 @@ namespace AbstractHandle
   }
 
   //return name for various named constructs
+  // return empty string if somehow we cannot get a good name.
+  // for a node without a name, we will use numbering or label as its specifier.
   string roseNode::getName() const
   {
     string result;
@@ -110,11 +112,19 @@ namespace AbstractHandle
         case V_SgFunctionDeclaration:
         case V_SgTemplateDeclaration:
         case V_SgMemberFunctionDeclaration:
+        case V_SgTemplateMemberFunctionDeclaration:
           {
             result = (decl->search_for_symbol_from_symbol_table()->get_name()).getString();
             ROSE_ASSERT(result.length()!=0);
             break;
           }
+
+        // support template instantiations: they have names
+        // symbol name is not sufficient to differentiate them: must have parameters followed.
+        // Try mangled names are too long!!
+        case V_SgTemplateInstantiationDecl:
+        case V_SgTemplateInstantiationMemberFunctionDecl:  
+        case V_SgTemplateInstantiationFunctionDecl:
           // No explicit name available
         case V_SgCtorInitializerList:
         case V_SgPragmaDeclaration:
@@ -126,8 +136,8 @@ namespace AbstractHandle
           }
         default:
           {
-            cerr<<"error, unhandled declaration type in roseNode::getName(): "<<mNode->class_name()<<endl;
-            ROSE_ASSERT(false);
+            cerr<<"Warning, unhandled declaration type in roseNode::getName(), use default empty name for "<<mNode->class_name()<<endl;
+            //ROSE_ASSERT(false);
             break;
           }
       }// end switch
@@ -232,13 +242,17 @@ namespace AbstractHandle
     return pos;
   }
 
-  // return the numbering within a scope 
+  // return the numbering within a scope /parent node
+  // start from 1
   size_t roseNode::getNumbering(const abstract_node * another_node) const
   {
     size_t number = 1;
     // self is counted as number 1 if no parent node exists
     if (another_node==NULL)
       return 1;
+
+    // find nodes of the same type within the parent/scope node
+    // using preorder traversal to order the nodes.
     SgNode* root = (SgNode*) ((dynamic_cast<const roseNode*> (another_node))->getNode());
     ROSE_ASSERT(root !=NULL);
     Rose_STL_Container <SgNode*> nodeArray = NodeQuery::querySubTree(root,mNode->variantT());
@@ -263,7 +277,7 @@ namespace AbstractHandle
     return result;
   }
 
-  //Find a node from a string for a abstract handle
+  //Find a node from a string for an abstract handle
   // eg. find a file node from a string like SgSourceFile<name,/home/liao6/names.cpp>
   abstract_node* roseNode::findNode(std::string construct_type_str, specifier mspecifier) const  
   {
@@ -274,6 +288,7 @@ namespace AbstractHandle
       return NULL; 
 
     //Get all matched nodes according to node type
+    // search within current node as root for a subtree
     Rose_STL_Container<SgNode*> nodelist =  NodeQuery::querySubTree((SgNode*)(getNode()),vt);
 
     for (Rose_STL_Container<SgNode *>::iterator i=nodelist.begin();i!=nodelist.end();i++)
@@ -294,14 +309,16 @@ namespace AbstractHandle
           result = cnode;
           break;
         }
-      } else if (mspecifier.get_type()==e_numbering)
+      } 
+      else if (mspecifier.get_type()==e_numbering)
       {
         if (mspecifier.get_value().int_v == cnode->getNumbering(this))
         {
           result = cnode;
           break;
         }
-      } else
+      } 
+      else
       {
         cerr<<"error: unhandled specifier type in roseNode::findNode()"<<endl;
         ROSE_ASSERT(false);

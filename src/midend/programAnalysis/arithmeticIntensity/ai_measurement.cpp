@@ -500,7 +500,7 @@ namespace ArithmeticIntensityMeasurement
     assert (t!=NULL);
 
     // strip off typedefs, reference, modifiers
-    t = t->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+    t = t->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE);
 
     // Fortran allow type_kind for types, read this first
     if (SgExpression* kind_exp =t->get_type_kind() )
