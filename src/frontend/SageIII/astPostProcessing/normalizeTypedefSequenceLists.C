@@ -178,7 +178,7 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
 
             // DQ (9/12/2011): Static analysis wants an assertion here.
                ROSE_ASSERT(baseType != NULL);
-               baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE);
+               baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE);
                if (baseType == previousBaseType)
                     baseType = NULL;
 

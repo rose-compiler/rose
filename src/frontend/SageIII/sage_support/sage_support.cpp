@@ -939,7 +939,7 @@ cout.flush();
                     file->set_outputFormat(SgFile::e_fixed_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_fixed_form_output_format);
 
-                    file->set_F77_only(true);
+                    file->set_F77_only();
                   }
 
                if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
@@ -951,7 +951,7 @@ cout.flush();
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
-                    file->set_F90_only(true);
+                    file->set_F90_only();
                   }
 
                if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
@@ -963,7 +963,7 @@ cout.flush();
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
-                    file->set_F95_only(true);
+                    file->set_F95_only();
                   }
 
                if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
@@ -975,7 +975,7 @@ cout.flush();
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
-                    file->set_F2003_only(true);
+                    file->set_F2003_only();
                   }
 
                if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
@@ -988,7 +988,7 @@ cout.flush();
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
                  // DQ (1/23/2009): I think that since CAF is an extension of F2003, we want to mark this as F2003 as well.
-                    file->set_F2003_only(true);
+                    file->set_F2003_only();
                     file->set_CoArrayFortran_only(true);
                   }
 
@@ -1005,7 +1005,7 @@ cout.flush();
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
-                    file->set_F2008_only(true);
+                    file->set_F2008_only();
                   }
              }
             else
@@ -1091,17 +1091,11 @@ cout.flush();
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
-                                   file->set_UPC_only(true);
+                                   file->set_UPC_only();
                                  }
                                 else
                                  {
-                                // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
-                                // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
-                                   file->set_C99_only(true);
-
-                                // DQ (9/3/2013): Set the default to use gnu99 when defaulting to C mode (this will be reset if the -std=c99 option is used).
-                                // However, it might be better still to check the backend compiler before we default to GNU.
-                                   file->set_C99_gnu_only(true);
+                                   file->set_C99_gnu_only();
 #if 0
                                    printf ("In determineFileType(): Setting the default mode for detected C cile to C99 (specifically generated code will use: -std=gnu99 option) \n");
 #endif

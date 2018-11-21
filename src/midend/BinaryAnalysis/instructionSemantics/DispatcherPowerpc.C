@@ -718,7 +718,7 @@ struct IP_mfcr: P {
 struct IP_move: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->read(args[1], 32));
+        d->write(args[0], d->read(args[1]));
     }
 };
 

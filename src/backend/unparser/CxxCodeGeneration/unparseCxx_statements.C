@@ -2644,6 +2644,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                return;
              }
 
+// TV (10/15/18): this is an issue when forcing ROSE to unparse the template instantiation in Kripke::Kernel
+#if 0
           bool skipInlinedTemplates = templateInstantiationFunctionDeclaration->get_functionModifier().isInline();
           if (skipInlinedTemplates == true)
              {
@@ -2656,6 +2658,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
                return;
              }
+#endif
 
 #if PRINT_DEVELOPER_WARNINGS
           curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): part of transformation - output the template function declaration */ \n "));
@@ -5489,10 +5492,7 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                  // Note: We might want to refine this criteria to if the associated class is a SgTemplateClassDeclaration.
 
                  // DQ (9/10/2014): Add the typename based on the base type ignoreing modifiers, etc.
-                 // SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
-                 // SgClassType*   classType   = isSgClassType(rtype);
-                 // SgTypedefType* typedefType = isSgTypedefType(rtype);
-                    SgType* baseTypeOfPointerOrReference = rtype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
+                    SgType* baseTypeOfPointerOrReference = rtype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
 
                     SgClassType*   classType   = isSgClassType(baseTypeOfPointerOrReference);
                     SgTypedefType* typedefType = isSgTypedefType(baseTypeOfPointerOrReference);
@@ -7137,7 +7137,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // declaration (if so then we need to output the name in this associated declaration).
                  // if (isSgNamedType(tmp_type) != NULL)
 #error "DEAD CODE!"
-                    SgType* baseType = tmp_type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+                    SgType* baseType = tmp_type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                     SgClassType* classType = isSgClassType(baseType);
                     SgEnumType*  enumType  = isSgEnumType(baseType);
                     if (classType != NULL || enumType != NULL)
@@ -10092,7 +10092,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
             // Get the base type and if it is a class or enum, is it associated with a un-named 
             // declaration (if so then we need to output the name in this associated declaration).
                printf ("In unparseTypedefStmt(): (before stripType()): btype = %p = %s \n",btype,btype->class_name().c_str());
-               SgType* baseType = btype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+               SgType* baseType = btype->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                printf ("In unparseTypedefStmt(): (after stripType()): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
                SgClassType* classType = isSgClassType(baseType);
                SgEnumType*  enumType  = isSgEnumType(baseType);
