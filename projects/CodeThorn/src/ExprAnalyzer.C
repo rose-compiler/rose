@@ -142,7 +142,7 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     std::string s=stringVal->get_value();
     VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
     AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
-    logger[TRACE]<<"Found StringValue: "<<s<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    logger[TRACE]<<"Found StringValue: "<<"\""<<s<<"\""<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
     return val;
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
@@ -748,16 +748,18 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                  SingleEvalResultConstInt arrayExprResult, 
                                  SingleEvalResultConstInt indexExprResult,
                                  EState estate, EvalMode mode) {
-  //cout<<"DEBUG: evalArrayReferenceOp: "<<node->unparseToString()<<endl;
+  logger[TRACE]<<"evalArrayReferenceOp: "<<node->unparseToString()<<endl;
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
   SgNode* arrayExpr=SgNodeHelper::getLhs(node);
- 
+  logger[TRACE]<<"arrayExpr: "<<arrayExpr->unparseToString()<<endl;
+
   if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
     // Precision: imprecise
+    logger[TRACE]<<"ExprAnalyzer::evalArrayReferenceOp: returns top"<<endl;
     res.result=CodeThorn::Top();
     resultList.push_back(res);
     return resultList;
@@ -802,7 +804,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
       if(pstate->varExists(arrayPtrValue)) {
-        //cout<<"DEBUG: ARRAY PTR VALUE IN STATE (OK!)."<<endl;
+      } else {
+        logger[TRACE]<<"evalArrayReferenceOp: array pointer value NOT in state: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         // address of denoted memory location
@@ -820,7 +823,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else {
         if(mode==MODE_ADDRESS) {
-          cerr<<"Error: evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
         }
         // array variable NOT in state. Special space optimization case for constant array.
@@ -862,12 +865,12 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           res.result=CodeThorn::Top();
           return listify(res);
         } else {
-          //cout<<estate.toString(_variableIdMapping)<<endl;
-          //cout<<"DEBUG: Program error detected: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          cout<<estate.toString(_variableIdMapping)<<endl;
+          cout<<"DEBUG: Program error detected: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-          //cerr<<"AST: "<<node->unparseToString()<<endl;
-          //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
+          cerr<<"AST: "<<node->unparseToString()<<endl;
+          cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
           _nullPointerDereferenceLocations.recordPotentialLocation(estate.label());
         }
       }

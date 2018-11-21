@@ -1721,9 +1721,6 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     }
 #endif
     // general case: the actual argument is an arbitrary expression (including a single variable)
-    // we use for the third parameter "false": do not use constraints when extracting values.
-    // Consequently, formalparam=actualparam remains top, even if constraints are available, which
-    // would allow to extract a constant value (or a range (when relational constraints are added)).
     list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
     if(evalResultList.size()==0) {
       cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
