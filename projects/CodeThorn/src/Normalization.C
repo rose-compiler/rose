@@ -262,15 +262,37 @@ namespace SPRAY {
       exprStmt->set_parent(stmt);
 
       // (iii) generate if-statement with old while-condition
-      SgIfStmt* ifStmt=SageBuilder::buildIfStmt(oldWhileCond,
+      // (iii.1) generate not operator to negate while condition
+      // (iii.2) build if stmt and insert into while/do-while loop
+      SgStatement* negatedOldWhileCond=0;
+      if(SgExprStatement* oldWhileCondExprStmt=isSgExprStatement(oldWhileCond)) {
+        SgExpression* oldWhileCondExpr=oldWhileCondExprStmt->get_expression();
+        ROSE_ASSERT(oldWhileCondExpr);
+        oldWhileCondExpr->set_parent(0);
+        SgExpression* negatedOldWhileCondExpr=SageBuilder::buildNotOp(oldWhileCondExpr);
+        ROSE_ASSERT(negatedOldWhileCondExpr);
+        negatedOldWhileCondExpr->set_parent(0);
+        ROSE_ASSERT(negatedOldWhileCondExpr);
+        oldWhileCondExprStmt->set_expression(negatedOldWhileCondExpr);
+        negatedOldWhileCondExpr->set_parent(oldWhileCondExprStmt);
+        negatedOldWhileCond=oldWhileCondExprStmt;
+      } else {
+        cerr<<"Error: Conditional of while-stmt not an expression ("<<oldWhileCond->class_name()<<"). Requires normalization."<<endl;
+        exit(1);
+      }
+      
+      ROSE_ASSERT(negatedOldWhileCond);
+      SgIfStmt* ifStmt=SageBuilder::buildIfStmt(negatedOldWhileCond,
                                                 SageBuilder::buildBreakStmt(),
                                                 0);
       SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(stmt));
       ROSE_ASSERT(body);
       // (iv) insert if-statement
       if(isSgWhileStmt(stmt)) {
+        // while loop
         SageInterface::prependStatement(ifStmt,body);
       } else {
+        // do-while loop
         SageInterface::appendStatement(ifStmt,body);
       }
     

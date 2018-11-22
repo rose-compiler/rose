@@ -872,6 +872,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           cerr<<"AST: "<<node->unparseToString()<<endl;
           cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
           _nullPointerDereferenceLocations.recordPotentialLocation(estate.label());
+          // do not generate a state because this is a null pointer dereference
         }
       }
     } else {
