@@ -11,7 +11,8 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-testNumbers=`echo {01..14}`
+function NormalizationTests {
+testNumbers=`echo {01..26}`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/NORM${testNumber};
@@ -19,7 +20,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
         g++ $benchmark
-        ./codethorn ${OPTIONS} $benchmark --normalize-all=yes --unparse=yes #> /dev/null
+        ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
         g++ rose_${benchmarkname} 
         if [ ! $? -eq 0 ]
         then
@@ -30,6 +31,10 @@ for testNumber in $testNumbers; do
         fi
     done
 done
-#rm -f rose_normalization*.C
+}
+
+NormalizationTests
+
+rm -f rose_normalization*.C
 rm -f a.out
 

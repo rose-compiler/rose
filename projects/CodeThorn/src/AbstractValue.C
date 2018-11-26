@@ -167,6 +167,7 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
   } else if(index.isConstInt()) {
     val.valueType=PTR;
     val.variableId=arrayVariableId;
+    ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
     return val;
   } else {
@@ -492,9 +493,9 @@ string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   case PTR: {
     stringstream ss;
     if(vim->getNumberOfElements(variableId)==1) {
-      ss<<variableId.toString(vim); // variables are arrays of size 1
+      ss<<variableId.toUniqueString(vim); // variables are arrays of size 1
     } else {
-      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+      ss<<variableId.toUniqueString(vim)<<"["<<getIntValue()<<"]";
     }
     return ss.str();
   }
@@ -516,9 +517,9 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
     if(vim->getNumberOfElements(variableId)==1) {
-      ss<<variableId.toString(vim); // variables are arrays of size 1
+      ss<<variableId.toUniqueString(vim); // variables are arrays of size 1
     } else {
-      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+      ss<<variableId.toUniqueString(vim)<<"["<<getIntValue()<<"]";
     }
     return ss.str();
   }
@@ -531,7 +532,7 @@ string AbstractValue::arrayVariableNameToString(SPRAY::VariableIdMapping* vim) c
   switch(valueType) {
   case PTR: {
     stringstream ss;
-    ss<<variableId.toString(vim);
+    ss<<variableId.toUniqueString(vim);
     return ss.str();
   }
   default:
@@ -555,7 +556,7 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
     //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
-        <<variableId.toString(vim)
+        <<variableId.toUniqueString(vim)
         <<","
         <<getIntValue()
         <<")";

@@ -29,6 +29,13 @@ CXXFLAGS              = -Wno-deprecated -std=c++11
 LDFLAGS               = 
 YACC                  = bison
 
+ROSE_INSTALLED = $(shell rose-config prefix)
+CXX      = $(shell $(ROSE_INSTALLED)/bin/rose-config cxx)
+CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags) -I. $(EXTRA_INCLUDES) -fopenmp -w
+CXXFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cxxflags)
+LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags) -L.
+LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
+
 # ROSE_INSTALL_LIB is environment variable referring to installed libs dir
 ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose
 
@@ -44,5 +51,7 @@ all: RERS_BINARY
 # Create a specialized hybrid analyzer for the given RERS problem.
 # Called by "generate_rers_hybrid_analyzer" script.
 $(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS_OPTIONS) $(BOOST_CPPFLAGS) -lspray -lcodethorn -lz3 -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) -L $(Z3_PREFIX)/lib
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS_OPTIONS) $(BOOST_CPPFLAGS) -L$(BOOST_HOME)/lib -lspray -lcodethorn -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) $(Z3_LINK_OPTIONS)
+	@echo "Linked hybrid analyzer $(TOOLNAME3)_$(PROBLEM)."
 
+# -L $(Z3_PREFIX)/lib

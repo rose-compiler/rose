@@ -44,8 +44,8 @@ namespace SPRAY {
       eliminateWhileStatements=false;
       hoistConditionExpressions=true;
       normalizeVariableDeclarations=false;
-      //eliminateShortCircuitOperators=true; // not iomplemented yet
-      //eliminateConditionalExpressionOp=ture; // not iomplemented yet
+      //eliminateShortCircuitOperators=true; // not implemented yet
+      //eliminateConditionalExpressionOp=true; // not implemented yet
       encapsulateNormalizedExpressionsInBlocks=false;
       normalizeExpressions=true;
       transformBreakToGotoInSwitchStmt=false;
@@ -60,13 +60,13 @@ namespace SPRAY {
       eliminateWhileStatements=true;  // different to level 1,2
       hoistConditionExpressions=true;
       normalizeVariableDeclarations=false;
-      //eliminateShortCircuitOperators=true; // not iomplemented yet
-      //eliminateConditionalExpressionOp=ture; // not iomplemented yet
+      //eliminateShortCircuitOperators=true; // not implemented yet
+      //eliminateConditionalExpressionOp=true; // not implemented yet
       encapsulateNormalizedExpressionsInBlocks=true; // different to level 1,2
       normalizeExpressions=true;
       transformBreakToGotoInSwitchStmt=true;  // different to level 1,2
       transformBreakToGotoInLoopStmts=true;  // different to level 1,2
-      //transformContinueToGotoInWhileStmts=false; // not iomplemented yet  // different to level 1,2
+      //transformContinueToGotoInWhileStmts=false; // not implemented yet  // different to level 1,2
       return;
     }
     cerr<<"Error: unsupported normalization level "<<level<<endl;
@@ -262,15 +262,37 @@ namespace SPRAY {
       exprStmt->set_parent(stmt);
 
       // (iii) generate if-statement with old while-condition
-      SgIfStmt* ifStmt=SageBuilder::buildIfStmt(oldWhileCond,
+      // (iii.1) generate not operator to negate while condition
+      // (iii.2) build if stmt and insert into while/do-while loop
+      SgStatement* negatedOldWhileCond=0;
+      if(SgExprStatement* oldWhileCondExprStmt=isSgExprStatement(oldWhileCond)) {
+        SgExpression* oldWhileCondExpr=oldWhileCondExprStmt->get_expression();
+        ROSE_ASSERT(oldWhileCondExpr);
+        oldWhileCondExpr->set_parent(0);
+        SgExpression* negatedOldWhileCondExpr=SageBuilder::buildNotOp(oldWhileCondExpr);
+        ROSE_ASSERT(negatedOldWhileCondExpr);
+        negatedOldWhileCondExpr->set_parent(0);
+        ROSE_ASSERT(negatedOldWhileCondExpr);
+        oldWhileCondExprStmt->set_expression(negatedOldWhileCondExpr);
+        negatedOldWhileCondExpr->set_parent(oldWhileCondExprStmt);
+        negatedOldWhileCond=oldWhileCondExprStmt;
+      } else {
+        cerr<<"Error: Conditional of while-stmt not an expression ("<<oldWhileCond->class_name()<<"). Requires normalization."<<endl;
+        exit(1);
+      }
+      
+      ROSE_ASSERT(negatedOldWhileCond);
+      SgIfStmt* ifStmt=SageBuilder::buildIfStmt(negatedOldWhileCond,
                                                 SageBuilder::buildBreakStmt(),
                                                 0);
       SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(stmt));
       ROSE_ASSERT(body);
       // (iv) insert if-statement
       if(isSgWhileStmt(stmt)) {
+        // while loop
         SageInterface::prependStatement(ifStmt,body);
       } else {
+        // do-while loop
         SageInterface::appendStatement(ifStmt,body);
       }
     
@@ -462,16 +484,18 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeSubExpression(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
-    if(isSgPntrArrRefExp(expr)) {
+    /*if(SgCastExp* castExp=isSgCastExp(expr)) {
+      normalizeSubExpression(stmt,castExp->get_operand(),subExprTransformationList);
+      } else*/ if(isSgPntrArrRefExp(expr)) {
         // TODO: normalize index-expressions
     } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(assignOp)),subExprTransformationList);
       //TODO: normalize subexpressions of LHS
-      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
+      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)),subExprTransformationList);
     } else if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(expr)) {
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)),subExprTransformationList);
       //TODO: normalize subexpressions of LHS
-      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
+      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)),subExprTransformationList);
     } else if(isSgBinaryOp(expr)) {
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
@@ -507,6 +531,7 @@ namespace SPRAY {
     tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
     tmpVarDeclaration->set_parent(scope);
     ROSE_ASSERT(tmpVarDeclaration!= 0);
+    //cout<<"DEBUG: tmp"<<tmpVarNr<<": generated declaration: "<<tmpVarDeclaration->unparseToString()<<endl;
     //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
     tmpVarNr++;
     subExprTransformationList.push_back(make_pair(stmt,expr));

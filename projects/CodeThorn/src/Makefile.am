@@ -129,6 +129,8 @@ libcodethorn_la_SOURCES=\
   IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
+  CallString.h \
+  CallString.C \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
@@ -177,8 +179,8 @@ libcodethorn_la_SOURCES=\
   LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  NullPointerDereferenceLocations.h \
-  NullPointerDereferenceLocations.C \
+  ProgramLocationsReport.h \
+  ProgramLocationsReport.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \
@@ -655,7 +657,7 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C --log-level=trace
-	@./codethorn $(srcdir)/tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -742,6 +744,7 @@ check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-equivalence:
+	@rm -f tmp.nsdump
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
@@ -762,6 +765,13 @@ check-deadcode:
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
+
+check-dev:
+	./codethorn $(srcdir)/tests/DOM007_sequence_arrays.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM007_sequence_arrays.C."
+check-dev2:
+	./codethorn $(srcdir)/tests/DOM008_sequence_structs.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM008_sequence_structs.C."
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

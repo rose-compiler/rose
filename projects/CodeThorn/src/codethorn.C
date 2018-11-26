@@ -378,6 +378,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
+    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -390,6 +391,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
+    ("out-of-bounds-analysis-file",po::value< string >(),"Perform out-of-bounds analysis and write results to file [arg].")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
@@ -574,7 +576,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     exit(0);
   } else if (args.count("version")) {
     cout << "CodeThorn version 1.8.1 (beta)\n";
-    cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
 
@@ -1274,6 +1276,12 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
 
+    /* Set call stringlength as provided on command line. If none is
+       provided use the default value is used (see command line
+       argument definition).
+    */
+    CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
+
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
     if(args.getBool("inline")) {
@@ -1540,10 +1548,17 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.isDefined("null-pointer-analysis-file")) {
-      NullPointerDereferenceLocations nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+      ProgramLocationsReport nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
       string fileName=args.getString("null-pointer-analysis-file");
       cout<<"Writing null-pointer analysis results to file "<<fileName<<endl;
       nullPointerDereferenceLocations.writeResultFile(fileName,analyzer->getLabeler());
+    }
+
+    if(args.isDefined("out-of-bounds-analysis-file")) {
+      ProgramLocationsReport outOfBoundsAccessLocations=analyzer->getExprAnalyzer()->getOutOfBoundsAccessLocations();
+      string fileName=args.getString("out-of-bounds-analysis-file");
+      cout<<"Writing out-of-bounds analysis results to file "<<fileName<<endl;
+      outOfBoundsAccessLocations.writeResultFile(fileName,analyzer->getLabeler());
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();

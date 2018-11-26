@@ -75,6 +75,21 @@ std::string EState::programPosToString(Labeler* labeler) const {
   * \date 2012.
  */
 // define order for EState elements (necessary for EStateSet)
+#define USE_CALLSTRINGS
+#ifdef USE_CALLSTRINGS
+bool CodeThorn::operator<(const EState& e1, const EState& e2) {
+  if(e1.label()!=e2.label())
+    return (e1.label()<e2.label());
+  if(e1.pstate()!=e2.pstate())
+    return (e1.pstate()<e2.pstate());
+  if(e1.constraints()!=e2.constraints())
+    return (e1.constraints()<e2.constraints());
+  if(e1.io!=e2.io) {
+    return e1.io<e2.io;
+  }
+  return e1.callString<e2.callString;
+}
+#else
 bool CodeThorn::operator<(const EState& e1, const EState& e2) {
   if(e1.label()!=e2.label())
     return (e1.label()<e2.label());
@@ -84,12 +99,17 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.constraints()<e2.constraints());
   return e1.io<e2.io;
 }
+#endif
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   return (c1.label()==c2.label())
     && (c1.pstate()==c2.pstate())
     && (c1.constraints()==c2.constraints())
-    && (c1.io==c2.io);
+    && (c1.io==c2.io)
+    //#ifdef USE_CALLSTRINGS
+    && (c1.callString==c2.callString)
+    //#endif
+    ;
 }
 
 bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
@@ -208,7 +228,10 @@ int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
-  ss << "("<<label()<<", ";
+  ss << "("
+     <<label()<<", "
+     <<callString.toString()<<", "
+    ;
   if(pstate())
     ss <<pstate()->toString();
   else
@@ -231,6 +254,7 @@ string EState::toString(VariableIdMapping* vim) const {
   stringstream ss;
   ss << "EState";
   ss << "("<<label()<<", ";
+  ss <<callString.toString()<<", ";
   if(pstate())
     ss <<pstate()->toString(vim);
   else

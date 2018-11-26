@@ -15,7 +15,7 @@
 #include "VariableIdMapping.h"
 #include "AbstractValue.h"
 #include "AstTerm.h"
-#include "NullPointerDereferenceLocations.h"
+#include "ProgramLocationsReport.h"
 #include "SgTypeSizeMapping.h"
 #include "StructureAccessLookup.h"
 
@@ -92,9 +92,15 @@ namespace CodeThorn {
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
     AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
-    NullPointerDereferenceLocations getNullPointerDereferenceLocations();
+
+    // record detected errors in programs
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
+    ProgramLocationsReport getNullPointerDereferenceLocations();
+    void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
+    void recordPotentialOutOfBoundsAccessLocation(Label lab);
+    ProgramLocationsReport getOutOfBoundsAccessLocations();
+
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
@@ -257,19 +263,28 @@ namespace CodeThorn {
     // special case of sizeof operator (operates on types and types of expressions)
     list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node, 
                                                 EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    // handles DotExp and ArrowExp
+    list<SingleEvalResultConstInt> evalLValueExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
+
     list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate);
     
+    // supported system functions
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
-    list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate);
+    list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
+    list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
+
+    // utilify functions
     int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
 
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
-    NullPointerDereferenceLocations _nullPointerDereferenceLocations;
+    ProgramLocationsReport _nullPointerDereferenceLocations;
+    ProgramLocationsReport _outOfBoundsAccessLocations;
    
     // Options
     bool _skipSelectedFunctionCalls=false;
