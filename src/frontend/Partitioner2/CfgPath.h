@@ -16,29 +16,39 @@ class CfgPath {
 public:
     /** Stack of inter-connected edges. */
     typedef std::vector<ControlFlowGraph::ConstEdgeIterator> Edges;
-
+    
     /** Stack of vertices. */
     typedef std::vector<ControlFlowGraph::ConstVertexIterator> Vertices;
+
+    /** Stores user-defined attributes. */
+    typedef Sawyer::Attribute::Storage<Sawyer::SingleThreadedTag> Attributes;
 
 private:
     Sawyer::Optional<ControlFlowGraph::ConstVertexIterator> frontVertex_;
     Edges edges_;
+
+    // Attributes stored at each vertex and edge
+    std::vector<Attributes> vertexAttributes_;
+    std::vector<Attributes> edgeAttributes_;
 
 public:
     /** Construct an empty path. */
     CfgPath() {}
 
     /** Construct a path having only a starting vertex. */
-    explicit CfgPath(const ControlFlowGraph::ConstVertexIterator &vertex): frontVertex_(vertex) {}
+    explicit CfgPath(const ControlFlowGraph::ConstVertexIterator &vertex)
+        : frontVertex_(vertex), vertexAttributes_(1, Attributes()) {}
 
     /** Construct a path given an initial edge. */
     explicit CfgPath(const ControlFlowGraph::ConstEdgeIterator &edge)
-        : frontVertex_(edge->source()), edges_(1, edge) {}
+        : frontVertex_(edge->source()), edges_(1, edge), vertexAttributes_(2, Attributes()), edgeAttributes_(1, Attributes()) {}
 
     /** Makes this path empty. */
     void clear() {
         frontVertex_ = Sawyer::Nothing();
         edges_.clear();
+        vertexAttributes_.clear();
+        edgeAttributes_.clear();
     }
 
     /** Determine if a path is empty. */
@@ -124,6 +134,30 @@ public:
      *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
      *  the path is at the front of the returned vector. */
     std::vector<ControlFlowGraph::ConstEdgeIterator>  backtrack();
+
+    /** User-defined attributes for the nth vertex.
+     *
+     *  Each vertex in the path has a corresponding attribute storage system. The attribute storage lifetime is the same as
+     *  that of the vertex to which it corresponds; when the path through the vertex index changes, the storage is reset. Note
+     *  that there is always one more vertex than edge (except when the path is completely empty). Edge number @em i
+     *  has two endpoints that are vertices @em i and @em i+1.
+     *
+     * @{ */
+    Attributes& vertexAttributes(size_t);
+    const Attributes& vertexAttributes(size_t) const;
+    /** @} */
+
+    /** User-defined attributes for the nth edge.
+     *
+     *  Each edge in the path has a corresponding attribute storage system. The attribute storage lifetime is the same as
+     *  that of the edge to which it corresponds; when the path through the edge index changes, the storage is reset. Note
+     *  that there is always one more vertex than edge (except when the path is completely empty). Edge number @em i
+     *  has two endpoints that are vertices @em i and @em i+1.
+     *
+     * @{ */
+    Attributes& edgeAttributes(size_t);
+    const Attributes& edgeAttributes(size_t) const;
+    /** @} */
 
     /** Number of times vertex appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstVertexIterator &vertex) const;

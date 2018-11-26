@@ -49,6 +49,7 @@ public:
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
         std::string solverName;                         /**< Type of SMT solver. */
         SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
+        bool processFinalVertex;                        /**< Whether to process the last vertex of the path. */
 
         // Null dereferences
         struct NullDeref {
@@ -64,7 +65,7 @@ public:
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
-              memoryParadigm(LIST_BASED_MEMORY) {}
+              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false) {}
     };
 
     /** Diagnostic output. */
@@ -109,10 +110,23 @@ public:
 
         virtual ~PathProcessor() {}
 
-        /** Function invoked whenever a complete path is found. */
+        /** Function invoked whenever a complete path is found.
+         *
+         *  The @p analyzer is a reference to the analyzer that's invoking this callback.
+         *
+         *  The @p path enumerates the CFG vertices and edges that compose the path.
+         *
+         *  The @p cpu represents the machine state at the start of the final vertex of the path. Modifications to the state
+         *  have undefined behavior; the state may be re-used by the analysis when testing subsequent paths.
+         *
+         *  The @p solver contains the assertions that are satisfied to prove that this path is feasible. The solver contains
+         *  multiple levels: an initial level that's probably empty (trivially satisfiable), followed by an additional level
+         *  pushed for each edge of the path. The path's user-defined post conditions are known to be satisfiable but have
+         *  already been popped from the solver state.
+         *
+         *  The return value from this callback determines whether the analysis will search for additional paths. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                             const std::vector<SymbolicExpr::Ptr> &pathConditions,
-                             const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+                             const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
                              const SmtSolverPtr &solver) { return CONTINUE; }
 
         /** Function invoked whenever a null pointer dereference is detected.
@@ -202,7 +216,9 @@ private:
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
-    FunctionSummarizer::Ptr functionSummarizer_;         // user-defined function for handling function summaries
+    FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
+    static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
+    static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +278,7 @@ public:
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
     virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    buildVirtualCpu(const Partitioner2::Partitioner&, PathProcessor*);
+    buildVirtualCpu(const Partitioner2::Partitioner&, PathProcessor*, const SmtSolver::Ptr&);
 
     /** Initialize state for first vertex of path.
      *
@@ -366,6 +382,12 @@ public:
                    PathProcessor *pathProcessor, std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
                    InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
+    /** Determine whether any ending vertex is reachable.
+     *
+     *  Returns true if any of the @p endVertices can be reached from the @p beginVertex by following the edges of the graph. */
+    static bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
+                                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
+                                       const Partitioner2::CfgConstVertexSet &endVertices);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
@@ -445,6 +467,20 @@ private:
                            const Partitioner2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge);
 
     boost::filesystem::path emitPathGraph(size_t callId, size_t graphId);  // emit paths graph to "rose-debug" directory
+
+    // Pop an edge (or more) from the path and follow some other edge.  Also, adjust the SMT solver's stack in a similar
+    // way. The SMT solver will have an initial state, plus one pushed state per edge of the path.
+    void backtrack(Partitioner2::CfgPath &path /*in,out*/, const SmtSolver::Ptr&);
+
+    // Process one edge of a path to find any path constraints. When called, the cpu's current state should be the virtual
+    // machine state at it exists just prior to executing the target vertex of the specified edge. 
+    //
+    // Returns a null pointer if the edge's condition is trivially unsatisfiable, such as when the edge points to a basic block
+    // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
+    // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
+    // edges, the return value is the constant 1 (one bit wide; i.e., true).
+    SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
+                                         InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
 };
 
 } // namespace
