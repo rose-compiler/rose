@@ -2,6 +2,7 @@
 int main() {
   char* data;
   char dataBuffer[10];
+  char dataBufferExp[10+1];
   data=dataBuffer;
   data[0]= '\0';
   char* stringPtr = "0123456789";

@@ -769,22 +769,25 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           ROSE_ASSERT(rhs);
           logger[TRACE]<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
           
+          // only create string in state with variable as pointer-address if it is an array (not for the case it is a char* pointer)
+          // in the case of char* it is handled as a pointer initializer (and the string-pointer is already available in state)
           if(SgStringVal* stringValNode=isSgStringVal(assignInitializer->get_operand())) {
-            // handle special cases of: char a[]="abc"; char a[4]="abc";
-            // TODO: a[5]="ab";
-            logger[TRACE]<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-            PState newPState=*currentEState.pstate();
-            initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
-            size_t stringLen=stringValNode->get_value().size();
-            if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
-              variableIdMapping.setNumberOfElements(initDeclVarId,(int)stringLen);
+            if(isSgArrayType(initName->get_type())) {
+              // handle special cases of: char a[]="abc"; char a[4]="abc";
+              // TODO: a[5]="ab";
+              logger[TRACE]<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
+              PState newPState=*currentEState.pstate();
+              initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
+              size_t stringLen=stringValNode->get_value().size();
+              if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+                variableIdMapping.setNumberOfElements(initDeclVarId,(int)stringLen);
+              }
+              SgType* variableType=initializer->get_type(); // for char and wchar
+              setElementSize(initDeclVarId,variableType);
+              ConstraintSet cset=*currentEState.constraints();
+              return createEState(targetLabel,newPState,cset);
             }
-            SgType* variableType=initializer->get_type(); // for char and wchar
-            setElementSize(initDeclVarId,variableType);
-            ConstraintSet cset=*currentEState.constraints();
-            return createEState(targetLabel,newPState,cset);
           }
-          
           // set type info for initDeclVarId
           variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
           SgType* variableType=initializer->get_type();
