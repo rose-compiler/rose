@@ -767,8 +767,24 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
-          //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
-
+          logger[TRACE]<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+          
+          if(SgStringVal* stringValNode=isSgStringVal(assignInitializer->get_operand())) {
+            // handle special cases of: char a[]="abc"; char a[4]="abc";
+            // TODO: a[5]="ab";
+            logger[TRACE]<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
+            PState newPState=*currentEState.pstate();
+            initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
+            size_t stringLen=stringValNode->get_value().size();
+            if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+              variableIdMapping.setNumberOfElements(initDeclVarId,(int)stringLen);
+            }
+            SgType* variableType=initializer->get_type(); // for char and wchar
+            setElementSize(initDeclVarId,variableType);
+            ConstraintSet cset=*currentEState.constraints();
+            return createEState(targetLabel,newPState,cset);
+          }
+          
           // set type info for initDeclVarId
           variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
           SgType* variableType=initializer->get_type();
@@ -1047,6 +1063,18 @@ list<EState> Analyzer::transferIdentity(Edge edge, const EState* estate) {
   EState newEState=*estate;
   newEState.setLabel(edge.target());
   return elistify(newEState);
+}
+
+void Analyzer::initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
+  //cout<<"DEBUG: TODO: initializeStringLiteralInState"<<endl;
+  string theString=stringValNode->get_value();
+  int pos;
+  for(pos=0;pos<(int)theString.size();pos++) {
+    AbstractValue character(theString[pos]);
+    initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+  }
+  // add terminating 0 to string in state
+  initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
 }
 
 void Analyzer::initializeStringLiteralsInState(PState& initialPState) {

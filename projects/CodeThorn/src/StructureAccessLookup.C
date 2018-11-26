@@ -43,32 +43,39 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-      //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+      cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
         if(isSgVariableDeclaration(dataMember)) {
-          //cout<<"DEBUG: varDecl: "<<classDef->unparseToString()<<" : ";
+          cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
             SgType* varType=variableIdMapping->getType(varId);
             if(varType) {
-              // TODO: recursive for struct/class/union members
+
+              // TODO: recursive type size initialization for nested struct/class/union members
+              // currently nested types are ignored!
               //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
-              
+
               SgTypeSizeMapping* typeSizeMapping=AbstractValue::getTypeSizeMapping();
               ROSE_ASSERT(typeSizeMapping);
               int typeSize=typeSizeMapping->determineTypeSize(varType);
               if(typeSize==0) {
                 numZeroTypeSize++;
-                //cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
+                cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
               }
               
               // different varids can be mapped to the same offset
               
               // every varid is inserted exactly once.
-              ROSE_ASSERT(varIdTypeSizeMap.find(varId)==varIdTypeSizeMap.end());
-              //cout<<"Offset: "<<offset<<endl;
+              if(varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end()) {
+
+                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid alread exists."<<endl;
+                cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
+                exit(1);
+              }
+              cout<<" Offset: "<<offset<<endl;
               
               varIdTypeSizeMap.emplace(varId,offset);
               // for unions the offset is not increased (it is the same for all members)
@@ -87,6 +94,8 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
           }
         }
       }
+      // skip subtree of class definition (would revisit nodes).
+      i.skipChildrenOnForward();
     }
   }
 #if 0

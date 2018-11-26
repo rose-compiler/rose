@@ -111,6 +111,7 @@ namespace CodeThorn {
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeVariableIdMapping(SgProject*);
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
     // set the size of an element determined by this type
