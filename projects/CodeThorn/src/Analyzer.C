@@ -657,8 +657,10 @@ int Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
   return 0;
 }
 
-// returns abstract value to which the aggregate initializer evaluates
-// to. Does not compute the address of the aggregate element.
+// sets all elements in PState according to aggregate
+// initializer. Also models default values of Integers (floats not
+// supported yet). EState is only used for lookup (modified is only
+// the PState object).
 PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
   //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
   // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
@@ -689,8 +691,9 @@ PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggre
   // otherwise the size is determined from the aggregate initializer itself (done above)
   if(aggregateSize!=0) {
     for(int i=elemIndex;i<aggregateSize;i++) {
-      AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+      AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
       AbstractValue defaultVal=AbstractValue(0); // TODO: float default values
+      logger[TRACE]<<"Init aggregate default value: "<<arrayElemId.toString()<<" : "<<defaultVal.toString()<<endl;
       newPState.writeToMemoryLocation(arrayElemId,defaultVal);
     }
   } else {
@@ -749,10 +752,11 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
           SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
+          // must be an array type, since structs are checked above
           ROSE_ASSERT(arrayType);
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          // only set size from aggregate initializer if not known from type (type size is set when variableidmapping is created)
+          // only set size from aggregate initializer if not known from type
           if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
             // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
             variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));

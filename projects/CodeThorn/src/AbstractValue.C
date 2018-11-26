@@ -167,6 +167,7 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
   } else if(index.isConstInt()) {
     val.valueType=PTR;
     val.variableId=arrayVariableId;
+    ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
     return val;
   } else {
