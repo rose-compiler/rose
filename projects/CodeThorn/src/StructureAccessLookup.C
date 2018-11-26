@@ -43,12 +43,12 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-      cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+      //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
         if(isSgVariableDeclaration(dataMember)) {
-          cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
+          //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
             SgType* varType=variableIdMapping->getType(varId);
@@ -63,7 +63,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               int typeSize=typeSizeMapping->determineTypeSize(varType);
               if(typeSize==0) {
                 numZeroTypeSize++;
-                cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
+                //cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
               }
               
               // different varids can be mapped to the same offset
@@ -75,7 +75,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
                 cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
                 exit(1);
               }
-              cout<<" Offset: "<<offset<<endl;
+              //cout<<" DEBUG Offset: "<<offset<<endl;
               
               varIdTypeSizeMap.emplace(varId,offset);
               // for unions the offset is not increased (it is the same for all members)

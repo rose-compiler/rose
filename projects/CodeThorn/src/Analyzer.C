@@ -830,7 +830,31 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         if(arrayType) {
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          variableIdMapping.setNumberOfElements(initDeclVarId,variableIdMapping.getArrayElementCount(arrayType));
+          int numElements=variableIdMapping.getArrayElementCount(arrayType);
+          if(numElements==0) {
+            logger[TRACE]<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
+            std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
+            if(arrayDimExps.size()>1) {
+              cerr<<"Error: multi-dimensional arrays not supported yet. Only linear arrays are supported."<<endl;
+              exit(1);
+            }
+            ROSE_ASSERT(arrayDimExps.size()==1);
+            SgExpression* arrayDimExp=*arrayDimExps.begin();
+            logger[TRACE]<<"Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+            list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(arrayDimExp,currentEState);
+            ROSE_ASSERT(evalResultList.size()==1);
+            SingleEvalResultConstInt evalRes=*evalResultList.begin();
+            AbstractValue arrayDimAVal=evalRes.result;
+            logger[TRACE]<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+            if(arrayDimAVal.isConstInt()) {
+              numElements=arrayDimAVal.getIntValue();
+              variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+            } else {
+              // TODO: size of array remains 1?
+            }
+          } else {
+            variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+          }
         } else {
           // set type info for initDeclVarId
           variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
@@ -1088,11 +1112,14 @@ void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
     auto dataPair=*iter;
     SgStringVal* stringValNode=dataPair.first;
     VariableId stringVarId=dataPair.second;
+    initializeStringLiteralInState(initialPState,stringValNode,stringVarId);
+    /*
     string theString=stringValNode->get_value();
     for(int pos=0;pos<(int)theString.size();pos++) {
       AbstractValue character(theString[pos]);
       initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
     }
+    */
   }
 }
 

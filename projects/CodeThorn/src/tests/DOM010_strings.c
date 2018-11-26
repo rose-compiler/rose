@@ -1,8 +1,9 @@
+#include "string.h"
 
 int main() {
   char* data;
-  char dataBuffer[10];
-  char dataBufferExp[10+1];
+  char dataBuffer[10+1];
+  //char dataBufferExp[10+1];
   data=dataBuffer;
   data[0]= '\0';
   char* stringPtr = "0123456789";
@@ -14,5 +15,8 @@ int main() {
     {
       data[i] = source[i];
     }
+  int len1,len2;
+  len1=strlen(source);
+  len2=strlen(stringPtr);
   return 0;
 }

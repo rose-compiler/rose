@@ -444,6 +444,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate);
   }
+  case V_SgNullExpression: {
+    list<SingleEvalResultConstInt> resultList;
+    SingleEvalResultConstInt anyResult;
+    resultList.push_front(anyResult);
+    return resultList;
+  }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
   } // end of switch
@@ -1423,6 +1429,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallMemCpy(funCall,estate);
     } else if(funName=="free") {
       return evalFunctionCallFree(funCall,estate);
+    } else if(funName=="strlen") {
+      return evalFunctionCallStrLen(funCall,estate);
     } else if(funName=="fflush") {
       // ignoring fflush
       // res initialized above
@@ -1586,13 +1594,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     if(!errorDetected) {
       // no error occured. Copy region.
       //cout<<"DEBUG: copy region now. "<<endl;
+      PState newPState=*estate.pstate();
       for(int i=0;i<copyRegionSize;i++) {
         AbstractValue index(i);
         AbstractValue targetPtr=memcpyArgs[0]+index;
         AbstractValue sourcePtr=memcpyArgs[1]+index;
-        cout<<"DEBUG: copying "<<targetPtr.toString(_variableIdMapping)<<" from "<<sourcePtr.toString(_variableIdMapping)<<endl;
+        logger[TRACE]<<"TODO: copying from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
         //TODO: cpymem
-        //newPState=*estate.pstate();
         //newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
       }
     }
@@ -1601,6 +1609,62 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
     exit(1);
   }
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate) {
+  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  SingleEvalResultConstInt res;
+  // memcpy is a void function, no return value
+  res.init(estate,AbstractValue(CodeThorn::Top())); 
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==1) {
+    AbstractValue functionArgs[1];
+    int i=0;
+    for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
+      SgExpression* arg=*argIter;
+      list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate);
+      if(resList.size()!=1) {
+        cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
+        exit(1);
+      }
+      SingleEvalResultConstInt sres=*resList.begin();
+      AbstractValue argVal=sres.result;
+      functionArgs[i++]=argVal;
+    }
+    // the argument (string pointer) is now in functionArgs[0];
+    // compute length now
+    // read value and proceed on pointer until 0 is found. Also check size of memory region.
+    AbstractValue stringPtr=functionArgs[0];
+    logger[TRACE]<<"function strlen: evaluated argument: "<<stringPtr.toString(_variableIdMapping)<<endl;
+    int pos=0;
+    while(1) {
+      AbstractValue AbstractPos=AbstractValue(pos);
+      AbstractValue currentPos=(stringPtr+AbstractPos);
+#if 0
+      // TODO: not working yet because the memory region of strings are not properly registered with size yet
+      // check bounds of string's memory region
+      if(!checkArrayBounds(stringPtr.getVariableId(),pos)) {
+        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        break;
+      }
+#endif
+      AbstractValue cmpResult=((estate.pstate()->readFromMemoryLocation(currentPos))==AbstractValue(0));
+      if(cmpResult.isTrue()) {
+        // found 0
+        res.init(estate,AbstractValue(pos));
+        return listify(res);
+      } else if(cmpResult.isFalse()) {
+        pos++;
+      } else {
+        // top or bot
+        break;
+      }
+    }
+  }
+  // fallthrough for top/bot
+  // return top for unknown (or out-of-bounds access)
+  res.init(estate,AbstractValue(CodeThorn::Top()));
   return listify(res);
 }
 
