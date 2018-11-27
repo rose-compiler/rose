@@ -41,16 +41,21 @@ namespace General_Language_Translation
           e_type_modifier_target,
           e_type_modifier_truncate,
           e_type_modifier_value,
+          e_type_modifier_reference,
+          e_type_modifier_result,
           e_type_modifier_volatile,
           e_type_modifier_z,
 
        // Function modifiers
        // ------------------
+          e_function_modifier_list,
+          e_function_modifier_none,
           e_function_modifier_elemental,
           e_function_modifier_impure,
           e_function_modifier_module,
           e_function_modifier_pure,
           e_function_modifier_recursive,
+          e_function_modifier_reentrant,
 
        // Operators
        // ---------
