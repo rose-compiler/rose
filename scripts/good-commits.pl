@@ -89,11 +89,41 @@ sub showHistogram {
     }
     print STDERR "\n";
 
-    printf "Percent Good/Total Author\n";
-    for my $author (sort keys %histogram) {
-	my($nbad,$ngood) = @{$histogram{$author}};
+    # Compute a total score for each author. The score is computed
+    # from the good:total ratio and the number of good commits. In
+    # other words, authors with lots of good commits are allowed to
+    # have some bad commits without being overly penalized for
+    # them. The reasoning is that an author with lots of commits is
+    # more likely to have legitimate reasons for not following these
+    # guidlines as strictly (e.g., lots of commits might imply smaller
+    # commits, some of which might be so small that a JIRA issue is
+    # not needed; the classic example is fixing a typo in
+    # documentation in some part of ROSE completely unrelated to other
+    # nearby commits).
+    my @results;
+    for my $author (keys %histogram) {
+	my($nbad, $ngood) = @{$histogram{$author}};
 	my($total) = $ngood + $nbad;
-	printf "%-7d %4d/%-4d %s\n", 100 * $ngood / $total, $ngood, $total, $author;
+	my($ratio) = $total > 0 ? $ngood / $total : 0.0;
+	my($score) = $ratio * $ngood;
+	push @results, {author=>$author, nbad=>$nbad, ngood=>$ngood, total=>$total, ratio=>$ratio, score=>$score};
+    }
+
+    # Print results in a table. The table is sorted by score. If two authors
+    # have the same score (as often happens with a zero ratio), then sort by
+    # increasing number of bad commits, otherwise just sort by author name.
+    printf "Percent Good/Total Score Author\n";
+    printf "------- ---------- ----- --------------------\n";
+    for my $record (sort {
+                             -1 * ($a->{score} <=> $b->{score}) ||
+                             $a->{nbad} <=> $b->{nbad} ||
+                             $a->{author} cmp $b->{author}
+                         } @results) {
+	printf("%-7d %4d/%-5d %5d %s\n",
+	       100 * $record->{ratio},
+	       $record->{ngood}, $record->{total},
+	       $record->{score},
+	       $record->{author});
     }
 }
 
