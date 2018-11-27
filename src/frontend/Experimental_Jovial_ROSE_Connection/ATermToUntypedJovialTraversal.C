@@ -176,6 +176,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
    printf("... traverse_MainProgramModule: %s\n", ATwriteToString(term));
 #endif
 
+   using namespace General_Language_Translation;
+
    ATerm t_decls, t_name, t_body, t_funcs;
    std::string name;
 
@@ -200,7 +202,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
       std::string label = "";
 
       SgUntypedInitializedNameList* param_list = new SgUntypedInitializedNameList();
-      SgUntypedExprListExpression* prefix_list = new SgUntypedExprListExpression();
+      SgUntypedExprListExpression* prefix_list = new SgUntypedExprListExpression(e_function_modifier_list);
 
       SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
       SgUntypedNamedStatement* end_program_stmt = new SgUntypedNamedStatement("",0,"");
@@ -260,15 +262,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
 
    if (ATmatch(term, "ProgramSimpleBody(<term>)", &t_stmt)) {
 
-      decl_list = new SgUntypedDeclarationStatementList();
-      ROSE_ASSERT(decl_list);
+      stmt_list = new SgUntypedStatementList();
+      ROSE_ASSERT(stmt_list);
 
       if (traverse_Statement(t_stmt, stmt_list)) {
          // MATCHED Statement
       } else return ATfalse;
 
-      stmt_list = new SgUntypedStatementList();
+      decl_list = new SgUntypedDeclarationStatementList();
+      ROSE_ASSERT(decl_list);
+
       func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(func_list);
 
       std::cout << "PROGRAM SIMPLE BODY\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";

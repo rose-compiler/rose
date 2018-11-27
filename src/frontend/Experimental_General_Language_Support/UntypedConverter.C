@@ -720,6 +720,11 @@ UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeader
 // setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
    setSourcePositionUnknown(programDeclaration->get_parameterList());
 
+// Make sure there are no function modifiers (just checking, not expected to happen)
+   SgUntypedExprListExpression* ut_modifiers = ut_program->get_modifiers();
+   ROSE_ASSERT(ut_modifiers);
+   ROSE_ASSERT(ut_modifiers->get_expressions().size() == 0);
+
 // Convert the labels for the program begin and end statements
    convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
    convertLabel(ut_program_end_statement, programDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ programDefinition);
@@ -821,12 +826,11 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
 
 // TODO - fix function type
    SgType* return_type = SgTypeVoid::createType();
-   SgFunctionType* functionType = new SgFunctionType(returnType, false);
+   SgFunctionType* functionType = new SgFunctionType(return_type, false);
 
-
-   sg_temp_param_type = SgTypeUnknown::createType();
+   SgType* sg_temp_param_type = SgTypeUnknown::createType();
    SgUntypedInitializedNameList* ut_params = ut_function->get_parameters();
-   SgInitializedNamePtrList* sg_params = convertUntypedInitializedNameList(ut_params, sg_temp_param_type);
+   SgInitializedNamePtrList* sg_params = convertSgUntypedInitializedNameList(ut_params, sg_temp_param_type);
 
 // Build empty parameter list, need to add initialized names
    SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList();
@@ -836,7 +840,7 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
 // appendArg(param_list, arg1);
 // appendArg(param_list, arg2);
 
-   SgFunctionDeclaration* function_decl = SageBuilderbuildDefiningFunctionDeclaration(name, return_type, param_list, scope);
+   SgFunctionDeclaration* function_decl = SageBuilder::buildDefiningFunctionDeclaration(name, return_type, param_list, scope);
    ROSE_ASSERT(function_decl);
    setSourcePositionFrom(function_decl, ut_function);
 
@@ -2355,6 +2359,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
     // Some lists are converted explicitly (not via a traversal) so they don't belong here
     //
        case e_type_modifier_list:           break;
+       case e_function_modifier_list:       break;
 
        case e_fortran_sync_stat_list:       break;
        case e_fortran_sync_stat_stat:       break;
