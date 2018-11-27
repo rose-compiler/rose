@@ -218,6 +218,11 @@ ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
 ROSE_DLL_API SgTypeUnknown * buildUnknownType();
 
+//! Build a type based on Fortran's implicit typing rules.
+//! Currently this interface does not take into account possible implicit
+//! statements that change the rules.
+ROSE_DLL_API SgType* buildFortranImplicitType(SgName name);
+
 //! Build a pointer type
 ROSE_DLL_API SgPointerType* buildPointerType(SgType *base_type = NULL);
 
@@ -1120,6 +1125,10 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 
 ROSE_DLL_API SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
+
+// Rasmussen (9/3/2018)
+//! Build a Fortran do construct
+ROSE_DLL_API SgFortranDo * buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body);
 
 //! Build a for init statement
 ROSE_DLL_API SgForInitStatement* buildForInitStatement();

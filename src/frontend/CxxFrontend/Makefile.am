@@ -21,9 +21,9 @@ CONTACT_INFO = "Please contact rose-public@nersc.gov to troubleshoot this error.
 EDG_GENERATE_SIG = $(top_srcdir)/scripts/edg-generate-sig
 
 # This is where EDG binaries are stored
-ROSE_WEB_SERVER         = http://www.rosecompiler.org
+ROSE_WEB_SERVER         = http://rosecompiler.org
 EDGBIN_LOCAL_TARBALLS   = /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
-EDGBIN_REMOTE_TARBALLS  = $(ROSE_WEB_SERVER)/edg_binaries
+EDGBIN_REMOTE_TARBALLS  = http://edg-binaries.rosecompiler.org
 EDGBIN_STAGING_TARBALLS = /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
 
 # The EDG hash is stored in a file, which gets around problems of using $(shell...), but means that we shouldn't use

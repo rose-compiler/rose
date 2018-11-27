@@ -162,14 +162,15 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         isSelected(Predicate &pred): pred(pred) {}
         bool operator()(SgNode *node) {
             SgFunctionDeclaration *f = isSgFunctionDeclaration(node);
-            assert(!f || f==f->get_firstNondefiningDeclaration()); // node uniqueness test
+         // TV (10/26/2018): FIXME ROSE-1487
+         // assert(!f || f==f->get_firstNondefiningDeclaration()); // node uniqueness test
 #if 0
          // DQ (8/25/2016): This is not a meaningful test since all functions will be in the memory pool, including template functions and template member functions.
             if(isSgTemplateFunctionDeclaration(f)||isSgTemplateMemberFunctionDeclaration(f)) {
               std::cerr<<"Error: CallGraphBuilder: call referring to node "<<f->class_name()<<" :: function-name:"<<f->get_qualified_name()<<std::endl;
             }
 #endif
-            return f && !isSgTemplateMemberFunctionDeclaration(f) && !isSgTemplateFunctionDeclaration(f) && pred(f);
+            return f && f==f->get_firstNondefiningDeclaration() &&  !isSgTemplateMemberFunctionDeclaration(f) && !isSgTemplateFunctionDeclaration(f) && pred(f);
         }
     };
 
