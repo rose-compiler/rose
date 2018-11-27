@@ -450,6 +450,7 @@ IntegerSize
 FractionSpecifier
 ScaleSpecifier
 Precision
+OptPrecision
 %%CompileTimeIntegerFormula
 IntegerMachineParameter
 
@@ -675,10 +676,8 @@ context-free syntax
   FloatingItemDescription     -> FloatingTypeDescription
   FloatingTypeName            -> FloatingTypeDescription   {reject} %% Using ItemTypeName
 
-%% 'F'
-
   'F' OptRoundOrTruncate
-      Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
+      OptPrecision            -> FloatingItemDescription {cons("FloatingItemDescription")}
 
   ',' 'R'                     -> RoundOrTruncate         {cons("R")}
   ',' 'T'                     -> RoundOrTruncate         {cons("T")}
@@ -688,6 +687,9 @@ context-free syntax
   % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
 
   CompileTimeNumericFormula   -> Precision
+
+  Precision                   -> OptPrecision
+  % empty %                   -> OptPrecision            {cons("no-precision")}
 
   ItemTypeName                -> FloatingTypeName
 
@@ -705,7 +707,7 @@ context-free syntax
   CompileTimeNumericFormula   -> ScaleSpecifier          {cons("ScaleSpecifier")}
   CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
 
-  FractionSpecifier           -> OptFractionSpecifier
+  ',' FractionSpecifier       -> OptFractionSpecifier    {cons("OptFractionSpecifier")}
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
 
   ItemTypeName                -> FixedTypeName
@@ -1043,7 +1045,7 @@ context-free syntax
   BlockTypeDeclaration            -> TypeDeclaration
 
   'TYPE' ItemTypeName
-    ItemTypeDescription           -> ItemTypeDeclaration   {cons("ItemTypeDeclaration")}
+    ItemTypeDescription ';'       -> ItemTypeDeclaration   {cons("ItemTypeDeclaration")}
 
   Name                            -> ItemTypeName
 
@@ -1217,18 +1219,18 @@ context-free syntax
   SubroutineAttribute             -> OptSubroutineAttribute
   % empty %                       -> OptSubroutineAttribute {cons("no-subroutine-attribute")}
  
-  Name                            -> ProcedureName
+  Name                            -> ProcedureName          {cons("Name")}
 
   SubroutineBody                  -> ProcedureBody
 
-  Statement                       -> SubroutineBody
+  Statement                       -> SubroutineBody         {cons("SubroutineSimpleBody")}
 
   'BEGIN'
     DeclarationList
     Statement*
     SubroutineDefinition*
     LabelList
-  'END'                           -> SubroutineBody         {cons("SubroutineBody")}
+  'END'                           -> SubroutineBody         {cons("SubroutineBody"), prefer}
 
 %% 3.2 FUNCTIONS
 %%
@@ -1279,6 +1281,7 @@ context-free syntax
   StatementName                   -> InputParameterName
   SubroutineName                  -> InputParameterName
 
+  Name                            -> OutputParameterName      {prefer}
   DataName                        -> OutputParameterName
 
   ProcedureName                   -> SubroutineName
@@ -1779,9 +1782,9 @@ context-free syntax
 %% 6.1 VARIABLE AND BLOCK REFERENCES
 %%
   NamedVariable               -> Variable
-  BitFunctionVariable         -> Variable           {cons("BitFunctionVariable")}
-  ByteFunctionVariable        -> Variable           {cons("ByteFunctionVariable")}
-  RepFunctionVariable         -> Variable           {cons("RepFunctionVariable")}
+  BitFunctionVariable         -> Variable
+  ByteFunctionVariable        -> Variable
+  RepFunctionVariable         -> Variable
 %%FunctionName                -> Variable           {reject} %% AMBIGUOUS with NamedVariable
   
   Item                        -> NamedVariable
