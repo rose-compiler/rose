@@ -111,8 +111,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureModule(ATerm term, SgUnt
 
    ATerm t_decls, t_funcs;
 
-   SgUntypedFunctionScope* function_scope = NULL;
-
    if (ATmatch(term, "ProcedureModule(<term>,<term>)", &t_decls, &t_funcs)) {
 
       cout << ".x. ProcedureModule match\n";
@@ -261,9 +259,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    *function_scope = NULL;
 
    if (ATmatch(term, "ProgramSimpleBody(<term>)", &t_stmt)) {
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      ROSE_ASSERT(decl_list);
+
       if (traverse_Statement(t_stmt, stmt_list)) {
          // MATCHED Statement
       } else return ATfalse;
+
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
 
       std::cout << "PROGRAM SIMPLE BODY\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
@@ -274,16 +279,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    else if (ATmatch(term, "ProgramBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
 
       decl_list = new SgUntypedDeclarationStatementList();
-      stmt_list = new SgUntypedStatementList();
-      func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(decl_list);
 
       if (traverse_DeclarationList(t_decls, decl_list)) {
          // MATCHED DeclarationList
       } else return ATfalse;
 
+      stmt_list = new SgUntypedStatementList();
+      ROSE_ASSERT(stmt_list);
+
       if (traverse_StatementList(t_stmts, stmt_list)) {
          // MATCHED StatementList
       } else return ATfalse;
+
+      func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(func_list);
 
       if (traverse_SubroutineDefinitionList(t_funcs, func_list)) {
          // MATCHED SubroutineDefinition
@@ -302,13 +312,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
 #endif
 
    // TODO - need list for labels in untyped IR
+   //        can labels be on program definitions?
       assert(labels.size() <= 1);
       if (labels.size() == 1) temp_label = labels[0];
 
    }
    else return ATfalse;
 
+   ROSE_ASSERT(decl_list);
+   ROSE_ASSERT(stmt_list);
+   ROSE_ASSERT(func_list);
+
    *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
+   ROSE_ASSERT(*function_scope);
+   setSourcePosition(*function_scope, term);
 
    return ATtrue;
 }
@@ -1746,14 +1763,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
    ATerm t_proc_heading, t_proc_body;
 
    std::string label, name;
-   int sub_attr;
    SgUntypedFunctionScope* function_scope = NULL;
-   SgUntypedExprListExpression* attr_list = NULL;
+   SgUntypedExprListExpression* modifiers = NULL;
    SgUntypedInitializedNameList* param_list = NULL;
+   SgUntypedFunctionDeclaration* function_decl;
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
 
-      if (traverse_ProcedureHeading(t_proc_heading, name, &attr_list, &param_list)) {
+      if (traverse_ProcedureHeading(t_proc_heading, name, &modifiers, &param_list)) {
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
@@ -1764,20 +1781,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
    }
    else return ATfalse;
 
-   int stmt_enum = General_Language_Translation::e_unknown
+   int stmt_enum = General_Language_Translation::e_unknown;
    SgUntypedNamedStatement* end_program_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
 
    SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
+   ROSE_ASSERT(type);
 
-   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression();
-   attr = new SgUntypedOtherExpression(sub_attr);
-   setSourcePosition(prefix, head);
-   attr_list->get_expressions().push_back(attr);
+   ROSE_ASSERT(modifiers);
 
-// create the function
+// create the function definition
    function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, type,
-                                                    function_scope, prefix_list, end_program_stmt);
+                                                    function_scope, modifiers, end_program_stmt);
+   ROSE_ASSERT(function_decl);
+   setSourcePosition(function_decl, term);
 
+   decl_list->get_decl_list().push_back(function_decl);
 
    return ATtrue;
 }
@@ -1799,17 +1817,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
    *attrs  = NULL;
    *params = NULL;
 
-   if (ATmatch(term, "ProcedureHeading(<term>,<term>,<term>)", &t_name, &t_attr, t_params)) {
+   if (ATmatch(term, "ProcedureHeading(<term>,<term>,<term>)", &t_name, &t_attr, &t_params)) {
 
       if (traverse_Name(t_name, name)) {
          // MATCHED Name
       } else return ATfalse;
 
+      cout << "\n.x. ProcedureHeading name is " << name << endl;
+
       if (traverse_SubroutineAttribute(t_attr, &function_modifier)) {
          // MATCHED SubroutineAttribute
       } else return ATfalse;
 
-      function_modifier_list = new SgUntypedExprListExpression(e_function_modifier_recursive_list);
+      cout << ".x. ProcedureHeading after attribute ---------\n";
+
+      function_modifier_list = new SgUntypedExprListExpression(e_function_modifier_list);
       ROSE_ASSERT(function_modifier_list);
       setSourcePosition(function_modifier_list, t_attr);
 
@@ -1819,7 +1841,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
       ROSE_ASSERT(function_param_list);
       setSourcePosition(function_param_list, t_params);
 
-      if (traverse_FormalParameterList(t_name, function_param_list)) {
+      if (traverse_FormalParameterList(t_params, function_param_list)) {
          // MATCHED FormalParameterList
       } else return ATfalse;
 
@@ -1845,7 +1867,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, S
    *attr_expr = NULL;
 
    if (ATmatch(term, "no-subroutine-attribute()")) {
-      *attr_expr = new SgUntypedOtherExpression(e_unknown);
+      *attr_expr = new SgUntypedOtherExpression(e_function_modifier_none);
    }
    else if (ATmatch(term, "SubroutineAttribute(REC)")) {
       *attr_expr = new SgUntypedOtherExpression(e_function_modifier_recursive);
@@ -1864,7 +1886,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, S
 ATbool ATermToUntypedJovialTraversal::traverse_SubroutineBody(ATerm term, SgUntypedFunctionScope** function_scope)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ProgramBody: %s\n", ATwriteToString(term));
+   printf("... traverse_SubroutineBody: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_stmt;
@@ -1879,21 +1901,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineBody(ATerm term, SgUnty
 
    *function_scope = NULL;
 
-// Statement option of a SubroutineBody
-   {
-      decl_list = new SgUntypedDeclarationStatementList();
-      stmt_list = new SgUntypedStatementList();
-      func_list = new SgUntypedFunctionDeclarationList();
+   if (ATmatch(term, "SubroutineSimpleBody(<term>)", &t_stmt)) {
 
+      decl_list = new SgUntypedDeclarationStatementList();
       ROSE_ASSERT(decl_list);
-      ROSE_ASSERT(stmt_list);
-      ROSE_ASSERT(func_list);
 
       if (traverse_Statement(t_stmt, stmt_list)) {
          // MATCHED Statement
       } else return ATfalse;
 
-      std::cout << "SUBROUTINE BODY produced by only a statement\n";
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
+      std::cout << "SUBROUTINE SIMPLE BODY\n";
       std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
    }
 
@@ -1933,11 +1953,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineBody(ATerm term, SgUnty
 #endif
 
    // TODO - need list for labels in untyped IR
+   //        can labels be on procedure definitions?
       assert(labels.size() <= 1);
       if (labels.size() == 1) temp_label = labels[0];
    }
    else return ATfalse;
 
+   ROSE_ASSERT(decl_list);
+   ROSE_ASSERT(stmt_list);
+   ROSE_ASSERT(func_list);
    *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
    ROSE_ASSERT(*function_scope);
    setSourcePosition(*function_scope, term);
@@ -1958,6 +1982,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalParameterList(ATerm term, S
 
    ATerm t_input, t_output;
 
+   if (ATmatch(term, "no-formal-parameter-list()")) {
+      // no formal parameters OK, return immediately
+      return ATtrue;
+   }
+
+// There is a formal parameter list (if not will have returned)
+//
    if (ATmatch(term, "FormalParameterList(<term>,<term>)", &t_input,&t_output)) {
    // Input parameters
       ATermList tail = (ATermList) ATmake("<term>", t_input);
@@ -1990,14 +2021,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalInputParameter(ATerm term, 
    printf("... traverse_FormalInputParameter: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(t_input, "no-formal-parameter-list()")) {
+   ATerm t_binding, t_name;
+   std::string name;
+   SgUntypedOtherExpression* binding_expr = NULL;
+
+   if (ATmatch(term, "no-formal-parameter-list()")) {
       // no input parameters OK, return immediately
       return ATtrue;
    }
 
 // There are input parameters (if not will have returned)
 //
-   if (ATmatch(term, "FormalInputParameter(<term>,<term>)", t_binding, t_name)) {
+   if (ATmatch(term, "FormalInputParameter(<term>,<term>)", &t_binding, &t_name)) {
       if (traverse_ParameterBinding(t_binding, &binding_expr)) {
          // MATCHED ParameterBinding
       } else return ATfalse;
@@ -2010,12 +2045,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalInputParameter(ATerm term, 
    SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
    ROSE_ASSERT(type);
 
-   SgUntypedExprListExpression* modifiers = type->get_modifiers();
+   SgUntypedExprListExpression* modifier_list = type->get_modifiers();
+   ROSE_ASSERT(modifier_list);
+   setSourcePosition(modifier_list, t_binding);
+
    modifier_list->get_expressions().push_back(binding_expr);
-   setSourcePosition(modifiers, t_binding);
 
    SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
+   ROSE_ASSERT(iname);
    setSourcePosition(iname, t_name);
+
    param_list->get_name_list().push_back(iname);
 
    return ATfalse;
@@ -2029,14 +2068,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalOutputParameter(ATerm term,
 
    using namespace General_Language_Translation;
 
-   if (ATmatch(t_input, "no-formal-output-parameters()")) {
+   ATerm t_binding, t_name;
+   std::string name;
+   SgUntypedOtherExpression* binding_expr = NULL;
+
+   if (ATmatch(term, "no-formal-output-parameters()")) {
       // no output parameters OK, return immediately
       return ATtrue;
    }
 
 // There are output parameters (if not will have returned)
 //
-   if (ATmatch(term, "FormalOutputParameter(<term>,<term>)", t_binding, t_name)) {
+   if (ATmatch(term, "FormalOutputParameter(<term>,<term>)", &t_binding, &t_name)) {
       if (traverse_ParameterBinding(t_binding, &binding_expr)) {
          // MATCHED ParameterBinding
       } else return ATfalse;
@@ -2053,13 +2096,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalOutputParameter(ATerm term,
    ROSE_ASSERT(type);
    setSourcePositionUnknown(output_expr);
 
-   SgUntypedExprListExpression* modifiers = type->get_modifiers();
+   ROSE_ASSERT(output_expr);
+   ROSE_ASSERT(binding_expr);
+
+   SgUntypedExprListExpression* modifier_list = type->get_modifiers();
+   ROSE_ASSERT(modifier_list);
+   setSourcePosition(modifier_list, t_binding);
+
    modifier_list->get_expressions().push_back(output_expr);
    modifier_list->get_expressions().push_back(binding_expr);
-   setSourcePosition(modifiers, t_binding);
 
    SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
+   ROSE_ASSERT(iname);
    setSourcePosition(iname, t_name);
+
    param_list->get_name_list().push_back(iname);
 
    return ATfalse;
@@ -2141,7 +2191,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels,&t_stmt)) {
+   if (ATmatch(term, "SimpleStatement(<term>,<term>)", &t_labels, &t_stmt)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
@@ -4472,6 +4522,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_Exponent(ATerm term, std::string 
 #endif
 
    ATerm t_sign, t_num;
+   //   std::string literal;
    char* number;
 
 

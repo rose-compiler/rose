@@ -69,6 +69,8 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedFunctionDeclaration:
       {
          SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(node);
+         cout << "-x- traversing ut_function " << ut_function
+              << ": scope is " << currentScope << ": " << currentScope->class_name() << endl;
          pConverter->convertUntypedFunctionDeclaration(ut_function, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;

@@ -115,9 +115,16 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
    {
       ROSE_ASSERT( isSgUntypedOtherExpression(ut_expr) );
 
+      using namespace General_Language_Translation;
+
       switch(ut_expr->get_expression_enum())
        {
-         case General_Language_Translation::e_function_modifier_elemental:
+         case e_function_modifier_none:
+            {
+            // No function modifier to add
+               break;
+            }
+         case e_function_modifier_elemental:
             {
                cout << "..SETTING.. elemental \n";
                function_decl->get_functionModifier().setElemental();
@@ -125,24 +132,24 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
             }
 #if 0
       // TODO
-         case General_Language_Translation::e_function_modifier_impure:
+         case e_function_modifier_impure:
             {
                function_decl->get_functionModifier().setImpure();
                break;
             }
       // TODO
-         case General_Language_Translation::e_function_modifier_module:
+         case e_function_modifier_module:
             {
                function_decl->get_functionModifier().setModule();
                break;
             }
 #endif
-         case General_Language_Translation::e_function_modifier_pure:
+         case e_function_modifier_pure:
             {
                function_decl->get_functionModifier().setPure();
                break;
             }
-         case General_Language_Translation::e_function_modifier_recursive:
+         case e_function_modifier_recursive:
             {
                function_decl->get_functionModifier().setRecursive();
                break;
@@ -150,22 +157,22 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
 
        // CUDA function modifiers/qualifiers
        // ----------------------------------
-          case General_Language_Translation::e_cuda_host:
+          case e_cuda_host:
             {
                function_decl->get_functionModifier().setCudaHost();
                break;
             }
-          case General_Language_Translation::e_cuda_global_function:
+          case e_cuda_global_function:
             {
                function_decl->get_functionModifier().setCudaGlobalFunction();
                break;
             }
-          case General_Language_Translation::e_cuda_device:
+          case e_cuda_device:
             {
                function_decl->get_functionModifier().setCudaDevice();
                break;
             }
-          case General_Language_Translation::e_cuda_grid_global:
+          case e_cuda_grid_global:
             {
                function_decl->get_functionModifier().setCudaGridGlobal();
                break;
@@ -520,7 +527,7 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
    setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
-   cout << "--- finished converting initialized name ", ut_name->get_name() << endl;
+   cout << "--- finished converting initialized name " << ut_name->get_name() << endl;
 #endif
 
    return sg_name;
@@ -813,8 +820,25 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
    SgName name = ut_function->get_name();
 
 // TODO - fix function type
-   SgType* returnType = SgTypeVoid::createType();
+   SgType* return_type = SgTypeVoid::createType();
    SgFunctionType* functionType = new SgFunctionType(returnType, false);
+
+
+   sg_temp_param_type = SgTypeUnknown::createType();
+   SgUntypedInitializedNameList* ut_params = ut_function->get_parameters();
+   SgInitializedNamePtrList* sg_params = convertUntypedInitializedNameList(ut_params, sg_temp_param_type);
+
+// Build empty parameter list, need to add initialized names
+   SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList();
+   ROSE_ASSERT(param_list);
+
+// Append args
+// appendArg(param_list, arg1);
+// appendArg(param_list, arg2);
+
+   SgFunctionDeclaration* function_decl = SageBuilderbuildDefiningFunctionDeclaration(name, return_type, param_list, scope);
+   ROSE_ASSERT(function_decl);
+   setSourcePositionFrom(function_decl, ut_function);
 
 // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
    SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name, functionType, NULL);
@@ -828,7 +852,7 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
 // TODO - suffix
    printf ("...TODO... convert suffix\n");
 
-printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class_name().c_str());
+   cout << "...TODO... convert untyped function: scope is " << scope << ": " << scope->class_name() << endl;
 
    buildProcedureSupport(ut_function, functionDeclaration, scope);
 
@@ -1134,7 +1158,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    //        DeclAttributes.reset();
 
 #if DEBUG_UNTYPED_CONVERTER
-   cout << "--- finished converting type-declaration-stmt ", sg_decl->class_name() << endl;
+   cout << "--- finished converting type-declaration-stmt " << sg_decl->class_name() << endl;
 #endif
 
    return sg_decl;
@@ -2751,6 +2775,8 @@ void
 UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function, SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope)
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
+
+     cout << "-x- buildProcedureSupport: scope is " << scope << ": " << scope->class_name() << endl;
 
    // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
       SgUntypedExprListExpression* modifiers = ut_function->get_modifiers();
