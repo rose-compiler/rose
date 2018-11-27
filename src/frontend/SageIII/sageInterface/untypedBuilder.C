@@ -25,6 +25,9 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
    std::string char_length;
    bool char_length_is_string = false;
 
+   SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
+   ROSE_ASSERT(modifiers);
+
    SgUntypedType* type = NULL;
 
    switch(language_enum)
@@ -36,50 +39,50 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
              case SgUntypedType::e_unknown:
                {
                  type = new SgUntypedType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_implicit:
                {
                  type = new SgUntypedType("IMPLICIT",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_void:
                {
                  type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_int:
                {
                  type = new SgUntypedType("integer",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_float:
                {
                  type = new SgUntypedType("real",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_complex:
                {
                  type = new SgUntypedType("complex",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_bool:
                {
                  type = new SgUntypedType("logical",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_char:
              case SgUntypedType::e_string:
                {
                  type = new SgUntypedType("character",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              default:
@@ -98,49 +101,49 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
              case SgUntypedType::e_unknown:
                {
                  type = new SgUntypedType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_void:
                {
                  type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_int:
                {
                  type = new SgUntypedType("S",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_uint:
                {
                  type = new SgUntypedType("U",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_float:
                {
                  type = new SgUntypedType("F",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_bool:
                {
                  type = new SgUntypedType("boolean_literal",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_bit:
                {
                  type = new SgUntypedType("B",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_string:
                {
                  type = new SgUntypedType("C",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              default:
@@ -159,13 +162,13 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
              case SgUntypedType::e_unknown:
                {
                  type = new SgUntypedType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              case SgUntypedType::e_void:
                {
                  type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
              default:
@@ -201,6 +204,9 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
    std::string char_length;
    bool char_length_is_string = false;
 
+   SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
+   ROSE_ASSERT(modifiers);
+
    SgUntypedArrayType* type = NULL;
 
    ROSE_ASSERT(shape != NULL);
@@ -214,42 +220,42 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              case SgUntypedType::e_unknown:
                {
                  type = new SgUntypedArrayType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_implicit:
                {
                  type = new SgUntypedArrayType("IMPLICIT",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_void:
                {
                  type = new SgUntypedArrayType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_int:
                {
                  type = new SgUntypedArrayType("integer",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_float:
                {
                  type = new SgUntypedArrayType("real",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_bool:
                {
                  type = new SgUntypedArrayType("logical",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
@@ -269,28 +275,28 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              case SgUntypedType::e_int:
                {
                  type = new SgUntypedArrayType("S",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_uint:
                {
                  type = new SgUntypedArrayType("U",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_float:
                {
                  type = new SgUntypedArrayType("F",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }
              case SgUntypedType::e_bit:
                {
                  type = new SgUntypedArrayType("B",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
                                           shape, rank);
                  break;
                }

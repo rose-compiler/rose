@@ -1080,6 +1080,7 @@ Grammar::setUpNodes ()
      UntypedTokenPair.setDataPrototype     ( "unsigned int", "classification_code_2", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // Rasmussen (11/19/2018): Added modifiers to allow more type information (should remove some existing like is_constant)
      UntypedType.setFunctionPrototype ( "HEADER_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedType.setDataPrototype     ( "std::string", "type_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1103,6 +1104,8 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedType.setDataPrototype     ( "bool", "char_length_is_string", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedType.setDataPrototype     ( "SgUntypedExprListExpression*", "modifiers", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 
   // DQ (12/9/2015): enum type for different types indentifable in the parsing.
      UntypedType.setDataPrototype     ( "SgUntypedType::type_enum", "type_enum_id", "= SgUntypedType::e_unknown",

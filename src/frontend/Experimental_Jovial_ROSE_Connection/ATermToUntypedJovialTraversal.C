@@ -104,11 +104,32 @@ ATbool ATermToUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntyp
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_ProcedureModule(ATerm term, SgUntypedScope* scope)
 { 
+   cout << "\n.x. ProcedureModule ---------------------------------------\n";
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProcedureModule: %s\n", ATwriteToString(term));
 #endif
 
-   return ATfalse;
+   ATerm t_decls, t_funcs;
+
+   SgUntypedFunctionScope* function_scope = NULL;
+
+   if (ATmatch(term, "ProcedureModule(<term>,<term>)", &t_decls, &t_funcs)) {
+
+      cout << ".x. ProcedureModule match\n";
+
+      SgUntypedDeclarationStatementList* decls = scope->get_declaration_list();
+
+      if (traverse_DeclarationList(t_decls, decls)) {
+         // MATCHED DeclarationList
+      } else return ATfalse;
+
+      if (traverse_NonNestedSubroutineList(t_funcs, scope)) {
+         // MATCHED NonNestedSubroutineList
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
@@ -117,9 +138,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUnt
    printf("... traverse_DeclarationList: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm decls;
-   if (ATmatch(term, "DeclarationList(<term>)" , &decls)) {
-      ATermList tail = (ATermList) ATmake("<term>", decls);
+   ATerm t_decls;
+
+   if (ATmatch(term, "DeclarationList(<term>)", &t_decls)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_decls);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
@@ -232,9 +254,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    std::vector<PosInfo> locations;
    std::string temp_label = "";
 
-   SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
 
    *function_scope = NULL;
 
@@ -250,6 +272,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
    }
 
    else if (ATmatch(term, "ProgramBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
       if (traverse_DeclarationList(t_decls, decl_list)) {
          // MATCHED DeclarationList
       } else return ATfalse;
@@ -259,7 +286,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
       } else return ATfalse;
 
       if (traverse_SubroutineDefinitionList(t_funcs, func_list)) {
-         // MATCHED StatementList
+         // MATCHED SubroutineDefinition
       } else return ATfalse;
 
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -278,10 +305,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
       assert(labels.size() <= 1);
       if (labels.size() == 1) temp_label = labels[0];
 
-      *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
    }
-
    else return ATfalse;
+
+   *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
 
    return ATtrue;
 }
@@ -292,7 +319,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_NonNestedSubroutineList(ATerm ter
    printf("... traverse_NonNestedSubroutineList: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(term, "NonNestedSubroutineList([])")) {
+   ATerm t_procs, t_proc;
+
+   SgUntypedDeclarationStatementList* decls = scope->get_declaration_list();
+
+   if (ATmatch(term, "NonNestedSubroutineList(<term>)", &t_procs)) {
+      ATermList tail = (ATermList) ATmake("<term>", t_procs);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+      // TODO - Probably will need a NonNestedSubroutineDef term
+         if (ATmatch(head, "NonNestedSubroutine(<term>)", &t_proc)) {
+            if (traverse_ProcedureDefinition(t_proc, decls)) {
+               // MATCHED ProcedureDefinition
+            } else return ATfalse;
+         } else return ATfalse;
+      }
    } else return ATfalse;
 
    return ATtrue;
@@ -1689,6 +1731,369 @@ ATbool ATermToUntypedJovialTraversal::traverse_DefSpecificationChoice(ATerm term
 
    return ATtrue;
 }
+
+
+//========================================================================================
+// 3.1 Procedures
+//----------------------------------------------------------------------------------------
+
+ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ProcedureDefinition: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_proc_heading, t_proc_body;
+
+   std::string label, name;
+   int sub_attr;
+   SgUntypedFunctionScope* function_scope = NULL;
+   SgUntypedExprListExpression* attr_list = NULL;
+   SgUntypedInitializedNameList* param_list = NULL;
+
+   if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
+
+      if (traverse_ProcedureHeading(t_proc_heading, name, &attr_list, &param_list)) {
+         // MATCHED ProcedureHeading
+      } else return ATfalse;
+
+      if (traverse_SubroutineBody(t_proc_body, &function_scope)) {
+         // MATCHED ProcedureBody (the production is actually a SubroutineBody)
+      } else return ATfalse;
+
+   }
+   else return ATfalse;
+
+   int stmt_enum = General_Language_Translation::e_unknown
+   SgUntypedNamedStatement* end_program_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
+
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
+
+   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression();
+   attr = new SgUntypedOtherExpression(sub_attr);
+   setSourcePosition(prefix, head);
+   attr_list->get_expressions().push_back(attr);
+
+// create the function
+   function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, type,
+                                                    function_scope, prefix_list, end_program_stmt);
+
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std::string & name,
+                                                                SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ProcedureHeading: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   ATerm t_name, t_attr, t_params;
+   SgUntypedExprListExpression* function_modifier_list;
+   SgUntypedInitializedNameList* function_param_list;
+   SgUntypedOtherExpression* function_modifier = NULL;
+
+   *attrs  = NULL;
+   *params = NULL;
+
+   if (ATmatch(term, "ProcedureHeading(<term>,<term>,<term>)", &t_name, &t_attr, t_params)) {
+
+      if (traverse_Name(t_name, name)) {
+         // MATCHED Name
+      } else return ATfalse;
+
+      if (traverse_SubroutineAttribute(t_attr, &function_modifier)) {
+         // MATCHED SubroutineAttribute
+      } else return ATfalse;
+
+      function_modifier_list = new SgUntypedExprListExpression(e_function_modifier_recursive_list);
+      ROSE_ASSERT(function_modifier_list);
+      setSourcePosition(function_modifier_list, t_attr);
+
+      function_modifier_list->get_expressions().push_back(function_modifier);
+
+      function_param_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(function_param_list);
+      setSourcePosition(function_param_list, t_params);
+
+      if (traverse_FormalParameterList(t_name, function_param_list)) {
+         // MATCHED FormalParameterList
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   *attrs  = function_modifier_list;
+   *params = function_param_list;
+
+   ROSE_ASSERT(*attrs);
+   ROSE_ASSERT(*params);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SubroutineAttribute: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   *attr_expr = NULL;
+
+   if (ATmatch(term, "no-subroutine-attribute()")) {
+      *attr_expr = new SgUntypedOtherExpression(e_unknown);
+   }
+   else if (ATmatch(term, "SubroutineAttribute(REC)")) {
+      *attr_expr = new SgUntypedOtherExpression(e_function_modifier_recursive);
+   }
+   else if (ATmatch(term, "SubroutineAttribute(RENT)")) {
+      *attr_expr = new SgUntypedOtherExpression(e_function_modifier_reentrant);
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(*attr_expr);
+   setSourcePosition(*attr_expr, term);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_SubroutineBody(ATerm term, SgUntypedFunctionScope** function_scope)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ProgramBody: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_stmt;
+   ATerm t_decls, t_stmts, t_funcs, t_labels;
+   std::vector<std::string> labels;
+   std::vector<PosInfo> locations;
+   std::string temp_label = "";
+
+   SgUntypedDeclarationStatementList* decl_list = NULL;
+   SgUntypedStatementList*            stmt_list = NULL;
+   SgUntypedFunctionDeclarationList*  func_list = NULL;
+
+   *function_scope = NULL;
+
+// Statement option of a SubroutineBody
+   {
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
+      ROSE_ASSERT(decl_list);
+      ROSE_ASSERT(stmt_list);
+      ROSE_ASSERT(func_list);
+
+      if (traverse_Statement(t_stmt, stmt_list)) {
+         // MATCHED Statement
+      } else return ATfalse;
+
+      std::cout << "SUBROUTINE BODY produced by only a statement\n";
+      std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
+   }
+
+   else if (ATmatch(term, "SubroutineBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      ROSE_ASSERT(decl_list);
+
+      if (traverse_DeclarationList(t_decls, decl_list)) {
+         // MATCHED DeclarationList
+      } else return ATfalse;
+
+      stmt_list = new SgUntypedStatementList();
+      ROSE_ASSERT(stmt_list);
+
+      if (traverse_StatementList(t_stmts, stmt_list)) {
+         // MATCHED StatementList
+      } else return ATfalse;
+
+      func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(func_list);
+
+      if (traverse_SubroutineDefinitionList(t_funcs, func_list)) {
+         // MATCHED SubroutineDefinition
+      } else return ATfalse;
+
+      if (traverse_LabelList(t_labels, labels, locations)) {
+         // MATCHED LabelList
+      } else return ATfalse;
+
+#if 1
+      std::cout << "SUBROUTINE BODY\n";
+      std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
+      std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
+      std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
+      std::cout << "  #labels = " << labels.size() << "\n\n";
+#endif
+
+   // TODO - need list for labels in untyped IR
+      assert(labels.size() <= 1);
+      if (labels.size() == 1) temp_label = labels[0];
+   }
+   else return ATfalse;
+
+   *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
+   ROSE_ASSERT(*function_scope);
+   setSourcePosition(*function_scope, term);
+
+   return ATtrue;
+}
+
+
+//========================================================================================
+// 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
+//----------------------------------------------------------------------------------------
+
+ATbool ATermToUntypedJovialTraversal::traverse_FormalParameterList(ATerm term, SgUntypedInitializedNameList* param_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FormalParameterList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_input, t_output;
+
+   if (ATmatch(term, "FormalParameterList(<term>,<term>)", &t_input,&t_output)) {
+   // Input parameters
+      ATermList tail = (ATermList) ATmake("<term>", t_input);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_FormalInputParameter(head, param_list)) {
+            // MATCHED FormalInputParametere
+         } else return ATfalse;
+      }
+
+   // Output parameters
+      tail = (ATermList) ATmake("<term>", t_output);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_FormalOutputParameter(head, param_list)) {
+            // MATCHED FormalInputParametere
+         } else return ATfalse;
+      }
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FormalInputParameter(ATerm term, SgUntypedInitializedNameList* param_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FormalInputParameter: %s\n", ATwriteToString(term));
+#endif
+
+   if (ATmatch(t_input, "no-formal-parameter-list()")) {
+      // no input parameters OK, return immediately
+      return ATtrue;
+   }
+
+// There are input parameters (if not will have returned)
+//
+   if (ATmatch(term, "FormalInputParameter(<term>,<term>)", t_binding, t_name)) {
+      if (traverse_ParameterBinding(t_binding, &binding_expr)) {
+         // MATCHED ParameterBinding
+      } else return ATfalse;
+      if (traverse_Name(t_name, name)) {
+         // MATCHED Name
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+   ROSE_ASSERT(type);
+
+   SgUntypedExprListExpression* modifiers = type->get_modifiers();
+   modifier_list->get_expressions().push_back(binding_expr);
+   setSourcePosition(modifiers, t_binding);
+
+   SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
+   setSourcePosition(iname, t_name);
+   param_list->get_name_list().push_back(iname);
+
+   return ATfalse;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FormalOutputParameter(ATerm term, SgUntypedInitializedNameList* param_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FormalOutputParameter: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   if (ATmatch(t_input, "no-formal-output-parameters()")) {
+      // no output parameters OK, return immediately
+      return ATtrue;
+   }
+
+// There are output parameters (if not will have returned)
+//
+   if (ATmatch(term, "FormalOutputParameter(<term>,<term>)", t_binding, t_name)) {
+      if (traverse_ParameterBinding(t_binding, &binding_expr)) {
+         // MATCHED ParameterBinding
+      } else return ATfalse;
+      if (traverse_Name(t_name, name)) {
+         // MATCHED Name
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+   ROSE_ASSERT(type);
+
+   SgUntypedOtherExpression* output_expr = new SgUntypedOtherExpression(e_type_modifier_intent_out);
+   ROSE_ASSERT(type);
+   setSourcePositionUnknown(output_expr);
+
+   SgUntypedExprListExpression* modifiers = type->get_modifiers();
+   modifier_list->get_expressions().push_back(output_expr);
+   modifier_list->get_expressions().push_back(binding_expr);
+   setSourcePosition(modifiers, t_binding);
+
+   SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
+   setSourcePosition(iname, t_name);
+   param_list->get_name_list().push_back(iname);
+
+   return ATfalse;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_ParameterBinding(ATerm term, SgUntypedOtherExpression** binding_expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ParameterBinding: %s\n", ATwriteToString(term));
+#endif
+
+   using namespace General_Language_Translation;
+
+   *binding_expr = NULL;
+
+   if (ATmatch(term, "no-parameter-binding()")) {
+      *binding_expr = new SgUntypedOtherExpression(e_unknown);
+   }
+   else if (ATmatch(term, "BYVAL()")) {
+      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_value);
+   }
+   else if (ATmatch(term, "BYREF()")) {
+      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_reference);
+   }
+   else if (ATmatch(term, "BYRES()")) {
+      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_result);
+   }
+
+   ROSE_ASSERT(*binding_expr);
+   setSourcePosition(*binding_expr, term);
+
+   return ATfalse;
+}
+
 
 //========================================================================================
 // 4.0 STATEMENTS
@@ -4067,7 +4472,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_Exponent(ATerm term, std::string 
 #endif
 
    ATerm t_sign, t_num;
-   //   std::string literal;
    char* number;
 
 

@@ -123,6 +123,19 @@ ATbool traverse_SimpleDef             (ATerm term, SgUntypedDeclarationStatement
 ATbool traverse_CompoundDef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_DefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 3.0 PROCEDURES AND FUNCTIONS
+ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr);
+ATbool traverse_ProcedureHeading(ATerm term, std::string & name,
+                                 SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+ATbool traverse_SubroutineBody(ATerm term, SgUntypedFunctionScope** function_scope);
+
+// 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
+ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
+ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
+ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
+ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
+
 // 4.0 STATEMENTS
 ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list);
