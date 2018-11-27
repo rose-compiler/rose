@@ -90,6 +90,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("ip");
             REG_SP = *regdict->lookup("sp");
             REG_SS = *regdict->lookup("ss");
+            REG_SF = *regdict->lookup("bp");
             break;
         case 4:
             name("i386");
@@ -99,6 +100,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("eip");
             REG_SP = *regdict->lookup("esp");
             REG_SS = *regdict->lookup("ss");
+            REG_SF = *regdict->lookup("ebp");
             callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
@@ -109,6 +111,7 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("rip");
             REG_SP = *regdict->lookup("rsp");
             REG_SS = *regdict->lookup("ss");
+            REG_SF = *regdict->lookup("rbp");
             callingConventions(CallingConvention::dictionaryAmd64());
             break;
         default:

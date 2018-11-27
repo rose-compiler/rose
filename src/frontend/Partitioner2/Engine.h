@@ -11,6 +11,11 @@
 #include <Progress.h>
 #include <Sawyer/DistinctList.h>
 
+#ifdef ROSE_ENABLE_PYTHON_API
+#undef slots                                            // stupid Qt pollution
+#include <boost/python.hpp>
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -140,16 +145,35 @@ private:
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
+        // The following lists are used for adding outgoing E_CALL_RETURN edges to basic blocks based on whether the basic
+        // block is a call to a function that might return.  When a new basic block is inserted into the CFG (or a previous
+        // block is removed, modified, and re-inserted), the operator() is called and conditionally inserts the block into the
+        // "pendingCallReturn" list (if the block is a function call that lacks an E_CALL_RETURN edge and the function is known
+        // to return or the analysis was incomplete).
+        //
+        // When we run out of other ways to create basic blocks, we process the pendingCallReturn list from back to front. If
+        // the back block (which gets popped) has a positive may-return result then an E_CALL_RETURN edge is added to the CFG
+        // and the normal recursive BB discovery is resumed. Otherwise if the analysis is incomplete the basic block is moved
+        // to the processedCallReturn list.  The entire pendingCallReturn list is processed before proceeding.
+        //
+        // If there is no more pendingCallReturn work to be done, then the processedCallReturn blocks are moved to the
+        // finalCallReturn list and finalCallReturn is sorted by approximate CFG height (i.e., leafs first). The contents
+        // of the finalCallReturn list is then analyzed and the result (or the default may-return value for failed analyses)
+        // is used to decide whether a new CFG edge should be created, possibly adding new basic block addresses to the
+        // list of undiscovered blocks.
+        //
         Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
         Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminate call sites awaiting final analysis
+
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
         Engine *engine_;                                                   // engine to which this callback belongs
+        size_t maxSorts_;                                                  // max sorts before using unsorted lists
     protected:
-        explicit BasicBlockWorkList(Engine *engine): engine_(engine) {}
+        BasicBlockWorkList(Engine *engine, size_t maxSorts): engine_(engine), maxSorts_(maxSorts) {}
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance(Engine *engine) { return Ptr(new BasicBlockWorkList(engine)); }
+        static Ptr instance(Engine *engine, size_t maxSorts) { return Ptr(new BasicBlockWorkList(engine, maxSorts)); }
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
@@ -184,6 +208,9 @@ private:
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+
+        // Address of instruction being examined.
+        rose_addr_t inProgress() const { return inProgress_; }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,7 +232,8 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)),
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
     }
@@ -213,7 +241,8 @@ public:
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
         : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
-        basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
+        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+        progress_(Progress::instance()) {
         init();
     }
     
@@ -702,7 +731,9 @@ public:
      *  that's already in the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
@@ -715,7 +746,9 @@ public:
      *  removed from the CFG/AUM.
      *
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found. */
+     *  function was found.
+     *
+     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_INSN_RO_DATA reason. */
     virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.
@@ -1180,12 +1213,13 @@ public:
 
     /** Property: Whether to find intra-function code.
      *
-     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
-     *  same function, and will attempt to disassemble that missing part and link it into the surrounding function.
+     *  If positive, the partitioner will look for parts of memory that were not disassembled and occur between other parts of
+     *  the same function, and will attempt to disassemble that missing part and link it into the surrounding function. It will
+     *  perform up to @p n passes across the entire address space.
      *
      * @{ */
-    bool findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
-    virtual void findingIntraFunctionCode(bool b) { settings_.partitioner.findingIntraFunctionCode = b; }
+    size_t findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
+    virtual void findingIntraFunctionCode(size_t n) { settings_.partitioner.findingIntraFunctionCode = n; }
     /** @} */
 
     /** Property: Whether to find intra-function data.
@@ -1263,6 +1297,22 @@ public:
      * @{ */
     FunctionReturnAnalysis functionReturnAnalysis() const /*final*/ { return settings_.partitioner.functionReturnAnalysis; }
     virtual void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
+    /** @} */
+
+    /** Property: Maximum number of function may-return sorting operations.
+     *
+     *  If function may-return analysis is being run, the functions are normally sorted according to their call depth (after
+     *  arbitrarily breaking cycles) and the analysis is run from the leaf functions to the higher functions in order to
+     *  minimize forward dependencies. However, the functions need to be resorted each time a new function is discovered and/or
+     *  when the global CFG is sufficiently modified. Therefore, the total cost of the sorting can be substantial for large
+     *  specimens. This property limits the total number of sorting operations and reverts to unsorted analysis once the limit
+     *  is reached. This allows smaller specimens to be handled as accurately as possible, but still allows large specimens to
+     *  be processed in a reasonable amount of time.  The limit is based on the number of sorting operations rather than the
+     *  specimen size.
+     *
+     * @{ */
+    size_t functionReturnAnalysisMaxSorts() const /*final*/ { return settings_.partitioner.functionReturnAnalysisMaxSorts; }
+    virtual void functionReturnAnalysisMaxSorts(size_t n) { settings_.partitioner.functionReturnAnalysisMaxSorts = n; }
     /** @} */
 
     /** Property: Whether to search for function calls between exiting functions.
@@ -1346,6 +1396,27 @@ public:
     virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
     /** @} */
 
+    /** Property: Give names to system calls.
+     *
+     *  If this property is set, then the partitioner makes a pass after the control flow graph is finalized and tries to give
+     *  names to system calls using the @ref Rose::BinaryAnalysis::SystemCall analysis.
+     *
+     * @{ */
+    bool namingSystemCalls() const /*final*/ { return settings_.partitioner.namingSyscalls; }
+    virtual void namingSystemCalls(bool b) { settings_.partitioner.namingSyscalls = b; }
+    /** @} */
+
+    /** Property: Header file in which system calls are defined.
+     *
+     *  If this property is not empty, then the specified Linux header file is parsed to obtain the mapping between system call
+     *  numbers and their names. Otherwise, any analysis that needs system call names obtains them by looking in predetermined
+     *  system header files.
+     *
+     * @{ */
+    const boost::filesystem::path& systemCallHeader() const /*final*/ { return settings_.partitioner.syscallHeader; }
+    virtual void systemCallHeader(const boost::filesystem::path &filename) { settings_.partitioner.syscallHeader = filename; }
+    /** @} */
+
     /** Property: Demangle names.
      *
      *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level
@@ -1402,6 +1473,17 @@ public:
     bool astCopyAllInstructions() const /*final*/ { return settings_.astConstruction.copyAllInstructions; }
     virtual void astCopyAllInstructions(bool b) { settings_.astConstruction.copyAllInstructions = b; }
     /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Python API support functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_PYTHON_API
+
+    // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
+    Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
+    Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
+        
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff

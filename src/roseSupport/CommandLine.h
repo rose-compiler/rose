@@ -63,14 +63,28 @@ ROSE_DLL_API Sawyer::CommandLine::Parser createEmptyParser(const std::string &pu
  *  description can be much longer, multiple paragraphs, free-format, with Sawyer markup. It will appear under the heading
  *  "Description" in the man page.
  *
- *  See also, @ref createEmptyParser. */
+ *  See also, @ref createEmptyParser, @ref genericSwitches. */
 ROSE_DLL_API Sawyer::CommandLine::Parser createEmptyParserStage(const std::string &purpose, const std::string &description);
 
 /** Generic command-line components.
  *
- *  Returns a description of the switches that should be available for all ROSE tools. To make a command-line parser that
- *  recognizes these switches, add the switches to the parser using its @c with method.  For example, here's how to construct a
- *  parser that recognizes only these switches:
+ *  Returns a description of the switches that should be available for all ROSE tools. For consistency's sake, most tools will
+ *  want to have at least this set of switches which is intended to be common across all tools. These switches fall into some
+ *  categories:
+ *
+ *  @li Actions: switches that cause some special action to be performed such as showing the documentation or version number,
+ *      or running self-tests. If such a switch is specified, its action is performed instead of the tools normal action.
+ *
+ *  @li Adjustments: switches that cause a tool-wide adjustment in behavior, such as how internal program logic errors are
+ *      handled or what diagnostic facilities are enabled.
+ *
+ *  @li Defaults: switches that provide default values for multiple software components, such as the maximum number of threads
+ *      that a parallel analysis can use, or the name of the default SMT solver connection. These defaults are generic in the
+ *      sense that they don't prescribe requirements for all components--they only provide defaults for those components that
+ *      don't otherwise have a command-line setting.
+ *
+ *  To make a command-line parser that recognizes these switches, add the switches to the parser using its @c with method.  For
+ *  example, here's how to construct a parser that recognizes only these switches:
  *
  * @code
  *  static Sawyer::CommandLine::ParserResult
@@ -84,18 +98,33 @@ ROSE_DLL_API Sawyer::CommandLine::Parser createEmptyParserStage(const std::strin
  *  }
  * @endcode
  *
+ *  In general, we want all tools to have all these switches. At a minimum, a tool developer should be aware that the switches
+ *  in this group are in some sense reserved across all tools and should not be circumvented for other purposes. However, if a
+ *  tool doesn't use a switch, the developer can remove that switch from the parser and its documentation in order to prevent
+ *  user confusion. Here's an example of removing the "--threads" switch from a parser for a tool that doesn't support multiple
+ *  threads:
+ *
+ * @code
+ *  Sawyer::CommandLine::Parser p = createParser(purpose, description).with(genericSwitches());
+ *  p.removeMatchingSwitch("--threads=1"); // must parse
+ * @endcode
+ *
  *  If you encounter strange errors near this call, make sure you're using -pthread consistently in your compile and link
  *  commands. Its presence or absence should be the same as however the ROSE library itself was compiled and linked. Mixing up
  *  the -pthread switch creates ABI incompatibilities that manifest themselves in various ways that usually look like a problem
  *  with a function that's called from a program that uses librose: often a segmentation fault, but can also be hangs,
  *  incorrect results, etc.  Note that -pthread is both a compile and a link switch.
  *
- *  See any recent tool for more examples. */
+ *  See any recent tool for more examples.
+ *
+ *  See also, @ref createEmptyParser, @ref createEmptyParserStage. */
 ROSE_DLL_API Sawyer::CommandLine::SwitchGroup genericSwitches();
 
 /** Type for storing generic switch arguments.
  *
- *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere. */
+ *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere.
+ *
+ *  See also, @ref genericSwitchArgs. */
 struct GenericSwitchArgs {
     unsigned int threads;                               /**< Number of threads analyses should use. Zero means use the number
                                                          *   of threads that the hardware provides. */
@@ -112,7 +141,9 @@ struct GenericSwitchArgs {
  *
  *  This global variable holds the results of command-line parsing using @ref genericSwitches.  Normally these settings are
  *  passed per command-line parsing request, but the interface in ROSE doesn't have that ability yet, so we use a global
- *  variable. */
+ *  variable.
+ *
+ *  See also, @ref genericSwitches. */
 ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
 
 /** Convenience for for adding Boolean switches.
@@ -122,13 +153,17 @@ ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
  *  disable the switch using "--no-foo" and what the default is (current value of storage location).
  *
  *  An alternative is to use a switch that takes a Boolean argument (e.g., "--foo=yes" or "--foo=no"), but this is more
- *  difficult for users to remember and type than just "--foo" and "--no-foo". */
+ *  difficult for users to remember and type than just "--foo" and "--no-foo".
+ *
+ *  See also, @ref createEmptyParser, @ref createEmptyParserStage. */
 ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
                                       bool &storageLocation, const std::string &documentation);
 
 /** Base class for self tests.
  *
- *  Each test has a name and a functor that takes no arguments. */
+ *  Each test has a name and a functor that takes no arguments.
+ *
+ *  See also, @ref selfTests, @ref runSelfTestsAndExit. */
 class ROSE_DLL_API SelfTest: public Sawyer::SharedObject {
 public:
     typedef Sawyer::SharedPointer<SelfTest> Ptr;

@@ -1,0 +1,13 @@
+START
+PROGRAM testCompoundStatement ;
+BEGIN
+  BEGIN
+    ivar = 13;
+    ibbr = 1;
+    BEGIN
+       ;
+       ;
+    END
+  END
+END
+TERM

@@ -12,7 +12,7 @@ Functions detected from binary executable:
     8 0x08048364 0x08048364 0x08048388    15/36     .C...S.G.........  unknown       yes        +4 call_gmon_start                 
     9 0x08048390 0x08048390 0x080483ce    20/62     .C...S.G.........  unknown       yes        +4 __do_global_dtors_aux           
    10 0x080483d0 0x080483d0 0x08048404    16/52     .C...S.G.........  unknown       yes        +4 frame_dummy                     
-   11 0x08048410 0x08048410 0x08048434    12/36     .....S.G.........  unknown       yes        +4 main                            
+   11 0x08048410 0x08048410 0x08048434    12/36     .C...S.G.........  unknown       yes        +4 main                            
    12 0x08048440 0x08048440 0x08048456     8/22     .....S.G.........  unknown       yes        +4 bar                             
    13 0x08048460 0x08048460 0x0804847e     7/30     .....S.G.........  unknown        no           foo                             
    14 0x08048480 0x08048480 0x080484a4     8/36     .....S.G.........  unknown        no           handler                         

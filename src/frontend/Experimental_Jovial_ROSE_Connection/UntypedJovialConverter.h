@@ -26,6 +26,8 @@ class UntypedJovialConverter : public UntypedConverter
    // Executable statements
    //
 
+    virtual SgStatement* convertSgUntypedCaseStatement (SgUntypedCaseStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+
    // Expressions
    //
 

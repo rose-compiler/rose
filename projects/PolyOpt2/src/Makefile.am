@@ -39,7 +39,7 @@ INCLUDES		=						\
 	-I$(POCC_INSTALL)/math/install-polylib/include			\
 	-I$(POCC_INSTALL)/math/install-isl/include			\
 	-I$(POCC_INSTALL)/math/install-barvinok/include			\
-	-I$(POCC_INSTALL)/math/install-ntl-6.2.0/include		\
+	-I$(POCC_INSTALL)/math/install-ntl-11.3.0/include		\
 	-I$(POCC_INSTALL)/math/install-fm/include			\
 	-I$(top_srcdir)							\
 	-I$(top_srcdir)/polyopt/include					\
@@ -71,7 +71,7 @@ INCLUDES		=						\
 	-I$(top_srcdir)/pocc/math/install-polylib/include		\
 	-I$(top_srcdir)/pocc/math/install-isl/include			\
 	-I$(top_srcdir)/pocc/math/install-barvinok/include		\
-	-I$(top_srcdir)/pocc/math/install-ntl-6.2.0/include		\
+	-I$(top_srcdir)/pocc/math/install-ntl-11.3.0/include		\
 	-I$(top_srcdir)/pocc/math/install-fm/include			\
 	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
@@ -90,11 +90,11 @@ PolyRose_SOURCES	=			\
 	Main.cpp
 
 PolyRose_CFLAGS		=					\
-	-DPOCC_ROOT_DIR=$(abs_top_srcdir)/pocc $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
+	-DPOCC_ROOT_DIR=$(abs_top_builddir)/pocc $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 PolyRose_CPPFLAGS	= -Wno-deprecated
 
 PolyRose_LDADD		= $(top_builddir)/polyopt/libpolyopt.la $(ROSE_ROOT)/lib/librose.la
 
-PolyRose_LDFLAGS	= -lboost_iostreams -lboost_system -L${BOOST_ROOT}/lib
+PolyRose_LDFLAGS	= -lboost_iostreams -lboost_system -lboost_chrono -L${BOOST_ROOT}/lib
 #############################################################################

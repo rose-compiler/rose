@@ -34,6 +34,8 @@ endif
 # #######################
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
+     R832.f90        \
+     R837.f90        \
      test2007_01.f90 \
      test2007_02.f90 \
      test2007_03.f90 \

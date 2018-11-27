@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
+PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
@@ -76,7 +78,8 @@ noinst_PROGRAMS = \
    testGraphGeneration \
    testPDFGeneration \
    testTokenGeneration \
-   testTemplates
+   testTemplates \
+   testBackend
 
 if ROSE_WITH_ATERM
    noinst_PROGRAMS += testAtermGraphGeneration
@@ -158,6 +161,8 @@ KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 
 # DQ (7/2/2015): Added test that marks templates to be output with instantiations.
 testTemplates_SOURCES = testTemplates.C
+
+testBackend_SOURCES = testBackend.C
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.

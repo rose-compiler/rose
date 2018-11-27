@@ -272,39 +272,36 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    SgUntypedInitializedNamePtrList::const_iterator it;
 
 #if 0
-   std::cerr << "convertSgUntypedVariableDeclaration: # vars is " << ut_vars.size() << endl;
-   std::cerr << "convertSgUntypedVariableDeclaration: b_type is " << sg_base_type->class_name() << endl;
-   std::cerr << "convertSgUntypedVariableDeclaration:   name is " << ut_vars[0]->get_name() << endl;
-   ROSE_ASSERT(ut_vars[0]->get_type() != NULL);
-   std::cerr << "convertSgUntypedVariableDeclaration:   type is " << ut_vars[0]->get_type()->class_name() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_decl: " << ut_decl << endl;
+   cout << "--- convertSgUntypedVariableDeclaration:       # vars is " << ut_vars.size() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_base_type is " << ut_base_type->class_name()
+                                                                << " " << ut_base_type << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: sg_base_type is " << sg_base_type->class_name() << endl;
 #endif
 
    SgInitializedNamePtrList sg_name_list;
-// TODO: convertSgUntypedInitializedNameList(ut_decl->get_variables(), sg_base_type);
 
 // Declare the first variable
 #if 0
 //TODO - not sure this is correct and is ackward anyway as it would be nice to create a variable declaration
 // without any variables and then add them all later.
-   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
-#endif
-
-#if 1
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration(name, sg_type, /*sg_init*/NULL, scope);
+#else
    SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
    setSourcePositionFrom(sg_decl, ut_decl);
+
+#if 0
+   cout << "--- convertSgUntypedVariableDeclaration: sg_decl: " << sg_decl << endl;
+   cout << "                                                  " << sg_decl->get_firstNondefiningDeclaration() << endl;
+#endif
 
    sg_decl->set_parent(scope);
    sg_decl->set_definingDeclaration(sg_decl);
    setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
-
-#if 0
-   std::cerr << "convertSgUntypedVariableDeclaration:    var is " << sg_decl << endl;
-   std::cerr << "                                               " << sg_decl->get_firstNondefiningDeclaration() << endl;
-#endif
 #endif
 
 // add variables
-   for (it = ut_vars.begin(); it != ut_vars.end(); it++)
+   BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_vars)
    {
          // TODO
          //   1. initializer
@@ -313,51 +310,60 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
          //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = convertSgUntypedInitializedName((*it), sg_base_type);
-      SgName variableName = initializedName->get_name();
+      SgInitializedName* sg_init_name = convertSgUntypedInitializedName(ut_init_name, sg_base_type);
+      SgName var_name = sg_init_name->get_name();
 
 #if 0
-      std::cerr << "convertSgUntypedVariableDeclaration:   name is " << (*it)->get_type()->class_name()   << endl;
+      cout << "--- convertSgUntypedVariableDeclaration: var name is " << ut_init_name->get_name() << endl;
+      cout << "--- convertSgUntypedVariableDeclaration:  ut_type is " << ut_init_name->get_type()->class_name()
+                                                               << " " << ut_init_name->get_type() << endl;
+      cout << "--- convertSgUntypedVariableDeclaration:  sg_type is " << sg_init_name->get_type()->class_name() << endl;
 #endif
 
-      initializedName->set_declptr(sg_decl);
-      sg_decl->append_variable(initializedName, initializedName->get_initializer());
+   // Finished with the untyped initialized name and associated types.  Don't delete untyped
+   // initialized names now as they will be deleted after the traversal but delete types now.
+      if (ut_init_name->get_type() != ut_base_type) delete ut_init_name->get_type();
+      ut_init_name->set_type(NULL);
+      delete ut_base_type;
+
+      sg_init_name->set_declptr(sg_decl);
+      sg_decl->append_variable(sg_init_name, sg_init_name->get_initializer());
 
       SgVariableSymbol* variableSymbol = NULL;
       SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(scope);
       if (functionDefinition != NULL)
       {
       // Check in the function definition for an existing symbol
-         variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
+         variableSymbol = functionDefinition->lookup_variable_symbol(var_name);
          if (variableSymbol != NULL)
          {
-            std::cout << "--- but variable symbol is _NOT_ NULL for " << variableName << std::endl;
+            std::cout << "--- but variable symbol is _NOT_ NULL for " << var_name << std::endl;
 
          // This variable symbol has already been placed into the function definition's symbol table
          // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
-            initializedName->set_prev_decl_item(variableSymbol->get_declaration());
+            sg_init_name->set_prev_decl_item(variableSymbol->get_declaration());
          // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
-            variableSymbol->get_declaration()->set_type(initializedName->get_type());
+            variableSymbol->get_declaration()->set_type(sg_init_name->get_type());
          // Function parameters are in the scope of the function definition (same for C/C++)
-            initializedName->set_scope(functionDefinition);
+            sg_init_name->set_scope(functionDefinition);
          }
       }
 
       if (variableSymbol == NULL)
       {
       // Check the current scope
-         variableSymbol = scope->lookup_variable_symbol(variableName);
+         variableSymbol = scope->lookup_variable_symbol(var_name);
 
-         initializedName->set_scope(scope);
+         sg_init_name->set_scope(scope);
          if (variableSymbol == NULL)
          {
-            variableSymbol = new SgVariableSymbol(initializedName);
-            scope->insert_symbol(variableName,variableSymbol);
-            ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+            variableSymbol = new SgVariableSymbol(sg_init_name);
+            scope->insert_symbol(var_name,variableSymbol);
+            ROSE_ASSERT (sg_init_name->get_symbol_from_symbol_table () != NULL);
          }
       }
       ROSE_ASSERT(variableSymbol != NULL);
-      ROSE_ASSERT(initializedName->get_scope() != NULL);
+      ROSE_ASSERT(sg_init_name->get_scope() != NULL);
    }
 
    scope->append_statement(sg_decl);
@@ -374,7 +380,7 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    //        DeclAttributes.reset();
 
 #if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting type-declaration-stmt %s\n", sg_decl->class_name().c_str());
+   cout << "--- finished converting type-declaration-stmt " << sg_decl->class_name() << endl;
 #endif
 
    return sg_decl;
@@ -397,7 +403,7 @@ UntypedFortranConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDe
    convertLabel(ut_decl, implicitStatement);
 
 #if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting implicit-stmt %s\n", implicitStatement->class_name().c_str());
+   cout << "--- finished converting implicit-stmt " << implicitStatement->class_name() << endl;
 #endif
 
    return implicitStatement;
@@ -407,7 +413,6 @@ SgDeclarationStatement*
 UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
    {
       SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
-      SgUntypedNamePtrList::const_iterator it;
 
       switch (ut_decl->get_statement_enum())
         {
@@ -421,9 +426,9 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
               SgExpressionPtrList localList;
 
-              for (it = ut_names.begin(); it != ut_names.end(); it++)
+              BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
               {
-                 SgName name = (*it)->get_name();
+                 SgName name = ut_name->get_name();
                  std::cout << "... IMPORT name is " << name << std::endl;
                  SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
                  ROSE_ASSERT(variableSymbol != NULL);
@@ -439,41 +444,35 @@ UntypedFortranConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListD
 
         case SgToken::FORTRAN_EXTERNAL:
           {
-          // TODO - name seems to need a parent found in get_name sageInterface.c, line 1528
-          //      - actually may be attr_spec_stmt without a parent
-             SgAttributeSpecificationStatement* attr_spec_stmt = new SgAttributeSpecificationStatement();
+             SgAttributeSpecificationStatement::attribute_spec_enum attr_enum = SgAttributeSpecificationStatement::e_externalStatement;
+             SgAttributeSpecificationStatement* attr_spec_stmt = SageBuilder::buildAttributeSpecificationStatement(attr_enum);
+             ROSE_ASSERT(attr_spec_stmt);
              setSourcePositionFrom(attr_spec_stmt, ut_decl);
 
-             attr_spec_stmt->set_definingDeclaration(attr_spec_stmt);
-             attr_spec_stmt->set_firstNondefiningDeclaration(attr_spec_stmt);
-
-             attr_spec_stmt->set_attribute_kind(SgAttributeSpecificationStatement::e_externalStatement);
-
-          // Build the SgExprListExp in the attributeSpecificationStatement if it has not already been built
-          // TODO - check to see if this is done in constructor?????????
-             if (attr_spec_stmt->get_parameter_list() == NULL)
-                {
-                   SgExprListExp* parameterList = new SgExprListExp();
-                   attr_spec_stmt->set_parameter_list(parameterList);
-                   parameterList->set_parent(attr_spec_stmt);
-                   setSourcePositionUnknown(parameterList);
-                }
-
-             for (it = ut_names.begin(); it != ut_names.end(); it++)
+             BOOST_FOREACH(SgUntypedName* ut_name, ut_names)
              {
-                std::string name = (*it)->get_name();
+                std::string name = ut_name->get_name();
                 std::cout << "... EXTERNAL name is " << name << std::endl;
 
-#if 0
-             // TODO - pick and implement one of these
-                SgExpression* parameterExpression = astExpressionStack.front();
-                SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
+             // TODO - what about symbol table, perhaps already typed ................................................................
+                SgType* return_type = SageBuilder::buildFortranImplicitType(name);
 
-                attr_spec_stmt->get_parameter_list()->prepend_expression(parameterExpression);
-#endif
+                SgFunctionParameterTypeList * func_params = SageBuilder::buildFunctionParameterTypeList();
+                SgFunctionType*               func_type   = SageBuilder::buildFunctionType(return_type, func_params);
+                SgFunctionRefExp *            func_ref    = SageBuilder::buildFunctionRefExp(name, func_type, scope);
+
+                attr_spec_stmt->get_parameter_list()->prepend_expression(func_ref);
+
+                std::cout << "...      func_ref is " << func_ref << std::endl;
+                std::cout << "...     func_type is " << func_type << " " << func_type->class_name() << std::endl;
+                std::cout << "...   func_params is " << func_params << endl;
+
              }
-             scope->append_statement(attr_spec_stmt);     
+             SageInterface::appendStatement(attr_spec_stmt, scope);
              UntypedFortranConverter::convertLabel(ut_decl, attr_spec_stmt);
+
+             std::cout << "...attr_spec_stmt is " << attr_spec_stmt << std::endl;
+             std::cout << "...    param_list is " << attr_spec_stmt->get_parameter_list() << std::endl;
 
              return attr_spec_stmt;
          }
@@ -541,7 +540,7 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
           }
         case SgToken::FORTRAN_RETURN:
           {
-             sg_stmt = new SgReturnStmt(sg_expr);
+             sg_stmt = SageBuilder::buildReturnStmt(sg_expr);
              break;
           }
         default:
@@ -565,6 +564,52 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
    }
 
 SgStatement*
+UntypedFortranConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      ROSE_ASSERT(children.size() == 4);
+
+#if 0
+      cout << "-x- convert do: initialization is " << ut_stmt->get_initialization() << " " << ut_stmt->get_initialization()->class_name() << endl;
+      cout << "-x- convert do:          bound is " << ut_stmt->get_bound() << " " << ut_stmt->get_bound()->class_name() << endl;
+      cout << "-x- convert do:      increment is " << ut_stmt->get_increment() << " " << ut_stmt->get_increment()->class_name() << endl;
+      cout << "-x- convert do:           body is " << ut_stmt->get_body() << " " << endl;
+      cout << "-x- convert do: construct name is " << ut_stmt->get_do_construct_name() << endl;
+#endif
+
+      SgAssignOp* initialization = isSgAssignOp(children[0]);
+      ROSE_ASSERT(initialization != NULL);
+
+      SgExpression* upper_bound = isSgExpression(children[1]);
+      ROSE_ASSERT(upper_bound != NULL);
+
+      SgExpression* increment = isSgExpression(children[2]);
+      ROSE_ASSERT(increment != NULL);
+
+   // Allowed to be NULL in SageBuilder
+      SgBasicBlock* loop_body = isSgBasicBlock(children[3]);
+
+      SgFortranDo* sg_stmt = SageBuilder::buildFortranDo(initialization, upper_bound, increment, loop_body);
+      ROSE_ASSERT(sg_stmt != NULL);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+  // For now assume this is a do-construct
+     sg_stmt->set_has_end_statement(true);
+
+   // Determine if do-construct-name is present
+      if (ut_stmt->get_do_construct_name().empty() == false)
+         {
+            sg_stmt->set_string_label(ut_stmt->get_do_construct_name());
+         }
+
+      SageInterface::appendStatement(sg_stmt, scope);
+
+// TEMPORARY (fix numeric labels especially here)
+//    convertLabel(ut_stmt, sg_stmt, scope);
+
+      return sg_stmt;
+   }
+
+SgStatement*
 UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
@@ -579,9 +624,11 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
              labelStatement->set_scope(currentFunctionScope);
              ROSE_ASSERT(labelStatement->get_scope() != NULL);
 
+          // SageInterface should be used but probably can't until SgFortranContinueStmt is used
+          // SageInterface::appendStatement(labelStatement, scope);
              scope->append_statement(labelStatement);
 
-          // TODO - why does this only work here??????
+          // TODO - why does this only work here?????? (this may be an old comment; check if need to pass scope immediately below)
           // UntypedFortranConverter::convertLabel(ut_stmt, labelStatement, currentFunctionScope);
              UntypedFortranConverter::convertLabel(ut_stmt, labelStatement);
 
@@ -594,8 +641,175 @@ UntypedFortranConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement
            }
        default:
           {
-             fprintf(stderr, "UntypedFortranConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
+             cerr << "UntypedFortranConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
              ROSE_ASSERT(0);
           }
        }
+   }
+
+SgImageControlStatement*
+UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope)
+   {
+      using namespace General_Language_Translation;
+
+      ROSE_ASSERT(ut_stmt);
+
+      SgImageControlStatement* sg_stmt = NULL;
+
+      SgUntypedExprListExpression* ut_status_list = ut_stmt->get_status_list();
+      ROSE_ASSERT(ut_status_list);
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_fortran_sync_all_stmt:
+          {
+             sg_stmt = new SgSyncAllStatement();
+             break;
+          }
+        case e_fortran_sync_images_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* image_set = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(image_set);
+
+             sg_stmt = new SgSyncImagesStatement(image_set);
+             break;
+          }
+        case e_fortran_sync_memory_stmt:
+          {
+             sg_stmt = new SgSyncMemoryStatement();
+             break;
+          }
+        case e_fortran_sync_team_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_expression());
+
+             SgExpression* team_value = convertSgUntypedExpression(ut_stmt->get_expression());
+             ROSE_ASSERT(team_value);
+
+             sg_stmt = new SgSyncTeamStatement(team_value);
+             break;
+          }
+        case e_fortran_lock_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_variable());
+
+             SgExpression* lock_variable = convertSgUntypedExpression(ut_stmt->get_variable());
+             ROSE_ASSERT(lock_variable);
+
+             sg_stmt = new SgLockStatement(lock_variable);
+             break;
+          }
+        case e_fortran_unlock_stmt:
+          {
+             ROSE_ASSERT(ut_stmt->get_variable());
+
+             SgExpression* lock_variable = convertSgUntypedExpression(ut_stmt->get_variable());
+             ROSE_ASSERT(lock_variable);
+
+             sg_stmt = new SgUnlockStatement(lock_variable);
+             break;
+          }
+        default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+        }
+
+      ROSE_ASSERT(sg_stmt);
+
+      cout << "-dn- ICS: sg_stmt = " << sg_stmt << ": " << sg_stmt->class_name()  << endl;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_fortran_sync_all_stmt:
+        case e_fortran_sync_images_stmt:
+        case e_fortran_sync_memory_stmt:
+        case e_fortran_sync_team_stmt:
+        case e_fortran_lock_stmt:
+        case e_fortran_unlock_stmt:
+          {
+             BOOST_FOREACH(SgUntypedExpression* ut_expr, ut_status_list->get_expressions())
+                {
+                   SgUntypedExprListExpression* ut_status_container = isSgUntypedExprListExpression(ut_expr);
+                   ROSE_ASSERT(ut_status_container);
+
+                   SgExpression* sg_expr = convertSgUntypedExpression(ut_status_container->get_expressions().front());
+                   ROSE_ASSERT(sg_expr);
+
+                   switch (ut_status_container->get_expression_enum())
+                     {
+                     case e_fortran_sync_stat_stat:    sg_stmt->set_stat    (sg_expr);  break;
+                     case e_fortran_sync_stat_errmsg:  sg_stmt->set_err_msg (sg_expr);  break;
+                     case e_fortran_stat_acquired_lock:
+                        {
+                           SgLockStatement* lock_stmt = isSgLockStatement(sg_stmt);
+                           ROSE_ASSERT(lock_stmt);
+                           lock_stmt->set_acquired_lock(sg_expr);
+                           break;
+                        }
+                     default: ROSE_ASSERT(0);
+                     }
+
+                }
+             break;
+          }
+       default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+      ROSE_ASSERT(sg_stmt);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+      SageInterface::appendStatement(sg_stmt, scope);
+
+      return sg_stmt;
+   }
+
+SgImageControlStatement*
+UntypedFortranConverter::convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
+                                                                SgNodePtrList& children, SgScopeStatement* scope)
+   {
+      SgImageControlStatement* sg_stmt = NULL;
+
+      cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+           << ut_stmt->get_statement_enum() << " # children is " << children.size() << endl;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case General_Language_Translation::e_fortran_sync_all_stmt:
+        case General_Language_Translation::e_fortran_sync_images_stmt:
+        case General_Language_Translation::e_fortran_sync_memory_stmt:
+        case General_Language_Translation::e_fortran_sync_team_stmt:
+        case General_Language_Translation::e_fortran_lock_stmt:
+        case General_Language_Translation::e_fortran_unlock_stmt:
+          {
+             cout << "-up- UntypedFortranConverter::convertSgUntypedImageControlStatement: statement enum, is "
+                  << ut_stmt->get_statement_enum() << " e_fortran_sync_all..team_stmt"<< endl;
+             SgStatement* sg_node = scope->getStatementList().back();
+             cout << "-up- sg_node = " << sg_node << endl;
+             SgImageControlStatement* sg_stmt = dynamic_cast<SgImageControlStatement*>(sg_node);
+             ROSE_ASSERT(sg_stmt);
+             break;
+          }
+       default:
+          {
+             cerr << "UntypedFortranConverter::convertSgUntypedImageControlStatement: failed to find known statement enum, is "
+                  << ut_stmt->get_statement_enum() << endl;
+             ROSE_ASSERT(0);
+          }
+       }
+
+   // The source position has already been set for the node in the down traversal (see previous function).
+   // No need to append sg_stmt either.
+
+      return sg_stmt;
    }

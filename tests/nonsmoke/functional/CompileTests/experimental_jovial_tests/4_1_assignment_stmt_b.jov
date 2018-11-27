@@ -1,0 +1,15 @@
+% Ambigious %
+% Test for multiple variables in an assignment statement %
+START
+PROGRAM testassign ;
+BEGIN
+% The variable PARTS(INDEX) is only ambiguous when not LAST
+in the variable list. Ambiguous between TableItem and TableEntry.
+There is a prefer on TableItem -> NamedVariable at 6.1 in the grammar. %
+
+  INDEX, PARTS(INDEX) = 5;
+
+  INDEX, PARTS(INDEX), CHECK = 5;
+  PARTS(INDEX), INDEX = 5;
+END
+TERM

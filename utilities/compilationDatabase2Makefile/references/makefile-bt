@@ -1,0 +1,41 @@
+# this is an automatically generated makefile
+default: all
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/y_solve.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/y_solve.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium y_solve.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/solve_subs.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/solve_subs.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium solve_subs.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/add.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/add.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium add.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/set_constants.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/set_constants.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium set_constants.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/wtime.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/wtime.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium -o wtime.o wtime.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/print_results.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/print_results.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium print_results.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_solution.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_solution.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium exact_solution.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/initialize.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/initialize.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium initialize.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/z_solve.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/z_solve.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium z_solve.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/x_solve.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/x_solve.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium x_solve.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_rhs.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_rhs.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium exact_rhs.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys/setparams:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys/setparams.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys; cc -c -o setparams setparams.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/adi.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/adi.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium adi.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/bt.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/bt.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium bt.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/error.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/error.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium error.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/verify.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/verify.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium verify.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/rhs.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/rhs.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium rhs.c
+/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/c_timers.o:/home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/c_timers.c
+	cd /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common; cc -c -I../common -g -Wall -O3 -fopenmp -mcmodel=medium c_timers.c
+all :  /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/y_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/solve_subs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/add.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/set_constants.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/wtime.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/print_results.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_solution.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/initialize.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/z_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/x_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_rhs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys/setparams /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/adi.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/bt.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/error.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/verify.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/rhs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/c_timers.o
+clean:
+	rm  /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/y_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/solve_subs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/add.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/set_constants.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/wtime.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/print_results.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_solution.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/initialize.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/z_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/x_solve.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/exact_rhs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/sys/setparams /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/adi.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/bt.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/error.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/verify.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/BT/rhs.o /home/liao6/1.local-git/7.benchmarks/SNU_NPB-1.0.3/NPB3.3-OMP-C/common/c_timers.o

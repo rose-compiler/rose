@@ -338,7 +338,7 @@ DisassemblerM68k::makeType(M68kDataFormat fmt)
         case m68k_fmt_i32: return SageBuilderAsm::buildTypeU32();
         case m68k_fmt_f32: return SageBuilderAsm::buildIeee754Binary32();
         case m68k_fmt_f96: return SageBuilderAsm::buildTypeM68kFloat96();
-        case m68k_fmt_p96: ASSERT_not_implemented("96-bit binary coded decimal [Robb P. Matzke 2014-07-16]");
+        case m68k_fmt_p96: throw Exception("96-bit binary coded decimal not implemented");
         case m68k_fmt_i16: return SageBuilderAsm::buildTypeU16();
         case m68k_fmt_f64: return SageBuilderAsm::buildIeee754Binary64();
         case m68k_fmt_i8:  return SageBuilderAsm::buildTypeU8();

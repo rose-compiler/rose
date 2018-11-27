@@ -1,0 +1,11 @@
+START
+PROGRAM testcase ;
+BEGIN
+  label1:
+  CASE TEST;
+  BEGIN
+    (DEFAULT): ;
+    (0,1,2): ;
+  END
+END
+TERM

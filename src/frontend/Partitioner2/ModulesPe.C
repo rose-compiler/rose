@@ -227,9 +227,9 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             }
             return;
         }
-        if (insn->get_kind()!=x86_jmp || insn->get_operandList()->get_operands().size()!=1)
+        if (insn->get_kind()!=x86_jmp || insn->nOperands() != 1)
             continue;                                   // ...that is a JMP...
-        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
         SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
         if (!addr)
             continue;                                   // ...with addressing mode [C] where C is a constant...

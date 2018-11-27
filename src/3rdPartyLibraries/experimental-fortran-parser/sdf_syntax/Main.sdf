@@ -262,7 +262,7 @@ sorts
   ValueStmt                           %% R558
   VolatileStmt                        %% R559
 
-  ArrayNameSpec DataStmtSetList NoList
+  ArrayNameSpec ParensArraySpec DataStmtSetList NoList
   NoDataStmtRepeat
 
 %% 5.5 Implicit statement
@@ -549,7 +549,7 @@ sorts
   UnlockStmt                          %% R865
   LockVariable                        %% R866
 
-  OptLockStatList NoSyncStatList OptSyncStatList
+  OptLockStatList NoSyncStatList OptSyncStatList CommaOptSyncStatList
 
 %% Deleted features
 
@@ -781,15 +781,16 @@ sorts
   SyncTeamStmt                        %% R510-F2015-N2007
   FailImageStmt                       %% R511-F2015-N2007
 
-  EventPostStmt                       %% R601-F2015-N2007
-  EventVariable                       %% R602-F2015-N2007
-  EventWaitStmt                       %% R603-F2015-N2007
-%%WaitSpec                            %% R604-F2015-N2007
+  EventPostStmt                       %% R1170-F2018-N2146
+  EventVariable                       %% R1171-F2018-N2146
+  EventWaitStmt                       %% R1172-F2018-N2146
+  EventWaitSpec                       %% R1173-F2018-N2146
+  UntilSpec                           %% R1174-F2018-N2146
 
   ScalarVariable                      %% TODO - use this in 2008 grammar portion as well
 
-  OptWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
-  OptTeamVariable CoselectorName OptTeamConstructName OptTeamConstructNameCOLON
+  OptEventWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
+  OptTeamVariable OptTeamConstructName OptTeamConstructNameCOLON
   OptImageSelectorSpecList
 
 
@@ -1599,7 +1600,8 @@ context-free syntax
   OptLabel 'DIMENSION' '::' {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
   OptLabel 'DIMENSION'      {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
 
-  ArrayName '(' ArraySpec ')'                               -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  ArrayName ParensArraySpec                                 -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  '(' ArraySpec ')'                                         -> ParensArraySpec   {cons("ArraySpec")}
   Ident                                                     -> ArrayName
 
 %%R546
@@ -2769,54 +2771,6 @@ context-free syntax
   % empty %                                             -> OptStopCode          {cons("no-stop-code")}
 
 
-%% 8.5 Image execution control
-%%
-
-%%R858
-  OptLabel 'SYNC' 'ALL' '(' {SyncStat ','}* ')'     EOS -> SyncAllStmt          {cons("SyncAllStmt")}
-  OptLabel 'SYNC' 'ALL'    NoSyncStatList           EOS -> SyncAllStmt          {cons("SyncAllStmt")}
-
-%%R859
-  'STAT'   '=' StatVariable                             -> SyncStat             {cons("STAT")}
-  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("ERRMSG")}
-
-  ',' {SyncStat ','}+                                   -> OptSyncStatList      {cons("comma-list")}
-  % empty %                                             -> OptSyncStatList      {cons("no-list")}
-  % empty %                                             ->  NoSyncStatList      {cons("no-list")}
-
-%%R860
-  OptLabel 'SYNC' 'IMAGES'
-         '(' ImageSet OptSyncStatList ')'           EOS -> SyncImagesStmt       {cons("SyncImagesStmt")}
-
-%%R861
-  IntExpr                                               -> ImageSet
-  '*'                                                   -> ImageSet             {cons("STAR")}
-
-%%R862
-  OptLabel 'SYNC' 'MEMORY' '(' {SyncStat ','}* ')'  EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
-  OptLabel 'SYNC' 'MEMORY'    NoSyncStatList        EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
-
-%%R863
-  OptLabel 'LOCK' '(' LockVariable
-                      OptLockStatList ')'           EOS -> LockStmt             {cons("LockStmt")}
-
-%%R864
-  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("ACQUIRED_LOCK")}
-  SyncStat                                              -> LockStat
-
-  ',' {LockStat ','}+                                   -> OptLockStatList      {cons("comma-list")}
-  % empty %                                             -> OptLockStatList      {cons("no-list")}
-
-%%R865
-  OptLabel 'UNLOCK' '(' LockVariable
-                        OptSyncStatList ')'         EOS -> UnlockStmt           {cons("UnlockStmt")}
-
-%%R866
-%%          variable substituted for scalar-variable
-%%
-  Variable                                              -> LockVariable
-
-
 %%%%%%%%%%
 %% Fortran ISO/IEC 1539:1991 section R9xx Input/Output Statements
 %%%%%%%%%%
@@ -3396,10 +3350,10 @@ context-free syntax
   EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
-  EventPostStmt                          -> ActionStmt  %% R601-F2015-N2007
-  EventWaitStmt                          -> ActionStmt  %% R603-F2015-N2007
-  FailImageStmt                          -> ActionStmt  %% R511-F2015-N2007
-  FormTeamStmt                           -> ActionStmt  %% R507-F2015-N2007
+  EventPostStmt                          -> ActionStmt  %% R1170-F2018-N2146
+  EventWaitStmt                          -> ActionStmt  %% R1172-F2018-N2146
+  FailImageStmt                          -> ActionStmt  %% R1163-F2018-N2146
+  FormTeamStmt                           -> ActionStmt  %% R1175-F2018-N2146
   ExitStmt                               -> ActionStmt
   FlushStmt                              -> ActionStmt
   ForallStmt                             -> ActionStmt
@@ -3906,88 +3860,6 @@ context-free syntax
 %% 5.2 TEAM_TYPE
 %% -------------
 
-%% 5.3 CHANGE TEAM construct
-%% -------------------------
-
-%%R501-F2015-N2007
-%%
-  ChangeTeamStmt Block EndChangeTeamStmt                -> ChangeTeamConstruct  {cons("ChangeTeamConstruct")}
-
-%%R502-F2015-N2007
-%%
-  OptLabel OptTeamConstructNameCOLON
-  'CHANGE' 'TEAM'
-    '('
-        TeamVariable
-        OptCoarrayAssociationList
-	OptSyncStatList
-    ')'                                             EOS -> ChangeTeamStmt            {cons("ChangeTeamStmt")}
-
-  Ident ':'                                             -> OptTeamConstructNameCOLON {cons("Name")}
-  % empty %                                             -> OptTeamConstructNameCOLON {cons("no-name")}
-
-  ',' { CoarrayAssociation ','}+                        -> OptCoarrayAssociationList {cons("comma-list")}
-  % empty %                                             -> OptCoarrayAssociationList {cons("no-list")}
-
-%%R503-F2015-N2007
-%%
-  CodimensionDecl '=>' CoselectorName                   -> CoarrayAssociation   {cons("CoarrayAssociation")}
-
-  Ident                                                 -> CoselectorName
-
-%% 5.6 SYNC TEAM statement
-%% -----------------------
-
-%% R510-F2015-N2007
-%%
-  OptLabel 'SYNC' 'TEAM'
-  '('
-      TeamVariable OptSyncStatList
-  ')'                                              EOS -> SyncTeamStmt          {cons("SyncTeamStmt")}
-
-%% 5.7 FAIL IMAGE statement
-%% ------------------------
-
-%% R511-F2015-N2007
-%%
-  OptLabel 'FAIL' 'IMAGE' OptStopCode              EOS -> FailImageStmt         {cons("FailImageStmt")}
-
-
-%% 6 Events
-%% --------
-
-%% 6.1 EVENT_TYPE
-%% --------------
-
-%% 6.2 EVENT POST statement
-%% ------------------------
-
-%% R601-F2015-N2007
-%%
-  OptLabel 'EVENT' 'POST'
-  '('
-      EventVariable OptSyncStatList
-  ')'                                             EOS -> EventPostStmt          {cons("EventPostStmt")}
-
-%% R602-F2015-N2007
-%%
-  ScalarVariable                                      -> EventVariable
-
-%% R603-F2015-N2007
-%%
-  OptLabel 'EVENT' 'WAIT'
-  '('
-      EventVariable OptWaitSpecList
-  ')'                                             EOS -> EventWaitStmt          {cons("EventWaitStmt")}
-
-  ',' { WaitSpec ','}+                                -> OptWaitSpecList       {cons("comma-list")}
-  % empty %                                           -> OptWaitSpecList       {cons("no-list")}
-
-%% R604-F2015-N2007
-%%
-  'UNTIL_COUNT' '=' ScalarIntExpr                     -> WaitSpec              {cons("UNTIL_COUNT")}
-  SyncStat                                            -> WaitSpec
-
 
 %%%%%%%%%%
 %% Fortran ISO/IECJTC1-SC22-WG5 N2146
@@ -4035,6 +3907,7 @@ context-free syntax
 %%%%%%%%%%
 
 %% 11.1.5 CHANGE TEAM construct
+%% ----------------------------
 
 %% R1111-F2018-N2146
 %%
@@ -4044,11 +3917,17 @@ context-free syntax
 
 %% R1112-F2018-N2146
 %%
-  OptLabel OptTeamConstructName 'CHANGE' 'TEAM'
+  OptLabel OptTeamConstructNameCOLON 'CHANGE' 'TEAM'
   '('
       TeamValue
       OptCoarrayAssociationList OptSyncStatList
-  '('                                               EOS -> ChangeTeamStmt        {cons("ChangeTeamStmt")}
+  ')'                                               EOS -> ChangeTeamStmt        {cons("ChangeTeamStmt")}
+
+  Ident ':'                                             -> OptTeamConstructNameCOLON {cons("Name")}
+  % empty %                                             -> OptTeamConstructNameCOLON {cons("no-name")}
+
+  ',' { CoarrayAssociation ','}+                        -> OptCoarrayAssociationList {cons("comma-list")}
+  % empty %                                             -> OptCoarrayAssociationList {cons("no-list")}
 
 %% R1113-F2018-N2146
 %%
@@ -4059,7 +3938,7 @@ context-free syntax
   OptLabel 'END' 'TEAM'
   OptParensSyncStatList OptTeamConstructName        EOS -> EndChangeTeamStmt     {cons("EndChangeTeamStmt")}
 
-  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("OptParensSyncStatList")}
+  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("image-ctrl-stat-list")}
   '('                  ')'                              -> OptParensSyncStatList {cons("no-list")}
   % empty %                                             -> OptParensSyncStatList {cons("no-list")}
 
@@ -4074,6 +3953,108 @@ context-free syntax
   ScalarIntExpr                                         -> TeamValue
 
   Expr                                                  -> ScalarIntExpr
+
+
+%% 11.5 FAIL IMAGE statement
+%% -------------------------
+
+%% R1163-F2018-N2146
+%%
+  OptLabel 'FAIL' 'IMAGE' OptStopCode              EOS -> FailImageStmt         {cons("FailImageStmt")}
+
+
+%% 11.6 Image execution control
+%% ----------------------------
+
+%% 11.6.1 Image control statements
+%% -------------------------------
+
+%% 11.6.3 SYNC ALL statement
+%% -------------------------
+
+%% R1164-F2018-N2146
+%%
+  OptLabel 'SYNC' 'ALL' '(' OptSyncStatList ')'     EOS -> SyncAllStmt          {cons("SyncAllStmt")}
+  OptLabel 'SYNC' 'ALL'      NoSyncStatList         EOS -> SyncAllStmt          {cons("SyncAllStmt")}
+
+%% R1165-F2018-N2146
+%%
+  'STAT'   '=' StatVariable                             -> SyncStat             {cons("STAT")}
+  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("ERRMSG")}
+
+  {SyncStat ','}*                                       -> OptSyncStatList      {cons("image-ctrl-stat-list")}
+  % empty %                                             ->  NoSyncStatList      {cons("no-list")}
+
+%% 11.6.4 SYNC IMAGES statement
+%% ----------------------------
+
+%% R1166-F2018-N2146
+%%
+  OptLabel 'SYNC' 'IMAGES'
+         '(' ImageSet CommaOptSyncStatList ')'      EOS -> SyncImagesStmt       {cons("SyncImagesStmt")}
+
+  ',' {SyncStat ','}+                                   -> CommaOptSyncStatList {cons("image-ctrl-stat-list")}
+  % empty %                                             -> CommaOptSyncStatList {cons("no-list")}
+
+%% R1167-F2018-N2146
+  IntExpr                                               -> ImageSet
+  '*'                                                   -> ImageSet             {cons("STAR")}
+
+%% 11.6.5 SYNC MEMORY statement
+%% ----------------------------
+
+%% R1168-F2018-N2146
+%%
+  OptLabel 'SYNC' 'MEMORY' '(' OptSyncStatList ')'  EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
+  OptLabel 'SYNC' 'MEMORY'      NoSyncStatList      EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
+
+%% 11.6.6 SYNC TEAM statement
+%% --------------------------
+
+%% R1169-F2018-N2146
+%%
+  OptLabel 'SYNC' 'TEAM'
+  '('
+      TeamValue CommaOptSyncStatList
+  ')'                                              EOS -> SyncTeamStmt          {cons("SyncTeamStmt")}
+
+
+%% 11.6.7 EVENT POST statement
+%% ---------------------------
+
+%% R1170-F2018-N2146
+%%
+  OptLabel 'EVENT' 'POST'
+  '('
+      EventVariable CommaOptSyncStatList
+  ')'                                             EOS -> EventPostStmt          {cons("EventPostStmt")}
+
+%% R1171-F2018-N2146
+%%
+  ScalarVariable                                      -> EventVariable
+
+%% 11.6.8 EVENT WAIT statement
+%% ---------------------------
+
+%% R1172-F2018-N2146
+%%
+  OptLabel 'EVENT' 'WAIT'
+  '('
+      EventVariable OptEventWaitSpecList
+  ')'                                             EOS -> EventWaitStmt          {cons("EventWaitStmt")}
+
+  ',' { EventWaitSpec ','}+                           -> OptEventWaitSpecList   {cons("image-ctrl-stat-list")}
+  % empty %                                           -> OptEventWaitSpecList   {cons("no-list")}
+
+%% R1173-F2018-N2146
+%%
+  UntilSpec                                           -> EventWaitSpec
+  SyncStat                                            -> EventWaitSpec
+
+%% R1174-F2018-N2146
+%%
+  'UNTIL_COUNT' '=' ScalarIntExpr                     -> UntilSpec              {cons("UNTIL_COUNT")}
+
 
 %% 11.6.9 FORM TEAM statement
 %% --------------------------
@@ -4099,5 +4080,29 @@ context-free syntax
   'NEW_INDEX' '=' ScalarIntExpr                         -> FormTeamSpec          {cons("FormTeamSpec")}
   SyncStat                                              -> FormTeamSpec
 
-  ',' { FormTeamSpec ','}+                              -> OptFormTeamSpecList   {cons("OptFormTeamSpecList")}
+  ',' { FormTeamSpec ','}+                              -> OptFormTeamSpecList   {cons("image-ctrl-stat-list")}
   % empty %                                             -> OptFormTeamSpecList   {cons("no-list")}
+
+
+%% 11.6.10 LOCK and UNLOCK statements
+%% ----------------------------------
+
+%% R1179-F2018-N2146
+  OptLabel 'LOCK' '(' LockVariable
+                      OptLockStatList ')'           EOS -> LockStmt             {cons("LockStmt")}
+
+%% R1180-F2018-N2146
+  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("ACQUIRED_LOCK")}
+  SyncStat                                              -> LockStat
+
+  ',' {LockStat ','}+                                   -> OptLockStatList      {cons("image-ctrl-stat-list")}
+  % empty %                                             -> OptLockStatList      {cons("no-list")}
+
+%% R1181-F2018-N2146
+  OptLabel 'UNLOCK' '(' LockVariable
+                        CommaOptSyncStatList ')'    EOS -> UnlockStmt           {cons("UnlockStmt")}
+
+%% R1182-F2018-N2146
+%%          variable substituted for scalar-variable
+%%
+  Variable                                              -> LockVariable

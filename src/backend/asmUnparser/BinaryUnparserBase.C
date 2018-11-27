@@ -1,12 +1,16 @@
 #include <sage3basic.h>
+#include <BaseSemantics2.h>
+#include <BinaryReachability.h>
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
 #include <stringify.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <ctype.h>
 #include <sstream>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -36,6 +40,64 @@ State::partitioner() const {
 const P2::FunctionCallGraph&
 State::cg() const {
     return cg_;
+}
+
+const std::vector<unsigned>
+State::cfgVertexReachability() const {
+    return cfgVertexReachability_;
+}
+
+void
+State::cfgVertexReachability(const std::vector<unsigned> &reachability) {
+    cfgVertexReachability_ = reachability;
+}
+
+unsigned
+State::isCfgVertexReachable(size_t vertexId) const {
+    return vertexId < cfgVertexReachability_.size() ? cfgVertexReachability_[vertexId] : Reachability::ASSUMED;
+}
+
+void
+State::reachabilityName(unsigned value, const std::string &name) {
+    if (name.empty()) {
+        reachabilityNames_.erase(value);
+    } else {
+        reachabilityNames_.insert(value, name);
+    }
+}
+
+std::string
+State::reachabilityName(unsigned value) const {
+    std::string s;
+    if (reachabilityNames_.getOptional(value).assignTo(s))
+        return s;
+
+    std::vector<std::string> names;
+    for (size_t i = 0; i < 8*sizeof(unsigned); ++i) {
+        unsigned bit = 1U << i;
+        if ((value & bit) != 0) {
+            if (reachabilityNames_.getOptional(bit).assignTo(s)) {
+                // void
+            } else if (bit >= Reachability::USER_DEFINED_0) {
+                s = "user-defined";
+                for (size_t j=0; j < 8*sizeof(unsigned); j++) {
+                    if (bit >> j == Reachability::USER_DEFINED_0) {
+                        s += "-" + StringUtility::numberToString(j);
+                        break;
+                    }
+                }
+            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit)) {
+                s = cs;
+                BOOST_FOREACH (char &ch, s)
+                    ch = tolower(ch);
+            } else {
+                s = StringUtility::toHex2(bit, 8*sizeof(unsigned), false, false);
+            }
+            names.push_back(s);
+        }
+    }
+
+    return StringUtility::join(", ", names);
 }
 
 P2::Function::Ptr
@@ -197,6 +259,7 @@ Settings::Settings() {
     bblock.cfg.showingPredecessors = true;
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
+    bblock.reach.showingReachability = true;
 
     insn.address.showing = true;
     insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
@@ -212,6 +275,10 @@ Settings::Settings() {
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
+    insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.tracing = false;                     // not usually desired even for full output
+    insn.semantics.formatter.set_show_latest_writers(false);
+    insn.semantics.formatter.set_line_prefix("        ;; state: ");
 }
 
 // class method
@@ -235,6 +302,7 @@ Settings::minimal() {
     s.bblock.cfg.showingPredecessors = false;
     s.bblock.cfg.showingSuccessors = false;
     s.bblock.cfg.showingSharing = false;
+    s.bblock.reach.showingReachability = false;
 
     s.insn.address.showing = false;
     s.insn.address.fieldWidth = 8;
@@ -244,6 +312,8 @@ Settings::minimal() {
     s.insn.operands.fieldWidth = 40;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
+    s.insn.semantics.showing = false;
+    s.insn.semantics.tracing = false;
 
     return s;
 }
@@ -253,7 +323,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
     using namespace Rose::CommandLine;
-    
+
     SwitchGroup sg("Unparsing switches");
     sg.name("out");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
@@ -310,6 +380,11 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "bb-cfg-sharing", settings.bblock.cfg.showingSharing,
                         "For each basic block, emit the list of functions that own the block in addition to the function "
                         "in which the block is listed.");
+
+    insertBooleanSwitch(sg, "bb-reachability", settings.bblock.reach.showingReachability,
+                        "For each basic block, emit information about whether the block is reachable according to the "
+                        "reachability analysis. If the unparser wasn't given any reachability analysis results then "
+                        "nothing is shown.");
 
     //----- Data blocks -----
 
@@ -370,6 +445,14 @@ commandLineSwitches(Settings &settings) {
                         "If comments are being shown and an instruction has an empty comment, then use the instruction "
                         "description instead.  This is especially useful for users that aren't familiar with the "
                         "instruction mnemonics for this architecture.");
+
+    insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
+                        "Run each instruction on a clean semantic state and show the results. This is useful if you want "
+                        "to see the effect of each instruction.");
+
+    insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
+                        "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
+                        "net effect.");
 
     return sg;
 }
@@ -578,6 +661,34 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_LEFTOVERS,    "provisional");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_INTRABLOCK,   "possibly unreached (intra)");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_USERDEF,      "user defined");
+
+        if (flags & 0xff) {
+            switch (flags & 0xff) {
+                case SgAsmFunction::FUNC_INTERPADFUNC:
+                    strings.push_back("interpadfunc");
+                    break;
+                case SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH:
+                    strings.push_back("pescrambler dispatch");
+                    break;
+                case SgAsmFunction::FUNC_CONFIGURED:
+                    strings.push_back("configuration");
+                    break;
+                case SgAsmFunction::FUNC_CMDLINE:
+                    strings.push_back("command-line");
+                    break;
+                case SgAsmFunction::FUNC_SCAN_RO_DATA:
+                    strings.push_back("scanned read-only ptr");
+                    break;
+                case SgAsmFunction::FUNC_INSN_RO_DATA:
+                    strings.push_back("referenced read-only ptr");
+                    break;
+                default:
+                    strings.push_back("miscellaneous(" + StringUtility::numberToString(flags & 0xff) + ")");
+                    break;
+            }
+            flags &= ~0xff;
+        }
+
         if (flags != 0) {
             char buf[64];
             sprintf(buf, "0x%08x", flags);
@@ -585,6 +696,8 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         }
         if (!strings.empty())
             out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+        if (!function->reasonComment().empty())
+            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
     }
 }
 
@@ -753,6 +866,8 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             state.frontUnparser().emitBasicBlockSharing(out, bb, state);
         if (settings().bblock.cfg.showingPredecessors)
             state.frontUnparser().emitBasicBlockPredecessors(out, bb, state);
+        if (settings().bblock.reach.showingReachability)
+            state.frontUnparser().emitBasicBlockReachability(out, bb, state);
 
         // Comment warning about block not being the function entry point.
         if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
@@ -775,7 +890,7 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         nextUnparser()->emitBasicBlockBody(out, bb, state);
     } else {
         if (0 == bb->nInstructions()) {
-            out <<"no instructions";
+            out <<"no instructions\n";
         } else {
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
@@ -925,6 +1040,22 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         } else {
             BOOST_FOREACH (const std::string &s, strings)
                 out <<"\t;; successor: " <<s <<"\n";
+        }
+    }
+}
+
+void
+Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+    if (nextUnparser()) {
+        nextUnparser()->emitBasicBlockReachability(out, bb, state);
+    } else if (!state.cfgVertexReachability().empty()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
+        if (vertex != state.partitioner().cfg().vertices().end()) {
+            if (unsigned reachable = state.isCfgVertexReachable(vertex->id())) {
+                out <<"\t;; reachable from: " <<state.reachabilityName(reachable) <<"\n";
+            } else {
+                out <<"\t;; not reachable\n";
+            }
         }
     }
 }
@@ -1084,6 +1215,7 @@ Base::emitInstructionEpilogue(std::ostream &out, SgAsmInstruction *insn, State &
     if (nextUnparser()) {
         nextUnparser()->emitInstructionEpilogue(out, insn, state);
     } else {
+        state.frontUnparser().emitInstructionSemantics(out, insn, state);
     }
 }
 
@@ -1184,6 +1316,27 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
             comment = insn->description();
         if (!comment.empty())
             out <<"; " <<StringUtility::cEscape(comment);
+    }
+}
+
+void
+Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (settings().insn.semantics.showing) {
+        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (settings().insn.semantics.tracing)
+            ops = S2::TraceSemantics::RiscOperators::instance(ops);
+
+        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+            try {
+                cpu->processInstruction(insn);
+                S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                std::ostringstream ss;
+                ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
+                out <<StringUtility::trim(ss.str(), "\n", false, true);
+            } catch (...) {
+            }
+        }
     }
 }
 

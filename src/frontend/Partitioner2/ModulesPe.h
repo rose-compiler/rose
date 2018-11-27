@@ -3,10 +3,13 @@
 
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Modules.h>
+#include <Sawyer/Map.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Disassembly and partitioning utilities for PE files. */
 namespace ModulesPe {
 
 /** Convert function name to system representation.
