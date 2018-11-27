@@ -164,11 +164,12 @@ insertFileError(const std::string &locatorString, const std::string &mesg) {
     throw std::runtime_error("MemoryMap::insertFile: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
 }
 
-static Sawyer::Optional<rose_addr_t>
+template<typename UnsignedInteger>
+static Sawyer::Optional<UnsignedInteger>
 parseInteger(const char *&s) {
     char *rest = const_cast<char*>(s);
     errno = 0;
-    rose_addr_t n = rose_strtoull(s, &rest, 0);
+    UnsignedInteger n = rose_strtoull(s, &rest, 0);
     if (errno!=0 || rest==s)
         return Sawyer::Nothing();
     s = rest;
@@ -220,7 +221,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     // Virtual address
     Sawyer::Optional<rose_addr_t> optionalVa;
     if (isdigit(*s)) {
-        optionalVa = parseInteger(s /*in,out*/);
+        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
         if (!optionalVa)
             throw insertFileError(locatorString, "virtual address expected");
     }
@@ -229,7 +230,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     Sawyer::Optional<size_t> optionalVSize;
     if ('+'==*s) {
         ++s;
-        optionalVSize = parseInteger(s /*in,out*/);
+        optionalVSize = parseInteger<size_t>(s /*in,out*/);
         if (!optionalVSize)
             throw insertFileError(locatorString, "virtual size expected");
     }
@@ -265,7 +266,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     // File offset
     Sawyer::Optional<size_t> optionalOffset;
     if (isdigit(*s)) {
-        optionalOffset = parseInteger(s /*in,out*/);
+        optionalOffset = parseInteger<size_t>(s /*in,out*/);
         if (!optionalOffset)
             throw insertFileError(locatorString, "file offset expected");
     }
@@ -274,7 +275,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     Sawyer::Optional<size_t> optionalFSize;
     if ('+'==*s) {
         ++s;
-        optionalFSize = parseInteger(s /*in,out*/);
+        optionalFSize = parseInteger<size_t>(s /*in,out*/);
         if (!optionalFSize)
             throw insertFileError(locatorString, "file size expected");
     }
@@ -425,7 +426,7 @@ MemoryMap::insertData(const std::string &locatorString) {
     // Virtual address
     Sawyer::Optional<rose_addr_t> optionalVa;
     if (isdigit(*s)) {
-        optionalVa = parseInteger(s /*in,out*/);
+        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
         if (!optionalVa)
             throw insertDataError(locatorString, "virtual address expected");
     }
@@ -434,7 +435,7 @@ MemoryMap::insertData(const std::string &locatorString) {
     Sawyer::Optional<size_t> optionalVSize;
     if ('+' == *s) {
         ++s;
-        optionalVSize = parseInteger(s /*in,out*/);
+        optionalVSize = parseInteger<size_t>(s /*in,out*/);
         if (!optionalVSize)
             throw insertDataError(locatorString, "virtual size expected");
     }
@@ -478,7 +479,7 @@ MemoryMap::insertData(const std::string &locatorString) {
         if (!*s)
             break;
         rose_addr_t u = 0;
-        if (!parseInteger(s /*in,out*/).assignTo(u))
+        if (!parseInteger<rose_addr_t>(s /*in,out*/).assignTo(u))
             throw insertDataError(locatorString, "expected numeric value for byte " + StringUtility::numberToString(data.size()));
         if (u > 0xff)
             throw insertDataError(locatorString, "value " + StringUtility::numberToString(u) +
@@ -572,8 +573,8 @@ MemoryMap::insertProcess(const std::string &locatorString) {
     if (':'!=*s++)
         throw insertProcessError("second colon expected in \"" + StringUtility::cEscape(locatorString) + "\"");
     
-    rose_addr_t pid = 0;
-    if (!parseInteger(s /*in,out*/).assignTo(pid))
+    pid_t pid = 0;
+    if (!parseInteger<pid_t>(s /*in,out*/).assignTo(pid))
         throw insertProcessError("process ID expected");
     insertProcess(pid, doAttach);
 }
