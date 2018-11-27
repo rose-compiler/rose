@@ -170,7 +170,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
       //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
     } else {
-      cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
+      //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);

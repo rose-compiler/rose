@@ -63,6 +63,10 @@ class AbstractValue {
   void initFloat(SPRAY::BuiltInType btype, long double fval);
   static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
   TypeSize calculateTypeSize(SPRAY::BuiltInType btype);
+  // currently this maps to isTop() - in preparation to handle
+  // uninitilized explicitly. A declaration (without initializer)
+  // should use this function to model the semantics of an undefined value.
+  bool isUndefined() const; 
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;

@@ -65,7 +65,7 @@ void Solver5::run() {
           if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
             _analyzer->reduceStgToInOutAssertWorklistStates();
             estatesLastReduction = _analyzer->estateSet.size();
-            logger[TRACE]<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
+            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
           }
         }
       }
@@ -110,26 +110,16 @@ void Solver5::run() {
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
-#if 1
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"PSTATE-IN :"<<currentEStatePtr->label().toString()<<":"<<currentEStatePtr->pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==40) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"PSTATE-OUT:"<<newEState.pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
                 fout<<endl;
                 fout<<endl;
                 fout.close();
-                // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
-#else
-                logger[TRACE]<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
-                string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
-                if(sourceString.size()==40) sourceString+="...";
-                logger[TRACE]<<sourceString<<endl;
-                logger[TRACE]<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
-                logger[TRACE]<<endl;
-#endif                
               }
             }
 
@@ -193,7 +183,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -201,7 +191,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
+    cout<< "analysis finished (worklist is empty)."<<endl;
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

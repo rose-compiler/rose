@@ -167,6 +167,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
+  rose_inputcreateAbstractHandles.C \
   buildJavaPackage.passed
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
@@ -600,4 +601,4 @@ clean-local:
 	rm -f $(generatedCodeExamples) *.dot 
 	rm -f $(addsuffix .passed, $(generatedCodeExamples)) 
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
-	rm -rf rose_*.C
+	rm -rf rose_*.C inputcreateAbstractHandles.C.pdf
