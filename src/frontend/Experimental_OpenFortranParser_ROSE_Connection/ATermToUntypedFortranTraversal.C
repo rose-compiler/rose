@@ -2088,8 +2088,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_PartRef(ATerm term, SgUntypedExp
 
    std::string name;
    bool isArray = false;
-   SgUntypedExprListExpression* subscripts = nullptr;
-   SgUntypedExprListExpression* image_selector = nullptr;
+   SgUntypedExprListExpression* subscripts = NULL;
+   SgUntypedExprListExpression* image_selector = NULL;
 
    *var_expr = NULL;
    if (ATmatch(term, "PartRef(<term>,<term>,<term>)", &t_name, &t_subscripts, &t_image_selector)) {
@@ -2168,9 +2168,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptSectionSubscripts(ATerm term,
 
    ATerm t_subscript_list;
    SgUntypedExpression* subscript;
-   SgUntypedExprListExpression* section_subscripts = nullptr;  // test to see if it passes Jenkins!!!
+   SgUntypedExprListExpression* section_subscripts = NULL;
 
-   *subscripts = nullptr;  // test to see if it passes Jenkins!!!
+   *subscripts = NULL;
 
    if (ATmatch(term, "no-section-subscripts()")) {
       // MATCHED empty list
@@ -2281,7 +2281,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptImageSelector(ATerm term, SgU
    printf("... traverse_OptImageSelector: %s\n", ATwriteToString(term));
 #endif
 
-   *image_selector = nullptr;
+   *image_selector = NULL;
 
    if (ATmatch(term, "no-image-selector()")) {
       // MATCHED empty list
