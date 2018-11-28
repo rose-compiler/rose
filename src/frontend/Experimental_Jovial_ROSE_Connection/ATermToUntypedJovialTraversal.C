@@ -926,12 +926,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, Sg
    printf("... traverse_BitItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_size;
+   ATerm t_type_desc, t_size;
    bool has_size;
    SgUntypedExpression* size;
 
-   if (ATmatch(term, "BitItemDescription(<term>)", &t_size)) {
+   if (ATmatch(term, "BitItemDescription(<term>,<term>)", &t_type_desc, &t_size)) {
+    // Ignore the BitTypeDesc term t_type_desc.  It was placed in JovialLex and will be 'B' (just syntax)
        *type = UntypedBuilder::buildType(SgUntypedType::e_bit);
+       ROSE_ASSERT(*type);
    } else return ATfalse;
 
    if (traverse_OptItemSize(t_size, &has_size, &size)) {
