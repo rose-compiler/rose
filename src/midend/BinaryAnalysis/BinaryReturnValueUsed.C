@@ -24,6 +24,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::ReturnValueUsed");
+        mlog.comment("determining whether a return value is used");
     }
 }
 

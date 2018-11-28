@@ -5126,6 +5126,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::TestChildPointersInMemoryPool");
+          mlog.comment("testing AST child pointers in memory pools");
         }
    }
 

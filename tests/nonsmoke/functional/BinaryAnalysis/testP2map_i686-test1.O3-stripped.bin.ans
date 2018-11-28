@@ -90,10 +90,10 @@
 0x08048350: 68 b0 84 04 08          |h....   |<sp-16>   push   0x080484b0<<Func>>
 0x08048355: 51                      |Q       |<sp-20>   push   ecx
 0x08048356: 56                      |V       |<sp-24>   push   esi
-0x08048357: 68 10 84 04 08          |h....   |<sp-28>   push   0x08048410<<Func>>
+0x08048357: 68 10 84 04 08          |h....   |<sp-28>   push   0x08048410<main>
 0x0804835c: e8 af ff ff ff          |.....   |<sp-32>   call   0x08048310<__libc_start_main@plt>
 0x0804835c: Outgoing stack delta: -36
-0x0804835c: Successor blocks: 0x08048310<__libc_start_main@plt>, 0x08048361, 0x08048410<<Func>>
+0x0804835c: Successor blocks: 0x08048310<__libc_start_main@plt>, 0x08048361, 0x08048410<main>
 
 0x08048361: Basic block reasons: 
 0x08048361: f4                      |.       |<sp-32>   hlt    
@@ -218,7 +218,7 @@
 0x08048403: Outgoing stack delta: +4
 0x08048403: Successor blocks: unknown
 
-0x08048410: ================================== Function (function call, graph) unknown name
+0x08048410: ================================== Function (function call, graph) <main>
 0x08048410: Function stack delta: +4
 
 0x08048410: Basic block reasons: entry point

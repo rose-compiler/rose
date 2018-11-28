@@ -24,6 +24,7 @@ SerialIo_initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&SerialIo::mlog, "Rose::BinaryAnalysis::SerialIo");
+        SerialIo::mlog.comment("reading/writing serialized analysis states");
     }
 }
 
@@ -37,6 +38,13 @@ void
 SerialIo::init() {}
 
 SerialIo::~SerialIo() {}
+
+SerialIo::Savable
+SerialIo::userSavable(unsigned offset) {
+    unsigned retval = USER_DEFINED + offset;
+    ASSERT_require(retval >= USER_DEFINED && retval <= USER_DEFINED_LAST);
+    return (Savable)retval;
+}
 
 SerialIo::Format
 SerialIo::format() const {

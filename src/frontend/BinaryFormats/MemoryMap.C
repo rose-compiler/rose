@@ -164,13 +164,14 @@ insertFileError(const std::string &locatorString, const std::string &mesg) {
     throw std::runtime_error("MemoryMap::insertFile: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
 }
 
-static rose_addr_t
-parseInteger(const std::string &locatorString, const char *&s, const std::string &mesg) {
+template<typename UnsignedInteger>
+static Sawyer::Optional<UnsignedInteger>
+parseInteger(const char *&s) {
     char *rest = const_cast<char*>(s);
     errno = 0;
-    rose_addr_t n = rose_strtoull(s, &rest, 0);
+    UnsignedInteger n = rose_strtoull(s, &rest, 0);
     if (errno!=0 || rest==s)
-        throw insertFileError(locatorString, mesg);
+        return Sawyer::Nothing();
     s = rest;
     return n;
 }
@@ -219,14 +220,19 @@ MemoryMap::insertFile(const std::string &locatorString) {
 
     // Virtual address
     Sawyer::Optional<rose_addr_t> optionalVa;
-    if (isdigit(*s))
-        optionalVa = parseInteger(locatorString, s /*in,out*/, "virtual address expected");
-
+    if (isdigit(*s)) {
+        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
+        if (!optionalVa)
+            throw insertFileError(locatorString, "virtual address expected");
+    }
+    
     // Virtual size
     Sawyer::Optional<size_t> optionalVSize;
     if ('+'==*s) {
         ++s;
-        optionalVSize = parseInteger(locatorString, s /*in,out*/, "virtual size expected");
+        optionalVSize = parseInteger<size_t>(s /*in,out*/);
+        if (!optionalVSize)
+            throw insertFileError(locatorString, "virtual size expected");
     }
 
     // Virtual accessibility
@@ -259,14 +265,19 @@ MemoryMap::insertFile(const std::string &locatorString) {
 
     // File offset
     Sawyer::Optional<size_t> optionalOffset;
-    if (isdigit(*s))
-        optionalOffset = parseInteger(locatorString, s /*in,out*/, "file offset expected");
+    if (isdigit(*s)) {
+        optionalOffset = parseInteger<size_t>(s /*in,out*/);
+        if (!optionalOffset)
+            throw insertFileError(locatorString, "file offset expected");
+    }
     
     // File size
     Sawyer::Optional<size_t> optionalFSize;
     if ('+'==*s) {
         ++s;
-        optionalFSize = parseInteger(locatorString, s /*in,out*/, "file size expected");
+        optionalFSize = parseInteger<size_t>(s /*in,out*/);
+        if (!optionalFSize)
+            throw insertFileError(locatorString, "file size expected");
     }
 
     // Third colon
@@ -385,6 +396,128 @@ MemoryMap::insertFile(const std::string &locatorString) {
 }
 
 std::string
+MemoryMap::insertDataDocumentation() {
+    return ("Beginning with the first colon, a data resource string has the form "
+            "\":@v{memory_properties}:@v{data_properties}:@v{data}\" where @v{memory_properties} and "
+            "@v{data_properties} are optional but the three colons are always required. The @v{memory_properties} "
+            "have the form \"[@v{address}][+@v{vsize}][=@v{access}]\" where each of the items is optional (indicated by "
+            "the square brackets which should not be present in the actual resource string). The @v{address} is the "
+            "starting address where the data will be mapped and defaults to the address of the lowest unmapped interval "
+            "that is large enough to hold the new map segment; @v{vsize} is the size in bytes of the interval to be "
+            "mapped, default to the size of the data; and @v{access} is the accessibility represented by "
+            "zero or more of the characters \"r\" (readable), \"w\" (writable), and \"x\" (executable) in that order and "
+            "defaulting to read, write, and execute.  No @v{data_properties} are defined at this time, so the "
+            "@v{data_properties} string is always empty. The @v{data} is a space-separated list of byte values in "
+            "decimal, hexadecimal (0x), binary (0b), or octal (0) using the usual C syntax.  If the @v{vsize} is larger "
+            "than the amount of @v{data} then the data will be zero-padded.");
+}
+
+static std::runtime_error
+insertDataError(const std::string &locatorString, const std::string &mesg) {
+    throw std::runtime_error("MemoryMap::insertData: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
+}
+
+AddressInterval
+MemoryMap::insertData(const std::string &locatorString) {
+    const char *s = locatorString.c_str();
+    if (':' != *s++)
+        throw insertDataError(locatorString, "not a locator string");
+
+    // Virtual address
+    Sawyer::Optional<rose_addr_t> optionalVa;
+    if (isdigit(*s)) {
+        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
+        if (!optionalVa)
+            throw insertDataError(locatorString, "virtual address expected");
+    }
+    
+    // Virtual size
+    Sawyer::Optional<size_t> optionalVSize;
+    if ('+' == *s) {
+        ++s;
+        optionalVSize = parseInteger<size_t>(s /*in,out*/);
+        if (!optionalVSize)
+            throw insertDataError(locatorString, "virtual size expected");
+    }
+
+    // Virtual accessibility
+    unsigned accessFlags = READ_WRITE_EXECUTE;
+    if ('='==*s) {
+        ++s;
+        accessFlags = 0;
+        if ('r'==*s) {
+            ++s;
+            accessFlags |= READABLE;
+        }
+        if ('w'==*s) {
+            ++s;
+            accessFlags |= WRITABLE;
+        }
+        if ('x'==*s) {
+            ++s;
+            accessFlags |= EXECUTABLE;
+        }
+    }
+    
+    // Second colon
+    if (':'!=*s) {
+        if (*s && accessFlags)
+            throw insertDataError(locatorString, "invalid access specification");
+        throw insertDataError(locatorString, "syntax error before second colon");
+    }
+    ++s;
+
+    // Third colon
+    if (':'!=*s)
+        throw insertDataError(locatorString, "syntax error before third colon");
+    ++s;
+
+    // The data
+    std::vector<uint8_t> data;
+    while (1) {
+        while (isspace(*s)) ++s;
+        if (!*s)
+            break;
+        rose_addr_t u = 0;
+        if (!parseInteger<rose_addr_t>(s /*in,out*/).assignTo(u))
+            throw insertDataError(locatorString, "expected numeric value for byte " + StringUtility::numberToString(data.size()));
+        if (u > 0xff)
+            throw insertDataError(locatorString, "value " + StringUtility::numberToString(u) +
+                                  " is out of bounds for byte " + StringUtility::numberToString(data.size()));
+        data.push_back(u);
+    }
+    if (!optionalVSize) {
+        optionalVSize = data.size();
+    } else if (*optionalVSize > data.size()) {
+        mlog[WARN] <<"data (" <<StringUtility::plural(data.size(), "bytes") <<") will be truncated to"
+                   <<" specified segment size (" <<StringUtility::plural(*optionalVSize, "bytes") <<")\n";
+    } else if (0 == *optionalVSize) {
+        mlog[WARN] <<"data is empty; nothing to map for \"" <<StringUtility::cEscape(locatorString) <<"\"\n";
+        return AddressInterval();
+    }
+    
+    // Find a place to map the file
+    ASSERT_require(optionalVSize);
+    if (!optionalVa) {
+        optionalVa = findFreeSpace(*optionalVSize);
+        if (!optionalVa) {
+            mlog[ERROR] <<"no virtual address specified and not enough space available"
+                        <<" for \"" <<StringUtility::cEscape(locatorString) <<"\"\n";
+        }
+    }
+
+    // Adjust the memory map
+    ASSERT_require(optionalVa);
+    ASSERT_require(optionalVSize);
+    ASSERT_require(*optionalVSize > 0);
+    AddressInterval interval = AddressInterval::baseSize(*optionalVa, *optionalVSize);
+    insert(interval, Segment::anonymousInstance(data.size(), accessFlags, "data"));
+    size_t nCopied = at(interval.least()).write(data).size();
+    ASSERT_always_require(data.size() == nCopied);
+    return interval;
+}
+
+std::string
 MemoryMap::insertProcessDocumentation() {
     return ("Beginning with the first colon, a process resource string has the form "
             "\":@v{options}:@v{pid}\" where @v{options} controls how the process memory is read and @v{pid} is the process ID. "
@@ -440,7 +573,9 @@ MemoryMap::insertProcess(const std::string &locatorString) {
     if (':'!=*s++)
         throw insertProcessError("second colon expected in \"" + StringUtility::cEscape(locatorString) + "\"");
     
-    int pid = parseInteger(locatorString, s /*in,out*/, "process ID expected");
+    pid_t pid = 0;
+    if (!parseInteger<pid_t>(s /*in,out*/).assignTo(pid))
+        throw insertProcessError("process ID expected");
     insertProcess(pid, doAttach);
 }
 

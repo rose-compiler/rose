@@ -6,6 +6,7 @@
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
@@ -225,6 +226,7 @@ private:
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     Progress::Ptr progress_;                            // optional progress reporting
+    ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
