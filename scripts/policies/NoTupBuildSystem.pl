@@ -23,6 +23,7 @@ sub checkdir {
     next if $entry =~ /^\.git$/; # Git can handle its own problems
     next if $entry =~ /^_build/; # typical names for build directories
     next if $entry =~ /^build_tree$/; # Jenkins' build directory
+    next if $entry =~ /^install-staging$/; # files about to be installed by 'make install' or similar
     checkdir("$dir/$entry") if -d "$dir/$entry" && ! -d "$dir/$entry/include_staging";
 
     if ($entry eq "Tupfile" || $entry eq "Tupfile.ini" || $entry eq "tup.config" || $entry eq "Tuprules.tup") {

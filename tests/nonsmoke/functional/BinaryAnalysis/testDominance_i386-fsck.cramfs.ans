@@ -270,7 +270,7 @@ CFG dominators for function 0x08048f14:
   function 0x08048f14 dominator of 0x080491b4<119> is 0x080491ac<120>
   function 0x08048f14 dominator of 0x080491ac<120> is 0x08049180<3>
   function 0x08048f14 dominator of 0x08049189<121> is 0x08049180<3>
-CFG dominators for function 0x080495a2:
+CFG dominators for function 0x080495a2 "main":
   function 0x080495a2 dominator of 0x0804990a<0> is 0x080498dc<108>
   function 0x080495a2 dominator of 0x0804988f<1> is 0x0804981b<35>
   function 0x080495a2 dominator of 0x080498c0<2> is 0x080498a9<107>

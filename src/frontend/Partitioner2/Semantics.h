@@ -12,15 +12,31 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Instruction semantics for the partitioner.
+ *
+ *  The partitioner semantic domain is closely related to the basic @ref
+ *  Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics "symbolic" domain and its classes inherit from the semantic
+ *  domain. The main difference is that the partitioner's domain also takes into account the concrete memory of the
+ *  specimen; e.g., the @ref MemoryMap that was initialized by loading the specimen into virtual memory. */
 namespace Semantics {
 
+/** Semantic value in the partitioner. */
 typedef InstructionSemantics2::SymbolicSemantics::SValue SValue;
+
+/** Reference counting pointer to semantic value. */
 typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr;
 
+/** Register state for the partitioner. */
 typedef InstructionSemantics2::BaseSemantics::RegisterStateGeneric RegisterState;
+
+/** Reference counting pointer to register state. */
 typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
+/** Total state (registers and memory) for the partitioner. */
 typedef InstructionSemantics2::BaseSemantics::State State;
+
+/** Reference counting pointer to total state. */
 typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,7 +174,10 @@ public:
                 InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
+/** Memory state using a chronological list of cells. */
 typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryListState> MemoryListState;
+
+/** Memory state indexed by hash of address expressions. */
 typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryMapState> MemoryMapState;
 
 /** Shared-ownership pointer to a @ref MemoryListState. See @ref heap_object_shared_ownership. */

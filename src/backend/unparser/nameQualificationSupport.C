@@ -69,6 +69,7 @@ void NameQualificationTraversal::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::NameQualificationTraversal");
+          mlog.comment("traversing name qualification ASTs");
         }
    }
 

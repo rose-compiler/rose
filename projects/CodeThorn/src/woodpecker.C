@@ -207,7 +207,9 @@ int main(int argc, char* argv[]) {
 
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-
+  SgTypeSizeMapping _typeSizeMapping;
+  AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  
   if(args.count("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);

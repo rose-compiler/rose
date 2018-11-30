@@ -48,6 +48,7 @@ SmtSolver::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SmtSolver");
+        mlog.comment("invocating a satisfiability modulo theory solver");
     }
 }
 
@@ -90,6 +91,8 @@ SmtSolver::~SmtSolver() {
     
 void
 SmtSolver::reset() {
+    if (errorIfReset_)
+        throw Exception("reset not allowed for this solver");
     stack_.clear();
     push();
     clearEvidence();
@@ -257,6 +260,14 @@ size_t
 SmtSolver::nAssertions(size_t level) {
     ASSERT_require(level < stack_.size());
     return stack_[level].size();
+}
+
+size_t
+SmtSolver::nAssertions() const {
+    size_t retval = 0;
+    BOOST_FOREACH (const std::vector<SymbolicExpr::Ptr> &level, stack_)
+        retval += level.size();
+    return retval;
 }
 
 std::vector<SymbolicExpr::Ptr>

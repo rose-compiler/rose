@@ -40,6 +40,7 @@ void Disassembler::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Disassembler");
+        mlog.comment("decoding machine language instructions");
     }
 }
 

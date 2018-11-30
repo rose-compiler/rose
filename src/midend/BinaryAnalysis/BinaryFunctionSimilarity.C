@@ -40,6 +40,7 @@ FunctionSimilarity::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FunctionSimilarity");
+        mlog.comment("matching function pairs based on similarity");
     }
 }
 
@@ -427,7 +428,8 @@ FunctionSimilarity::computeDistances(const std::vector<P2::Function::Ptr> &rowFu
                                      size_t nThreads) const {
     ComparisonTasks tasks;
     std::vector<double> distances = buildTasks(rowFunctions, colFunctions, nThreads, tasks /*out*/);
-    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "comparisons");
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "dist matrix");
+    progressBar.suffix(" elements");
     ComparisonFunctor f(this, rowFunctions, colFunctions, progress_, progressBar);
     if (mlog[WHERE]) {
         ComparisonMonitor monitor(this, rowFunctions, colFunctions, mlog[WHERE]);

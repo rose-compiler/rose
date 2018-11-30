@@ -18,7 +18,9 @@ namespace Partitioner2 {
     }
 }
 
-/** Stack delta analysis. */
+/** Stack delta analysis.
+ *
+ *  See the @ref Analysis class in this namespace. */
 namespace StackDelta {
 
 /** Initialize diagnostics.
@@ -34,7 +36,19 @@ extern Sawyer::Message::Facility mlog;
 
 /** Stack delta anzalyzer.
  *
- *  This is the class that actually does the analysis and holds the results. */
+ *  Local variables within a function are generally found at constant offsets from a stack frame located on the stack. Some
+ *  architectures have a stack frame pointer register that points to the current frame, but even on these architectures the
+ *  register can sometimes be used for other purposes.  If there is no frame pointer register, then the stack frame still
+ *  exists and can be found at a constant offset from the stack pointer's initial value (at the start of the function).
+ *
+ *  This class performs a data-flow analysis to attempt to assign stack deltas to each instruction: one delta at the start of
+ *  the instruction and one delta after the instruction executes. A stack delta is the difference between the current
+ *  top-of-stack and the original top-of-stack.
+ *
+ *  If a stack delta is known at a particular instruction, then it can be used to find the original stack pointer by
+ *  subtracting it from the current stack pointer.  For example, if a function's first instruction is x86 "PUSH EAX" then the
+ *  pre-instruction delta is zero and the post-instruction delta will be -4 due to the "push" decrementing ESP by four. After
+ *  the "push", subtracting -4 from the current ESP value will give you the original ESP, from which you can find the frame. */
 class Analysis {
 public:
     typedef Sawyer::Container::Map<rose_addr_t, InstructionSemantics2::BaseSemantics::SValuePtr> DeltasPerAddress;

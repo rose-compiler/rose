@@ -25,6 +25,7 @@ namespace BinaryAnalysis {
     namespace ReturnValueUsed { void initDiagnostics(); }
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
+    namespace Unparser { void initDiagnostics(); }
     void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
@@ -96,6 +97,7 @@ void initialize() {
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
         initAndRegister(&mlog, "Rose");
+        mlog.comment("top-level ROSE diagnostics");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -127,6 +129,7 @@ void initialize() {
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
+        BinaryAnalysis::Unparser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();

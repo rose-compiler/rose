@@ -119,6 +119,7 @@ void FixupAstDeclarationScope::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstDeclarationScope");
+          mlog.comment("normalizing AST declarations");
         }
    }
 

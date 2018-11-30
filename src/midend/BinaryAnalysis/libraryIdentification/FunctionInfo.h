@@ -3,7 +3,8 @@
 
 #include <BinaryAstHash.h>
 #include "Combinatorics.h"
-
+#include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Function.h>
 /** LibraryIdentification.
  *
  *  This namespace encapsulates function for FLIRT ( Fast Library
@@ -35,7 +36,7 @@ namespace LibraryIdentification
          * function belongs to. The Library should already be in the database.
          **/
     FunctionInfo(const std::string& ifuncName, const std::string& ifuncHash, const std::string& ilibHash) :
-        funcName(ifuncName), funcHash(ifuncHash), libHash(ilibHash), sgAsmFunc(0) {};
+        funcName(ifuncName), funcHash(ifuncHash), libHash(ilibHash), binaryFunction() {};
         
         /**
          *  FunctionInfo
@@ -47,14 +48,16 @@ namespace LibraryIdentification
          *  Note that currently on FNV hasher is used.  This should be
          *  an option.
          *
+         * @param[in] partitioner Required to get the basic blocks of
+         * the function
          * @param[in] function Binary AST Function Node
          * @param[in] libHash  Unique Hash of the library this
          * function belongs to. The Library should already be in the database.
          **/
-    FunctionInfo(SgAsmFunction* function, const std::string& ilibHash) :
-        funcName(function->get_name()),  libHash(ilibHash), sgAsmFunc(function)
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function, const std::string& ilibHash) :
+        funcName(function->name()),  libHash(ilibHash), binaryFunction(function)
         {
-             initializeHash(function);
+             initializeHash(partitioner, function);
         }
         
         /**
@@ -67,13 +70,15 @@ namespace LibraryIdentification
          *  Note that currently on FNV hasher is used.  This should be
          *  an option.
          *
+         * @param[in] partitioner Required to get the basic blocks of
+         * the function
          * @param[in] function Binary AST Function Node
          * @param[in] libInfo  LibraryInfo that should be in the database
          **/
-    FunctionInfo(SgAsmFunction* function, LibraryInfo& libInfo) :
-        funcName(function->get_name()),  libHash(libInfo.libHash), sgAsmFunc(function)
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function, LibraryInfo& libInfo) :
+        funcName(function->name()),  libHash(libInfo.libHash), binaryFunction(function)
         {
-             initializeHash(function);
+             initializeHash(partitioner, function);
         }
 
         /**
@@ -86,7 +91,7 @@ namespace LibraryIdentification
          * (Please use Fowler-Noll-Vo HasherFnv class in Combinatorics.h)
          **/
     FunctionInfo(const std::string& ifuncHash) :
-        funcName(""), funcHash(ifuncHash), libHash(""), sgAsmFunc(0) {};
+        funcName(""), funcHash(ifuncHash), libHash(""), binaryFunction() {};
 
         /**
          *  FunctionInfo
@@ -97,10 +102,10 @@ namespace LibraryIdentification
          *
          * @param[in] function Binary AST Function Node
          **/
-    FunctionInfo(SgAsmFunction* function) :
-        funcName(function->get_name()),  libHash(""), sgAsmFunc(function)
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) :
+        funcName(function->name()),  libHash(""), binaryFunction(function)
         {
-            initializeHash(function);
+            initializeHash(partitioner, function);
         }
 
         friend bool operator<(const FunctionInfo& lhs, const FunctionInfo& rhs) 
@@ -121,20 +126,29 @@ namespace LibraryIdentification
 
         //@brief A pointer to the binary version of this function IF
         //IT'S AVAILIBLE.  THIS IS LIKELY TO BE NULL
-        SgAsmFunction* sgAsmFunc;
+        Rose::BinaryAnalysis::Partitioner2::Function::Ptr binaryFunction;
         
 
     private:
-        void initializeHash(SgNode* function) 
-        {
-            //Should make the hash optional via factory method in Combinatorics.h
+        void initializeHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
+        {   //Ordered set, so it should always be the same order...
             Rose::Combinatorics::HasherFnv fnv;
             Rose::Combinatorics::Hasher& hasher = dynamic_cast<Rose::Combinatorics::Hasher&>(fnv);            
-
             Rose::BinaryAnalysis::AstHash astHash(hasher);            
-            astHash.traverse((SgNode*)function,preorder);
+
+            const std::set<rose_addr_t>& basicBlocks = function->basicBlockAddresses();
+            
+            for(std::set<rose_addr_t>::const_iterator bbIt = basicBlocks.begin(); bbIt != basicBlocks.end(); ++bbIt) 
+                {
+                    Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr bb = partitioner.basicBlockExists(*bbIt);
+                    ROSE_ASSERT(bb != NULL);
+                    astHash.appendBasicBlock(bb);
+                    
+                }
+
             funcHash = fnv.toString();
         }
+
     };
     
 }
