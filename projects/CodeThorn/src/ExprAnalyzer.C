@@ -107,15 +107,6 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
     // 1) array variable id
     // 2) eval array-index expr
     // 3) if const then compute variable id otherwise return non-valid var id (would require set)
-#if 0
-    VariableId arrayVarId;
-    SgExpression* arrayIndexExpr=0;
-    int arrayIndexInt=-1;
-    //cout<<"DEBUG: ARRAY-ACCESS"<<astTermWithNullValuesToString(node)<<endl;
-    if(false) {
-      varId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,arrayIndexInt);
-    }
-#endif
     return false;
   }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
@@ -799,16 +790,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
-#if 0
-      VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-      int index2=arrayPtrPlusIndexValue.getIntValue();
-      if(!checkArrayBounds(arrayVarId2,index2)) {
-        cerr<<"Read access: "<<node->unparseToString()<<endl;
-        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-      }
-      VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
-      ROSE_ASSERT(arrayElementId.isValid());
-#endif
       if(pstate->varExists(arrayPtrValue)) {
       } else {
         logger[TRACE]<<"evalArrayReferenceOp: array pointer value NOT in state: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
@@ -838,7 +819,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
           for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
             SgExpression* exp=*i;
             SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
             if(assignInit) {

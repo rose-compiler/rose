@@ -71,7 +71,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               // every varid is inserted exactly once.
               if(varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end()) {
 
-                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid alread exists."<<endl;
+                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
                 cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
                 exit(1);
               }

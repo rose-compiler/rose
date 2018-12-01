@@ -308,18 +308,22 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 }
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
+  ROSE_ASSERT(variableId.isValid());
   mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
 size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToNumberOfElements[variableId._id];
 }
 
 void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+  ROSE_ASSERT(variableId.isValid());
   mappingVarIdToElementSize[variableId._id]=size;
 }
 
 size_t VariableIdMapping::getElementSize(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToElementSize[variableId._id];
 }
 
@@ -413,7 +417,9 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 /*! 
   * \author Markus Schordan
   * \date 2012.
- */string VariableIdMapping::variableName(VariableId varId) {
+ */
+string VariableIdMapping::variableName(VariableId varId) {
+  ROSE_ASSERT(varId.isValid());
   SgSymbol* sym=getSymbol(varId);
   return SgNodeHelper::symbolToString(sym);
 }
@@ -450,7 +456,7 @@ VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
 }
 
 VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
-  assert(initName);
+  ROSE_ASSERT(initName);
   SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initName);
   if(sym)
     return variableId(sym);
