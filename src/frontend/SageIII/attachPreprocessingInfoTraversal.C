@@ -454,8 +454,13 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // This uses the old code to attach comments and CPP directives to the AST as attributes.
                     locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
 
+                 // DQ (12/2/2018): This fails for Fortran.
                  // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
-                    ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                 // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                    if (SageInterface::is_Fortran_language() == false)
+                       {
+                         ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                       }
 
                  // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
                  // If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
@@ -1745,8 +1750,13 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
 #endif
 
+       // DQ (12/2/2018): This fails for Fortran.
        // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
-          ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+       // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+          if (SageInterface::is_Fortran_language() == false)
+             {
+               ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+             }
 
 #if 0
           int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
@@ -1830,8 +1840,13 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 1
                printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
 #endif
+            // DQ (12/2/2018): This fails for Fortran.
             // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
-               ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+            // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+               if (SageInterface::is_Fortran_language() == false)
+                  {
+                    ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+                  }
              }
 #if 0
           printf ("Exiting as a test so that we can get the token information attached to the SgSourceFile \n");
@@ -1866,8 +1881,13 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
           ROSE_ASSERT(currentFileInfo != NULL);
 
+       // DQ (12/2/2018): This fails for Fortran.
        // DQ (9/7/2018): Assert this as default for C/C++ file processing tests only (remove later).
-          ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
+       // ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
+          if (SageInterface::is_Fortran_language() == false)
+             {
+               ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
+             }
 
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Calling Sg_File_Info::getIDFromFilename() \n");
