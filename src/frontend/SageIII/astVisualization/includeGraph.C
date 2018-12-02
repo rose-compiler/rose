@@ -1,5 +1,9 @@
 // Support for building include graphs (graphs of include files)
 
+#include "sage3basic.h"
+
+#include "FileHelper.h"
+
 #include "includeGraph.h"
 
 using namespace std;
