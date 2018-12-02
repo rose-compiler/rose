@@ -309,6 +309,10 @@ TokenStreamSequenceToNodeMapping::createTokenInterval (SgNode* n, int input_lead
    }
 
 
+// DQ (11/25/2018): This name appears to collide silently at link time with any ROSE tools that uses the same name.
+// This is important to fix ASAP.  For now I will verify the behavior further by changing the name in the ROSE tools 
+// that I am building.
+
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 class InheritedAttribute // : AstInheritedAttribute
    {
@@ -354,6 +358,10 @@ InheritedAttribute::InheritedAttribute ( const InheritedAttribute & X )
      end_of_token_sequence   = X.end_of_token_sequence;
    }
 
+
+// DQ (11/25/2018): This name appears to collide silently at link time with any ROSE tools that uses the same name.
+// This is important to fix ASAP.  For now I will verify the behavior further by changing the name in the ROSE tools 
+// that I am building.
 
 class SynthesizedAttribute
    {
@@ -809,29 +817,31 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                  // DQ (9/11/2018): This node has no children and it is an error to call the get_childIndex() function for that IR node.
                     if (isSgHeaderFileBody(n->get_parent()) == NULL)
                        {
-                    size_t child_index = n->get_parent()->get_childIndex(n);
+                         size_t child_index = n->get_parent()->get_childIndex(n);
 #if 0
-                    printf ("In Graph_TokenMappingTraversal::visit(): child_index = %zu \n",child_index);
-                    printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",n->get_parent()->get_traversalSuccessorNamesContainer().size());
+                         printf ("In Graph_TokenMappingTraversal::visit(): child_index = %zu \n",child_index);
+                         printf ("In Graph_TokenMappingTraversal::visit(): n->get_parent()->get_traversalSuccessorNamesContainer().size() = %zu \n",n->get_parent()->get_traversalSuccessorNamesContainer().size());
 #endif
-                 // DQ (1/4/2015): Handle strange case (demonstrated by tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
-                 // string edge_name   = n->get_parent()->get_traversalSuccessorNamesContainer()[child_index];
-                    bool name_available = (child_index < n->get_parent()->get_traversalSuccessorNamesContainer().size());
-                    string edge_name   = name_available ? n->get_parent()->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
+                      // DQ (1/4/2015): Handle strange case (demonstrated by tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_11.C).
+                      // string edge_name   = n->get_parent()->get_traversalSuccessorNamesContainer()[child_index];
+                         bool name_available = (child_index < n->get_parent()->get_traversalSuccessorNamesContainer().size());
+                         string edge_name   = name_available ? n->get_parent()->get_traversalSuccessorNamesContainer()[child_index] : "unknown edge name";
 
-                    if (name_available == false)
-                       {
-                         printf ("Warning: child not found in parent list of children: for n = %p = %s and parent = %p = %s \n",n,n->class_name().c_str(),n->get_parent(),n->get_parent()->class_name().c_str());
-                       }
+                         if (name_available == false)
+                            {
+#if 0
+                              printf ("Warning: child not found in parent list of children: for n = %p = %s and parent = %p = %s \n",n,n->class_name().c_str(),n->get_parent(),n->get_parent()->class_name().c_str());
+#endif
+                            }
 
-                    file << "\"" << StringUtility::numberToString(n->get_parent()) << "\" -> \"" << StringUtility::numberToString(n) << "\"[label=\"" << edge_name << "\" color=\"black\" weight=1];" << endl;
+                         file << "\"" << StringUtility::numberToString(n->get_parent()) << "\" -> \"" << StringUtility::numberToString(n) << "\"[label=\"" << edge_name << "\" color=\"black\" weight=1];" << endl;
                        }
                   }
              }
         }
    }
 
-   
+
 
 void
 Graph_TokenMappingTraversal::graph_ast_and_token_stream( SgSourceFile* source_file, vector<stream_element*> & tokenList, map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap )
@@ -5383,6 +5393,17 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                locatedNode->get_endOfConstruct()->display("Error: evaluateInheritedAttribute(): end");
              }
         }
+
+#if 1
+  // DQ (11/24/2018): Error that I need to debug.
+     if (start_of_token_subsequence > end_of_token_subsequence)
+        {
+          printf ("ERROR: Failing test: (start_of_token_subsequence <= end_of_token_subsequence): \n");
+          printf ("   --- start_of_token_subsequence = %d \n",start_of_token_subsequence);
+          printf ("   --- end_of_token_subsequence   = %d \n",end_of_token_subsequence);
+        }
+#endif
+
      ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
 
   // DQ (12/6/2016): Added assertion as part of fix for warning now considered to be an error.
@@ -6401,6 +6422,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 
      vector<stream_element*> tokenVector = getTokenStream(sourceFile);
 
+  // DQ (11/29/2018): Debugging the token stream (for form-feeds).
 #if 0
      printf ("In buildTokenStreamMapping(): (after getTokenStream()): tokenVector = %zu sourceFile->getFileName() = %s \n",tokenVector.size(),sourceFile->getFileName().c_str());
      printf ("Exiting as a test! \n");

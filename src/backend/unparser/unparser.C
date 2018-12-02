@@ -2135,7 +2135,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
 
   // printf ("Inside of resetSourcePositionToGeneratedCode(UnparseFormatHelp*) outputFilename = %s \n",outputFilename.c_str());
 
-     if ( SgProject::get_verbose() > 0 )
+     if ( SgProject::get_verbose() > -1 )
           printf ("Calling the resetSourcePositionToGeneratedCode: outputFilename = %s \n",outputFilename.c_str());
 
      fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
@@ -2945,7 +2945,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // Call the unparser mechanism
 
 #if 0
-     printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
+     printf ("Inside of unparseFile ( SgFile* file ) (using file->get_unparse_output_filename() = %s) \n",file->get_unparse_output_filename().c_str());
 #endif
 
 #if 0
@@ -2965,7 +2965,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
 #if 0
      printf ("Exiting as a test! \n");
-     assert(false);
+     ROSE_ASSERT(false);
 #endif
 
 #if 0
@@ -3196,6 +3196,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             }
         }
 
+#error "DEAD CODE!"
+
         file->set_unparse_output_filename(outputFilename);
         ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
      }
@@ -3210,6 +3212,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
   // Name of output filename (with prefix).
      string outputFilename;
+
+#if 0
+     printf ("In unparseFile(SgFile* file): before switch: file->get_unparse_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
+#endif
 
   // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
@@ -3609,6 +3615,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                        }
                   }
 
+#if 0
+               printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
+#endif
                file->set_unparse_output_filename(outputFilename);
              }
 
@@ -3895,6 +3904,8 @@ void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& 
        }
    }
 
+// DQ (11/10/2018): Move this ot a more common location.
+void generateGraphOfIncludeFiles( SgProject* project, std::string filename );
 
 void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
@@ -3904,6 +3915,12 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
      printf ("In unparseIncludedFiles(): project = %p \n",project);
 #endif
 
+#define DEBUG_UNPARSE_INCLUDE_FILES 0
+
+#if 0
+     string dotgraph_filename = "include_file_graph_from_top_of_unparseIncludedFiles";
+     generateGraphOfIncludeFiles(project,dotgraph_filename);
+#endif
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
@@ -3942,7 +3959,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           SageInterface::reportModifiedStatements("After prependIncludeOptionsToCommandLine()",project);
 #endif
 
-#if 0
+#if DEBUG_UNPARSE_INCLUDE_FILES
           printf ("In unparseIncludedFiles(): \n");
           for (map<string, string>::const_iterator unparseMapEntry = unparseMap.begin(); unparseMapEntry != unparseMap.end(); unparseMapEntry++)
              {
@@ -3963,7 +3980,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                printf ("   -- scope->first = %s scope->second = %p = %s \n",scope->first.c_str(),scope->second,scope->second->class_name().c_str());
              }
 #endif
-#if 0
+#if DEBUG_UNPARSE_INCLUDE_FILES
           const map<string, SgSourceFile*> & unparseSourceFileMap = includedFilesUnparser.getUnparseSourceFileMap();
           printf ("Output the unparseSourceFileMap: \n");
           for (map<string, SgSourceFile*>::const_iterator sourceFile = unparseSourceFileMap.begin(); sourceFile != unparseSourceFileMap.end(); sourceFile++)
@@ -3976,16 +3993,138 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           ROSE_ASSERT(false);
 #endif
 
+       // DQ (11/19/2018): Copy the files that are specified in the filesToCopy list.
+          set<string> copySet = includedFilesUnparser.getFilesToCopy();
+          set<string>::iterator copySetInterator = copySet.begin();
+          while (copySetInterator != copySet.end())
+             {
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("copySetInterator = %s \n",(*copySetInterator).c_str());
+#endif
+               string originalFileName = *copySetInterator;
+
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("Loop over files to copy: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
+#endif
+
+            // DQ (11/19/2018): Retrieve the original SgSourceFile constructed within the frontend processing.
+               map<string, SgSourceFile*> unparseSourceFileMap = includedFilesUnparser.getUnparseSourceFileMap();
+
+            // DQ (11/19/2018): This appears to be an error, force this as a test and exit until we fix this.
+            // ROSE_ASSERT(unparseSourceFileMap.find(originalFileName) != unparseSourceFileMap.end());
+               if (unparseSourceFileMap.find(originalFileName) == unparseSourceFileMap.end())
+                  {
+#if 0
+                    printf ("Error: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
+                    ROSE_ASSERT(false);
+#else
+                 // printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
+#endif
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                    printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
+#endif
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(unparseSourceFileMap.find(originalFileName) != unparseSourceFileMap.end());
+
+                    SgSourceFile* unparsedFile = unparseSourceFileMap[originalFileName];
+                    ROSE_ASSERT(unparsedFile != NULL);
+
+                    string filenameWithOutPath = FileHelper::getFileName(originalFileName);
+
+                    string adjusted_header_file_directory = unparseRootPath;
+
+                    SgIncludeFile* associated_include_file = unparsedFile->get_associated_include_file();
+                    ROSE_ASSERT(associated_include_file != NULL);
+
+                    string name_used_in_include_directive = associated_include_file->get_name_used_in_include_directive();
+                    string directoryPathPrefix = Rose::getPathFromFileName(name_used_in_include_directive);
+                    if (directoryPathPrefix == ".")
+                       {
+                         directoryPathPrefix = "";
+                       }
+                      else
+                       {
+                      // Nothing to do.
+                       }
+
+                    directoryPathPrefix += "/";
+
+                 // string newFileName = adjusted_header_file_directory + directoryPathPrefix + filenameWithOutPath;
+                 // adjusted_header_file_directory += directoryPathPrefix;
+                    adjusted_header_file_directory += "/" + directoryPathPrefix;
+
+                    string newFileName = adjusted_header_file_directory + filenameWithOutPath;
+
+                    bool isApplicationFile = associated_include_file->get_isApplicationFile();
+
+#if 0
+                    printf ("Copy this file: unparsedFile          = %p filename = %s \n",unparsedFile,unparsedFile->getFileName().c_str());
+                    printf ("   --- size of global scope           = %zu \n",unparsedFile->get_globalScope()->get_declarations().size());
+                    printf ("   --- originalFileName               = %s \n",originalFileName.c_str());
+                    printf ("   --- filenameWithOutPath            = %s \n",filenameWithOutPath.c_str());
+                    printf ("   --- adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+                    printf ("   --- name_used_in_include_directive = %s \n",name_used_in_include_directive.c_str());
+                    printf ("   --- directoryPathPrefix            = %s \n",directoryPathPrefix.c_str());
+                    printf ("   --- newFileName                    = %s \n",newFileName.c_str());
+                    printf ("   --- isApplicationFile              = %s \n",isApplicationFile ? "true" : "false");
+#endif
+
+                    if (isApplicationFile == true)
+                       {
+                         boost::filesystem::path pathPrefix(adjusted_header_file_directory);
+                         create_directories(pathPrefix);
+
+                         boost::filesystem::path originalFileNamePath(originalFileName);
+                         boost::filesystem::path newFileNamePath(newFileName);
+
+                         if (exists(newFileNamePath) == true)
+                            {
+                           // Handle error.
+                           // We might want to report this but not stop processing, since multiple files will trigger the same header files the be copied.
+#if 0
+                              printf ("Error: this file already exists: newFileName = %s \n",newFileName.c_str());
+                              ROSE_ASSERT(false);
+#else
+                              printf ("Note: this file already exists: no need to re-copy it: newFileName = %s \n",newFileName.c_str());
+#endif
+                            }
+                           else
+                            {
+                           // syntax: copy_file(from, to, copy_option::fail_if_exists);
+                              copy_file(originalFileNamePath, newFileNamePath, boost::filesystem::copy_option::fail_if_exists);
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Note: skip copying non-application header file \n");
+#endif
+                       }
+                  }
+
+               copySetInterator++;
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
           for (map<string, string>::const_iterator unparseMapEntry = unparseMap.begin(); unparseMapEntry != unparseMap.end(); unparseMapEntry++)
              {
             // const string & originalFileName = unparseMapEntry -> first;
                string originalFileName = unparseMapEntry -> first;
-
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("In unparseIncludedFiles(): Processing unparseMapEntries: originalFileName = %s \n",originalFileName.c_str());
+#endif
 #if 0
             // DQ (10/23/2018): Output report of AST nodes marked as modified!
                SageInterface::reportModifiedStatements("Top of loop in unparseIncludedFiles()",project);
 #endif
-#if 1
+
+// #if 1
             // DQ (9/7/2018): Retrieve the original SgSourceFile constructed within the frontend processing.
                map<string, SgSourceFile*> unparseSourceFileMap = includedFilesUnparser.getUnparseSourceFileMap();
 
@@ -3999,11 +4138,37 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                SgSourceFile* unparsedFile = unparseSourceFileMap[originalFileName];
                ROSE_ASSERT(unparsedFile != NULL);
-#if 0
+#if DEBUG_UNPARSE_INCLUDE_FILES
                printf ("Unparse file from unparseMap: unparsedFile = %p filename = %s \n",unparsedFile,unparsedFile->getFileName().c_str());
                printf ("                              size of global scope = %zu \n",unparsedFile->get_globalScope()->get_declarations().size());
 #endif
 
+            // DQ (11/12/2018): This is the newer approach to getting any associated SgIncludeFile information.
+               SgIncludeFile* associated_include_file = unparsedFile->get_associated_include_file();
+               if (associated_include_file != NULL)
+                  {
+
+                 // DQ (11/15/2018): Mark this as a header file that will be unparsed.
+                    associated_include_file->set_will_be_unparsed(true);
+
+                    if (associated_include_file->get_can_be_supported_using_token_based_unparsing() == false)
+                       {
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                         printf ("Skip over this entry in the unparseMap \n");
+#endif
+                      // Mark this as a header file that could not be unparsed (transformation is ignored).
+                      // associated_include_file->set_suppressing_unparsing_of_header_file(true);
+
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                         continue;
+                       }
+                  }
+
+            // DQ (11/7/2018): Make sure that this is available.
+               ROSE_ASSERT(unparsedFile->get_project() != NULL);
 #if 0
             // DQ (10/23/2018): Output report of AST nodes marked as modified!
                SageInterface::reportModifiedStatements("Middle of loop in unparseIncludedFiles(): project",project);
@@ -4015,9 +4180,206 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
             // DQ (9/14/2018): Added code to set the source file and output file names.
                unparsedFile -> set_sourceFileNameWithoutPath(FileHelper::getFileName(originalFileName));
                unparsedFile -> set_sourceFileNameWithPath(originalFileName);
-               const string& outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
+
+               ROSE_ASSERT(unparsedFile->get_parent() != NULL);
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("Processing unparseMapEntries: unparseMapEntry->second = %s \n",unparseMapEntry->second.c_str());
+               printf ("Processing unparseMapEntries: unparsedFile->get_parent() = %p = %s \n",unparsedFile->get_parent(),unparsedFile->get_parent()->class_name().c_str());
+#endif
+
+#if DEBUG_UNPARSE_INCLUDE_FILES
+            // DQ (11/7/2018): Mark this location since we will have to both add more logic to support more complex 
+            // use of header files in applications and define locations for the source files so that they can access 
+            // the header files once they are unparsed.
+               printf ("\n\n");
+               printf ("********************************************************** \n");
+               printf ("Computing the adjusted header file directory for unparsing \n");
+               printf ("********************************************************** \n");
+#endif
+
+            // DQ (11/6/2018): The header file directory can be a subdir of the unparseRootPath if it is specified in 
+            // the include directive with a path prefix.  If this is the case then it is recomputed below.
+               string adjusted_header_file_directory = unparseRootPath;
+
+               SgHeaderFileBody* associated_header_file_body = isSgHeaderFileBody(unparsedFile->get_parent());
+               if (associated_header_file_body != NULL)
+                  {
+                 // SgIncludeFile* associated_include_file = isSgIncludeFile(associated_header_file_body->get_parent());
+                    SgIncludeDirectiveStatement* associated_include_directive = isSgIncludeDirectiveStatement(associated_header_file_body->get_parent());
+                    ROSE_ASSERT(associated_include_directive != NULL);
+                    if (associated_include_directive != NULL)
+                       {
+                         string name_used_in_include_directive = associated_include_directive->get_name_used_in_include_directive();
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                         printf ("Processing unparseMapEntries: name_used_in_include_directive = %s \n",name_used_in_include_directive.c_str());
+#endif
+                      // DQ (11/11/2018): Need to connect the extraIncludeDirectorySpecifierList to the translation unit, 
+                      // and not the source file associated with any header.
+                         SgIncludeFile* include_file_support = associated_include_directive->get_include_file_heirarchy();
+                         ROSE_ASSERT(include_file_support != NULL);
+                         SgSourceFile* translation_unit_source_file = include_file_support->get_source_file_of_translation_unit();
+                         ROSE_ASSERT(translation_unit_source_file != NULL);
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                         printf ("(check directory prefix) translation_unit_source_file: filename = %s \n",translation_unit_source_file->getFileName().c_str());
+#endif
+                      // DQ (11/6/2018): Adding support for when the header file has a path prefix.
+                         string directoryPathPrefix = Rose::getPathFromFileName(name_used_in_include_directive);
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                         printf ("directoryPathPrefix = %s \n",directoryPathPrefix.c_str());
+#endif
+                         string include_filename = Rose::utility_stripPathFromFileName(name_used_in_include_directive);
 #if 0
-               printf ("In unparseIncludedFiles(): outputFileName = %s \n",outputFileName.c_str());
+                         printf ("include_filename = %s \n",include_filename.c_str());
+#endif
+                         if (directoryPathPrefix != ".")
+                            {
+#if 0
+                           // string test_no_path = Rose::getPathFromFileName(include_filename);
+                           // printf ("test_no_path = %s \n",test_no_path.c_str());
+                              printf ("unparseRootPath = %s \n",unparseRootPath.c_str());
+                           // printf ("unparseRootPath + directoryPathPrefix = %s \n",(unparseRootPath + "/" + directoryPathPrefix).c_str());
+#endif
+
+                              adjusted_header_file_directory = unparseRootPath + "/" + directoryPathPrefix;
+#if 0
+                              printf ("adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+#endif
+                           // DQ (11/6/2018): Build the path.
+                              boost::filesystem::path pathPrefix(adjusted_header_file_directory);
+                              create_directories(pathPrefix);
+
+                           // DQ (11/8/2018): Adding the "-I" prefix required for use on the command line.
+                              string include_line = string("-I") + adjusted_header_file_directory;
+                           // unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                              translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+#if 0
+                              printf ("unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
+                              for (size_t i = 0; i < translation_unit_source_file->get_extraIncludeDirectorySpecifierList().size(); i++)
+                                 {
+                                   printf ("translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,translation_unit_source_file->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                                 }
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                         printf ("Note: associated_include_file == NULL: associated_header_file_body->get_parent() = %p = %s \n",associated_header_file_body->get_parent(),associated_header_file_body->get_parent()->class_name().c_str());
+                       }
+                  }
+                 else
+                  {
+                 // DQ (11/7/2018): This case is used when the original source file (not a header file) is processed.
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                    printf ("Note: associated_include_file == NULL: filename = %s unparsedFile->get_parent() = %p = %s \n",
+                         unparsedFile->getFileName().c_str(),unparsedFile->get_parent(),unparsedFile->get_parent()->class_name().c_str());
+                    printf ("Before modification for source file: adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+#endif
+                    string applicationRootDirectory = unparsedFile->get_project()->get_applicationRootDirectory();
+#if 0
+                    printf ("applicationRootDirectory = %s \n",applicationRootDirectory.c_str());
+#endif
+                    boost::filesystem::path applicationRootDirectoryPath(applicationRootDirectory);
+                    boost::filesystem::path currentDirectoryPath(adjusted_header_file_directory);
+
+                    string source_filename = unparsedFile->getFileName();
+                    string source_file_directory = Rose::getPathFromFileName(source_filename);
+#if 0
+                    printf ("source_filename       = %s \n",source_filename.c_str());
+                    printf ("source_file_directory = %s \n",source_file_directory.c_str());
+#endif
+                    boost::filesystem::path source_file_directory_path(source_file_directory);
+
+                 // bool paths_are_equivalent = currentDirectoryPath.equivalent(applicationRootDirectoryPath);
+                    bool paths_are_equivalent = equivalent(currentDirectoryPath,source_file_directory_path);
+#if 0
+                    printf ("paths_are_equivalent = %s \n",paths_are_equivalent ? "true" : "false");
+#endif
+                    if (paths_are_equivalent == true)
+                       {
+                      // Nothng to do here.
+                       }
+                      else
+                       {
+                      // Need to modify the path associated with the output filename.
+
+                     // remove substring (represented by applicationRootDirectory) from source_file_directory, and append this to the adjusted_header_file_directory.
+                        string source_file_directory_copy = source_file_directory;
+                        string::size_type i = source_file_directory_copy.find(applicationRootDirectory);
+
+                        if (i != string::npos)
+                           {
+                             source_file_directory_copy.erase(i, applicationRootDirectory.length());
+                           }
+
+                         string added_directory = source_file_directory_copy;
+#if 0
+                         printf ("added_directory = %s \n",added_directory.c_str());
+#endif
+                         adjusted_header_file_directory += added_directory;
+#if 0
+                         printf ("adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+#endif
+                      // We might need to build the added directory.
+
+                         boost::filesystem::path adjusted_header_file_directory_path(adjusted_header_file_directory);
+                         create_directories(adjusted_header_file_directory_path);
+
+                      // DQ (11/8/2018): Debugging code to spot the added include path in the command line for the backend compiler.
+                      // source_file_directory += "ADDED_INCLUDE_PATH";
+
+                         ROSE_ASSERT(unparsedFile->get_project() != NULL);
+
+                      // DQ (11/7/2018): We need a way to add include directories to the generated command line for the backend compiler.
+                      // Then we need to add the adjusted_header_file_directory as an include directory to the backend compiler's command line.
+                      // We should maybe add a list of include directories to add the the generated command line for the backend compiler.
+                      // This would be seperated from the list of includes that is collected from the user specified command line (since 
+                      // that is used directly so that we capture anything that we don't explicitly collect).
+
+                      // unparsedFile->get_project()->get_quotedIncludesSearchPaths().push_back(source_file_directory);
+                      // unparsedFile->get_project()->get_includeDirectorySpecifierList().push_back(source_file_directory);
+
+                      // DQ (11/28/2018): This is adding the include path for the directory location of the source file.
+                      // I don't think this adds any other directories to the include path list.
+
+                      // DQ (11/8/2018): Adding the "-I" prefix required for use on the command line.
+                         string include_line = string("-I") + source_file_directory;
+                         unparsedFile->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+#if 0
+                         printf ("unparsedFile->get_project()->get_includeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_project()->get_includeDirectorySpecifierList().size());
+                         for (size_t i = 0; i < unparsedFile->get_project()->get_includeDirectorySpecifierList().size(); i++)
+                            {
+                              printf ("unparsedFile->get_project()->get_includeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_project()->get_includeDirectorySpecifierList()[i].c_str());
+                            }
+
+                         printf ("(added for source file) unparsedFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",unparsedFile->get_extraIncludeDirectorySpecifierList().size());
+                         for (size_t i = 0; i < unparsedFile->get_extraIncludeDirectorySpecifierList().size(); i++)
+                            {
+                              printf ("unparsedFile->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,unparsedFile->get_extraIncludeDirectorySpecifierList()[i].c_str());
+                            }
+#endif
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+            // We need to add in any possible extra directories in the path between unparseMapEntry->second.c_str() (the filename without path), and the base directory.
+
+            // const string& outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
+               const string& outputFileName = FileHelper::concatenatePaths(adjusted_header_file_directory, unparseMapEntry -> second);
+#if 0
+               printf ("In unparseIncludedFiles(): calling set_unparse_output_filename(): outputFileName = %s \n",outputFileName.c_str());
 #endif
 #if 0
             // DQ (10/23/2018): Output report of AST nodes marked as modified!
@@ -4030,6 +4392,8 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                SageInterface::reportModifiedStatements("After set_unparse_output_filename()",unparsedFile);
 #endif
 
+            // DQ (11/7/2018): Make sure that this is available.
+               ROSE_ASSERT(unparsedFile->get_project() != NULL);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -4104,206 +4468,116 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
                   }
 
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
 
-#else
-
-#error "DEAD CODE!"
-
-            // DQ (9/7/2018): START OF OLD CODE
-               SgSourceFile* unparsedFile = new SgSourceFile();
-#if 0
-               printf ("In unparseIncludedFiles(): building a new SgSourceFile = %p to stand for the include file = %s \n",unparsedFile,originalFileName.c_str());
-#endif
-
-#error "DEAD CODE!"
-
-            // DQ (8/23/2018): We need to use the SgSourceFile built in the frontend (before any transformations) so that we can use the token stream saved there.
 
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
-            // DQ (8/7/2018): Added assertion.
-               ROSE_ASSERT(unparsedFile != NULL);
 
-#error "DEAD CODE!"
+// #else
 
-            // DQ (8/7/2018): use of new data member to explicitly mark SgSourceFile as a header file.
-               unparsedFile->set_isHeaderFile(true);
-#if 0
-               printf ("In unparseIncludedFiles(): unparsedFile marked as heade file: unparsedFile->get_isHeaderFile() = %s \n",unparsedFile->get_isHeaderFile() ? "true" : "false");
-#endif
-            // DQ (8/3/2018): Set the boolean unparse token option on the new SgSourceFile built for unparsing the header file.
-               bool use_token_based_unparsing = project->get_unparse_tokens();
-               unparsedFile->set_unparse_tokens(use_token_based_unparsing);
-
-#error "DEAD CODE!"
-
-            // TODO: Generalize this hard coded trick.
-               unparsedFile -> set_Cxx_only(true);
-
-#if 0
-               printf ("In unparseIncludedFiles(): originalFileName = %s \n",originalFileName.c_str());
-#endif
-
-#error "DEAD CODE!"
-
-               if (use_token_based_unparsing == true)
-                  {
-                 // Check that we have a token stream available, and build one if required.
-                    ROSE_ASSERT(unparsedFile != NULL);
-                  }
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
-
-#error "DEAD CODE!"
-
-            // DQ (8/6/2018): Adding assertions to support unparse_tokens option.
-               ROSE_ASSERT(unparsedFile->get_startOfConstruct() == NULL);
-               ROSE_ASSERT(unparsedFile->get_endOfConstruct()   == NULL);
-
-            // DQ (8/6/2018): Set the file name for the unparsedFile.
-               unparsedFile->set_sourceFileNameWithPath(originalFileName);
-
-            // DQ (8/6/2018): Set the file info for the unparsedFile.
-               unparsedFile->set_startOfConstruct(new Sg_File_Info(originalFileName));
-            // unparsedFile->set_endOfConstruct(new Sg_File_Info(originalFileName));
-
-#error "DEAD CODE!"
-
-            // DQ (8/6/2018): Adding assertions to support unparse_tokens option.
-               ROSE_ASSERT(unparsedFile->get_startOfConstruct() != NULL);
-            // ROSE_ASSERT(unparsedFile->get_endOfConstruct()   != NULL);
-#if 0
-            // DQ (8/8/2018): The implementation of getFileName accesses the filename stored in the startOfConstruct (which might not be set yet).
-               printf ("In unparseIncludedFiles(): unparsedFile->getFileName()                   = %s \n",unparsedFile->getFileName().c_str());
-               printf ("In unparseIncludedFiles(): unparsedFile->get_sourceFileNameWithPath()    = %s \n",unparsedFile->get_sourceFileNameWithPath().c_str());
-               printf ("In unparseIncludedFiles(): unparsedFile->get_sourceFileNameWithoutPath() = %s \n",unparsedFile->get_sourceFileNameWithoutPath().c_str());
-               printf ("In unparseIncludedFiles(): unparsedFile->get_unparse_output_filename()   = %s \n",unparsedFile->get_unparse_output_filename().c_str());
-#endif
-#if 0
-               printf ("############## In unparseIncludedFiles(): originalFileName = %s \n",originalFileName.c_str());
-               printf ("############## In unparseIncludedFiles(): unparsedFile->getFileName() = %s \n",unparsedFile->getFileName().c_str());
-#endif
-            // DQ (8/6/2018): Check the parent on the new file.
-               ROSE_ASSERT(unparsedFile->get_parent() == NULL);
-
-#error "DEAD CODE!"
-
-            // DQ (8/6/2018): Set the parent on the new file.
-               unparsedFile->set_parent(project->get_fileList_ptr());
-
-            // DQ (8/6/2018): Check the parent on the new file.
-               ROSE_ASSERT(unparsedFile->get_parent() != NULL);
-
-#error "DEAD CODE!"
-
-               if (!includedFilesUnparser.isInputFile(originalFileName))
-                  {
-                 // Unparse here only files that would not be unparsed otherwise.
-                    if (SgProject::get_verbose() >= 1)
-                       {
-                         cout << "Unparsing included file:" << originalFileName << endl;
-                       }
-                    map<string, SgScopeStatement*>::const_iterator unparseScopesMapEntry = unparseScopesMap.find(originalFileName);
-                    ROSE_ASSERT(unparseScopesMapEntry != unparseScopesMap.end());
-
-#error "DEAD CODE!"
-
-                    unparsedFile -> set_sourceFileNameWithoutPath(FileHelper::getFileName(originalFileName));
-                    unparsedFile -> set_sourceFileNameWithPath(originalFileName);
-                    const string& outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
-                    FileHelper::ensureParentFolderExists(outputFileName);
-                    unparsedFile -> set_unparse_output_filename(outputFileName);
-
-#error "DEAD CODE!"
-
-                    Sg_File_Info* unparsedFileInfo = new Sg_File_Info(originalFileName, 0,0);
-                    unparsedFile -> set_file_info(unparsedFileInfo);
-
-                 // Set SgGlobal to avoid problems with checks during unparsing.
-                    SgGlobal* fakeGlobal = new SgGlobal();
-                    fakeGlobal -> set_file_info(unparsedFileInfo);                 
-                    unparsedFile -> set_globalScope(fakeGlobal);
-#if 0
-                    printf ("In unparseIncludedFiles(): building a new SgGlobal to stand for a copy of the global scope = %p to go with the include file = %s \n",fakeGlobal,originalFileName.c_str());
-#endif
-                 // DQ (8/14/2018): Set the parent to be the new unparsedFile.
-                    ROSE_ASSERT(fakeGlobal->get_parent() == NULL);
-                    fakeGlobal->set_parent(unparsedFile);
-                    ROSE_ASSERT(fakeGlobal->get_parent() != NULL);
-
-#error "DEAD CODE!"
-
-                 // DQ (8/6/2018): Set the file info (end of construct) for the unparsedFile.
-                 // Not clear if the ending line number and column numbers are important.
-                    fakeGlobal->set_endOfConstruct(new Sg_File_Info(originalFileName));
-
-                 // DQ (8/6/2018): Adding assertions to support unparse_tokens option.
-                    ROSE_ASSERT(fakeGlobal->get_startOfConstruct() != NULL);
-                    ROSE_ASSERT(fakeGlobal->get_endOfConstruct()   != NULL);
-
-#error "DEAD CODE!"
-
-                 // DQ (8/15/2018): Now copy the list of statements in the global scope (of the translation unit) 
-                 // to the copy of the newly build global scope to go with the newly built SgSourceFile that 
-                 // represents the header file.
-                    ROSE_ASSERT(project->get_files().empty() == false);
-
-                    SgSourceFile* translationUnitSourceFile = isSgSourceFile(project->get_files()[0]);
-                    ROSE_ASSERT(translationUnitSourceFile != NULL);
-
-                    SgGlobal* translationUnitGlobalScope = translationUnitSourceFile->get_globalScope();
-                    ROSE_ASSERT(translationUnitGlobalScope != NULL);
-
-#error "DEAD CODE!"
-
-                 // Copy the statements that are in the translation unit's global scope to the declaration list 
-                 // in the global scope built to represent the include file.
-                    fakeGlobal->get_declarations() = translationUnitGlobalScope->get_declarations();
-#if 0
-                    printf ("fakeGlobal->get_declarations().size() = %zu \n",fakeGlobal->get_declarations().size());
-#endif
-
-#error "DEAD CODE!"
-
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
-#if 0
-                    printf ("In unparseIncludedFiles(): unparseScopesMapEntry->second = %p = %s \n",unparseScopesMapEntry->second,unparseScopesMapEntry->second->class_name().c_str());
-#endif
-
-#error "DEAD CODE!"
-
-#if 0
-                    printf ("In unparseIncludedFiles(): calling unparseFile() \n");
-#endif
-                 // DQ (8/16/2018): Use the more conventional usage and handle the new SgGlobal (global scope) in the new SgSourceFile.
-                 // unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, unparseScopesMapEntry->second);
-                    unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, NULL);
-
-#error "DEAD CODE!"
-
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-
-#error "DEAD CODE!"
+// #error "DEAD CODE!"
 
 // DQ (9/7/2018): END OF OLD CODE
+// #endif
+
+#if 0
+               printf ("In unparseIncludedFiles(): End of loop over unparseMapEntries: originalFileName = %s \n",originalFileName.c_str());
+#endif
+#if 0
+            // DQ (11/19/2018): Exiting to debug where a header file was unparsed, but should not have been unparsed.
+               if (originalFileName == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test11/Inner.h")
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
 #endif
              }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+       // DQ (11/18/2018): For any include file that is unparsed, it can cause a nested include file to be missed if it used a 
+       // relative path (common).  This step detects child include files that are not unparsed and explicitly provides a path 
+       // for the origninal child include file to be found in the backend compile step.  This is less about the unparsing of 
+       // include files than the testing of the include files that are being generated (but the testing is essential).
+          SgSourceFile* sourceFile = isSgSourceFile(project->operator[](0));
+          ROSE_ASSERT(sourceFile != NULL);
+          SgIncludeFile* includeFile = sourceFile->get_associated_include_file();
+          if (includeFile != NULL)
+             {
+            // IncludeFileSupport::headerFilePrefix (includeFile);
+               std::set<std::string> added_include_path_set = IncludeFileSupport::headerFilePrefix (includeFile);
+
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("In unparseIncludedFiles(): added_include_path_set.size() = %zu \n",added_include_path_set.size());
+#endif
+               SgSourceFile* translation_unit_source_file = includeFile->get_source_file_of_translation_unit();
+               ROSE_ASSERT(translation_unit_source_file != NULL);
+
+#if DEBUG_UNPARSE_INCLUDE_FILES
+               printf ("(add extra include paths) translation_unit_source_file: filename = %s \n",translation_unit_source_file->getFileName().c_str());
+#endif
+               std::set<std::string>::iterator i = added_include_path_set.begin();
+               while (i != added_include_path_set.end())
+                  {
+                    string header_file_directory = *i;
+                    string include_line = string("-I") + header_file_directory;
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                    printf ("   --- include_line = %s \n",include_line.c_str());
+#endif
+
+                 // DQ (11/28/2018): Avoid putting system directories into the extraIncludeDirectorySpecifierList.
+                 // translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                    string applicationRootDirectory = sourceFile->get_project()->get_applicationRootDirectory();
+#if 0
+                    printf ("applicationRootDirectory = %s \n",applicationRootDirectory.c_str());
+#endif
+                    string includeFileName = includeFile->get_filename();
+#if 0
+                    printf ("includeFileName = %s \n",includeFileName.c_str());
+#endif
+                 // bool isSubstring = (includeFileName.substr(applicationRootDirectory,0) != string::npos);
+                 // size_t location = includeFileName.find(applicationRootDirectory);
+                    size_t location = header_file_directory.find(applicationRootDirectory);
+                    bool isSubstring = (location == 0);
+#if DEBUG_UNPARSE_INCLUDE_FILES
+                    printf ("location = %zu isSubstring = %s \n",location,isSubstring ? "true" : "false");
+#endif
+                 // Check is this is a path in the application directory (avoid system or compiler include paths).
+                    if (isSubstring == true)
+                       {
+#if 0
+                         printf ("Adding to extraIncludeDirectorySpecifierList: header_file_directory = %s \n",header_file_directory.c_str());
+#endif
+                         translation_unit_source_file->get_extraIncludeDirectorySpecifierList().push_back(include_line);
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Supress output of this directory in the extraIncludeDirectorySpecifierList \n");
+#endif
+                       }
+
+                    i++;
+                  }
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
         }
+
+#if 1
+  // DQ (11/15/2018): Generate the dot file as a test!
+     string tmp_dotgraph_filename = "include_file_graph_from_base_of_unparseIncludedFiles";
+     generateGraphOfIncludeFiles(project,tmp_dotgraph_filename);
+#endif
 
   // DQ (9/14/2018): At this point we have unparsed the include files, and skipped the unparsing of the
   // source file (since they will be unparsed using the usual memchanism which ignores include files).
@@ -4318,10 +4592,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
      SageInterface::reportModifiedStatements("Leaving unparseIncludedFiles()",project);
 #endif
 
-#if 0
+#if DEBUG_UNPARSE_INCLUDE_FILES
      printf ("Leaving unparseIncludedFiles() project = %p \n",project);
 #endif
-
    }
 
 
@@ -4424,17 +4697,17 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
           unparseFile(&file,unparseFormatHelp,unparseDelegate);
         }
 #else
-     if ( SgProject::get_verbose() > 1 )
+     if ( SgProject::get_verbose() >= 1 )
         {
-          printf ("Unparse the file list first, then the directory list \n");
+          printf ("In unparseProject(): Unparse the file list first, then the directory list \n");
         }
 
   // DQ (1/23/2010): refactored the SgFileList
      unparseFileList(project->get_fileList_ptr(),unparseFormatHelp,unparseDelegate);
 
-     if ( SgProject::get_verbose() > 1 )
+     if ( SgProject::get_verbose() >= 1 )
         {
-          printf ("Unparse the directory list... \n");
+          printf ("In unparseProject(): Unparse the directory list... \n");
         }
 
 #if 0
@@ -4533,67 +4806,74 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
-{
-  ROSE_ASSERT(fileList != NULL);
+   {
+     ROSE_ASSERT(fileList != NULL);
 
-  int status_of_function = 0;
+     int status_of_function = 0;
 
-  for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
-  {
-      SgFile* file = fileList->get_listOfFiles()[i];
-      {
+     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+        {
+          SgFile* file = fileList->get_listOfFiles()[i];
+       // {
           ROSE_ASSERT(file != NULL);
 
           if (SgProject::get_verbose() > 1)
-          {
+             {
                printf("Unparsing file = %p = %s \n",
                       file,
                       file->class_name().c_str());
-          }
+             }
 
 #ifndef _MSC_VER
           if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL)
-          {
-              std::cout
-                  << "[WARN] "
-                  << "Configured to keep going after catching a "
-                  << "signal in Unparser::unparseFile()"
-                  << std::endl;
+             {
+               std::cout
+                   << "[WARN] "
+                   << "Configured to keep going after catching a "
+                   << "signal in Unparser::unparseFile()"
+                   << std::endl;
 
-              if (file != NULL)
-              {
-                  file->set_unparserErrorCode(100);
-                  status_of_function =
-                      max(100, status_of_function);
-              }
-              else
-              {
-                  std::cout
-                      << "[FATAL] "
-                      << "Unable to keep going due to an unrecoverable internal error"
-                      << std::endl;
-                  exit(1);
-              }
-          }
+               if (file != NULL)
+                  {
+                    file->set_unparserErrorCode(100);
+                    status_of_function = max(100, status_of_function);
+                  }
+                 else
+                  {
+                    std::cout
+                        << "[FATAL] "
+                        << "Unable to keep going due to an unrecoverable internal error"
+                        << std::endl;
+                    exit(1);
+                  }
+             }
 #else
-      if (false) {}
+          if (false)
+             {
+             }
 #endif
-          else if (!isSgSourceFile(file) || isSgSourceFile(file) -> get_frontendErrorCode() == 0)
-          {
-              unparseFile(file, unparseFormatHelp, unparseDelegate);
-          }
-          else
-          {
-              if (SgProject::get_verbose() > 1)
-              {
-                  std::cout
-                      << "[WARN] "
-                      << "Skipping unparsing of file "
-                      << file->getFileName()
-                      << std::endl;
-              }
-          }
-      }//file
-  }//for each
-}
+            else
+             {
+               if (!isSgSourceFile(file) || isSgSourceFile(file) -> get_frontendErrorCode() == 0)
+                  {
+#if 0
+                    printf ("In unparseFileList(): calling unparseFile(): filename = %s \n",file->getFileName().c_str());
+#endif
+                    unparseFile(file, unparseFormatHelp, unparseDelegate);
+                  }
+                 else
+                  {
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         std::cout
+                             << "[WARN] "
+                             << "Skipping unparsing of file "
+                             << file->getFileName()
+                             << std::endl;
+                       }
+                  }
+             }
+       // }//file
+        }//for each
+   }
 

@@ -3755,6 +3755,11 @@ Grammar::setUpStatements ()
      IncludeDirectiveStatement.setDataPrototype( "SgIncludeFile*", "include_file_heirarchy", "= NULL",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/5/2018): Pass the name that was used to the SgIncludeDirectiveStatement.
+     IncludeDirectiveStatement.setDataPrototype ("std::string", "name_used_in_include_directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 #if 0
   // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
      IncludeDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString3", "= \"\"",

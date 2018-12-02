@@ -39,13 +39,22 @@ map<string, SgSourceFile*> IncludedFilesUnparser::getUnparseSourceFileMap()
      return unparseSourceFileMap;
    }
 
-list<string> IncludedFilesUnparser::getIncludeCompilerOptions() {
-    list<string> includeCompilerOptions;
-    for (list<pair<int, string> >::const_iterator it = includeCompilerPaths.begin(); it != includeCompilerPaths.end(); it++) {
-        includeCompilerOptions.push_back("-I" + it -> second);
-    }
-    return includeCompilerOptions;
-}
+
+set<string> IncludedFilesUnparser::getFilesToCopy()
+   {
+  // DQ (11/19/2018): Added access function.
+     return filesToCopy;
+   }
+
+list<string> IncludedFilesUnparser::getIncludeCompilerOptions()
+   {
+     list<string> includeCompilerOptions;
+     for (list<pair<int, string> >::const_iterator it = includeCompilerPaths.begin(); it != includeCompilerPaths.end(); it++)
+        {
+          includeCompilerOptions.push_back("-I" + it -> second);
+        }
+     return includeCompilerOptions;
+   }
 
 
 // void IncludedFilesUnparser::unparse()
@@ -107,6 +116,11 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 
   // collect immediately affected files as well as all traversed files
+
+  // DQ (11/28/2018): I think the order of the traversal should be postorder instead of preorder, because we sometimes mark the 
+  // enclosing statement tn as modified.
+  // traverse(projectNode, preorder);
+  // traverse(projectNode, postorder);
      traverse(projectNode, preorder);
 
 #if 0
@@ -121,7 +135,25 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
           prepareForNewIteration();
 
-          collectAdditionalFilesToUnparse();
+       // DQ (11/19/2018): When using the token-based unpasing we don't modify include paths in the source or header files 
+       // and so we don't need to unparse as large of a set of header files as when the unparse_tokens option is NOT used.
+          if (projectNode->get_unparse_tokens() == false)
+             {
+               collectAdditionalFilesToUnparse();
+             }
+            else
+             {
+            // We need to for a list of header files to copy, since we can't use the original source directory location as 
+            // an include path because then we can't pick up the unparsed header files.
+#if 0
+               printf ("$$$$$$$$$$$$ Skipping call to collectAdditionalFilesToUnparse() when projectNode->get_unparse_tokens() == true $$$$$$$$$$$$ \n");
+#endif
+               collectAdditionalListOfHeaderFilesToCopy();
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
 
           applyFunctionToIncludingPreprocessingInfos(filesToUnparse, &IncludedFilesUnparser::collectIncludingPathsFromUnaffectedFiles);
 
@@ -140,16 +172,26 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
         }
      while (!newFilesToUnparse.empty());
-    
+
+
+  // DQ (11/13/2018): If we are unparsing from the token stream, then we can't be modifying the include directives. 
+  // This is also an issue because the #include directives are a part of the white space, and thus transformations 
+  // of then can cause them to be unparsed twice (e.g. test9 in UnparseHeader_tests).  Also, modicication of the
+  // include directives can trigger unparsing from the AST (which would not otherwise be required).
+
   // Update including paths for the unparsed files according to unparseMap
-     applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
+  // applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
+     if (projectNode->get_unparse_tokens() == false)
+        {
+          applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
+        }
 
      for (list<pair<int, string> >::const_iterator it = includeCompilerPaths.begin(); it != includeCompilerPaths.end(); it++)
         {
           FileHelper::ensureFolderExists(it -> second);
         }
 
-#if 0
+#if 1
      printDiagnosticOutput();
 #endif
 
@@ -160,6 +202,10 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 0
      printf ("Leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -175,6 +221,8 @@ IncludedFilesUnparser::printDiagnosticOutput()
           CollectionHelper::printSet(modifiedFiles, "\nModified files:", "");
 
           CollectionHelper::printSet(filesToUnparse, "\nFiles to unparse:", "");
+
+          CollectionHelper::printSet(filesToCopy, "\nCopy files:", "");
 
           CollectionHelper::printMapOfSets(includingPathsMap, "\nIncluding paths map:", "Included file:", "Including path:");
 
@@ -196,17 +244,52 @@ IncludedFilesUnparser::printDiagnosticOutput()
         }    
    }
 
-void IncludedFilesUnparser::prepareForNewIteration() {
-    filesToUnparse.insert(newFilesToUnparse.begin(), newFilesToUnparse.end());
-    newFilesToUnparse.clear();
-    includingPathsMap.clear();
-    notUnparsedPreprocessingInfos.clear();
-    unparseMap.clear();
-    unparsePaths.clear();
-    includeCompilerPaths.clear();
-    //The unparse root path is always included (though could be redundant if no included files need unparsing).
-    addIncludeCompilerPath(0, unparseRootPath);
-}
+void IncludedFilesUnparser::prepareForNewIteration() 
+   {
+#if 0
+     printf ("In prepareForNewIteration(): newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
+     set<string>::iterator k = newFilesToUnparse.begin();
+     while (k != newFilesToUnparse.end())
+       {
+         printf ("newFilesToUnparse = %s \n",(*k).c_str());
+         k++;
+       }
+#endif
+
+     filesToUnparse.insert(newFilesToUnparse.begin(), newFilesToUnparse.end());
+     newFilesToUnparse.clear();
+     includingPathsMap.clear();
+     notUnparsedPreprocessingInfos.clear();
+     unparseMap.clear();
+     unparsePaths.clear();
+     includeCompilerPaths.clear();
+  // The unparse root path is always included (though could be redundant if no included files need unparsing).
+     addIncludeCompilerPath(0, unparseRootPath);
+
+#if 0
+     printf ("In prepareForNewIteration(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+     set<string>::iterator i = filesToUnparse.begin();
+     while (i != filesToUnparse.end()) 
+       {
+         printf ("filesToUnparse = %s \n",(*i).c_str());
+         i++;
+       }
+#endif
+#if 0
+     printf ("In prepareForNewIteration(): newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
+     set<string>::iterator j = newFilesToUnparse.begin();
+     while (j != newFilesToUnparse.end()) 
+       {
+         printf ("newFilesToUnparse = %s \n",(*j).c_str());
+         j++;
+       }
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+   }
 
 bool IncludedFilesUnparser::isInputFile(const string& absoluteFileName) {
     const SgFilePtrList& fileList = projectNode -> get_fileList();
@@ -346,6 +429,10 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
 
 void IncludedFilesUnparser::populateUnparseMap()
    {
+#if 0
+     printf ("In populateUnparseMap(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
+
   // First, process files that need to go to a specific location
      for (map<string, set<string> >::const_iterator mapEntry = includingPathsMap.begin(); mapEntry != includingPathsMap.end(); mapEntry++) 
         {
@@ -386,6 +473,10 @@ void IncludedFilesUnparser::populateUnparseMap()
                unparsePaths.insert(unparseFileName);
              }
         }
+
+#if 0
+     printf ("Leaving populateUnparseMap(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
    }
 
 
@@ -423,15 +514,26 @@ void IncludedFilesUnparser::collectIncludingPathsFromUnaffectedFiles(const strin
 void
 IncludedFilesUnparser::initializeFilesToUnparse()
    {
+#if 0
+     printf ("In initializeFilesToUnparseMap(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
+
   // All modified files have to be unparsed.
      filesToUnparse = modifiedFiles;
     
+#if 0
+     printf ("In initializeFilesToUnparseMap(): initialized with modifiedFiles: filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
+
   // All input files are also unparsed by default.
      SgFilePtrList inputFilesList = projectNode -> get_fileList();
      for (SgFilePtrList::const_iterator inputFilePtr = inputFilesList.begin(); inputFilePtr != inputFilesList.end(); inputFilePtr++)
         {
           filesToUnparse.insert(FileHelper::normalizePath((*inputFilePtr) -> getFileName())); //normalize just in case it is not normalized by default as expected
         }
+#if 0
+     printf ("Leaving initializeFilesToUnparseMap(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
    }
 
 void
@@ -449,17 +551,110 @@ IncludedFilesUnparser::collectAdditionalFilesToUnparse()
 
 void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
    {
+#if 0
+     printf ("In collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
+
      IncludeDirective includeDirective(includingPreprocessingInfo -> getString());
      if (includeDirective.isQuotedInclude() || FileHelper::isAbsolutePath(includeDirective.getIncludedPath())) 
         {
           string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
+#if 0
+          printf ("In collectNewFilesToUnparse(): normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
+#endif
           if (filesToUnparse.find(normalizedIncludingFileName) == filesToUnparse.end()) 
              {
                filesToUnparse.insert(normalizedIncludingFileName);
                newFilesToUnparse.insert(normalizedIncludingFileName);
              }
         }
+
+#if 0
+     printf ("Leaving collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
    }
+
+
+void
+IncludedFilesUnparser::collectAdditionalListOfHeaderFilesToCopy()
+   {
+  // Recursively add to filesToUnparse set any file that includes using quotes (or an absolute path) at least one of the files that is already in filesToUnparse set.
+     set<string> workingSet = filesToUnparse;
+     while (!workingSet.empty())
+        {
+          newFilesToUnparse.clear();
+          applyFunctionToIncludingPreprocessingInfos(workingSet, &IncludedFilesUnparser::collectNewFilesToCopy);
+          workingSet = newFilesToUnparse;
+        }
+   }
+
+
+void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
+   {
+#if 0
+     printf ("In collectNewFilesToCopy(): filesToCopy.size() = %zu \n",filesToCopy.size());
+#endif
+
+     IncludeDirective includeDirective(includingPreprocessingInfo -> getString());
+     if (includeDirective.isQuotedInclude() || FileHelper::isAbsolutePath(includeDirective.getIncludedPath())) 
+        {
+          string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
+#if 0
+          printf ("In collectNewFilesToCopy(): normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
+#endif
+          if (filesToCopy.find(normalizedIncludingFileName) == filesToCopy.end()) 
+             {
+               filesToCopy.insert(normalizedIncludingFileName);
+            // newFilesToUnparse.insert(normalizedIncludingFileName);
+             }
+        }
+
+  // Go through the list of allFiles, and identify any that are not in the list of files to unparse, and add them to the list of files to copy.
+     set<string>::iterator i = allFiles.begin();
+     while (i != allFiles.end())
+        {
+#if 0
+          printf ("Checking allFiles: (*i) = %s \n",(*i).c_str());
+#endif
+          if (modifiedFiles.find(*i) == modifiedFiles.end() && filesToCopy.find(*i) == filesToCopy.end())
+             {
+#if 0
+               printf ("In collectNewFilesToCopy(): adding remaining file to filesToCopy (*i) = %s \n",(*i).c_str());
+#endif
+
+            // We need to exclude the ROSE preinclude file from being added to the list of files to copy.
+            // filesToCopy.insert(*i);
+            // string filenameWithOutPath = FileHelper::normalizePath(*i);
+               string filenameWithOutPath = FileHelper::getFileName(*i);
+#if 0
+               printf ("In collectNewFilesToCopy(): filtering ROSE preinclude file: filenameWithOutPath = %s \n",filenameWithOutPath.c_str());
+#endif
+               if (filenameWithOutPath != "rose_edg_required_macros_and_functions.h")
+                  {
+                    filesToCopy.insert(*i);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("@@@@@@@@ Filtered file: *i = %s \n",(*i).c_str());
+#endif
+                  }
+             }
+
+          i++;
+        }
+
+#if 0
+     printf ("Leaving collectNewFilesToUnparse(): filesToCopy.size() = %zu \n",filesToCopy.size());
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
 
 void
 IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
@@ -521,11 +716,14 @@ void IncludedFilesUnparser::addToUnparseScopesMap(const string& fileName, SgNode
 
 void IncludedFilesUnparser::visit(SgNode* node) 
    {
-#if 0
-     printf ("In IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
+
+#define DEBUG_INCLUDE_FILE_UNPARSER_VISIT 0
+
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+     printf ("\nIn IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
 #endif
 
-#if 0
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
      if (isSgGlobal(node) != NULL)
         {
           printf ("In IncludedFilesUnparser::visit(): (SgGlobal): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
@@ -535,7 +733,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
      SgSourceFile* sourceFile = isSgSourceFile(node);
      if (sourceFile != NULL)
         {
-#if 0
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
           printf ("Building unparseSgSourceFileMap: sourceFile = %p sourceFile->getFileName() = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
           unparseSourceFileMap.insert(pair<string,SgSourceFile*>(sourceFile->getFileName(),sourceFile));
@@ -573,30 +771,62 @@ void IncludedFilesUnparser::visit(SgNode* node)
           SgHeaderFileBody* headerFileBody = includeDirectiveStatement->get_headerFileBody();
           ROSE_ASSERT(headerFileBody != NULL);
           SgSourceFile* headerFile = headerFileBody->get_include_file();
-          ROSE_ASSERT(headerFile != NULL);
 
-#if 0
-          printf ("Building unparseSgSourceFileMap: headerFile = %p headerFile->getFileName() = %s \n",headerFile,headerFile->getFileName().c_str());
+       // DQ (11/22/2018): We only build associated SgSourceFile for application header files.
+       // ROSE_ASSERT(headerFile != NULL);
+          if (headerFile != NULL)
+             {
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+               printf ("Building unparseSgSourceFileMap: headerFile = %p headerFile->getFileName() = %s \n",headerFile,headerFile->getFileName().c_str());
 #endif
 
-          unparseSourceFileMap.insert(pair<string,SgSourceFile*>(headerFile->getFileName(),headerFile));
+               unparseSourceFileMap.insert(pair<string,SgSourceFile*>(headerFile->getFileName(),headerFile));
+             }
         }
 
      Sg_File_Info* fileInfo = node -> get_file_info();
 
      if (fileInfo != NULL)
         {
-          string normalizedFileName = FileHelper::normalizePath(fileInfo -> get_filenameString());
-          bool isTransformation     = fileInfo -> isTransformation();
-          bool isCompilerGenerated  = fileInfo -> isCompilerGenerated();
+       // DQ (11/28/2018): Need to use the full filename (perhaps resolved of symbolic links) because 
+       // filename that match can represent files in different directories.  Though this is more of an 
+       // issue for system header file.
+       // string normalizedFileName = FileHelper::normalizePath(fileInfo -> get_filenameString());
+       // string normalizedFileName = FileHelper::normalizePath(fileInfo->get_physical_filename());
+          int physical_file_id      = fileInfo->get_physical_file_id();
+          string normalizedFileName = FileHelper::normalizePath(fileInfo->getFilenameFromID(physical_file_id));
+          bool isTransformation     = fileInfo->isTransformation();
+          bool isCompilerGenerated  = fileInfo->isCompilerGenerated();
+          bool isModified           = node->get_isModified();
+
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+          printf ("In IncludedFilesUnparser::visit(): physical_file_id             = %d \n",physical_file_id);
+          printf ("In IncludedFilesUnparser::visit(): physical fileName (computed) = %s \n",fileInfo->get_physical_filename().c_str());
+          printf ("In IncludedFilesUnparser::visit(): physical fileName (raw)      = %s \n",fileInfo->getFilenameFromID(physical_file_id).c_str());
+          printf ("In IncludedFilesUnparser::visit(): normalizedFileName           = %s \n",normalizedFileName.c_str());
+          printf ("In IncludedFilesUnparser::visit(): isTransformation             = %s \n",isTransformation    ? "true" : "false");
+          printf ("In IncludedFilesUnparser::visit(): isCompilerGenerated          = %s \n",isCompilerGenerated ? "true" : "false");
+          printf ("In IncludedFilesUnparser::visit(): isModified                   = %s \n",isModified          ? "true" : "false");
+#endif
 
           if (!isTransformation && !isCompilerGenerated)
              {
             // avoid infos that do not have real file names
-               if (fileInfo -> get_file_id() >= 0)
+
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+               printf ("fileInfo->get_file_id() = %d \n",fileInfo->get_file_id());
+               printf ("fileInfo->get_physical_file_id() = %d \n",fileInfo->get_physical_file_id());
+#endif
+            // if (fileInfo->get_file_id() >= 0)
+               if (fileInfo->get_physical_file_id() >= 0)
                   {
                  // TODO: Investigate why it can be less than 0 (e.g. -2 with file name being NULL_FILE).
-#if 0
+                 // Note that any Sg_File_Info that is marked as transformed, will output a filename "transformed" 
+                 // and a file_id that is less than zero. What we want to use is the information about the physical file
+                 // which in general would have to map to whatever filename a transformations considers itself to be 
+                 // associated with.  Need to implement mechanisms to automatically set this (e.g. using the physiscal 
+                 // file Id of surreountings statements) and check that is is consistant as well.
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                     printf ("In IncludedFilesUnparser::visit(): !isTransformation && !isCompilerGenerated: node = %p = %s normalizedFileName = %s \n",node,node->class_name().c_str(),normalizedFileName.c_str());
 #endif
                     set<string>::const_iterator setEntry = allFiles.find(normalizedFileName);
@@ -605,7 +835,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                     if (setEntry == allFiles.end())
                        {
                       // This is a new file, process it.
-#if 0
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                          printf ("In IncludedFilesUnparser::visit(): !isTransformation && !isCompilerGenerated: This is a new file, process it: file = %s \n",normalizedFileName.c_str());
 #endif
                          allFiles.insert(normalizedFileName);
@@ -619,12 +849,32 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
                          addToUnparseScopesMap(normalizedFileName, node);
                        }
+                      else
+                       {
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+                         printf ("This is NOT a new file: normalizedFileName = %s \n",normalizedFileName.c_str());
+#endif
+                       }
                   }
              }
 
-          if (node -> get_isModified()) 
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+          printf ("List allFiles list (size = %zu): \n",allFiles.size());
+          set<string>::iterator i = allFiles.begin();
+          size_t counter = 0;
+          while (i != allFiles.end())
              {
-#if 0
+               printf ("   --- allFiles[%zu] = %s \n",counter,(*i).c_str());
+
+               i++;
+               counter++;
+             }
+#endif
+
+       // if (node -> get_isModified()) 
+          if (isModified == true) 
+             {
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): node = %p = %s  \n",node,node->class_name().c_str());
 #endif
                if (SgProject::get_verbose() > 0)
@@ -635,12 +885,14 @@ void IncludedFilesUnparser::visit(SgNode* node)
                     cout << "   Is compiler generated: " << isCompilerGenerated << endl;
                   }
 
+            // In a preorder traversal, this is not meaningful, since I understand that the parent statement has already been visited.
             // DQ (9/24/2018): If this is not a statement, then mark the enclosing statement as modified.
+            // DQ (11/28/2018): This should be an issue for a preorder traversal, so this should be reconsidered.
                if (isSgStatement(node) == NULL)
                   {
                     SgStatement* enclosingStatement = TransformationSupport::getStatement(node);
                     ROSE_ASSERT(enclosingStatement != NULL);
-#if 0
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                     printf ("Found non-statement = %p = %s as modified, marking enclosing statement = %p = %s \n",
                          node,node->class_name().c_str(),enclosingStatement,enclosingStatement->class_name().c_str());
 #endif
@@ -651,21 +903,42 @@ void IncludedFilesUnparser::visit(SgNode* node)
                     enclosingStatement->setTransformation();
                   }
 
-               if (!isTransformation && !isCompilerGenerated)
+            // DQ (11/28/2018): I think this is a bug fix for the recognition of transformed statements in either header files or 
+            // source files within the AST.
+            // if (!isTransformation && !isCompilerGenerated)
+               if (isTransformation == true && isCompilerGenerated == false)
                   {
                  // avoid infos that do not have real file names
-#if 0
-                    printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): !isTransformation && !isCompilerGenerated: normalizedFileName = %s \n",normalizedFileName.c_str());
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+                 // printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): !isTransformation && !isCompilerGenerated: normalizedFileName = %s \n",normalizedFileName.c_str());
+                    printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): (isTransformation == true && isCompilerGenerated == false): normalizedFileName = %s \n",normalizedFileName.c_str());
 #endif
                     modifiedFiles.insert(normalizedFileName);
                   }
 
-#if 0
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): output endl \n");
 #endif
             // cout << endl << endl;
              }
+
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+          printf ("List modifiedFiles list (size = %zu): \n",modifiedFiles.size());
+          set<string>::iterator j = modifiedFiles.begin();
+          size_t modified_file_counter = 0;
+          while (j != modifiedFiles.end())
+             {
+               printf ("   --- modifiedFiles[%zu] = %s \n",modified_file_counter,(*j).c_str());
+
+               j++;
+               modified_file_counter++;
+             }
+#endif
         }
+
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+     printf ("Leaving IncludedFilesUnparser::visit(): node = %p = %s modifiedFiles.size() = %zu \n",node,SageInterface::get_name(node).c_str(),modifiedFiles.size());
+#endif
    }
 
 

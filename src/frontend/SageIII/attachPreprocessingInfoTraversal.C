@@ -470,6 +470,17 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                               printf ("))))))))))))))))))))))))))) sourceFile->get_unparseHeaderFiles() == true: includedFileName = %s \n",includedFileName.c_str());
                            // printf ("   --- includedFileName.length() = %zu \n",includedFileName.length());
 #endif
+#if 0
+                              printf ("sourceFile->get_include_file_list().size() = %zu \n",sourceFile->get_include_file_list().size());
+                              for (size_t i = 0; i < sourceFile->get_include_file_list().size(); i++)
+                                 {
+                                   printf ("Saved inlcude file information: filename = %s \n",sourceFile->get_include_file_list()[i]->get_filename().str());
+                                 }
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                            // DQ (9/18/2018): Build a map so that the CPP include directives, processed in later stages of the frontend,
                            // can initialize the pointer in the SgIncludeBody or the SGIncludeDirective so the SgInclude data structure.
                            // We only want to process included files that are a part of the translation unit (for not this will exclude 
@@ -516,6 +527,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                  }
                                 else
                                  {
+                                // NOTE: we want to add this information to the header file report.
 #if 0
                                    printf ("COULD NOT find a SgIncludeFile (skip this include file that is not in the translation unit (was not seen by EDG)) \n");
 #endif
@@ -573,8 +585,13 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
                                 // DQ (9/18/2018): Adding the connection to the include file hierarchy as generated in the EDG/ROSE translation.
                                    includeDirectiveStatement->set_include_file_heirarchy(include_file);
-                                   include_file->set_parent(includeDirectiveStatement);
 
+                                // DQ (11/9/2018): Not clear if this is the best solution.  Might be better to have 
+                                // it point to the SgSourceFile or the parent include file IR node.
+                                   include_file->set_parent(includeDirectiveStatement);
+#if 0
+                                   printf ("Attaching CPP directives: include_file->get_name_used_in_include_directive() = %s \n",include_file->get_name_used_in_include_directive().str());
+#endif
                                 // DQ (8/21/2018): Set a better source file position for the SgIncludeDirectiveStatement.
                                    includeDirectiveStatement->set_startOfConstruct(new Sg_File_Info(*(currentPreprocessingInfoPtr-> get_file_info())));
                                    includeDirectiveStatement->set_endOfConstruct  (new Sg_File_Info(*(currentPreprocessingInfoPtr-> get_file_info())));
@@ -582,8 +599,16 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // DQ (8/24/2018): Connect this properly into the AST.
                                    includeDirectiveStatement->set_parent(sourceFile->get_globalScope());
 
-                                   includeDirectiveStatement -> set_directiveString(currentPreprocessingInfoPtr -> getString()); //Set, but not used in the current implementation.
+                                // NOTE: Set, but not used in the current implementation.
+                                   includeDirectiveStatement->set_directiveString(currentPreprocessingInfoPtr -> getString());
+#if 0
+                                   printf ("includeDirectiveStatement->get_directiveString() = %s \n",includeDirectiveStatement->get_directiveString().c_str());
+#endif
+                                // DQ (11/5/2018): Pass the name that was used to the SgIncludeDirectiveStatement.
+                                   includeDirectiveStatement->set_name_used_in_include_directive(include_file->get_name_used_in_include_directive());
 
+                                // DQ (11/9/2018): It might simplify the design to eliminate this IR node since it only contains 
+                                // a pointer to the SgSourceFile for the associated header file.
                                    SgHeaderFileBody* headerFileBody = new SgHeaderFileBody();
 
                                 // DQ (8/21/2018): Set a better source file position for the SgHeaderFileBody.
@@ -654,19 +679,30 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
                                    printf ("$$$$$$$$$$$$$$$$$$ Building new SgSourceFile (to support include file) \n");
 #endif
+                                // DQ (11/10/2018): This is now set in the EDG/ROSE translation.
                                 // DQ (8/23/2018): Collect the comments, CPP directives, and token stream from the include file.
-                                   SgSourceFile* include_sourceFile = new SgSourceFile();
+                                // SgSourceFile* include_sourceFile = new SgSourceFile();
+                                   SgSourceFile* include_sourceFile = include_file->get_source_file();
+
+                                // DQ (11/22/2018): EDG/ROSE translation skips building SgSourceFile for non-application header files.
+                                // ROSE_ASSERT(include_sourceFile != NULL);
+
+                                // DQ (11/21/2018): I think we can assert this here!
+                                   ROSE_ASSERT(include_file != NULL);
 
                                 // DQ (9/26/2018): Set the source file in the SgIncludeFile.
-                                   if (include_file != NULL)
+                                // if (include_file != NULL)
+                                   if (include_file != NULL && include_sourceFile != NULL)
                                       {
-                                // DQ (10/27/2018): If this is an non-null include_file: START.
-
+                                     // DQ (10/27/2018): If this is an non-null include_file: START.
+#if 0
                                         if (include_file->get_source_file() != NULL)
                                            {
                                              printf ("include_file->get_source_file()                = %p \n",include_file->get_source_file());
                                              printf ("include_file->get_source_file()->getFileName() = %s \n",include_file->get_source_file()->getFileName().c_str());
                                            }
+#endif
+#if 0
                                         if (include_file->get_source_file() != NULL)
                                            {
                                              ROSE_ASSERT(include_file->get_source_file() == NULL);
@@ -674,8 +710,70 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                              ROSE_ASSERT(include_file->get_source_file() != NULL);
                                              ROSE_ASSERT(include_file->get_filename().is_null() == false);
                                            }
+#else
+                                     // This is now set in the EDG?ROSE connection (check it here).
+                                        ROSE_ASSERT(include_file->get_source_file() != NULL);
+                                        ROSE_ASSERT(include_file->get_filename().is_null() == false);
+#endif
 #if 0
                                         printf ("include_file->get_filename() = %s \n",include_file->get_filename().str());
+                                        printf ("sourceFile->getFileName()    = %s \n",sourceFile->getFileName().c_str());
+#endif
+
+                                     // This is now set in EDG/ROSE translation.
+                                     // We need to link to the source file for the translation unit, and the source file (or header file) that included this include file.
+                                     // include_file->set_source_file_of_translation_unit(sourceFile);
+                                        ROSE_ASSERT(include_file->get_source_file_of_translation_unit() == sourceFile);
+#if 0
+                                        printf ("include_file->get_source_file_of_translation_unit() = %p filename = %s \n",
+                                             include_file->get_source_file_of_translation_unit(),
+                                             include_file->get_source_file_of_translation_unit()->getFileName().c_str());
+                                        printf ("include_file->get_parent_include_file() = %p filename = %s \n",
+                                             include_file->get_parent_include_file(),
+                                             include_file->get_parent_include_file() != NULL ? include_file->get_parent_include_file()->get_filename().str() : "NULL");
+#endif
+                                     // This might not be correct yet.
+                                        include_file->set_including_source_file(sourceFile);
+                                     // include_sourceFile>set_including_source_file(include_file);
+
+                                     // The parent of the SgIncludeDirectiveStatement is ??
+                                        ROSE_ASSERT(includeDirectiveStatement->get_parent() != NULL);
+#if 0
+                                        printf ("includeDirectiveStatement->get_parent() = %p = %s \n",includeDirectiveStatement->get_parent(),includeDirectiveStatement->get_parent()->class_name().c_str());
+                                        printf ("include_file->get_parent() = %p = %s \n",include_file->get_parent(),include_file->get_parent()->class_name().c_str());
+#endif
+                                        SgNode* tmp_parent = include_file;
+                                        while (tmp_parent != NULL)
+                                           {
+#if 0
+                                             if (tmp_parent != NULL && tmp_parent->get_parent() != NULL)
+                                                {
+                                                  printf ("tmp_parent->get_parent() = %p = %s \n",tmp_parent->get_parent(),tmp_parent->get_parent()->class_name().c_str());
+                                                }
+#endif
+#if 0
+                                          // DQ (11/9/2018): What is the issue with the parent pointer in SgProject?
+                                             if (isSgProject(tmp_parent) != NULL)
+                                                {
+                                                  tmp_parent = NULL;
+                                                }
+                                               else
+                                                {
+                                                  tmp_parent = tmp_parent->get_parent();
+                                                }
+#else
+                                             tmp_parent = tmp_parent->get_parent();
+#endif
+#if 0
+                                             printf ("After increment! tmp_parent = %p \n",tmp_parent);
+#endif
+                                           }
+#if 0
+                                        printf ("After while loop! \n");
+#endif
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
 #endif
 
                                 // DQ (9/7/2018): C/C++ source files and header files should set this to false, since the C preprocessor need not be and is not explicitly called.
@@ -687,7 +785,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // DQ (8/23/2018): Point to the generate SgSourceFile for the include file (so that we can reuse it in the unparser).
                                    headerFileBody->set_include_file(include_sourceFile);
                                    include_sourceFile->set_parent(headerFileBody);
-#if 1
+
                                 // DQ (8/7/2018): use of new data member to explicitly mark SgSourceFile as a header file.
                                    include_sourceFile->set_isHeaderFile(true);
 #if 0
@@ -722,15 +820,21 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    ROSE_ASSERT(false);
 #endif
 
+                                // DQ (11/10/2018): This is handled in the EDG/ROSE connection.
                                 // DQ (8/6/2018): Adding assertions to support unparse_tokens option.
-                                   ROSE_ASSERT(include_sourceFile->get_startOfConstruct() == NULL);
+                                // ROSE_ASSERT(include_sourceFile->get_startOfConstruct() == NULL);
+                                // ROSE_ASSERT(include_sourceFile->get_endOfConstruct()   == NULL);
+                                   ROSE_ASSERT(include_sourceFile->get_startOfConstruct() != NULL);
+                                // ROSE_ASSERT(include_sourceFile->get_endOfConstruct()   != NULL);
                                    ROSE_ASSERT(include_sourceFile->get_endOfConstruct()   == NULL);
 
+                                // DQ (11/10/2018): This is now set in the EDG/ROSE translation.
                                 // DQ (8/6/2018): Set the file name for the unparsedFile.
-                                   include_sourceFile->set_sourceFileNameWithPath(includedFileName);
+                                // include_sourceFile->set_sourceFileNameWithPath(includedFileName);
 
+                                // DQ (11/10/2018): This is now set in the EDG/ROSE translation.
                                 // DQ (8/6/2018): Set the file info for the unparsedFile.
-                                   include_sourceFile->set_startOfConstruct(new Sg_File_Info(includedFileName));
+                                // include_sourceFile->set_startOfConstruct(new Sg_File_Info(includedFileName));
                                 // include_sourceFile->set_endOfConstruct(new Sg_File_Info(includedFileName));
 
                                 // DQ (8/6/2018): Adding assertions to support unparse_tokens option.
@@ -754,7 +858,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                                 // DQ (8/6/2018): Check the parent on the new file (this is fixed now).
                                 // ROSE_ASSERT(include_sourceFile->get_parent() == NULL);
-#endif
+
 #if 0
                                 // printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                                    printf ("sourceFile->get_unparseHeaderFiles() == true: Calling secondaryPassOverSourceFile() \n");
@@ -833,10 +937,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // can mark it independenty to be unparsed using the token based unparser from the AST or the token stream.
                                    ROSE_ASSERT(include_sourceFile->get_globalScope() == NULL);
 
-                                   string headerFileName = include_sourceFile->getFileName();
-                                   Sg_File_Info* headerFileInfo = new Sg_File_Info(headerFileName, 0,0);
-                                   include_sourceFile->set_file_info(headerFileInfo);
+                                // DQ (11/10/2018): I think this may have already been set in the EDG/ROSE connection.
+                                   ROSE_ASSERT(include_sourceFile->get_file_info() != NULL);
 
+                                   string headerFileName = include_sourceFile->getFileName();
+#if 0
+                                   Sg_File_Info* headerFileInfo = new Sg_File_Info(headerFileName, 0,0);
+
+                                   include_sourceFile->set_file_info(headerFileInfo);
+#endif
                                 // Set SgGlobal to avoid problems with checks during unparsing.
                                    SgGlobal* headerFileGlobal = new SgGlobal();
                                    include_sourceFile->set_globalScope(headerFileGlobal);
@@ -904,6 +1013,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                                              reportData = new SgHeaderFileReport(sourceFile);
                                              sourceFile->set_headerFileReport(reportData);
+
+                                          // DQ (11/10/2018): Double check that this is set.
+                                             ROSE_ASSERT(reportData->get_source_file() != NULL);
                                            }
                                           else
                                            {
@@ -916,7 +1028,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                         printf ("reportData->get_include_file_list().size() = %zu \n",reportData->get_include_file_list().size());
 #endif
                                         reportData->get_include_file_list().push_back(include_sourceFile);
-#if 0
+#if 1
                                         printf ("################################################### \n");
                                         printf ("################################################### \n");
                                         reportData->display("processing includes");
@@ -1065,6 +1177,19 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                it->second = 0;
              }
         }
+
+#if 0
+     string dotgraph_filename = "include_file_graph_from_attach_CPP_directives";
+     SgProject* project = SageInterface::getProject(XXX);
+     ROSE_ASSERT(project != NULL);
+     generateGraphOfIncludeFiles(project,dotgraph_filename);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
    }
 
 
@@ -2334,7 +2459,51 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                          }
                                         else
                                          {
-                                           SageInterface::insertStatementAfter(it -> second, it -> first, false);
+                                           ROSE_ASSERT(it->second != NULL);
+#if 0
+                                           printf ("it->second = %p = %s \n",it->second,it->second->class_name().c_str());
+#endif
+                                           ROSE_ASSERT(it->first != NULL);
+#if 0
+                                           printf ("it->first = %p = %s \n",it->first,it->first->class_name().c_str());
+#endif
+                                        // Handle other scopes.
+                                        // SgScopeStatement* scope = isSgScopeStatement(it->second);
+                                           SgGlobal* globalScope = isSgGlobal(it->second);
+                                           if (globalScope != NULL)
+                                              {
+                                                printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+                                                if (globalScope->get_declarations().empty() == false)
+                                                   {
+                                                  // When there is no statement outside of the frontend (rose_edg_required_macros_and_functions.h), we want 
+                                                  // to put this after the last statement from rose_edg_required_macros_and_functions.h.
+                                                     SgStatement* firstStatement = globalScope->get_declarations()[0];
+                                                     printf ("Addressing insertion into globa scope: firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+                                                     ROSE_ASSERT(firstStatement != NULL);
+
+                                                     SgStatement* firstStatementAfterPreincludeStatements = SageInterface::lastFrontEndSpecificStatement(globalScope);
+                                                     ROSE_ASSERT(firstStatementAfterPreincludeStatements != NULL);
+#if 1
+                                                     printf ("Addressing insertion into globa scope: firstStatementAfterPreincludeStatements = %p = %s \n",
+                                                          firstStatementAfterPreincludeStatements,firstStatementAfterPreincludeStatements->class_name().c_str());
+#endif
+                                                     SageInterface::insertStatementAfter(firstStatement, it->first, false);
+                                                   }
+                                                  else
+                                                   {
+                                                  // DQ (11/21/2018): Adding.
+                                                     printf ("Global scope is empty! \n");
+                                                     ROSE_ASSERT(false);
+                                                   }
+#if 0
+                                                printf ("Exiting as a test! \n");
+                                                ROSE_ASSERT(false);
+#endif
+                                              }
+                                             else
+                                              {
+                                                SageInterface::insertStatementAfter(it->second, it->first, false);
+                                              }
                                          }
                                     }
                                }
