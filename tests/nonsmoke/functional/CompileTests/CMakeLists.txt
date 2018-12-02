@@ -100,6 +100,7 @@ else()
         add_subdirectory(NewEDGInterface_C_tests)
       endif()
       add_subdirectory(UnparseHeadersTests)
+      add_subdirectory(UnparseHeadersUsingTokenStream_tests)
 
       if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Xtensa")
         add_subdirectory(mergeAST_tests)

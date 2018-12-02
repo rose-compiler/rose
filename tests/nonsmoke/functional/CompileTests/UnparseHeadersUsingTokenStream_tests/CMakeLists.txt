@@ -1,13 +1,21 @@
-set(TestUnparseHeaders_SRCS
-    TestUnparseHeaders.C
-    UnparseHeadersTransformVisitor.C)
-add_executable(TestUnparseHeaders ${TestUnparseHeaders_SRCS})
-target_link_libraries(TestUnparseHeaders ROSE_DLL EDG ${link_with_libraries} )
+set(TestUnparseHeadersUsingTokens_SRCS
+    TestUnparseHeadersUsingTokens.C
+    UnparseHeadersTransformVisitorUsingTokens.C)
+
+set(whiteSpaceTransformation_SRCS
+    whiteSpaceTransformation.C)
+
+add_executable(TestUnparseHeadersUsingTokens ${TestUnparseHeadersUsingTokens_SRCS})
+target_link_libraries(TestUnparseHeadersUsingTokens ROSE_DLL EDG ${link_with_libraries} )
+
+add_executable(whiteSpaceTransformation ${whiteSpaceTransformation_SRCS})
+target_link_libraries(whiteSpaceTransformation ROSE_DLL EDG ${link_with_libraries} )
 
 set(TESTCODES
   test1/Simple1.C test2/Simple2.C test3/Simple3.C test4/Simple4.C
   test5/Simple5.C test9/Simple9.C test10/Simple10.C test11/Simple11.C
-  test12/Simple12.C test13/Simple13.C
+  test12/Simple12.C test13/Simple13.C test14/Simple14.C test15/Simple15.C 
+  test16/Simple16.C
 )
 
 set(TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER test0/Simple0.C)
@@ -32,7 +40,7 @@ foreach(file_to_test ${TESTCODES})
 
   add_test(
     NAME ${testName}
-    COMMAND TestUnparseHeaders ${TEST_INCLUDE_PATHS} -rose:unparseHeaderFiles
+    COMMAND TestUnparseHeadersUsingTokens ${TEST_INCLUDE_PATHS} -rose:unparseHeaderFiles -rose:unparse_tokens
       -rose:unparseHeaderFilesRootFolder ${TestDir}_unparsedHeaders
       ${ROSE_FLAGS} -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
@@ -52,7 +60,7 @@ foreach(file_to_test ${TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER})
 
   add_test(
     NAME ${testName}
-    COMMAND TestUnparseHeaders -rose:unparseHeaderFiles ${ROSE_FLAGS}
+    COMMAND TestUnparseHeadersUsingTokens -rose:unparseHeaderFiles ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
   set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName})

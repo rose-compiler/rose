@@ -1658,6 +1658,13 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+       // DQ (12/2/2018): New lists have to include an entry to return the element type of the list.
+          if (typenameString == "SgIncludeFilePtrList")
+             {
+               returnString = "SgIncludeFile";
+               goto done;
+             }
+
 #if 0
           if (typenameString == "SgAsmElfSymverDefinedAuxList")
              {

@@ -2588,7 +2588,9 @@ SgProject::parse()
 
                       // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
                          ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
-                         ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
+
+                      // DQ (12/2/2018): We can't enforce this for an empty file (see test in roseTests/astTokenStreamTests).
+                      // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 #if 0
                          printf ("Calling display on token sequence for global scope (for *.C file) \n");
                          ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
