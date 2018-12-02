@@ -1,10 +1,6 @@
 #ifndef INCLUDE_FILE_GRAPH_H
 #define INCLUDE_FILE_GRAPH_H
 
-#include "sage3basic.h"
-
-#include "FileHelper.h"
-
 // #include "StringUtility.h"
 // Support for building include graphs (graphs of include files)
 
