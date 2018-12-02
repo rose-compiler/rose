@@ -117,7 +117,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       OvertureCode P++Tests A++Code \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-      UnparseHeadersTests 
+      UnparseHeadersTests UnparseHeadersUsingTokenStream_tests
 
 # DQ (11/5/2016): These tests fail when testing with Address Sanitizer, but I can't see the output. 
 # Need to work work with Markus to understand the results better, skip these tests for now is using

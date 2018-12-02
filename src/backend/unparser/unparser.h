@@ -33,6 +33,10 @@
 // This is intended to suppport non standard backend compiler annotations.
 #include "astUnparseAttribute.h"
 
+
+#include "includeFileSupport.h"
+
+
 class Unparser_Nameq;
 
 // Macro used for debugging.  If true it fixes the anonymous typedef and anonymous declaration

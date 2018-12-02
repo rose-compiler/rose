@@ -562,6 +562,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_62.c \
      test2018_63.c \
      test2018_64.c \
+     test2018_67.c \
      rose-1391-a.c \
      rose-1391-b.c
 

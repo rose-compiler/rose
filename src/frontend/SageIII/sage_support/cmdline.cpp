@@ -347,7 +347,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
-             
+
+       // DQ (11/6/2018): Adding support to specify the root directory of an application for header file unparsing and token based unparsing).
+          argument == "-rose:applicationRootDirectory" ||
+
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-annot" ||
           argument == "-bs" ||
@@ -3459,6 +3462,11 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"
+"     -rose:applicationRootDirectory DIRECTORYNAME\n"
+"                             A relative or an absolute path to the root folder,\n"
+"                             in which all application files will use for the unparsing \n"
+"                             of source files and header files. If not specified, the default \n"
+"                             location is the current directory. \n"
 "     -rose:unparse_in_same_directory_as_input_file\n"
 "                             Build the generated source file (unparse) in the same directory as \n"
 "                             the input source file.  This allows the backend compiler \n"
@@ -5350,11 +5358,23 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
      // negara1 (08/16/2011): A user may optionally specify the root folder for the unparsed header files.  
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true) {
-         //Although it is specified per file, it should be the same for the whole project.         
-         get_project() -> set_unparseHeaderFilesRootFolder(stringParameter);
-     }
-     
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true)
+        {
+       // Although it is specified per file, it should be the same for the whole project.         
+          get_project()->set_unparseHeaderFilesRootFolder(stringParameter);
+        }
+
+     // DQ (11/6/2018): Added to support a specification of the application directory for source file and header file unparsing.     
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(applicationRootDirectory)", stringParameter, true) == true)
+        {
+       // Although it is specified per file, it should be the same for the whole project.
+#if 0
+          printf ("Found option: -rose:applicationRootDirectory: stringParameter = %s \n",stringParameter.c_str());
+#endif
+          get_project()->set_applicationRootDirectory(stringParameter);
+          get_project()->set_usingApplicationRootDirectory(true);
+        }
+
   //
   // skip_commentsAndDirectives option: if analysis that does not use comments or CPP directives is required
   // then this option can improve the performance of the compilation.
@@ -5860,6 +5880,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
      char* unparseHeaderFilesRootFolderOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(unparseHeaderFilesRootFolder)", unparseHeaderFilesRootFolderOption, 1);
+
+  // DQ (11/6/2018): Added to support specification of application root directory to support source file and header file unparsing.
+     char* applicationRootDirectoryOption = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(applicationRootDirectory)", applicationRootDirectoryOption, 1);
 
      char* templateInstationationOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(instantiation)",templateInstationationOption,1);
@@ -8425,6 +8449,34 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
+  // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
+  // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
+  // file (is we don't unparse the header file) or the directory where we are putting the generated source file, if we 
+  // are unparsing the header file.  Not that nested header file using a similar specification may require the output of 
+  // additional include file specifications (is this true?  If so then we need an example of this).
+#if 0
+     printf ("get_project()->get_includeDirectorySpecifierList().size() = %zu \n",get_project()->get_includeDirectorySpecifierList().size());
+#endif
+
+  // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
+     const SgSourceFile* sourceFile = isSgSourceFile(this);
+     ROSE_ASSERT(sourceFile != NULL);
+#if 0
+     printf ("sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
+#endif
+
+     argcArgvList.reserve(argcArgvList.size()+sourceFile->get_extraIncludeDirectorySpecifierList().size());
+  // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
+     argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
+
+#if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@ In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (9/25/2007): Moved to std::vector from std::list uniformly within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
@@ -8835,6 +8887,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // if (!this -> get_unparseHeaderFiles())
                if (this->get_unparseHeaderFiles() == false) 
                   {
+                 // DQ (11/7/2018): This might be the better way to get at the SgProject IR node.
+                    ROSE_ASSERT(this->get_project() != NULL);
+
                  // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
                  // When (get_unparse_in_same_directory_as_input_file() == true) we don't want to add the include 
                  // path to the source directory.
@@ -9048,7 +9103,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
-     printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("\n\nAt base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
      printf ("\n\nExiting at base of buildCompilerCommandLineOptions() ... \n");

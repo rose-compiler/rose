@@ -923,7 +923,7 @@ cout.flush();
 #endif
                       );
 
-#if 1
+#if 0
                printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to %s (test 1) \n",requires_C_preprocessor ? "true" : "false");
 #endif
                file->set_requires_C_preprocessor(requires_C_preprocessor);
@@ -1355,7 +1355,7 @@ cout.flush();
                                       // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
                                       file->set_binary_only(true);
 
-#if 1
+#if 0
                                       printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 2) \n");
 #endif
                                       // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
@@ -1451,7 +1451,7 @@ cout.flush();
                                 // If all else fails, then output the type of file and exit.
                                    file->set_sourceFileTypeIsUnknown(true);
 
-#if 1
+#if 0
                                    printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 3) \n");
 #endif
                                    file->set_requires_C_preprocessor(false);
@@ -2429,9 +2429,14 @@ SgProject::parse()
 
           if (SgProject::get_verbose() >= 1)
              {
+            // DQ (11/7/2018): Output the list of quotedIncludesSearchPaths and bracketedIncludesSearchPaths include paths.
                CollectionHelper::printList(get_quotedIncludesSearchPaths(), "\nQuoted includes search paths:", "Path:");
                CollectionHelper::printList(get_bracketedIncludesSearchPaths(), "\nBracketed includes search paths:", "Path:");
              }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
   // GB (9/4/2009): Moved the secondary pass over source files (which
@@ -2541,13 +2546,18 @@ SgProject::parse()
           const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
 
           set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
-         
+
           if (SgProject::get_verbose() >= 1)
              {
                printf ("\nOutput info for unparse headers support: \n");
                CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
                CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
              }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 #if 0
@@ -2594,7 +2604,11 @@ SgProject::parse()
                          tokenSequence->display("token sequence for global scope (*.C file)");
 #endif
                       // Search over the list of include files
-                         SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
+
+                      // DQ (11/15/2018): We have removed the include_file_list from the SgSourceFile so that we can support traversals on the SgIncludeFile tree.
+                      // SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
+                         ROSE_ASSERT(sourceFile->get_associated_include_file() != NULL);
+                         SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
                          for (size_t i = 0; i < include_file_list.size(); i++)
                             {
                               SgIncludeFile* includeFile = include_file_list[i];
@@ -2609,16 +2623,24 @@ SgProject::parse()
                            // ROSE_ASSERT(header_file != NULL);
                               if (header_file != NULL)
                                  {
-                                   ROSE_ASSERT(header_file->get_globalScope() != NULL);
-                                   ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
 #if 0
-                                   printf ("Calling display on token sequence for global scope (for *.h file) \n");
-                                   ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
-                                   TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
-                                   ROSE_ASSERT(tokenSequence != NULL);
-                                   printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
-                                   tokenSequence->display("token sequence for global scope (*.h file)");
+                                // DQ (11/10/2018): Added debugging output.
+                                   printf ("header_file = %p header_file->getFileName() = %s \n",header_file,header_file->getFileName().c_str());
 #endif
+                                // DQ (11/29/2018): I think this is only valid when header file unparsing and token unparsing are used together.
+                                // ROSE_ASSERT(header_file->get_globalScope() != NULL);
+                                   if (header_file->get_globalScope() != NULL)
+                                      {
+                                        ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
+#if 0
+                                        printf ("Calling display on token sequence for global scope (for *.h file) \n");
+                                        ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
+                                        TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
+                                        ROSE_ASSERT(tokenSequence != NULL);
+                                        printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
+                                        tokenSequence->display("token sequence for global scope (*.h file)");
+#endif
+                                      }
                                  }
                             }
 
@@ -3277,7 +3299,7 @@ SgFile::secondaryPassOverSourceFile()
                     requiresCPP = get_requires_C_preprocessor();
                     if (requiresCPP == true)
                        {
-#if 1
+#if 0
                          printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 4) \n");
 #endif
                          set_requires_C_preprocessor(false);
@@ -3311,7 +3333,7 @@ SgFile::secondaryPassOverSourceFile()
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
                   {
-#if 1
+#if 0
                     printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 5) \n");
 #endif
                     set_requires_C_preprocessor(false);
@@ -6041,6 +6063,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
+#if 0
+     printf ("Inside of SgFile::compileOutput() \n");
+#endif
+
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 0
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
@@ -6050,6 +6076,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      printf ("***************************************************** \n\n\n");
 #endif
 #if 0
+     printf ("In SgFile::compileOutput(): calling display() \n");
      display("In SgFile::compileOutput()");
 #endif
 
@@ -6209,7 +6236,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        {
                          boost::filesystem::remove(unparsed_file);
                        }
-#if 1
+#if 0
                     printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
 #endif
                     Rose::FileSystem::copyFile(original_file, unparsed_file);
@@ -6235,6 +6262,15 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
+
+#if 0
+     printf ("In SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // Support for compiling .C files as C++ on Visual Studio
 #ifdef _MSC_VER

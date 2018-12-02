@@ -5,7 +5,8 @@ unparser_headers=\
 	$(unparserPath)/unparse_sym.h \
 	$(unparserPath)/astUnparseAttribute.h \
 	$(unparserPath)/IncludedFilesUnparser.h \
-	$(unparserPath)/nameQualificationSupport.h
+	$(unparserPath)/nameQualificationSupport.h \
+	$(unparserPath)/includeFileSupport.h
 
 unparser_sources=\
 	$(unparser_headers:.h=.C)

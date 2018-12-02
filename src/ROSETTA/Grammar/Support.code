@@ -14781,7 +14781,7 @@ Sg_File_Info::getIDFromFilename( std::string filename )
 
      if (p_nametofileid_map.count(filename) == 0)
         {
-#if 1
+#if 0
           printf ("In Sg_File_Info::getIDFromFilename(): p_nametofileid_map.count(filename) == 0 \n");
           printf ("   --- filename = %s \n",filename.c_str());
 #endif
@@ -16923,11 +16923,30 @@ SgHeaderFileReport::SgHeaderFileReport( SgSourceFile* sourceFile )
 void
 SgHeaderFileReport::display( const string & label) const
    {
-     printf ("In HeaderFileReport::display(): label = %s \n",label.c_str());
+     printf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
 
      ROSE_ASSERT(this != NULL);
 
 #if 1
+     printf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
+     ROSE_ASSERT(p_source_file != NULL);
+     printf ("   --- source filename = %s \n",p_source_file->getFileName().c_str());
+     printf ("   --- isHeaderFile = %s \n",p_source_file->get_isHeaderFile() ? "true" : "false");
+     printf ("   --- isHeaderFileIncludedMoreThanOnce = %s \n",p_source_file->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
+
+  // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
+  // printf ("   --- include_file_list size = %zu \n",p_source_file->get_include_file_list().size());
+     printf ("   --- associated_include_file = %p \n",p_source_file->get_associated_include_file());
+     ROSE_ASSERT(p_source_file->get_associated_include_file() != NULL);
+     printf ("   --- associated_include_file include_file_list size = %zu \n",p_source_file->get_associated_include_file()->get_include_file_list().size());
+
+#if 0
+     printf ("   --- source_file_of_translation_unit = %p = %s \n",
+          p_source_file->get_source_file_of_translation_unit(),p_source_file->get_source_file_of_translation_unit()->getFileName().c_str());
+     printf ("   --- including_source_file = %p = %s \n",
+          p_source_file->get_including_source_file(),p_source_file->get_including_source_file()->getFileName().c_str());
+#endif
+
      printf ("In HeaderFileReport::display(): p_include_file_list.size() = %zu \n",p_include_file_list.size());
 
      Rose_STL_Container<SgSourceFile*>::const_iterator i = p_include_file_list.begin();
@@ -16939,12 +16958,27 @@ SgHeaderFileReport::display( const string & label) const
 
           printf ("   --- includedFile: name = %s \n",includedFile->getFileName().c_str());
           printf ("   --- --- # of statements in global scope = %zu \n",includedFile->get_globalScope()->get_declarations().size());
+          printf ("   --- --- isHeaderFile = %s \n",includedFile->get_isHeaderFile() ? "true" : "false");
+          printf ("   --- --- isHeaderFileIncludedMoreThanOnce = %s \n",includedFile->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
 
-#if 1
+       // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
+       // printf ("   --- --- include_file_list size = %zu \n",includedFile->get_include_file_list().size());
+          printf ("   --- --- associated_include_file = %p \n",includedFile->get_associated_include_file());
+          ROSE_ASSERT(includedFile->get_associated_include_file() != NULL);
+          printf ("   --- --- associated_include_file include_file_list size = %zu \n",includedFile->get_associated_include_file()->get_include_file_list().size());
+
+#if 0
+          printf ("   --- --- source_file_of_translation_unit = %p = %s \n",
+               includedFile->get_source_file_of_translation_unit(),includedFile->get_source_file_of_translation_unit()->getFileName().c_str());
+          printf ("   --- --- including_source_file = %p = %s \n",
+               includedFile->get_including_source_file(),includedFile->get_including_source_file()->getFileName().c_str());
+#endif
+#if 0
           printf ("In SgHeaderFileReport::display(): includedFile         = %p file name = %s \n",includedFile,includedFile->getFileName().c_str());
           printf ("   --- includedFile->get_globalScope()                 = %p \n",includedFile->get_globalScope());
           printf ("   --- includedFile->get_tokenSubsequenceMap().size()  = %zu \n",includedFile->get_tokenSubsequenceMap().size());
-
+#endif
+#if 0
           ROSE_ASSERT(includedFile->get_tokenSubsequenceMap().find(includedFile->get_globalScope()) != includedFile->get_tokenSubsequenceMap().end());
 
           printf ("In SgHeaderFileReport::display(): Calling display on token sequence for global scope \n");

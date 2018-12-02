@@ -2202,7 +2202,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                        {
                       // This should not BE a transformation (else it needs to be unparsed using the AST).
                          ROSE_ASSERT(stmt->isTransformation() == false);
-
 #if 0
                          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseViaTokenStream == false: stmt->get_containsTransformation() == true: Calling unparseStatementFromTokenStream() \n");
 #endif
@@ -2582,7 +2581,23 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                unparseStatementNumbers(stmt,info);
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               curprint("/* test 1 */\n");
 #endif
+
+#if 0
+            // DQ (11/13/2018): Configure a temporary test.
+               if (isSgIncludeDirectiveStatement(stmt) != NULL)
+                  {
+                    static int count = 0;
+                    count++;
+                    if (count > 3)
+                       {
+                         printf ("Exiting as a test! count = %d \n",count);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#endif
+
 #if 0
                curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */");
 #endif
@@ -2706,6 +2721,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): scope              = %p \n",scope);
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): globalScope        = %p \n",globalScope);
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): functionDefinition = %p \n",functionDefinition);
+#endif
+
+#if 0
+          curprint("/* test 2 */\n");
 #endif
 
        // DQ (1/10/2015): We can't enforce this for all expresions (not clear why).
@@ -2874,6 +2893,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (1/6/2014): This appears to always be false, and it should be set to true for the last statement.
   // ROSE_ASSERT(lastStatementOfGlobalScopeUnparsedUsingTokenStream == false);
 
+#if 0
+     curprint("/* test 3 */\n");
+#endif
+
      if (skipOutputOfPreprocessingInfo == false)
         {
           if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == false)
@@ -2894,6 +2917,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
 #if 0
      printf ("DONE: Output the comments and CCP directives for the SgStatement stmt = %p = %s (after) \n",stmt,stmt->class_name().c_str());
+#endif
+
+#if 0
+     curprint("/* test 4 */\n");
 #endif
 
   // DQ (5/31/2005): special handling for compiler generated statements
@@ -2924,6 +2951,21 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
      curprint ("/* Leaving unparse statement() */");
 #endif
+
+#if 0
+  // DQ (11/13/2018): Configure a temporary test.
+     if (isSgIncludeDirectiveStatement(stmt) != NULL)
+        {
+          static int count = 0;
+          count++;
+          if (count > 3)
+             {
+               printf ("Exiting as a test! count = %d \n",count);
+               ROSE_ASSERT(false);
+             }
+        }
+#endif
+
    }
 
 
@@ -6508,22 +6550,40 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
   // curprint(directive->get_directiveString());
   // unp->cur.insert_newline(1);
 
-#if 1
-  // DQ (10/31/2018): This might be a better approach that I first realized (since the header file can contain just another header file with no statements).
-
-  // DQ (9/24/2018): I think we want CPP directivs to be unparsed from the SgAttachedPreprocessingInfo lists on statements, instead of seperately.
-  // This is the better choice because then the other comments and any other CPP directives will be unparsed as in the original code.
-  // NOTE: If we don't suppores this here, then there will be two include directives unparsed.
-     SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
-     ROSE_ASSERT(headerFileBody != NULL);
 #if 0
-     printf ("In unparseIncludeDirectiveStatement(): headerFileBody -> get_file_info() -> get_filenameString() = %s \n",headerFileBody -> get_file_info() -> get_filenameString().c_str());
-     printf ("In unparseIncludeDirectiveStatement(): getFileName() = %s \n",getFileName().c_str());
+     info.display("In unparseIncludeDirectiveStatement");
 #endif
-     if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName())
+
+     ROSE_ASSERT(info.get_current_source_file() != NULL);
+     bool usingTokenUnparsing = info.get_current_source_file()->get_unparse_tokens();
+
+#if 0
+     printf ("In unparseIncludeDirectiveStatement: usingTokenUnparsing = %s \n",usingTokenUnparsing ? "true" : "false");
+#endif
+
+#if 1
+  // DQ (12/1/2018): This code may be required when unparsing using the header file unparsing support but not using the token unparsing.
+     if (usingTokenUnparsing == false)
         {
-          unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+       // DQ (11/13/2018): I want to try to turn this off as a tst for test9 in UnparseHeader_tests.
+       // DQ (10/31/2018): This might be a better approach that I first realized (since the header file can contain just another header file with no statements).
+
+       // DQ (9/24/2018): I think we want CPP directivs to be unparsed from the SgAttachedPreprocessingInfo lists on statements, instead of seperately.
+       // This is the better choice because then the other comments and any other CPP directives will be unparsed as in the original code.
+       // NOTE: If we don't suppores this here, then there will be two include directives unparsed.
+          SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
+          ROSE_ASSERT(headerFileBody != NULL);
+#if 0
+          printf ("In unparseIncludeDirectiveStatement(): headerFileBody -> get_file_info() -> get_filenameString() = %s \n",headerFileBody -> get_file_info() -> get_filenameString().c_str());
+          printf ("In unparseIncludeDirectiveStatement(): getFileName() = %s \n",getFileName().c_str());
+#endif
+          if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName())
+             {
+               unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+             }
         }
+#else
+     printf ("In unparseIncludeDirectiveStatement(): skipping unparsing of directives and comments \n");
 #endif
    }
 

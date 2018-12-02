@@ -1103,6 +1103,23 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
           return 0;
         }
 
+  // DQ (11/12/2018): In general, this can't be tested if we permit it to be transformed.
+     if (statementCanBeTransformed(parent_declaration) == false)
+        {
+          printf ("WARNING: SageInterface::set_name(): This statement can not be transformed because it is part of a header file specific more then once with different include file syntax \n");
+          return 0;
+        }
+       else
+        {
+          printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
+
+#if 0
+       // DQ (11/12/2018): Initial test problem should not permit a transformation! 
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
      SgSymbol * associated_symbol = (*found_it).second;
 
   // erase the name from there
@@ -1137,6 +1154,13 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // p_name = new_name;
      initializedNameNode->set_name(new_name);
 
+  // DQ (11/30/2018): Mark the enclosing statement as modified, so that it will be recognized 
+  // in the header file unparsing as being a header file that should be unparsed.
+     SgStatement* enclosingStatement = getEnclosingStatement(initializedNameNode);
+     ROSE_ASSERT(enclosingStatement != NULL);
+     enclosingStatement->set_isModified(true);
+     enclosingStatement->setTransformation();
+
   // Invalidate the p_iterator, p_no_name and p_name data members in the Symbol table
 
 #if 1
@@ -1159,7 +1183,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 0
+#if 1
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1167,12 +1191,21 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                          ROSE_ASSERT(false);
 #endif
                          varRefExp->set_isModified(true);
+
+                      // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
+                         SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
+                         ROSE_ASSERT(associatedStatement != NULL);
+                      // associatedStatement->set_isModified(true);
+                      // associatedStatement->set_containsTransformation(true);
+                         associatedStatement->setTransformation();
                        }
                   }
 
                RoseVisitor(SgSymbol* symbol_parmeter) : counter(0), symbol(symbol_parmeter)
                  {
-                // printf ("roseVisitor::visit: counter %4d node = %s \n",counter,node->class_name().c_str());
+#if 1
+                   printf ("roseVisitor::visit: counter %4d node = %s \n",counter,symbol_parmeter->class_name().c_str());
+#endif
                    counter++;
                  }
         };
@@ -1185,6 +1218,39 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
      return 1;
    }
+
+
+void
+SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
+   {
+     printf ("In SageInterface::listHeaderFiles(): includeFile filename = %s \n",includeFile->get_filename().str());
+
+  // Preorder traversal to uniquely name specific declarations (SgClassDeclaration and SgFunctionDeclaration IR nodes).
+     class PrefixTraversal : public AstSimpleProcessing
+        {
+          public:
+               void visit (SgNode* node)
+                  {
+                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    SgIncludeFile* includeFile = isSgIncludeFile(node);
+                    if (includeFile != NULL)
+                       {
+                         printf ("include file: filename = %s \n",includeFile->get_filename().str());
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     PrefixTraversal traversal;
+     traversal.traverse(includeFile, preorder);
+
+   }
+
+
+
+
+
+
 
 string
 SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive )
@@ -11931,6 +11997,41 @@ bool  SageInterface::hasSimpleChildrenList (SgScopeStatement* scope)
   return rt;
 }
 
+
+// DQ (11/21/2018): We need to sometimes insert something after the last statement of the collection from rose_edg_required_macros_and_functions.h.
+SgStatement* SageInterface::lastFrontEndSpecificStatement( SgGlobal* globalScope )
+   {
+  // When inserting a statement into global scope, if inserting at the top of scope it is best to insert 
+  // after the last statement from the preinclude file rose_edg_required_macros_and_functions.h.
+
+     SgDeclarationStatementPtrList & declarationList = globalScope->get_declarations();
+
+     SgStatement* last_statement = NULL;
+     SgDeclarationStatementPtrList::iterator i = declarationList.begin();
+  // while (i != declarationList.end())
+     while (i != declarationList.end() && (*i)->get_file_info() != NULL && (*i)->get_file_info()->isFrontendSpecific() == true)
+        {
+#if 0
+          printf ("(*i)->get_file_info()->get_file_id() = %d isFrontendSpecific = %s \n",(*i)->get_file_info()->get_file_id(),(*i)->get_file_info()->isFrontendSpecific() ? "true" : "false");
+#endif
+          last_statement = *i;
+
+          i++;
+        }
+
+     ROSE_ASSERT(last_statement != NULL);
+#if 1
+     printf ("last_statement = %p = %s \n",last_statement,last_statement->class_name().c_str());
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return last_statement;
+   }
+
+
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
   // insert  SageInterface::insertStatement()
@@ -11976,6 +12077,11 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
   // must get the new scope after ensureBasicBlockAsParent ()
      SgScopeStatement* scope = targetStmt->get_scope();
      ROSE_ASSERT(scope);
+
+#if 0
+     printf ("targetStmt = %p = %s \n",targetStmt,targetStmt->class_name().c_str());
+     printf ("scope      = %p = %s \n",scope,scope->class_name().c_str());
+#endif
 
   // DQ (11/16/2014): This step is problematic if the targetStmt has been transformed to be associated with a SgLabelStatement.
   // The reason is that the targetStmt's parent will have been reset to be the SgLabelStatement and the logic in the set_parent()
@@ -20701,6 +20807,72 @@ void SageInterface::replaceVariableReferences(SgVariableSymbol* old_sym, SgVaria
       vRef->set_symbol(new_sym);
   }
 }
+
+
+// DQ (11/12/2018): Adding test to avoid issues that we can't test for in the unparsing of header files using the token based unparsing.
+//! If header file unparsing and token-based unparsing are used, then some statements in header files 
+//! used with the same name and different include syntax can't be transformed. This is currently because 
+//! there is no way to generally test the resulting transformed code generated by ROSE.
+//! NOTE: This is demonstrated by test8 in the unparse headers tests directory.
+bool
+SageInterface::statementCanBeTransformed(SgStatement* stmt)
+   {
+     bool result = true;
+
+     bool includingSelf = false;
+     SgSourceFile* sourceFile = getEnclosingSourceFile(stmt,includingSelf);
+
+     if (sourceFile == NULL)
+        {
+          printf ("In SageInterface::statementCanBeTransformed(): sourceFile not found \n"); 
+        }
+
+  // I think we can assert this!
+     ROSE_ASSERT(sourceFile != NULL);
+
+     if (sourceFile != NULL && sourceFile->get_unparse_tokens() == true && sourceFile->get_unparseHeaderFiles() == true)
+        {
+       // Need to look up the source file name, find the SgIncludeFile, and check if statements from this file can be transformed.
+       // There could be at least one other file is this is a header file that was included twice, but it should have a different path.
+          string source_filename = stmt->getFilenameString();
+#if 0
+          printf ("In SageInterface::statementCanBeTransformed(): source_filename = %s \n",source_filename.c_str());
+#endif
+          if (Rose::includeFileMapForUnparsing.find(source_filename) != Rose::includeFileMapForUnparsing.end())
+             {
+               SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
+               ROSE_ASSERT(include_file != NULL);
+#if 0
+               printf ("include_file->get_can_be_supported_using_token_based_unparsing() = %s \n",include_file->get_can_be_supported_using_token_based_unparsing() ? "true" : "false");
+#endif
+               if (include_file->get_can_be_supported_using_token_based_unparsing() == false)
+                  {
+#if 0
+                    printf ("NOTE: Transformations of this statement cannot be supported using the header file unparsing with token unparsing options! \n");
+#endif
+                    result = false;
+                  }
+             }
+            else
+             {
+#if 1
+               printf ("Not found in Rose::includeFileMapForUnparsing: source_filename = %s \n",source_filename.c_str());
+#endif
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+#if 0
+          printf ("Error: In statementCanBeTransformed(): this might be an issue! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     return result;
+   }
+
 
 //Note: this function is no longer used by decl move tool: we use copy and insert instead to support moving to multiple scopes
 //! Move a variable declaration from its original scope to a new scope, assuming original scope != target_scope
