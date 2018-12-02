@@ -5,6 +5,17 @@
 #include <omp.h>
 #endif
 
+// introduce C++ stuff
+// Contributed by Nathan Pinnow
+#include <vector>
+
+std::vector<int> testFunction(){
+    std::vector<int> test;
+      return test;
+}
+//------------end of C++ stuff -----------
+
+
 // Add timing support
 #include <sys/time.h>
 double time_stamp()

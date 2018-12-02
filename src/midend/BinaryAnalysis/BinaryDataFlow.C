@@ -18,6 +18,7 @@ DataFlow::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::DataFlow");
+        mlog.comment("solving data-flow analysis problems");
     }
 }
 

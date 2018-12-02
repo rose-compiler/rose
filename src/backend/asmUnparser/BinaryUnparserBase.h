@@ -5,7 +5,9 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
+#include <Progress.h>
 #include <Registers.h>
 
 namespace Rose {
@@ -13,6 +15,12 @@ namespace BinaryAnalysis {
 
 /** Generates pseudo-assembly listings. */
 namespace Unparser {
+
+/** Diagnostic output for unparsing. */
+extern Sawyer::Message::Facility mlog;
+
+// used internally to initialize mlog
+void initDiagnostics();
 
 /** State for unparsing.
  *
@@ -151,8 +159,8 @@ public:
      *  This is just a convenience wrapper around the three-argument form.
      *
      * @{ */
-    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/ {
-        return unparse(p);
+    std::string operator()(const Partitioner2::Partitioner &p, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/ {
+        return unparse(p, progress);
     }
     std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/ {
         return unparse(p, insn);
@@ -177,13 +185,13 @@ public:
      *  This function does the same thing as the function operator that has the same arguments.
      *
      * @{ */
-    void unparse(std::ostream&, const Partitioner2::Partitioner&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
 
-    std::string unparse(const Partitioner2::Partitioner&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/;
     std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
     std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;

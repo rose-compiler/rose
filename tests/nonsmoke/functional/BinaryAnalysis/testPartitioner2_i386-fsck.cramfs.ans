@@ -338,10 +338,10 @@
 0x08048bc0: 68 40 9c 04 08          |h@...   |<sp-16>   push   0x08049c40<<Func>>
 0x08048bc5: 51                      |Q       |<sp-20>   push   ecx
 0x08048bc6: 56                      |V       |<sp-24>   push   esi
-0x08048bc7: 68 a2 95 04 08          |h....   |<sp-28>   push   0x080495a2<<Func>>
+0x08048bc7: 68 a2 95 04 08          |h....   |<sp-28>   push   0x080495a2<main>
 0x08048bcc: e8 b7 fe ff ff          |.....   |<sp-32>   call   0x08048a88<__libc_start_main@plt>
 0x08048bcc: Outgoing stack delta: -36
-0x08048bcc: Successor blocks: 0x08048a88<__libc_start_main@plt>, 0x08048bd1, 0x080495a2<<Func>>
+0x08048bcc: Successor blocks: 0x08048a88<__libc_start_main@plt>, 0x08048bd1, 0x080495a2<main>
 
 0x08048bd1: Basic block reasons: 
 0x08048bd1: f4                      |.       |<sp-32>   hlt    
@@ -1850,7 +1850,7 @@
 0x080495a1: Outgoing stack delta: +4
 0x080495a1: Successor blocks: unknown
 
-0x080495a2: ================================== Function (function call, graph) unknown name
+0x080495a2: ================================== Function (function call, graph) <main>
 
 0x080495a2: Basic block reasons: entry point
 0x080495a2: 8d 4c 24 04             |.L$.    |<sp+0 >   lea    ecx, [esp + 0x04]

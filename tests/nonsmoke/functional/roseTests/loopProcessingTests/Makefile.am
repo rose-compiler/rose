@@ -26,7 +26,8 @@ LoopProcessor_LDADD = $(ROSE_SEPARATE_LIBS)
 # EDG3 and EDG4 produce slightly different outputs. For instance, EDG3 adds some extra parentheses around expressions.
 # These tests aren't intended to check that EDG3 and EDG4 produce identical output, so we just maintain separate
 # answers based on the EDG major version number.
-EDG  = edg@ROSE_EDG_MAJOR_VERSION_NUMBER@
+#EDG  = edg@ROSE_EDG_MAJOR_VERSION_NUMBER@
+EDG  = edg4
 
 # The configuration file. Look here for the actual command that runs for each test. The command can also be found in
 # the *.failed files after the "=== CUT ===" line.

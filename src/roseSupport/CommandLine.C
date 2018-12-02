@@ -99,6 +99,11 @@ genericSwitches() {
                .whichValue(SAVE_ALL)
                .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
 
+    gen.insert(Switch("quiet", 'q')
+               .action(configureDiagnosticsQuiet(Sawyer::Message::mfacilities))
+               .doc("Turn off all diagnostic output except the error and fatal levels. This is identical to saying "
+                    "\"--log='none,>=error'\"."));
+
     gen.insert(Switch("version-long")
                .action(showVersionAndExit(version_message(), 0))
                .doc("Shows version information for ROSE and various dependencies and then exits. The shorter @s{version} "

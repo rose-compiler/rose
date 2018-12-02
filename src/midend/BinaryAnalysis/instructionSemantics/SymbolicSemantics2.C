@@ -585,45 +585,54 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     }
     if (solver()) {
         // If the selection expression cannot be true, then return b
-        ExprPtr condition = sel->get_expression();
-        bool can_be_true = SmtSolver::SAT_NO != solver()->satisfiable(condition);
-        if (!can_be_true) {
-            retval = SValue::promote(b->copy());
-            switch (computingDefiners_) {
-                case TRACK_NO_DEFINERS:
-                    break;
-                case TRACK_ALL_DEFINERS:
+        {
+            SmtSolver::Transaction transaction(solver());
+            ExprPtr condition = sel->get_expression();
+            solver()->insert(condition);
+            bool can_be_true = SmtSolver::SAT_NO != solver()->check();
+            if (!can_be_true) {
+                retval = SValue::promote(b->copy());
+                switch (computingDefiners_) {
+                    case TRACK_NO_DEFINERS:
+                        break;
+                    case TRACK_ALL_DEFINERS:
 #if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                    retval->add_defining_instructions(b);
+                        retval->add_defining_instructions(b);
 #endif
-                    retval->add_defining_instructions(sel); // fall through...
-                case TRACK_LATEST_DEFINER:
-                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
-                    break;
+                        retval->add_defining_instructions(sel); // fall through...
+                    case TRACK_LATEST_DEFINER:
+                        retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+                        break;
+                }
+                return filterResult(retval);
             }
-            return filterResult(retval);
         }
 
         // If the selection expression cannot be false, then return a
-        ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression(), solver());
-        bool can_be_false = SmtSolver::SAT_NO != solver()->satisfiable(inverseCondition);
-        if (!can_be_false) {
-            retval = SValue::promote(a->copy());
-            switch (computingDefiners_) {
-                case TRACK_NO_DEFINERS:
-                    break;
-                case TRACK_ALL_DEFINERS:
+        {
+            SmtSolver::Transaction transaction(solver());
+            ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression(), solver());
+            solver()->insert(inverseCondition);
+            bool can_be_false = SmtSolver::SAT_NO != solver()->check();
+            if (!can_be_false) {
+                retval = SValue::promote(a->copy());
+                switch (computingDefiners_) {
+                    case TRACK_NO_DEFINERS:
+                        break;
+                    case TRACK_ALL_DEFINERS:
 #if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                    retval->add_defining_instructions(a);
+                        retval->add_defining_instructions(a);
 #endif
-                    retval->add_defining_instructions(sel); // fall through...
-                case TRACK_LATEST_DEFINER:
-                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
-                    break;
+                        retval->add_defining_instructions(sel); // fall through...
+                    case TRACK_LATEST_DEFINER:
+                        retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+                        break;
+                }
+                return filterResult(retval);
             }
-            return filterResult(retval);
         }
     }
+
     retval = svalue_expr(SymbolicExpr::makeIte(sel->get_expression(), a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:

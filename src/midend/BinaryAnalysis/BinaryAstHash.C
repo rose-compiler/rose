@@ -52,5 +52,27 @@ namespace BinaryAnalysis {
     }
 
 
-    } // namespace
+    /**  HashAST::appendBasicBlock
+     *  
+     * Making a binary hash from the Paritioner interface.  So, this
+     * function must be called on every Basic Block that will be in
+     * the hash.  
+     * This function then traverses every instruction in the basic block
+     *
+     * @param[in] bb The Basic Block to travse over and add to the hash
+     **/
+    void
+    AstHash::appendBasicBlock(Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr bb ) 
+    {
+        const std::vector<SgAsmInstruction*>& instructions = bb->instructions();
+        for(std::vector<SgAsmInstruction*>::const_iterator instIt = instructions.begin(); 
+            instIt != instructions.end(); ++instIt) 
+            {
+                this->traverse((SgNode*) *instIt, preorder);
+            }
+    }
+    
+
+
+} // namespace
 } // namespace

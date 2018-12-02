@@ -42,6 +42,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::UnparseLanguageIndependentConstructs");
+          mlog.comment("generating source code for language-indepentend constructs");
         }
    }
 
@@ -5227,7 +5228,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
                  // If this is a consequence of a cast that was implicit (compiler generated), then we don't want to output this operator.
                     ROSE_ASSERT(binary_op->get_parent() != NULL);
-                    ROSE_ASSERT(binary_op->get_parent()->get_parent() != NULL);
+                 // TV (11/08/2018): that can be called when creating an array type where the index is a call expression to a method...
+                 // ROSE_ASSERT(binary_op->get_parent()->get_parent() != NULL);
 
 #if DEBUG_BINARY_OPERATORS
                     printf ("++++++++++++++++ binary_op->get_parent()->get_parent() = %p = %s \n",binary_op->get_parent()->get_parent(),binary_op->get_parent()->get_parent()->class_name().c_str());
@@ -8116,6 +8118,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgUnsignedLongVal:        // return 0;
           case V_SgComplexVal:             // return 0;
           case V_SgMatrixExp:
+          case V_SgEnumVal:
                                      precedence_value = 0; break;
 
           case V_SgCAFCoExpression:        // return 16;

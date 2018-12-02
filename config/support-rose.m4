@@ -1988,6 +1988,11 @@ src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
+src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_5.0/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_5.0/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2060,6 +2065,9 @@ projects/CompilationDB/scripts/Makefile
 projects/CompilationDB/examples/demo/Makefile
 projects/CompilationDB/examples/demo/compile_commands.json
 projects/CompilationDB/examples/kripke/Makefile
+projects/CompilationDB/examples/doxygen/Makefile
+projects/CompilationDB/static/js/Makefile
+projects/CompilationDB/static/css/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile

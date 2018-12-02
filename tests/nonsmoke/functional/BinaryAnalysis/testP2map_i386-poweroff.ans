@@ -386,10 +386,10 @@
 0x08048c2c: 68 1c 98 04 08          |h....   |<sp-16>   push   0x0804981c<<Func>>
 0x08048c31: 51                      |Q       |<sp-20>   push   ecx
 0x08048c32: 56                      |V       |<sp-24>   push   esi
-0x08048c33: 68 6c 8e 04 08          |hl...   |<sp-28>   push   0x08048e6c<<Func>>
+0x08048c33: 68 6c 8e 04 08          |hl...   |<sp-28>   push   0x08048e6c<main>
 0x08048c38: e8 5f fe ff ff          |._...   |<sp-32>   call   0x08048a9c<__libc_start_main@plt>
 0x08048c38: Outgoing stack delta: -36
-0x08048c38: Successor blocks: 0x08048a9c<__libc_start_main@plt>, 0x08048c3d, 0x08048e6c<<Func>>
+0x08048c38: Successor blocks: 0x08048a9c<__libc_start_main@plt>, 0x08048c3d, 0x08048e6c<main>
 
 0x08048c3d: Basic block reasons: 
 0x08048c3d: f4                      |.       |<sp-32>   hlt    
@@ -746,7 +746,7 @@
 0x08048e66: Outgoing stack delta: -64
 0x08048e66: Successor blocks: 0x08048b5c<exit@plt>
 
-0x08048e6c: ================================== Function (function call, graph, discontiguous) unknown name
+0x08048e6c: ================================== Function (function call, graph, discontiguous) <main>
 
 0x08048e6c: Basic block reasons: entry point
 0x08048e6c: 55                      |U       |<sp+0 >   push   ebp

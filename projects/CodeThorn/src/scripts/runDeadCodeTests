@@ -13,9 +13,11 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-testNumbers=`echo {001..013}`
+testNumbers1=`echo {001..007}`
+testNumbers2=`echo {009..013}`
+testNumbers="$testNumbers1 $testNumbers2"
 echo "Scheduled tests: $testNumbers"
-echo "skipping DC008"
+echo "Skipping DC008."
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DC${testNumber};
     for benchmark in ${benchmarkprefix}_*.C; do

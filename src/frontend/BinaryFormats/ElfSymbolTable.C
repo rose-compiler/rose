@@ -257,9 +257,8 @@ SgAsmElfSymbolSection::finish_parsing()
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
-            SgAsmGenericSection *bound = get_file()->get_section_by_id(symbol->get_st_shndx());
-            ROSE_ASSERT(bound != NULL);
-            symbol->set_bound(bound);
+            if (SgAsmGenericSection *bound = get_file()->get_section_by_id(symbol->get_st_shndx()))
+                symbol->set_bound(bound);
         }
     }
 }

@@ -971,7 +971,7 @@ TEST_TRANSLATOR=../../testTranslator
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:C89
+ROSE_FLAGS = -std=c
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif

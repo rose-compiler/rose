@@ -18,6 +18,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Partitioner2");
+        mlog.comment("partitioning insns to basic blocks and functions");
     }
 }
 

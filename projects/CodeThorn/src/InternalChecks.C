@@ -444,7 +444,9 @@ void checkTypes() {
     check("=> eStateSet.size() == 3",eStateSet.size() == 3);
     checkLargeSets();
 #endif
+
  }
+
 #if 0
   // MS: TODO: rewrite the following test to new check format
   {
@@ -516,6 +518,15 @@ void checkTypes() {
     }
 #endif
   } // end of stream operator checks
+
+  {  
+    cout << "------------------------------------------"<<endl;
+    cout << "RUNNING CHECKS FOR CALL STRINGS:"<<endl;
+    CallString s1;
+    CallString s2;
+    check("callstrings: "+s1.toString()+" == "+s2.toString()+" (true)",s1==s2);
+  }
+
 }
 
 void checkLanguageRestrictor(int argc, char *argv[]) {

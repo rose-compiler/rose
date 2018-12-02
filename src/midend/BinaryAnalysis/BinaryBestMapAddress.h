@@ -168,6 +168,14 @@ public:
      *  zero means that shifting the functions by any of the best deltas caused none of the function call targets to line up
      *  with functions, and a return value of one means all of them line up. */
     double bestDeltaRatio() const;
+
+    /** Align executable regions of a memory map.
+     *
+     *  Runs the BestMapAddress repeatedly on the specified memory map in order to create a new map with the executable regions
+     *  of the input map moved to better addresses. */
+    static MemoryMap::Ptr align(const MemoryMap::Ptr&,
+                                const Partitioner2::Engine::Settings &settings = Partitioner2::Engine::Settings(),
+                                const Progress::Ptr &progress = Progress::Ptr());
 };
 
 } // namespace

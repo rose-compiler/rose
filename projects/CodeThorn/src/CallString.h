@@ -1,0 +1,64 @@
+#ifndef CALL_STRING_H
+#define CALL_STRING_H
+
+#include <vector>
+#include <string>
+#include "Labeler.h"
+
+namespace CodeThorn {
+  /**
+     A CallString is used as context in inter-procedural analysis. It
+     consists of Labels that are associated with the function calls in
+     an analyzed program.
+  */
+  class CallString {
+  public:
+    /** Adds a label to the call string if it is not longer than getLength().
+        Returns true if the label is added, otherwise false.
+    */
+    bool addLabel(SPRAY::Label lab);
+
+    /** Removes the last label of the call string if it matches with the argument 'lab'.
+        In case of success this function returns true, otherwise false.
+        On a call string of length 0 it always returns false and no operation is performed.
+    */
+    bool removeIfLastLabel(SPRAY::Label lab);
+
+    /** removes last label. 
+        If call string is of length 0 no operation is performed.
+    */
+    void removeLabel();
+
+
+    /** returns the length of the call string.
+     */
+    size_t getLength() const;
+    static size_t getMaxLength();
+    static void setMaxLength(size_t maxLength);
+
+    /** generates a string showing the labels of the call string
+        within brackets. For each label the label-id (an integer) is
+        shown. No white space is generated. Labels are separated by
+        commas.
+        Example: [2,1,5]
+    */
+    std::string toString() const;
+
+    /** Establish an ordering of call strings as required for ordered STL containers.
+        Compares this string with 'other'.
+        Returns true if the length is shorter or if same length then all values are lower
+        Examples: [1,2] < [2,3]; [1,3]<[1,2,3]; 
+    */
+    bool operator<(const CallString& other) const;
+    bool operator==(const CallString& other) const;
+    bool operator!=(const CallString& other) const;
+
+  private:
+    static size_t _maxLength;
+    typedef std::vector<SPRAY::Label> CallStringType;
+    CallStringType _callString;
+  };
+
+}
+
+#endif

@@ -10,7 +10,7 @@ LDADD    = $(ROSE_LIBS)
 
 # globalVariablesInLambdas_TESTS = test_1.C
 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+TESTCODES_REQUIRED_TO_PASS = \
    test2012_01.C \
    test2012_02.C \
    test2012_05.C \
@@ -249,7 +249,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    rose-1379-a.C \
    rose-1379-b.C \
    rose-1380.C \
-rose-1437-0.C \
+   rose-1437-0.C \
    test2012_03.C \
    test2012_04.C \
    test2012_06.C \
@@ -262,7 +262,8 @@ rose-1437-0.C \
    test2014_03.C \
    test2014_82.C \
    test2014_88.C \
-   test2017_10.C
+   test2017_10.C \
+   rose-1522-0.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_07.C \
@@ -308,31 +309,31 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_85.C
 
 if ROSE_USE_EDG_VERSION_4_9
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+  TESTCODES_REQUIRED_TO_PASS += \
      test2014_25.C \
      test2014_28.C \
      test2015_11.C 
 else
-  TESTCODE_CURRENTLY_FAILING = \
+  TESTCODE_CURRENTLY_FAILING += \
      test2014_25.C \
      test2014_28.C \
      test2015_11.C 
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_9
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+  TESTCODES_REQUIRED_TO_PASS += \
      test2018_63.C \
      test2018_64.C \
      test2018_66.C
 else
-  TESTCODE_CURRENTLY_FAILING = \
+  TESTCODE_CURRENTLY_FAILING += \
      test2018_63.C \
      test2018_64.C \
      test2018_66.C
 endif
 
 if OS_MACOSX
-  TESTCODE_CURRENTLY_FAILING = \
+  TESTCODE_CURRENTLY_FAILING += \
      test2016_12.C \
      test2016_20.C \
      test2016_23.C \
@@ -343,7 +344,7 @@ if OS_MACOSX
      test2016_36.C \
      test2016_90.C 
 else
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+  TESTCODES_REQUIRED_TO_PASS += \
      test2016_12.C \
      test2016_20.C \
      test2016_23.C \
@@ -354,10 +355,6 @@ else
      test2016_36.C \
      test2016_90.C 
 endif
-
-# This is the long test of ROSE (takes a while!)
-TESTCODES_REQUIRED_TO_PASS = \
-   $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -441,7 +438,7 @@ endif
 ############
 
 # Make sure that all the test codes end up in the distribution
-EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
+EXTRA_DIST = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC

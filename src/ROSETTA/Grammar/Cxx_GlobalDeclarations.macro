@@ -17,3 +17,6 @@ void preventConstructionOnStack(SgNode* n);
    ATTENTION: For huge applications, this might be set to 0, otherwise, we can run out of space easily ....
 */
 #define DISABLE_REALLOCATION_OF_DELETED_POINTERS 1
+
+#define FILE_IO_MEMORY_POOL_CHECK 0
+

@@ -58,7 +58,12 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   }
 
   AbstractValue myIOVal=myTarget->determineUniqueIOValue();
-  ROSE_ASSERT(myIOVal.isConstInt());
+  if(!myIOVal.isConstInt()) {
+    cerr<<myTarget->toString()<<endl;
+    cerr<<"Error: IOVal is not constant (determineUniqueIOValue could determine a unique IO value)."<<endl;
+    cerr<<"myIOVal: "<<myIOVal.toString()<<endl;
+    ROSE_ASSERT(myIOVal.isConstInt());
+  }
   // check if there exists a single input or output value (remove for support of symbolic analysis)
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
     if(!myIOVal.isConstInt()) {

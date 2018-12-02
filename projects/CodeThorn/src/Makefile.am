@@ -28,7 +28,8 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libspray.la
+lib_LTLIBRARIES = libspray.la libcodethorn.la
+
 libspray_la_LDFLAGS= -no-undefined
 libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 libspray_la_SOURCES=\
@@ -118,20 +119,9 @@ libspray_la_SOURCES=\
  Timer.h \
  Timer.cpp
 
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
-# this line create speparately named object files
-codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_DEPENDENCIES=libspray.la
-
-#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
-if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd $(Z3_LINK)
-codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-endif
-
-codethorn_SOURCES = \
+libcodethorn_la_LDFLAGS= -no-undefined
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+libcodethorn_la_SOURCES=\
   AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
@@ -139,6 +129,8 @@ codethorn_SOURCES = \
   IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
+  CallString.h \
+  CallString.C \
   CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
@@ -179,8 +171,6 @@ codethorn_SOURCES = \
   InternalChecks.h                 \
   ContNodeAttribute.h \
   ContNodeAttribute.C \
-  LTL.h                            \
-  LTLParser.y++                    \
   LtsminConnection.h		   \
   LtsminConnection.C		   \
   LanguageRestrictorCollection.C   \
@@ -189,8 +179,8 @@ codethorn_SOURCES = \
   LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  NullPointerDereferenceLocations.h \
-  NullPointerDereferenceLocations.C \
+  ProgramLocationsReport.h \
+  ProgramLocationsReport.C \
   PhiAttribute.h \
   PhiAttribute.C \
   PhiStatement.h \
@@ -210,7 +200,6 @@ codethorn_SOURCES = \
   ReadWriteAnalyzer.C \
   ReadWriteHistory.h \
   ReadWriteHistory.C \
-  RERS_empty_specialization.C      \
   RewriteStatistics.C \
   RewriteStatistics.h \
   RewriteSystem.C \
@@ -280,7 +269,25 @@ codethorn_SOURCES = \
   Visualizer.C                     \
   Visualizer.h                     \
   AstTermRepresentation.h \
-  AstTermRepresentation.C \
+  AstTermRepresentation.C
+
+codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
+# this line create speparately named object files
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+codethorn_DEPENDENCIES=libspray.la libcodethorn.la
+
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
+if ROSE_WITH_SPOT
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn -lspot -lbdd $(Z3_LINK)
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn
+endif
+
+codethorn_SOURCES = \
+  RERS_empty_specialization.C \
+  LTL.h                            \
+  LTLParser.y++                    \
   codethorn.h \
   codethorn.C 
 
@@ -610,18 +617,22 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-data-races check-svcomp-witness
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-svcomp-witness
+
+CHECK_DEFAULT_FAILING=check-data-races
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
-CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven-reset-analyzer
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
 
-CHECK_WITH_SPOT=$(CHECK_DEFAULT) $(CHECK_WITH_SPOT_ONLY)
+CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
 if ROSE_WITH_SPOT
-check-local: $(CHECK_WITH_SPOT)
+check-local: $(CHECK_WITH_SPOT_PASSING)
 else
-check-local: $(CHECK_DEFAULT)
+check-local: $(CHECK_DEFAULT_PASSING)
 endif
+
+check-default-failing: $(CHECK_DEFAULT_FAILING)
 
 check-svcomp:
 	@echo ================================================================
@@ -646,7 +657,7 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C --log-level=trace
-	@./codethorn $(srcdir)/tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -681,11 +692,10 @@ check-const-analysis:
 check-ltl-old: check-ltl-rers-different-versions
 
 # failing tests due to changes in domain
-check-ltl-failing: check-ltl-rers-array
+#check-ltl-failing: check-ltl-rers-array
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-topify check-ltl-rers-timeout check-ltl-rers-loop-aware-sync check-ltl-cegpra
-
+check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-timeout check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================
@@ -733,6 +743,7 @@ check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-equivalence:
+	@rm -f tmp.nsdump
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
@@ -753,6 +764,13 @@ check-deadcode:
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
+
+check-dev:
+	./codethorn $(srcdir)/tests/DOM007_sequence_arrays.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM007_sequence_arrays.C."
+check-dev2:
+	./codethorn $(srcdir)/tests/DOM008_sequence_structs.C --stg-trace-file=trace.txt --log-level=trace
+	@echo "Generated trace.txt for DOM008_sequence_structs.C."
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

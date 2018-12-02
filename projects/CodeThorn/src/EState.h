@@ -19,6 +19,7 @@
 
 #include "PState.h"
 #include "InputOutput.h"
+#include "CallString.h"
 
 using namespace CodeThorn;
 
@@ -72,6 +73,7 @@ namespace CodeThorn {
     const CodeThorn::ConstraintSet* _constraints;
   public:
     CodeThorn::InputOutput io;
+    CallString callString;
   };
 
   // define order for EState elements (necessary for EStateSet)

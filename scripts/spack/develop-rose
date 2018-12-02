@@ -1,0 +1,69 @@
+#!/bin/bash
+# Script to enter a ROSE development environment
+
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+die() {
+    echo "$arg0:" "$@" >&2
+    exit 1
+}
+
+usage_error() {
+    echo "usage: $arg0 SRCDIR [DEPENDENCIES]" >&2
+}
+
+################################################################################
+
+
+# ROSE source directory
+if [ "$#" -gt 0 -a -d "$1/src/midend/Makefile.am" ]; then
+    ROSE_SRC="$1"
+    shift
+elif [ "$ROSE_SRC" = "" ]; then
+    ROSE_SRC="$(cd "$dir0/../.." && pwd)"
+fi
+[ -n "$ROSE_SRC" ] || die "no ROSE source tree specified"
+[ -d "$ROSE_SRC" ] || die "ROSE source directory is missing: $ROSE_SRC"
+[ -r "$ROSE_SRC/scripts/spack/develop-rose" ] || die "not a ROSE source tree: $ROSE_SRC"
+
+# ROSE build directory
+[ -n "$ROSE_BLD" ] || ROSE_BLD="$(pwd)"
+[ -n "$ROSE_BLD" ] || die "no ROSE build tree specified"
+[ -d "$ROSE_BLD" ] || die "ROSE build directory is missing: $ROSE_BLD"
+[ -r "$ROSE_BLD/scripts/spack/develop-rose" ] && die "ROSE build tree must not be source tree"
+
+# Run Spack to install dependencies
+[ -n "$(type -fp spack)" ] || die "spack is not installed or not in PATH"
+ROSE_TEMP_VERSION=development
+spack install --only dependencies "rose@$ROSE_TEMP_VERSION" "$@"
+
+# Configure ROSE for development, but do not build
+# FIXME: Is there some way to prevent "spack diy" from asking for confirmation
+#        about the ROSE source tree? Using "yes y |..." doesn't work, and the
+#        confirmation request will interfere with running this in Jenkins.
+rm -f "$ROSE_BLD/spack-spec"
+if ! spack diy -d "$ROSE_SRC" "rose@$ROSE_TEMP_VERSION" "development=$ROSE_BLD" "$@"; then
+    if [ -r "$ROSE_BLD/spack-spec" ]; then
+	echo
+	echo "  You can ignore the previous Spack error. Spack has no way to do a partial"
+	echo "  installation without failing."
+	echo
+    else
+	exit 1
+    fi
+fi
+
+# Start a subshell for development
+echo
+echo "Starting a subshell for ROSE development..."
+(
+    set -e
+    cd "$ROSE_BLD"
+
+    # "spack env" changed to "spack build-env" around 2018-11-11. The
+    # "spack env" command now means something TOTALLY different.
+    #spack env "rose@$ROSE_TEMP_VERSION development=$ROSE_BLD $*" bash
+    spack build-env "rose@$ROSE_TEMP_VERSION development=$ROSE_BLD $*" bash
+)
