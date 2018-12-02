@@ -445,7 +445,8 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
   // tmp_tokenSequence->display("token sequence for global scope");
 #endif
 
-     ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
+  // DQ (12/2/2018): This can be empty for an empty file (see test in: roseTests/astTokenStreamTests).
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 
 #if 0
   // Debugging (this set in the constructor).

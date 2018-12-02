@@ -733,8 +733,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // ROSEAttributesList* attributeList = AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId );
        // buildTokenStreamMapping(file);
 
+       // DQ (12/2/2018): This can be empty for an empty file (see test in: roseTests/astTokenStreamTests).
        // DQ (8/23/2018): This should be a non-empty list if we are using the token stream.
-          ROSE_ASSERT (file->get_token_list().empty() == false);
+       // ROSE_ASSERT (file->get_token_list().empty() == false);
 
 #if 0
        // DQ (8/23/2018): This is the wrong way to access the token stream.

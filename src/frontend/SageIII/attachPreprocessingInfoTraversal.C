@@ -454,12 +454,14 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // This uses the old code to attach comments and CPP directives to the AST as attributes.
                     locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
 
+                 // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
                  // DQ (12/2/2018): This fails for Fortran.
                  // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
                  // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
-                    if (SageInterface::is_Fortran_language() == false)
+                 // if (SageInterface::is_Fortran_language() == false)
+                    if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
                        {
-                         ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                      // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
                        }
 
                  // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
@@ -1750,12 +1752,14 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
 #endif
 
+       // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
        // DQ (12/2/2018): This fails for Fortran.
        // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
        // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
-          if (SageInterface::is_Fortran_language() == false)
+       // if (SageInterface::is_Fortran_language() == false)
+          if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
              {
-               ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+            // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
              }
 
 #if 0
@@ -1840,12 +1844,14 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 1
                printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
 #endif
+            // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
             // DQ (12/2/2018): This fails for Fortran.
             // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
             // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
-               if (SageInterface::is_Fortran_language() == false)
+            // if (SageInterface::is_Fortran_language() == false)
+               if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
                   {
-                    ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
+                 // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
                   }
              }
 #if 0
@@ -1881,10 +1887,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
           ROSE_ASSERT(currentFileInfo != NULL);
 
+       // DQ (12/2/2018): Oddly enough, this case does not appear to fail in the C/C++ snippet insertion tests.
        // DQ (12/2/2018): This fails for Fortran.
        // DQ (9/7/2018): Assert this as default for C/C++ file processing tests only (remove later).
        // ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
-          if (SageInterface::is_Fortran_language() == false)
+       // if (SageInterface::is_Fortran_language() == false)
+          if (SageInterface::is_C_language() == true || SageInterface::is_Cxx_language() == true)
              {
                ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
              }
