@@ -11,11 +11,11 @@
 #include <Sawyer/Stack.h>
 
 #include <boost/foreach.hpp>
-#include <boost/version.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/version.hpp>
 #include <set>
 
 namespace Sawyer {

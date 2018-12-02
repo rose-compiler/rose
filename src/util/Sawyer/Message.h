@@ -1581,7 +1581,7 @@ class SAWYER_EXPORT Facility {
     unsigned constructed_;
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 #include <Sawyer/WarningsOff.h>
-    std::string name_;
+    std::string name_, comment_;
     std::vector<SProxy> streams_;
 #include <Sawyer/WarningsRestore.h>
 
@@ -1655,6 +1655,18 @@ public:
      *
      *  Thread safety: This method is thread-safe. */
     std::string name() const;
+
+    /** Property: Comment associated with facility.
+     *
+     *  The comment should be a single-line string without terminating punctuation (for consistency, although not
+     *  enforced). The comment is printed as part of the output when listing the facility names.
+     *
+     *  Thread safety: This method is thread-safe.
+     *
+     * @{ */
+    std::string comment() const;
+    Facility& comment(const std::string&);
+    /** @} */
 
     /** Renames all the facility streams.
      *

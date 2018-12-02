@@ -4435,6 +4435,7 @@ SgFunctionCallExp::get_type() const
        // Milind Chabbi, after discussing with DQ (7/29/2013), we need to strip all. See test: CompileTests/Cxx_tests/test2013_milind_01.C
           likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE | 
                                                              SgType::STRIP_REFERENCE_TYPE | 
+                                                             SgType::STRIP_RVALUE_REFERENCE_TYPE | 
                                                              SgType::STRIP_POINTER_TYPE | 
                                                              SgType::STRIP_ARRAY_TYPE | 
                                                              SgType::STRIP_TYPEDEF_TYPE);
@@ -5901,7 +5902,8 @@ SgAddressOfOp::get_type() const
        // TODO: should we strip STRIP_TYPEDEF_TYPE? Not sure, need to talk to Dan.
        // DQ (7/16/2014): Dan says no. Don't strip the typedef or we could generate references to types 
        // in the AST that might be private or inaccessible when we compile the unparsed the source code).
-          returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE));
+       // TV (11/13/2018): Added r-value reference handling
+          returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE));
 
        // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as 
        // shared (even if the type on the rhs_operand is non-shared) (see UPC_tests/test2014_56.c for an example).

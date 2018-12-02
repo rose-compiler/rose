@@ -316,16 +316,29 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
                   curprint(",");
                 commaCounter ++; 
               }
-              else
+              else {
                 curprint(",");
+              }
 
+              SgExpression * capt_var_expr = lambdaCapture->get_capture_variable();
+              ROSE_ASSERT(capt_var_expr != NULL);
 
+          // TV (11/14/2018): ROSE-1525: Made a separated case when 'this' is captured to properly handle the changes in EDG 4.14
+             if (isSgThisExp(capt_var_expr)) {
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 14) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+               if (lambdaCapture->get_capture_by_reference() == false) {
+                 curprint("*");
+               }
+#endif
+               curprint("this");
+             } else {
                if (lambdaCapture->get_capture_by_reference() == true)
                   {
                     curprint("&");
                   }
+               unp->u_exprStmt->unparseExpression(capt_var_expr,info);
+             }
 
-               unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
              }
 
 #if 0
@@ -2911,8 +2924,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
         }
 
      SgExpression* binary_op = isSgExpression(mfunc_ref->get_parent());
-     ROSE_ASSERT(binary_op != NULL);
-     bool isPartOfArrowOperatorChain = partOfArrowOperatorChain(binary_op);
+  // TV (11/15/2018): With EDG 5.0, it happens inside some STL include (originating from <string>).
+  // ROSE_ASSERT(binary_op != NULL);
+     bool isPartOfArrowOperatorChain = binary_op != NULL ? partOfArrowOperatorChain(binary_op) : false;
 
 #if MFuncRefSupport_DEBUG
      printf ("In unparseMFuncRefSupport(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
@@ -7643,10 +7657,15 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
      curprint("/* In unparseAssnInit() */ "); 
 #endif
-
-     if (assn_init->get_is_explicit_cast() == true)
+      if (assn_init->get_is_explicit_cast() == true)
         {
-          unparseExpression(assn_init->get_operand(), info);
+       // TV (11/15/2018): fixing weird behavior introduced with EDG 5.0 on Cxx_tests/test2006_70.C
+       //                  happens when unparsing the "parameterList_syntax" for a parameter that has a default value
+          if (assn_init->get_operand()->get_originalExpressionTree() != NULL) {
+            unparseExpression(assn_init->get_operand()->get_originalExpressionTree(), info);
+          } else {
+            unparseExpression(assn_init->get_operand(), info);
+          }
         }
        else
         {
@@ -8267,8 +8286,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           ROSE_ASSERT(assignInitializer->get_operand() != NULL);
           ROSE_ASSERT(assignInitializer->get_operand()->get_type() != NULL);
 
-       // Calling SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
-          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
+          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
           bool isClassType = (classType != NULL);
 
 #if DEBUG_DESIGNATED_INITIALIZER

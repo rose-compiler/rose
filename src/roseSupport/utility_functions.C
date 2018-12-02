@@ -193,6 +193,7 @@ void Rose::initDiagnostics()
           initialized = true;
        // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
           ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", Rose::Diagnostics::destination);
+          ir_node_mlog.comment("operating on ROSE internal representation nodes");
           Rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
        // printf ("In Rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
         }

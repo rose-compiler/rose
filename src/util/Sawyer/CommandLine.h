@@ -1710,6 +1710,38 @@ protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
+/** Function to configure diagnostics to quiet mode.
+ *
+ *  @code
+ *   generic.insert(Switch("quiet", 'q')
+ *                  .action(configureDiagnosticsQuiet(Sawyer::Message::mfacilities))
+ *                  .doc("Turn off all diagnostic output except error and fatal levels."));
+ *  @endcode */
+class SAWYER_EXPORT ConfigureDiagnosticsQuiet: public SwitchAction {
+#include <Sawyer/WarningsOff.h>
+    Message::Facilities &facilities_;
+#include <Sawyer/WarningsRestore.h>
+protected:
+    ConfigureDiagnosticsQuiet(Message::Facilities &facilities)
+        : facilities_(facilities) {
+    }
+
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<ConfigureDiagnosticsQuiet> Ptr;
+
+    /** Allocating constructor. Returns a pointer to a new ConfigureDiagnosticsQuiet object. Users will most likely want to use
+     * the @ref configureDiagnosticsQuiet factory instead, which requires less typing.
+     *
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(Message::Facilities &facilities) {
+        return Ptr(new ConfigureDiagnosticsQuiet(facilities));
+    }
+
+protected:
+    virtual void operator()(const ParserResult&) /*override*/;
+};
+
 /** Wrapper around a user functor.  User code doesn't often use reference counting smart pointers for functors, but more often
  *  creates functors in global data or on the stack.  The purpose of UserAction is to be a wrapper around these functors, to
  *  be a bridge between the world of reference counting pointers and objects or object references.  For example, say the
@@ -1785,6 +1817,8 @@ SAWYER_EXPORT ShowHelp::Ptr showHelp();
 SAWYER_EXPORT ShowHelpAndExit::Ptr showHelpAndExit(int exitStatus);
 
 SAWYER_EXPORT ConfigureDiagnostics::Ptr configureDiagnostics(const std::string&, Message::Facilities&, bool exitOnHelp=true);
+
+SAWYER_EXPORT ConfigureDiagnosticsQuiet::Ptr configureDiagnosticsQuiet(Message::Facilities&);
 
 template<class Functor>
 typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
