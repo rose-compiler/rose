@@ -2059,6 +2059,15 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
             {
             goto done;
             }
+
+
+       // DQ (12/2/2018): Added this support because the windows support failed with the message below, but I don't see why an error code what returned.
+          if (typenameString == "SgIncludeFilePtrList")
+             {
+               // returnString = "SgIncludeFile";
+               goto done;
+             }
+
 #if 0
           if (typenameString == "SgAsmElfSymverDefinedAuxList")
              {
