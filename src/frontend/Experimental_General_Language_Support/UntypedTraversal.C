@@ -69,8 +69,6 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedFunctionDeclaration:
       {
          SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(node);
-         cout << "-x- traversing ut_function " << ut_function
-              << ": scope is " << currentScope << ": " << currentScope->class_name() << endl;
          pConverter->convertUntypedFunctionDeclaration(ut_function, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
@@ -301,7 +299,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedFunctionCallStatement* ut_stmt = dynamic_cast<SgUntypedFunctionCallStatement*>(node);
          SgNodePtrList children(childAttrs);
-         cout << "-x- traversing function call statement " << ut_stmt << endl;
          sg_node = pConverter->convertSgUntypedFunctionCallStatement(ut_stmt, children, currentScope);
          break;
       }
@@ -397,6 +394,16 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SageBuilder::popScopeStack();  // procedure body
          SageBuilder::popScopeStack();  // procedure definition
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedFunctionDeclaration:
+      {
+         SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(node);
+         SgNodePtrList children(childAttrs);
+
+      // Convert the types in the parameter list to what has by now been seen in variable declarations
+         sg_node = pConverter->convertUntypedFunctionDeclaration(ut_function, children, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }

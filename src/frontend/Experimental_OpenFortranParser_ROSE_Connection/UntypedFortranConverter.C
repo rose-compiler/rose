@@ -268,7 +268,7 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
-   SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
+   SgType*        sg_base_type = convertUntypedType(ut_base_type, scope);
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
 

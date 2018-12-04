@@ -30,7 +30,7 @@ ATbool traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope
 ATbool traverse_Name(ATerm term, std::string & name);
 ATbool traverse_ProgramBody(ATerm term, SgUntypedFunctionScope** function_scope);
 ATbool traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope);
-ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList*);
+ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList* func_list);
 
 // 1.4 IMPLEMENTATION PARAMETERS
 //ATbool traverse_IntegerMachineParameter(ATerm term, SgUntypedExpression** expr);
@@ -123,16 +123,30 @@ ATbool traverse_SimpleDef             (ATerm term, SgUntypedDeclarationStatement
 ATbool traverse_CompoundDef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_DefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 2.5.2 REF SPECIFICATIONS
+ATbool traverse_SimpleRef             (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_CompoundRef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_RefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
 // 3.0 PROCEDURES AND FUNCTIONS
-ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list);
 ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr);
-ATbool traverse_ProcedureHeading(ATerm term, std::string & name,
-                                 SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
-ATbool traverse_SubroutineBody(ATerm term, SgUntypedFunctionScope** function_scope);
+ATbool traverse_ProcedureHeading   (ATerm term, std::string & name,
+                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+ATbool traverse_SubroutineBody     (ATerm term, SgUntypedFunctionScope** function_scope);
+
+// 3.1 PROCEDURES
+ATbool traverse_ProcedureDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// 3.2 FUNCTIONS
+ATbool traverse_FunctionDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType** type,
+                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
+ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
 
@@ -176,7 +190,7 @@ ATbool traverse_CaseIndex       (ATerm term, SgUntypedExpression** case_index);
 
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term, SgUntypedStatementList* stmt_list);
-ATbool traverse_ActualParameterList    (ATerm term, SgUntypedExprListExpression** param_list);
+ATbool traverse_ActualParameterList    (ATerm term, SgUntypedExprListExpression* arg_list);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement (ATerm term, SgUntypedStatementList* stmt_list);

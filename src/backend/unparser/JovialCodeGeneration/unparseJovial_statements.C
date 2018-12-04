@@ -64,14 +64,13 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
         {
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
-       // program units
+       // module support
           case V_SgJovialCompoolStatement:     unparseCompoolStmt(stmt, info);      break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt(stmt, info);      break;
-       // case V_SgProcedureHeaderStatement:   unparseProcHdrStmt(stmt, info);      break;
+          case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
+          case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
        // declarations
-       // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
-          case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
           case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
 
@@ -107,7 +106,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
 
-          case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
+          case V_SgForInitStatement:       unparseForInitStmt(stmt, info);      break;
 
           case V_SgFunctionParameterList:  unparseFunctionParameterList(stmt, info); break;
 
@@ -160,6 +159,64 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
  //  unparseStatementNumbersSupport(mod->get_end_numeric_label(),info);
 
   // TODO - unparse non-nested-subroutines
+   }
+
+void
+Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt);
+     ROSE_ASSERT(func);
+
+     bool isDefiningDeclaration = (func->get_definition() != NULL);
+
+     if (isDefiningDeclaration)  curprint("DEF PROC ");
+     else                        curprint("REF PROC ");
+
+     curprint(func->get_name());
+
+  // unparse function arguments
+     SgFunctionParameterList* params = func->get_parameterList();
+     SgInitializedNamePtrList & args = params->get_args();
+
+     if (args.size() > 0)
+        {
+           bool firstOutParam = false;
+           bool foundOutParam = false;
+
+           curprint("(");
+
+           int i = 0;
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+              // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+                 if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+                    {
+                       firstOutParam = true;
+                       foundOutParam = true;
+                       curprint(" : ");
+                    }
+
+              // Don't output comma if this is the first out parameter
+                 if (i++ > 0 && firstOutParam == false) curprint(",");
+                 firstOutParam = false;
+
+                 curprint(arg->get_name());
+              }
+           curprint(")");
+        }
+
+  // unparse function type
+     SgType* type = func->get_type();
+     unparseType(type, ninfo);
+
+     curprint(";\n");
+
+     if (isDefiningDeclaration)
+        {
+           unparseStatement(func->get_definition(), ninfo);
+        }
    }
 
 void

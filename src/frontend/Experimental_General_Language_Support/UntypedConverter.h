@@ -17,6 +17,10 @@ class UntypedConverter
       UntypedConverter(bool isCaseInsensitive = false)
          {
             pCaseInsensitive = isCaseInsensitive;
+
+         // not currently converting a function declaration
+            isConvertingFunctionDecl = false;
+            isDefiningDeclaration    = false;
          }
 
       void  setSourcePositionFrom      ( SgLocatedNode* toNode, SgLocatedNode* fromNode );
@@ -28,6 +32,10 @@ class UntypedConverter
 
       void buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function,
                                   SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope);
+
+   // Replacement for API removed from SageBuilder
+   // WARNING: This should be removed in a redesign using class member variables to save state.
+      SgFunctionRefExp* buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=NULL*/);
 
       virtual bool
       convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope=NULL) = 0;
@@ -43,7 +51,7 @@ class UntypedConverter
 
       virtual void setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedExprListExpression* mod_list);
 
-      virtual SgType*   convertSgUntypedType (SgUntypedType* ut_type,            SgScopeStatement* scope);
+      virtual SgType*   convertUntypedType   (SgUntypedType* ut_type,            SgScopeStatement* scope);
       virtual SgType*   convertSgUntypedType (SgUntypedInitializedName* ut_name, SgScopeStatement* scope, bool delete_ut_type=false);
 
       virtual SgGlobal* convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
@@ -53,8 +61,10 @@ class UntypedConverter
       virtual SgProcedureHeaderStatement* convertUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
       virtual SgProcedureHeaderStatement* convertUntypedBlockDataDeclaration     (SgUntypedBlockDataDeclaration*     ut_decl, SgScopeStatement* scope);
 
-      virtual SgProcedureHeaderStatement* convertUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
-      virtual void                        convertUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
+      virtual SgFunctionDeclaration* convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_decl, SgScopeStatement* scope);
+      virtual SgFunctionDeclaration* convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_decl, SgNodePtrList& children, SgScopeStatement* scope);
+
+      virtual void convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope);
 
    // Declaration statements
    //
@@ -126,6 +136,10 @@ class UntypedConverter
     protected:
 
       bool pCaseInsensitive;
+
+   // variables for converting functions declarations
+      bool isConvertingFunctionDecl;
+      bool isDefiningDeclaration;
   };
 
 } // namespace Untyped
