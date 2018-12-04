@@ -38,15 +38,21 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
     switch (expr->variantT())
        {
+       // function, intrinsic calls
+          case V_SgFunctionCallExp:     unparseFuncCall(expr, info);             break;
+
        // expressions
           case V_SgSubscriptExpression: unparseSubscriptExpr(expr, info);        break;
           case V_SgAsteriskShapeExp:    unparseAsteriskShapeExpr(expr, info);    break;
+
+       // symbol references
+          case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
+          case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
           case V_SgBinaryOp:            unparseBinaryExpr (expr, info);          break;
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
-          case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
           case V_SgSubtractOp:          unparseBinaryOperator(expr, "-", info);  break;
@@ -63,6 +69,8 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
+
+          case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
           case V_SgAssignInitializer:   unparseAssnInit  (expr, info);           break;
@@ -87,7 +95,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
                 case V_SgNotOp:
                 case V_SgBitComplementOp:
                      unparseUnaryOp(isSgUnaryOp(expr), info ); break;
-                case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
                 case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
 #endif
 
@@ -117,7 +124,7 @@ Unparse_Jovial::unparseStringVal (SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(false);
   }
 
-void 
+void
 Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
   {
      SgBinaryOp* op = isSgBinaryOp(expr);
@@ -149,7 +156,7 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
 //  Table/array subscripts
 //----------------------------------------------------------------------------
 
-void 
+void
 Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgSubscriptExpression* sub_expr = isSgSubscriptExpression(expr);
@@ -189,7 +196,23 @@ Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
         }
    }
 
-void 
+void
+Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // Sage node corresponds to array indicing
+     SgPntrArrRefExp* arrayRefExp = isSgPntrArrRefExp(expr);
+
+     unparseExpression(arrayRefExp->get_lhs_operand(),info);
+
+     SgUnparse_Info ninfo(info);
+     ninfo.set_SkipParen();
+
+     curprint("(");
+     unparseExpression(arrayRefExp->get_rhs_operand(),ninfo);
+     curprint(")");
+   }
+
+void
 Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
      ROSE_ASSERT( isSgAsteriskShapeExp(expr) != NULL);
@@ -197,11 +220,48 @@ Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& inf
      curprint("*");
    }
 
+void
+Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
+   {
+      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
+      ROSE_ASSERT(func_call != NULL);
+
+   // function name
+      unparseExpression(func_call->get_function(), info);
+
+   // argument list
+      SgUnparse_Info ninfo(info);
+      curprint("(");
+      if (func_call->get_args()) {
+         SgExpressionPtrList& list = func_call->get_args()->get_expressions();
+         SgExpressionPtrList::iterator arg = list.begin();
+         while (arg != list.end()) {
+            unparseExpression((*arg), ninfo);
+            arg++;
+            if (arg != list.end()) {
+               curprint(",");
+            }
+         }
+      }
+      curprint(")");
+   }
+
+
 //----------------------------------------------------------------------------
 //  ::<symbol references>
 //----------------------------------------------------------------------------
 
-void 
+void
+Unparse_Jovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
+   {
+      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+      ROSE_ASSERT(func_ref != NULL);
+
+      string func_name = func_ref->get_symbol()->get_name().str();
+      curprint(func_name);
+   }
+
+void
 Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);

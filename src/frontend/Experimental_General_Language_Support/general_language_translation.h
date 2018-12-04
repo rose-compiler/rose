@@ -118,6 +118,7 @@ namespace General_Language_Translation
           e_assumed_size,
 
        // Expressions for array indexing
+          e_array_subscripts,
           e_array_index_triplet,
           e_section_subscripts,
 
@@ -135,6 +136,9 @@ namespace General_Language_Translation
           e_end_switch_stmt,
           e_case_option_stmt,
           e_case_default_option_stmt,
+
+          e_end_proc_ref_stmt,
+          e_end_proc_def_stmt,
 
        // Fortran specific
           e_fortran_dimension_stmt,

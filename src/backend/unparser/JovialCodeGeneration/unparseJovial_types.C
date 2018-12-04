@@ -34,8 +34,18 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeBool:        curprint("B"); unparseTypeSize(type, info);  break;
           case V_SgTypeChar:        curprint("C"); unparseTypeSize(type, info);  break;
           case V_SgTypeString:      curprint("C"); unparseTypeSize(type, info);  break;
+          case V_SgTypeVoid:                                                     break;
 
           case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
+
+          case V_SgFunctionType:
+             {
+                SgFunctionType* func_type = isSgFunctionType(type);
+                ROSE_ASSERT(func_type);
+                curprint(" ");
+                unparseType(func_type->get_return_type(), info);
+                break;
+             }
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;

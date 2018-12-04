@@ -1246,7 +1246,7 @@ context-free syntax
     OptFormalParameterList
     ItemTypeDescription           -> FunctionHeading      {cons("FunctionHeading")}
 
-  Name                            -> FunctionName
+  Name                            -> FunctionName         {cons("Name")}
 
   SubroutineBody                  -> FunctionBody
 
@@ -1260,7 +1260,7 @@ context-free syntax
   FormalParameterList             -> OptFormalParameterList
   % empty %                       -> OptFormalParameterList   {cons("no-formal-parameter-list")}
 
-  ':' {FormalOutputParameter','}+ -> OptFormalOutputParameter {cons("OptFormalOutputParameter")}
+  ':' {FormalOutputParameter','}+ -> OptFormalOutputParameter {cons("FormalOutputParameterList")}
   % empty %                       -> OptFormalOutputParameter {cons("no-formal-output-parameters")}
 
   OptParameterBinding
@@ -1276,12 +1276,12 @@ context-free syntax
   ParameterBinding                -> OptParameterBinding
   % empty %                       -> OptParameterBinding      {cons("no-parameter-binding")}
 
-  Name                            -> InputParameterName       {prefer} %% added this production and prefer to remove ambiguity within InputParameterName
+  Name                            -> InputParameterName       {cons("Name"), prefer} %% added this production and prefer to remove ambiguity within InputParameterName
   DataName                        -> InputParameterName
   StatementName                   -> InputParameterName
   SubroutineName                  -> InputParameterName
 
-  Name                            -> OutputParameterName      {prefer}
+  Name                            -> OutputParameterName      {cons("Name"), prefer}
   DataName                        -> OutputParameterName
 
   ProcedureName                   -> SubroutineName
