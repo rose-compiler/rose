@@ -7,7 +7,8 @@ namespace BinaryAnalysis {
 
 
 namespace Strings {
-    void initDiagnostics() {}
+void initDiagnostics() {}
+
 
 bool
 isDone(State st) {

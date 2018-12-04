@@ -146,7 +146,8 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0),
-  _svCompFunctionSemantics(false)
+  _svCompFunctionSemantics(false),
+  _contextSensitiveAnalysis(true)
 {
   initDiagnostics();
   _analysisTimer.start();
@@ -203,6 +204,7 @@ bool Analyzer::isPrecise() {
   return true;
 }
 
+// only relevant for maximum values (independent of topify mode)
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
     return false;
@@ -319,7 +321,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
-    ss<<" "<<analyzerStateToString();
+    ss<<" "<<color("normal")<<analyzerStateToString();
     ss<<endl;
     printStatusMessage(ss.str());
   }
@@ -431,8 +433,13 @@ bool Analyzer::isActiveGlobalTopify() {
 }
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
-  logger[TRACE] << "mode global-topify activated."<<endl;
-  AbstractValueSet vset=variableValueMonitor.getVariables();
+  cout << "STATUS: mode global-topify activated:"<<endl
+       << "Transitions  : "<<(long int)transitionGraph.size()<<","<<_maxTransitionsForcedTop<<endl
+       << "Iterations   : "<<getIterations()<<":"<< _maxIterationsForcedTop<<endl
+       << "Memory(bytes): "<<getPhysicalMemorySize()<<":"<< _maxBytesForcedTop<<endl
+       << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl;
+
+AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
   for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {
@@ -628,6 +635,73 @@ void Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
   variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
 }
 
+// for arrays: number of elements (nested arrays not implemented yet)
+// for variable: 1
+// for structs: not implemented yet
+int Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
+      SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
+      ROSE_ASSERT(arrayType);
+      //SgType* arrayElementType=arrayType->get_base_type();
+      SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+      SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+      // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+      return initList.size(); 
+    } else if(isSgAssignInitializer(initializer)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+// sets all elements in PState according to aggregate
+// initializer. Also models default values of Integers (floats not
+// supported yet). EState is only used for lookup (modified is only
+// the PState object).
+PState Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
+  //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
+  // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
+  PState newPState=pstate;
+  int elemIndex=0;
+  SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+  SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+
+  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+    AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+    SgExpression* exp=*i;
+    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+    if(assignInit==nullptr) {
+      cerr<<"Error: NOT an assign initializer: "<<exp->unparseToString();
+      cerr<<"  AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      ROSE_ASSERT(assignInit);
+    }
+    // initialize element of array initializer in state
+    SgExpression* assignInitExpr=assignInit->get_operand();
+    // currentEState from above, newPState must be the same as in currentEState.
+    AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+    newPState.writeToMemoryLocation(arrayElemId,newVal);
+    elemIndex++;
+  }
+  // initialize remaining elements (if there are any) with default value
+  int aggregateSize=(int)getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+  // if array size is not 0 then it was determined from the type and remaining elements are initialized
+  // otherwise the size is determined from the aggregate initializer itself (done above)
+  if(aggregateSize!=0) {
+    for(int i=elemIndex;i<aggregateSize;i++) {
+      AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
+      AbstractValue defaultVal=AbstractValue(0); // TODO: float default values
+      logger[TRACE]<<"Init aggregate default value: "<<arrayElemId.toString()<<" : "<<defaultVal.toString()<<endl;
+      newPState.writeToMemoryLocation(arrayElemId,defaultVal);
+    }
+  } else {
+    getVariableIdMapping()->setNumberOfElements(initDeclVarId,initList.size());
+  }
+  return newPState;
+}
+
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
 
   /*
@@ -676,38 +750,44 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           exit(1);
         }
         // has aggregate initializer
-        if(isSgAggregateInitializer(initializer)) {
-          // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
-          PState newPState=*currentEState.pstate();
-          int elemIndex=0;
-          SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
-          variableIdMapping.setNumberOfElements(initDeclVarId,initList.size());
-          SgArrayType* arrayType=isSgArrayType(initializer->get_type());
+        if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
+          SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
+          // must be an array type, since structs are checked above
           ROSE_ASSERT(arrayType);
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-            SgExpression* exp=*i;
-            SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-            ROSE_ASSERT(assignInit);
-            // TODO: model arbitrary RHS values (use:analyzeAssignRhs (see below))
-            if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
-              int intVal=intValNode->get_value();
-              // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
-            } else {
-              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-              exit(1);
-            }
-            elemIndex++;
+          // only set size from aggregate initializer if not known from type
+          if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+            // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
+            variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
           }
+          PState newPState=*currentEState.pstate();
+          newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
           return createEState(targetLabel,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
-          //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
-
+          logger[TRACE]<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+          
+          // only create string in state with variable as pointer-address if it is an array (not for the case it is a char* pointer)
+          // in the case of char* it is handled as a pointer initializer (and the string-pointer is already available in state)
+          if(SgStringVal* stringValNode=isSgStringVal(assignInitializer->get_operand())) {
+            if(isSgArrayType(initName->get_type())) {
+              // handle special cases of: char a[]="abc"; char a[4]="abc";
+              // TODO: a[5]="ab";
+              logger[TRACE]<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
+              PState newPState=*currentEState.pstate();
+              initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
+              size_t stringLen=stringValNode->get_value().size();
+              if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+                variableIdMapping.setNumberOfElements(initDeclVarId,(int)stringLen);
+              }
+              SgType* variableType=initializer->get_type(); // for char and wchar
+              setElementSize(initDeclVarId,variableType);
+              ConstraintSet cset=*currentEState.constraints();
+              return createEState(targetLabel,newPState,cset);
+            }
+          }
           // set type info for initDeclVarId
           variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
           SgType* variableType=initializer->get_type();
@@ -750,7 +830,31 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         if(arrayType) {
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          variableIdMapping.setNumberOfElements(initDeclVarId,variableIdMapping.getArrayElementCount(arrayType));
+          int numElements=variableIdMapping.getArrayElementCount(arrayType);
+          if(numElements==0) {
+            logger[TRACE]<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
+            std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
+            if(arrayDimExps.size()>1) {
+              cerr<<"Error: multi-dimensional arrays not supported yet. Only linear arrays are supported."<<endl;
+              exit(1);
+            }
+            ROSE_ASSERT(arrayDimExps.size()==1);
+            SgExpression* arrayDimExp=*arrayDimExps.begin();
+            logger[TRACE]<<"Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+            list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(arrayDimExp,currentEState);
+            ROSE_ASSERT(evalResultList.size()==1);
+            SingleEvalResultConstInt evalRes=*evalResultList.begin();
+            AbstractValue arrayDimAVal=evalRes.result;
+            logger[TRACE]<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+            if(arrayDimAVal.isConstInt()) {
+              numElements=arrayDimAVal.getIntValue();
+              variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+            } else {
+              // TODO: size of array remains 1?
+            }
+          } else {
+            variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+          }
         } else {
           // set type info for initDeclVarId
           variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
@@ -988,6 +1092,18 @@ list<EState> Analyzer::transferIdentity(Edge edge, const EState* estate) {
   return elistify(newEState);
 }
 
+void Analyzer::initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
+  //cout<<"DEBUG: TODO: initializeStringLiteralInState"<<endl;
+  string theString=stringValNode->get_value();
+  int pos;
+  for(pos=0;pos<(int)theString.size();pos++) {
+    AbstractValue character(theString[pos]);
+    initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+  }
+  // add terminating 0 to string in state
+  initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
+}
+
 void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
   ROSE_ASSERT(getVariableIdMapping());
   //cout<<"DEBUG: TODO: initializeStringLiteralsInState"<<endl;
@@ -996,11 +1112,14 @@ void Analyzer::initializeStringLiteralsInState(PState& initialPState) {
     auto dataPair=*iter;
     SgStringVal* stringValNode=dataPair.first;
     VariableId stringVarId=dataPair.second;
+    initializeStringLiteralInState(initialPState,stringValNode,stringVarId);
+    /*
     string theString=stringValNode->get_value();
     for(int pos=0;pos<(int)theString.size();pos++) {
       AbstractValue character(theString[pos]);
       initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
     }
+    */
   }
 }
 
@@ -1555,6 +1674,14 @@ bool Analyzer::getSkipArrayAccesses() {
   return exprAnalyzer.getSkipArrayAccesses();
 }
 
+void Analyzer::setIgnoreUndefinedDereference(bool skip) {
+  exprAnalyzer.setIgnoreUndefinedDereference(skip);
+}
+
+bool Analyzer::getIgnoreUndefinedDereference() {
+  return exprAnalyzer.getIgnoreUndefinedDereference();
+}
+
 void Analyzer::set_finished(std::vector<bool>& v, bool val) {
   ROSE_ASSERT(v.size()>0);
   for(vector<bool>::iterator i=v.begin();i!=v.end();++i) {
@@ -1610,6 +1737,10 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
 
+  if(_contextSensitiveAnalysis) {
+    currentEState.callString.addLabel(currentEState.label());
+  }
+
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
@@ -1652,11 +1783,13 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     }
 #endif
     // general case: the actual argument is an arbitrary expression (including a single variable)
-    // we use for the third parameter "false": do not use constraints when extracting values.
-    // Consequently, formalparam=actualparam remains top, even if constraints are available, which
-    // would allow to extract a constant value (or a range (when relational constraints are added)).
     list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
-    ROSE_ASSERT(evalResultList.size()>0);
+    if(evalResultList.size()==0) {
+      cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+      cerr<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+      cerr<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+      exit(1);
+    }
     list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
     SingleEvalResultConstInt evalResult=*resultListIter;
     if(evalResultList.size()>1) {
@@ -1781,6 +1914,15 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
+
+  // determine functionCallLabel corresponding to functioncallReturnLabel.
+  Label functionCallReturnLabel=edge.source();
+  SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
+  Label functionCallLabel=getLabeler()->functionCallLabel(node);
+
+  if(_contextSensitiveAnalysis) {
+    currentEState.callString.removeIfLastLabel(functionCallLabel);
+  }
 
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
@@ -2267,6 +2409,8 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         exit(1);
       } else if(variableIdMapping.hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
+      } else if(variableIdMapping.hasFloatingPointType(lhsVar)) {
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasBoolType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
@@ -2364,7 +2508,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
             int index2=arrayPtrPlusIndexValue.getIndexIntValue();
             if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+              exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
+              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
+              cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
             }
           }
           arrayElementId=arrayPtrPlusIndexValue;
@@ -2412,13 +2560,21 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
-        exit(1);
+        if(lhsPointerValue.isUndefined() && getIgnoreUndefinedDereference()) {
+          //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+          PState pstate2=*(estate->pstate());
+          // skip write access, just create new state (no effect)
+          estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
+        } else {
+          cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
+          exit(1);
+        }
+      } else {
+        //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+        PState pstate2=*(estate->pstate());
+        pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
+        estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
-      //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
-      PState pstate2=*(estate->pstate());
-      pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
-      estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
@@ -2573,6 +2729,14 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
       estateSet.insert((*j)->source);
   }
   return estateSet;
+}
+
+void Analyzer::setContextSensitiveAnalysisFlag(bool flag) {
+  _contextSensitiveAnalysis=flag;
+}
+
+bool Analyzer::getContextSensitiveAnalysisFlag() {
+  return _contextSensitiveAnalysis;
 }
 
 #endif

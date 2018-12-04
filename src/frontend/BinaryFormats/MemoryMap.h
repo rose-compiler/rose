@@ -374,6 +374,38 @@ public:
     /** Documentation string for @ref insertFile. */
     static std::string insertFileDocumentation();
 
+    /** Insert data into a memory map.
+     *
+     *  This is intended for insert small pieces of data parsed from the locator string.  The locator string has the form:
+     *
+     * @verbatim
+     *  :[ADDR][+VMSIZE][=PERM]::DATA
+     * @endverbatim
+     *
+     *  The fields between the first and second colon are parameters for virtual memory; the fields between the second and
+     *  third colon are parameters for the data (none currently defined). Their meanings are:
+     *
+     *  @li @c ADDR: The virtual address where the first byte of data is mapped. This can be specified in decimal, octal, or
+     *      hexadecimal using the usual C syntax. If no address is specified then the data is mapped at the lowest unmapped
+     *      region which is large enough to hold it.
+     *
+     *  @li @c VMSIZE: Size in bytes of the virtual memory to map.  If VMSIZE is not specified then it is the same as the
+     *      number of bytes of DATA. If VMSIZE is smaller than DATA then the DATA will be truncated; if VMSIZE is larger than
+     *      DATA then DATA is zero-padded. If the resulting memory are size is zero then no change is made to the memory map.
+     *
+     *  @li @c PERM: Accessibility for the mapped segment. If present, it should be any of the letters "r", "w", and/or "x" in
+     *      that order to indicate readable, writable, and/or executable. If not present, then the new memory is readable,
+     *      writable, and executable.
+     *
+     *  @li @c DATA: The byte values in ascending address order. The values should be separated from one another by white space
+     *      and all values must be in the range 0 through 255, inclusive.  Values can be specified in hexadecimal (leading
+     *      "0x"), binary (leading "0b"), octal (leading "0"), or decimal. */
+    AddressInterval insertData(const std::string &locatorString);
+
+    /** Documentation string for @ref insertData. */
+    static std::string insertDataDocumentation();
+    
+
 #ifdef BOOST_WINDOWS
     void insertProcess(int pid, Attach::Boolean attach);
 #else

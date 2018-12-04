@@ -12,5 +12,6 @@ SgAsmExecutableFileFormat::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Ast");
+        mlog.comment("operating on binary abstract syntax trees");
     }
 }

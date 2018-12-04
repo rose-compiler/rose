@@ -1519,6 +1519,23 @@ Facility::name() const {
     return name_;
 }
 
+// thread-safe
+SAWYER_EXPORT std::string
+Facility::comment() const {
+    assert(isConstructed());
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return comment_;
+}
+
+// thread-safe
+SAWYER_EXPORT Facility&
+Facility::comment(const std::string &s) {
+    assert(isConstructed());
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    comment_ = s;
+    return *this;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // thread-safe
@@ -2089,6 +2106,12 @@ Facilities::print(std::ostream &log) const {
     if (facilities_.isEmpty()) {
         log <<"no message facilities registered\n";
     } else {
+        // Get length of longest facility name (assume single-line, no tabs as documented in API)
+        size_t maxNameLength = 0;
+        BOOST_FOREACH (const std::string &name, facilities_.keys())
+            maxNameLength = std::max(maxNameLength, name.size());
+
+        // Produce the output
         BOOST_FOREACH (const FacilityMap::Node &fnode, facilities_.nodes()) {
             Facility *facility = fnode.value();
 
@@ -2102,7 +2125,14 @@ Facilities::print(std::ostream &log) const {
                     log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
                 }
             }
-            log <<" " <<fnode.key() <<"\n";
+            log <<" " <<fnode.key();
+
+            std::string comment = facility->comment();
+            if (!comment.empty()) {
+                ASSERT_require(fnode.key().size() <= maxNameLength);
+                log <<std::string(maxNameLength - fnode.key().size(), ' ') <<" -- " <<comment;
+            }
+            log <<"\n";
         }
     }
 }
@@ -2148,6 +2178,7 @@ public:
     void operator()() {
         merr = FdSink::instance(2);
         mlog = Facility("", merr);
+        mlog.comment("Sawyer C++ support library");
         mlog[DEBUG].disable();
         mlog[TRACE].disable();
         mlog[WHERE].disable();

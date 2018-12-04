@@ -189,6 +189,20 @@ void CodeThornLanguageRestrictor::initialize() {
 
 }
 
+#ifdef POLYOPT_CHECK
+typedef std::list<SgFunctionDefinition*,SgFunctionDefinition> PolyOptFunctionPairList;
+typedef std::list<SgFunctionDefinition*> FunctionList;
+PolyOptFunctionPairList findPolyOptGeneratedFunctions(SgProject* project) {
+  PolyOptFunctionPairList funPairlist;
+  FunctionList funList;
+  std::list<SgFunctionDefinition*> allFunDefs=SgNodeHelper::listOfFunctionDefinitions(project);
+  for(auto funDef : allFunDefs) {
+    // TODO
+  }
+  return list;
+}
+#endif
+
 static IOAnalyzer* global_analyzer=0;
 
 set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
@@ -364,6 +378,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
+    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -376,10 +391,12 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
+    ("out-of-bounds-analysis-file",po::value< string >(),"Perform out-of-bounds analysis and write results to file [arg].")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
+    ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ;
 
   rersOptions.add_options()
@@ -415,8 +432,10 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("specialize-fun-const", po::value< vector<int> >(), "Constant <arg>, the param is to be specialized to.")
     ("specialize-fun-varinit", po::value< vector<string> >(), "Variable name of which the initialization is to be specialized (overrides any initializer expression).")
     ("specialize-fun-varinit-const", po::value< vector<int> >(), "Constant <arg>, the variable initialization is to be specialized to.")
+#ifdef POLYOPT_CHECK
+    ("check-polyopt-variants", po::value< bool >()->default_value(false)->implicit_value(true), "Select equivalence checking for generated polyopt variants (named '*_orig' and '*_transfo'). Function pairs are automatically detected.")
+#endif
     ;
-
   patternSearchOptions.add_options()
     ("pattern-search-max-depth", po::value< int >()->default_value(10), "Maximum input depth that is searched for cyclic I/O patterns.")
     ("pattern-search-repetitions", po::value< int >()->default_value(100), "Number of unrolled iterations of cyclic I/O patterns.")
@@ -557,7 +576,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     exit(0);
   } else if (args.count("version")) {
     cout << "CodeThorn version 1.8.1 (beta)\n";
-    cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
 
@@ -1189,6 +1208,9 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("print-rewrite-trace")) {
       rewriteSystem.setTrace(true);
     }
+    if(args.getBool("ignore-undefined-dereference")) {
+      analyzer->setIgnoreUndefinedDereference(true);
+    }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer->setSkipSelectedFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
@@ -1253,6 +1275,12 @@ int main( int argc, char * argv[] ) {
       lowering.normalizeAst(sageProject,2);
       logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
+
+    /* Set call stringlength as provided on command line. If none is
+       provided use the default value is used (see command line
+       argument definition).
+    */
+    CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
@@ -1520,10 +1548,17 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.isDefined("null-pointer-analysis-file")) {
-      NullPointerDereferenceLocations nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+      ProgramLocationsReport nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
       string fileName=args.getString("null-pointer-analysis-file");
       cout<<"Writing null-pointer analysis results to file "<<fileName<<endl;
       nullPointerDereferenceLocations.writeResultFile(fileName,analyzer->getLabeler());
+    }
+
+    if(args.isDefined("out-of-bounds-analysis-file")) {
+      ProgramLocationsReport outOfBoundsAccessLocations=analyzer->getExprAnalyzer()->getOutOfBoundsAccessLocations();
+      string fileName=args.getString("out-of-bounds-analysis-file");
+      cout<<"Writing out-of-bounds analysis results to file "<<fileName<<endl;
+      outOfBoundsAccessLocations.writeResultFile(fileName,analyzer->getLabeler());
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();
@@ -1741,6 +1776,15 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
+#ifdef POLYOPT_CHECK
+    if(args.getBool("check-polyopt-variants")) {
+      cout<<"STATUS: checking polyopt variants."<<endl;
+      analyzer->setSkipSelectedFunctionCalls(true);
+      analyzer->setSkipArrayAccesses(true);
+      args.setOption("explicit-arrays",false);
+      PolyOptFunctionPairList list=findPolyOptGeneratedFunctions();
+    }
+#endif
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
       if(args.getBool("rewrite-ssa")) {

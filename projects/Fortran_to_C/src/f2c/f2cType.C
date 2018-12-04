@@ -13,7 +13,8 @@ SgType* Fortran_to_C::translateType(SgType* oldType)
     case V_SgTypeString:
       {
         SgExpression* stringLength = deepCopy(isSgTypeString(oldType)->get_lengthExpression());
-        SgArrayType* newType =  buildArrayType(buildCharType(),NULL);
+        SgExpression* tmp = NULL;
+        SgArrayType* newType =  buildArrayType(buildCharType(),tmp);
         newType->set_rank(1);
         newType->set_dim_info(buildExprListExp(stringLength));
         return newType;

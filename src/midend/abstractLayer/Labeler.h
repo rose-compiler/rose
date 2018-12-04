@@ -145,13 +145,15 @@ class Labeler {
   int isLabelRelevantNode(SgNode* node);
   virtual void createLabels(SgNode* node);
 
-  /* Labels are numbered 0..n-1 where n is the number of labeled nodes (not all nodes are labeled).
+  /** Labels are numbered 0..n-1 where n is the number of labels
+      associated with AST nodes (not all nodes are labeled, and some
+      nodes are associated with more than one label).
      A return value of NO_LABEL means that this node has no label.
   */
   Label getLabel(SgNode* node);
   LabelSet getLabelSet(std::set<SgNode*>& nodeSet);
 
-  /* Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
+  /** Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
      this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label);
