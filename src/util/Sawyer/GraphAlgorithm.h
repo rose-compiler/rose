@@ -274,7 +274,6 @@ graphEraseParallelEdges(Graph &g) {
     }
 }
 
-
 /** Number vertices according to their height from the leaves.
  *
  *  This function treats the input graph as a dependency graph where an edge from vertex V1 to V2 means that V1 depends on

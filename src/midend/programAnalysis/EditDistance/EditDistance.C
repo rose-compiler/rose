@@ -13,6 +13,7 @@ initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::EditDistance");
+        mlog.comment("measuring differences using edit distance");
     }
 }
 

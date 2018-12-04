@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <istream>
 #include <list>
 #include <ostream>
 #include <rose_override.h>
@@ -176,6 +177,15 @@ public:
     void insert(const std::string &x) { append((const uint8_t*)x.c_str(), x.size()); }
     void insert(uint64_t x) { append((uint8_t*)&x, sizeof x); }
     void insert(const uint8_t *x, size_t size) { append(x, size); }
+    void insert(std::istream &stream) {
+        char buf[4096];                                 // multiple of 64
+        while (stream.good()) {
+            stream.read(buf, sizeof buf);
+            append((const uint8_t*)buf, stream.gcount());
+        }
+        if (!stream.eof())
+            throw Hasher::Exception("failed to read data from file");
+    }
     /** @} */
     
     /** Insert data into the digest.
@@ -288,13 +298,13 @@ typedef HasherGcrypt<GCRY_MD_SHA256> HasherSha256;      /**< SHA-256 hasher. Thr
 typedef HasherGcrypt<GCRY_MD_SHA384> HasherSha384;      /**< SHA-384 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<GCRY_MD_SHA512> HasherSha512;      /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<GCRY_MD_CRC32> HasherCrc32;        /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
-#else
-typedef HasherGcrypt<0> HasherMd5;                      // the template argument is arbitrary and they can all be the same
-typedef HasherGcrypt<0> HasherSha1;
-typedef HasherGcrypt<0> HasherSha256;
-typedef HasherGcrypt<0> HasherSha384;
-typedef HasherGcrypt<0> HasherSha512;
-typedef HasherGcrypt<0> HasherCrc32;
+#else // the template argument for the following unimplemented hashers is arbitrary and they can all be the same
+typedef HasherGcrypt<0> HasherMd5;                      /**< MD5 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha1;                     /**< SHA1 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha256;                   /**< SHA-256 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha384;                   /**< SHA-384 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherSha512;                   /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
+typedef HasherGcrypt<0> HasherCrc32;                    /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
 #endif
 
 /** Fowler-Noll-Vo hashing using the Hasher interface. */
@@ -305,6 +315,25 @@ public:
     const Digest& digest() ROSE_OVERRIDE;
     void append(const uint8_t *message, size_t messageSize);
     uint64_t partial() const { return partial_; }
+};
+
+/** Built-in SHA-256 hasher.
+ *
+ *  This algorithm is built into ROSE and doesn't depend on any external libraries. */
+class ROSE_DLL_API HasherSha256Builtin: public Hasher {
+    static const uint32_t roundConstants_[64];          // statically-generated constants for the algorithm
+    uint32_t state_[8];                                 // 256 bits of state information
+    size_t processedBytes_;                             // number of message bytes hashed (excludes padding)
+    std::vector<uint8_t> leftoverBytes_;                // message bytes inserted but not yet hashed
+public:
+    HasherSha256Builtin();
+    void clear() ROSE_OVERRIDE;
+    const Digest& digest() ROSE_OVERRIDE;
+    void append(const uint8_t *message, size_t messageSize);
+private:
+    uint8_t messageByte(size_t index, const uint8_t *message, size_t messageSize);
+    bool getNextChunk(const uint8_t* &message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/);
+    void accumulateChunk(const uint32_t chunk[16]);
 };
 
 /** Convert two vectors to a vector of pairs.

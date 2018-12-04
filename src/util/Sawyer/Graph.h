@@ -845,6 +845,15 @@ public:                                                 // public only for the s
             }
             return a < b;
         }
+
+        /** True if iterator doesn't point to anything. */
+        bool isEmpty() const {
+            if (N_PHASES == phase_) {
+                return iter_.isAtEnd();
+            } else {
+                return vlist_->isHead();
+            }
+        }
     };
 
     /** Base class for vertex iterators. */
@@ -893,6 +902,11 @@ public:                                                 // public only for the s
         /** Iterator comparison. */
         bool operator<(const VertexBaseIterator &other) const { return base_ < other.base_; }
 
+        /** True if iterator doesn't point to anything. */
+        bool isEmpty() const {
+            return base_.base() == NULL;
+        }
+        
     private:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }
