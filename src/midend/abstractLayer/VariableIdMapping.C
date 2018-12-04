@@ -327,6 +327,21 @@ size_t VariableIdMapping::getElementSize(VariableId variableId) {
   return mappingVarIdToElementSize[variableId._id];
 }
 
+bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
+  if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) { 
+      if(SgValueExp* bitFieldValExp=varDecl->get_bitfield()) {
+        // the variable declaration is a bitfield. Check whether it has a name
+        string bitfieldName=string(initName->get_name());
+        if(bitfieldName.size()==0) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -352,28 +367,30 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
         type = closureVar->get_type();
-      }
-      else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+      } else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+        //cout<<"DEBUG VIM: @ initName: "<<initName->unparseToString()<<endl;
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
+          //cout<<"DEBUG VIM: symbol: "<<sym<<endl;
+          // determine the declaration to check for bitfields
+           if(isAnonymousBitfield(initName)) {
+            // MS (2018-12-4): skip anonymous bitfields because in the
+            // same struct/class/union they are mapped to the same
+            // SgSymbol.
+            continue;
+          }
           type = initName->get_type();
           initializer = initName->get_initializer();
-        }
-        else {
+        } else {  
           //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
           // Registration is not possible without symbol.
           // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
           //  TODO: Is it possible to assert this?
           //  ==> It is okay to ignore these.
+          cout<<"DEBUG VIM: NO symbol! "<<endl;
         }
       }
-      // schroder3 (2016-08-22): This is currently not necessary because we will insert the variable when traversing its declaration.
-      // else if(SgVarRefExp* varRef = isSgVarRefExp(*i)) {
-      //   sym = varRef->get_symbol();
-      //   ROSE_ASSERT(sym);
-      // }
-
       if(sym) {
         // Symbol found. There should be a type:
         ROSE_ASSERT(type);
