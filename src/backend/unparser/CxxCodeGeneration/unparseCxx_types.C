@@ -3744,8 +3744,6 @@ Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info, bool is_fir
      SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
      ROSE_ASSERT(nrdecl != NULL);
 
-     SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
-
      if (nrdecl->get_templateDeclaration() == NULL) {
        SgNode * parent = nrdecl->get_parent();
        ROSE_ASSERT(parent != NULL);
@@ -3773,6 +3771,8 @@ Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info, bool is_fir
 #endif
        curprint(nameQualifier.str());
      }
+
+     SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
 
      // if template argument are provided then the "template" keyword has to be added
   // if (tpl_args.size() > 0) curprint("template ");

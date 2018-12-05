@@ -257,10 +257,19 @@ Unparse_ExprStmt::unparseNonrealRefExpression(SgExpression* expr, SgUnparse_Info
   SgNonrealRefExp * nr_refexp = isSgNonrealRefExp(expr);
   ROSE_ASSERT(nr_refexp != NULL);
 
+  SgName nameQualifier = nr_refexp->get_qualified_name_prefix();
+  curprint(nameQualifier.str());
+
   SgNonrealSymbol * nrsym = nr_refexp->get_symbol();
   ROSE_ASSERT(nrsym != NULL);
 
+  SgNonrealDecl * nrdecl = nrsym->get_declaration();
+  ROSE_ASSERT(nrdecl != NULL);
+
   curprint(nrsym->get_name().str());
+
+  SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
+  unparseTemplateArgumentList(tpl_args, info);
 }
 
 void
