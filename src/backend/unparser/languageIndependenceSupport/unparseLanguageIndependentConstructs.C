@@ -8313,6 +8313,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
        // DQ (12/2/2004): Original cases
           case VAR_REF:
+          case NONREAL_REF:
           case CLASSNAME_REF:
           case FUNCTION_REF:
           case MEMBER_FUNCTION_REF:

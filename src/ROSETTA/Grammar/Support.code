@@ -4365,6 +4365,8 @@ HEADER_SYMBOL_TABLE_START
 
           SgClassSymbol*     find_class(const SgName & name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
 
+          SgNonrealSymbol*   find_nonreal(const SgName & name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList);
+
           SgFunctionSymbol* find_function(const SgName& name);                //! Complexity O(log n) for first match against name, then O(n)
        // SgFunctionSymbol* find_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
           SgFunctionSymbol* find_function(const SgName&, const SgType* name, SgTemplateArgumentPtrList* templateArgumentList = NULL);
@@ -9311,6 +9313,14 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
    }
 
 
+SgNonrealSymbol*
+SgSymbolTable::find_nonreal(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList)
+   {
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgNonrealSymbol>(nm,NULL,templateParameterList,templateArgumentsList,filterTemplateSymbols);
+   }
+
+
 
 #if 0
 // DQ (11/27/2010): Removed deprecated function (depricated three years ago).
@@ -9573,6 +9583,7 @@ SgSymbolTable::find_template(const SgName & nm, SgTemplateParameterPtrList* temp
    }
 #endif
 
+#define DEBUG_TEMPLATE_PARAMETERS_AND_ARGUMENTS_ERROR_CHECKING 0
 
 template<class ReturnType>
 bool
@@ -9594,25 +9605,19 @@ templateParameterAndArgumentErrorChecking(SgTemplateParameterPtrList* templatePa
         {
           if (templateParameterList != NULL)
              {
-#if 0
-               printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList can be used with valid templateArgumentList = %p \n",templateArgumentList);
-#endif
             // ROSE_ASSERT((VariantT)ReturnType::static_variant == V_SgTemplateClassDeclaration || (VariantT)ReturnType::static_variant == V_SgTemplateFunctionDeclaration || (VariantT)ReturnType::static_variant == V_SgTemplateMemberFunctionDeclaration);
-               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol || returnTypeVariant == V_SgTemplateFunctionSymbol || returnTypeVariant == V_SgTemplateMemberFunctionSymbol);
-#if 0
-               printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList != NULL: returnValue = %s \n",returnValue ? "true" : "false");
+               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol || returnTypeVariant == V_SgTemplateFunctionSymbol || returnTypeVariant == V_SgTemplateMemberFunctionSymbol || returnTypeVariant == V_SgNonrealSymbol);
+#if DEBUG_TEMPLATE_PARAMETERS_AND_ARGUMENTS_ERROR_CHECKING
+               printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList != NULL && templateArgumentList == NULL: returnValue = %s \n",returnValue ? "true" : "false");
 #endif
              }
 
           if (templateParameterList != NULL && templateArgumentList != NULL)
              {
-#if 0
-               printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList and templateArgumentList not used \n");
-#endif
             // This is the only allowed case (since functions template can be partially specialized.
             // ROSE_ASSERT((VariantT)ReturnType::static_variant == V_SgTemplateClassDeclaration);
-               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol || returnTypeVariant == V_SgTemplateVariableSymbol);
-#if 0
+               returnValue = (returnTypeVariant == V_SgTemplateClassSymbol || returnTypeVariant == V_SgTemplateVariableSymbol || returnTypeVariant == V_SgNonrealSymbol);
+#if DEBUG_TEMPLATE_PARAMETERS_AND_ARGUMENTS_ERROR_CHECKING
                printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList != NULL && templateArgumentList != NULL: returnValue = %s \n",returnValue ? "true" : "false");
 #endif
              }
@@ -9621,9 +9626,9 @@ templateParameterAndArgumentErrorChecking(SgTemplateParameterPtrList* templatePa
                if (templateArgumentList != NULL)
                   {
                  // ROSE_ASSERT((VariantT)ReturnType::static_variant == V_SgTemplateInstantiationDecl || (VariantT)ReturnType::static_variant == V_SgTemplateInstantiationFunctionDecl || (VariantT)ReturnType::static_variant == V_SgTemplateInstantiationMemberFunctionDecl);
-                    returnValue = (returnTypeVariant == V_SgClassSymbol || returnTypeVariant == V_SgFunctionSymbol || returnTypeVariant == V_SgMemberFunctionSymbol);
-#if 0
-                    printf ("In templateParameterAndArgumentErrorChecking(): templateArgumentList != NULL: returnValue = %s \n",returnValue ? "true" : "false");
+                    returnValue = (returnTypeVariant == V_SgClassSymbol || returnTypeVariant == V_SgFunctionSymbol || returnTypeVariant == V_SgMemberFunctionSymbol || returnTypeVariant == V_SgNonrealSymbol);
+#if DEBUG_TEMPLATE_PARAMETERS_AND_ARGUMENTS_ERROR_CHECKING
+                    printf ("In templateParameterAndArgumentErrorChecking(): templateParameterList == NULL && templateArgumentList != NULL: returnValue = %s \n",returnValue ? "true" : "false");
 #endif
                   }
              }

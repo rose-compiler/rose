@@ -631,6 +631,14 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                     break;
                   }
 
+               case V_SgNonrealDecl:
+                  {
+                    SgNonrealDecl* nrdecl = isSgNonrealDecl(declaration);
+                    ROSE_ASSERT(nrdecl != NULL);
+                    evaluateNameQualificationForTemplateArgumentList (nrdecl->get_tpl_args(),currentScope,positionStatement);
+                    break;
+                  }
+
 
                default:
                   {
@@ -2307,11 +2315,14 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        }
                     case V_SgNonrealDecl:
                        {
-                      // TV (05/10/2018): TODO
 #if 0
                          printf ("In NameQualificationTraversal::nameQualificationDepth(): Found a case of declaration == SgNonrealDecl => return 0\n");
 #endif
-                         return 0;
+                         ROSE_ASSERT(symbol != NULL);
+                         if (!isSgNonrealSymbol(symbol)) {
+                           symbol = SageInterface::lookupNonrealSymbolInParentScopes(name,currentScope,templateParameterList,templateArgumentList);
+                         }
+
                          break;
                        }
 
@@ -3095,6 +3106,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               break;
                             }
 
+                         case V_SgNonrealSymbol:
+                            {
+                              printf ("WARNING: Support for name qualification depth for SgNonrealSymbol is not implemented yet \n");
+                              break;
+                            }
+
                          default:
                             {
                            // Handle cases are we work through specific example codes.
@@ -3756,6 +3773,8 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
      printf(" -- type = %p (%s) : %s\n", type, type->class_name().c_str(), type->unparseToString().c_str());
 #endif
 
+#if 0
+  // TV (12/03/2018): the call to `evaluateTemplateInstantiationDeclaration` later takes care of that
   // TV (04/03/2018): Traverse type structure associated with non-real "stuff" (template parameters and their members)
      SgType * btype = type->stripType();
      SgNonrealType * nrtype = isSgNonrealType(btype);
@@ -3765,17 +3784,8 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        if (nrdecl->get_tpl_args().size() > 0) {
          evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, positionStatement);
        }
-#if 0
-       ROSE_ASSERT(nrdecl->get_nonreal_decl_scope());
-       SgNonrealDecl * parent_nrdecl = isSgNonrealDecl(nrdecl->get_nonreal_decl_scope()->get_parent());
-       if (parent_nrdecl != NULL) {
-         SgType * tmp = parent_nrdecl->get_type();
-         ROSE_ASSERT(tmp != NULL);
-         ROSE_ASSERT(isSgNonrealType(tmp) != NULL);
-//       traverseType(parent_nrdecl->get_type(), nodeReferenceToType, currentScope, positionStatement);
-       }
-#endif
      }
+#endif
 
 #if 0
   // DQ (4/23/2013): Added this case to allow pointers to function to have there argument types unparsed with name qualification.
@@ -8796,10 +8806,35 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In setNameQualification(SgTypedefDeclaration*) \n");
+     printf (" --- typedefDeclaration = %p (%s)\n", typedefDeclaration, typedefDeclaration->class_name().c_str());
+     printf (" --- declaration = %p (%s)\n", declaration, declaration->class_name().c_str());
 #endif
+     SgScopeStatement * scope = declaration->get_scope();
+
+     SgNonrealDecl * nrdecl = isSgNonrealDecl(declaration);
+     if (nrdecl != NULL) {
+       printf (" --- nrdecl->get_templateDeclaration() = %p (%s)\n", nrdecl->get_templateDeclaration(), nrdecl->get_templateDeclaration() != NULL ? nrdecl->get_templateDeclaration()->class_name().c_str() : "");
+       if (nrdecl->get_templateDeclaration() != NULL) {
+         scope = nrdecl->get_templateDeclaration()->get_scope();
+       } else {
+         SgDeclarationScope * decl_scope = isSgDeclarationScope(nrdecl->get_scope());
+         ROSE_ASSERT(decl_scope != NULL);
+
+         SgNode * decl_scope_parent = decl_scope->get_parent();
+         printf (" --- decl_scope_parent = %p (%s)\n", decl_scope_parent, decl_scope_parent != NULL ? decl_scope_parent->class_name().c_str() : "");
+
+         SgNonrealDecl * decl_scope_nrparent = isSgNonrealDecl(decl_scope_parent);
+         if (decl_scope_nrparent != NULL) {
+           ROSE_ASSERT(decl_scope_nrparent != nrdecl);
+
+           setNameQualification(typedefDeclaration, decl_scope_nrparent, amountOfNameQualificationRequired);
+           return;
+         }
+       }
+     }
 
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
-     string qualifier = setNameQualificationSupport(declaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+     string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
      typedefDeclaration->set_global_qualification_required_for_base_type(outputGlobalQualification);
      typedefDeclaration->set_name_qualification_length_for_base_type(outputNameQualificationLength);
@@ -9312,7 +9347,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      outputGlobalQualification                = false;
      outputTypeEvaluation                     = false;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
 #endif
 
@@ -9525,6 +9560,17 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                   }
              }
 
+          SgDeclarationScope * decl_scope = isSgDeclarationScope(scope);
+          if (decl_scope != NULL) {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+            printf ("setNameQualificationSupport(): case of SgDeclarationScope:\n");
+            printf (" --- scope_name         = %s \n",scope_name.c_str());
+            printf (" --- scope->get_scope() = %p (%s) \n", scope->get_scope(), scope->get_scope() != NULL ? scope->get_scope()->class_name().c_str() : "");
+            printf (" --- scope->get_parent() = %p (%s) \n", scope->get_parent(), scope->get_parent() != NULL ? scope->get_parent()->class_name().c_str() : "");
+//          ROSE_ASSERT(false);
+#endif
+          }
+
           SgGlobal* globalScope = isSgGlobal(scope);
           if (globalScope != NULL)
              {
@@ -9583,7 +9629,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      printf ("In NameQualificationTraversal::setNameQualificationSupport(): After loop over name qualifiction depth: inputNameQualificationLength = %d \n",inputNameQualificationLength);
 #endif
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("Leaving NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",
           outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired,qualifierString.c_str());
 #endif

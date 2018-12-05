@@ -6116,6 +6116,27 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      return symbol;
    }
 
+SgNonrealSymbol*
+SageInterface::lookupNonrealSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+   {
+     SgNonrealSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+          symbol = cscope->lookup_nonreal_symbol(name,templateParameterList,templateArgumentList);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 SgTypedefSymbol *
 SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
