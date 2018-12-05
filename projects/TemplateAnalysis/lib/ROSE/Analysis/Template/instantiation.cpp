@@ -63,12 +63,15 @@ void Instantiation::construct() {
   ::MFB::Utils::collect_symbol_template_info(symbol, template_symbol, nonreal_scope, tpl_params, tpl_args);
   
    if (template_symbol != NULL && template_symbol != symbol) {
-    SgTemplateClassSymbol * tpl_sym_ = isSgTemplateClassSymbol(template_symbol);
+    SgTemplateClassSymbol * tpl_csym_ = isSgTemplateClassSymbol(template_symbol);
+    SgTemplateFunctionSymbol * tpl_fsym_ = isSgTemplateFunctionSymbol(template_symbol);
     SgNonrealSymbol * nr_sym_ = isSgNonrealSymbol(template_symbol);
-    ROSE_ASSERT(tpl_sym_ != NULL || nr_sym_ != NULL);
+    ROSE_ASSERT(tpl_csym_ != NULL || tpl_fsym_ != NULL || nr_sym_ != NULL);
 
-    if (tpl_sym_ != NULL) {
-      cannonical = TemplateInstantiation::build(tpl_sym_);
+    if (tpl_csym_ != NULL) {
+      cannonical = TemplateInstantiation::build(tpl_csym_);
+    } else if (tpl_fsym_ != NULL) {
+      cannonical = TemplateInstantiation::build(tpl_fsym_);
 //  } else {
 //    cannonical = TemplateInstantiation::build(nr_sym_);
     }

@@ -36,7 +36,9 @@ bool declared_in_namespace(SgNode * n, const std::set<std::string> & nsp_filter)
   } else if (vsym) {
     // SgInitializedName * get_declaration ()
   } else if (nrsym) {
-    // SgNonrealDecl * get_declaration ()
+    SgNonrealDecl * decl = isSgNonrealDecl(nrsym->get_declaration());
+    assert(decl != NULL);
+    name = decl->get_qualified_name().getString();
   } else if (ctype) {
     SgClassDeclaration * decl = isSgClassDeclaration(ctype->get_declaration());
     assert(decl != NULL);
@@ -48,7 +50,9 @@ bool declared_in_namespace(SgNode * n, const std::set<std::string> & nsp_filter)
   } else if (mtype) {
     // 
   } else if (nrtype) {
-    // 
+    SgNonrealDecl * decl = isSgNonrealDecl(nrtype->get_declaration());
+    assert(decl != NULL);
+    name = decl->get_qualified_name().getString();
   } else if (ptype) {
     // 
   } else if (rtype) {

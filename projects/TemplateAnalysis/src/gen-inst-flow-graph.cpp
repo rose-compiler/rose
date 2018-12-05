@@ -14,6 +14,7 @@
 int main(int argc, char ** argv) {
   std::vector<std::string> args(argv, argv+argc);
   std::set<std::string> nsp_filter_analysis;
+  std::set<std::string> force_analysis;
   std::set<std::string> nsp_filter_graphviz;
   auto arg = args.begin();
   while (arg != args.end()) {
@@ -28,6 +29,12 @@ int main(int argc, char ** argv) {
       if (nsp_name.substr(0,2) != "::")
         nsp_name = "::" + nsp_name;
       nsp_filter_graphviz.insert(nsp_name);
+      arg = args.erase(arg);
+    } else if (arg->find("--force-analysis=") == 0) {
+      std::string nsp_name = arg->substr(17);
+      if (nsp_name.substr(0,2) != "::")
+        nsp_name = "::" + nsp_name;
+      force_analysis.insert(nsp_name);
       arg = args.erase(arg);
     } else {
       arg++;
@@ -48,10 +55,17 @@ int main(int argc, char ** argv) {
     SgClassDeclaration * xdecl = csym->get_declaration();
     assert(xdecl != NULL);
 
+    std::string xname = xdecl->get_qualified_name().getString();
+
     bool declaration_of_interrest = true;
     for (auto nsp_name: nsp_filter_analysis) {
-      if (xdecl->get_qualified_name().getString().find(nsp_name) == 0) {
+      if (xname.find(nsp_name) == 0) {
         declaration_of_interrest = false;
+      }
+    }
+    for (auto nsp_name: force_analysis) {
+      if (xname.find(nsp_name) == 0) {
+        declaration_of_interrest = true;
       }
     }
 
