@@ -184,6 +184,8 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // void setNameQualification ( SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
 
+          void setNameQualification ( SgNonrealRefExp* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
+
           void setNameQualification ( SgEnumVal* enumVal, SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired);
 
        // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.

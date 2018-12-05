@@ -6062,6 +6062,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
         }
 
+     SgNonrealRefExp * nrRefExp = isSgNonrealRefExp(n);
+     if (nrRefExp != NULL) {
+       SgNonrealSymbol * nrsym = nrRefExp->get_symbol();
+       ROSE_ASSERT(nrsym != NULL);
+
+       SgNonrealDecl * nrdecl = nrsym->get_declaration();
+       ROSE_ASSERT(nrdecl != NULL);
+
+       SgStatement* currentStatement = TransformationSupport::getStatement(nrRefExp);
+       SgScopeStatement* currentScope = currentStatement->get_scope();
+
+       SgDeclarationStatement * declstmt = nrdecl;
+       if (nrdecl->get_templateDeclaration() != NULL) {
+         declstmt = nrdecl->get_templateDeclaration();
+       }
+
+       int amountOfNameQualificationRequired = nameQualificationDepth(declstmt, currentScope, currentStatement);
+       setNameQualification(nrRefExp, declstmt, amountOfNameQualificationRequired);
+     }
+
 
   // DQ (5/12/2011): We want to located name qualification information about referenced functions 
   // at the SgFunctionRefExp and SgMemberFunctionRefExp IR node instead of the SgFunctionCallExp IR node.
@@ -9193,6 +9213,70 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
         }
    }
 
+void
+NameQualificationTraversal::setNameQualification(SgNonrealRefExp* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
+   {
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+  // DQ (11/22/2016): Added assertion.
+     ROSE_ASSERT(typeDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgNonrealRefExp*) \n");
+#endif
+
+     string qualifier = setNameQualificationSupport(typeDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+     exp->set_global_qualification_required(outputGlobalQualification);
+     exp->set_name_qualification_length(outputNameQualificationLength);
+
+  // DQ (6/2/2011): I think that type elaboration could be required for casts, but I am not certain.
+     exp->set_type_elaboration_required(outputTypeEvaluation);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_name_qualification_length()     = %d \n",exp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_type_elaboration_required()     = %s \n",exp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_global_qualification_required() = %s \n",exp->get_global_qualification_required() ? "true" : "false");
+#endif
+     if (qualifiedNameMapForNames.find(exp) == qualifiedNameMapForNames.end())
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),exp,exp->class_name().c_str());
+#endif
+          qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(exp,qualifier));
+        }
+       else
+        {
+       // DQ (6/21/2011): Now we are catching this case...
+
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(exp);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("WARNING: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+
+               SgName testNameInMap = exp->get_qualified_name_prefix();
+               printf ("testNameInMap = %s \n",testNameInMap.str());
+             }
+        }
+   }
+
 
 void
 NameQualificationTraversal::setNameQualification(SgAggregateInitializer* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
@@ -9494,7 +9578,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                          SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(scope);
                          if (templateClassDefinition != NULL)
                             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("In NameQualificationTraversal::setNameQualificationSupport(): Found SgTemplateClassDefinition: templateClassDefinition = %p = %s \n",templateClassDefinition,templateClassDefinition->class_name().c_str());
 #endif
                               SgTemplateClassDeclaration* templateClassDeclaration = templateClassDefinition->get_declaration();
@@ -9548,7 +9632,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
                               scope_name = template_name;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("setNameQualificationSupport(): case of SgTemplateClassDefinition: scope_name = %s \n",scope_name.c_str());
 #endif
 #if 0
@@ -9586,7 +9670,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                scope_name = "::";
              }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope_name = %s skip_over_scope = %s \n",scope_name.c_str(),skip_over_scope ? "true" : "false");
 #endif
 
