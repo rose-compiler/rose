@@ -130,7 +130,9 @@ tc.DumpDep();
     for (GroupGraphNode::const_iterator iter=scc->begin(); !iter.ReachEnd(); iter++) {
        LoopTreeDepGraphNode *n = 
           static_cast<LoopTreeDepGraphNode*>(iter.Current()); 
-       treeSet.insert( tc.GetTreeNode(n) );
+       LoopTreeNode*         ltn = tc.GetTreeNode(n);
+//     ROSE_ASSERT(ltn != NULL);
+       treeSet.insert( ltn );
     }
     if (treeSet.NumberOfEntries()) {
       SelectPtrSet<LoopTreeNode> sel(treeSet);

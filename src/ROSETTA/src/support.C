@@ -838,86 +838,18 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "output_warnings", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Controls language mode (should support strict variants as well)
      File.setDataPrototype         ( "bool", "C_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Liao (6/6/2008): Support for UPC model of C , 6/19/2008: add support for static threads compilation
-     File.setDataPrototype         ( "bool", "UPC_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (9/19/2010): Added support to control use of C++ internal support when using UPC (which defines initial work for UPC++)
-     File.setDataPrototype         ( "bool", "UPCxx_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "int", "upc_threads", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // C89 options:
-  // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
-     File.setDataPrototype         ( "bool", "C89_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "C89_gnu_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // C99 options:
-     File.setDataPrototype         ( "bool", "C99_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "C99_gnu_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // C11 and C++11 options:
-  // DQ (7/21/2012): Adding C11 support.
-     File.setDataPrototype         ( "bool", "C11_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
-     File.setDataPrototype         ( "bool", "C11_gnu_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (7/21/2012): Adding C++0x support.
-     File.setDataPrototype         ( "bool", "Cxx0x_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (7/21/2012): Adding C++11 support.
-     File.setDataPrototype         ( "bool", "Cxx11_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (7/27/2014): Adding C++11 GNU support.
-     File.setDataPrototype         ( "bool", "Cxx11_gnu_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // C14 and C++14 options:
-  // DQ (4/20/2014): Adding C14 support.
-     File.setDataPrototype         ( "bool", "C14_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (7/26/2014): Adding gnu11 option (future default for GNU gcc).
-     File.setDataPrototype         ( "bool", "C14_gnu_only", "= false",
-
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/20/2014): Adding C++14 support.
-     File.setDataPrototype         ( "bool", "Cxx14_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/27/2014): Adding C++14 gnu support.
-     File.setDataPrototype         ( "bool", "Cxx14_gnu_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/11/2007): Support for Fortran (Fortran, f77, f90, f95, f03)
      File.setDataPrototype         ( "bool", "Fortran_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "F77_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "F90_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "F95_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "F2003_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (1/25/2016): Added initial command line support for Fortran 2008 files.
-     File.setDataPrototype         ( "bool", "F2008_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (1/23/2009): Co-Array Fortran (CAF) support
      File.setDataPrototype         ( "bool", "CoArrayFortran_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     File.setDataPrototype         ( "int", "upc_threads", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/11/2010): Added initial Java support.
      File.setDataPrototype         ( "bool", "Java_only", "= false",
@@ -1016,6 +948,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "exit_after_parser", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "skip_syntax_check", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TV (09/24/2018): Adding the ability to skip the parser when testing the backend with ROSE command line processing
+     File.setDataPrototype         ( "bool", "skip_parser", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/7/2010): This permits less agressive syntax checking, but still some syntax checking.
@@ -1457,6 +1392,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "no_optimize_flag_for_frontend", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // TV (10/08/2018): ROSE-1392
+     File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ******************************************************************************
   // ******************************************************************************
@@ -2532,6 +2470,11 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // TV (10/05/2018): create a double-link chain of instances of a template argument instead of sharing (ROSE-1431)
+     TemplateArgument.setDataPrototype("SgTemplateArgument*","previous_instance","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype("SgTemplateArgument*","next_instance","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.

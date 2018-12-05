@@ -167,6 +167,7 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
   } else if(index.isConstInt()) {
     val.valueType=PTR;
     val.variableId=arrayVariableId;
+    ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
     return val;
   } else {
@@ -187,6 +188,10 @@ std::string AbstractValue::valueTypeToString() const {
     return "unknown";
   }
 }
+
+// currently maps to isTop(); in preparation for explicit handling of
+// undefined values.
+bool AbstractValue::isUndefined() const {return isTop();}
 
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}

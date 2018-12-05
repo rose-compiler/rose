@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
-
+EXTRA_DIST =
 
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
@@ -32,6 +32,19 @@ if !ROSE_USE_INSURE
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
+
+# The MatrixTestingProject is not compiled as part of ROSE but serves as a simple example of an external project.
+# Matrix testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
+# and build trees. Therefore, this project's source code should be installed as part of the ROSE installation. These
+# rules are at this high level of the source code because this project must be installed even if the "projects'
+# subdirectory doesn't participate in the $(SUBDIRS).
+testprojdir = ${datarootdir}/test-project
+testproj_DATA =						\
+	projects/MatrixTestingProject/Makefile		\
+	projects/MatrixTestingProject/README		\
+	projects/MatrixTestingProject/binary_specimen	\
+	projects/MatrixTestingProject/disassemble.C
+EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
 # Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
@@ -98,7 +111,7 @@ install-compass: install-core
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
 # ROSE project developers that have a need to install the library and other specific tools (via other install targets) but
 # don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
-install-rose-library: install-data-local
+install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
 	$(MAKE) -C $(top_builddir)/python install
@@ -201,7 +214,7 @@ check-policies: enforce_policies
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
-EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
+EXTRA_DIST += cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers build ChangeLog2
 
 # The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
@@ -698,7 +711,7 @@ lcov:
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
 -d src/frontend/Partitioner2/.libs \
--d src/midend/binaryAnalyses/.libs \
+-d src/midend/BinaryAnalysis/.libs \
 -d src/midend/programAnalysis/.libs \
 -d src/midend/programAnalysis/staticSingleAssignment/.libs \
 -d src/midend/programAnalysis/ssaUnfilteredCfg/.libs \

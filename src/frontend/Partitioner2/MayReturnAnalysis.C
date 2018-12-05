@@ -463,6 +463,7 @@ Partitioner::allFunctionMayReturn() const {
     size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "may-return analysis");
+    progress.suffix(" functions");
     for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
         if (!visited[cgVertexId]) {
             typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;

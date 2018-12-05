@@ -47,6 +47,7 @@ void BinaryLoader::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::BinaryLoader");
+        mlog.comment("mapping files into virtual memory");
     }
 }
 

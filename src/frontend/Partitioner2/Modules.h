@@ -148,6 +148,7 @@ public:
 //                                      Generic modules
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Miscellaneous supporting functions for disassembly. */
 namespace Modules {
 
 /** Convert system function names to ROSE canonical form.

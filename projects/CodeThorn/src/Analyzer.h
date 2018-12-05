@@ -111,11 +111,16 @@ namespace CodeThorn {
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeVariableIdMapping(SgProject*);
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
 
+    int computeNumberOfElements(SgVariableDeclaration* decl);
+    // modifies PState with written initializers
+    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pState, EState currentEState);
+    // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
@@ -152,6 +157,8 @@ namespace CodeThorn {
     void setSkipSelectedFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
+    void setIgnoreUndefinedDereference(bool);
+    bool getIgnoreUndefinedDereference();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }
@@ -228,7 +235,15 @@ namespace CodeThorn {
 
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    // temporary option
     bool optionStringLiteralsInState=false;
+
+    /** allows to enable context sensitive analysis. Currently only
+        call strings of arbitrary length are supported (recursion is
+        not supported yet) */
+    void setOptionContextSensitiveAnalysis(bool flag);
+    bool getOptionContextSensitiveAnalysis();
+
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -380,6 +395,7 @@ namespace CodeThorn {
 
     std::vector<string> _commandLineOptions;
     SgTypeSizeMapping _typeSizeMapping;
+    bool _contextSensitiveAnalysis;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

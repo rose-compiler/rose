@@ -163,6 +163,11 @@ public:
     /** Register used as a user-mode stack pointer. */
     RegisterDescriptor stackPointerRegister() const { return disassembler_->stackPointerRegister(); }
 
+    /** Register used for function call frames.
+     *
+     *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
+    RegisterDescriptor stackFrameRegister() const { return disassembler_->stackFrameRegister(); }
+
     /** Register used as a segment to access stack memory.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */

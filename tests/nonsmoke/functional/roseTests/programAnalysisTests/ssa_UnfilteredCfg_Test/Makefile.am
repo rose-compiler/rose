@@ -770,7 +770,7 @@ TEST_CXX:
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+	./ssaTestHarness --edg:no_warnings -std=c++03 -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
 	@$(MAKE) TEST_C

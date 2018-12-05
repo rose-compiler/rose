@@ -100,6 +100,10 @@ namespace SPRAY {
 
     static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
     static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
+    // transforms Label1: Label2: LabelN: Stmt; ==> Label1:; Label2:; LabelN:; Stmt;
+    // requires: normalizeSingleStatementsToBlocks()
+    // the associated stmt node (= the label node's child) remains unchanged, except for the update of its parent pointer.
+    static void normalizeLabel(SgLabelStatement* label);
 
   protected:
     // assumes correctly configured options (invoked by normalizeAst(root,level))

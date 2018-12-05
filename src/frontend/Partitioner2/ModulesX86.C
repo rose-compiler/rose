@@ -839,6 +839,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     return chain;
 }
 
+    
 } // namespace
 } // namespace
 } // namespace

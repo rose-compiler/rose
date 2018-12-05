@@ -54,6 +54,7 @@ for script in "$policies_dir"/*; do
     else
 	nwarnings=$[nwarnings + 1]
     fi
+    echo
 done
 
 # Final report and exit

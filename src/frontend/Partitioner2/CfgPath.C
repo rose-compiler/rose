@@ -36,17 +36,35 @@ CfgPath::vertices() const {
 
 void
 CfgPath::pushBack(const ControlFlowGraph::ConstEdgeIterator &edge) {
+    ASSERT_require2(!edge.isEmpty(), "cannot be an end iterator");
     ASSERT_require(isEmpty() || edge->source()==backVertex());
-    if (isEmpty())
+
+    if (isEmpty()) {
         frontVertex_ = edge->source();
+        vertexAttributes_.push_back(Attributes());
+    }
+
     edges_.push_back(edge);
+    edgeAttributes_.push_back(Attributes());
+    vertexAttributes_.push_back(Attributes());
+
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
 }
 
 void
 CfgPath::pushFront(const ControlFlowGraph::ConstEdgeIterator &edge) {
+    ASSERT_require2(!edge.isEmpty(), "cannot be an end iterator");
     ASSERT_require(isEmpty() || edge->target()==frontVertex());
     frontVertex_ = edge->source();
-    edges_.insert(edges_.begin(), edge);                // Warning: linear time
+
+    // Warning: linear time
+    edges_.insert(edges_.begin(), edge);
+    vertexAttributes_.insert(vertexAttributes_.begin(), Attributes());
+    edgeAttributes_.insert(edgeAttributes_.begin(), Attributes());
+    
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
 }
 
 void
@@ -56,25 +74,76 @@ CfgPath::popBack() {
     if (edges_.empty()) {
         // Erasing the starting vertex; then the path will be empty
         frontVertex_ = Sawyer::Nothing();
+        vertexAttributes_.clear();
     } else {
         edges_.pop_back();
+        vertexAttributes_.pop_back();
+        edgeAttributes_.pop_back();
     }
+
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
 }
 
 std::vector<ControlFlowGraph::ConstEdgeIterator>
 CfgPath::backtrack() {
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
+
     std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges;
     while (!edges_.empty()) {
         ControlFlowGraph::ConstEdgeIterator edgeToRemove = edges_.back();
         ControlFlowGraph::ConstVertexIterator vertex = edgeToRemove->source();
         removedEdges.push_back(edgeToRemove);
+
+        // Advance to next edge
         ++edges_.back();
-        if (edges_.back() != vertex->outEdges().end())
+        edgeAttributes_.back() = Attributes();
+        vertexAttributes_.back() = Attributes();
+
+        // Looks good - we found another edge out of the last vertex
+        if (edges_.back() != vertex->outEdges().end()) {
+            ASSERT_require(edgeAttributes_.size() == edges_.size());
+            ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
             return removedEdges;
+        }
+        
+        // Remove last edge
         edges_.pop_back();
+        vertexAttributes_.pop_back();
+        edgeAttributes_.pop_back();
     }
+
     clear();
     return removedEdges;
+}
+
+CfgPath::Attributes&
+CfgPath::vertexAttributes(size_t index) {
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
+    ASSERT_require(index < vertexAttributes_.size());
+    return vertexAttributes_[index];
+}
+
+const CfgPath::Attributes&
+CfgPath::vertexAttributes(size_t index) const {
+    ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
+    ASSERT_require(index < vertexAttributes_.size());
+    return vertexAttributes_[index];
+}
+
+CfgPath::Attributes&
+CfgPath::edgeAttributes(size_t index) {
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(index < edgeAttributes_.size());
+    return edgeAttributes_[index];
+}
+
+const CfgPath::Attributes&
+CfgPath::edgeAttributes(size_t index) const {
+    ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(index < edgeAttributes_.size());
+    return edgeAttributes_[index];
 }
 
 size_t
@@ -189,6 +258,10 @@ CfgPath::truncate(const CfgConstEdgeSet &toRemove) {
             std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges(ei, edges_.end());
             std::reverse(removedEdges.begin(), removedEdges.end());
             edges_.erase(ei, edges_.end());
+
+            edgeAttributes_.resize(edges_.size());
+            vertexAttributes_.resize(1 + edges_.size());
+
             return removedEdges;
         }
     }

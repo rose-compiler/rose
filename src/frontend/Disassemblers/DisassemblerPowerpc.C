@@ -52,8 +52,7 @@ bool
 DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return isa == SgAsmExecutableFileFormat::ISA_PowerPC ||
-           isa == SgAsmExecutableFileFormat::ISA_PowerPC_64bit;
+    return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
 }
 
 Unparser::BasePtr

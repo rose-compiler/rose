@@ -5,6 +5,8 @@
 #include <DisassemblerX86.h>
 #include <Partitioner2/Partitioner.h>
 
+using namespace Rose::Diagnostics;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -92,6 +94,106 @@ nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &s
             } catch (...) {
                 // Not an error if we can't figure out the system call name.
             }
+        }
+    }
+}
+
+bool
+LibcStartMain::operator()(bool chain, const Args &args) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    // Look at this block only if it's a function call
+    if (!chain || !args.bblock || args.bblock->nInstructions() == 0)
+        return chain;
+    if (!isSgAsmX86Instruction(args.bblock->instructions().back()))
+        return chain;
+    if (!args.partitioner.basicBlockIsFunctionCall(args.bblock))
+        return chain;
+
+    // It must call a function named "__libc_start_main@plt"
+    bool foundCallToLibcStartMain = false;
+    BOOST_FOREACH (const rose_addr_t &succVa, args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
+        Function::Ptr func = args.partitioner.functionExists(succVa);
+        if (func && func->name() == "__libc_start_main@plt") {
+            foundCallToLibcStartMain = true;
+            break;
+        }
+    }
+    if (!foundCallToLibcStartMain)
+        return chain;
+    SAWYER_MESG(debug) <<"LibcStartMain analysis: found call to __libc_start_main\n";
+
+    // One of the arguments to the function call is the address of "main". We need instruction semantics to get its value.
+    args.bblock->undropSemantics();
+    BaseSemantics::DispatcherPtr cpu = args.bblock->dispatcher();
+    BaseSemantics::StatePtr state = args.bblock->finalState();
+    if (!cpu || !state) {
+        try {
+            // Map-based memory seems to work best for this. Maybe we should use that also when the partitioners semantics are
+            // enabled in general?
+            if (BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators(MAP_BASED_MEMORY)) {
+                if (cpu = args.partitioner.newDispatcher(ops)) {
+                    BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                        cpu->processInstruction(insn);
+                    state = cpu->currentState();
+                }
+            }
+        } catch (...) {
+        }
+    }
+    if (!state) {
+        SAWYER_MESG(debug) <<"LibcStartMain analysis: failed to obtain basic block semantic state\n";
+        return chain;
+    }
+    
+    // Location and size of argument varies by architecture
+    Semantics::SValuePtr mainVa;
+    if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
+        if (cpu->addressWidth() == 64) {
+            const RegisterDescriptor REG_RCX = cpu->findRegister("rcx", 64, true /*allowMissing*/);
+            ASSERT_require(!REG_RCX.isEmpty());
+            
+            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, cpu->undefined_(64), &*cpu->get_operators());
+            if (rcx->is_number())
+                mainVa = Semantics::SValue::promote(rcx);
+
+        } else if (cpu->addressWidth() == 32) {
+            cpu->get_operators()->currentState(state);
+            const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
+            ASSERT_require(!REG_ESP.isEmpty());
+            BaseSemantics::SValuePtr esp = cpu->get_operators()->peekRegister(REG_ESP, cpu->undefined_(32));
+            BaseSemantics::SValuePtr arg0addr = cpu->get_operators()->add(esp, cpu->number_(32, 4));
+            BaseSemantics::SValuePtr arg0 = cpu->get_operators()->peekMemory(RegisterDescriptor(), arg0addr, cpu->undefined_(32));
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: x86-32 arg0 addr  = " <<*arg0addr <<"\n"
+                               <<"LibcStartMain analysis: x86-32 arg0 value = " <<*arg0 <<"\n";
+            if (arg0->is_number())
+                mainVa = Semantics::SValue::promote(arg0);
+
+        } else {
+            // architecture not supported yet
+        }
+    }
+
+    if (mainVa) {
+        ASSERT_require(args.bblock->successors().isCached());
+        SAWYER_MESG(debug) <<"LibcStartMain analysis: address of \"main\" is " <<*mainVa <<"\n";
+        BasicBlock::Successors succs = args.bblock->successors().get();
+        succs.push_back(BasicBlock::Successor(mainVa, E_FUNCTION_CALL));
+        args.bblock->successors() = succs;
+
+        if (mainVa->is_number() && mainVa->get_width() <= 64)
+            mainVa_ = mainVa->get_number();
+    }
+    
+    return true;
+}
+
+void
+LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
+    if (mainVa_) {
+        if (Function::Ptr main = partitioner.functionExists(*mainVa_)) {
+            if (main->name().empty())
+                main->name("main");
         }
     }
 }

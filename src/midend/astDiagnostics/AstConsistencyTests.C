@@ -2894,7 +2894,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
             // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
             // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
-               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL)
+               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL && firstNondefiningDeclaration->get_parent() == definingDeclaration->get_parent())
                  {
                    ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
                  }
@@ -5126,6 +5126,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::TestChildPointersInMemoryPool");
+          mlog.comment("testing AST child pointers in memory pools");
         }
    }
 

@@ -58,7 +58,7 @@ mProgramTransformationPath=programTransformation#
 # will be installed by "make install", even with language only options are used.
 #
 SUBDIRS = \
-	binaryAnalyses \
+	BinaryAnalysis \
 	programTransformation/extractFunctionArgumentsNormalization \
 	programTransformation/singleStatementToBlockNormalization 
 
