@@ -194,7 +194,7 @@ class MultiInstanceTls {
     // order when initializing and destroying global variables in C++.
     typedef Type::UnsignedInteger<8*sizeof(void*)>::type IntPtr;
     typedef Container::Map<IntPtr, T> Repo;
-    static SAWYER_THREAD_LOCAL Repo *repo_;
+    static SAWYER_THREAD_LOCAL Repo *repo_;             // no mutex necessary since this is thread-local
 
 public:
     /** Default-constructed value. */

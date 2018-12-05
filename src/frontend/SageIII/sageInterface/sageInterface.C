@@ -7085,17 +7085,32 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
 
           case SgTemplateArgument::nontype_argument:
              {
-               if (arg1->get_expression() == arg2->get_expression()) 
-                  {
+               SgExpression * expr1 = arg1->get_expression();
+               SgExpression * expr2 = arg2->get_expression();
+               if (expr1 == expr2) {
 #if DEBUG_TEMPLATE_ARG_EQUIVALENCE
                     printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: checking for the same expression: returning true \n");
 #endif
                     return true;
-                  }
-                 else
-                  {
-                    ROSE_ASSERT(!"NIY: non-type template argument comparaison."); /// \todo
-                  }
+               } else if (expr1->variantT() == expr2->variantT() ) {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: same variant of expression: %s\n", expr1->class_name().c_str());
+#endif
+                    switch (expr1->variantT()) {
+                      case V_SgLongIntVal: {
+                        return ((SgLongIntVal *)expr1)->get_value() == ((SgLongIntVal *)expr2)->get_value();
+                      }
+                      default: {
+                        printf ("FATAL: In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: expression have the same variant %s but comparison is not NIY!\n", expr1->class_name().c_str());
+                        ROSE_ASSERT(false);
+                      }
+                    }
+               } else {
+#if DEBUG_TEMPLATE_ARG_EQUIVALENCE
+                    printf ("In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: different variant of expression: returning false \n");
+#endif
+                    return false;
+               }
              }
 
           case SgTemplateArgument::template_template_argument:
@@ -8726,8 +8741,16 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     bool isReferenceType = SageInterface::isReferenceType(expressionType);
     if (isReferenceType)
     {
-        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE);
         variableType = SageBuilder::buildPointerType(expressionBaseType);
+    }
+
+    //MS 10/24/2018: If the expression has array type, we need to use a pointer type referring to the base type for the temporary variable.
+    if (SgArrayType* arrayType=isSgArrayType(expressionType)) {
+      if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
+        variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
     }
 
     // If the expression is a dereferenced pointer, use a reference to hold it.
@@ -8788,6 +8811,15 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
+
+    //MS 10/24/2018: If the expression has array type, we need to use a pointer type for the temporary variable.
+    if (SgArrayType* arrayType=isSgArrayType(expressionType))
+    {
+      if(SgArrayType* strippedArrayType = isSgArrayType(arrayType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+        SgType* strippedArrayBaseType = strippedArrayType->get_base_type();
+        variableType = SageBuilder::buildPointerType(strippedArrayBaseType);
+      }
+    }
 
     //Generate a unique variable name
     string name = generateUniqueVariableName(scope);
@@ -12914,10 +12946,10 @@ int SageInterface::fixVariableReferences(SgNode* root)
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(arrowExp->get_lhs_operand_i());
             SgType* lhs_type = arrowExp->get_lhs_operand_i()->get_type() ;
-            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
             SgPointerType* ptrType = isSgPointerType(lhs_type);
             ROSE_ASSERT(ptrType);
-            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
+            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -12942,7 +12974,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
             counter += fixVariableReferences(dotExp->get_lhs_operand_i());
 
             SgType* lhs_type = dotExp->get_lhs_operand_i()->get_type() ;
-            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
             SgClassType* clsType = isSgClassType(lhs_type);
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
@@ -16112,7 +16144,7 @@ getDependentDeclarations (SgStatement* stmt, vector<SgDeclarationStatement*> & d
     {
 
       // we don't want to strip of nested typedef declarations
-      base_type = isSgTypedefDeclaration(decl)->get_base_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+      base_type = isSgTypedefDeclaration(decl)->get_base_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
     }
 
     //TODO variable declaration, function declaration: parameter list types,

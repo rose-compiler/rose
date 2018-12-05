@@ -9,6 +9,9 @@
 #include <sys/wait.h>
 #endif
 
+using namespace Rose;
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,10 +126,10 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
             waitpid(pid, NULL, 0);
             char mesg[64+sizeof buf];
-            sprintf(mesg, "unrecognized file format: %s", buf);
+            sprintf(mesg, "unrecognized file format for \"%s\": %s", StringUtility::cEscape(name).c_str(), buf);
             throw FormatError(mesg);
         } else {
-            throw FormatError("unrecognized file format");
+            throw FormatError("unrecognized file format for \"" + StringUtility::cEscape(name) + "\"");
         }
 #endif
     }

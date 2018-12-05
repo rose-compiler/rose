@@ -373,7 +373,7 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
             std::cout <<"Logging facilities status\n"
                 //       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (80 cols)
                       <<"  Letters indicate a stream that is enabled; hyphens indicate disabled.\n"
-                      <<"  D=debug, T=trace, H=where, I=info, W=warning, E=error, F=fatal\n";
+                      <<"  D=debug, T=trace, H=where, M=march, I=info, W=warning, E=error, F=fatal\n";
             facilities_.print(std::cout);
             if (exitOnHelp_)
                 exit(0);
@@ -407,6 +407,13 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
     }
 }
 
+SAWYER_EXPORT void
+ConfigureDiagnosticsQuiet::operator()(const ParserResult&) {
+    std::string errorMessage = facilities_.control("none,>=error");
+    if (!errorMessage.empty())
+        throw std::runtime_error(errorMessage);
+};
+
 SAWYER_EXPORT ShowVersion::Ptr
 showVersion(const std::string &versionString) { return ShowVersion::instance(versionString); }
 
@@ -424,6 +431,11 @@ showHelpAndExit(int exitStatus) { return ShowHelpAndExit::instance(exitStatus); 
 SAWYER_EXPORT ConfigureDiagnostics::Ptr
 configureDiagnostics(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp) {
     return ConfigureDiagnostics::instance(switchKey, facilities, exitOnHelp);
+}
+
+SAWYER_EXPORT ConfigureDiagnosticsQuiet::Ptr
+configureDiagnosticsQuiet(Message::Facilities &facilities) {
+    return ConfigureDiagnosticsQuiet::instance(facilities);
 }
 
 /*******************************************************************************************************************************

@@ -274,6 +274,41 @@ graphEraseParallelEdges(Graph &g) {
     }
 }
 
+/** Number vertices according to their height from the leaves.
+ *
+ *  This function treats the input graph as a dependency graph where an edge from vertex V1 to V2 means that V1 depends on
+ *  V2. It then numbers the vertices (after breaking cycles arbitrarily) giving each vertex a distinct number based on its
+ *  height in the tree. The caller will then typically processes the vertices according to increasing vertex numbers in order
+ *  to minimize the number of dependencies during the processing. */
+template<class Graph>
+std::vector<size_t>
+graphDependentOrder(Graph &g) {
+    size_t height = 1;
+    std::vector<size_t> retval(g.nVertices(), 0);
+    for (size_t root = 0; root < retval.size(); ++root) {
+        if (0 == retval[root]) {
+            std::vector<size_t /*vertexId*/> stack;
+            stack.reserve(retval.size());
+            stack.push_back(root);
+            while (!stack.empty()) {
+                size_t vid = stack.back();
+                BOOST_FOREACH (const typename Graph::Edge &edge, g.findVertex(vid)->outEdges()) {
+                    size_t target = edge.target()->id();
+                    if (0 == retval[target]) {
+                        retval[target] = 1;
+                        stack.push_back(target);
+                    }
+                }
+                if (stack.back() == vid) {
+                    stack.pop_back();
+                    retval[vid] = ++height;
+                }
+            }
+        }
+    }
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Common subgraph isomorphism (CSI)
 // Loosely based on the algorithm presented by Evgeny B. Krissinel and Kim Henrick

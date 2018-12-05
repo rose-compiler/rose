@@ -485,7 +485,12 @@ SgVariableSymbol* LookupQualifiedVar (const std::string& name, SgScopeStatement*
       }
       if (!matched_decl) 
       {
-        cerr<<"Warning: cannot find qualified name for "<< currentname << " within scope " << cur_scope->class_name() << " @ " << cur_scope->get_file_info()->get_line() <<endl;
+        if (cur_scope != NULL) {
+          cerr<<"Warning: cannot find qualified name for "<< currentname << " within scope " << cur_scope->class_name() << " @ " << cur_scope->get_file_info()->get_line() <<endl;
+        }
+        else {
+          cerr<<"Warning: cannot find qualified name "<< currentname <<endl;
+        }
         return NULL; // cannot find the declaration
       }
 
