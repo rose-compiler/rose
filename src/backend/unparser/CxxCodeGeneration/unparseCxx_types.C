@@ -3724,61 +3724,75 @@ Unparse_Type::unparseAutoType(SgType* type, SgUnparse_Info& info)
      }
    }
 
+#define DEBUG_UNPARSE_NONREAL_TYPE 0
+
 void
-Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info)
+Unparse_Type::unparseNonrealType(SgType* type, SgUnparse_Info& info, bool is_first_in_nonreal_chain)
    {
+
+  // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
+     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
+     if (!unparse_type) return;
+
      SgNonrealType * nrtype = isSgNonrealType(type);
      ROSE_ASSERT(nrtype != NULL);
 
-#if 0
+#if DEBUG_UNPARSE_NONREAL_TYPE
      printf("In unparseNonrealType(type = %p): name = %s\n", type, nrtype->get_name().str());
 #endif
 
      SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
      ROSE_ASSERT(nrdecl != NULL);
-     SgNode * parent = nrdecl->get_parent();
-     ROSE_ASSERT(parent != NULL);
-     SgDeclarationScope * nrscope = isSgDeclarationScope(parent);
-     if (nrscope == NULL) {
-       printf("WARNING: Found a SgNonrealDecl (%p) whose parent is a %s (%p)\n      (it should be the definition of a template function/class/...)\n", nrdecl, parent->class_name().c_str(), parent);
-     }
-
-     SgNonrealDecl * nrparent_nrscope = NULL;
-     if (nrscope != NULL) {
-       nrparent_nrscope = isSgNonrealDecl(nrscope->get_parent());
-     }
 
      SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
 
-  // TV (03/29/2018): either first part is requested, or neither if called from unparseToString.
-     bool unparse_type = info.isTypeFirstPart() || ( !info.isTypeFirstPart() && !info.isTypeSecondPart() );
-     if (unparse_type) {
-       // if the scope is non-real then recursively prepend the neccessary qualification
+     if (nrdecl->get_templateDeclaration() == NULL) {
+       SgNode * parent = nrdecl->get_parent();
+       ROSE_ASSERT(parent != NULL);
+       SgDeclarationScope * nrscope = isSgDeclarationScope(parent);
+       if (nrscope == NULL) {
+         printf("FATAL: Found a SgNonrealDecl (%p) whose parent is a %s (%p)\n", nrdecl, parent->class_name().c_str(), parent);
+       }
+       ROSE_ASSERT(nrscope != NULL);
+
+       parent = nrscope->get_parent();
+       SgNonrealDecl * nrparent_nrscope = isSgNonrealDecl(parent);
+#if DEBUG_UNPARSE_NONREAL_TYPE
+       printf(" --- nrparent_nrscope = %p (%s)\n", nrparent_nrscope, nrparent_nrscope != NULL ? nrparent_nrscope->class_name().c_str() : NULL);
+#endif
        if (nrparent_nrscope != NULL) {
-         unparseNonrealType(nrparent_nrscope->get_type(), info);
+         if (is_first_in_nonreal_chain) curprint("typename ");
+         unparseNonrealType(nrparent_nrscope->get_type(), info, false);
          curprint("::");
        }
 
-       // if template argument are provided then the "template" keyword has to be added
-       if (tpl_args.size() > 0) curprint("template ");
-
-       // output the name of the non-real type
-       curprint(nrtype->get_name());
-
-       // unparse template argument list
-       if (tpl_args.size() > 0) {
-#if 0
-         printf("  tpl_args.size() = %d\n", tpl_args.size());
+     } else if (info.get_reference_node_for_qualification()) {
+       SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
+#if DEBUG_UNPARSE_NONREAL_TYPE
+       printf(" --- nameQualifier = %s\n", nameQualifier.str());
 #endif
-         SgUnparse_Info ninfo(info);
-         ninfo.set_SkipClassDefinition();
-         ninfo.set_SkipEnumDefinition();
-         ninfo.set_SkipClassSpecifier();
-         unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
-       }
-
-       curprint(" ");
+       curprint(nameQualifier.str());
      }
+
+     // if template argument are provided then the "template" keyword has to be added
+  // if (tpl_args.size() > 0) curprint("template ");
+
+     // output the name of the non-real type
+     curprint(nrtype->get_name());
+
+     // unparse template argument list
+     if (tpl_args.size() > 0) {
+#if DEBUG_UNPARSE_NONREAL_TYPE
+       printf("  tpl_args.size() = %d\n", tpl_args.size());
+#endif
+       SgUnparse_Info ninfo(info);
+       ninfo.set_SkipClassDefinition();
+       ninfo.set_SkipEnumDefinition();
+       ninfo.set_SkipClassSpecifier();
+       unp->u_exprStmt->unparseTemplateArgumentList(tpl_args, ninfo);
+     }
+
+     curprint(" ");
    }
 
 #if 0

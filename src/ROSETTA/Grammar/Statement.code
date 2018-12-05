@@ -337,6 +337,8 @@ HEADER_SCOPE_STATEMENT_START
        // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
           SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
+          SgNonrealSymbol*   lookup_nonreal_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
+
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n) const;
 
        // DQ (8/10/2013): Added to support function symbol lookup for template instantiations that would only be disambiguated by their template arguments.
@@ -5416,6 +5418,37 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
      }
 
      return p_symbol_table->find_class(n,templateArgumentsList);
+   }
+
+SgNonrealSymbol*
+SgScopeStatement::lookup_nonreal_symbol(const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nonreal(n,templateParameterList,templateArgumentsList);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgNonrealSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nonreal(n,templateParameterList,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_nonreal(n,templateParameterList,templateArgumentsList);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
