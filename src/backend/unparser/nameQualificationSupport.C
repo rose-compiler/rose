@@ -11,6 +11,10 @@ using namespace Rose::Diagnostics;
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
+#ifndef WARNING_FOR_NONREAL_DEVEL
+#  define WARNING_FOR_NONREAL_DEVEL 0
+#endif
+
 // ***********************************************************
 // Main calling function to support name qualification support
 // ***********************************************************
@@ -3108,7 +3112,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                          case V_SgNonrealSymbol:
                             {
+#if WARNING_FOR_NONREAL_DEVEL
                               printf ("WARNING: Support for name qualification depth for SgNonrealSymbol is not implemented yet \n");
+#endif
                               break;
                             }
 
@@ -3318,6 +3324,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #endif
 
                          SgClassType* classType = isSgClassType(namedType);
+                         SgNonrealType* nrType = isSgNonrealType(namedType);
                          if (classType != NULL)
                             {
                            // If this is a class then it should be relative to it's declaration.
@@ -3335,35 +3342,65 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                                    recursiveDepth--;
                                  }
                             }
-                           else
+                           else if (nrType == NULL)
                             {
                            // If not a class then (e.g. typedef) then it is relative to the typedef declaration, but we don't have to recursively evaluate the type.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
-                              printf ("This is not a SgClassType, so we don't have to recursively evaluate for template arguments. \n");
+                              printf ("This is not a SgClassType nor a SgNonrealType, so we don't have to recursively evaluate for template arguments. \n");
 #endif
                             }
 
-                         int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth(namedType,currentScope,positionStatement);
+                         if (nrType != NULL) {
+                           SgNonrealDecl * nrdecl = isSgNonrealDecl(nrType->get_declaration());
+                           ROSE_ASSERT(nrdecl != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
-                         printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d (for type = %p (%s) = %s) (counter = %d recursiveDepth = %d) \n",
-                              amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(), namedType->get_name().str(),counter,recursiveDepth);
-                         printf ("xxxxxx --- Must call a function to set the name qualification data in the SgTemplateArgument = %p \n",templateArgument);
+                           printf ("namedType is a SgNonrealType: nrdecl = %p = %s \n",nrdecl,nrdecl->class_name().c_str());
 #endif
-                      // TV (10/09/2018): FIXME ROSE-1511
-                         SgNamespaceDefinitionStatement * nsp_defn = isSgNamespaceDefinitionStatement(currentScope);
-                         if (nsp_defn != NULL) {
-                           SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
-                           ROSE_ASSERT(nsp_decl != NULL);
-                           if (nsp_decl->get_name() == "std" && (
-                                  namedType->get_name().getString().find("allocator") == 0 ||
-                                  namedType->get_name().getString().find("less") == 0
-                                )) {
-                             amountOfNameQualificationRequiredForTemplateArgument = 1;
-                           }
-                         }
+                           do {
+                             recursiveDepth++;
+                             evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, positionStatement);
+                             recursiveDepth--;
 
-                         setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
+                             if (nrdecl->get_templateDeclaration() != NULL) {
+                               int amountOfNameQualificationRequired = nameQualificationDepth(nrdecl->get_templateDeclaration(),currentScope,positionStatement);
+                               setNameQualification(templateArgument,nrdecl->get_templateDeclaration(),amountOfNameQualificationRequired);
+                             }
+
+                             SgNode * nrdecl_parent = nrdecl->get_parent();
+                             ROSE_ASSERT(nrdecl_parent != NULL);
+                             nrdecl_parent = nrdecl_parent->get_parent();
+                             ROSE_ASSERT(nrdecl_parent != NULL);
+
+                             ROSE_ASSERT(nrdecl_parent != nrdecl); // That would be a loop...
+
+                             nrdecl = isSgNonrealDecl(nrdecl_parent);
+                           } while (nrdecl != NULL);
+
+                         } else {
+                           int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth(namedType,currentScope,positionStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
+                           printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d (for type = %p (%s) = %s) (counter = %d recursiveDepth = %d) \n",
+                                amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(), namedType->get_name().str(),counter,recursiveDepth);
+                           printf ("xxxxxx --- Must call a function to set the name qualification data in the SgTemplateArgument = %p \n",templateArgument);
+#endif
+
+                        // TV (10/09/2018): FIXME ROSE-1511
+                           SgNamespaceDefinitionStatement * nsp_defn = isSgNamespaceDefinitionStatement(currentScope);
+                           if (nsp_defn != NULL) {
+                             SgNamespaceDeclarationStatement * nsp_decl = nsp_defn->get_namespaceDeclaration();
+                             ROSE_ASSERT(nsp_decl != NULL);
+                             if (nsp_decl->get_name() == "std" && (
+                                    namedType->get_name().getString().find("allocator") == 0 ||
+                                    namedType->get_name().getString().find("less") == 0
+                                  )) {
+                               amountOfNameQualificationRequiredForTemplateArgument = 1;
+                             }
+                           }
+
+                           setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
+                         }
                        }
                   }
 
@@ -3456,23 +3493,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
      SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(type);
      if (declaration != NULL)
         {
-       // SgScopeStatement* currentScope = initializedName->get_scope();
 
        // Check the visability and unambiguity of this declaration.
           amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
           printf ("amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-
-          SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
-          if (templateClassInstantiationDeclaration != NULL)
-             {
-            // We need to handle any possible template arguments.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_NAME_QUALIFICATION_DEPTH
-               printf ("In nameQualificationDepth(SgType*): declaration = %p = %s Unhandled template arguments \n",declaration,declaration->class_name().c_str());
-#endif
-            // ROSE_ASSERT(false);
-             }
         }
        else
         {
@@ -6064,8 +6090,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
      SgNonrealRefExp * nrRefExp = isSgNonrealRefExp(n);
      if (nrRefExp != NULL) {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+        printf ("case SgNonrealRefExp: nrRefExp = %p\n", nrRefExp);
+#endif
        SgNonrealSymbol * nrsym = nrRefExp->get_symbol();
        ROSE_ASSERT(nrsym != NULL);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+       printf (" --- nrsym = %p : %s\n", nrsym, nrsym->get_name().str());
+#endif
 
        SgNonrealDecl * nrdecl = nrsym->get_declaration();
        ROSE_ASSERT(nrdecl != NULL);
@@ -6073,12 +6105,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        SgStatement* currentStatement = TransformationSupport::getStatement(nrRefExp);
        SgScopeStatement* currentScope = currentStatement->get_scope();
 
+       evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, currentStatement);
+
        SgDeclarationStatement * declstmt = nrdecl;
        if (nrdecl->get_templateDeclaration() != NULL) {
          declstmt = nrdecl->get_templateDeclaration();
        }
 
        int amountOfNameQualificationRequired = nameQualificationDepth(declstmt, currentScope, currentStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+       printf (" --- amountOfNameQualificationRequired = %d\n", amountOfNameQualificationRequired);
+#endif
        setNameQualification(nrRefExp, declstmt, amountOfNameQualificationRequired);
      }
 
@@ -8833,7 +8870,7 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
 
      SgNonrealDecl * nrdecl = isSgNonrealDecl(declaration);
      if (nrdecl != NULL) {
-       printf (" --- nrdecl->get_templateDeclaration() = %p (%s)\n", nrdecl->get_templateDeclaration(), nrdecl->get_templateDeclaration() != NULL ? nrdecl->get_templateDeclaration()->class_name().c_str() : "");
+//     printf (" --- nrdecl->get_templateDeclaration() = %p (%s)\n", nrdecl->get_templateDeclaration(), nrdecl->get_templateDeclaration() != NULL ? nrdecl->get_templateDeclaration()->class_name().c_str() : "");
        if (nrdecl->get_templateDeclaration() != NULL) {
          scope = nrdecl->get_templateDeclaration()->get_scope();
        } else {
@@ -8841,7 +8878,7 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
          ROSE_ASSERT(decl_scope != NULL);
 
          SgNode * decl_scope_parent = decl_scope->get_parent();
-         printf (" --- decl_scope_parent = %p (%s)\n", decl_scope_parent, decl_scope_parent != NULL ? decl_scope_parent->class_name().c_str() : "");
+//       printf (" --- decl_scope_parent = %p (%s)\n", decl_scope_parent, decl_scope_parent != NULL ? decl_scope_parent->class_name().c_str() : "");
 
          SgNonrealDecl * decl_scope_nrparent = isSgNonrealDecl(decl_scope_parent);
          if (decl_scope_nrparent != NULL) {

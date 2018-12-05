@@ -8867,6 +8867,7 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
           case V_SgMemberFunctionSymbol:
           case V_SgTypedefSymbol:
           case V_SgEnumSymbol:
+          case V_SgEnumFieldSymbol:
           case V_SgNamespaceSymbol:
              {
             // This function requires this case so that it can be called within very general contexts.
