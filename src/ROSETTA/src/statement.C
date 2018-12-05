@@ -2334,6 +2334,7 @@ Grammar::setUpStatements ()
      NonrealDecl.setDataPrototype ("bool","is_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NonrealDecl.setDataPrototype ("bool","is_template_template_param","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NonrealDecl.setDataPrototype ("bool","is_nonreal_template","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealDecl.setDataPrototype ("bool","is_nonreal_function","= false", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumDeclaration.setFunctionPrototype ( "HEADER_ENUM_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      EnumDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
