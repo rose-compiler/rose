@@ -2800,6 +2800,7 @@ HEADER_NONREAL_DECL_START
           SgName get_mangled_name (void) const;
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
+          SgName get_qualified_name() const;
 
 HEADER_NONREAL_DECL_END
 
@@ -14658,6 +14659,25 @@ SgSymbol* SgNonrealDecl::get_symbol_from_symbol_table() const {
 
   return res;
 }
+
+SgName
+SgNonrealDecl::get_qualified_name() const
+   {
+     SgName returnName;
+     SgClassDeclaration * xdecl = isSgClassDeclaration(get_templateDeclaration());
+     SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(get_templateDeclaration());
+     if (xdecl != NULL) {
+       returnName = xdecl->get_qualified_name();
+     } else if (fdecl != NULL) {
+       returnName = fdecl->get_qualified_name();
+     } else {
+       returnName = get_name();
+     }
+
+     // TODO template argument
+
+     return returnName;
+   }
 
 SOURCE_NONREAL_DECL_END
 
