@@ -1504,7 +1504,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
-    Sawyer::Container::BitVector accumulator((*begin)->nBits());
+    Sawyer::Container::BitVector accumulator((*begin)->isLeafNode()->bits());
     unsigned flags = 0;
     for (++begin; begin!=end; ++begin) {
         accumulator.bitwiseXor((*begin)->isLeafNode()->bits());
