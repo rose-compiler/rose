@@ -131,6 +131,8 @@ class VariableIdMapping {
   void registerStringLiterals(SgNode* root);
   int numberOfRegisteredStringLiterals();
   bool isStringLiteralAddress(VariableId stringVarId);
+  // returns true if the variable is a formal parameter in a function definition
+  bool isFunctionParameter(VariableId varId);
   std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
   // determines for struct/class/union's data member if its
   // SgInitializeName defines an anonymous bitfield (e.g. struct S {
