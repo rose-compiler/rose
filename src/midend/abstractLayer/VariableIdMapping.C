@@ -330,7 +330,8 @@ size_t VariableIdMapping::getElementSize(VariableId variableId) {
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) { 
-      if(SgValueExp* bitFieldValExp=varDecl->get_bitfield()) {
+      // check if the expression for the size of the bitfield exists
+      if(varDecl->get_bitfield()) {
         // the variable declaration is a bitfield. Check whether it has a name
         string bitfieldName=string(initName->get_name());
         if(bitfieldName.size()==0) {
@@ -388,7 +389,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
           //  TODO: Is it possible to assert this?
           //  ==> It is okay to ignore these.
-          cout<<"DEBUG VIM: NO symbol! "<<endl;
+          //cout<<"DEBUG VIM: NO symbol! "<<endl;
         }
       }
       if(sym) {
@@ -800,7 +801,7 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
   VariableIdSet vset;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    VariableId vid; // default creates intentionally an invalid id.
+    VariableId vid; // creates default invalid id (isValid(vid)==false).
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       vid=variableId(varDecl);
     } else if(SgVarRefExp* varRefExp=isSgVarRefExp(*i)) {
@@ -835,6 +836,27 @@ bool VariableIdMapping::isStringLiteralAddress(VariableId stringVarId) {
   return variableIdToSgStringValueMapping.find(stringVarId)!=variableIdToSgStringValueMapping.end();
 }
 
+bool VariableIdMapping::isFunctionParameter(VariableId varId) {
+#if 0
+  if(Symbol* sym=getSymbol(varId)) {
+    SgDeclarationStatement* declStmt=sym->get_declaration();
+    if(isSgFunctionParameterList(declStmt)) {
+      return true;
+    }
+  }
+#else
+  if(SgVariableSymbol* varSym=isSgVariableSymbol(getSymbol(varId))) {
+    if(SgInitializedName* initName=varSym->get_declaration()) {
+      if(isSgFunctionParameterList(initName->get_parent())) {
+        return true;
+      }
+    }
+  }
+#endif
+  return false;
+}
+
+
 void VariableIdMapping::registerStringLiterals(SgNode* root) {
   string prefix="$string";
   int num=1;
@@ -861,7 +883,8 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
 }
 
 void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
-  ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active;
+  ROSE_ASSERT(mappingVarIdToSym.size()==0); 
+  modeVariableIdForEachArrayElement=active;
 }
 
 bool VariableIdMapping::getModeVariableIdForEachArrayElement() {

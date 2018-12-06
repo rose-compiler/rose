@@ -39,11 +39,14 @@ namespace SgNodeHelper {
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
 
-  //! returns filename information of AST fragment in format "filename". Used for generating readable output
+  //! returns filename as stored in AST node. Used for generating readable output.
   std::string sourceFilenameToString(SgNode* node);
 
-  //! returns filename information of AST fragment in format "line:col". Used for generating readable output
+  //! returns filename followed by line:column in one string. Used for generating readable output.
   std::string sourceLineColumnToString(SgNode* node);
+
+  //! returns line, column, and unparsed node in one string.
+  std::string lineColumnNodeToString(SgNode* node);
 
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
