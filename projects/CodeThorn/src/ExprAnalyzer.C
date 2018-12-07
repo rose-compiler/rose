@@ -768,13 +768,20 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
+        if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
+          // function parameter of array type contains a pointer value in C/C++
+          arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value of array function paramter only (without index)
+          logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+        } else {
+          arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
+          logger[TRACE]<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+        }
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
-          //cout<<"DEBUG: arrayPtrValue read from memory."<<endl;
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
+          logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
             cout<<estate.toString(_variableIdMapping)<<endl;
@@ -809,6 +816,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         }
       } else {
+        logger[TRACE]<<"evalArrayReferenceOp:"<<" memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+        logger[TRACE]<<"evalArrayReferenceOp:"<<pstate->toString(_variableIdMapping)<<endl;
         if(mode==MODE_ADDRESS) {
           cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
@@ -847,12 +856,11 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           cerr<<"Error: access to element of constant array (not in state). Not supported."<<endl;
           exit(1);
         } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
-          cout<<"TODO: Found string literal address. Data not present in state yet. skipping for now, returning top"<<endl;
-          res.result=CodeThorn::Top();
-          return listify(res);
+          cout<<"Error: Found string literal address, but data not present in state."<<endl;
+          exit(1);
         } else {
           cout<<estate.toString(_variableIdMapping)<<endl;
-          cout<<"DEBUG: Program error detected: potential out of bounds access 1 : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          cout<<"DEBUG: Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
@@ -1060,11 +1068,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   SingleEvalResultConstInt res;
   AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(address);
   AbstractValue newValue=oldValue+change;
+  CallString cs=estate.callString;
   PState newPState=*estate.pstate();
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),newValue);
+  res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),newValue);
   return listify(res);
   }
 
@@ -1073,11 +1082,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   SingleEvalResultConstInt res;
   AbstractValue oldValue=estate.pstate()->readFromMemoryLocation(address);
   AbstractValue newValue=oldValue+change;
+  CallString cs=estate.callString;
   PState newPState=*estate.pstate();
   newPState.writeToMemoryLocation(address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),newPState,cset),oldValue);
+  res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),oldValue);
   return listify(res);
 }
 
