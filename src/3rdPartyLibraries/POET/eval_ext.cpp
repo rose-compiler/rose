@@ -46,7 +46,10 @@ eval_readInput_nosyntax(POETCode* inputFiles, POETCode* codeType, POETCode* inpu
   return eval_readInput(inputFiles, codeType,inputInline); 
 }
 
-POETAstInterface::Ast POETAstInterface::MatchAstTypeName(const Ast& n, const std::string& name, POETCode* args)
+POETCode* POETAstInterface::MatchAstWithPattern(const Ast& n, POETCode* pattern)
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+
+POETCode* POETAstInterface::getAstAttribute(const Ast& n, POETCode* attr)
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
 std::string POETAstInterface::Ast2String(const Ast & n)

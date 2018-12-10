@@ -307,6 +307,7 @@ GetLoopHandle(AstInterface &fa, const AstNodePtr& loop)
      LocalVar* res = NewLoopHandle();
      astMap[loop.get_ptr()] = res;
      std::string name = res->toString(OUTPUT_NO_DEBUG);
+std::cerr << "Mapping " << AstInterface::AstToString(loop) << " with handle " << name << "\n";
      fa.InsertAnnot(loop, "//@; BEGIN("+name+"=Nest)",true);
      return res;
    }

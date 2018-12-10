@@ -40,6 +40,8 @@ ComputeStmtDep( const StmtNodeInfo& n1,
    AstInterface& fa = LoopTransformInterface::getAstInterface();
    DepGraphEdgeCreate deps1(graph,n1.node,n2.node),deps2(graph,n2.node,n1.node);
    AstNodePtr s1 = n1.start, s2 = n2.start;
+   if (DebugDep()) 
+       std::cerr << "Computing Stmt Dep between " << AstInterface::AstToString(s1) << " and " << AstInterface::AstToString(s2) << "\n";
    if (s1 != s2 && ( (fa.IsIOInputStmt(s1) && fa.IsIOInputStmt(s2)) ||
                     (fa.IsIOOutputStmt(s1) && fa.IsIOOutputStmt(s2))) ) {
      if (t & DEPTYPE_IO)
@@ -60,6 +62,30 @@ ComputeCtrlDep( const StmtNodeInfo& nc,
    impl.ComputeCtrlDep( c, s, deps1, deps2, t);
 }
 
+
+bool BuildAstTreeDepGraph::
+ProcessIf(AstInterface &fa, const AstNodePtr& l, 
+                    const AstNodePtr& cond, const AstNodePtr& truebody,
+                    const AstNodePtr& falsebody, AstInterface::TraversalVisitType t)
+{
+  if (t == AstInterface::PreVisit) {
+    GraphAccessInterface::Node *n = graph->CreateNodeImpl(l, GetStmtDomain(l));
+    if (cond != AST_NULL) {
+      for (StmtStackType::Iterator p(stmtNodes); !p.ReachEnd(); ++p) 
+         ComputeDataDep(*p, StmtNodeInfo(n,cond), DEPTYPE_DATA );
+    }
+    for (StmtStackType::Iterator ps(gotoNodes); !ps.ReachEnd(); ++ps) {
+        StmtNodeInfo info(n,l);
+        ComputeCtrlDep((*ps), info);
+    }
+    ctrlNodes.PushFirst(StmtNodeInfo(n,l) );
+    stmtNodes.PushFirst(StmtNodeInfo(n,cond));
+  }
+  else {
+    ctrlNodes.PopFirst();
+  }
+  return ProcessAstTree::ProcessIf(fa, l, cond, truebody, falsebody, t);
+}
 
 bool BuildAstTreeDepGraph::
 ProcessLoop( AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
