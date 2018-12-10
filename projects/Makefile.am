@@ -19,6 +19,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = \
 	ArithmeticMeasureTool \
+        POET_ROSE \
 	AstEquivalence \
 	BabelPreprocessor \
 	BinaryCloneDetection \
@@ -68,10 +69,11 @@ SUBDIRS = \
         TemplateAnalysis \
 	$(OPTIONAL_PROJECTS)
 
+#QY (6/11/2018): this directory is no longer used; moved code to POET-ROSE/manycore-stencil
 # DQ (4/20/2016): Clang has a problem within compiling POET, which is used in the StencilManyCore project.
-if !USING_CLANG_COMPILER
-SUBDIRS += StencilManyCore 
-endif
+#if !USING_CLANG_COMPILER
+#SUBDIRS += StencilManyCore 
+#endif
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8

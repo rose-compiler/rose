@@ -195,10 +195,12 @@ AstNodePtr LoopTreeNode :: CodeGen() const
 {
   AstInterface& fa = LoopTransformInterface::getAstInterface();
   AstNodePtr result = AST_NULL;
-  if (ChildCount() == 1) {
+  switch (ChildCount()) {
+   case 0: result = fa.CreateBlock(); break;
+   case 1:
      result = FirstChild()->CodeGen();
-  }
-  else if (ChildCount() > 0) {
+     break;
+   default: 
      result = fa.CreateBlock();
      for (LoopTreeNode *child = FirstChild(); child != 0; 
           child = child->NextSibling()) {
@@ -258,30 +260,53 @@ LoopInfo:: LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub,
 }
 
 std::string LoopTreeLoopNode :: toString() const
-{ return  info.toString(); }
+{ return preAnnot + info.toString() + postAnnot; 
+  
+}
+
+LoopTreeIfCond:: LoopTreeIfCond(const AstNodePtr&  _cond) 
+  : LoopTreeStmtNode(_cond)
+{
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  cond = SymbolicValGenerator::GetSymbolicVal(fa, _cond);
+}
+
+AstNodePtr LoopTreeIfCond :: CodeGen( const AstNodePtr& c) const
+{
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  AstNodePtr result = fa.CreateIf(cond.CodeGen(fa), c);
+  if (preAnnot != "")
+     fa.InsertAnnot(result, preAnnot,true);
+  if (postAnnot != "")
+     fa.InsertAnnot(result, postAnnot,false);
+  return result;
+}
 
 AstNodePtr LoopTreeLoopNode :: CodeGen( const AstNodePtr& c) const
 {
   AstInterface& fa = LoopTransformInterface::getAstInterface();
+  if (postAnnot != "") 
+          fa.InsertAnnot(c, postAnnot, true);
   AstNodePtr result;
   if (info.GetVar().GetVarName() == "") {
      result=fa.CreateLoop(info.GetStep().CodeGen(fa), c);
   }
   else if (info.GetLoopUB() == info.GetLoopLB()) {       
       result =  fa.CreateBlock();
-      fa.BlockAppendStmt(result, 
-            fa.CreateAssignment(info.GetVar().CodeGen(fa),
-                                info.GetLoopLB().CodeGen(fa)));
+      AstNodePtr r = info.GetLoopLB().CodeGen(fa);
+      if (r != AST_NULL)
+        fa.BlockAppendStmt(result, 
+            fa.CreateAssignment(info.GetVar().CodeGen(fa), r));
       fa.BlockAppendStmt(result, c);
   }   
-  else result = fa.CreateLoop( info.GetVar().CodeGen(fa), 
+  else { 
+      result = fa.CreateLoop( info.GetVar().CodeGen(fa), 
                             info.GetLoopLB().CodeGen(fa),
                             info.GetLoopUB().CodeGen(fa), 
                             info.GetStep().CodeGen(fa), c, info.ReverseEnum());
+  }
   if (preAnnot != "")
      fa.InsertAnnot(result, preAnnot,true);
-  if (postAnnot != "")
-     fa.InsertAnnot(c, postAnnot,true);
   return result;
 }
 
@@ -327,12 +352,12 @@ bool LoopTreeNode :: IsPerfectLoopNest() const
 }
 
 
-LoopTreeNode* LoopTreeCreate:: CloneTree( LoopTreeNode *n)
+LoopTreeNode* LoopTreeNode:: CloneTree()
 {
-  LoopTreeNode *n1 = n->Clone();
-  for (LoopTreeNode *child = n->FirstChild(); child != 0;
+  LoopTreeNode *n1 = Clone();
+  for (LoopTreeNode *child = FirstChild(); child != 0;
        child = child->NextSibling()) {
-       CloneTree(child)->Link( n1, LoopTreeNode::AsLastChild);
+       child->CloneTree()->Link( n1, LoopTreeNode::AsLastChild);
   }
   return n1;
 }

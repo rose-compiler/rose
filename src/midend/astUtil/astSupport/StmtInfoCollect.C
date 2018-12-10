@@ -106,19 +106,6 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
      if (mp == 0 || mp->find(lhs) == mp->end()) {
         modstack.push_back(s);
         modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
-        // Liao 7/17/2017.  To support assignment like this->x = 0.9, 
-        // we have to also record this expression AND x VarRefExp as the lhs for the assignment. 
-        // So later traversal of this and x will not put it into the read set.
-        AstNodePtr op1, op2; 
-        AstInterface::OperatorEnum opr; 
-        if (fa.IsBinaryOp(lhs, &opr,&op1, &op2 ))
-        {
-          if (opr==AstInterface::BOP_DOT_ACCESS || opr== AstInterface::BOP_ARROW_ACCESS)
-          {
-            modstack.back().modmap[op1] =  ModRecord( rhs,readlhs); 
-            modstack.back().modmap[op2] =  ModRecord( rhs,readlhs); 
-          } 
-        }
      }
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) && 
@@ -155,9 +142,11 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
          Skip(s);
      }
      if ( fa.IsMemoryAccess(s)) {
-        ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-        if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
-           AppendReadLoc(fa, s);
+        if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
+          ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+          if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
+             AppendReadLoc(fa, s);
+        }
         AstNodeList arglist;
         if (fa.IsArrayAccess(s, 0, &arglist))  {
            for (AstNodeList::const_iterator p = arglist.begin(); 
@@ -257,6 +246,7 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending modifying " << AstInterface::AstToString(mod) << " = " << AstInterface::AstToString(rhs) << std::endl;
       }
+if(curstmt == 0) return;
        assert(curstmt != AST_NULL);
        if (killcollect != 0 && rhs != AST_NULL)
             (*killcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt));
@@ -318,7 +308,7 @@ public:
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope)->union_with(repr);
       if (DebugAliasAnal())  {
-         std::cerr << "Generating aliasing with: " << varname << std::endl;
+         std::cerr << "aliasing with: " << varname << std::endl;
       }
     }
     else {
@@ -415,11 +405,11 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
   if (rhs == AST_NULL || !fa.IsVarRef(mod, &modtype, &modname, &modscope) || fa.IsScalarType(modtype))
     return;
   AstInterface::AstNodeList args;
-  if (fa.IsFunctionCall( rhs, 0, &args) ) {  // rhs is a function call, check if alias info. available for the function
+  if (fa.IsFunctionCall( rhs, 0, &args) ) {
     ModifyAliasMap collect(fa, aliasmap);
     if (funcanal != 0 && funcanal->may_alias( fa, rhs, mod, collect))
         return;
-    hasunknown = true;   // no function alias analysis results, assuming the worst, aliasing all parameters
+    hasunknown = true;
     if (DebugAliasAnal()) {
         std::cerr << "unknown alias info for function call : " << AstInterface::AstToString(rhs) << std::endl;
         std::cerr << "aliasing all parameters with " << AstInterface::AstToString(mod) << std::endl;;
@@ -437,11 +427,7 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
       if (!fa.IsScalarType(rhstype)) 
-      {
          aliasmap.get_alias_map(modname, modscope)->union_with(aliasmap.get_alias_map(rhsname, rhsscope));
-         if (DebugAliasAnal()) 
-             std::cerr << "Generating aliasing relation between " << AstInterface::AstToString(mod)<< " and " << AstInterface::AstToString(rhs) << std::endl;
-      }
     }
   }
 }

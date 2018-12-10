@@ -13,7 +13,6 @@ void LoopTreeDepGraphCreate::AddNode(LoopTreeDepGraphNode* result)
       LoopTreeNode *s = result->GetInfo();
       GraphCreateBase::AddNode(result);
       if (s && IsSimpleStmt(s)) {
-        //s->AttachObserver(*this);
         if (map.GetDepNode(s) == 0)
            map.InsertMapping(s, result);
         else
@@ -68,6 +67,8 @@ DepInfoEdge* LoopTreeDepGraphCreate::
 CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, const DepInfo& info)
    { 
      //assert(info.GetDepType() != DEPTYPE_NONE);
+  if (DebugDep())
+ std::cerr << "Creating dep edge from " << n1->toString() << " to " << n2->toString() << ":" << info.toString() << "\n";
      return DepInfoGraphCreate<LoopTreeDepGraphNode>::CreateEdge(n1,n2,info);
    }
 
@@ -86,6 +87,35 @@ CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
 
 void LoopTreeDepComp :: DumpTree() const 
   { GetLoopTreeRoot()->DumpTree(); }
+
+void LoopTreeDepComp :: OutputDep() const 
+{ 
+   for (GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
+             = GetDepGraph()->GetNodeIterator();
+        !nodes.ReachEnd(); ++nodes) {
+      LoopTreeDepGraphNode* n1 = *nodes;
+      std::cerr << "From " << n1->toString() << ":\n"; 
+      for (GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::EdgeIterator p=GetDepGraph()->GetNodeEdgeIterator(n1, GraphAccess::EdgeOut);
+           !p.ReachEnd(); ++p) {
+         LoopTreeDepGraphNode* n2 = GetDepGraph()->GetEdgeEndPoint(*p, GraphAccess::EdgeIn);
+         std::cerr << "To " << n2->toString() << ":";
+         const DepInfo& info = (*p)->GetInfo();
+         if (info.SrcRef() != AST_NULL) 
+           std::cerr << AstInterface::AstToString(info.SrcRef(),false) << AstInterface::getAstLocation(info.SrcRef()) << "->" << AstInterface::AstToString(info.SnkRef(),false) << AstInterface::getAstLocation(info.SnkRef());
+         std::cerr  << ": (";
+         
+         int i;
+         for (i = 0; i < info.CommonLevel()-1; i++) {
+              std::cerr << info.Entry( i, i).toString(true) << ",";
+         }
+         if (i >= 0 && i < info.CommonLevel())
+             std::cerr << info.Entry(i, i).toString(true);
+         std::cerr << ");";
+         std::cerr << DepType2String(info.GetDepType()) << "\n";
+      }
+   }
+}
+
 void LoopTreeDepComp :: DumpDep() const 
 { 
    GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
@@ -215,6 +245,8 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
                   return;
              }
           }
+  if (DebugDep())
+ std::cerr << "Trying to create dep edge:" << info.toString() << "\n";
           graph.CreateEdgeFromOrigAst(n1,n2,info);
         }
   virtual DepInfoConstIterator
@@ -256,20 +288,20 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
   virtual GraphAccessInterface::Node* CreateNodeImpl(AstNodePtr start, const DomainCond& c)
   {
     LoopTreeNode *cur = iter.Current();
-    for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0);
-         iter.Advance(), cur = iter.Current());
-    if (cur == NULL || !( cur->GetOrigStmt() == 0 || cur->GetOrigStmt() == start))
-       { std::cerr << "problem stmt: " << ((cur == NULL)? "NULL" : cur->toString()) << "\n"; 
-         std::cerr << "start : " << AstInterface::AstToString(start) << "\n";
-         assert(0);}
-    iter.Advance();
+    for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0); iter.Advance(), cur = iter.Current());
+    if (DebugDep())  {
+      std::cerr << "Trying to create : " << AstInterface::AstToString(start) << "\n";
+      std::cerr << "current loop tree node:" << cur->toString() << "\n";
+     }
     LoopTreeDepGraphNode *d = graph.CreateNode(cur, c);
+    iter.Advance();
     return d;
   }
   LoopTreeTraverse iter;
  public:
   BuildLoopDepGraphCreate( LoopTreeNode* root, LoopTreeDepGraphCreate &c)
-    : BuildLoopDepGraphEdges(c), iter(root, LoopTreeTraverse::PreOrder) {}
+    : BuildLoopDepGraphEdges(c), iter(root, LoopTreeTraverse::PreOrder) {
+    }
 };
 
 void LoopTreeDepCompCreate :: BuildDepGraph()
