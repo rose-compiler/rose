@@ -2167,6 +2167,7 @@ projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
 projects/TemplateAnalysis/src/Makefile
 projects/TemplateAnalysis/examples/Makefile
+projects/TemplateAnalysis/examples/inspect-autovar/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy
