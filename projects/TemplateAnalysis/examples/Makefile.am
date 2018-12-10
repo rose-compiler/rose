@@ -1,6 +1,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS=inspect-autovar
+
 RAT_REL_PATH=projects/TemplateAnalysis
 RAT_ORG_PATH=ROSE/Analysis/Template
 RAT_PATH=$(top_builddir)/$(RAT_REL_PATH)/src

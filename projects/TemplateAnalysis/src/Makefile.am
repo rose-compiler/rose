@@ -28,13 +28,17 @@ PROP_LIB=$(abs_top_builddir)/$(PROP_REL_PATH)/lib/$(PROP_ORG_PATH)/libROSE-Propo
 $(PROP_LIB):
 	$(MAKE) -C $(abs_top_builddir)/$(PROP_REL_PATH)/lib/$(PROP_ORG_PATH) libROSE-Proposed.la
 
-bin_PROGRAMS=genInstFlowGraph
+bin_PROGRAMS=genInstFlowGraph inspectAutoVar
 # mfbEnv sage2json
 
 genInstFlowGraph_SOURCES=gen-inst-flow-graph.cpp
 genInstFlowGraph_CXXFLAGS=-g $(MFB_INC_PATHS) $(RAT_INC_PATHS) $(ROSE_INCLUDES)
 #genInstFlowGraph_LIBADD=$(MFB_LIB_PATHS) $(MFB_LIBS) $(RAT_LIB_PATH) $(RAT_LIBS)
 genInstFlowGraph_LDADD=$(LIBS_WITH_RPATH) $(ROSE_LIBS) $(MFB_LIB_SAGE) $(MFB_LIB_UTILS) $(RAT_LIB)
+
+inspectAutoVar_SOURCES=inspect-autovar.cpp
+inspectAutoVar_CXXFLAGS=-g $(RAT_INC_PATHS) $(ROSE_INCLUDES)
+inspectAutoVar_LDADD=$(LIBS_WITH_RPATH) $(ROSE_LIBS) $(MFB_LIB_UTILS) $(RAT_LIB)
 
 #mfbEnv_SOURCES=mfb-environment.cpp
 #mfbEnv_CXXFLAGS=-g $(MFB_INC_PATHS) $(RAT_INC_PATHS) $(PROP_INC_PATHS) $(ROSE_INCLUDES)
