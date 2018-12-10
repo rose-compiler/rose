@@ -4355,6 +4355,15 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          break;
                        }
 
+                    case V_SgLambdaExp:
+                       {
+                         // This happens when calling unparseToString on the function declaration associated with a lambda
+                         printf("WARNING: In fixupScopeInUnparseInfo: Case of a lambda expression !!!\n");
+                         SgLambdaExp * lambda = isSgLambdaExp(parentOfFunctionDeclaration);
+                         currentScope = SageInterface::getEnclosingStatement(lambda)->get_scope();
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
@@ -9830,7 +9839,9 @@ Unparse_ExprStmt::unparseNonrealDecl(SgStatement* stmt, SgUnparse_Info& info)
      SgNonrealDecl * nrdecl = isSgNonrealDecl(stmt);
      ROSE_ASSERT(nrdecl != NULL);
 
-     ROSE_ASSERT(false);
+     printf("WARNING: Asked to unparse a non-real declaration!\n");
+
+     curprint(nrdecl->get_name().str());
    }
 
 void

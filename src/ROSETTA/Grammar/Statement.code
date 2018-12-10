@@ -2852,6 +2852,8 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 
+          typedef SgTemplateInstantiationDecl instantiation_kind_t;
+
       /*! A template declaration can be of either class, struct, or union */
           enum class_types
              {
@@ -2871,9 +2873,15 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
+
+          typedef SgTemplateInstantiationFunctionDecl instantiation_kind_t;
+
 HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
+
+          typedef SgTemplateInstantiationMemberFunctionDecl instantiation_kind_t;
+
 HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
@@ -2909,29 +2917,7 @@ HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
 
 HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
 
-#if 0
-       // DQ (8/27/2005): This is not used!
-
-       // DQ (3/11/2004): Use the base classes' version of this template_type_enum.
-       // Actually we need this here since a template instantiation is derived from 
-       // a class declaration.
-
-       // The instantiated template is either a class or a function or member
-       // data but can't be represented in the program tree by a string as the 
-       // non-instantiated template (stuff) can be! So the only members that
-       // make sense here are the ones specific to the class and member class
-       // (nested class?) enum values.
-      /*! Type of template declaration (borrowed values from SgTemplateDeclaration) */
-          enum template_type_enum
-             {
-               e_template_none       = SgTemplateDeclaration::e_template_none,       /*!< error value */
-               e_template_class      = SgTemplateDeclaration::e_template_class,      /*!< class template */
-               e_template_m_class    = SgTemplateDeclaration::e_template_m_class,    /*!< nested class template */
-               e_template_function   = SgTemplateDeclaration::e_template_function,   /*!< function template */
-               e_template_m_function = SgTemplateDeclaration::e_template_m_function, /*!< member function template */
-               e_template_m_data     = SgTemplateDeclaration::e_template_m_data      /*!< member data template (typically static member data) */
-             };
-#endif
+          typedef SgTemplateClassDeclaration template_kind_t;
 
        // DQ (3/21/2004): get_name assembles the full template name with arguments (e.g. "ABC<int>")
           void resetTemplateName();
@@ -2970,29 +2956,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
 
-#if 0
-       // DQ (8/27/2005): This is not used!
-
-       // DQ (3/11/2004): Use the base classes' version of this template_type_enum.
-       // Actually we need this here since a template instantiation is derived from 
-       // a class declaration.
-
-       // The instantiated template is either a class or a function or member
-       // data but can't be represented in the program tree by a string as the 
-       // non-instantiated template (stuff) can be! So the only members that
-       // make sense here are the ones specific to the class and member class
-       // (nested class?) enum values.
-      /*! Type of template declaration (borrowed values from SgTemplateDeclaration) */
-          enum template_type_enum
-             {
-               e_template_none       = SgTemplateDeclaration::e_template_none,       /*!< error value */
-               e_template_class      = SgTemplateDeclaration::e_template_class,      /*!< class template */
-               e_template_m_class    = SgTemplateDeclaration::e_template_m_class,    /*!< nested class template */
-               e_template_function   = SgTemplateDeclaration::e_template_function,   /*!< function template */
-               e_template_m_function = SgTemplateDeclaration::e_template_m_function, /*!< member function template */
-               e_template_m_data     = SgTemplateDeclaration::e_template_m_data      /*!< member data template (typically static member data) */
-             };
-#endif
+          typedef SgTemplateFunctionDeclaration template_kind_t;
 
        // DQ (2/15/2005): Added resetTemplateName function to handle templated functions
        // DQ (5/8/2004): Not clear that this is useful for function name which  
@@ -3024,29 +2988,8 @@ HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
 HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
-#if 0
-       // DQ (8/27/2005): This is not used!
 
-       // DQ (3/11/2004): Use the base classes' version of this template_type_enum.
-       // Actually we need this here since a template instantiation is derived from 
-       // a class declaration.
-
-       // The instantiated template is either a class or a function or member
-       // data but can't be represented in the program tree by a string as the 
-       // non-instantiated template (stuff) can be! So the only members that
-       // make sense here are the ones specific to the class and member class
-       // (nested class?) enum values.
-      /*! Type of template declaration (borrowed values from SgTemplateDeclaration) */
-          enum template_type_enum
-             {
-               e_template_none       = SgTemplateDeclaration::e_template_none,       /*!< error value */
-               e_template_class      = SgTemplateDeclaration::e_template_class,      /*!< class template */
-               e_template_m_class    = SgTemplateDeclaration::e_template_m_class,    /*!< nested class template */
-               e_template_function   = SgTemplateDeclaration::e_template_function,   /*!< function template */
-               e_template_m_function = SgTemplateDeclaration::e_template_m_function, /*!< member function template */
-               e_template_m_data     = SgTemplateDeclaration::e_template_m_data      /*!< member data template (typically static member data) */
-             };
-#endif
+          typedef SgTemplateMemberFunctionDeclaration template_kind_t;
 
        // DQ (2/15/2005): Added resetTemplateName function to handle templated member functions
        // DQ (5/8/2004): Not clear that this is useful for function name which  
@@ -3081,6 +3024,8 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
+          typedef SgDeclarationStatement instantiation_kind_t;
+
        // DQ (12/28/2011): We need a constructor similar to the base class.
           $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 
@@ -3112,6 +3057,8 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
+          typedef SgTemplateInstantiationTypedefDeclaration instantiation_kind_t;
+
        // DQ (12/28/2011): We need a constructor similar to the base class.
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 // BH (11/13/2015) on windows this caused incosistent defines of this
@@ -3131,6 +3078,8 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+
+          typedef SgTemplateTypedefDeclaration template_kind_t;
 
        // DQ (2/26/2018): get_name assembles the full template name with arguments (e.g. "ABC<int>")
           void resetTemplateName();
