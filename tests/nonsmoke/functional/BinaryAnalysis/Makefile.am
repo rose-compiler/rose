@@ -1477,6 +1477,23 @@ test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translat
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@
 
+###############################################################################################################################
+# Symbolic substitution in huge expressions with many common subexpressions
+###############################################################################################################################
+
+noinst_PROGRAMS += testSymbolicSubstitution
+testSymbolicSubstitution_SOURCES = testSymbolicSubstitution.C
+testSymbolicSubstitution_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSymbolicSubstitution.passed
+
+testSymbolicSubstitution.passed: testSymbolicSubstitution conditionalDisable
+	@$(RTH_RUN)					\
+	    TITLE="symbolic substitution"		\
+	    DISABLED="$$(./conditionalDisable)"		\
+	    USE_SUBDIR=yes				\
+	    CMD="$$(pwd)/testSymbolicSubstitution"	\
+	    $(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
 # Standard boilerplate
