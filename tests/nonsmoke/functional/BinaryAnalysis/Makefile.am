@@ -1496,6 +1496,36 @@ testSymbolicSubstitution.passed: testSymbolicSubstitution conditionalDisable
 	    $(top_srcdir)/scripts/test_exit_status $@
 
 ###############################################################################################################################
+# Z3 solver with wide constants
+################################################################################################################################
+
+noinst_PROGRAMS += testSmtWideConstant
+testSmtWideConstant_SOURCES = testSmtWideConstant.C
+testSmtWideConstant_LDADD = $(ROSE_SEPARATE_LIBS)
+
+if ROSE_HAVE_Z3
+TEST_TARGETS += testSmtWideConstant-z3exe.passed
+testSmtWideConstant-z3exe.passed: $(top_srcdir)/scripts/test_exit_status testSmtWideConstant conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="SMT wide constant z3-exe [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSmtWideConstant z3-exe"	\
+		$< $@
+endif
+
+if ROSE_HAVE_LIBZ3
+TEST_TARGETS += testSmtWideConstant-z3lib.passed
+testSmtWideConstant-z3lib.passed: $(top_srcdir)/scripts/test_exit_status testSmtWideConstant conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="SMT wide constant z3-lib [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSmtWideConstant z3-lib"	\
+		$< $@
+endif
+
+###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
 
