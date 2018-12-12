@@ -1291,7 +1291,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
       {
         VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
         int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-        if(!checkArrayBounds(arrayVarId2,index2)) {
+        if(!accessIsWithinArrayBounds(arrayVarId2,index2)) {
           recordDefinitiveOutOfBoundsAccessLocation(estate.label());
           //cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
         }
@@ -1415,10 +1415,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate) {
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   for (auto arg : argsList) {
-    //cout<<"DEBUG: functioncall argument: "<<arg->unparseToString()<<endl;
+    logger[TRACE]<<"evaluating function call argument: "<<arg->unparseToString()<<endl;
     // Requirement: code is normalized, does not contain state modifying operations in function arguments
     list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate);
-    //cout<<"DEBUG: resList.size()"<<resList.size()<<endl;
   }
   SingleEvalResultConstInt res;
   AbstractValue evalResultValue=CodeThorn::Top();
@@ -1653,7 +1652,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
 #if 0
       // TODO: not working yet because the memory region of strings are not properly registered with size yet
       // check bounds of string's memory region
-      if(!checkArrayBounds(stringPtr.getVariableId(),pos)) {
+      if(!accessIsWithinArrayBounds(stringPtr.getVariableId(),pos)) {
         recordDefinitiveOutOfBoundsAccessLocation(estate.label());
         break;
       }
@@ -1677,16 +1676,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
   return listify(res);
 }
 
-bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
+// true if access is correct. false if out-of-bounds access.
+// TODO: rewrite using new abstract values with array address references
+bool ExprAnalyzer::accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
   int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
-  if(accessIndex<0||accessIndex>=arraySize) {  
-    // this will throw a specific exception that will be caught by the analyzer to report verification results
-    cerr<<"Detected out of bounds array access in application: ";
-    cerr<<"array size: "<<arraySize<<", array index: "<<accessIndex<<" :: ";
-    return false; // fail
-  }
-  return true; // pass
+  return !(accessIndex<0||accessIndex>=arraySize);
 }
 
 ProgramLocationsReport ExprAnalyzer::getNullPointerDereferenceLocations() {

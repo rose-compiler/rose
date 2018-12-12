@@ -1055,7 +1055,12 @@ std::list<EState> CodeThorn::Analyzer::elistify(EState res) {
   return resList;
 }
 
-// wrapper function for reusing exprAnalyzer's function
+// wrapper function for reusing exprAnalyzer's function TODO:
+// investigate whether evaluation of parameters is now superfluous for
+// normalized program. This function is only relevant for external
+// functions (when the implementation does not exist in input program
+// and the semantics are available in the analyzer (e.g. malloc,
+// strlen, etc.))
 list<EState> CodeThorn::Analyzer::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
   CallString cs=currentEState.callString;
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalFunctionCallArguments(funCall, currentEState);
@@ -1805,7 +1810,12 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   while(i!=formalParameters.end() || j!=actualParameters.end()) {
     SgInitializedName* formalParameterName=*i;
     ROSE_ASSERT(formalParameterName);
+    // test formal parameter (instead of argument type) to allow for expressions in arguments
     VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
+    if(variableIdMapping.hasClassType(formalParameterVarId)) {
+      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of Class/Struct/Union types as function paramters per value not supported."<<endl;
+      exit(1);
+    }
     // VariableName varNameString=name->get_name();
     SgExpression* actualParameterExpr=*j;
     ROSE_ASSERT(actualParameterExpr);
@@ -2591,7 +2601,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
           {
             VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
             int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-            if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+            if(!exprAnalyzer.accessIsWithinArrayBounds(arrayVarId2,index2)) {
               exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
               cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
