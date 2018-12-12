@@ -4572,13 +4572,12 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
              }
 
-        }
-
 #if 1
-  // DQ (11/15/2018): Generate the dot file as a test!
-     string tmp_dotgraph_filename = "include_file_graph_from_base_of_unparseIncludedFiles";
-     generateGraphOfIncludeFiles(project,tmp_dotgraph_filename);
+       // DQ (11/15/2018): Generate the dot file as a test!
+          string tmp_dotgraph_filename = "include_file_graph_from_base_of_unparseIncludedFiles";
+          generateGraphOfIncludeFiles(project,tmp_dotgraph_filename);
 #endif
+        }
 
   // DQ (9/14/2018): At this point we have unparsed the include files, and skipped the unparsing of the
   // source file (since they will be unparsed using the usual memchanism which ignores include files).
