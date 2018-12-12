@@ -450,11 +450,18 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // DQ (10/22/2007): Allow empty name strings (to support #line n "")
             // ROSE_ASSERT (statementfilename.empty() == false);
 
+            // DQ (12/12/2018): Adding testing for failing test in virtual function analysis.
+            // ROSE_ASSERT(sourceFile != NULL);
+            // ROSE_ASSERT(sourceFile->get_file_info() != NULL);
+               ROSE_ASSERT(stmt != NULL);
+               ROSE_ASSERT(stmt->get_file_info() != NULL);
+
             // DQ (10/31/2018): Because the filenames are interpreted, we have to use the file_id values.
             // DQ (9/20/2013): If this is a performance issue, an optimization would be to use file_id's instead of strings (filenames).
             // However, this does not appear to be an important optimization.
             // if ( statementfilename == sourceFilename )
-               if (sourceFile->get_file_info()->get_physical_file_id() == stmt->get_file_info()->get_physical_file_id())
+            // if (sourceFile->get_file_info()->get_physical_file_id() == stmt->get_file_info()->get_physical_file_id())
+               if ((sourceFile != NULL) && (sourceFile->get_file_info()->get_physical_file_id() == stmt->get_file_info()->get_physical_file_id()))
                   {
                     statementInFile = true;
                   }

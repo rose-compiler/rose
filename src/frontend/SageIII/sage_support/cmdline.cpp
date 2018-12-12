@@ -7825,14 +7825,19 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
      const SgSourceFile* sourceFile = isSgSourceFile(this);
-     ROSE_ASSERT(sourceFile != NULL);
+
+  // DQ (12/12/2018): This step to insert extra include paths only applies to source files, not binary files (caught in Jenkins testing).
+  // ROSE_ASSERT(sourceFile != NULL);
+     if (sourceFile != NULL)
+        {
 #if 0
-     printf ("sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
+          printf ("sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
 #endif
 
-     argcArgvList.reserve(argcArgvList.size()+sourceFile->get_extraIncludeDirectorySpecifierList().size());
-  // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
-     argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
+          argcArgvList.reserve(argcArgvList.size()+sourceFile->get_extraIncludeDirectorySpecifierList().size());
+       // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
+          argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
+        }
 
 #if 0
      printf ("@@@@@@@@@@@@@@@@@@@@ In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());

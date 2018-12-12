@@ -199,18 +199,19 @@ void PtrAliasAnalysis::computeCallGraphNodes(SgFunctionDeclaration* targetFuncti
 }
 
 void PtrAliasAnalysis::run()  {
-        
+
+#if 0
      printf ("In PtrAliasAnalysis::run(): TOP \n");
-        
+#endif
         CallGraphBuilder fullCallGraph(project);
         fullCallGraph.buildCallGraph();
         std::set<SgGraphNode *>allNodes =  fullCallGraph.getGraph()->computeNodeSet();
 
         int counter = 0;
         foreach(SgGraphNode *node, allNodes) {
-            
+#if 0
           printf ("In PtrAliasAnalysis::run(): in loop body: counter = %d \n",counter);
-
+#endif
             counter++;
         
             SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node->get_SgNode());
@@ -219,24 +220,24 @@ void PtrAliasAnalysis::run()  {
             
             if(funcDecl->get_definingDeclaration() == NULL || isSgFunctionDeclaration(funcDecl->get_definingDeclaration())->get_definition() == NULL)
                 continue;
-
+#if 0
           printf ("In PtrAliasAnalysis::run(): in loop body: calling IntraProcAliasAnalysis \n");
-                
+#endif                
             IntraProcAliasAnalysis *intra = new IntraProcAliasAnalysis(funcDecl, classHierarchy, cgBuilder, intraAliases, resolver);
-
+#if 0
           printf ("In PtrAliasAnalysis::run(): in loop body: AFTER calling IntraProcAliasAnalysis \n");
-
+#endif
             intra->init();
-
+#if 0
           printf ("In PtrAliasAnalysis::run(): in loop body: AFTER calling init() \n");
-
+#endif
             intraAliases[funcDecl] = intra;
 
         }
         
-        
+#if 0
      printf ("In PtrAliasAnalysis::run(): after loop \n");
-         
+#endif
         order = TOPOLOGICAL;
         
         // Get the main funciton declaration
@@ -246,6 +247,8 @@ void PtrAliasAnalysis::run()  {
         
         InterProcDataFlowAnalysis::run();
 
+#if 0
      printf ("Leaving PtrAliasAnalysis::run(): TOP \n");
+#endif
  }
 
