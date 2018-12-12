@@ -40,6 +40,7 @@ namespace SPRAY {
     if(level==1||level==2) {
       normalization=true;
       normalizeSingleStatements=true;
+      normalizeLabels=true;
       eliminateForStatements=true;
       eliminateWhileStatements=false;
       hoistConditionExpressions=true;
@@ -56,6 +57,7 @@ namespace SPRAY {
     if(level==3) {
       normalization=true;
       normalizeSingleStatements=true;
+      normalizeLabels=true;
       eliminateForStatements=true;
       eliminateWhileStatements=true;  // different to level 1,2
       hoistConditionExpressions=true;
@@ -88,8 +90,7 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeLabel(SgLabelStatement* label) {
-    SgNode* parent=label->get_parent();
-    ROSE_ASSERT(!isSgIfStmt(parent) && !isSgWhileStmt(parent) && !isSgDoWhileStmt(parent));
+    //SgNode* parent=label->get_parent();ROSE_ASSERT(!isSgIfStmt(parent) && !isSgWhileStmt(parent) && !isSgDoWhileStmt(parent));
     SgStatement* stmt=label->get_statement();
     if(stmt==0 || isSgNullStatement(stmt)) {
       // nothing to normalize
@@ -180,10 +181,26 @@ namespace SPRAY {
       AstPostProcessing(project);
     }
   }
+  void Normalization::normalizeLabelStmts(SgNode* root) {
+    RoseAst ast(root);
+    list<SgLabelStatement*> list;
+    // first determine statements to be normalized, then transform.
+    for(auto node:ast) {
+      if(SgLabelStatement* labelStmt=isSgLabelStatement(node)) {
+        list.push_back(labelStmt);
+      }
+    }
+    for(auto labelStmt:list) {
+      normalizeLabel(labelStmt);
+    }
+  }
 
   void Normalization::normalizeAst(SgNode* root) {
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
+    }
+    if(options.normalizeLabels) {
+      normalizeLabelStmts(root);
     }
     if(options.eliminateForStatements) {
       convertAllForStmtsToWhileStmts(root);

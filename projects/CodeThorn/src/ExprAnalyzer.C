@@ -771,7 +771,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
           // function parameter of array type contains a pointer value in C/C++
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value of array function paramter only (without index)
-          logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+          logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
         } else {
           arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
           logger[TRACE]<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
@@ -783,12 +783,12 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
-            cout<<"Error: value not a pointer value: "<<arrayPtrValue.toString()<<endl;
+            logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
             cout<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
           }
         } else {
-          cerr<<"Error: pointer variable does not exist in PState."<<endl;
+          cerr<<"Error: pointer variable does not exist in PState."<<endl  ;
           exit(1);
         }
       } else {
@@ -797,9 +797,28 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
+      if(arrayPtrPlusIndexValue.isNullPtr()) {
+        _nullPointerDereferenceLocations.recordDefinitiveLocation(estate.label());
+        // there is no state following a definitive null pointer
+        // dereference. An error-state recording this property is
+        // created to allow analysis of errors on the programs
+        // transition graph. In addition the property is also recorded in the _nullPointerDereferenceLocations list.
+        res.result=CodeThorn::Top(); // consider returning bot here?
+        // verification error states are detected in the solver and no successor states are computed.
+        res.estate.io.recordVerificationError();
+        resultList.push_back(res);
+        return resultList;
+      }
       if(pstate->varExists(arrayPtrValue)) {
       } else {
-        logger[TRACE]<<"evalArrayReferenceOp: array pointer value NOT in state: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+        if(arrayPtrValue.isTop()) {
+          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction not supported yet."<<endl;
+        } else {
+          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
+          logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state. array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+          logger[ERROR]<<"evalArrayReferenceOp: access out of allocated memory bounds."<<endl;
+        }
+        exit(1);
       }
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
         // address of denoted memory location

@@ -37,8 +37,10 @@ namespace SPRAY {
       bool normalization=true;
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
-      // turns single statements into blocks with one statement
+      // transforms single statements into blocks with one statement
       bool normalizeSingleStatements=true;
+      // transforms all labels into separate statements
+      bool normalizeLabels=true;
       // replace for with while
       bool eliminateForStatements=true;
       // replace while with if/goto
@@ -110,6 +112,13 @@ namespace SPRAY {
     void normalizeAst(SgNode* root);
 
   private:
+    /* normalize all label stmts in AST. Every label is attached to an
+     * empty statement (instead to S). Inserting a statement before S
+     * is then straight-forward.
+     * Transformation:  L: S; => L; S;
+     */
+    static void normalizeLabelStmts(SgNode* root);
+
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
