@@ -2603,43 +2603,45 @@ SgProject::parse()
 
                       // DQ (11/15/2018): We have removed the include_file_list from the SgSourceFile so that we can support traversals on the SgIncludeFile tree.
                       // SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
-                         ROSE_ASSERT(sourceFile->get_associated_include_file() != NULL);
-                         SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
-                         for (size_t i = 0; i < include_file_list.size(); i++)
+                      // ROSE_ASSERT(sourceFile->get_associated_include_file() != NULL);
+                         if (sourceFile->get_associated_include_file() != NULL)
                             {
-                              SgIncludeFile* includeFile = include_file_list[i];
-                              ROSE_ASSERT(includeFile != NULL);
-#if 0
-                              printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
-#endif
-                           // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
-                           // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the 
-                           // the source (*.C) file.
-                              SgSourceFile* header_file = includeFile->get_source_file();
-                           // ROSE_ASSERT(header_file != NULL);
-                              if (header_file != NULL)
+                              SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
+                              for (size_t i = 0; i < include_file_list.size(); i++)
                                  {
+                                   SgIncludeFile* includeFile = include_file_list[i];
+                                   ROSE_ASSERT(includeFile != NULL);
 #if 0
-                                // DQ (11/10/2018): Added debugging output.
-                                   printf ("header_file = %p header_file->getFileName() = %s \n",header_file,header_file->getFileName().c_str());
+                                   printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
-                                // DQ (11/29/2018): I think this is only valid when header file unparsing and token unparsing are used together.
-                                // ROSE_ASSERT(header_file->get_globalScope() != NULL);
-                                   if (header_file->get_globalScope() != NULL)
+                                // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
+                                // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the 
+                                // the source (*.C) file.
+                                   SgSourceFile* header_file = includeFile->get_source_file();
+                                // ROSE_ASSERT(header_file != NULL);
+                                   if (header_file != NULL)
                                       {
-                                        ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
 #if 0
-                                        printf ("Calling display on token sequence for global scope (for *.h file) \n");
-                                        ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
-                                        TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
-                                        ROSE_ASSERT(tokenSequence != NULL);
-                                        printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
-                                        tokenSequence->display("token sequence for global scope (*.h file)");
+                                     // DQ (11/10/2018): Added debugging output.
+                                        printf ("header_file = %p header_file->getFileName() = %s \n",header_file,header_file->getFileName().c_str());
 #endif
+                                     // DQ (11/29/2018): I think this is only valid when header file unparsing and token unparsing are used together.
+                                     // ROSE_ASSERT(header_file->get_globalScope() != NULL);
+                                        if (header_file->get_globalScope() != NULL)
+                                           {
+                                             ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
+#if 0
+                                             printf ("Calling display on token sequence for global scope (for *.h file) \n");
+                                             ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
+                                             TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
+                                             ROSE_ASSERT(tokenSequence != NULL);
+                                             printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
+                                             tokenSequence->display("token sequence for global scope (*.h file)");
+#endif
+                                           }
                                       }
                                  }
                             }
-
 #if 0
                          printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
