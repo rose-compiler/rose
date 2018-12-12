@@ -1,6 +1,7 @@
 include ExpStmt.incl
 include Loops.incl
 include omp.incl
+include analysis.pi
 
 <*
    POET : Parameterized Optimizations for Empirical Tuning
@@ -33,23 +34,22 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
  syntax descriptions for the Fortran language
 ******************************************************>
 
-<define KEYWORDS ("continue" "CONTINUE" "return" "while" "end" "enddo" "endif" "do" "if" "else" "dimension" "implicit" "double" "precision" "integer" "call")/>
+<define KEYWORDS ("continue" "CONTINUE" "return" "RETURN" "while" "WHILE" "end" "END" "enddo" "ENDDO" "endif" "ENDIF" "do" "DO" "if" "IF" "else" "ELSE" "dimension" "DIMENSION" "implicit" "IMPLICIT" "double" "DOUBLE" "precision" "PRECISION" "real" "REAL" "integer" "INTEGER" "call" "CALL")/>
 <define BACKTRACK FALSE/>
 <define PARSE NoParse/>
 <define UNPARSE UnparseLine[start_col=7;label_col=2; cont_col=6;text_len=66;is_omp=1]/>
 <define PREP ParseLine[comment_col=1;continue_col=6;text_len=66] />
-<define F77STMT CODE.Label|CODE.NestDO|CODE.NestIf|CODE.CallStmt|CODE.ParamDeclStmt|CODE.ImplicitDeclStmt|CODE.ExpStmt|CODE.VarDeclStmt />
-<define SymTable MAP{}/>
+<define F77STMT CODE.Label|CODE.NestDO|CODE.NestIf|CODE.CallStmt|CODE.ReturnStmt|CODE.ParamDeclStmt|CODE.ImplicitDeclStmt|CODE.ExpStmt|CODE.VarDeclStmt />
 
-<code Stmt parse=F77STMT/>
+<code Stmt parse=F77STMT />
 
-<code D0FLOAT pars=(val:CODE.FLOAT,pre:"D0"|"d0"|"")
+<code D0FLOAT pars=(val:FLOAT,pre:"D0"|"d0"|"")
         rebuild=((pre=="")?val:D0FLOAT#(val,pre))> @val pre@ </code>
 
-<define TOKEN (("." "true" ".") ("." "false" ".") ("." "not" ".") ("." "and" ".") ("." "or" ".") ("." "eq" ".") ("." "ne" ".") ("." "gt" ".") ("." "lt" ".") ("." "le" ".") ("." "ge" ".") CODE.FLOAT CODE.EndIf CODE.EndDo)/>
+<define TOKEN (("." "true" ".") ("." "false" ".") ("." "not" ".") ("." "and" ".") ("." "or" ".") ("." "eq" ".") ("." "ne" ".") ("." "gt" ".") ("." "lt" ".") ("." "le" ".") ("." "ge" ".") CODE.EndIf CODE.EndDo)/>
 
-<code EndIf parse=("end" " " "if") rebuild="endif"/> 
-<code EndDo parse=("end" " " "do") rebuild="enddo" />
+<code EndIf parse=("end" " " "if")|("END" " " "IF")|"endif"  rebuild="endif"/> 
+<code EndDo parse=("end" " " "do")|("END" " " "DO")  rebuild="enddo" />
 
 <define EXP_BASE INT|D0FLOAT|Name|".true."|".false." />
 <define EXP_BOP ("=" (".and." ".or.") (".eq." ".ne." ".gt." ".lt." ".le." ".ge.") ("+" "-") ("*" "/") ) />
@@ -64,9 +64,8 @@ default: Bop#(op,lhs,rhs)
 </xform>
 <define BUILD_BOP F_buildBop/>
 
-<xform BuildCall pars=(name,args)>
-tab=car(ERASE(GLOBAL.SymTable));
-if (!(tab : MAP)) ERROR("No symbol table!");
+<xform BuildCall pars=(name,args) tab=GLOBAL.SymTable>
+if (tab == NULL) { GLOBAL.SymTable = tab = MAP{}; }
 switch (t=tab[name]) 
 {
   case "": ArrayAccess#(name,args)
@@ -100,7 +99,7 @@ max(@first@,@second@)
 enddo
 </code>
 
-<code Nest pars=(ctrl, body:LIST(Stmt,"\n"))>
+<code Nest pars=(ctrl, body:LIST(Stmt,"\n")) match=CODE.Stmt>
 @(switch (ctrl) {
   case CODE.Loop|CODE.While: NestLoop#(ctrl, body)
   case CODE.If: NestIf#(ctrl, body,"endif")
@@ -150,7 +149,7 @@ if (!(stopToken : stop)) {
    ERROR("Unexpected stopping token:" stopToken "; expecting:" stop "\n parse result is : " res "\n leftover is: " left);
 }
 left2=NextToken(left);
-if (stop == label && !(FirstToken(left2) : CODE.Continue)) 
+if (stop == label && !(FirstToken(left2) : "CONTINUE"|"continue")) 
    { <<* QY: include stmt as part of loop body
       left2 => (next=CODE.Stmt,left2=_);
       res=BuildList(res,next);
@@ -191,36 +190,52 @@ else @rest@
 @exp@
 </code>
 
+<code FunctionCall pars=(function:ID, args : CODE.ExpList)>
+@function@(@args@)
+</code> 
+
 <code CallStmt pars=(func : FunctionCall)>
-call @func@
+@CODE.Call@ @func@
 </code>
 
-<code Label pars=(val:INT) > 
-@val@ @CODE.Continue@ 
+<code Call parse="call"|"CALL" output="call"/>
 
+<code ReturnStmt pars=(val : EXP | "") >
+@CODE.Return@ @val@
 </code>
 
-<code Continue parse="continue"|"CONTINUE" match="continue"|"CONTINUE">
-continue
+<code Return parse="return"|"RETURN" output="return"/>
+
+<code Label pars=(val:INT) parse=(val ("continue"|"CONTINUE"))> 
+@val@ continue
+
 </code>
 
 <*********************************** Types ************************************>
 
-<code Type pars=(content: CODE.IntegerType
-                        | CODE.DoubleType
+<code Type pars=(content: CODE.IntegerType | CODE.DoubleType | CODE.RealType
                         | CODE.Name)>
 @content@
 </code>
 
-<code IntegerType>integer</code>
-<code DoubleType>double precision</code>
+<code IntegerType pars=(val : "integer"|"INTEGER") > @val@ </code>
+<code DoubleType pars=(val : ("double" "precision") | ("DOUBLE" "PRECISION"))> @val@ </code>
+<code RealType pars=(name : "real"|"REAL", prec : CODE.Precision|"") >
+@name prec@
+</code>
+<code Precision pars=(i:INT)> *@i@ </code>
+
+
 
 <code IntType pars=(name:"int")>@ (name=="int")? IntegerType : name @</code>
 <code FloatType pars=(name:"double")>@ (name=="double")? DoubleType : name @</code>
 
 <******************************* Identifiers **********************************>
 
-<code ArrayDim pars=(dim:LIST(ID|INT,",")) rebuild=dim> (@dim@) </code>
+<code ArrayDim pars=(dim:LIST(CODE.Range,",")) rebuild=dim> (@dim@) </code>
+<code Range pars=(begin : ID|INT, end : CODE.EndRange|"") 
+           rebuild=((end == "")? begin : Range#(begin,end)) > @begin end@ </code>
+<code EndRange pars=(val : ID|INT) > : @val@ </code>
 
 <code Variable pars=(name:Name, arrDim : CODE.ArrayDim | "")>
 @name@@arrDim@
@@ -228,25 +243,9 @@ continue
 
 <code VariableList parse=LIST(Variable,",") />
 
-<xform InsertTypeInfo pars=(type,vars) tab=GLOBAL.SymTable>
-tab=car(ERASE(tab));
-if (!(tab : MAP)) RETURN vars;
-switch (vars)
-{
- case (a b) : InsertTypeInfo(type,a); InsertTypeInfo(type,b); vars
- case Variable#(name,dim) : if (dim!="") type=ArrayType#(type,dim);
-                            pre=tab[name];
-                            if (pre:TAG#(tag,"")) type=TAG#(tag,type); 
-                            else if (pre != "") ERROR("duplicate decl:" name);
-                            tab[name]=type; 
-                            vars
- case CODE.ParamName#(name): tab[name]=TAG#("PARAM",type); vars
-}
-</xform>
-
 <xform InsertParam pars=(var) tab=GLOBAL.SymTable>
-tab=car(ERASE(tab));
-if (!(tab : MAP)) RETURN var;
+if (tab == NULL) { GLOBAL.SymTable = tab = MAP{}; }
+tab=car(tab);
 tab[var]=TAG#("PARAM",tab[var]);
 </xform>
 
@@ -272,19 +271,23 @@ tab[var]=TAG#("PARAM",tab[var]);
 
 </code>
 
-<code VarDeclStmt
-      pars=(type:Type, var:VariableListStmt) rebuild=(InsertTypeInfo(type,var);VarDeclStmt#(type,var))>
+<code VarDeclStmt pars=(type:Type, var:VariableListStmt) 
+                  rebuild=(VarDeclStmt#(insert_typeInfo(type,var))) >
 @type@ @var@
 </code>
 
-<code ParamName pars=(id:ID) 
-    rebuild=(InsertTypeInfo("",ParamName#id))> @id@ </code>
+<code ParamName pars=(id:ID) rebuild=(insert_typeInfo("",ParamName#(id)))> 
+@id@ </code>
+
+<code Subroutine parse="subroutine"|"SUBROUTINE" output="subroutine" />
 
 <code SubroutineDecl pars=(name:ID, params:LIST(ParamName,","), body:LIST(F77STMT,"\n"))>
-subroutine @name@(@params@)
+@CODE.Subroutine@ @name@(@params@)
 @body@
-end
+@CODE.End@
 </code>
+
+<code End parse="end"|"END" output="end" />
 
 <***************************** OMP Instructions *******************************>
 
@@ -310,9 +313,9 @@ shared(@vars@)
 <* Variables are seperated into lines to avoid going beyond limited columns. *>
 <code OMPParallelBegin pars=(private, shared)>
 @ ret=OMPParallelDo;
-for (rest=private; rest; rest=cdr rest)
+for (rest=private; rest!=NULL; rest=cdr rest)
   ret=BuildList(OMPContinue#(PrivateNameList#(car rest)), ret);
-for (rest=shared; rest; rest=cdr rest)
+for (rest=shared; rest!=NULL; rest=cdr rest)
   ret=BuildList(OMPContinue#(SharedNameList#(car rest)), ret);
 ReverseList(ret) @
 </code>
@@ -437,46 +440,43 @@ case OMPParallelSection#(content):
   BuildList(OMPMacro#(OMPParallelSection#(Nothing)),
             RebuildOMPMacro(content))
 case OMPAttrList#(attr):
-  ret = "";
+  ret = NULL;
   foreach (attr : (shared = OMPSharedNameList) : TRUE)
-    ret = BuildList(RebuildOMPMacro(shared), ret);
+    ret = RebuildOMPMacro(shared) :: ret;
   foreach (attr : (private = OMPPrivateNameList) : TRUE)
-    ret = BuildList(RebuildOMPMacro(private), ret);
+    ret = RebuildOMPMacro(private) :: ret;
   foreach (attr : (reduction = OMPReductionNameList) : TRUE)
-    ret = BuildList(RebuildOMPMacro(reduction), ret);
+    ret = RebuildOMPMacro(reduction) :: ret;
   foreach (attr : (schedule = OMPSchedule) : TRUE)
-    ret = BuildList(OMPMacroCont#(schedule), ret);
+    ret = OMPMacroCont#(schedule) :: ret;
   foreach (attr : (threads = OMPNumThreads) : TRUE)
-    ret = BuildList(OMPMacroCont#(threads), ret);
+    ret = OMPMacroCont#(threads):: ret;
   ret
 
 case OMPSharedNameList#(vars):
   (!(vars:NameList#(l)))? OMPMacroCont#(OMPSharedNameList#(vars))
   : (
-    ret = "";
-    for (rest = l; rest; rest = cdr rest)
-      ret = BuildList(OMPMacroCont#(OMPSharedNameList#(car rest)),
-                      ret);
+    ret = NULL;
+    for (rest = l; rest!=NULL; rest = cdr rest)
+      ret = OMPMacroCont#(OMPSharedNameList#(car rest)) :: ret;
     ret
   )
 
 case OMPPrivateNameList#(vars):
   (!(vars:NameList#(l)))? OMPMacroCont#(OMPPrivateNameList#(vars))
   : (
-    ret = "";
-    for (rest = l; rest; rest = cdr rest)
-      ret = BuildList(OMPMacroCont#(OMPPrivateNameList#(car rest)),
-                      ret);
+    ret = NULL;
+    for (rest = l; rest!=NULL; rest = cdr rest)
+      ret = OMPMacroCont#(OMPPrivateNameList#(car rest)):: ret;
     ret
   )
 
 case OMPReductionNameList#(op, vars):
   (!(vars:NameList#(l)))? OMPMacroCont#(OMPReductionNameList#(op, vars))
   : (
-    ret = "";
-    for (rest = l; rest; rest = cdr rest)
-      ret = BuildList(OMPMacroCont#(OMPReductionNameList#(op, car rest)),
-                      ret);
+    ret = NULL;
+    for (rest = l; rest!=NULL; rest = cdr rest)
+      ret = OMPMacroCont#(OMPReductionNameList#(op, car rest)) :: ret;
     ret
   )
 
