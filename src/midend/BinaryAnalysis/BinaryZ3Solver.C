@@ -393,11 +393,13 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             z3::expr z3expr(*ctx_);
             for (size_t offset=0; offset < leaf->bits().size(); offset += 64) {
                 size_t windowSize = std::min((size_t)64, leaf->bits().size() - offset);
-                z3::expr window = portable_z3_bv_val(ctx_, leaf->bits().toInteger(), windowSize);
+                Sawyer::Container::BitVector windowBits = leaf->bits();
+                windowBits.shiftRight(offset).resize(windowSize);
+                z3::expr window = portable_z3_bv_val(ctx_, windowBits.toInteger(), windowSize);
                 if (0 == offset) {
                     z3expr = window;
                 } else {
-                    z3expr = z3::concat(z3expr, window);
+                    z3expr = z3::concat(window, z3expr);
                 }
             }
             return Z3ExprTypePair(z3expr, BIT_VECTOR);

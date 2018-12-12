@@ -226,8 +226,6 @@ SmtSolver::satisfiable(const SymbolicExpr::Ptr &expr) {
     reset();
     insert(expr);
     Satisfiable retval = check();
-    if (SAT_YES == retval)
-        parseEvidence();
     return retval;
 }
 
@@ -236,8 +234,6 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
     reset();
     insert(exprs);
     Satisfiable retval = check();
-    if (SAT_YES == retval)
-        parseEvidence();
     return retval;
 }
 
@@ -343,17 +339,26 @@ SmtSolver::Satisfiable
 SmtSolver::check() {
     ++stats.ncalls;
 
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"assertions:\n";
+        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, assertions())
+            mlog[DEBUG] <<"  " <<*expr <<"\n";
+    }
+    
     latestMemoizationId_ = 0;
-    clearEvidence();
-    Satisfiable retval = checkTrivial();
-    if (retval != SAT_UNKNOWN)
-        return retval;
-
-    // Have we seen this before?
-    SymbolicExpr::Hash h = 0;
     latestMemoizationRewrite_.clear();
-    latestMemoizationId_ = 0;
-    if (doMemoization_) {
+    clearEvidence();
+    bool wasTrivial = false;
+    Satisfiable retval = checkTrivial();
+    if (retval != SAT_UNKNOWN) {
+        mlog[DEBUG] <<"trivial solution\n";
+        wasTrivial = true;
+    }
+    
+    // Have we seen this before?
+    bool wasMemoized = false;
+    SymbolicExpr::Hash h = 0;
+    if (!wasTrivial && doMemoization_) {
         // Normalize the expressions by renumbering all variables. The renumbering is saved in the latestMemoizationRewrites_
         // data member so the mapping can be reversed when parsing evidence.
         std::vector<SymbolicExpr::Ptr> rewritten = normalizeVariables(assertions(), latestMemoizationRewrite_/*out*/);
@@ -363,30 +368,27 @@ SmtSolver::check() {
             retval = found->second;
             latestMemoizationId_ = h;
             ++stats.memoizationHits;
-            return retval;
+            mlog[DEBUG] <<"using memoized result\n";
+            wasMemoized = true;
         }
-    }
-
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"assertions:\n";
-        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, assertions())
-            mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
     
     // Do the real work
-    switch (linkage_) {
-        case LM_EXECUTABLE:
-            retval = checkExe();
-            break;
-        case LM_LIBRARY:
-            retval = checkLib();
-            break;
-        case LM_NONE:
-            throw Exception("no linkage for " + name_ + " solver");
-        default:
-            ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+    if (!wasTrivial && !wasMemoized) {
+        switch (linkage_) {
+            case LM_EXECUTABLE:
+                retval = checkExe();
+                break;
+            case LM_LIBRARY:
+                retval = checkLib();
+                break;
+            case LM_NONE:
+                throw Exception("no linkage for " + name_ + " solver");
+            default:
+                ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+        }
     }
-
+    
     if (mlog[DEBUG]) {
         switch (retval) {
             case SAT_NO:
@@ -402,10 +404,13 @@ SmtSolver::check() {
     }
     
     // Cache the result
-    if (doMemoization_) {
+    if (doMemoization_ && !wasTrivial && !wasMemoized) {
         memoization_[h] = retval;
         latestMemoizationId_ = h;
     }
+
+    if (SAT_YES == retval)
+        parseEvidence();
     return retval;
 }
 
@@ -491,15 +496,18 @@ SmtSolver::checkExe() {
                         StringUtility::cEscape(errorMesg) + "\"");
 
     // Look for an expression that's just "sat" or "unsat"
+    Satisfiable sat = SAT_UNKNOWN;
     BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
         if (expr->name() == "sat") {
-            return SAT_YES;
+            sat = SAT_YES;
         } else if (expr->name() == "unsat") {
-            return SAT_NO;
+            sat = SAT_NO;
+        } else if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"solver output sexpr: " <<*expr <<"\n";
         }
     }
 
-    return SAT_UNKNOWN;
+    return sat;
 #endif
 }
 

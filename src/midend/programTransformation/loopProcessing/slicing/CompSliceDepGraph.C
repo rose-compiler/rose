@@ -8,6 +8,8 @@
 #include <CompSliceDepGraph.h>
 #include <GraphGroup.h>
 
+extern bool DebugDep();
+
 CompSliceDepGraphCreate :: 
 CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
                          LoopTreeTransDepGraphCreate *tc)
@@ -22,7 +24,8 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
        sliceNode = CreateNode(scope, op);
     }
     else {
-      std::cerr << "construct transitive dep. graph" << "\n";
+      if (DebugDep())
+         std::cerr << "construct transitive dep. graph for " << n->TreeToString() << "\n";
       sliceNode = CreateNode(scope, op, tc);
     }
     LoopTreeTraverseSelectStmt stmts(n);
@@ -38,9 +41,9 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
 
     LoopTreeNode *s1 = comp.GetTreeNode(n1);
     LoopTreeNode *s2 = comp.GetTreeNode(n2);
- 
+    assert(s1 != 0 && s2 != 0);
     CompSliceDepGraphNode *src = treeMap.Map( s1 ), *snk = treeMap.Map(s2);
-    if (src == snk) {
+    if (src == 0 || snk == 0 || src == snk) {
       continue;
    }
     CompSliceNest *nest1 = src->GetInfo().GetNest(), *nest2 = snk->GetInfo().GetNest();

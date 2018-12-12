@@ -67,6 +67,8 @@ int main(int argc,char *argv[])
             mu = abs(a[i][j]);
             p[j] = i;
           }
+           else {
+          }
         }
         t = a[j][j];
         a[j][j] = a[p[j]][j];

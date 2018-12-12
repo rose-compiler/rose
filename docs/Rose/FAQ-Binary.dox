@@ -86,7 +86,17 @@ namespace BinaryAnalysis {
  *  individual instruction are indistinguishable, but a BB "does more". Most analysis is more efficient when it's able to
  *  perform larger units of work.
  *
- * @subsection binfaq_disassembly_3 Q3. (No longer applicable.)
+ * @subsection binfaq_disassembly_3 Q3. Is there an easy way to overwrite part of virtual memory?
+ *
+ *  Sometimes one wants to replace (or insert) an instruction or some data in the virtual memory space, and figuring out what
+ *  bytes of the specimen, e.g., ELF file, correspond to the virtual memory addresses can be difficult.  But most binary
+ *  analysis tools have an easy command-line way to modify the virtual address space before any disassembly occurs. Usually, a
+ *  binary specimen is described by one command-line argument, such as the name of an ecutable file like "/home/user/a.out",
+ *  but most tools actually understand that a specimen can be described by more than one argument. Therefore, you could use the
+ *  file name as the first argument, followed by additional arguments that modify the address space. These additional arguments
+ *  have various forms which are described in the "--help" output of most commands.  For instance, if you want to replace a
+ *  four-byte instruction at virtual address 0x26a5bc with i386 NOP instructions, each being a single 0x90 byte, you'd use
+ *  "data:0x26a5bc=rx::'0x90 0x90 0x90 0x90'". The "=rx" means the data should be mapped with read and execute permission.
  *
  * @subsection binfaq_disassembly_4 Q4. Why is ROSE's CFG structured the way it is?
  *

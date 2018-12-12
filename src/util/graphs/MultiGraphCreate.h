@@ -60,7 +60,7 @@ class MultiGraphElemTemplate : public MultiGraphElem
   Info&  GetInfo() { return info; }
   Info GetInfo() const { return info; }
   // Liao, 2/22/2008, some instantiated objects do not have this member function
- // std::string toString() const { return info.toString(); }
+  //virtual std::string toString() const { return info.toString(); }
 };
 
 #endif
