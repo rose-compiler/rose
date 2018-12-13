@@ -378,7 +378,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
-    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >()->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
@@ -397,6 +396,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
+    ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
+     //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
 
   rersOptions.add_options()
@@ -575,8 +576,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.8.1 (beta)\n";
-    cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Joshua Asplund, Adrian Prantl\n";
+    cout << "CodeThorn version 1.9.0\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
 
@@ -1276,11 +1277,13 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
     }
 
-    /* Set call stringlength as provided on command line. If none is
-       provided use the default value is used (see command line
-       argument definition).
-    */
-    CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
+    /* Context sensitive analysis using call strings.
+     */
+    {
+      analyzer->setOptionContextSensitiveAnalysis(args.getBool("context-sensitive"));
+      //Call strings length abrivation is not supported yet.
+      //CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
+    }
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
@@ -1981,12 +1984,14 @@ int main( int argc, char * argv[] ) {
       assert(analyzer->startFunRoot);
       //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
       //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+      logger[TRACE] << "Option VIZ: generate ast node info."<<endl;
       analyzer->generateAstNodeInfo(sageProject);
-      cout << "generated node info."<<endl;
+      cout << "generating AST node info ... "<<endl;
       dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
       write_file("ast.dot", dotFile);
       cout << "generated ast.dot."<<endl;
 
+      logger[TRACE] << "Option VIZ: generating cfg dot file ..."<<endl;
       write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
