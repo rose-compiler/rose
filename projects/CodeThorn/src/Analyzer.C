@@ -2512,8 +2512,10 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
         //newPState[lhsVar]=(*i).result;
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else {
-        cerr<<"WARNING: Unknown type on LHS side of assignment: "<<nextNodeToAnalyze2->unparseToString()<<" TYPE: "<<variableIdMapping.getType(lhsVar)->unparseToString();
-        cerr<<" TYPE NODE: "<<variableIdMapping.getType(lhsVar)->class_name()<<endl;
+        logger[ERROR]<<SgNodeHelper::lineColumnNodeToString(nextNodeToAnalyze2)<<endl;
+        logger[ERROR]<<"Unknown type on LHS side of assignment: TYPE: "<<variableIdMapping.getType(lhsVar)->unparseToString()<<endl;
+        logger[ERROR]<<"TYPE SGNODE: "<<variableIdMapping.getType(lhsVar)->class_name()<<endl;
+        exit(1);
       }
 #if 0
       if(!(*i).result.isTop()) {

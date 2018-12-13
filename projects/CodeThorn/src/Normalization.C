@@ -44,7 +44,10 @@ namespace SPRAY {
       eliminateForStatements=true;
       eliminateWhileStatements=false;
       hoistConditionExpressions=true;
-      normalizeVariableDeclarations=false;
+      // normalization is not applied to static variables (would be wrong)
+      normalizeVariableDeclarations=true;
+      // temporary, until function calls inside variable initializers are supported.
+      normalizeVariableDeclarationsWithFunctionCalls=false; 
       //eliminateShortCircuitOperators=true; // not implemented yet
       //eliminateConditionalExpressionOp=true; // not implemented yet
       encapsulateNormalizedExpressionsInBlocks=false;
@@ -109,15 +112,27 @@ namespace SPRAY {
     ROSE_ASSERT(label->get_parent()==stmt->get_parent());
   }
 
-  void Normalization::normalizeAllVariableDeclarations(SgNode* root) {
+  bool Normalization::isVarDeclWithFunctionCall(SgNode* node) {
+    return SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(node);
+  }
+
+  void Normalization::normalizeAllVariableDeclarations(SgNode* root, bool onlyFunctionCalls) {
     RoseAst ast(root);
     typedef std::list<std::pair<SgVariableDeclaration*,SgStatement*>> DeclAssignListType;
     DeclAssignListType declAssignList;
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgNode* node=*i;
-      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) { 
         // do not transform assignments to static variables (must remain initializations because of different semantics)
         if(!SageInterface::isStatic(varDecl)) {
+          if(onlyFunctionCalls) {
+            if(!isVarDeclWithFunctionCall(*i)) {
+              i.skipChildrenOnForward();
+              continue;
+            } else {
+              cout<<"DEBUG: Normalizing variable initializer with function call: "<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
+            }
+          }
           if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
             declAssignList.push_back(std::make_pair(varDecl,newVarAssignment));
           }
@@ -221,7 +236,11 @@ namespace SPRAY {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
     }
     if(options.normalizeVariableDeclarations) {
-      normalizeAllVariableDeclarations(root);
+      normalizeAllVariableDeclarations(root,false);
+    }
+    if(options.normalizeVariableDeclarationsWithFunctionCalls) {
+      bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
+      normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
     }
     if(options.inlining) {
       InlinerBase* inliner=getInliner();
