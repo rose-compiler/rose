@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
                                 [Use the Z3 Satisfiability Modulo Theories Solver. PREFIX is where the
                                 executable z3 is contained])],
                 [ac_cv_use_z3=$withval],
-                [ac_cv_use_z3=try])
+                [ac_cv_use_z3=no])
 
     USE_Z3=0
     if test "$ac_cv_use_z3" != no; then
@@ -40,6 +40,11 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
     fi
 
     if test $USE_Z3 = 1; then
+        # z3_version.h was added in 4.8.1 but not included by z3.h. Therefore ROSE needs to include it explicitly
+	# but only if the file exists.
+	AC_CHECK_HEADER($Z3_INCLUDE_PATH/z3_version.h,
+		        [AC_DEFINE(ROSE_HAVE_Z3_VERSION_H, 1, [Define if z3_version.h exists])])
+
         if test ! -x "$Z3BIN/z3" ; then
             AC_MSG_ERROR([z3 could not be found in the z3 bin directory $Z3BIN])
         fi

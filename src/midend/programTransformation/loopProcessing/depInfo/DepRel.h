@@ -30,7 +30,7 @@ class DepRel
   int GetMinAlign() const;
   int GetMaxAlign() const;
   int GetAlign() const {return align; };
-  std:: string toString() const;
+  std:: string toString(bool dir_only=false) const;
   void Dump() const { std:: cerr << toString() << std:: endl; }
   bool IsTop() const;
   bool IsBottom() const;

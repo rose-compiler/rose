@@ -128,6 +128,13 @@ SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>
         if (return_va)
             *return_va = insn->get_address() + insn->get_size();
         return true;
+    } else if (insn->get_kind() == powerpc_bclrl && insn->nOperands() == 3 &&
+               (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
+               insn->operand(2)->asUnsigned().orElse(1) == 0) {
+        // Indirect function call, assuming the LR register is dynamically initialized with the target address.
+        if (return_va)
+            *return_va = insn->get_address() + insn->get_size();
+        return true;
     }
     
     return false;
