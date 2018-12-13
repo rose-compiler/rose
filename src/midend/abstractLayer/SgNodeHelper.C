@@ -265,6 +265,17 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool sho
   return 0;
 }
 
+SgVariableDeclaration* SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(SgNode* node) {
+  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+    SgExpression* initializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    if(isSgFunctionCallExp(initializer)) {
+      return varDecl;
+    }
+  }
+  return 0;
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
