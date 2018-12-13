@@ -76,11 +76,11 @@
 0x004004de: 50                      |P       |<sp+0 >   push   rax
 0x004004df: 54                      |T       |<sp-8 >   push   rsp
 0x004004e0: 49 c7 c0 50 06 40 00    |I..P.@. |<sp-16>   mov    r8, 0x00400650
-0x004004e7: 48 c7 c1 f0 05 40 00    |H....@. |<sp-16>   mov    rcx, 0x004005f0<<Func>>
+0x004004e7: 48 c7 c1 f0 05 40 00    |H....@. |<sp-16>   mov    rcx, 0x004005f0<main>
 0x004004ee: 48 c7 c7 90 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x00400590
 0x004004f5: e8 96 ff ff ff          |.....   |<sp-16>   call   0x0000000000400490<__libc_start_main@plt>
 0x004004f5: Outgoing stack delta: -24
-0x004004f5: Successor blocks: 0x00400490<__libc_start_main@plt>, 0x004004fa, 0x004005f0<<Func>>
+0x004004f5: Successor blocks: 0x00400490<__libc_start_main@plt>, 0x004004fa, 0x004005f0<main>
 
 0x004004fa: Basic block reasons: 
 0x004004fa: f4                      |.       |<sp-16>   hlt    
@@ -193,7 +193,7 @@
 0x00400585: Outgoing stack delta: +8
 0x00400585: Successor blocks: unknown
 
-0x004005f0: ================================== Function (function call, graph) unknown name
+0x004005f0: ================================== Function (function call, graph) <main>
 0x004005f0: Function stack delta: +8
 
 0x004005f0: Basic block reasons: entry point

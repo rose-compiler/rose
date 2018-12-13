@@ -46,7 +46,7 @@ CFG dominators for function 0x0804851c:
   function 0x0804851c dominator of 0x08048534<2> is 0x0804852b<0>
   function 0x0804851c dominator of 0x08048544<3> is 0x0804851c<1>
   function 0x0804851c dominator of 0x0804853e<4> is 0x08048534<2>
-CFG dominators for function 0x08048550:
+CFG dominators for function 0x08048550 "main":
   function 0x08048550 dominator of 0x080485a0<0> is 0x08048598<19>
   function 0x08048550 dominator of 0x0804862e<1> is 0x08048598<19>
   function 0x08048550 dominator of 0x080485a6<2> is 0x080485a0<0>

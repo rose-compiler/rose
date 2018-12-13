@@ -25,9 +25,9 @@ namespace Rose {
  *  task completes (either because the task was finished or it had an error), one of the workers calls @ref finished to let all
  *  the listeners know there will be nothing new to report.
  *
- *  Sometimes a task has multiple phases and its hard to predict the total amount of work across all phases before earlier
+ *  Sometimes a task has multiple phases and it's hard to predict the total amount of work across all phases before earlier
  *  phases have completed. Therefore, progress reports have two parts: not only do they have a completion amount, they
- *  also have a phase name.  When a @ref Progress object is first created, it's phase name is empty and the completion
+ *  also have a phase name.  When a @ref Progress object is first created, its phase name is empty and the completion
  *  amount is zero.  There is no intrinsic @ref Progress requirement that phases occur in any particular order, or that the
  *  completion amount is monotonically increasing, or that the completion amount is in the interval [0..1] although listeners
  *  might be expecting certain things.

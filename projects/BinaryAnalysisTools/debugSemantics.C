@@ -3,6 +3,7 @@
 #include <rose.h>
 
 #include <BinaryNoOperation.h>
+#include <BinarySerialIo.h>
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
 #include <CommandLine.h>
@@ -344,7 +345,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 }
 
 static BaseSemantics::MemoryStatePtr
-makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSemantics::SValuePtr &protoval,
+makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, const BaseSemantics::SValuePtr &protoval,
                 const BaseSemantics::SValuePtr &protoaddr, const RegisterDictionary *regdict) {
     const std::string &className = settings.mstateClassName;
     if (className == "list") {
@@ -376,11 +377,11 @@ makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSe
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
-        m->memoryMap(engine.memoryMap()->shallowCopy());
+        m->memoryMap(partitioner.memoryMap()->shallowCopy());
         return m;
     } else if (className == "p2-map") {
         P2::Semantics::MemoryMapStatePtr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
-        m->memoryMap(engine.memoryMap()->shallowCopy());
+        m->memoryMap(partitioner.memoryMap()->shallowCopy());
         return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
@@ -406,7 +407,7 @@ listRiscOperators() {
 }
 
 static BaseSemantics::RiscOperatorsPtr
-makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
+makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) {
     const std::string &className = settings.opsClassName;
     if (className.empty())
         throw std::runtime_error("--semantics switch is required");
@@ -415,7 +416,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
-    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, engine, protoval, protoval, regdict);
+    BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, partitioner, protoval, protoval, regdict);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(rstate, mstate);
 
     if (0) {
@@ -432,7 +433,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     } else if (className == "partial") {
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
         if (settings.useMemoryMap)
-            ops->set_memory_map(engine.memoryMap()->shallowCopy());
+            ops->set_memory_map(partitioner.memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
@@ -464,8 +465,8 @@ adjustSettings(Settings &settings) {
 
 // Test the API for various combinations of classes.
 static void
-testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
+testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, partitioner);
     if (settings.opsClassName == settings.valueClassName &&
         settings.opsClassName == settings.rstateClassName &&
         settings.opsClassName == settings.mstateClassName) {
@@ -541,8 +542,7 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
 }
 
 static void
-runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
-             const P2::Engine &engine, const P2::Partitioner &partitioner,
+runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const P2::Partitioner &partitioner,
              InstructionHistogram &allInsns, InstructionHistogram &failedInsns) {
     if (!settings.bblockInterval.isContaining(bblock->address()))
         return;
@@ -553,7 +553,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
                   <<"=====================================================================================\n";
     }
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, partitioner);
 
     BaseSemantics::Formatter formatter;
     formatter.set_suppress_initial_values(!settings.showInitialValues);
@@ -622,7 +622,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         if (settings.runNoopAnalysis) {
             // Use a different state for no-op analysis, otherwise it will end up messing with the state we're using for our
             // own semantics.
-            BaseSemantics::RiscOperatorsPtr ops2 = makeRiscOperators(settings, engine, partitioner);
+            BaseSemantics::RiscOperatorsPtr ops2 = makeRiscOperators(settings, partitioner);
             BaseSemantics::DispatcherPtr dispatcher2 = partitioner.instructionProvider().dispatcher();
             dispatcher2 = dispatcher2->create(ops2);
             NoOperation nopAnalyzer(dispatcher2);
@@ -654,7 +654,8 @@ main(int argc, char *argv[]) {
         listAndExit = true;
     }
     if (settings.mstateClassName == "list") {
-        (void) makeMemoryState(settings, engine, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), NULL);
+        P2::Partitioner p;
+        (void) makeMemoryState(settings, p, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), NULL);
         listAndExit = true;
     }
     if (settings.opsClassName == "list") {
@@ -669,15 +670,23 @@ main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Parse, disassemble, and partition
-    P2::Partitioner partitioner = engine.partition(specimenNames);
-
-    testSemanticsApi(settings, engine, partitioner);
+    P2::Partitioner partitioner;
+    if (specimenNames.size() == 1 && boost::ends_with(specimenNames[0], ".rba")) {
+        SerialInput::Ptr input = SerialInput::instance();
+        input->open(specimenNames[0]);
+        partitioner = input->loadPartitioner();
+        std::cerr <<"ROBB: " <<partitioner.nBasicBlocks() <<"\n";
+    } else {
+        partitioner = engine.partition(specimenNames);
+    }
+    
+    testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block
     Sawyer::ProgressBar<size_t> progress(partitioner.nBasicBlocks(), ::mlog[MARCH], "basic block semantics");
     InstructionHistogram allInsns, failedInsns;
     BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks()) {
-        runSemantics(bblock, settings, engine, partitioner, allInsns /*in,out*/, failedInsns /*in,out*/);
+        runSemantics(bblock, settings, partitioner, allInsns /*in,out*/, failedInsns /*in,out*/);
         ++progress;
     }
     

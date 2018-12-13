@@ -169,6 +169,7 @@ struct VariableRenamer {
     ExprExprHashMap &index;
     size_t &nextVariableId;
     SmtSolverPtr solver;                                // may be null
+    ExprExprHashMap seen;
 
     VariableRenamer(ExprExprHashMap &index, size_t &nextVariableId, const SmtSolverPtr &solver)
         : index(index), nextVariableId(nextVariableId), solver(solver) {}
@@ -176,7 +177,11 @@ struct VariableRenamer {
     Ptr rename(const Ptr &input) {
         ASSERT_not_null(input);
         Ptr retval;
-        if (InteriorPtr inode = input->isInteriorNode()) {
+
+        ExprExprHashMap::iterator found = seen.find(input);
+        if (found != seen.end()) {
+            return found->second;
+        } else if (InteriorPtr inode = input->isInteriorNode()) {
             bool anyChildRenamed = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
@@ -191,6 +196,7 @@ struct VariableRenamer {
             } else {
                 retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
             }
+            seen.insert(std::make_pair(input, retval));
         } else {
             LeafPtr leaf = input->isLeafNode();
             ASSERT_not_null(leaf);
@@ -214,22 +220,74 @@ struct VariableRenamer {
                     index[input] = retval;
                 }
             }
+            seen.insert(std::make_pair(input, retval));
         }
         ASSERT_not_null(retval);
         return retval;
     }
 };
 
-struct Substituter {
+// Perform substitutions by looking for a single expression. Preserves sharing of subexpressions. Creates new
+// expressions only when necessary. Comparison for substitution is by isEquivalentTo method.
+struct SingleSubstituter {
+    Ptr from;                                           // replace this
+    Ptr to;                                             // with this
+    SmtSolverPtr solver;                                // for simplifications (optional)
+    ExprExprHashMap seen;                               // things we've already seen
+
+    SingleSubstituter(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
+        : from(from), to(to), solver(solver) {}
+    
+    Ptr substitute(const Ptr &input) {
+        ASSERT_not_null(input);
+        Ptr retval;
+
+        ExprExprHashMap::iterator found = seen.find(input);
+        if (found != seen.end()) {
+            retval = found->second;
+        } else if (input->isEquivalentTo(from)) {
+            retval = to;
+            seen.insert(std::make_pair(input, retval));
+        } else if (InteriorPtr inode = input->isInteriorNode()) {
+            bool anyChildChanged = false;
+            Nodes newChildren;
+            newChildren.reserve(inode->nChildren());
+            BOOST_FOREACH (const Ptr &child, inode->children()) {
+                Ptr newChild = substitute(child);
+                if (newChild != child)
+                    anyChildChanged = true;
+                newChildren.push_back(newChild);
+            }
+            if (anyChildChanged) {
+                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+            } else {
+                retval = input;
+            }
+            seen.insert(std::make_pair(input, retval));
+        } else {
+            retval = input;
+            seen.insert(std::make_pair(input, retval));
+        }
+        ASSERT_not_null(retval);
+        return retval;
+    }
+};
+            
+struct MultiSubstituter {
     const ExprExprHashMap &substitutions;
     SmtSolverPtr solver;
+    ExprExprHashMap seen;
 
-    Substituter(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver)
+    MultiSubstituter(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver)
         : substitutions(substitutions), solver(solver) {}
 
     Ptr substitute(const Ptr &input) {
         ASSERT_not_null(input);
         Ptr retval;
+        ExprExprHashMap::iterator previous = seen.find(input);
+        if (previous != seen.end())
+            return previous->second;
+
         ExprExprHashMap::const_iterator found = substitutions.find(input);
         if (found != substitutions.end()) {
             retval = found->second;
@@ -252,6 +310,7 @@ struct Substituter {
             retval = input;
         }
         ASSERT_not_null(retval);
+        seen.insert(std::make_pair(input, retval));
         return retval;
     }
 };
@@ -287,9 +346,16 @@ std::set<LeafPtr>
 Node::getVariables() {
     struct T1: public Visitor {
         std::set<LeafPtr> vars;
-        VisitAction preVisit(const Ptr&) {
-            return CONTINUE;
+        std::set<const Node*> seen;
+
+        VisitAction preVisit(const Ptr &node) {
+            if (seen.insert(getRawPointer(node)).second) {
+                return CONTINUE;
+            } else {
+                return TRUNCATE;
+            }
         }
+
         VisitAction postVisit(const Ptr &node) {
             LeafPtr l_node = node->isLeafNode();
             if (l_node && !l_node->isNumber())
@@ -309,7 +375,7 @@ Node::renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId,
 
 Ptr
 Node::substituteMultiple(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver) {
-    Substituter substituter(substitutions, solver);
+    MultiSubstituter substituter(substitutions, solver);
     return substituter.substitute(this->sharedFromThis());
 }
 
@@ -849,8 +915,10 @@ Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
         // is not available.
         retval = true;
     } else if (solver) {
+        SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeNe(sharedFromThis(), other_, solver);
-        retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
+        solver->insert(assertion);
+        retval = SmtSolver::SAT_NO==solver->check(); /*equal if there is no solution for inequality*/
     }
     return retval;
 }
@@ -868,8 +936,8 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
             return result;
     }
 
-    // Two addition operations of the form V + X and V + Y where V is a variable and X and Y are constants, are equal if and
-    // only if X = Y.
+    // Two addition operations of the form V + C1 and V + C2 where V is a variable and C1 and C2 are constants, are equal if
+    // and only if C1 = C2.
     LeafPtr variableA, variableB, constantA, constantB;
     if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/) &&
         other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
@@ -889,8 +957,10 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
     // equality assertion, we want to assume that they can be equal.  Thus only if the solver can prove that they cannot be
     // equal do we have anything to return here.
     if (solver) {
+        SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeEq(sharedFromThis(), other, solver);
-        if (SmtSolver::SAT_NO == solver->satisfiable(assertion))
+        solver->insert(assertion);
+        if (SmtSolver::SAT_NO == solver->check())
             return false;
     }
 
@@ -967,21 +1037,8 @@ Interior::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
-    bool substituted = false;
-    Nodes newnodes;
-    for (size_t i=0; i<children_.size(); ++i) {
-        if (children_[i]->isEquivalentTo(from)) {
-            newnodes.push_back(to);
-            substituted = true;
-        } else {
-            newnodes.push_back(children_[i]->substitute(from, to, solver));
-            if (newnodes.back()!=children_[i])
-                substituted = true;
-        }
-    }
-    if (!substituted)
-        return sharedFromThis();
-    return Interior::create(0, getOperator(), newnodes, solver, comment());
+    SingleSubstituter subber(from, to, solver);
+    return subber.substitute(sharedFromThis());
 }
 
 VisitAction
@@ -1447,7 +1504,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
-    Sawyer::Container::BitVector accumulator((*begin)->nBits());
+    Sawyer::Container::BitVector accumulator((*begin)->isLeafNode()->bits());
     unsigned flags = 0;
     for (++begin; begin!=end; ++begin) {
         accumulator.bitwiseXor((*begin)->isLeafNode()->bits());
@@ -2843,17 +2900,28 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
     if (this==getRawPointer(other)) {
         retval = true;
     } else if (flags() != other_->flags()) {
+        // Expressions with different flags are not considered mustEqual
         retval = false;
     } else if (other==NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
+            SmtSolver::Transaction transaction(solver);
             Ptr assertion = makeNe(sharedFromThis(), other_, solver);
-            retval = SmtSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
+            solver->insert(assertion);
+            retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
         }
-    } else if (isNumber()) {
-        retval = other->isNumber() && 0==bits_.compare(other->bits_);
-    } else {
-        retval = !other->isNumber() && name_==other->name_;
+    } else if (isNumber() && other->isNumber()) {
+        // Both are numbers
+        retval = 0 == bits_.compare(other->bits());
+    } else if (solver && solver->nAssertions() > 0) {
+        // At least one is a variable and the solver has some context that might affect the comparison
+        SmtSolver::Transaction transaction(solver);
+        Ptr assertion = makeNe(sharedFromThis(), other_, solver);
+        solver->insert(assertion);
+        retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
+    } else if (!isNumber() && !other->isNumber()) {
+        // Both are variables, and no solver context. Variables must be equal if they have the same name.
+        retval = name_ == other->name_;
     }
     return retval;
 }

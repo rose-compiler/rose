@@ -102,6 +102,52 @@ public:
         }
     };
 
+    /** RAII guard for solver stack.
+     *
+     *  This object implements a rudimentary form of SMT transactions. The constructor starts a new transaction by pushing
+     *  a new level onto the specified solver (if the solver is non-null). The destructor pops one level from the solver
+     *  unless this object is in the @ref isCommitted state (see @ref commit).  This guard object makes no attempt to ensure
+     *  that the level popped is the same as the one that was initially pushed by the constructor. */
+    class Transaction {
+        SmtSolver::Ptr solver_;
+        bool committed_;
+    public:
+        /** Constructor pushes level if solver is non-null.
+         *
+         *  It is safe to call this with a null solver. */
+        explicit Transaction(const SmtSolver::Ptr &solver)
+            : solver_(solver), committed_(false) {
+            if (solver)
+                solver->push();
+        }
+
+        /** Destructor pops level unless canceled. */
+        ~Transaction() {
+            if (solver_ && !committed_) {
+                if (solver_->nLevels() > 1) {
+                    solver_->pop();
+                } else {
+                    solver_->reset();
+                }
+            }
+        }
+
+        /** Cancel the popping during the destructor. */
+        void commit(bool b = true) {
+            committed_ = b;
+        }
+
+        /** Whether the guard is canceled. */
+        bool isCommitted() const {
+            return committed_;
+        }
+
+        /** Solver being protected. */
+        SmtSolver::Ptr solver() const {
+            return solver_;
+        }
+    };
+    
     /** Set of variables. */
     typedef Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName> VariableSet;
 
@@ -134,6 +180,7 @@ public:
 private:
     std::string name_;
     std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
+    bool errorIfReset_;
 
 protected:
     LinkMode linkage_;
@@ -188,7 +235,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
+        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
         init(linkages);
     }
     
@@ -317,6 +364,20 @@ public:
      *  API-based solvers, this function might also create a new solver and/or solver context. */
     virtual void reset();
 
+    /** Property: Throw an exception if the solver is reset.
+     *
+     *  This is used mostly for debugging solvers that are intending to use transactions. If the solver is ever reset, say by
+     *  accidentally invoking its @ref satisfiable method, then an exception is thrown.
+     *
+     * @{ */
+    bool errorIfReset() const {
+        return errorIfReset_;
+    }
+    void errorIfReset(bool b) {
+        errorIfReset_ = b;
+    }
+    /** @} */
+
     /** Create a backtracking point.
      *
      *  Pushes a new, empty set of assertions onto the solver stack.
@@ -346,6 +407,9 @@ public:
      *
      *  Backtracking levels are numbered starting at zero up to one less than the value returned by @ref nLevels. */
     virtual size_t nAssertions(size_t backtrackingLevel);
+
+    /** Total number of assertions across all backtracking levels. */
+    virtual size_t nAssertions() const;
     
     /** Insert assertions.
      *

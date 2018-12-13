@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+
+# Installs spack in $SPACK_ROOT or ~/spack
+if [ "$#" -gt 0 ]; then
+    SPACK_ROOT="$1"
+    shift
+fi
+: ${SPACK_ROOT:=$HOME/spack}
+
+if [ -d $SPACK_ROOT ]; then
+    echo "already installed in $SPACK_ROOT; not updating."
+    exit 1
+fi
+
+git clone https://github.com/spack/spack $SPACK_ROOT
+(
+    cd $SPACK_ROOT
+    git remote add robbs-patches https://github.com/matzke1/spack
+    git fetch robbs-patches
+    #git merge --no-edit robbs-patches/master  # --no-edit not supported on RHEL 6
+    git merge -m "merged Robb's spack patches" robbs-patches/master
+)
+
+export PATH="$SPACK_ROOT/bin:$PATH"
+
+if [ -r $HOME/.spack/modules.yaml ]; then
+    echo "warning: not overwriting your old ~/.spack/modules.yaml configuration"
+else
+    mkdir -p $HOME/.spack
+    cat >$HOME/.spack/modules.yaml <<'EOF'
+modules:
+  enable:
+    - tcl
+  tcl:
+    all:
+      environment:
+        set:
+          '${PACKAGE}_ROOT': '${PREFIX}'
+          '${PACKAGE}_VERSION': '${VERSION}'
+EOF
+fi
+
+spack bootstrap
+spack module tcl refresh --delete-tree -y
+
+echo
+echo
+echo "Execute these commands in your shell, and also add them to your ~/.bashrc file:"
+echo "  export PATH=\"$SPACK_ROOT/bin:\$PATH\""
+echo "  source $SPACK_ROOT/share/spack/setup-env.sh"

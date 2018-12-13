@@ -1,0 +1,7 @@
+Skipping unique array dependence!
+----------------------------------------------
+dependence graph: 
+From if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:: ();CTRL_DEP;
+From SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:
+To if (AstWrap(SgExprStatement:(this) -> bcVelocity[3] . y != 0xdeadbeef;)):: ();CTRL_DEP;

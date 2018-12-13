@@ -21,6 +21,7 @@ NoOperation::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::NoOperation");
+        mlog.comment("determining insn sequences having no effect");
     }
 }
     

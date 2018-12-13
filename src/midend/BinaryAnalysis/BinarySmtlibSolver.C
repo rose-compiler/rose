@@ -1205,9 +1205,12 @@ SmtlibSolver::parseEvidence() {
         if (found != memoizedEvidence.end()) {
             SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
             evidence.clear();
-            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
-                evidence.insert(node.key()->substituteMultiple(denorm),
-                                node.value()->substituteMultiple(denorm));
+            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes()) {
+                SymbolicExpr::Ptr var = node.key()->substituteMultiple(denorm);
+                SymbolicExpr::Ptr val = node.value()->substituteMultiple(denorm);
+                evidence.insert(var, val);
+                SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
+            }
             stats.evidenceTime += evidenceTimer.stop();
             return;
         }

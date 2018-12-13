@@ -7,6 +7,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgVertex
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 AddressIntervalSet
 CfgVertex::addresses() const {
     AddressIntervalSet retval;
@@ -16,15 +20,42 @@ CfgVertex::addresses() const {
             BOOST_FOREACH (SgAsmInstruction *insn, bblock()->instructions())
                 retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
             break;
+        case V_USER_DEFINED:
             retval.insert(address());
             break;
         case V_INDETERMINATE:
-        case V_USER_DEFINED:
         case V_UNDISCOVERED:
         case V_NONEXISTING:
             break;
     }
     return retval;
+}
+
+Sawyer::Optional<rose_addr_t>
+CfgVertex::optionalAddress() const {
+    switch (type()) {
+        case V_BASIC_BLOCK:
+        case V_USER_DEFINED:
+            return address();
+        default:
+            return Sawyer::Nothing();
+    }
+}
+
+Sawyer::Optional<rose_addr_t>
+CfgVertex::optionalLastAddress() const {
+    switch (type()) {
+        case V_BASIC_BLOCK:
+            if (bblock()->nInstructions() > 1) {
+                return bblock()->instructions().back()->get_address();
+            } else {
+                return address();
+            }
+        case V_USER_DEFINED:
+            return address();
+        default:
+            return Sawyer::Nothing();
+    }
 }
 
 Function::Ptr
@@ -47,6 +78,10 @@ CfgVertex::isEntryBlock() const {
     }
     return retval;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Free functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/) {

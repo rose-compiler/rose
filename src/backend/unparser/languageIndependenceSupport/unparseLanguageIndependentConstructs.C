@@ -42,6 +42,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::UnparseLanguageIndependentConstructs");
+          mlog.comment("generating source code for language-indepentend constructs");
         }
    }
 

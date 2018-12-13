@@ -1,0 +1,17 @@
+include opt.pi
+
+<parameter outputFile default="" message="output file location" />
+<parameter uj parse=LIST(INT," ") default=(2 2) message="Unroll&jam factor for nest1"/>
+<parameter ur parse=INT default=2 message="Unroll factor for nest2"/>
+
+<trace inputCode,nest1,nest2/>
+<input from="dgemm_test.C" to=inputCode/>
+
+<eval UnrollJam[factor=uj;cleanup=0;trace=inputCode](nest2,nest1);
+      UnrollLoops[factor=ur;trace=inputCode](nest2[Nest.body],nest2); 
+      CleanupBlockedNests(inputCode);
+/>
+
+<output to=outputFile syntax="Cfront.code" from=(inputCode)/>
+
+
