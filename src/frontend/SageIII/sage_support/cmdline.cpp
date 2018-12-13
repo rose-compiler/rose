@@ -364,9 +364,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-MF" ||
           argument == "-MT" || argument == "-MQ" ||
           argument == "-outputdir" ||  // FMZ (12/22/1009) added for caf compiler
-          argument == "-rose:disassembler_search" ||
-          argument == "-rose:partitioner_search" ||
-          argument == "-rose:partitioner_config" ||
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
@@ -3359,47 +3356,6 @@ SgFile::usage ( int status )
 "                             (Note: not implemented in front-end (OFP) yet.)\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
-"\n"
-"Control Disassembly:\n"
-"     -rose:disassembler_search HOW\n"
-"                             Influences how the disassembler searches for instructions\n"
-"                             to disassemble. HOW is a comma-separated list of search\n"
-"                             specifiers. Each specifier consists of an optional\n"
-"                             qualifier followed by either a word or integer. The\n"
-"                             qualifier indicates whether the search method should be\n"
-"                             added ('+') or removed ('-') from the set. The qualifier\n"
-"                             '=' acts like '+' but first clears the set.  The words\n"
-"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
-"                             enumerated constants without the leading \"SEARCH_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Disassembler::parse_switches class method for full details.\n"
-"     -rose:partitioner_search HOW\n"
-"                             Influences how the partitioner searches for functions.\n"
-"                             HOW is a comma-separated list of search specifiers. Each\n"
-"                             specifier consists of an optional qualifier followed by\n"
-"                             either a word or integer. The qualifier indicates whether\n"
-"                             the search method should be added ('+') or removed ('-')\n"
-"                             from the set. The qualifier '=' acts like '+' but first\n"
-"                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunction::FunctionReason\n"
-"                             enumerated constants without the leading \"FUNC_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Partitioner::parse_switches class method for full details.\n"
-"     -rose:partitioner_config FILENAME\n"
-"                             File containing configuration information for the\n"
-"                             instruction/block/function partitioner. This config\n"
-"                             file can be used to override block successors,\n"
-"                             alias two or more blocks that have identical\n"
-"                             semantics, assign particular blocks to functions,\n"
-"                             override function return analysis, provide or\n"
-"                             override function names, etc. See documentation for\n"
-"                             the IPDParser class for details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparser:clobber_input_file\n"

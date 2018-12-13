@@ -153,7 +153,7 @@ testAssembler_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
 run $(test) testAssembler \
     -x rose_buffer2.bin.s -x buffer2.bin.new -x buffer2.bin.dump \
     --answer=testAssembler.ans \
-    ./testAssembler -rose:partitioner_search -leftovers $(testAssembler_INPUT)
+    ./testAssembler $(testAssembler_INPUT)
 
 ###############################################################################################################################
 # Program to test that we can write and then read an AST for a binary executable

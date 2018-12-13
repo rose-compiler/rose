@@ -2,9 +2,9 @@
 # env SPECIMEN_DIR=DIRECTORY N=NUMBER $0
 set -e
 
-./testElfSchulz -rose:partitioner_search -leftovers ${SPECIMEN_DIR}/schulz-sample${N}.so
-./execFormatsTest -rose:partitioner_search -leftovers ./schulz-sample${N}.so.new
-./execFormatsTest -rose:partitioner_search -leftovers ${SPECIMEN_DIR}/schulz-sample${N}-p.so
+./testElfSchulz ${SPECIMEN_DIR}/schulz-sample${N}.so
+./execFormatsTest ./schulz-sample${N}.so.new
+./execFormatsTest ${SPECIMEN_DIR}/schulz-sample${N}-p.so
 diff -u schulz-sample${N}-p.so.dump schulz-sample${N}.so.new.dump
 diff ${SPECIMEN_DIR}/schulz-sample${N}-p.so schulz-sample${N}.so.new
 
