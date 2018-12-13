@@ -424,6 +424,8 @@ namespace SgNodeHelper {
     //! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
     SgVarRefExp* matchSingleVarFPrintf(SgNode* node,bool showWarnings=false);
 
+    SgVariableDeclaration* matchVariableDeclarationWithFunctionCall(SgNode* node);
+
     struct OutputTarget {
       bool isKnown();
       enum OType { VAR,INT,UNKNOWNPRINTF,UNKNOWNOPERATION};
