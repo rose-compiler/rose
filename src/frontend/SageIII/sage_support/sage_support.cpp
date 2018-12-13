@@ -1305,7 +1305,7 @@ cout.flush();
                                else
                                 {
                                 // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
-#if 1
+#if 0
                                    printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
 #endif
                                 // Detect if this is a binary (executable) file!
