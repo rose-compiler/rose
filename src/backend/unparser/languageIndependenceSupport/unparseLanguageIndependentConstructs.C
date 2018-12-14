@@ -3490,6 +3490,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      ROSE_ASSERT(globalScope->get_parent() != NULL);
      SgSourceFile* sourceFile = isSgSourceFile(globalScope->get_parent());
 
+     ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(info.get_current_source_file() != NULL);
      ROSE_ASSERT(sourceFile != NULL);
 
