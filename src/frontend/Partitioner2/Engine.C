@@ -731,8 +731,8 @@ Engine::specimenNameDocumentation() {
             "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
             "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior. "
-            "The syntax syntax of this form is \"run:@v{options}:@v{filename}\" where @v{options} is a comma-separated "
-            "list of options that control the finer details. The following options are recognized:"
+            "The syntax of this form is \"run:@v{options}:@v{filename}\" where @v{options} is a comma-separated list of "
+            "options that control the finer details. The following options are recognized:"
 
             "@named{replace}{This option causes the memory map to be entirely replaced with the process map rather than "
             "the default behavior of the process map augmenting the map created by the ROSE loader.  This can be useful "
