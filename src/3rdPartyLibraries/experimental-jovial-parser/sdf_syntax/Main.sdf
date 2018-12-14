@@ -983,7 +983,7 @@ context-free syntax
   % empty %                       -> OptItemPreset           {cons("no-item-preset")}
 
   CompileTimeFormula              -> ItemPresetValue
-  LocFunction                     -> ItemPresetValue  {prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
+  LocFunction                     -> ItemPresetValue         {prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
 
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
@@ -1003,7 +1003,7 @@ context-free syntax
   % empty %                       -> OptDefaultPresetSublist {cons("no-default-preset-sublist")}
 
   PresetIndexSpecifier
-    PresetValuesOption            -> SpecifiedPresetSublist  {cons("SpecifiedPresetSublist")}
+    {PresetValuesOption ','}+     -> SpecifiedPresetSublist  {cons("SpecifiedPresetSublist")}
 
   'POS'
     '('
@@ -1095,9 +1095,12 @@ context-free syntax
 
   Letter                          -> FormalDefineParameter        {cons("FormalDefineParameter")}
 
-  '"'
-     {Character ','}*
-  '"'                             -> DefineString                 {cons("DefineString")}
+%% Moved to lexer
+%%'"'
+%%   {Character ','}*
+%%'"'                             -> DefineString                 {cons("DefineString")}
+
+  DefString                       -> DefineString                 {cons("DefineString")}
 
 %% 2.4.1 DEFINE CALLS
 %%
@@ -1653,7 +1656,7 @@ context-free syntax
 %%
   NumericFormula
     RelationalOperator
-    NumericFormula            -> RelationalExpression   {cons("RelationalExpression")}
+    NumericFormula            -> RelationalExpression   {cons("RelationalExpression"), prefer}
 
   GeneralFormula
     RelationalOperator
