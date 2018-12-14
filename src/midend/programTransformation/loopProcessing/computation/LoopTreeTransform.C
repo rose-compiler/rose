@@ -10,6 +10,8 @@
 #include <LoopTreeDummyNode.h>
 #include <StmtDepAnal.h>
 
+extern bool DebugLoopDist();
+
 /*QY: modify $prep$ to save the value of $v$ to variable named name_i; */
 void save_value( AstInterface& fa, SymbolicVal& v, const std::string& name, int i, AstNodePtr& prep)
 {
@@ -97,7 +99,15 @@ LoopTreeNode*  LoopTreeDistributeNode ::
 Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, int pos, ObserveTransform &ob, 
             LoopTreeNode** loc)
 {
-  if (sel(n)) return n; 
+  if (sel(n)) {  
+    if (DebugLoopDist()) 
+      std::cerr << "loop dist selected node: " << n->toString() << "\n";
+    return n; 
+  }
+  else {
+    if (DebugLoopDist()) 
+      std::cerr << "loop dist checking  node: " << n->toString() << "\n";
+  }
   if (n->ChildCount() == 0) { return 0; }
 
   LoopTreeNode *tmp = 0, *tmp1 = 0,*n1 = 0;
@@ -184,12 +194,16 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
    switch(config) {
      case BEFORE:
         {
+         if (DebugLoopDist()) 
+            std::cerr << "distributing loop before " << n->toString() << "\n";
         n1 = Distribute( n, stmts, -1, ob, &loc);
         if (n1 != n && n1 != 0) 
-        n1->Link( n, LoopTreeNode::AsPrevSibling); break;
+           n1->Link( n, LoopTreeNode::AsPrevSibling); break;
         }
      case AFTER:
         {
+         if (DebugLoopDist()) 
+            std::cerr << "distributing loop after " << n->toString() << "\n";
         n1 = Distribute( n, stmts, 1, ob, &loc);
         if (n1 != n && n1 != 0) 
             n1->Link( n, LoopTreeNode::AsNextSibling); break;
@@ -203,7 +217,7 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
 LoopTreeNode* LoopTreeSplitStmt ::
 operator () (LoopTreeNode *stmt, LoopTreeNode *restr1, LoopTreeNode *restr2)
 {
-  LoopTreeNode *n = stmt->Clone();
+  LoopTreeNode *n = stmt->CloneTree();
   LoopTreeNode *tn = restr1;
   tn->Link( stmt, LoopTreeNode::AsPrevSibling);
   n->Link( tn, LoopTreeNode::AsLastChild);

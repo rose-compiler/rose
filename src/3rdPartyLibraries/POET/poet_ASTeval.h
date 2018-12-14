@@ -94,6 +94,11 @@ inline POETString* AST2String(POETCode* r)
       }
       return ASTFactory::inst()->new_string(r->toString(OUTPUT_NO_DEBUG));
      }
+  case SRC_UNKNOWN: {
+     std::string s = POETAstInterface::Ast2String(static_cast<POETCode_ext*>(r)->get_content());
+     if (s != "") { return ASTFactory::inst()->new_string(s); }
+     else return 0;
+    }
   default: return 0;
   }
 }
@@ -242,7 +247,7 @@ class EvaluatePOET
       {
          POETCode* cur = get_head(p_input);
          if (lineno != 0 && cur == LINE_BREAK) ++(*lineno); 
-         if (cur!=space && cur != LINE_BREAK && cur != tab)
+         if (cur!=space && cur != EMPTY && cur != LINE_BREAK && cur != tab)
              return p_input;
       }
       return EMPTY;

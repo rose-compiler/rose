@@ -2158,7 +2158,6 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
-projects/StencilManyCore/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy
@@ -2200,6 +2199,11 @@ projects/Viz/tools/Makefile
 projects/amrShiftDSLcompiler/AMRShift/Makefile
 projects/amrShiftDSLcompiler/Makefile
 projects/arrayDSLcompiler/Makefile
+projects/POET_ROSE/Makefile
+projects/POET_ROSE/test/Makefile
+projects/POET_ROSE/manycore-stencil/Makefile
+projects/POET_ROSE/manycore-stencil/include/Makefile
+projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
 projects/autoParallelization/Makefile

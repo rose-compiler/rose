@@ -313,6 +313,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
          return v1 - v2;
      case AstInterface::BOP_DOT_ACCESS:
      case AstInterface::BOP_ARROW_ACCESS: 
+        return new SymbolicAstWrap(exp);
      case AstInterface::BOP_DIVIDE:
         return new SymbolicFunction( opr, "/", v1,v2);
      case AstInterface::BOP_EQ: 
@@ -331,6 +332,10 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         return new SymbolicFunction( opr, "&&", v1,v2);
      case AstInterface::BOP_OR:
         return new SymbolicFunction( opr, "||", v1,v2);
+     case AstInterface::BOP_BIT_RSHIFT:
+        return new SymbolicFunction( opr, ">>", v1,v2);
+     case AstInterface::BOP_BIT_LSHIFT:
+        return new SymbolicFunction( opr, "<<", v1,v2);
      default:
      {
          cerr<<"Error in SymbolicValGenerator::GetSymbolicVal(): unhandled type of binary operator "<< AstInterface::toString(opr) <<endl;
@@ -362,7 +367,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
        assert(false);
      }
   }
-  else if (fa.IsFunctionCall(exp, &s1, &l)) { 
+  else if (fa.IsFunctionCall(exp, &s1, &l) || fa.IsArrayAccess(exp, &s1, &l)) { 
      bool ismin = fa.IsMin(s1), ismax = fa.IsMax(s1);
      AstInterface::AstNodeList::const_iterator p = l.begin();
      if (ismin || ismax) {
@@ -375,7 +380,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
        }
        return v;
      }
-     if (fa.IsVarRef(exp, 0, &name)) {    
+     if (fa.IsVarRef(s1, 0, &name)) {    
         SymbolicFunction::Arguments args;
         for ( ; p != l.end(); ++p) { 
            SymbolicVal cur = GetSymbolicVal(fa, *p);

@@ -7,6 +7,8 @@
 #include <OperatorAnnotation.h>
 #include <AstInterface_ROSE.h>
 #include <AutoTuningInterface.h>
+#include <ArrayAnnot.h>
+#include <ArrayInterface.h>
 
 #include "AstDiagnostics.h"
 
@@ -56,13 +58,19 @@ main ( int argc,  char * argv[] )
   vector<string> argvList(argv, argv + argc);
   CmdOptions::GetInstance()->SetOptions(argvList);
 
-  OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
-  funcAnnot->register_annot();
-  LoopTransformInterface::set_sideEffectInfo(funcAnnot);
+  ArrayAnnotation* array_annot = ArrayAnnotation::get_inst();
+  array_annot->register_annot();
+
+  //OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
+  //funcAnnot->register_annot();
+  LoopTransformInterface::set_sideEffectInfo(array_annot);
+
+  ArrayInterface anal(*array_annot);
+  LoopTransformInterface::set_arrayInfo(&anal);
 
   ReadAnnotation::get_inst()->read();
   if (DebugAnnot()) {
-    funcAnnot->Dump();
+    array_annot->Dump();
   }
 
   AssumeNoAlias aliasInfo;

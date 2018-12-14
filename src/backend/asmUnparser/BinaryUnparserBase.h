@@ -1,8 +1,11 @@
 #ifndef ROSE_BinaryAnalysis_UnparserBase_H
 #define ROSE_BinaryAnalysis_UnparserBase_H
 
+#include <BinaryEdgeArrows.h>
 #include <BinaryUnparser.h>
+#include <BitFlags.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
@@ -22,6 +25,59 @@ extern Sawyer::Message::Facility mlog;
 // used internally to initialize mlog
 void initDiagnostics();
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Margins containing arrows
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** State associated with printing arrows in the margin. */
+class ArrowMargin {
+public:
+    /** Flags controlling the finer aspects of margin arrows. */
+    enum Flags {
+        /** Set this flag when you want the emitLinePrefix function to treat the next possible line as the start of a pointable
+         *  entity. The actual start is delayed until an appropriate state is reached. When the entity does finally start, the
+         *  emitLinePrefix function will clear this flag and set the corresponding EMIT flag instead.  The start of a pointable
+         *  entity serves as the line to which arrows point. */
+        POINTABLE_ENTITY_START = 0x00000001,
+
+        /** Set this flag when you want the emitLinePrefix function to treat the next line as the end of a pointable entity.
+         * The end of an entity is from whence arrows emanate.  The emitLinePrefix will clear this flag at the next
+         * opportunity. */
+        POINTABLE_ENTITY_END    = 0x00000002,
+
+        /** This flag is modified automatically by the emitLinePrefix function. There is no need to adjust it. */
+        POINTABLE_ENTITY_INSIDE = 0x00000004,
+
+        /** If set, then emit the prefix area even if we seem to be generating output that the unparser would otherwise
+         *  consider to be before or after the set of arrows. This flag is not adjusted by the renderer. */
+        ALWAYS_RENDER           = 0x00000008
+    };
+
+    EdgeArrows arrows;                                  /**< The arrows to be displayed. */
+    BitFlags<Flags> flags;                              /**< Flags that hold and/or control the output state. */
+    Sawyer::Optional<EdgeArrows::VertexId> latestEntity;/**< Latest pointable entity that was encountered in the output. */
+
+    /** Reset the marging arrow state.
+     *
+     *  This should be called near the end of emitting a function, probably just before emitting the function epilogue. */
+    void reset() {
+        arrows.reset();
+        flags = 0;
+        latestEntity = Sawyer::Nothing();
+    }
+
+    /** Generate the string to print in the margin.
+     *
+     *  The @p currentEntity values are the vertex IDs used to initialize the @ref arrows method of this object. For
+     *  control flow graphs, that's usually the entry address of a basic block. However, the unparser doesn't really
+     *  care what kind of entities are being pointed at by the arrows. */
+    std::string render(Sawyer::Optional<EdgeArrows::VertexId> currentEntity);
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// State of the unparser (the unparser itself is const during unparsing)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** State for unparsing.
  *
  *  This object stores the current state for unparsing. The state is kept separate from the unparser class so that (1) the
@@ -35,12 +91,17 @@ private:
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
+    Sawyer::Optional<EdgeArrows::VertexId> currentPredSuccId_;
     std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
     const Base &frontUnparser_;
     std::vector<unsigned> cfgVertexReachability_;
     Sawyer::Container::Map<unsigned, std::string> reachabilityNames_; // map reachability value to name
+    ArrowMargin intraFunctionCfgArrows_;                              // arrows for the intra-function control flow graphs
+    ArrowMargin intraFunctionBlockArrows_;                            // user-defined intra-function arrows to/from blocks
+    ArrowMargin globalBlockArrows_;                                   // user-defined global arrows to/from blocks
+    bool cfgArrowsPointToInsns_;                                      // arrows point to insns? else predecessor/successor lines
 
 public:
     State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
@@ -54,6 +115,79 @@ public:
     void cfgVertexReachability(const std::vector<unsigned>&);
     unsigned isCfgVertexReachable(size_t vertexId) const;
 
+    /** Control flow graph arrows within a function.
+     *
+     *  This property holds information about how and when to draw arrows in the left margin to represent the edges of a
+     *  control flow graph whose endpoints are both within the same function. The object is initialized each time a function is
+     *  entered (see @code emitFunction) just before emitting the first basic block, but only if the unparser settings indicate
+     *  that these margin arrows should be displayed.  The object is reset just after printing the basic blocks. The object
+     *  should be in a default state when printing the function prologue and epilogue information, otherwise those parts
+     *  of the output would be unecessarily indented.
+     *
+     *  See also, @ref intraFunctionBlockArrows, @ref globalBlockArrows.
+     *
+     * @{ */
+    const ArrowMargin& intraFunctionCfgArrows() const { return intraFunctionCfgArrows_; }
+    ArrowMargin& intraFunctionCfgArrows() { return intraFunctionCfgArrows_; }
+    /** @} */
+
+    /** User-defined intra-function margin arrows.
+     *
+     *  This object holds information about user-defined arrows in the margin. These arrows point to/from basic blocks
+     *  such that both basic blocks are in the same function.
+     *
+     *  To update these arrows during unparsing, the user should provide an unparser updateIntraFunctionArrows either by class
+     *  derivation or chaining.  The actual information about the arrows will be in that function's @c state argument in @c
+     *  state.intraFunctionBlockArrows().arrows. Although it will have already been computed, the @p
+     *  state.intraFunctionCfgArrows can be adjusted at the same time.
+     *
+     *  See also, @ref intraFunctionCfgArrows, @ref globalBlockArrows.
+     *
+     * @{ */
+    const ArrowMargin& intraFunctionBlockArrows() const { return intraFunctionBlockArrows_; }
+    ArrowMargin& intraFunctionBlockArrows() { return intraFunctionBlockArrows_; }
+    /** @} */
+
+    /** User-defined arrows to basic blocks across entire output.
+     *
+     *  This object holds information about user-defined arrows in the margin. These arrows point to/from basic blocks
+     *  anywhere in the program (not just within functions as with @ref intraFunctionBlockArrows).
+     *
+     *  See also, @ref intraFunctionCfgArrows, @ref intraFunctionBlockArrows.
+     *
+     * @{ */
+    const ArrowMargin& globalBlockArrows() const { return globalBlockArrows_; }
+    ArrowMargin& globalBlockArrows() { return globalBlockArrows_; }
+    /** @} */
+
+    /** Call this when you're about to output the first instruction of a basic block. */
+    void thisIsBasicBlockFirstInstruction();
+
+    /** Call this when you're about to output the last instruction of a basic block. */
+    void thisIsBasicBlockLastInstruction();
+
+    /** Property: ID for CFG edge arrow endpoint.
+     *
+     *  When generating margin arrows that point to the "predecessor:" and "successor:" lines of the output (instead of arrows
+     *  that point to the basic block instructions), this property holds the ID number for the arrow endpoint. See @ref
+     *  EdgeArrows::computeCfgEdgeLayout.
+     *
+     * @{ */
+    Sawyer::Optional<EdgeArrows::VertexId> currentPredSuccId() const { return currentPredSuccId_; }
+    void currentPredSuccId(Sawyer::Optional<EdgeArrows::VertexId> id) { currentPredSuccId_ = id; }
+    /** @} */
+
+    /** Proerty: Whether CFG margin arrows point to instructions.
+     *
+     *  If set, then the CFG arrows in the left margin origin from and point to instructions of basic blocks. If false, they
+     *  originate from "successor:" lines and point to "predecessor:" lines.  If there are no CFG margin arrows then the
+     *  value of this property doesn't matter.
+     *
+     * @{ */
+    bool cfgArrowsPointToInsns() const { return cfgArrowsPointToInsns_; }
+    void cfgArrowsPointToInsns(bool b) { cfgArrowsPointToInsns_ = b; }
+    /** @} */
+    
     /** Assign a reachability name to a reachability value.
      *
      *  The two-argument version of this function associates a name with a value. An empty name clears the association.
@@ -90,6 +224,10 @@ public:
     const Base& frontUnparser() const;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Base unparser
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Abstract base class for unparsers.
  *
  *  This defines the interface only. All data that's used during unparsing is provided to each function so that this interface
@@ -121,10 +259,27 @@ public:
     virtual Ptr copy() const = 0;
     virtual ~Base();
 
+    /** Property: Settings associated with this unparser.
+     *
+     *  Most of these settings can also be configured from the command-line. They control features of the unparser
+     *  directly without the programmer having to invervene by creating a subclss or chaining a new parser. Most of
+     *  the switches simply turn things on and off.
+     *
+     * @{ */
     virtual const Settings& settings() const = 0;
     virtual Settings& settings() = 0;
+    /** @} */
 
+    /** Property: Next parser in chain.
+     *
+     *  Parsers can be subclass and/or chained.  Nearly all functions check for chaining and delegate to the next parser
+     *  in the chain.  When one function calls some other function, it uses the first parser of the chain.  The chain can
+     *  be created by supplying an argument to the constructor, or it can be constructed later by setting this property.
+     *
+     * @{ */
     Ptr nextUnparser() const { return nextUnparser_; }
+    void nextUnparser(Ptr next) { nextUnparser_ = next; }
+    /** @} */
 
     /** Emit the entity to an output stream.
      *
@@ -279,14 +434,67 @@ public:
     virtual bool emitAddress(std::ostream&, const Sawyer::Container::BitVector&, State&, bool always=true) const;
     virtual void emitCommentBlock(std::ostream&, const std::string&, State&, const std::string &prefix = ";;; ") const;
     virtual void emitTypeName(std::ostream&, SgAsmType*, State&) const;
+
+    virtual void emitLinePrefix(std::ostream&, State&) const;
     /** @} */
 
+    //----- Other overrridable things -----
+public:
+    /** Finish initializing the unparser state.
+     *
+     *  This gets called by the @ref unparse and @ref operator() methods just after the state object is created. It
+     *  can be used to adjust the state before any unparsing actually starts. One common use is to initialize the
+     *  global margin arrows.  The base implementation does nothing except chain to the next unparser. */
+    virtual void initializeState(State&) const;
+
+    /** Calculate intra-function arrows.
+     *
+     *  This is the oppurtunity for the subclass to calculate the intra-function arrows that should appear in the left margin
+     *  of the output. This function is invoked by the base parser after emitting the function prologue and after possibly
+     *  calculating CFG intra-function arrows but before emitting any basic blocks or data blocks for the function. */
+    virtual void updateIntraFunctionArrows(State&) const;
+    
     //-----  Utility functions -----
 public:
+    /** Render a string left justified. */
     static std::string leftJustify(const std::string&, size_t nchars);
 
+    /** Render a table row.
+     *
+     *  Given a row of table data as a vector of cell contents, each of which could be multiple lines, return a
+     *  string, also possibly multiple lines, that renders the row into columns. */
     static std::string juxtaposeColumns(const std::vector<std::string> &content, const std::vector<size_t> &minWidths,
                                         const std::string &columnSeparator = " ");
+
+    /** Return true if edges are in order by source address.
+     *
+     *  If edge @p a has a source address that's less than the address of @p b, or if @ a has a source address and @p b has
+     *  no source address, then return true; otherwise return false. Both edges must be valid edges, not end iterators. This
+     *  defines the order that block prefixes are emitted. Source addresses are the last address of the source vertex. */
+    static bool ascendingSourceAddress(Partitioner2::ControlFlowGraph::ConstEdgeIterator a,
+                                       Partitioner2::ControlFlowGraph::ConstEdgeIterator b);
+
+    /** Return true if edges are in order by target address.
+     *
+     *  If edge @p a has a target address that's less than the address of @p b, or if @ a has a target address and @p b has
+     *  no target address, then return true; otherwise return false. Both edges must be valid edges, not end iterators. This
+     *  defines the order that block suffixes are emitted. Target addresses are the first address of the target vertex. */
+    static bool ascendingTargetAddress(Partitioner2::ControlFlowGraph::ConstEdgeIterator a,
+                                       Partitioner2::ControlFlowGraph::ConstEdgeIterator b);
+
+    /** Ordered incoming CFG edges.
+     *
+     *  Returns the incoming CFG edges for the specified basic block in the order that they should be displayed in the listing.
+     *  The order is defined by @ref ascendingSourceAddress. */
+    static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
+    orderedBlockPredecessors(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&);
+
+    /** Ordered outgoing CFG edges.
+     *
+     *  Returns the outgoing CFG edges for the specified basic block in the order that they should be displayed in the listing.
+     *  The order is defined by @ref ascendingTargetAddress. */
+    static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
+    orderedBlockSuccessors(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&);
 };
 
 
