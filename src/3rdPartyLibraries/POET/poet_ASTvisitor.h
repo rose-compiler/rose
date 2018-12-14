@@ -216,4 +216,33 @@ inline void ReplInfoVisitor:: visitLocalVar(LocalVar* v) {
           }
         }
 
+class MatchASTVisitor :  public ReplInfoVisitor
+{
+ protected:
+  POETCode* r1;
+  LocalVar* lvar;
+  MatchOption config;
+  POETCode* any;
+  ASTFactory* fac;
+
+  virtual void visitIconst(POETIconst* v);
+  virtual void visitString(POETString* v) ;
+  bool matchCodeVar(POETCode *_r1, CodeVar* v2, POETCode* args);
+  virtual void visitUnknown (POETCode_ext* e); 
+  virtual void visitCodeVar(CodeVar* v2); 
+  virtual void visitLocalVar(LocalVar* v2);
+  virtual void visitXformVar( XformVar* v) ;
+  virtual void visitTuple( POETTuple* r2);
+  virtual void visitType( POETType* t);
+  virtual void visitList(POETList* v2);
+  virtual void visitAssign(POETAssign* assign); 
+  virtual void visitOperator(POETOperator* op);
+  virtual void defaultVisit(POETCode* f) ;
+ public:
+  MatchASTVisitor(MatchOption _config) : config(_config)
+   { fac = ASTFactory::inst(); any = fac->make_any(); lvar = 0; r1 = 0; }
+  void setup(POETCode* _r1, POETCode* _r2) ;
+  bool apply(POETCode* _r1, POETCode* _r2); 
+  POETCode* get_result() { return res; }
+};
 #endif
