@@ -2532,7 +2532,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
             // debugging code!
             // printf ("Exiting to debug case of SgTemplateArgument \n");
             // ROSE_ASSERT(false);
-
 #if 0
             // DQ (9/15/2012): Commented this out since while we build the AST we don't have parents of classes set (until the class declaration is attached to the AST).
                SgScopeStatement* scope = templateArgument->get_scope();
