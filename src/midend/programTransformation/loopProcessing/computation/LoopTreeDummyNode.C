@@ -275,6 +275,10 @@ bool LoopTreeRelateLoopIvar :: SelfRemove()
         RemoveTree();
         return true;     
       }
+      if (loop1.GetAncesLoop() == loop2.GetAncesLoop()) {
+        RemoveSelf();
+        return true;
+      }
       SelectRelateLoopAnces sel(this);
       LoopTreeNode* l = ApproachAncesLoop( this, sel);
       if (l != 0) {

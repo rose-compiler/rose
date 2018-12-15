@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
                                 [Use the Z3 Satisfiability Modulo Theories Solver. PREFIX is where the
                                 executable z3 is contained])],
                 [ac_cv_use_z3=$withval],
-                [ac_cv_use_z3=try])
+                [ac_cv_use_z3=no])
 
     USE_Z3=0
     if test "$ac_cv_use_z3" != no; then

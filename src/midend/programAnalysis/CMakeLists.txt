@@ -36,6 +36,7 @@ if (enable-binary-analysis)
     defUseAnalysis/dfaToDot.cpp
     defUseAnalysis/DefUseAnalysis_perFunction.cpp
     valuePropagation/ValueAnnot.C
+    valuePropagation/ArrayAnnot.C
     valuePropagation/ValuePropagate.C
     variableRenaming/VariableRenaming.C
     OAWrap/OAWrap.C
@@ -84,6 +85,7 @@ else()
     defUseAnalysis/dfaToDot.cpp
     defUseAnalysis/DefUseAnalysis_perFunction.cpp
     valuePropagation/ValueAnnot.C
+    valuePropagation/ArrayAnnot.C
     valuePropagation/ValuePropagate.C
     variableRenaming/VariableRenaming.C
     OAWrap/OAWrap.C
