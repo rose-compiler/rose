@@ -16,6 +16,7 @@ namespace CodeThorn {
     /** Adds a label to the call string if it is not longer than getLength().
         Returns true if the label is added, otherwise false.
     */
+    bool isEmpty();
     bool addLabel(SPRAY::Label lab);
 
     /** Removes the last label of the call string if it matches with the argument 'lab'.
@@ -24,10 +25,15 @@ namespace CodeThorn {
     */
     bool removeIfLastLabel(SPRAY::Label lab);
 
+    /** true if the provided label is the last label in the call
+        string. Always false for the empty call string.
+     */
+    bool isLastLabel(SPRAY::Label lab);
+
     /** removes last label. 
         If call string is of length 0 no operation is performed.
     */
-    void removeLabel();
+    void removeLastLabel();
 
 
     /** returns the length of the call string.

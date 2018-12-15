@@ -190,12 +190,12 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
 }
 
 Label CFAnalysis::getLabel(SgNode* node) {
-  assert(labeler);
+  ROSE_ASSERT(labeler);
   return labeler->getLabel(node);
 }
 
 SgNode* CFAnalysis::getNode(Label label) {
-  assert(labeler);
+  ROSE_ASSERT(labeler);
   return labeler->getNode(label);
 }
 
@@ -284,7 +284,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
       throw SPRAY::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
     }
-    assert(stmtPtrList.size()>0);
+    ROSE_ASSERT(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
   }
@@ -322,8 +322,12 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgTypedefDeclaration:
     return labeler->getLabel(node);
 
+  case V_SgFunctionCallExp:
+    // the first label of a function call is the CALL label.
+    return labeler->getLabel(node);
+
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
+    cerr << "Error: Unknown xnode in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
     exit(1);
   }
 }
@@ -537,8 +541,8 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
 
 
 Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
-  assert(s1);
-  assert(s2);
+  ROSE_ASSERT(s1);
+  ROSE_ASSERT(s2);
   Flow flow12;
   Flow flow1=flow(s1);
   Flow flow2=flow(s2);
@@ -867,7 +871,7 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
   SgNode* condNode=SgNodeHelper::getCond(node);
   Label condLabel=getLabel(condNode);
   SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-  assert(bodyNode);
+  ROSE_ASSERT(bodyNode);
   Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
   edge.addType(edgeTypeParam1);
   Flow flowB=flow(bodyNode);
@@ -916,7 +920,7 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
 }
 
 Flow CFAnalysis::flow(SgNode* node) {
-  assert(node);
+  ROSE_ASSERT(node);
 
   Flow edgeSet;
   if(node==0)
@@ -1024,7 +1028,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     SgNode* funcDef=SgNodeHelper::correspondingSgFunctionDefinition(node);
     if(!funcDef)
       cerr << "Error: No corresponding function for ReturnStmt found."<<endl;
-    assert(isSgFunctionDefinition(funcDef));
+    ROSE_ASSERT(isSgFunctionDefinition(funcDef));
     Edge edge=Edge(getLabel(node),EDGE_FORWARD,labeler->functionExitLabel(funcDef));
     edgeSet.insert(edge);
     return edgeSet;
@@ -1232,7 +1236,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       cerr << "Error: empty for-stmt initializer (should be an empty statement node)."<<endl;
       exit(1);
     }
-    assert(len>0);
+    ROSE_ASSERT(len>0);
     SgNode* lastNode=0;
     if(len==1) {
       SgNode* onlyStmt=*stmtPtrList.begin();
@@ -1240,7 +1244,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       edgeSet+=onlyFlow;
       lastNode=onlyStmt;
     } else {
-      assert(stmtPtrList.size()>=2);
+      ROSE_ASSERT(stmtPtrList.size()>=2);
       for(SgStatementPtrList::iterator i=stmtPtrList.begin();
           i!=stmtPtrList.end();
           ++i) {
@@ -1264,7 +1268,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
     SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-    assert(bodyNode);
+    ROSE_ASSERT(bodyNode);
     Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
     edge.addType(EDGE_FORWARD);
     Flow flowB=flow(bodyNode);

@@ -496,6 +496,7 @@ inline POETCode* SubList(POETCode* l1, POETCode* stop, POETCode*& rest) {
 }
 
 inline POETCode* MergeList(POETCode* l1, POETCode* l2) {
+  if (l2 == 0) return l1;
   POETList* ll2 = dynamic_cast<POETList*>(l2);
   if (ll2 == 0 && l2 != EMPTY) {
       ll2 = ASTFactory::inst()->new_list(l2, 0);
@@ -563,7 +564,7 @@ class ParseMatchVisitor  : public EvaluatePOET, public POETCodeVisitor
     if (r1_head->get_enum() == SRC_OP && static_cast<POETUop*>(r1_head)->get_op() == POET_OP_ANNOT) {
        r1 = SkipEmpty(get_tail(r1), &lineno);
        POETCode* leftOver = 0;
-       POETCode* r1_arg=static_cast<POETUop*>(r1_head)->get_arg();
+       POETCode* r1_arg=SkipEmpty(static_cast<POETUop*>(r1_head)->get_arg(), &lineno);
        POETCode* nres = apply(r1_arg,EMPTY,&leftOver);
        if (leftOver == 0) r1 = nres;
        else r1 = fac->new_list(nres,leftOver); 
