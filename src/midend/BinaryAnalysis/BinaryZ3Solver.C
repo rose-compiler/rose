@@ -764,10 +764,8 @@ Z3Solver::ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa);
-
     z3::expr e = z3::ashr(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
-                          ctxCast(ctxExpression(expr), BIT_VECTOR).first);
-
+                          ctxCast(ctxExpression(sa), BIT_VECTOR).first);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
