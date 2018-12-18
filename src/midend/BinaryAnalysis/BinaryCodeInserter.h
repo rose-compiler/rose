@@ -1,5 +1,5 @@
 #ifndef Rose_BinaryAnalysis_CodeInserter_H
-#define Rose_BinaryAnalysis__CodeInserter_H
+#define Rose_BinaryAnalysis_CodeInserter_H
 
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/Map.h>
@@ -137,7 +137,7 @@ public:
      *  one past the last deleted instruction or, if no instructions are deleted, the instruction originally at the insertion
      *  point. */
     typedef Sawyer::Container::Map<int, InstructionInfo> InstructionInfoMap;
-    
+
 protected:
     const Rose::BinaryAnalysis::Partitioner2::Partitioner &partitioner_;
     AddressInterval chunkAllocationRegion_;             // where chunks can be allocated
@@ -148,7 +148,6 @@ protected:
     AddressIntervalSet freeSpace_;                      // parts of mapped memory serving as free space for allocations
     unsigned aggregationDirection_;                     // AggregationDirection bits
     NopPadding nopPadding_;                             // where to add no-op padding
-    
 
 public:
     /** Facility for emitting diagnostics. */
