@@ -1,0 +1,1 @@
+cmd = cd ${TARGET} && ../TestUnparseHeadersUsingTokens -I${srcdir}/test8/subdir ${ROSE_SWITCHES} ${HDR_ROOT_SWITCHES} ${srcdir}/${TARGET}/Simple8.C

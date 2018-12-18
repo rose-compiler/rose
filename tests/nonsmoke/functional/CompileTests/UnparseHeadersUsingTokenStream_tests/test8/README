@@ -1,0 +1,8 @@
+In this test, a single source file includes two header files, each
+declaring a different class. Also, these header files include two
+different other header files with the same name (and each of the inner
+header files declares a distinct variable). To avoid path collisions
+among the unparsed and not unparsed header files (i.e. to avoid
+finding the wrong file with the same name), additionally to the header
+files affected by the rename variable transformation, ROSE unparses
+one not affected file.

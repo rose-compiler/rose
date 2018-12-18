@@ -1,0 +1,138 @@
+# This Tupfile serves as the canonical example for writing tests. When creating your own, don't bother
+# copying these extensive comments -- refer back to this file instead if you want.
+#
+# See also, tests/smoke/ExamplesForTestWriters/Tupfile
+
+
+########################################################################################################################
+# Prologue
+#
+# All Tupfiles start with this line
+include_rules
+
+########################################################################################################################
+# Input specimens.
+#
+# Many checkers (programs that test something) process a specimen (input) in order to test (verify) that some feature
+# or ROSE works as expected.  If a specimen is expected to be used by many checkers in many directories, then put the
+# specimen in a directory that contains only specimens. For non-smoke binary analysis specimens, that directory is
+# $ROSE/tests/nonsmoke/specimens/binary.  On the other hand, if you expect a specimen to be useful only to checkers
+# in one directory you might as well keep the two together for easier maintenance.
+#
+# A directory containing only specimens should organize those specimens into a list (or lists) that are stored in a
+# "Specimens.inc" file that can be included into a Makefile.am or a Tupfile. All variables in a Specimen.inc file should
+# have a common prefix so makefiles can include Specimen.inc files from multiple directories.  For instance, the
+# variables defined in $ROSE/tests/nonsmoke/specimens/binary/Specimens.inc all start with "nonsmoke_specimens_binary_".
+# Other specimen directories should use a similar naming scheme (i.e., prefix reflects location in the directory
+# hierarchy).
+
+# The top_srcdir trick is because SpecimenSets.inc includes Specimens.inc and these files were written for GNU Make,
+# not tup. There is no "top_srcdir" in Tup. Setting "top_srcdir = $(ROSE)" doesn't work because $(ROSE) expands
+# to a special Tup variable that will have a different value in SpecimenSets.inc.
+top_srcdir = ../../../..
+include $(ROSE)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
+
+########################################################################################################################
+# A checker to test that something compiles.
+#
+# This is the simplest kind of checker -- all we do is make sure it compiles, and we never try to run it.
+# The "run" command produces an executable whose name is the same as the base name of the first source file.
+run $(tool_compile_linkexe) checkCompilation.C
+
+########################################################################################################################
+# A checker taking no specimen (i.e., a single test)
+#
+# The next level of checker is one that we compile and run, but it doesn't need to process any specimens.
+
+run $(tool_compile_linkexe) noInputs.C
+
+# Then create the rules to run the test. The "run" means run some shell script whose standard output is the ":"-rules.
+# The $(test) points to $(ROSE)/scripts/tup/generate-test-rule. Its first argument are the space-separated inputs, which
+# in this case is just the name of the executable. When no other args are given, the $(test) script generates a rule that
+# runs "$(run_test) ./noInputs". $(run_test) points to $(ROSE)/scripts/tup/run-test, which runs commands with time
+# limits, capture outputs, etc.  Both $(test) and $(run_test) have detailed documentation in the script.  The output of
+# this rule is "noInputs.result".
+run $(test) noInputs
+
+########################################################################################################################
+# A checker taking specified specimens (i.e., many tests)
+#
+# Here's a checker that runs on three specific specimens. It's written using pattern rules so that the specific
+# specimens can be easily changed, although in such a small example it might be clearer to list all three tests
+# explicitly.
+
+run $(tool_compile_linkexe) parser.C
+
+# The explicit list of specimens. If you have specimens coming from multiple specimen directories you'll have to
+# include the directory name and make special provisions below to prevent conflicts in the test names.
+parser_specdir = $(ROSE)/tests/nonsmoke/specimens/binary
+parser_specimens = i386-fcalls i386-fld i386-lea
+
+# Assume the parser does something and produces some output on stdout. We like to compare that output with a known
+# good answer that we previously computed. Let's assume that the answers are in files named "parser_FOO.ans" where FOO
+# is the base name of the input specimen.
+#
+# Like before, we run $(test) to create the ":"-rules, but this time we do it in a loop over the input specimens.
+# The first argument, "parser", like before is the name of the input. The output will be "parser-FOO.result" where
+# FOO is the value of the "-o" switch (i.e., "$specimen"). The --answer switch says to compare the output with
+# the specified file, and the rest of the arguments form the command to run.  Note two things: (1) the string "${foo}"
+# is not a Tup variable--it's just a shell variable (I could have written "$foo" just as easily), and (2) you write
+# the command as if you were running it in the source tree and as if the source and build trees have been magically
+# unioned together.  I.e., assume that "./foo" can refer to "foo" in the current working directory of the build tree or
+# "foo" in the corresponding source tree directory.
+#
+run for specimen in $(parser_specimens); do \
+        $(test) parser -o ${specimen} --answer=parser_${specimen}.ans \
+	    ./parser $(parser_specdir)/${specimen}; \
+    done
+    
+########################################################################################################################
+# A checker that runs on many specimens (i.e., many tests)
+#
+# Here's a more complicated example that runs one checker on many specimens with the specimen list coming from some
+# other location. As the list is updated we automatically create more tests.
+#
+# We'll use the same "parser" checker as above, so no need for compiling and linking again.  However, we will need
+# to use some other prefix for our variables, such as "parser2".
+#
+# Our specimens are all ELF executables except those for the MIPS architecture. This wildcard matching is why we've
+# included SpecimenSets.inc instead of (or really, in addition to) Specimens.inc. The pattern is
+# nonsmoke_specimens_binary_<container>_<filetype>_<architecture>. Another common example is filtering out specific
+# specimens that you know are not meant to work (not shown here). Tup doesn't have the same extensive set of functions
+# as GNU make or CMake. Instead, you're expected to use other tools. We'll use "sort" and "comm" commands to acheive
+# this.
+
+parser2_specdir = $(ROSE)/tests/nonsmoke/specimens/binary
+parser2_specimens = `echo $(nonsmoke_specimens_binary_elf_exe_any) |\
+		     $(ROSE)/scripts/tup/filter-out $(nonsmoke_specimens_binary_any_any_mips)`
+
+# Create the make target rules. This time we don't compare with an answer file because it would mean that if someone
+# added a new specimen they'd need to know how to also create a new answer file. Binary analysis often takes this
+# approach (using answers) but everyone that would add a new binary specimen also knows how to create and manually
+# verify the answers for each checker.
+run for specimen in $(parser2_specimens); do \
+        $(test) parser -o "2-${specimen}" \
+	    ./parser $(parser2_specdir)/${specimen}; \
+    done
+
+########################################################################################################################
+# A smoke checker that needs to run on non-smoke specimens
+#
+# This time we have a checker on the smoke side (presumably because it needs to be run on some smoke specimens) that
+# we also want to run on some non-smoke specimens.  The only difference is the name of the checker.
+
+# Get a list of specimens. We'll hard code a list this time.
+runAlgorithm = $(ROSE)/tests/smoke/ExamplesForTestWriters/runAlgorithm
+runAlgorithm_specdir = $(ROSE)/tests/nonsmoke/specimens/binary
+runAlgorithm_specimens = $(nonsmoke_specimens_binary_elf_exe_amd64)
+
+# Create the test rules
+run for specimen in $(runAlgorithm_specimens); do \
+        $(test) $(runAlgorithm) -o ${specimen} \
+	    $(runAlgorithm) --algorithm=foo $(runAlgorithm_specdir)/${specimen}; \
+    done
+
+########################################################################################################################
+# Boilerplate.
+#
+# No boilerplate necessary with Tup.

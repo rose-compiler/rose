@@ -3779,7 +3779,17 @@ Grammar::setUpStatements ()
   // negara1 (08/12/2011): Added header file body as a field of include directive statement.
      IncludeDirectiveStatement.setDataPrototype( "SgHeaderFileBody*", "headerFileBody", "= NULL",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     
+
+  // DQ (9/18/2018): Adding support for the include fine heirarchy as generated in the EDG/ROSE translation. This
+  // is exact in the since that it is the files included instead of just the CPP Include directives that were processed.
+     IncludeDirectiveStatement.setDataPrototype( "SgIncludeFile*", "include_file_heirarchy", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/5/2018): Pass the name that was used to the SgIncludeDirectiveStatement.
+     IncludeDirectiveStatement.setDataPrototype ("std::string", "name_used_in_include_directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 #if 0
   // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
      IncludeDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString3", "= \"\"",

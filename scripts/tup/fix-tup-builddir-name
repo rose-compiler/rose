@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+
+# Fixes names like: /home/ec2-user/rose/.tup/mnt/@tupjob-46122/home/ec2-user/rose/_build/src
+# to become:                                                  /home/ec2-user/rose/_build_src
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use TupScripts;
+
+my($arg0) = $0 =~ m(([^/]+)$);
+my $make_absolute = 0;
+my $make_canonical = 0;
+
+sub parse_command_line {
+    my @args = @_;
+    while (@args) {
+	if ($args[0] eq "--absolute") {
+	    $make_absolute = 1;
+	    shift @args;
+	} elsif ($args[0] eq "--canonical") {
+	    $make_absolute = 1;
+	    $make_canonical = 1;
+	    shift @args;
+	} elsif ($args[0] =~ /^-/) {
+	    die "$arg0: unknown switch: \"$args[0]\"\n";
+	} else {
+	    last;
+	}
+    }
+    return @args;
+}
+
+########################################################################################################################
+
+my @filenames = parse_command_line(@ARGV);
+
+for my $arg (@filenames) {
+    $arg = TupScripts::absolute_name($arg) if $make_absolute;
+    $arg = TupScripts::canonical_name($arg) if $make_canonical;
+    $arg =~ s(.*/\@tupjob-\d+/)(/);
+}
+
+print join(" ", @filenames), "\n";
+exit 0;

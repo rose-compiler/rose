@@ -6041,13 +6041,19 @@ HEADER_APPLICATION_SOURCE_FILE_START
           std::set<int> & get_redundantTokenEndingsSet();
           void set_redundantTokenEndingsSet(std::set<int> & X);
 
+       // DQ (9/28/2018): Removed static keyword (I don't think we wnat this to be a static function.
        // DQ (11/20/2015): Added support for retrieving representative whitespace in unparsing transformations when using the token-based unparsing.
-          static void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
-          static std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
+       // static void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
+       // static std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
+          void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
+          std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
 
+       // DQ (9/28/2018): Removed static keyword (I don't think we wnat this to be a static function.
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-          static void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
-          static std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
+       // static void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
+       // static std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
+          void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
+          std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
 
 #if 0
        // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
@@ -6057,6 +6063,25 @@ HEADER_APPLICATION_SOURCE_FILE_START
 #endif
 
 HEADER_APPLICATION_SOURCE_FILE_END
+
+
+HEADER_INCLUDE_FILE_START
+HEADER_INCLUDE_FILE_END
+
+
+HEADER_HEADER_FILE_REPORT_START
+     private:
+       // Define these as private so that we can control and/or eliminate their use.
+       // SgHeaderFileReport( const SgHeaderFileReport & X );
+       // SgHeaderFileReport & operator= ( const SgHeaderFileReport & X );
+
+     public:
+          void display( const std::string & label) const;
+
+       // SgHeaderFileReport( SgSourceFile* sourceFile );
+
+HEADER_HEADER_FILE_REPORT_END
+
 
 HEADER_APPLICATION_BINARY_FILE_START
         private:
@@ -6354,19 +6379,19 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ (8/25/2017): Added more language support.
           bool get_Csharp_only (void) const;
-          void set_Csharp_only (bool value);
+       // void set_Csharp_only (bool value);
 
        // DQ (8/25/2017): Added more language support.
           bool get_Ada_only (void) const;
-          void set_Ada_only (bool value);
+       // void set_Ada_only (bool value);
 
        // DQ (8/25/2017): Added more language support.
           bool get_Jovial_only (void) const;
-          void set_Jovial_only (bool value);
+       // void set_Jovial_only (bool value);
 
        // DQ (8/25/2017): Added more language support.
           bool get_Cobol_only (void) const;
-          void set_Cobol_only (bool value);
+       // void set_Cobol_only (bool value);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -6416,6 +6441,11 @@ HEADER_APPLICATION_PROJECT_START
           SgFilePtrList & get_fileList() const;
           void set_fileList(SgFilePtrList & fileList);
 #endif
+
+       // DQ (8/3/2018): Added support for evaluation of options at the project level (which are normally associated with files).
+          bool get_unparse_tokens (void) const;
+       // void set_unparse_tokens (bool value);
+
 
 
 HEADER_APPLICATION_PROJECT_END
@@ -13846,19 +13876,52 @@ Sg_File_Info::get_physical_file_id() const
   // Initialize to error value.
      int return_physical_file_id = NULL_FILE_ID;
 
+#if 0
   // Match the behavior (transformation, compiler generated, etc.) of the p_file_id.
      int file_id = get_file_id();
+#else
+  // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
+  // This is (I think) required support for the unparsing of header files.
+     bool physicalFileOK = (p_physical_file_id >= 0);
+     int file_id = get_file_id();
+#endif
 
-     // PHL (01/06/2014) use get_line for Fortran frontend
+  // DQ (8/20/2018): Not clear why this language specific rule is a good idea.
+  // PHL (01/06/2014) use get_line for Fortran frontend
      if (SageInterface::is_Fortran_language() )
-     {
-       return file_id;
-     }
+        {
+          return file_id;
+        }
 
+  // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
+  // This is (I think) required support for the unparsing of header files.
+#if 0
      if (file_id < 0)
+#else
+     if (physicalFileOK == false && file_id < 0)
+#endif
+        {
           return_physical_file_id = file_id;
+        }
        else
+        {
+#if 0
           return_physical_file_id = p_physical_file_id;
+#else
+       // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
+#if 0
+          printf ("In Sg_File_Info::get_physical_file_id(): isCompilerGenerated() = %s file_id = %d p_physical_file_id = %d \n",isCompilerGenerated() ? "true" : "false",file_id,p_physical_file_id);
+#endif
+          if (isCompilerGenerated() == true)
+             {
+               return_physical_file_id = file_id;
+             }
+            else
+             {
+               return_physical_file_id = p_physical_file_id;
+             }
+#endif
+        }
 
      return return_physical_file_id;
    }
@@ -14886,8 +14949,17 @@ Sg_File_Info::getIDFromFilename( std::string filename )
 #if 1
   // DQ (10/22/2007): Should this be commented out?
 
+#if 0
+     printf ("In Sg_File_Info::getIDFromFilename(): filename = %s \n",filename.c_str());
+#endif
+
      if (p_nametofileid_map.count(filename) == 0)
         {
+#if 0
+          printf ("In Sg_File_Info::getIDFromFilename(): p_nametofileid_map.count(filename) == 0 \n");
+          printf ("   --- filename = %s \n",filename.c_str());
+#endif
+
           return BAD_FILE_ID;
         }
 #endif
@@ -15007,7 +15079,28 @@ SgFile::getFileName () const
      Sg_File_Info* fileInfo = p_startOfConstruct;
 #endif
      assert (fileInfo != NULL);
+
+#if 0
+  // Original code
      std::string fileName = fileInfo->get_filenameString();
+#else
+
+#if 0
+     printf ("In SgFile::getFileName(): using the raw (uninterpreted) filename instead! \n");
+#endif
+
+#if 0
+  // DQ (8/15/2018): I think we want to original physical filename. since if it is transformed 
+  // as a file we don't what the name "transformation".
+     std::string fileName = fileInfo->get_physical_filename();
+#else
+  // DQ (8/16/2018): I think we want to original filename as constructed and reported by the 
+  // get_raw_filename() function, since if the statement is transformed as a file we don't what 
+  // the name "transformation".
+     std::string fileName = fileInfo->get_raw_filename();
+#endif
+#endif
+
      return fileName;
    }
 
@@ -16278,15 +16371,120 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     Rose::tokenSubsequenceMap = tokenStreamSequenceMap;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::tokenSubsequenceMap = tokenStreamSequenceMap;
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
+
+#if 0
+     printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
+#endif
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator i = tokenStreamSequenceMap.begin();
+     while (i != tokenStreamSequenceMap.end())
+        {
+          ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (tokenMap.find(i->first) != tokenMap.end())
+             {
+               printf ("This is a redundant entry in the tokenMap \n");
+               ROSE_ASSERT(false);
+             }
+
+          tokenMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
+#endif
+
    }
+
+// DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
+#include "tokenStreamMapping.h"
 
 std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
 SgSourceFile::get_tokenSubsequenceMap()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return Rose::tokenSubsequenceMap;
+
+#if 0
+     printf ("$$$$$$$$$$$$$$$$$$$$ In SgSourceFile::get_tokenSubsequenceMap() $$$$$$$$$$$$$$$$$$$$$$ \n");
+#endif
+
+  // DQ (9/27/2018): To support multiple files with the token based unparsing, we need to have one map per file 
+  // (to simplify the debugging if not fix a current bug in the use of the token based unparsing across multiple 
+  // files, as is being tested with the header file unparsing).
+  // return Rose::tokenSubsequenceMap;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d filename = %s \n",index,this->getFileName().c_str());
+  // printf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d \n",index);
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): Rose::tokenSubsequenceMapOfMaps.size() = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::tokenSubsequenceMapOfMaps.find(index) == Rose::tokenSubsequenceMapOfMaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#endif
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenSubsequenceMap = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
+          ROSE_ASSERT(tokenSubsequenceMap != NULL);
+
+          Rose::tokenSubsequenceMapOfMaps.insert(std::pair<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >(index,tokenSubsequenceMap));
+#if 0
+          printf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (after) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps.find(index) != Rose::tokenSubsequenceMapOfMaps.end());
+     ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps[index] != NULL);
+
+  // return *(Rose::tokenSubsequenceMapOfMaps[index]);
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = Rose::tokenSubsequenceMapOfMaps[index];
+     ROSE_ASSERT(result != NULL);
+
+#if 1
+  // DQ (10/4/2018): Run a test each time this map is accessed: Output the tokenStreamSequenceMap:
+#if 0
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
+#endif
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator k = result->begin();
+     while (k != result->end())
+        {
+#if 0
+          printf ("k->first = %p = %s: \n",k->first,k->first->class_name().c_str());
+#endif
+       // DQ (9/28/2018): Adding assertion.
+          ROSE_ASSERT(k->second->node != NULL);
+#if 0
+          k->second->display("token sequence");
+#endif
+          k++;
+        }
+#endif
+
+     return *result;
    }
+
 
 // void SgSourceFile::set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap)
 void 
@@ -16294,7 +16492,38 @@ SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & 
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     Rose::frontierNodes = tokenStreamSequenceMap;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::frontierNodes = tokenStreamSequenceMap;
+
+     std::map<SgStatement*,FrontierNode*> & frontierMap = this->get_token_unparse_frontier();
+
+#if 0
+     printf ("In SgSourceFile::set_token_unparse_frontier(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::map<SgStatement*,FrontierNode*>::iterator i = tokenStreamSequenceMap.begin();
+     while (i != tokenStreamSequenceMap.end())
+        {
+          ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_token_unparse_frontier(): This is a redundant entry in the Map \n");
+               ROSE_ASSERT(false);
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_token_unparse_frontier(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 // std::vector<FrontierNode*> & SgSourceFile::get_token_unparse_frontier()
@@ -16302,60 +16531,411 @@ std::map<SgStatement*,FrontierNode*> &
 SgSourceFile::get_token_unparse_frontier()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return Rose::frontierNodes;
+
+  // DQ (9/28/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // return Rose::frontierNodes;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_token_unparse_frontier(): index = %d filename = %s \n",index,this->getFileName().c_str());
+     printf ("In SgSourceFile::get_token_unparse_frontier(): Rose::frontierNodesMapOfMaps.size() = %zu \n",Rose::frontierNodesMapOfMaps.size());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::frontierNodesMapOfMaps.find(index) == Rose::frontierNodesMapOfMaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::frontierNodesMapOfMaps: (before) size = %zu \n",Rose::frontierNodesMapOfMaps.size());
+#endif
+          std::map<SgStatement*,FrontierNode*>* frontierNodesMap = new std::map<SgStatement*,FrontierNode*>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::frontierNodesMapOfMaps.insert(std::pair<int,std::map<SgStatement*,FrontierNode*>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::frontierNodesMapOfMaps: (after) size = %zu \n",Rose::frontierNodesMapOfMaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::frontierNodesMapOfMaps.find(index) != Rose::frontierNodesMapOfMaps.end());
+     ROSE_ASSERT(Rose::frontierNodesMapOfMaps[index] != NULL);
+
+     std::map<SgStatement*,FrontierNode*>* result = Rose::frontierNodesMapOfMaps[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void 
 SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndNextNodeData*> & tokenStreamSequenceMap)
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     Rose::previousAndNextNodeMap = tokenStreamSequenceMap;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::previousAndNextNodeMap = tokenStreamSequenceMap;
+
+     std::map<SgNode*,PreviousAndNextNodeData*> & frontierMap = this->get_token_unparse_frontier_adjacency();
+
+#if 0
+     printf ("In SgSourceFile::set_token_unparse_frontier_adjacency(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::map<SgNode*,PreviousAndNextNodeData*>::iterator i = tokenStreamSequenceMap.begin();
+     while (i != tokenStreamSequenceMap.end())
+        {
+          ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_token_unparse_frontier_adjacency(): This is a redundant entry in the Map \n");
+               ROSE_ASSERT(false);
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_token_unparse_frontier_adjacency(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 std::map<SgNode*,PreviousAndNextNodeData*> &
 SgSourceFile::get_token_unparse_frontier_adjacency()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return Rose::previousAndNextNodeMap;
+  // return Rose::previousAndNextNodeMap;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_token_unparse_frontier_adjacency(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::previousAndNextNodeMapOfMaps.find(index) == Rose::previousAndNextNodeMapOfMaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgNode*,PreviousAndNextNodeData*> object to the Rose::previousAndNextNodeMapOfMaps: (before) size = %zu \n",Rose::previousAndNextNodeMapOfMaps.size());
+#endif
+          std::map<SgNode*,PreviousAndNextNodeData*>* frontierNodesMap = new std::map<SgNode*,PreviousAndNextNodeData*>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::previousAndNextNodeMapOfMaps.insert(std::pair<int,std::map<SgNode*,PreviousAndNextNodeData*>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::map<SgNode*,PreviousAndNextNodeData*> object to the Rose::previousAndNextNodeMapOfMaps: (after) size = %zu \n",Rose::previousAndNextNodeMapOfMaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::previousAndNextNodeMapOfMaps.find(index) != Rose::previousAndNextNodeMapOfMaps.end());
+     ROSE_ASSERT(Rose::previousAndNextNodeMapOfMaps[index] != NULL);
+
+     std::map<SgNode*,PreviousAndNextNodeData*>* result = Rose::previousAndNextNodeMapOfMaps[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 void
 SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,SgStatement*> & X)
    {
-     Rose::redundantlyMappedTokensToStatementMultimap = X;
+  // Rose::redundantlyMappedTokensToStatementMultimap = X;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::frontierNodes = tokenStreamSequenceMap;
+
+     std::multimap<int,SgStatement*> & frontierMap = this->get_redundantlyMappedTokensToStatementMultimap();
+
+#if 0
+     printf ("In SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::multimap<int,SgStatement*>::iterator i = X.begin();
+     while (i != X.end())
+        {
+       // ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               ROSE_ASSERT(i->second != NULL);
+#if 0
+               printf ("SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): This is a redundant entry in the Map: i->first = %d i->second = %p = %s \n",i->first,i->second,i->second->class_name().c_str());
+#endif
+            // DQ (11/1/2018): Since this is a multimap, this might be OK (debugging move tool tests).
+            // ROSE_ASSERT(false);
+             }
+            else
+             {
+#if 0
+               printf ("SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): new entry in the map: i->first = %d i->second = %p = %s \n",i->first,i->second,i->second->class_name().c_str());
+#endif
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::multimap<int,SgStatement*> &
 SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    {
-     return Rose::redundantlyMappedTokensToStatementMultimap;
+  // return Rose::redundantlyMappedTokensToStatementMultimap;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_redundantlyMappedTokensToStatementMultimap(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::redundantlyMappedTokensToStatementMapOfMultimaps.find(index) == Rose::redundantlyMappedTokensToStatementMapOfMultimaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::redundantlyMappedTokensToStatementMapOfMultimaps: (before) size = %zu \n",Rose::redundantlyMappedTokensToStatementMapOfMultimaps.size());
+#endif
+          std::multimap<int,SgStatement*>* frontierNodesMap = new std::multimap<int,SgStatement*>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::redundantlyMappedTokensToStatementMapOfMultimaps.insert(std::pair<int,std::multimap<int,SgStatement*>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::redundantlyMappedTokensToStatementMapOfMultimaps: (after) size = %zu \n",Rose::redundantlyMappedTokensToStatementMapOfMultimaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::redundantlyMappedTokensToStatementMapOfMultimaps.find(index) != Rose::redundantlyMappedTokensToStatementMapOfMultimaps.end());
+     ROSE_ASSERT(Rose::redundantlyMappedTokensToStatementMapOfMultimaps[index] != NULL);
+
+     std::multimap<int,SgStatement*>* result = Rose::redundantlyMappedTokensToStatementMapOfMultimaps[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 void
 SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
    {
-     Rose::redundantTokenEndingsSet = X;
+  // Rose::redundantTokenEndingsSet = X;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::frontierNodes = tokenStreamSequenceMap;
+
+     std::set<int> & frontierMap = this->get_redundantTokenEndingsSet();
+
+#if 0
+     printf ("In SgSourceFile::set_redundantTokenEndingsSet(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::set<int>::iterator i = X.begin();
+     while (i != X.end())
+        {
+       // ROSE_ASSERT(i->first  != NULL);
+       // ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+       // if (frontierMap.find(i->first) != frontierMap.end())
+          if (frontierMap.find(*i) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_redundantTokenEndingsSet(): This is a redundant entry in the Map \n");
+               ROSE_ASSERT(false);
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_redundantTokenEndingsSet(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::set<int> &
 SgSourceFile::get_redundantTokenEndingsSet()
    {
-     return Rose::redundantTokenEndingsSet;
+  // return Rose::redundantTokenEndingsSet;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_token_unparse_frontier(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::redundantTokenEndingsMapOfSets.find(index) == Rose::redundantTokenEndingsMapOfSets.end())
+        {
+#if 0
+          printf ("Adding a new std::set<int> object to the Rose::redundantTokenEndingsMapOfSets: (before) size = %zu \n",Rose::redundantTokenEndingsMapOfSets.size());
+#endif
+          std::set<int>* frontierNodesMap = new std::set<int>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::redundantTokenEndingsMapOfSets.insert(std::pair<int,std::set<int>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::set<int> object to the Rose::redundantTokenEndingsMapOfSets: (after) size = %zu \n",Rose::redundantTokenEndingsMapOfSets.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::redundantTokenEndingsMapOfSets.find(index) != Rose::redundantTokenEndingsMapOfSets.end());
+     ROSE_ASSERT(Rose::redundantTokenEndingsMapOfSets[index] != NULL);
+
+     std::set<int>* result = Rose::redundantTokenEndingsMapOfSets[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void 
 SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap)
    {
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-     Rose::representativeWhitespaceStatementMap = representativeWhitespaceStatementMap;
+  // Rose::representativeWhitespaceStatementMap = representativeWhitespaceStatementMap;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::frontierNodes = tokenStreamSequenceMap;
+
+     std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
+
+#if 0
+     printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::map<SgScopeStatement*,SgStatement*>::iterator i = representativeWhitespaceStatementMap.begin();
+     while (i != representativeWhitespaceStatementMap.end())
+        {
+          ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_representativeWhitespaceStatementMap(): This is a redundant entry in the Map \n");
+               printf ("   --- filename = %s \n",getFileName().c_str());
+               printf ("   --- i->first  = %p = %s \n",i->first,i->first->class_name().c_str());
+               printf ("   --- i->second = %p = %s \n",i->second,i->second->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 std::map<SgScopeStatement*,SgStatement*> &
@@ -16363,15 +16943,98 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
    {
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
   // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
-     return Rose::representativeWhitespaceStatementMap;
+  // return Rose::representativeWhitespaceStatementMap;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_representativeWhitespaceStatementMap(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::representativeWhitespaceStatementMapOfMaps.find(index) == Rose::representativeWhitespaceStatementMapOfMaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgScopeStatement*,SgStatement*> object to the Rose::representativeWhitespaceStatementMapOfMaps: (before) size = %zu \n",Rose::representativeWhitespaceStatementMapOfMaps.size());
+#endif
+          std::map<SgScopeStatement*,SgStatement*>* frontierNodesMap = new std::map<SgScopeStatement*,SgStatement*>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::representativeWhitespaceStatementMapOfMaps.insert(std::pair<int,std::map<SgScopeStatement*,SgStatement*>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::map<SgScopeStatement*,SgStatement*> object to the Rose::representativeWhitespaceStatementMapOfMaps: (after) size = %zu \n",Rose::representativeWhitespaceStatementMapOfMaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::representativeWhitespaceStatementMapOfMaps.find(index) != Rose::representativeWhitespaceStatementMapOfMaps.end());
+     ROSE_ASSERT(Rose::representativeWhitespaceStatementMapOfMaps[index] != NULL);
+
+     std::map<SgScopeStatement*,SgStatement*>* result = Rose::representativeWhitespaceStatementMapOfMaps[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void 
 SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap)
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-     Rose::macroExpansionMap = macroExpansionMap;
+  // Rose::macroExpansionMap = macroExpansionMap;
+
+  // DQ (9/26/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
+  // multiple files (or header files in addition to the source file).
+  // Rose::frontierNodes = tokenStreamSequenceMap;
+
+     std::map<SgStatement*,MacroExpansion*> & frontierMap = this->get_macroExpansionMap();
+
+#if 0
+     printf ("In SgSourceFile::set_macroExpansionMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
+
+     std::map<SgStatement*,MacroExpansion*>::iterator i = macroExpansionMap.begin();
+     while (i != macroExpansionMap.end())
+        {
+          ROSE_ASSERT(i->first  != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_macroExpansionMap(): This is a redundant entry in the Map \n");
+               ROSE_ASSERT(false);
+             }
+
+          frontierMap.insert(*i);
+
+          i++;
+        }
+
+#if 0
+     printf ("In SgSourceFile::set_macroExpansionMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
+#endif
    }
 
 std::map<SgStatement*,MacroExpansion*> &
@@ -16379,13 +17042,168 @@ SgSourceFile::get_macroExpansionMap()
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
   // DQ (11/30/2015): Not sure I want this to be copy by value, but OK for now.
-     return Rose::macroExpansionMap;
+  // return Rose::macroExpansionMap;
+
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(this->get_startOfConstruct() != NULL);
+
+     int index = this->get_startOfConstruct()->get_file_id();
+
+#if 0
+     printf ("In SgSourceFile::get_macroExpansionMapOfMaps(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#endif
+
+     if (index < 0)
+        {
+          printf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
+          ROSE_ASSERT(false);
+        }
+
+     if (Rose::macroExpansionMapOfMaps.find(index) == Rose::macroExpansionMapOfMaps.end())
+        {
+#if 0
+          printf ("Adding a new std::map<SgStatement*,MacroExpansion*> object to the Rose::macroExpansionMapOfMaps: (before) size = %zu \n",Rose::macroExpansionMapOfMaps.size());
+#endif
+          std::map<SgStatement*,MacroExpansion*>* frontierNodesMap = new std::map<SgStatement*,MacroExpansion*>();
+          ROSE_ASSERT(frontierNodesMap != NULL);
+
+          Rose::macroExpansionMapOfMaps.insert(std::pair<int,std::map<SgStatement*,MacroExpansion*>* >(index,frontierNodesMap));
+#if 0
+          printf ("Adding a new std::map<SgStatement*,MacroExpansion*> object to the Rose::macroExpansionMapOfMaps: (after) size = %zu \n",Rose::macroExpansionMapOfMaps.size());
+#endif
+        }
+
+     ROSE_ASSERT(Rose::macroExpansionMapOfMaps.find(index) != Rose::macroExpansionMapOfMaps.end());
+     ROSE_ASSERT(Rose::macroExpansionMapOfMaps[index] != NULL);
+
+     std::map<SgStatement*,MacroExpansion*>* result = Rose::macroExpansionMapOfMaps[index];
+     ROSE_ASSERT(result != NULL);
+
+     return *result;
    }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 SOURCE_APPLICATION_SOURCE_FILE_END
+
+
+SOURCE_INCLUDE_FILE_START
+SOURCE_INCLUDE_FILE_END
+
+
+SOURCE_HEADER_FILE_REPORT_START
+
+#if 0
+SgHeaderFileReport::SgHeaderFileReport( SgSourceFile* sourceFile )
+   {
+  // Nothing to do here (so far).
+   }
+#endif
+
+
+// DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
+#include "tokenStreamMapping.h"
+
+void
+SgHeaderFileReport::display( const string & label) const
+   {
+     printf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
+
+     ROSE_ASSERT(this != NULL);
+
+#if 1
+     printf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
+     ROSE_ASSERT(p_source_file != NULL);
+     printf ("   --- source filename = %s \n",p_source_file->getFileName().c_str());
+     printf ("   --- isHeaderFile = %s \n",p_source_file->get_isHeaderFile() ? "true" : "false");
+     printf ("   --- isHeaderFileIncludedMoreThanOnce = %s \n",p_source_file->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
+
+  // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
+  // printf ("   --- include_file_list size = %zu \n",p_source_file->get_include_file_list().size());
+     printf ("   --- associated_include_file = %p \n",p_source_file->get_associated_include_file());
+     ROSE_ASSERT(p_source_file->get_associated_include_file() != NULL);
+     printf ("   --- associated_include_file include_file_list size = %zu \n",p_source_file->get_associated_include_file()->get_include_file_list().size());
+
+#if 0
+     printf ("   --- source_file_of_translation_unit = %p = %s \n",
+          p_source_file->get_source_file_of_translation_unit(),p_source_file->get_source_file_of_translation_unit()->getFileName().c_str());
+     printf ("   --- including_source_file = %p = %s \n",
+          p_source_file->get_including_source_file(),p_source_file->get_including_source_file()->getFileName().c_str());
+#endif
+
+     printf ("In HeaderFileReport::display(): p_include_file_list.size() = %zu \n",p_include_file_list.size());
+
+     Rose_STL_Container<SgSourceFile*>::const_iterator i = p_include_file_list.begin();
+     while (i != p_include_file_list.end())
+        {
+       // const SgSourceFile* includedFile = *i;
+          SgSourceFile* includedFile = *i;
+          ROSE_ASSERT(includedFile != NULL);
+
+          printf ("   --- includedFile: name = %s \n",includedFile->getFileName().c_str());
+          printf ("   --- --- # of statements in global scope = %zu \n",includedFile->get_globalScope()->get_declarations().size());
+          printf ("   --- --- isHeaderFile = %s \n",includedFile->get_isHeaderFile() ? "true" : "false");
+          printf ("   --- --- isHeaderFileIncludedMoreThanOnce = %s \n",includedFile->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
+
+       // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
+       // printf ("   --- --- include_file_list size = %zu \n",includedFile->get_include_file_list().size());
+          printf ("   --- --- associated_include_file = %p \n",includedFile->get_associated_include_file());
+          ROSE_ASSERT(includedFile->get_associated_include_file() != NULL);
+          printf ("   --- --- associated_include_file include_file_list size = %zu \n",includedFile->get_associated_include_file()->get_include_file_list().size());
+
+#if 0
+          printf ("   --- --- source_file_of_translation_unit = %p = %s \n",
+               includedFile->get_source_file_of_translation_unit(),includedFile->get_source_file_of_translation_unit()->getFileName().c_str());
+          printf ("   --- --- including_source_file = %p = %s \n",
+               includedFile->get_including_source_file(),includedFile->get_including_source_file()->getFileName().c_str());
+#endif
+#if 0
+          printf ("In SgHeaderFileReport::display(): includedFile         = %p file name = %s \n",includedFile,includedFile->getFileName().c_str());
+          printf ("   --- includedFile->get_globalScope()                 = %p \n",includedFile->get_globalScope());
+          printf ("   --- includedFile->get_tokenSubsequenceMap().size()  = %zu \n",includedFile->get_tokenSubsequenceMap().size());
+#endif
+#if 0
+          ROSE_ASSERT(includedFile->get_tokenSubsequenceMap().find(includedFile->get_globalScope()) != includedFile->get_tokenSubsequenceMap().end());
+
+          printf ("In SgHeaderFileReport::display(): Calling display on token sequence for global scope \n");
+          ROSE_ASSERT(includedFile->get_tokenSubsequenceMap()[includedFile->get_globalScope()] != NULL);
+          TokenStreamSequenceToNodeMapping* tokenSequence = includedFile->get_tokenSubsequenceMap()[includedFile->get_globalScope()];
+          ROSE_ASSERT(tokenSequence != NULL);
+          tokenSequence->display("token sequence for global scope");
+#endif
+
+          i++;
+        }
+#endif
+
+
+
+   }
+
+SOURCE_HEADER_FILE_REPORT_END
+
 
 SOURCE_APPLICATION_BINARY_FILE_START
 
@@ -16715,6 +17533,10 @@ SgProject::initialization()
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
+
+  // DQ (9/15/2018): Added support for a report on the internal use of header file unparsing.
+  // This is to support the header file unparsing when used with and without the token based unparsing.
+     p_reportOnHeaderFileUnparsing = false;
    }
 
 
@@ -17905,6 +18727,24 @@ SgProject::set_excludeFileList ( const SgStringList & excludeFileList )
      set_isModified(true);
      
      p_excludeFileList = excludeFileList;
+   }
+
+
+
+bool
+SgProject::get_unparse_tokens (void) const
+   {
+  // DQ (8/3/2018): Added support for evaluation of options at the project level (which are normally associated with files).
+
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_unparse_tokens();
+        }
+
+     return result;
    }
 
 
@@ -19107,6 +19947,12 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
      printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (10/23/2018): Output the name of the file to support debugging of the token based unparsing.
+     if (p_current_source_file != NULL)
+        {
+          printf ("   --- p_current_source_file = %s \n",p_current_source_file->getFileName().c_str());
+        }
 
   // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
   // arguments as used in symbol table lookup.

@@ -18,7 +18,14 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
   // If traversing without constraint, just continue.
   // if (!traversalConstraint)
      if (traversalConstraint == false)
+        {
           return true;
+        }
+
+#if 0
+  // DQ (8/20/2018): Added debugging for support unparsing of header files.
+     printf ("In SgTreeTraversal_inFileToTraverse(): fileToVisit = %p filename = %s \n",fileToVisit,fileToVisit->getFileName().c_str());
+#endif
 
   // DQ (1/21/2008): Recently added SgAsmNodes for binaries also do not 
   // have a SgFileInfo object.
@@ -99,6 +106,13 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
           traverseNode = true;
        else
           traverseNode = false;
+
+
+#if 0
+  // DQ (8/17/2018): Need to stop here and debug this function tomorrow.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      return traverseNode;
    }

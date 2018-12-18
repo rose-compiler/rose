@@ -347,7 +347,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
-             
+
+       // DQ (11/6/2018): Adding support to specify the root directory of an application for header file unparsing and token based unparsing).
+          argument == "-rose:applicationRootDirectory" ||
+
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-annot" ||
           argument == "-bs" ||
@@ -361,9 +364,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-MF" ||
           argument == "-MT" || argument == "-MQ" ||
           argument == "-outputdir" ||  // FMZ (12/22/1009) added for caf compiler
-          argument == "-rose:disassembler_search" ||
-          argument == "-rose:partitioner_search" ||
-          argument == "-rose:partitioner_config" ||
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
@@ -1491,6 +1491,15 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_astMerge = true;
         }
 
+  // DQ (9/15/2018): Adding support for output of report on the header file unparsing (for debugging).
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(headerFileUnparsingReport)",true) == true )
+        {
+#if 0
+          printf ("-rose:headerFileUnparsingReport option found \n");
+#endif
+          set_reportOnHeaderFileUnparsing(true);
+        }
+
   // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
   //
   // specify AST merge command file option
@@ -2497,6 +2506,8 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
 
   std::string target = "";
 
+#if 0
+  // DQ (9/20/2018): This is an unused variable now (and a compiler warning).
   bool has_java_target =
       // -target
       CommandlineProcessing::isOptionWithParameter(
@@ -2518,6 +2529,7 @@ ProcessTarget (SgProject* project, std::vector<std::string>& argv)
   //{
   //    target = "1.6";
   //}
+#endif
 
   project->set_Java_target(target);
 }// Cmdline::Java::Processtarget
@@ -3345,47 +3357,6 @@ SgFile::usage ( int status )
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
 "\n"
-"Control Disassembly:\n"
-"     -rose:disassembler_search HOW\n"
-"                             Influences how the disassembler searches for instructions\n"
-"                             to disassemble. HOW is a comma-separated list of search\n"
-"                             specifiers. Each specifier consists of an optional\n"
-"                             qualifier followed by either a word or integer. The\n"
-"                             qualifier indicates whether the search method should be\n"
-"                             added ('+') or removed ('-') from the set. The qualifier\n"
-"                             '=' acts like '+' but first clears the set.  The words\n"
-"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
-"                             enumerated constants without the leading \"SEARCH_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Disassembler::parse_switches class method for full details.\n"
-"     -rose:partitioner_search HOW\n"
-"                             Influences how the partitioner searches for functions.\n"
-"                             HOW is a comma-separated list of search specifiers. Each\n"
-"                             specifier consists of an optional qualifier followed by\n"
-"                             either a word or integer. The qualifier indicates whether\n"
-"                             the search method should be added ('+') or removed ('-')\n"
-"                             from the set. The qualifier '=' acts like '+' but first\n"
-"                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunction::FunctionReason\n"
-"                             enumerated constants without the leading \"FUNC_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Partitioner::parse_switches class method for full details.\n"
-"     -rose:partitioner_config FILENAME\n"
-"                             File containing configuration information for the\n"
-"                             instruction/block/function partitioner. This config\n"
-"                             file can be used to override block successors,\n"
-"                             alias two or more blocks that have identical\n"
-"                             semantics, assign particular blocks to functions,\n"
-"                             override function return analysis, provide or\n"
-"                             override function names, etc. See documentation for\n"
-"                             the IPDParser class for details.\n"
-"\n"
 "Control code generation:\n"
 "     -rose:unparser:clobber_input_file\n"
 "                               **CAUTION**RED*ALERT**CAUTION**\n"
@@ -3447,6 +3418,11 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"
+"     -rose:applicationRootDirectory DIRECTORYNAME\n"
+"                             A relative or an absolute path to the root folder,\n"
+"                             in which all application files will use for the unparsing \n"
+"                             of source files and header files. If not specified, the default \n"
+"                             location is the current directory. \n"
 "     -rose:unparse_in_same_directory_as_input_file\n"
 "                             Build the generated source file (unparse) in the same directory as \n"
 "                             the input source file.  This allows the backend compiler \n"
@@ -4897,11 +4873,23 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
      // negara1 (08/16/2011): A user may optionally specify the root folder for the unparsed header files.  
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true) {
-         //Although it is specified per file, it should be the same for the whole project.         
-         get_project() -> set_unparseHeaderFilesRootFolder(stringParameter);
-     }
-     
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true)
+        {
+       // Although it is specified per file, it should be the same for the whole project.         
+          get_project()->set_unparseHeaderFilesRootFolder(stringParameter);
+        }
+
+     // DQ (11/6/2018): Added to support a specification of the application directory for source file and header file unparsing.     
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(applicationRootDirectory)", stringParameter, true) == true)
+        {
+       // Although it is specified per file, it should be the same for the whole project.
+#if 0
+          printf ("Found option: -rose:applicationRootDirectory: stringParameter = %s \n",stringParameter.c_str());
+#endif
+          get_project()->set_applicationRootDirectory(stringParameter);
+          get_project()->set_usingApplicationRootDirectory(true);
+        }
+
   //
   // skip_commentsAndDirectives option: if analysis that does not use comments or CPP directives is required
   // then this option can improve the performance of the compilation.
@@ -5408,6 +5396,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      char* unparseHeaderFilesRootFolderOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(unparseHeaderFilesRootFolder)", unparseHeaderFilesRootFolderOption, 1);
 
+  // DQ (11/6/2018): Added to support specification of application root directory to support source file and header file unparsing.
+     char* applicationRootDirectoryOption = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(applicationRootDirectory)", applicationRootDirectoryOption, 1);
+
      char* templateInstationationOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(instantiation)",templateInstationationOption,1);
 
@@ -5529,6 +5521,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (30/8/2017): Removing option to specify Cobol language support.
      optionCount = sla(argv, "-rose:", "($)", "(cobol|cobol_only)",1);
+
+  // DQ (9/20/2018): Removing option to specify support for header file unparsing report.
+     optionCount = sla(argv, "-rose:", "($)", "(headerFileUnparsingReport)",1);
 
   // TV (04/11/2018): Generates GraphViz from EDG internal representation
      optionCount = sla(argv, "-rose:", "($)", "edg_il_to_graphviz",1);
@@ -7775,6 +7770,39 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
+  // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
+  // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
+  // file (is we don't unparse the header file) or the directory where we are putting the generated source file, if we 
+  // are unparsing the header file.  Not that nested header file using a similar specification may require the output of 
+  // additional include file specifications (is this true?  If so then we need an example of this).
+#if 0
+     printf ("get_project()->get_includeDirectorySpecifierList().size() = %zu \n",get_project()->get_includeDirectorySpecifierList().size());
+#endif
+
+  // DQ (11/8/2018): Adding extra include paths identified as being required in the unparsing of headers, either for the source file or for otehr included headers (nested headers).
+     const SgSourceFile* sourceFile = isSgSourceFile(this);
+
+  // DQ (12/12/2018): This step to insert extra include paths only applies to source files, not binary files (caught in Jenkins testing).
+  // ROSE_ASSERT(sourceFile != NULL);
+     if (sourceFile != NULL)
+        {
+#if 0
+          printf ("sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
+#endif
+
+          argcArgvList.reserve(argcArgvList.size()+sourceFile->get_extraIncludeDirectorySpecifierList().size());
+       // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
+          argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
+        }
+
+#if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@ In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (9/25/2007): Moved to std::vector from std::list uniformly within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
@@ -8185,6 +8213,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // if (!this -> get_unparseHeaderFiles())
                if (this->get_unparseHeaderFiles() == false) 
                   {
+                 // DQ (11/7/2018): This might be the better way to get at the SgProject IR node.
+                    ROSE_ASSERT(this->get_project() != NULL);
+
                  // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
                  // When (get_unparse_in_same_directory_as_input_file() == true) we don't want to add the include 
                  // path to the source directory.
@@ -8398,7 +8429,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
-     printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+     printf ("\n\nAt base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
      printf ("\n\nExiting at base of buildCompilerCommandLineOptions() ... \n");

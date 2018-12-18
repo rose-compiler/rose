@@ -1,0 +1,10 @@
+#!/bin/bash
+# env SPECIMEN_DIR=DIRECTORY N=NUMBER $0
+set -e
+
+./testElfSchulz ${SPECIMEN_DIR}/schulz-sample${N}.so
+./execFormatsTest ./schulz-sample${N}.so.new
+./execFormatsTest ${SPECIMEN_DIR}/schulz-sample${N}-p.so
+diff -u schulz-sample${N}-p.so.dump schulz-sample${N}.so.new.dump
+diff ${SPECIMEN_DIR}/schulz-sample${N}-p.so schulz-sample${N}.so.new
+

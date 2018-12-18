@@ -51,6 +51,7 @@ add_library (unparser OBJECT
   nameQualificationSupport.C
   unparse_sym.C
   IncludedFilesUnparser.C
+  includeFileSupport.C
   formatSupport/unparseFormatHelp.C
   formatSupport/unparse_format.C
   languageIndependenceSupport/modified_sage_isUnaryOp.C
@@ -73,6 +74,6 @@ add_dependencies(unparser rosetta_generated)
 ########### install files ###############
 
 set(unparser_headers copy_unparser.h unparser.h unparse_sym.h
-  astUnparseAttribute.h IncludedFilesUnparser.h nameQualificationSupport.h)
+  astUnparseAttribute.h IncludedFilesUnparser.h includeFileSupport.h nameQualificationSupport.h)
 
 install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})

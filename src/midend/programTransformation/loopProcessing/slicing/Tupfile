@@ -1,0 +1,6 @@
+include_rules
+
+run $(librose_compile) CompSlice.C DynamicCompSlice.C CompSliceDepGraph.C CompSliceLocality.C DependenceHoisting.C
+
+run $(public_header) CompSliceDepGraph.h CompSliceImpl.h DynamicCompSlice.h CompSliceObserver.h CompSlice.h \
+    CompSliceLocality.h CompSliceRegistry.h

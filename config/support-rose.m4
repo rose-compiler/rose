@@ -2521,6 +2521,7 @@ tests/nonsmoke/functional/CompileTests/RoseExample_tests/Makefile
 tests/nonsmoke/functional/CompileTests/STL_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UPC_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/Makefile
+tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/Makefile
 tests/nonsmoke/functional/CompileTests/boost_tests/Makefile
 tests/nonsmoke/functional/CompileTests/colorAST_tests/Makefile
 tests/nonsmoke/functional/CompileTests/copyAST_tests/Makefile

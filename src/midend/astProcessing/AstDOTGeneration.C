@@ -133,7 +133,9 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                std::string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
                if (filenameWithoutPath == targetFileName)
                   {
-#if 1
+#if 0
+                 // DQ (8/22/2018): This can be handy to comment out when debuging associating comments 
+                 // and CPP directives to IR nodes (e.g. unparse header support).
                  // This permits the visualization of the AST to be smaller (skips things in std namespace for example).
                     ia.skipSubTree = true;
 #endif
@@ -429,25 +431,37 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
+#if 0
   // DQ (12/4/2014): Added support for debugging the unparsing using the token stream.
-     SgStatement* genericStatement = isSgStatement(node);
+  // SgStatement* genericStatement = isSgStatement(node);
      if (genericStatement != NULL)
         {
           nodelabel += string("\\n") + string("isModified = ") + string(genericStatement->get_isModified() ? "true" : "false");
           nodelabel += string("\\n") + string("containsTransformation = ") + string(genericStatement->get_containsTransformation() ? "true" : "false");
           nodelabel += string("\\n") + string("isTransformation = ") + string(genericStatement->isTransformation() ? "true" : "false");
         }
+#endif
 
   // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
      SgInitializedName* initializedName = isSgInitializedName(node);
      if (initializedName != NULL)
         {
           nodelabel += string("\\n") + initializedName->get_name();
-
+#if 0
        // DQ (4/14/2015): We need to have these additional data members output (similar to SgStatement).
           nodelabel += string("\\n") + string("isModified = ") + string(initializedName->get_isModified() ? "true" : "false");
           nodelabel += string("\\n") + string("containsTransformation = ") + string(initializedName->get_containsTransformation() ? "true" : "false");
           nodelabel += string("\\n") + string("isTransformation = ") + string(initializedName->isTransformation() ? "true" : "false");
+#endif
+        }
+
+  // DQ (9/24/2018): Output this information for all located nodes (so that we can include expressions).
+     SgLocatedNode* genericLocatedNode = isSgLocatedNode(node);
+     if (genericLocatedNode != NULL)
+        {
+          nodelabel += string("\\n") + string("isModified = ") + string(genericLocatedNode->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(genericLocatedNode->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(genericLocatedNode->isTransformation() ? "true" : "false");
         }
 
   // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.
@@ -1167,10 +1181,12 @@ commentAndCppInformation (SgNode* node)
         }
 
 #if 0
+    // DQ (9/21/2018): This is incorrect code since CPP directives and comments are not attached to a SgFile, but are attached to a SgGlobal (global scope IR node).
        else
         {
        // DQ (9/1/2013): We could handle the source position of some other IR nodes (e.g. output name of the file for SgFile).
-          SgFile* file = isSgFile(node);
+       // SgFile* file = isSgFile(node);
+          SgSourceFile* file = isSgSourceFile(node);
           if (file != NULL)
              {
             // ROSE_ASSERT(file->get_file_info() != NULL);
@@ -1182,7 +1198,7 @@ commentAndCppInformation (SgNode* node)
                     numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
                     if (numberofCommentsAndCppDirectives > 0)
                        {
-                         ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
+                         ss = string("comments/directives = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
                        }
                   }
              }

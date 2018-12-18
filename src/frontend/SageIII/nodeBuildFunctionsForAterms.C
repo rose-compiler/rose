@@ -15370,3 +15370,12 @@ SgWhenStmt* SgWhenStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpres
      SgWhenStmt* returnNode = NULL;
      return returnNode;
    }
+
+// DQ (12/2/2018: Added support for new IR node.
+SgIncludeFile* SgIncludeFile::build_node_from_nonlist_children ( SgName name )
+   {
+     SgIncludeFile* returnNode = NULL;
+
+     return returnNode;
+   }
+

@@ -2235,6 +2235,13 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (8/2/2018): Added support for token based unparsing to the unparse header file support.
+          case V_SgHeaderFileBody:
+            {
+              printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+              break;
+            }
+
        // Ignore these SgType cases since we handle types directly, via the addAssociatedNodes() function
           case V_SgJavaWildcardType:
           case V_SgFunctionType:
@@ -2282,8 +2289,16 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
-       // DQ (11/23/2008): Added cases for CPP directives...
+       // DQ (9/25/2018): Specialized the support for the case of header file unparsing.
           case V_SgIncludeDirectiveStatement:
+            {
+           // DQ (9/25/2018): This is now seen when using the header file unparsing, but can be ignored.
+              break;
+            }
+
+       // DQ (11/23/2008): Added cases for CPP directives...
+       // DQ (9/25/2018): Handling this case above.
+       // case V_SgIncludeDirectiveStatement:
           case V_SgDefineDirectiveStatement:
           case V_SgUndefDirectiveStatement:
           case V_SgIfdefDirectiveStatement:

@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) transformationTracking.cpp
+
+run $(public_header) transformationTracking.h

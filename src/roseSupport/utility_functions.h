@@ -231,26 +231,37 @@ namespace Rose
           SgStatement* getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope = true);
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
+       // DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
+       // such as what is required when using the unparsing header files feature).
        // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-          extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
+       // extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
+          extern std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMaps;
 
        // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
        // extern std::vector<FrontierNode*> frontierNodes;
-          extern std::map<SgStatement*,FrontierNode*> frontierNodes;
+       // extern std::map<SgStatement*,FrontierNode*> frontierNodes;
+          extern std::map<int,std::map<SgStatement*,FrontierNode*>*> frontierNodesMapOfMaps;
 
        // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-          extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
+       // extern std::map<SgNode*,PreviousAndNextNodeData*> previousAndNextNodeMap;
+          extern std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> previousAndNextNodeMapOfMaps;
 
        // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-          extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
-          extern std::set<int> redundantTokenEndingsSet;
+       // extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
+       // extern std::set<int> redundantTokenEndingsSet;
+          extern std::map<int,std::multimap<int,SgStatement*>*> redundantlyMappedTokensToStatementMapOfMultimaps;
+          extern std::map<int,std::set<int>*> redundantTokenEndingsMapOfSets;
 
        // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-          extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+       // extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+          extern std::map<int,std::map<SgScopeStatement*,SgStatement*>*> representativeWhitespaceStatementMapOfMaps;
 
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-          extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
+       // extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
+          extern std::map<int,std::map<SgStatement*,MacroExpansion*>*> macroExpansionMapOfMaps;
 
+       // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
+          extern std::map<std::string, SgIncludeFile*> includeFileMapForUnparsing;
 
   // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
      extern Sawyer::Message::Facility ir_node_mlog;

@@ -667,6 +667,24 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
 
   // push the element onto the token stream
      ROSE_token_stream_pointer->push_back(p_se);
+
+#if 0
+  // DQ (11/29/2018): Investigating form-feeds and windows line endings (and how the token-based unparsing is removing them).
+     if (p_tok_elem->token_id == C_CXX_WHITESPACE)
+        {
+          printf ("p_se->beginning_fpi.line_num   = (%d,%d) \n",p_se->beginning_fpi.line_num,p_se->beginning_fpi.column_num);
+          if (p_tok_elem->token_lexeme.length() == 1)
+             {
+               printf ("Found token of length one \n");
+               char character = p_tok_elem->token_lexeme[0];
+               printf ("character = %d \n",(int)character);
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
    }
 
 
@@ -863,6 +881,23 @@ int preproc_start_column_num = preproc_column_num;
                         /*Do we need this  ???*/
 BEGIN NORMAL;
 %}
+
+<NORMAL>\f { 
+#if DEBUG_LEX_PASS
+     printf("%s is a form-feed token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
+  // DQ (11/29/2018): Adding form feed support to ROSE.
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+   }
+
+<NORMAL>\r\n { 
+#if DEBUG_LEX_PASS
+     printf("%s is a windows line ending token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
+  // DQ (11/29/2018): Adding windows line ending support to ROSE.
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+   }
+
 <NORMAL>{mlinkagespecification} { 
 #if DEBUG_LEX_PASS
      printf("%s is a mlinkagespecification token \n",yytext);
@@ -1535,6 +1570,8 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
+  // printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives() \n");
+
   // printf ("Inside of lex file: getPreprocessorDirectives() \n");
   // ROSE_ASSERT(false);
 
@@ -1609,7 +1646,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
 
-#if DEBUG_LEX_PASS
+#if DEBUG_LEX_PASS || 0
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
 #endif

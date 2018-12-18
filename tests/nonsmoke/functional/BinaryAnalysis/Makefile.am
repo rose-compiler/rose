@@ -213,7 +213,6 @@ testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #1 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=1							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -221,7 +220,6 @@ testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #2 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=2							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -382,12 +380,12 @@ TEST_TARGETS += testAssembler.passed
 EXTRA_DIST += testAssembler.ans
 
 testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans conditionalDisable
-	@$(RTH_RUN)												\
-		TITLE="x86 assembler [$@]"									\
-		DISABLED="$$(./conditionalDisable)"								\
-		CMD="$$(pwd)/testAssembler -rose:partitioner_search -leftovers $(SPECIMEN_DIR)/buffer2.bin"	\
-		USE_SUBDIR=yes											\
-		ANS="$(srcdir)/testAssembler.ans"								\
+	@$(RTH_RUN)							\
+		TITLE="x86 assembler [$@]"				\
+		DISABLED="$$(./conditionalDisable)"			\
+		CMD="$$(pwd)/testAssembler $(SPECIMEN_DIR)/buffer2.bin"	\
+		USE_SUBDIR=yes						\
+		ANS="$(srcdir)/testAssembler.ans"			\
 		$< $@
 
 

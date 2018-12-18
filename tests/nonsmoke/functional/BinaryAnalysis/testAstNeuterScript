@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+./testAstNeuter ${SPECIMEN_DIR}/${INPUT}
+grep -q "ROSE is refusing to create" ${INPUT}.new || (echo "ROSE appears to have created the binary!"; false)

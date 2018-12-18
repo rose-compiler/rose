@@ -1,0 +1,910 @@
+.gitignore
+
+########################################################################################################################
+# General variables, defaults.
+########################################################################################################################
+
+# The top ROSE directory, often referred to in documentation as $ROSE. Within the Tup build system, $(ROSE) refers
+# to both the top of the source tree and the top of the build tree even though they are different directories. $(ROSE)
+# is always a relative name from the directory containing the Tupfile (i.e., it never starts with "/"). The generic
+# tup scripts use $(ROOT) instead of $(ROSE).
+ROSE = $(TUP_CWD)
+ROOT = $(TUP_CWD)
+
+# Compilers.
+CXX = @(CXX)
+CC  = @(CC)
+FC  = @(FC)
+
+# C preprocessor command-line switches
+CPPFLAGS = @(CPPFLAGS)
+
+# C compiler switches (w/out C preprocessor switches which are above)
+CFLAGS += @(C_CXX_DEBUG)
+CFLAGS += @(C_DEBUG)
+CFLAGS += @(C_CXX_OPTIM)
+CFLAGS += @(C_OPTIM)
+CFLAGS += @(C_CXX_WARN)
+CFLAGS += @(C_WARN)
+CFLAGS += @(C_CXX_MISC)
+CFLAGS += @(C_MISC)
+
+# C++ compiler switches (w/out C preprocessor switches which are above)
+CXXFLAGS += @(C_CXX_DEBUG)
+CXXFLAGS += @(CXX_DEBUG)
+CXXFLAGS += @(C_CXX_OPTIM)
+CXXFLAGS += @(CXX_OPTIM)
+CXXFLAGS += @(C_CXX_WARN)
+CXXFLAGS += @(CXX_WARN)
+CXXFLAGS += @(C_CXX_MISC)
+CXXFLAGS += @(CXX_MISC)
+
+# Linker flags for static linking
+LDFLAGS_STATIC += @(LD_STATIC)
+LDFLAGS_STATIC += @(LD_WARN)
+LDFLAGS_STATIC += @(LD_MISC)
+LDFLAGS_STATIC += -lm -ldl
+
+# Linker flags for shared linking
+LDFLAGS_SHARED += @(LD_SHARED)
+LDFLAGS_SHARED += @(LD_WARN)
+LDFLAGS_SHARED += @(LD_MISC)
+LDFLAGS_SHARED += -lm -ldl
+
+# Tup scripts
+TUP_SCRIPTS = $(ROSE)/scripts/tup
+COMPILER_RULES = $(TUP_SCRIPTS)/generate-compile-link-rules --depend=$(ROSE)/tup.acknowledgment
+
+# Compilation database
+ifeq (@(COMPILATION_DATABASE),yes)
+    COMPILER_RULES += --compilation-database=$(ROSE)/compdb
+    compilation_database_record = $(ROSE)/scripts/tup/compdb-emit-llvm-record
+endif
+
+########################################################################################################################
+# Supported languages.
+########################################################################################################################
+
+ifeq (@(ENABLE_ADA_ANALYSIS),yes)
+    error Ada is not supported by the tup ROSE build system yet
+endif
+
+# @(ENABLE_BINARY_ANALYSIS) is supported
+
+ifeq (@(ENABLE_COBOL_ANALYSIS),yes)
+    error COBOL is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_CSHARP_ANALYSIS),yes)
+    error C\# is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_CUDA_ANALYSIS),yes)
+    error CUDA is not supported by the tup ROSE build system yet
+endif
+
+# @(ENABLE_CXX_ANALYSIS) is supported
+
+ifeq (@(ENABLE_FORTRAN_ANALYSIS),yes)
+    error Fortran is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_JAVA_ANALYSIS),yes)
+    error Java is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_JOVIAL_ANALYSIS),yes)
+    error Jovial is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_MATLAB_ANALYSIS),yes)
+    error Matlab is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_OFP_ANALYSIS),yes)
+    error OFP is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_OPENCL_ANALYSIS),yes)
+    error OpenCL is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_PHP_ANALYSIS),yes)
+    error PHP is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
+    error Python is not supported by the tup ROSE build system yet
+endif
+
+ifeq (@(ENABLE_X10_ANALYSIS),yes)
+    error X10 is not supported by the tup ROSE build system yet
+endif
+
+########################################################################################################################
+# Software dependencies.
+#
+# Each software dependency "foo" has a corresponding @(WITH_FOO) configuration variable that is "no", "system", or the
+# name of foo's installation prefix.  If the value is other than "no" then a tup variable of the name $(FOO_ROOT) is
+# defined to be that value. If the value is a prefix directory, then CPPFLAGS, LDFLAGS_STATIC, and LDFLAGS_SHARED are
+# adjusted.
+#
+# These are generally defined in alphabetical order except when the libraries need to be in a certain order. For
+# instance, boost comes near the end of the list and is followed by zlib and bzip2 because a few other libraries
+# depend on boost, and boost depends on zlib and bzip2.
+########################################################################################################################
+
+# Binwalk binary search and extraction tool
+ifneq (@(WITH_BINWALK),no)
+    BINWALK_ROOT = @(WITH_BINWALK)
+endif
+
+# Dlib general-purpose cross platform library
+ifneq (@(WITH_DLIB),no)
+    DLIB_ROOT = @(WITH_DLIB)
+    ifneq (@(WITH_DLIB),system)
+	CPPFLAGS += -DROSE_HAVE_DLIB
+	CPPFLAGS += -I$(DLIB_ROOT)/include
+	LDFLAGS_STATIC += -L$(DLIB_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(DLIB_ROOT)/lib -L$(DLIB_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -ldlib
+    LDFLAGS_SHARED += -ldlib
+endif
+
+# Doxygen code documentation system
+ifneq (@(WITH_DOXYGEN),no)
+    DOXYGEN_ROOT = @(WITH_DOXYGEN)
+endif
+
+# DWARF debugging info parser library
+ifneq (@(WITH_DWARF),no)
+    DWARF_ROOT = @(WITH_DWARF)
+    ifneq (@(WITH_DWARF),system)
+	CPPFLAGS += -I$(DWARF_ROOT)/include
+	LDFLAGS_STATIC += -L$(DWARF_ROOT)/lib
+	LDFLAGS_SHARED += -Wl,-rpath,$(DWARF_ROOT)/lib -L$(DWARF_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -ldwarf
+    LDFLAGS_SHARED += -ldwarf
+endif
+
+# Elf parser library
+ifneq (@(WITH_ELF),no)
+    ELF_ROOT = @(WITH_ELF)
+    ifneq (@(WITH_ELF),system)
+	CPPFLAGS += -I$(ELF_ROOT)/include
+	LDFLAGS_STATIC += -L$(ELF_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(ELF_ROOT)/lib -L$(ELF_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lelf
+    LDFLAGS_SHARED += -lelf
+endif
+
+# Gcrypt cryptographic library
+ifneq (@(WITH_GCRYPT),no)
+    GCRYPT_ROOT = @(WITH_GCRYPT)
+    ifneq (@(WITH_GCRYPT),system)
+	CPPFLAGS += -I$(GCRYPT_ROOT)/include
+	LDFLAGS_STATIC  += -L$(GCRYPT_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(GCRYPT_ROOT)/lib -L$(GCRYPT_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lgcrypt
+    LDFLAGS_SHARED += -lgcrypt
+endif
+
+# GPG error library
+ifneq (@(WITH_GPG_ERROR),no)
+    GPG_ERROR_ROOT = @(WITH_GPG_ERROR)
+    ifneq (@(WITH_GPG_ERROR),system)
+	CPPFLAGS += -I$(GPG_ERROR_ROOT)/include
+	LDFLAGS_STATIC  += -L$(GPG_ERROR_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(GPG_ERROR_ROOT)/lib -L$(GPG_ERROR_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lgpg-error
+    LDFLAGS_SHARED += -lgpg-error
+endif
+
+# GraphicsMagick image manipulation
+ifneq (@(WITH_GRAPHICSMAGICK),no)
+    GRAPHICSMAGICK_ROOT = @(WITH_GRAPHICSMAGICK)
+    ifneq (@(WITH_GRAPHFICSMAGICK),system)
+        CPPFLAGS += -I$(GRAPHICSMAGICK_ROOT)/include
+	LDFLAGS_STATIC  += -L$(GRAPHICSMAGICK_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(GRAPHICSMAGICK_ROOT)/lib -L$(GRAPHICSMAGICK_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lGraphicsMagick
+    LDFLAGS_SHARED += -lGraphicsMagick
+endif
+
+# Intel Pin tracing
+ifneq (@(WITH_INTEL_PIN),no)
+    INTEL_PIN_ROOT = @(WITH_INTEL_PIN)
+    ifneq (@(WITH_INTEL_PIN),system)
+        CPPFLAGS += -I$(INTEL_PIN_ROOT)/include
+	LDFLAGS_STATIC  += -L$(INTEL_PIN_ROOT)/intel64/lib-ext
+	LDFLAGS_SHARED  += -L$(INTEL_PIN_ROOT)/intel64/lib-ext
+    endif
+    LDFLAGS_STATIC += -lpin
+    LDFLAGS_SHARED += -lpin
+endif
+
+# JPEG image encoding
+ifneq (@(WITH_JPEG),no)
+    JPEG_ROOT = @(WITH_JPEG)
+    ifneq (@(WITH_JPEG),system)
+        CPPFLAGS += -I$(JPEG_ROOT)/include
+	LDFLAGS_STATIC  += -L$(JPEG_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(JPEG_ROOT)/lib -L$(JPEG_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -ljpeg
+    LDFLAGS_SHARED += -ljpeg
+endif
+
+# LCMS color managment system
+ifneq (@(WITH_LCMS),no)
+    LCMS_ROOT = @(WITH_LCMS)
+    ifneq (@(WITH_LCMS),system)
+        CPPFLAGS += -I$(LCMS_ROOT)/include
+	LDFLAGS_STATIC  += -L$(LCMS_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(LCMS_ROOT)/lib -L$(LCMS_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -llcms2
+    LDFLAGS_SHARED += -llcms2
+endif
+
+# LZMA compression
+ifneq (@(WITH_LZMA),no)
+    LZMA_ROOT = @(WITH_LZMA)
+    ifneq (@(WITH_LZMA),system)
+        CPPFLAGS += -I$(LZMA_ROOT)/include
+	LDFLAGS_STATIC  += -L$(LZMA_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(LZMA_ROOT)/lib -L$(LZMA_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -llzma
+    LDFLAGS_SHARED += -llzma
+endif
+
+# Magic file type identification (magic numbers)
+ifneq (@(WITH_MAGIC),no)
+    MAGIC_ROOT = @(WITH_MAGIC)
+    ifneq (@(WITH_MAGIC),system)
+	CPPFLAGS += -I$(MAGIC_ROOT)/include
+	LDFLAGS_STATIC  += -L$(MAGIC_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(MAGIC_ROOT)/lib -L$(MAGIC_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lmagic
+    LDFLAGS_SHARED += -lmagic
+endif
+
+# PNG image encoding
+ifneq (@(WITH_PNG),no)
+    PNG_ROOT = @(WITH_PNG)
+    ifneq (@(WITH_PNG),system)
+        CPPFLAGS += -I$(PNG_ROOT)/include
+	LDFLAGS_STATIC  += -L$(PNG_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(PNG_ROOT)/lib -L$(PNG_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lpng
+    LDFLAGS_SHARED += -lpng
+endif
+
+# Postgresql C++ API
+ifneq (@(WITH_PQXX),no)
+    PQXX_ROOT = @(WITH_PQXX)
+    ifneq (@(WITH_PQXX),system)
+	CPPFLAGS += -I$(PQXX_ROOT)/include
+	LDFLAGS_STATIC  += -L$(PQXX_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(PQXX_ROOT)/lib -L$(PQXX_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lpqxx
+    LDFLAGS_SHARED += -lpqxx
+endif
+
+# Qt
+ifneq (@(WITH_QT),no)
+    QT_ROOT = @(WITH_QT)
+    ifneq (@(WITH_QT),system)
+        CPPFLAGS += -I$(QT_ROOT)/include -I$(QT_ROOT)/include/QtCore -I$(QT_ROOT)/include/QtGui -I$(QT_ROOT)/include/QtWidgets
+        LDFLAGS_STATIC += -L$(QT_ROOT)/lib
+        LDFLAGS_SHARED += -Wl,-rpath,$(QT_ROOT)/lib -L$(QT_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lQt5Charts -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread
+    LDFLAGS_SHARED += -lQt5Charts -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread
+endif
+
+# Readline command-line editing library
+ifneq (@(WITH_READLINE),no)
+    READLINE_ROOT = @(WITH_READLINE)
+    ifneq (@(WITH_READLINE),system)
+	CPPFLAGS += -I$(READLINE_ROOT)/include
+	LDFLAGS_STATIC  += -L$(READLINE_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(READLINE)/lib -L$(READLINE_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lreadline
+    LDFLAGS_SHARED += -lreadline
+endif
+
+# SQLite database
+ifneq (@(WITH_SQLITE),no)
+    SQLITE_ROOT = @(WITH_SQLITE)
+    ifneq (@(WITH_SQLITE),system)
+	CPPFLAGS += -I$(SQLITE_ROOT)/include
+	LDFLAGS_STATIC  += -L$(SQLITE_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(SQLITE_ROOT)/lib -L$(SQLITE_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lsqlite3
+    LDFLAGS_SHARED += -lsqlite3
+endif
+
+# TIFF image encoding
+ifneq (@(WITH_TIFF),no)
+    TIFF_ROOT = @(WITH_TIFF)
+    ifneq (@(WITH_TIFF),system)
+        CPPFLAGS += -I$(TIFF_ROOT)/include
+	LDFLAGS_STATIC  += -L$(TIFF_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(TIFF_ROOT)/lib -L$(TIFF_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -ltiff
+    LDFLAGS_SHARED += -ltiff
+endif
+
+# Wt web toolkit
+ifneq (@(WITH_WT),no)
+    WT_ROOT = @(WITH_WT)
+    ifneq (@(WITH_WT),system)
+	CPPFLAGS += -I$(WT_ROOT)/include
+	LDFLAGS_STATIC  += -L$(WT_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(WT_ROOT)/lib -L$(WT_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lwt -lwthttp -lwtdbo -lwtdbopostgres
+    LDFLAGS_SHARED += -lwt -lwthttp -lwtdbo -lwtdbopostgres
+endif
+
+# YamlCPP is a YAML parser and emitter in C++
+ifneq (@(WITH_YAMLCPP),no)
+    YAMLCPP_ROOT = @(WITH_YAMLCPP)
+    ifneq (@(WITH_YAMLCPP),system)
+	CPPFLAGS += -I$(YAMLCPP_ROOT)/include
+	LDFLAGS_STATIC  += -L$(YAMLCPP_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(YAMLCPP_ROOT)/lib -L$(YAMLCPP_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lyaml-cpp
+    LDFLAGS_SHARED += -lyaml-cpp
+endif
+
+# Yices SMT solver
+ifneq (@(WITH_YICES),no)
+    YICES_ROOT = @(WITH_YICES)
+    ifneq (@(WITH_YICES),system)
+	CPPFLAGS += -I$(YICES_ROOT)/include
+	LDFLAGS_STATIC  += -L$(YICES_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(YICES_ROOT)/lib -L$(YICES_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lyices
+    LDFLAGS_SHARED += -lyices
+endif
+
+# Z3 SMT solver
+ifneq (@(WITH_Z3),no)
+    Z3_ROOT = @(WITH_Z3)
+    ifneq (@(WITH_Z3),system)
+	CPPFLAGS += -I$(Z3_ROOT)/include
+	LDFLAGS_STATIC  += -L$(Z3_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(Z3_ROOT)/lib -L$(Z3_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lz3
+    LDFLAGS_SHARED += -lz3
+endif
+
+# Boost support/portability library (note that -lboost_python is added if we have python, later)
+ifeq (@(WITH_BOOST),no)
+    error Boost is required. See CONFIG_WITH_BOOST in the tup.config file.
+else
+    BOOST_ROOT = @(WITH_BOOST)
+    ifneq (@(WITH_BOOST),system)
+	CPPFLAGS += -I$(BOOST_ROOT)/include
+	LDFLAGS_STATIC  += -L$(BOOST_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(BOOST_ROOT)/lib -L$(BOOST_ROOT)/lib
+    endif
+    # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
+    CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
+    LDFLAGS_STATIC += -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_iostreams -lboost_program_options
+    LDFLAGS_SHARED += -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_iostreams -lboost_program_options
+    LDFLAGS_STATIC += -lboost_random -lboost_regex -lboost_serialization -lboost_signals -lboost_system -lboost_thread
+    LDFLAGS_SHARED += -lboost_random -lboost_regex -lboost_serialization -lboost_signals -lboost_system -lboost_thread
+    LDFLAGS_STATIC += -lboost_wave -lboost_wserialization
+    LDFLAGS_SHARED += -lboost_wave -lboost_wserialization
+endif
+
+# Python development
+ifneq (@(WITH_PYTHON),no)
+    PYTHON_ROOT = @(WITH_PYTHON)
+    ifneq (@(WITH_PYTHON),system)
+        CPPFLAGS += -I$(PYTHON_ROOT)/include/python@(PYTHON_VERSION)m
+	LDFLAGS_STATIC += -L$(PYTHON_ROOT)/lib
+	LDFLAGS_SHARED += -Wl,-rpath,$(PYTHON_ROOT)/lib -L$(PYTHON_ROOT)/lib
+    endif
+    # Note: static linking with python is not yet tested
+    LDFLAGS_STATIC += -lboost_python -lpython@(PYTHON_VERSION)m
+    LDFLAGS_SHARED += -lboost_python -lpython@(PYTHON_VERSION)m
+endif
+
+# Bzip2 compression library
+ifneq (@(WITH_BZIP2),no)
+    BZIP2_ROOT = @(WITH_BZIP2)
+    ifneq (@(WITH_BZIP2),system)
+	CPPFLAGS += -I$(BZIP2_ROOT)/include
+	LDFLAGS_STATIC  += -L$(BZIP2_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(BZIP2_ROOT)/lib -L$(BZIP2_ROOT)/lib
+    endif
+    LDFLAGS_STATIC  += -lbz2
+    LDFLAGS_SHARED  += -lbz2
+endif
+
+# Zlib compression library
+ifeq (@(WITH_ZLIB),no)
+    error Zlib is required. See CONFIG_WITH_ZLIB in the tup.config file.
+else
+    ZLIB_ROOT = @(WITH_ZLIB)
+    ifneq (@(WITH_ZLIB),system)
+	CPPFLAGS += -I$(ZLIB_ROOT)/include
+	LDFLAGS_STATIC  += -L$(ZLIB_ROOT)/lib
+	LDFLAGS_SHARED  += -Wl,-rpath,$(ZLIB_ROOT)/lib -L$(ZLIB_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += -lz
+    LDFLAGS_SHARED += -lz
+endif
+
+# The long, fake rpaths are intended to be reserving space in the executable that will be overwritten by
+# new rpaths when the executable is installed.
+LDFLAGS_SHARED += -Wl,-rpath,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+LDFLAGS_SHARED += -Wl,-rpath,YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+LDFLAGS_SHARED += -Wl,-rpath,ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
+########################################################################################################################
+# Sanity checks
+########################################################################################################################
+
+ifneq (@(WITH_DWARF),no)
+    ifeq (@(WITH_ELF),no)
+        error CONFIG_WITH_DWARF specified means you also need CONFIG_WITH_ELF
+    endif
+endif
+
+ifneq (@(WITH_GCRYPT),no)
+    ifeq (@(WITH_GPG_ERROR),no)
+        error CONFIG_WITH_GGCRYPT specified means you also need CONFIG_WITH_GPG_ERROR
+    endif
+endif
+
+########################################################################################################################
+#                                            Phase 1 "support"
+#
+# The purpose of Phase-1 is to compile those tools that are prerequisites for building the ROSE library. For instance,
+# the executable "CxxGrammarMetaProgram" must be built and run in order to generate various source files including the
+# definitions for all the Sage IR nodes.
+#
+# Phase-1 can be used to create any artifacts (object files, libraries, executables, etc) that don't depend on generated
+# source files.
+#
+########################################################################################################################
+
+# List of compiler flags for searching for ROSE header files for #include files. List here only those directories
+# that are part of the ROSE source distribution -- DO NOT list directories for other software like Boost.
+support_INCDIRS = \
+ -I$(ROSE) \
+ -I$(ROSE)/src \
+ -I$(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include \
+ -I$(ROSE)/src/frontend/SageIII \
+ -I$(ROSE)/src/frontend/SageIII/sageInterface \
+ -I$(ROSE)/src/midend/binaryAnalyses \
+ -I$(ROSE)/src/roseSupport \
+ -I$(ROSE)/src/util \
+ -I$(ROSE)/src/util/commandlineProcessing \
+ -I$(ROSE)/src/util/stringSupport
+
+# Compilers
+support_CC = $(CC)
+support_CXX = $(CXX)
+
+# C preprocessor flags
+support_CPPFLAGS += $(CPPFLAGS)
+support_CPPFLAGS += @(SUPPORT_CPPFLAGS)
+support_CPPFLAGS += $(support_INCDIRS)
+
+# C compiler flags
+support_CFLAGS += $(CFLAGS)
+support_CFLAGS += @(SUPPORT_CFLAGS)
+
+# C++ compiler flags
+support_CXXFLAGS += $(CXXFLAGS)
+support_CXXFLAGS += @(SUPPORT_CXXFLAGS)
+
+# Linker flags
+support_LDFLAGS_STATIC += $(LDFLAGS_STATIC)
+support_LDFLAGS_STATIC += @(SUPPORT_LDFLAGS_STATIC)
+
+support_LDFLAGS_SHARED += $(LDFLAGS_SHARED)
+support_LDFLAGS_SHARED += @(SUPPORT_LDFLAGS_SHARED)
+
+# Generated files used by Phase-1 when compiling
+support_GENHDR = \
+  $(ROSE)/rose_config.h \
+  $(ROSE)/rosePublicConfig.h \
+  $(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include/hpdf_config.h
+
+# If you're creating an executable from a bunch of source files, use "run $(support_compile_linkexe) ..." which will create
+# rules for compiling the specified source files into objects, and then linking the objects. Detailed usage information
+# can be found in the script. Here are some examples:
+#
+# 1. To create a "foo" executable from a foo.C source file
+#      run $(support_compile_linkexe) foo.C
+#
+# 2. To create a "foo" executable from two source files. The executable is named "foo" since the first source file's
+#    base name is "foo.C".
+#      run $(support_compile_linkexe) foo.C bar.C baz.C
+#
+# 3. Specify the name of the executable.
+#      run $(support_compile_linkexe) -o a.out foo.C bar.C baz.C
+#
+# 4. You can mix languages (assuming linking is possible).
+#      run $(support_compile_linkexe) foo.C bar.cpp baz.c
+#
+# 5. You can specify additional include and/or library paths.
+#      run $(support_compile_linkexe) foo.C -I/some/include -L/some/lib -lsome
+#
+# 6. You can define or undefine macros
+#      run $(support_compile_linkexe) foo.C -DNAME='"some_string"' -UFOO
+#
+# 7. We also have a "lib" version that behaves exactly the same, but produces libraries.
+#    For instance, this command produces a library named libfoo.so
+#      run $(support_compile_linklib) foo.C bar.C
+#
+# 8. The version without "link" in its name only compiles to objects and doesn't produce
+#    an executable or a library.
+#      run $(support_compile) foo.C bar.C
+#
+support_compile_linkexe = $(COMPILER_RULES) --phase=support --link=exe --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
+support_compile_linklib = $(COMPILER_RULES) --phase=support --link=lib --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
+support_compile         = $(COMPILER_RULES) --phase=support --link=none --begin-deps $(support_GENHDR) --end-deps
+
+########################################################################################################################
+#                                              Phase 2 "librose"
+#
+# This phase is for compiling and linking those source files that ultimately become part of the ROSE library (librose.so
+# and/or librose.a). Such files may be generated and/or use generated headers.
+#
+# DO NOT use Phase-2 to compile anything that's needed by a tool that generates ROSE source files. For example, since
+# the CxxGrammarMetaProgram executable generates source files that go into the ROSE library, it must be built during
+# Phase-1. And since CxxGrammarMetaProgram uses $(ROSE)/src/util/commandline_processing/commandline_processing.C to
+# perform its command-line parsing, that file must also be compiled during Phase-1.
+########################################################################################################################
+
+# List of compiler flags for searching for ROSE header files for #include files. List here only those directories
+# that are part of the ROSE source distribution -- DO NOT list directories for other software like Boost.
+librose_INCDIRS = \
+ $(support_INCDIRS) \
+ -I$(ROSE)/src/3rdPartyLibraries/MSTL \
+ -I$(ROSE)/src/backend/asmUnparser \
+ -I$(ROSE)/src/backend/unparser \
+ -I$(ROSE)/src/backend/unparser/AdaCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/CxxCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/formatSupport \
+ -I$(ROSE)/src/backend/unparser/FortranCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/JavaCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/JovialCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/languageIndependenceSupport \
+ -I$(ROSE)/src/backend/unparser/PHPCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/PythonCodeGeneration \
+ -I$(ROSE)/src/backend/unparser/X10CodeGeneration \
+ -I$(ROSE)/src/frontend \
+ -I$(ROSE)/src/frontend/BinaryFormats \
+ -I$(ROSE)/src/frontend/BinaryLoader \
+ -I$(ROSE)/src/frontend/Disassemblers \
+ -I$(ROSE)/src/frontend/DLX/include \
+ -I$(ROSE)/src/frontend/PHPFrontend \
+ -I$(ROSE)/src/frontend/PythonFrontend \
+ -I$(ROSE)/src/frontend/SageIII/astFileIO \
+ -I$(ROSE)/src/frontend/SageIII/astFixup \
+ -I$(ROSE)/src/frontend/SageIII/astFromString \
+ -I$(ROSE)/src/frontend/SageIII/astMerge \
+ -I$(ROSE)/src/frontend/SageIII/astPostProcessing \
+ -I$(ROSE)/src/frontend/SageIII/astTokenStream \
+ -I$(ROSE)/src/frontend/SageIII/astVisualization \
+ -I$(ROSE)/src/frontend/SageIII/includeDirectivesProcessing \
+ -I$(ROSE)/src/frontend/SageIII/sage_support \
+ -I$(ROSE)/src/frontend/SageIII/virtualCFG \
+ -I$(ROSE)/src/midend/abstractHandle \
+ -I$(ROSE)/src/midend/abstractLayer \
+ -I$(ROSE)/src/midend/abstractMemoryObject \
+ -I$(ROSE)/src/midend/astDiagnostics \
+ -I$(ROSE)/src/midend/astMatching \
+ -I$(ROSE)/src/midend/astProcessing \
+ -I$(ROSE)/src/midend/astQuery \
+ -I$(ROSE)/src/midend/astRewriteMechanism \
+ -I$(ROSE)/src/midend/astUtil/annotation \
+ -I$(ROSE)/src/midend/astUtil/astInterface \
+ -I$(ROSE)/src/midend/astUtil/astSupport \
+ -I$(ROSE)/src/midend/astUtil/symbolicVal \
+ -I$(ROSE)/src/midend/BinaryAnalysis \
+ -I$(ROSE)/src/midend/BinaryAnalysis/instructionSemantics \
+ -I$(ROSE)/src/midend/programAnalysis/ \
+ -I$(ROSE)/src/midend/programAnalysis/bitvectorDataflow \
+ -I$(ROSE)/src/midend/programAnalysis/CallGraphAnalysis \
+ -I$(ROSE)/src/midend/programAnalysis/CFG \
+ -I$(ROSE)/src/midend/programAnalysis/defUseAnalysis \
+ -I$(ROSE)/src/midend/programAnalysis/dominanceAnalysis \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/analysis \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/arrIndexLabeler \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/cfgUtils \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/lattice \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/rwAccessLabeler \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/simpleAnalyses \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/state \
+ -I$(ROSE)/src/midend/programAnalysis/genericDataflow/variables \
+ -I$(ROSE)/src/midend/programAnalysis/OAWrap \
+ -I$(ROSE)/src/midend/programAnalysis/pointerAnal \
+ -I$(ROSE)/src/midend/programAnalysis/valuePropagation \
+ -I$(ROSE)/src/midend/programAnalysis/VirtualFunctionAnalysis \
+ -I$(ROSE)/src/midend/programTransformation/astInlining \
+ -I$(ROSE)/src/midend/programTransformation/astOutlining \
+ -I$(ROSE)/src/midend/programTransformation/constantFolding \
+ -I$(ROSE)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
+ -I$(ROSE)/src/midend/programTransformation/finiteDifferencing \
+ -I$(ROSE)/src/midend/programTransformation/implicitCodeGeneration \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/computation \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/depGraph \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/depInfo \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/driver \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/outsideInterface \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/prepostTransformation \
+ -I$(ROSE)/src/midend/programTransformation/loopProcessing/slicing \
+ -I$(ROSE)/src/midend/programTransformation/ompLowering \
+ -I$(ROSE)/src/midend/programTransformation/partialRedundancyElimination \
+ -I$(ROSE)/src/midend/programTransformation/singleStatementToBlockNormalization \
+ -I$(ROSE)/src/midend/programTransformation/transformationTracking \
+ -I$(ROSE)/src/ROSETTA/src \
+ -I$(ROSE)/src/ROSETTA/src/astFileIO \
+ -I$(ROSE)/src/roseExtensions/failSafe \
+ -I$(ROSE)/src/util/graphs \
+ -I$(ROSE)/src/util/support
+
+# Compilers
+librose_CC  	 = $(CC)
+librose_CXX 	 = $(CXX)
+
+# C preprocessor flags
+librose_CPPFLAGS += $(CPPFLAGS)
+librose_CPPFLAGS += @(LIBROSE_CPPFLAGS)
+librose_CPPFLAGS += $(librose_INCDIRS)
+
+# C compiler flags
+librose_CFLAGS += $(CFLAGS)
+librose_CFLAGS += @(LIBROSE_CFLAGS)
+
+# C++ compiler flags
+librose_CXXFLAGS += $(CXXFLAGS)
+librose_CXXFLAGS += @(LIBROSE_CXXFLAGS)
+
+# Linker flags
+librose_LDFLAGS_STATIC += $(LDFLAGS_STATIC)
+librose_LDFLAGS_STATIC += @(LIBROSE_LDFLAGS_STATIC)
+
+librose_LDFLAGS_SHARED += $(LDFLAGS_SHARED)
+librose_LDFLAGS_SHARED += @(LIBROSE_LDFLAGS_SHARED)
+
+# Headers generated by CxxGrammarMetaProgram
+#
+# Note: $(ROSE)/src/ROSETTA/SourcesOfIRNodesAstFileIOSupport.C, although ending with ".C" is actually treated more like
+#       a header file. It is not compiled directly to create an object file. Instead, it is included into other sources
+#       with "#include <SourcesOfIRNodesAstFileIOSupport.C>" in
+#       $(ROSE)/src/ROSETTA/Grammar/grammarStaticDatamanagingClassSource.macro.
+CxxGrammarMetaProgram_GENHDR = \
+ $(ROSE)/src/ROSETTA/src/AST_FILE_IO.h \
+ $(ROSE)/src/ROSETTA/src/AstQueryMemoryPool.h \
+ $(ROSE)/src/ROSETTA/src/AstSpecificDataManagingClass.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_Grammar.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarMemoryPoolSupport.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarSerialization.h \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h \
+ $(ROSE)/src/ROSETTA/src/StorageClasses.h \
+ $(ROSE)/src/ROSETTA/src/SourcesOfIRNodesAstFileIOSupport.C
+
+# Source files generated by CxxGrammarMetaProgram
+CxxGrammarMetaProgram_GENSRC = \
+ $(ROSE)/src/ROSETTA/src/AST_FILE_IO.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_Grammar.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarAtermSupport.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarCopyMemberFunctions.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarGetChildIndex.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarMemoryPoolSupport.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarNewAndDeleteOperators.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarNewConstructors.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarProcessDataMemberReferenceToPointers.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarRTI.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarReturnClassHierarchySubTree.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarReturnDataMemberPointers.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarSerialization.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarTraverseMemoryPool.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarTreeTraversalSuccessorContainer.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarVariantEnumNames.C \
+ $(ROSE)/src/ROSETTA/src/StorageClasses.C
+
+# Other files generated by CxxGrammarMetaProgram
+CxxGrammarMetaProgram_GENMISC = \
+ $(ROSE)/src/ROSETTA/src/grammar.dot \
+ $(ROSE)/src/ROSETTA/src/generated_abstractcppgrammar.atg \
+ $(ROSE)/src/ROSETTA/src/generated_sdf_tree_grammar.rtg \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarClassesAndFields.txt \
+
+# All files generated by CxxGrammarMetaProgram
+CxxGrammarMetaProgram_OUTPUT = \
+ $(CxxGrammarMetaProgram_GENHDR) \
+ $(CxxGrammarMetaProgram_GENSRC) \
+ $(CxxGrammarMetaProgram_GENMISC)
+
+# Generated header files used by Phase-2 when compiling
+librose_GENHDR = \
+ $(support_GENHDR) \
+ $(CxxGrammarMetaProgram_GENHDR)
+
+# Use this command to compile C and C++ files that ultimately become part of librose.so. Use it like this:
+#   run $(librose_compile) file1.C file2.C file3.C ... fileN.C
+librose_compile = $(COMPILER_RULES) --phase=librose --link=lib --linkage=static -o rose_partial --group=$(ROSE)/librose --begin-deps $(librose_GENHDR) --end-deps
+
+# Macro called by $(librose_compile) to generate a intermediate archive. This isn't usually used directly.
+!for_librose = \
+  |> ^ librose LINK %o^ \
+     ar rcs %o %f \
+  |> librose_partial.a $(ROSE)/<librose>
+
+
+# This command generates the rules for building a python API
+python_module = $(COMPILER_RULES) --phase=librose --link=python --linkage=shared --begin-deps $(librose_GENHDR) --end-deps
+
+python_package = $(TUP_SCRIPTS)/generate-install-rules \
+  --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt \
+  --language=shell
+
+########################################################################################################################
+#                                                 Phase 3 "tool"
+#
+# These variables and rules are for compiling tools once the ROSE library (librose.so and/or librose.a) have been
+# built.  If you tool doesn't depend on ROSE (neither libraries nor headers) you may use Phase-1 commands instead.
+# Programs run to test ROSE are a kind of tool.
+########################################################################################################################
+
+tool_INCDIRS  = $(librose_INCDIRS)
+
+# Compilers
+tool_CC = $(CC)
+tool_CXX = $(CXX)
+
+# C preprocessor flags
+tool_CPPFLAGS += $(CPPFLAGS)
+tool_CPPFLAGS += @(LIBROSE_CPPFLAGS)
+tool_CPPFLAGS += @(TOOL_CPPFLAGS)
+tool_CPPFLAGS += $(tool_INCDIRS)
+
+# C compiler flags
+tool_CFLAGS += $(CFLAGS)
+tool_CFLAGS += @(TOOL_CFLAGS)
+
+# C++ compiler flags
+tool_CXXFLAGS += $(CXXFLAGS)
+tool_CXXFLAGS += @(TOOL_CXXFLAGS)
+
+# Linker flags.
+tool_LDFLAGS_STATIC += $(LDFLAGS_STATIC)
+tool_LDFLAGS_STATIC += @(TOOL_LDFLAGS_STATIC)
+tool_LDFLAGS_STATIC += -L$(ROSE)/src -lrose
+
+tool_LDFLAGS_SHARED += $(LDFLAGS_SHARED)
+tool_LDFLAGS_SHARED += @(TOOL_LDFLAGS_SHARED)
+tool_LDFLAGS_SHARED += -Wl,-rpath,`$(ROSE)/scripts/tup/fix-tup-builddir-name --canonical $(ROSE)/src` -L$(ROSE)/src -lrose
+
+# Generated headers used by Phase-3 when compiling
+tool_GENHDR   = $(librose_GENHDR)
+
+# Generated libraries used by Phase-3 when linking
+tool_GENLIB = $(ROSE)/src/librose
+
+# If you're creating an executable from a bunch of source files, use "run $(tool_compile_linkexe) ..." which will create
+# rules for compiling the specified source files into objects, and then linking the objects. Detailed usage information
+# can be found in the script. Here are some examples:
+#
+# 1. To create a "foo" executable from a foo.C source file
+#      run $(tool_compile_linkexe) foo.C
+#
+# 2. To create a "foo" executable from two source files. The executable is named "foo" since the first source file's
+#    base name is "foo.C".
+#      run $(tool_compile_linkexe) foo.C bar.C baz.C
+#
+# 3. Specify the name of the executable.
+#      run $(tool_compile_linkexe) -o a.out foo.C bar.C baz.C
+#
+# 4. You can mix languages (assuming linking is possible).
+#      run $(tool_compile_linkexe) foo.C bar.cpp baz.c
+#
+# 5. You can specify additional include and/or library paths.
+#      run $(tool_compile_linkexe) foo.C -I/some/include -L/some/lib -lsome
+#
+# 6. You can define or undefine macros
+#      run $(tool_compile_linkexe) foo.C -DNAME='"some_string"' -UFOO
+#
+# 7. We also have a "lib" version that behaves exactly the same, but produces libraries.
+#    For instance, this command produces a library named libfoo.so
+#      run $(tool_compile_linklib) foo.C bar.C
+#
+# 8. The version without "link" in its name only compiles to objects and doesn't produce
+#    an executable or a library.
+#      run $(tool_compile) foo.C bar.C
+#
+tool_compile_linkexe = $(COMPILER_RULES) --phase=tool --link=exe --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps $(ROSE)/src/librose
+tool_compile_linklib = $(COMPILER_RULES) --phase=tool --link=lib --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps
+tool_compile         = $(COMPILER_RULES) --phase=tool --link=none --begin-deps $(tool_GENHDR) --end-deps
+
+########################################################################################################################
+#							Testing
+#					   This section is for running tests
+########################################################################################################################
+
+# To run a tester to check it's exit status, do one of these
+#    run $(test) a.out
+#    run $(test) a.out ./a.out
+#
+# Additional arguments can be given to the executable
+#    run $(test) a.out ./a.out hello world
+#
+
+# This script generates the testing rules
+test = $(TUP_SCRIPTS)/generate-test-rules
+
+# This script actually runs the test. You shouldn't need to call this explicitly -- use "run $(test) ..." instead.
+run_test = $(TUP_SCRIPTS)/run-test --timeout=@(RTH_TIMEOUT) --map=@(ROSE_SOURCE),$(ROOT) @(RTH_FLAGS)
+
+
+########################################################################################################################
+#                                                 Installation
+#
+# Installation happens in a couple steps.  First step is created by the "run $(preinstall)" rule generator which
+# arranges to copy the inputs to the current working directory and prepend "preinstall-" to each of their names. Certain
+# transformations are applied during the copy, such as adding the copyright and/or licensing information to the top of
+# header files.  These "preinstall-*" files are then added to a <staging> group defined in the destination directory.
+# There are only a few destination directories all located under $(ROSE)/$(INSTALL_STAGING) and each has a Tupfile with
+# a rule that copies the preinstall-* files from where they were generated to the staging area.  The reason for this
+# extra copy is that we want the "run $(preinstall)" to appear in the same directory where the input file exists.
+########################################################################################################################
+
+# Staging area for installing, a subdirectory of the build tree. Things are installed here by tup, and then moved to
+# their final location by another script later.
+INSTALL_STAGING = install-staging
+
+# Use "run $(public_header) FILES..." to mark header files as being public and therefore needing to be installed.
+# All header files are assumed to be C++ for the purposes of inserting comments, but you can override the --language
+# switch if you need to. You can also override the --output switch if the headers are intended to be installed
+# somewhere other than include/rose (the value should be relative to the ROSE install prefix).
+public_header = $(TUP_SCRIPTS)/generate-install-rules \
+  --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt \
+  --language=c++ \
+  --output=include/rose
+
+# Use "run $(public_file) FILES..." to install files other than header files. You'll need to specify an instllation
+# subdirectory with the "-o" (or --output) switch. If you want the copyright notice, use --license (which might also
+# require a --language switch).
+public_file = $(TUP_SCRIPTS)/generate-install-rules
+
+# Use this to install public libraries.
+public_library = $(TUP_SCRIPTS)/generate-install-rules -o lib
+
+# Use this to install shell scripts. We don't prepend a copyright comment because the script probably starts
+# with "#!" or other special commands that might be messed up by the comment.
+public_script = $(TUP_SCRIPTS)/generate-install-rules --language=shell -o bin
+
+#FIXME: 3rd party libraries such as Sawyer probably have their own LICENSE files that should be used instead.
+
+# Each staging destination directory (e.g., $(ROSE)/install-staging/bin) must have a tupfile with the followin g rule
+#   : <staging> |> echo %<staging> >%o |> MANIFEST

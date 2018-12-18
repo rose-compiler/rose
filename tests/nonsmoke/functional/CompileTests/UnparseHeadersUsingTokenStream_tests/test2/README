@@ -1,0 +1,4 @@
+In this test, a single source file includes two header files in
+different scopes. One of the header files declares a class, the other
+one - declares a variable. Both header files are unparsed because a
+variable is renamed in each of them.

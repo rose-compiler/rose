@@ -1,0 +1,3 @@
+This test checks that ROSE can correctly detect and unparse
+preprocessor directives (or comments) that appear in a header file
+that does not contain any other located IR nodes except its own body.
