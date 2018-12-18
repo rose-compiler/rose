@@ -1,0 +1,4 @@
+include_rules
+
+run $(librose_compile) unparser.C unparse_sym.C astUnparseAttribute.C IncludedFilesUnparser.C nameQualificationSupport.C includeFileSupport.C
+run $(public_header)   unparser.h unparse_sym.h astUnparseAttribute.h IncludedFilesUnparser.h nameQualificationSupport.h includeFileSupport.h

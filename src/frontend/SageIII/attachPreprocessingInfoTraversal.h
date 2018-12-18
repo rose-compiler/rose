@@ -72,7 +72,7 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
           bool isPartOfTemplateInstantiationDeclaration;
    };
 
-// This is an empty class, meaning that we could likely just have implemented a TopDownProcessing traversal.
+// This is an empty class, meaning that we could likely just have implemented just a TopDownProcessing traversal.
 class AttachPreprocessingInfoTreeTraversalSynthesizedAttribute {};
 
 class AttachPreprocessingInfoTreeTrav 

@@ -1598,7 +1598,7 @@ ROSEAttributesList::operator[]( int i)
 void
 ROSEAttributesList::display ( const string & label )
    {
-     printf ("ROSEAttributesList::display (label = %s) \n",label.c_str());
+     printf ("ROSEAttributesList::display (label = %s): size = %zu \n",label.c_str(),attributeList.size());
      ROSE_ASSERT(this != NULL);
 
   // fprintf(outFile,"\n%s: \n", getFileName() );
@@ -2941,8 +2941,11 @@ ROSEAttributesListContainer::display ( const string & label )
           string filename = i->first;
           ROSEAttributesList* attributeList = i->second;
 
-          printf ("filename = %s \n",filename.c_str());
+          printf ("   --- filename = %s \n",filename.c_str());
           ROSE_ASSERT(attributeList != NULL);
+
+       // DQ (9/25/2018): Added output the the list for each file (debugging header file unparsing).
+          attributeList->display("In ROSEAttributesListContainer::display(): xxx");
 
           i++;
         }

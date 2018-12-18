@@ -53,6 +53,9 @@ typedef std::vector<std::list<token_type> > token_container_container;
 // #include <fstream>
 // #include <string>
 
+// DQ (11/11/2018): Added prototype to support debugging.
+void generateGraphOfIncludeFiles( SgSourceFile* sourceFile, std::string filename );
+
 
 #if 0
 // DQ (11/30/2008): This does not appear to be used!
@@ -657,7 +660,17 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // printf ("sageFilePtr->get_collectAllCommentsAndDirectives() = %s \n",sageFilePtr->get_collectAllCommentsAndDirectives() ? "true" : "false");
 
      bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
+
+#if 0
+     printf ("In attachPreprocessingInfo(): processAllFiles = %s \n",processAllFiles ? "true" : "false");
+#endif
+
      AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
+
+#if 0
+     printf ("Exiting as a test after AttachPreprocessingInfoTreeTrav constructor call! \n");
+     ROSE_ASSERT(false);
+#endif
 
   // When using Wave get all the preprocessing dirctives for all the files.
      if ( sageFilePtr->get_wave() == true )
@@ -677,6 +690,10 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
   // marked with a source position from the filename with the "_preprocessed" suffix).
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
+#if 0
+     printf ("In attachPreprocessingInfo(): processAllFiles = %s requiresCPP = %s \n",processAllFiles ? "true" : "false",requiresCPP ? "true" : "false");
+#endif
+
      if (processAllFiles == true || requiresCPP == true)
         {
 #if 0
@@ -693,6 +710,22 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
         }
 
   // endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
+
+
+#if 0
+     printf ("In attachPreprocessingInfo(): build include graph: wave = %s file = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
+#endif
+#if 0
+  // Note that this only builds the include graph starting at the first header file not the input source file.
+     string dotgraph_filename = "include_file_graph_from_attachPreprocessingInfo";
+     ROSE_ASSERT(sageFilePtr != NULL);
+     generateGraphOfIncludeFiles(sageFilePtr,dotgraph_filename);
+#endif
+
+#if 0
+     printf ("Exiting as a test after either call to sageFilePtr or traverseWithinFile \n");
+     ROSE_ASSERT(false);
 #endif
 
 #if 0
