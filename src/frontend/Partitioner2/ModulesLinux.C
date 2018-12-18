@@ -132,7 +132,8 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             // Map-based memory seems to work best for this. Maybe we should use that also when the partitioners semantics are
             // enabled in general?
             if (BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators(MAP_BASED_MEMORY)) {
-                if (cpu = args.partitioner.newDispatcher(ops)) {
+                cpu = args.partitioner.newDispatcher(ops);
+                if (cpu) {
                     BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
                         cpu->processInstruction(insn);
                     state = cpu->currentState();

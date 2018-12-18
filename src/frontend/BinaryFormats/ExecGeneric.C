@@ -110,7 +110,9 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
                 printf ("ERROR: Commented out use of functions from sys/wait.h \n");
                 ROSE_ASSERT(false);
 #else
-        pipe(child_stdout);
+        if (pipe(child_stdout) == -1)
+            throw FormatError("unrecognized file format for \"" + StringUtility::cEscape(name) + "\"");
+
         pid_t pid = fork();
         if (0==pid) {
             close(0);
@@ -122,7 +124,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         } else if (pid>0) {
             char buf[4096];
             memset(buf, 0, sizeof buf);
-            read(child_stdout[0], buf, sizeof buf);
+            (void) read(child_stdout[0], buf, sizeof buf); // buffer has already been zeroed for short reads
             buf[sizeof(buf)-1] = '\0';
             if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
             waitpid(pid, NULL, 0);

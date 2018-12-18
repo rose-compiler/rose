@@ -352,6 +352,8 @@ Z3Solver::z3Assertions() const {
 
 static z3::expr
 portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
+    // Z3 prior to 4.8 didn't have a way to check the version at compile time, however a workaround for ROSE users was to
+    // define the Z3_*_VERSION constants themselves for these older Z3 versions.
 #if defined(Z3_MAJOR_VERSION) && defined(Z3_MINOR_VERSION) && defined(Z3_BUILD_NUMBER)
     #if Z3_MAJOR_VERSION < 4
         // z3 < 4.0.0
@@ -364,18 +366,17 @@ portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
         return ctx->bv_val((uint64_t)value, (unsigned)nBits);
     #endif
 #else
-    // If you get a compile error here, you're probably using Z3 >= 4.7.0 but a version before compile-time versions were
-    // added. As of 2018-09-18, Z3 has no C preprocessor macros for version portability.  Issue #1833 has been submitted to the
-    // Z3 team. You can view it here: https://github.com/Z3Prover/z3/issues/1833
+    // Not all ROSE users manually defined the Z3_*_VERSION constants. Therefore, if the compiler is compiling this part of the
+    // code the only thing we know is that it's a version before 4.8.0 where the version numbers were first defined in the Z3
+    // source code. See [https://github.com/Z3Prover/z3/issues/1833].
     //
-    // As a temporary workaround, after you build and install Z3, copy the contents of the src/util/version.h file from the Z3
-    // source tree into the installed $Z3_ROOT/include/z3.h file.
+    // The Z3 API for z3::context::bv_val changed in version 4.7 that makes it incompatible with earlier versions, but since we
+    // have no Z3_*_VERSION constants we can't tell whether this is z3 4.7 or an earlier version. We assume that it's an earlier
+    // version since that's more likely.
     //
-    // An alternative workaround if you didn't compile Z3 from source code or if you don't want to (or can't) modify z3.h, is
-    // to add the following to the ROSE C++ compile commands: -DZ3_MAJOR_VERSION=4 -DZ3_MINOR_VERSION=7 -DZ3_BUILD_NUMBER=1
-    // (adjusting for your actual Z3 version of course). If you're using the Tup build system, edit "tup.config" at the top of
-    // the ROSE build tree (after configuring) and change the CONFIG_CPPFLAGS line and (re)run "tup".
-    return ctx->bv_val((unsigned long long)value, (unsigned)nBits);
+    // If you get an error here it's probably because we assumed wrong and you're actually using Z3 4.7. Instead of
+    // changing the ROSE source code, define the Z3_*_VERSION values in your compiler command-line.
+    return ctx->bv_val((unsigned long long)value, (unsigned)nBits); // DO NOT CHANGE; this assumes z3 < 4.7.
 #endif
 }
 
