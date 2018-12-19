@@ -5535,7 +5535,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
   // TV (11/20/2018): ROSE-1529: removed non-standard standard selection
-     optionCount = sla(argv, "-std=", "($)", "(c|c++|gnu|gnu++|fortran|upc|upcxx)",1);
+  // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
+     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);

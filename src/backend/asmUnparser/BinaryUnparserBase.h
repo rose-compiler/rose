@@ -243,7 +243,37 @@ public:
  *  Mid-level "emit" functions use a combination of C++ virtual functions and unparser object chaining as described in the
  *  documentation for those functions. This permits two ways to override or augment behavior: behavior modification based on
  *  architecture (virtual functions) and behavior modification based on a filtering concept to support things like tables and
- *  HTML (chaining). */
+ *  HTML (chaining).
+ *
+ *  The following code is a starting point for creating your own unparser:
+ *
+ * @code
+ *  class MyUnparser: public BinaryAnalysis::Unparser::Base {
+ *  protected:
+ *      explicit MyUnparser(const BinaryAnalysis::Unparser::Base::Ptr &next)
+ *          : BinaryAnalysis::Unparser::Base(next) {
+ *          ASSERT_not_null(next);
+ *      }
+ *  
+ *  public:
+ *      typedef Sawyer::SharedPointer<MyUnparser> Ptr;
+ *  
+ *      static Ptr instance(const BinaryAnalysis::Unparser::Base::Ptr &next) { return Ptr(new MyUnparser(next)); }
+ *      virtual BinaryAnalysis::Unparser::Base::Ptr copy() const ROSE_OVERRIDE { return Ptr(new MyUnparser(nextUnparser()->copy())); }
+ *      virtual const BinaryAnalysis::Unparser::Settings& settings() const ROSE_OVERRIDE { return nextUnparser()->settings(); }
+ *      virtual BinaryAnalysis::Unparser::Settings& settings() ROSE_OVERRIDE { return nextUnparser()->settings(); }
+ *
+ *      // specialized output functions here...
+ *  };
+ * @endcode
+ *
+ *  To instantiate this parser from a @p Partitioner2::Partitioner object named @c partitioner, do this:
+ *
+ * @code
+ *  BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+ *  unparser->settings() = settings.unparser; // See Rose::BinaryAnalysis::Unparser::Settings for starters
+ *  unparser = MyUnparser::instance(unparser);
+ * @endcode */
 class Base: public Sawyer::SharedObject {
 public:
     typedef Sawyer::SharedPointer<Base> Ptr;

@@ -269,10 +269,12 @@ EdgeArrows::nSources(VertexId v) const {
     for (size_t i=0; i<columns_.size(); ++i) {
         size_t colnum = arrowStyle_.pointsRight ? columns_.size() - (i+1) : i;
         const Arrow &arrow = columns_[colnum].getOrDefault(lineNumber);
-        if (lineNumber == arrow.location.least() && arrow.isForward) {
-            ++retval;
-        } else if (lineNumber == arrow.location.greatest() && !arrow.isForward) {
-            ++retval;
+        if (!arrow.location.isEmpty()) {
+            if (lineNumber == arrow.location.least() && arrow.isForward) {
+                ++retval;
+            } else if (lineNumber == arrow.location.greatest() && !arrow.isForward) {
+                ++retval;
+            }
         }
     }
     return retval;
@@ -289,10 +291,12 @@ EdgeArrows::nTargets(VertexId v) const {
     for (size_t i=0; i<columns_.size(); ++i) {
         size_t colnum = arrowStyle_.pointsRight ? columns_.size() - (i+1) : i;
         const Arrow &arrow = columns_[colnum].getOrDefault(lineNumber);
-        if (lineNumber == arrow.location.least() && !arrow.isForward) {
-            ++retval;
-        } else if (lineNumber == arrow.location.greatest() && arrow.isForward) {
-            ++retval;
+        if (!arrow.location.isEmpty()) {
+            if (lineNumber == arrow.location.least() && !arrow.isForward) {
+                ++retval;
+            } else if (lineNumber == arrow.location.greatest() && arrow.isForward) {
+                ++retval;
+            }
         }
     }
     return retval;
