@@ -2046,7 +2046,6 @@ projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
 projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
-projects/BinFuncDetect/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
