@@ -387,7 +387,7 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
           <<", actual size = " <<StringUtility::plural(cse->nNodesUnique(), "nodes") <<"\n";
         std::string termName = "cse_" + StringUtility::numberToString(++cseId);
 
-        SExprTypePair et = outputExpression(cse);
+        SExprTypePair et = outputCast(outputExpression(cse), BIT_VECTOR);
         ASSERT_not_null(et.first);
 
         o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" " <<*et.first <<")\n";
