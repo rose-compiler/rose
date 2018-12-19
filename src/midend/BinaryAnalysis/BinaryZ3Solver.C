@@ -892,9 +892,9 @@ Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
-        z3::shl(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
-                           ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+        z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
+                            ctxCast(ctxExpression(expr), BIT_VECTOR).first),
+                 ctxCast(ctxExpression(sa), BIT_VECTOR).first)
         .extract(expr->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
