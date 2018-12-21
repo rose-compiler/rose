@@ -555,7 +555,7 @@ protected:
     virtual std::string getErrorMessage(int exitStatus);
 
     /** Return all variables that need declarations. */
-    virtual VariableSet findVariables(const SymbolicExpr::Ptr&) { return VariableSet(); }
+    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) {}
 
     /** Print an S-Expr for debugging.
      *

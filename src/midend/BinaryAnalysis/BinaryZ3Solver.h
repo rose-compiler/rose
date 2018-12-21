@@ -5,7 +5,6 @@
 #include <BinarySmtlibSolver.h>
 #ifdef ROSE_HAVE_Z3
 #include <z3++.h>
-#include <z3_version.h>
 #endif
 #ifdef ROSE_HAVE_Z3_VERSION_H
 #include <z3_version.h>
