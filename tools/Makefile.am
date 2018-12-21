@@ -1,7 +1,7 @@
 # Build the ROSE-based tools
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIR = globalVariablesInLambdas
+SUBDIR = globalVariablesInLambdas classMemberVariablesInLambdas
 
 EXTRA_DIST = 
 

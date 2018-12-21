@@ -2647,6 +2647,7 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
+tools/classMemberVariablesInLambdas/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile
