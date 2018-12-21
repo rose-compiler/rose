@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) AstConsistencyTests.C AstWarnings.C AstStatistics.C AstPerformance.C
+
+run $(public_header) AstDiagnostics.h AstConsistencyTests.h AstWarnings.h AstStatistics.h AstPerformance.h

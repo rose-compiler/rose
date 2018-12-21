@@ -9,6 +9,7 @@
 #include <Sawyer/Graph.h>
 #include <Sawyer/HashMap.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 
 #include <boost/serialization/access.hpp>
 #include <list>
@@ -42,7 +43,7 @@ public:
     // intentionally undocumented. Necessary for serialization of Sawyer::Container::Graph
     CfgVertex()
         : type_(V_USER_DEFINED), startVa_(0) {}
-    
+
 public:
     /** Construct a basic block placeholder vertex. */
     explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
@@ -64,6 +65,9 @@ public:
     /** Property: starting address.
      *
      *  The virtual address for a placeholder or basic block.  User-defined vertices can use this for whatever they want.
+     *  Calling this for a vertex that's not a basic block or user defined type results in undefined behavior.
+     *
+     *  See also, @ref optionalAddress.
      *
      * @{ */
     rose_addr_t address() const {
@@ -75,6 +79,17 @@ public:
         startVa_ = va;
     }
     /** @} */
+
+    /** Safe version of starting address.
+     *
+     *  This is the same as @ref address but doesn't fail if there is no address. */
+    Sawyer::Optional<rose_addr_t> optionalAddress() const;
+
+    /** Address of last item in the vertex.
+     *
+     *  If the vertex is a basic block with more than one instruction, then return the address of its last instruction.
+     *  Otherwise, this is the same as @ref optionalAddress. */
+    Sawyer::Optional<rose_addr_t> optionalLastAddress() const;
 
     /** Compute entire address set.
      *
@@ -404,7 +419,7 @@ ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const Functi
  *
  *  A function control flow graph is created by traversing the specified global control flow grap (@p gcfg) starting at
  *  the specified vertex (@p gcfgEntry). The traversal follows only vertices that are owned by the specified function, and
- *  the indeterminate vertex. The indeterminate vertex is only reachable through edges of types other than @ref 
+ *  the indeterminate vertex. The indeterminate vertex is only reachable through edges of types other than @ref
  *  E_FUNCTION_RETURN.
  *
  *  The function control flow graph entry point corresponding to @p gcfgEntry is always vertex number zero in the return

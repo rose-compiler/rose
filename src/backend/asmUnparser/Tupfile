@@ -1,0 +1,18 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    SOURCES = BinaryEdgeArrows.C BinarySerialIo.C BinaryUnparserArm.C BinaryUnparserBase.C BinaryUnparserM68k.C \
+              BinaryUnparserMips.C BinaryUnparserPowerpc.C BinaryUnparserX86.C AsmUnparser.C AsmUnparser_compat.C \
+	      AsmFunctionIndex.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseM68kAsm.C unparseMipsAsm.C
+else
+    SOURCES = dummyAsmUnparser.C
+endif
+
+run $(librose_compile) $(SOURCES)
+
+# Headers for the older API
+run $(public_header) AsmUnparser.h AsmUnparser_compat.h AsmFunctionIndex.h
+
+# Headers for the newer API
+run $(public_header) BinaryEdgeArrows.h BinarySerialIo.h BinaryUnparser.h BinaryUnparserArm.h BinaryUnparserBase.h \
+    BinaryUnparserM68k.h BinaryUnparserMips.h BinaryUnparserPowerpc.h BinaryUnparserX86.h

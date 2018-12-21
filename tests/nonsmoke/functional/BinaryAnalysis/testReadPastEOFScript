@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+./testReadPastEOF 0x0804b7f4 ${SPECIMEN_DIR}/fnord.i386
+./testReadPastEOF 0x08051000 ${SPECIMEN_DIR}/fnord.i386
