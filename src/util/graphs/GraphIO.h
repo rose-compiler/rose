@@ -36,13 +36,13 @@ void write_graph( const Graph& g, OUTPUT& out, const std::string& hint)
         typename Graph::EdgeIterator edges 
                         = g.GetNodeEdgeIterator(curnode,GraphAccess::EdgeOut);
         if (edges.ReachEnd()) 
-            out << hint << " " << curnode->toString() << std::endl; 
+            out << hint << ":" << curnode->toString() << std::endl; 
         else for ( ;!edges.ReachEnd(); ++edges) {
             typename Graph::Edge *e = (*edges);
             typename Graph::Node* n = 
                   g.GetEdgeEndPoint(e, GraphAccess::EdgeIn);
-            out << hint << " " << curnode->toString() << " " << n->toString() 
-               <<  " " << e->toString() << std::endl; 
+            out << hint << ":" << curnode->toString() << "->" << n->toString() 
+               <<  " : " << e->toString() << std::endl; 
         }
      }
   }
@@ -58,8 +58,11 @@ void write_graph_node_edge(Graph& g, const Node* curnode,
        typename Graph::Edge *e = (*edges);
        typename Graph::Node* n = 
              g.GetEdgeEndPoint(e, GraphAccess::Reverse(dir));
-       out << hint << " " << curnode << " " << n  
-          << " " << e->toString() << std::endl; 
+       std::string s = e->toString();
+       if (s == "") 
+         out << hint << " " << curnode << " " << n  << ":";
+       else out << hint << ":";
+       out << e->toString() << std::endl; 
    }
 }
 
@@ -69,7 +72,10 @@ void write_graph2( const Graph& g, OUTPUT& out, const std::string& hint)
      typename Graph::NodeIterator nodes = g.GetNodeIterator();
      for ( ; !nodes.ReachEnd() ; ++nodes) {
         typename Graph::Node* curnode = *nodes;
-        out << "node " << curnode << ":" << curnode->toString() << std::endl;
+        std::string s = curnode->toString();
+        if (s == "") out << "node " << curnode << ":";
+        else out << "node:";
+        out  << curnode->toString() << std::endl;
      }
      for ( nodes.Reset(); !nodes.ReachEnd() ; ++nodes) {
         typename Graph::Node* curnode = *nodes;
