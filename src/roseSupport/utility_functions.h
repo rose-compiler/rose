@@ -85,7 +85,9 @@ ROSE_DLL_API int copy_backend( SgProject* project, UnparseFormatHelp *unparseFor
 // SgProject & frontend ( int argc, char * argv[] );
 
 ROSE_DLL_API void generatePDF ( const SgProject & project );
-ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
+
+// DQ (12/20/2018): Added option to exclude template instantiations which make the graphs smaller and tractable t manage for larger C++ applications.
+ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenamePostfix = "", bool excludeTemplateInstantiations = false );
 
 // DQ (9/22/2017): Adding support that is can work with any IR node, so that we can generated DOT files on untyped ASTs.
 // I prefer the API that takes a SgNode pointer.
