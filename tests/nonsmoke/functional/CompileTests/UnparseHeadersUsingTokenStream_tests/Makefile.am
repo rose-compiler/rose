@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST =
 
-noinst_PROGRAMS = TestUnparseHeadersUsingTokens whiteSpaceTransformation
+noinst_PROGRAMS = TestUnparseHeadersUsingTokens whiteSpaceTransformation transformVariable
 
 TestUnparseHeadersUsingTokens_SOURCES = UnparseHeadersTransformVisitorUsingTokens.C TestUnparseHeadersUsingTokens.C
 TestUnparseHeadersUsingTokens_CPPFLAGS = $(ROSE_INCLUDES)
@@ -14,6 +14,10 @@ whiteSpaceTransformation_LDFLAGS  = $(ROSE_RPATHS)
 whiteSpaceTransformation_LDADD    = $(ROSE_LIBS)
 # whiteSpaceTransformation_DEPENDENCIES = whiteSpaceTransformation.C whiteSpaceTransformation.h
 
+transformVariable_SOURCES  = transformVariable.C
+transformVariable_CPPFLAGS = $(ROSE_INCLUDES)
+transformVariable_LDFLAGS  = $(ROSE_RPATHS)
+transformVariable_LDADD    = $(ROSE_LIBS)
 
 # Test specimens are actually directories, each of which contains a ROSE Test Harness "config" file.
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
@@ -38,7 +42,11 @@ $(TEST_TARGETS): %.passed: $(srcdir)/% %/config TestUnparseHeadersUsingTokens
 	mkdir -p "$(@:.passed=)"
 	$(RTH_RUN) ROSE_SWITCHES="$(ROSE_SWITCHES)" HDR_ROOT_SWITCHES="$(HDR_ROOT_SWITCHES)" "$</config" "$@"
 
-check-local: $(TEST_TARGETS)
+# DQ (12/27/2018): This is a test using the Windows line endings (previously failing case).
+testTransformVariable: transformVariable $(srcdir)/badInput.c
+	./transformVariable -rose:unparse_tokens -c $(srcdir)/badInput.c
+
+check-local: $(TEST_TARGETS) testTransformVariable
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

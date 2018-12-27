@@ -602,6 +602,19 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
      printf("%s is either a %s token \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier");
 #endif
 
+#if 0
+     printf("%s is a %s token str.length() = %zu \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier",str.length());
+     if (str.length() == 1)
+        {
+          printf ("str[0] = %d \n",str[0]);
+        }
+     if (str.length() == 2)
+        {
+          printf ("str[0] = %d \n",str[0]);
+          printf ("str[1] = %d \n",str[1]);
+        }
+#endif
+
   // found a keyword?
      if(is_keyword != -1)
         {
@@ -663,7 +676,27 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
 
   // When using the std::string we need to subtract 1 for the null terminal.
   // preproc_column_num += strlen(yytext);
-     preproc_column_num += str.length();
+  // preproc_column_num += str.length();
+
+  // DQ (12/26/2018): This is reset when we see a windows CR LF pair.
+     if (str.length() == 2)
+        {
+          if (str[0] == '\r' && str[1] == '\n')
+             {
+#if 0
+               printf ("Found a CR LF Windows line ending pair, reset the column number \n");
+#endif
+               preproc_column_num = 1;
+             }
+            else
+             {
+               preproc_column_num += str.length();
+             }
+        }
+       else
+        {
+          preproc_column_num += str.length();
+        }
 
   // push the element onto the token stream
      ROSE_token_stream_pointer->push_back(p_se);
@@ -896,6 +929,12 @@ BEGIN NORMAL;
 #endif
   // DQ (11/29/2018): Adding windows line ending support to ROSE.
      add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+
+  // DQ (12/26/2018): Adding windows line ending support to ROSE (increment the line count).
+     preproc_line_num  += 1;
+
+  // DQ (12/26/2018): This is reset in the add_token() function.
+  // preproc_column_num = 1;
    }
 
 <NORMAL>{mlinkagespecification} { 

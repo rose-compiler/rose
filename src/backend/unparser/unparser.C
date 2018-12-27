@@ -1479,7 +1479,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
         {
 #if 0
-          printf ("TOP OF LOOP: line = %d column = %d \n",current_line_number,current_column_number);
+          printf ("TOP OF LOOP: current_line_number: line = %d current_column_number: column = %d \n",current_line_number,current_column_number);
 #endif
 #if 0
           printf ("   --- token #%d token = %p \n",output_token_counter,(*i)->p_tok_elem);
@@ -1495,9 +1495,16 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 #endif
           output_token_counter++;
 
-          std::string s = (*i)->p_tok_elem->token_lexeme;
-          int lines = getNumberOfLines(s);
+          std::string s   = (*i)->p_tok_elem->token_lexeme;
+          int lines       = getNumberOfLines(s);
           int line_length = getColumnNumberOfEndOfString(s);
+#if 0
+       // DQ (12/26/2018): Added detection for windows line endings.
+          if (s.length() == 2 && s[0] == '\r' && s[1] == '\n')
+             {
+               printf ("   --- Found a Windows CR LF pair \n");
+             }
+#endif
 #if 0
           printf ("   --- lines = %d \n",lines);
           printf ("   --- line_length = %d \n",line_length);
@@ -1524,6 +1531,10 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
              }
 
           current_line_number += lines;
+
+#if 0
+          printf ("MIDDLE OF LOOP: current_line_number: line = %d current_column_number: column = %d \n",current_line_number,current_column_number);
+#endif
           if (lines == 0)
              {
             // Increment the column number.
