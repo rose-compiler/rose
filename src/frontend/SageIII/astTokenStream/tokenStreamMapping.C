@@ -668,7 +668,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                     trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.line_num,
                     trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.column_num);
 #endif
-#if 0
+#if 1
                printf ("\nGraph_TokenMappingTraversal::visit(): n = %p = %s \n",n,n->class_name().c_str());
                printf ("   --- leading_whitespace_start  = %d leading_whitespace_end  = %d \n",leading_whitespace_start,leading_whitespace_end);
                printf ("   --- token_subsequence_start   = %d token_subsequence_end   = %d \n",token_subsequence_start,token_subsequence_end);
@@ -683,8 +683,20 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                int token_subsequence_start_column   = token_subsequence_start   < 0 ? -1 : tokenList[token_subsequence_start]->beginning_fpi.column_num;
                int token_subsequence_end_line       = token_subsequence_end     < 0 ? -1 : tokenList[token_subsequence_end]->ending_fpi.line_num; 
                int token_subsequence_end_column     = token_subsequence_end     < 0 ? -1 : tokenList[token_subsequence_end]->ending_fpi.column_num;
+
+            // DQ (12/23/2018): Added assertion to catch issue in token based unparsing.
+               ROSE_ASSERT(tokenList[trailing_whitespace_start] != NULL);
+#if 1
+               printf ("tokenList.size() = %zu trailing_whitespace_start = %d \n",tokenList.size(),trailing_whitespace_start);
+#endif
+               ROSE_ASSERT(trailing_whitespace_start < (int)tokenList.size());
                int trailing_whitespace_start_line   = trailing_whitespace_start < 0 ? -1 : tokenList[trailing_whitespace_start]->beginning_fpi.line_num; 
                int trailing_whitespace_start_column = trailing_whitespace_start < 0 ? -1 : tokenList[trailing_whitespace_start]->beginning_fpi.column_num;
+
+            // DQ (12/23/2018): Added assertion to catch issue in token based unparsing.
+               ROSE_ASSERT(tokenList[trailing_whitespace_end] != NULL);
+               ROSE_ASSERT(trailing_whitespace_end < (int)tokenList.size());
+
                int trailing_whitespace_end_line     = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.line_num;
                int trailing_whitespace_end_column   = trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.column_num;
 
@@ -854,7 +866,7 @@ Graph_TokenMappingTraversal::graph_ast_and_token_stream( SgSourceFile* source_fi
      string dot_header = filename;
      filename += ".dot";
 
-#if 0
+#if 1
      printf ("In graph_ast_and_token_stream(): filename = %s \n",filename.c_str());
 #endif
 
@@ -6391,7 +6403,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
-#if 1
+#if 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
@@ -6499,8 +6511,9 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      tokenMappingTraversal.outputTokenStreamSequenceMap();
 
 #if 1
+  // DQ (12/26/2018): This is an error for badInput3.c (when using "-rose:verbose 2".
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
-     if ( SgProject::get_verbose() > -1 )
+     if ( SgProject::get_verbose() > 1 )
         {
        // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
        // Build a dot file of the AST and the token stream showing the mapping.
@@ -6535,6 +6548,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 
   // This should now include all of the CPP directives and C/C++ style comments as tokens.
   // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+     int counter = 0;
      for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
         {
           ROSE_ASSERT((*i)->p_tok_elem != NULL);
@@ -6551,6 +6565,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
           roseToken->set_endOfConstruct  (new Sg_File_Info(currentFileId,(*i)->ending_fpi.line_num,   (*i)->ending_fpi.column_num));
 
           roseTokenList.push_back(roseToken);
+          counter++;
         }
 
   // Avoid the copy into the list held by SgSourceFile.

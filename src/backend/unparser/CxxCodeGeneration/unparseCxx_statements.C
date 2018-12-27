@@ -174,6 +174,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
      printf ("In unparseStatementFromTokenStream(): sourceFile->get_tokenSubsequenceMap().size()         = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
+  // DQ (12/26/2018): Moved this to the outer function scopw so that we can assert that any element index is less then the tokenVectorSize.
+     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+     int tokenVectorSize = tokenVector.size();
+
   // Note: that there is a single global map that is accessed from the get_tokenSubsequenceMap() function, not one per SgSourceFile.
   // I am not clear if this is an issue for the header file unparsing using the token steam, I think that since the map is based on 
   // keys that are IR node pointers, they are all unique.
@@ -238,8 +242,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
 
 #if 0
-               SgTokenPtrList & tokenVector = sourceFile->get_token_list();
-               int tokenVectorSize = tokenVector.size();
+            // DQ (12/26/2018): Declaration moved to location above, but in this function.
+            // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+            // int tokenVectorSize = tokenVector.size();
 
                int start = i->second->token_subsequence_start;
                int end   = i->second->token_subsequence_end;
@@ -330,27 +335,39 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          start_reset_because_requestion_position_was_not_defined = true;
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_leading_whitespace_end:
                     start = tokenSubsequence_1->leading_whitespace_end;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_token_subsequence_start:
                     start = tokenSubsequence_1->token_subsequence_start;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_token_subsequence_end:
                     start = tokenSubsequence_1->token_subsequence_end;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_trailing_whitespace_start:
                     start = tokenSubsequence_1->trailing_whitespace_start;
 #if 0
-                    printf ("Case e_trailing_whitespace_start: start = %d \n",start);
+                    printf ("Case e_trailing_whitespace_start: tokenVectorSize = %d start = %d \n",tokenVectorSize,start);
 #endif
                  // DQ (12/10/2014): Note that white space is not always available.
                     if (start == -1)
@@ -362,6 +379,22 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): If this is out of bounds then we have to set it to not available.
+                    if (start >= tokenVectorSize)
+                       {
+#if 0
+                         printf ("Case e_trailing_whitespace_start: start >= tokenVectorSize: resetting to mark as unavailable: start = %d \n",start);
+#endif
+                      // start = -1;
+                         start = tokenVectorSize - 1;
+
+                      // Unclear if this should also be set.
+                         start_reset_because_requestion_position_was_not_defined = true;
+                       }
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_trailing_whitespace_end:
@@ -381,6 +414,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                default:
@@ -398,16 +434,42 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
             // end = start + 1;
 #if 0
                printf ("(stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == true \n");
+               printf ("   --- start_reset_because_requestion_position_was_not_defined = %s \n",start_reset_because_requestion_position_was_not_defined ? "true" : "false");
 #endif
                if (start_reset_because_requestion_position_was_not_defined == false)
                   {
                     end = start + 1;
+
+                 // DQ (12/27/2018): avoid out of range access.
+                    if (end == tokenVectorSize)
+                       {
+                      // DQ (12/27/2018): This case is special to the last token in the file that is unparsed with its own call to unparseStatementFromTokenStream().
+#if 0
+                         printf ("NOTE: ALLOW out of range value: make sure there is no access: start = %d end = %d tokenVectorSize = %d (reset end to start) \n",start,end,tokenVectorSize);
+#endif
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(end < tokenVectorSize);
+                       }
                   }
                  else
                   {
                  // This is a value that will prevent any output of tokens.
                     end = start;
+
+                    ROSE_ASSERT(end < tokenVectorSize);
                   }
+
+            // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+               if (end >= tokenVectorSize)
+                  {
+                 // DQ (12/27/2018): This is allowed for the last token of the file (which is a special case).
+                 // printf ("Error: start = %d end = %d tokenVectorSize = %d \n",start,end,tokenVectorSize);
+                  }
+
+            // DQ (12/27/2018): Modified assertion to test all but the case of end == tokenVectorSize (above).
+            // ROSE_ASSERT(end < tokenVectorSize);
              }
             else
              {
@@ -434,6 +496,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_start;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_leading_whitespace_end:
@@ -445,16 +510,25 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_start;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_token_subsequence_start:
                          end = tokenSubsequence_2->token_subsequence_start;
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_token_subsequence_end:
                          end = tokenSubsequence_2->token_subsequence_end;
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_trailing_whitespace_start:
@@ -466,6 +540,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_end + 1;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_trailing_whitespace_end:
@@ -479,6 +556,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_end + 1;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 #endif
                     default:
@@ -494,9 +574,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
           ROSE_ASSERT(start >= 0);
 
-          SgTokenPtrList & tokenVector = sourceFile->get_token_list();
-
-          int tokenVectorSize = tokenVector.size();
+       // DQ (12/26/2018): This is now declared in the function body scope.
+       // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+       // int tokenVectorSize = tokenVector.size();
 #if 0
           printf ("tokenVectorSize = %d start = %d end = %d \n",tokenVectorSize,start,end);
 #endif
@@ -511,10 +591,13 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
              }
           ROSE_ASSERT(start < tokenVectorSize && end <= tokenVectorSize);
 
+       // DQ (12/27/2018): It appears that we allow the "end" to be equal to "tokenVectorSize".  Could this be an error?
           if (start < tokenVectorSize && end <= tokenVectorSize)
              {
             // We don't want to unparse the token at the end.
-
+#if 0
+               printf ("unparseOnlyWhitespace = %s \n",unparseOnlyWhitespace ? "true" : "false");
+#endif
             // DQ (11/4/2015): Adding support to optionally only unparse the associated whitespace with any region of a statement.
             // This is used when we want to unparse the leading whitespace of a statement as part of a transformation, yet we need 
             // to ONLY unparse the spaces and CR's.
@@ -524,9 +607,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                  // then we only want to use the non-whitespace that is at the end of the leading whitespace for the statement.
 
                     SgTokenPtrList whitespaceTokens;
-
+#if 0
+                    printf ("(unparseOnlyWhitespace == true): end = %d \n",end);
+#endif
                  // We don't want to unparse the token at the end.
                     int j = end-1;
+
                     bool firstCarriageReturn = false;
                     bool still_is_whitespace = true;
                     while ( (j >= start) && (still_is_whitespace == true) )
@@ -538,7 +624,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          printf ("possible whitespace: start = %d j = %d \n",start,j);
 #endif
 #if DEBUG_TOKEN_STREAM_UNPARSING
-                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                         printf ("iterate j=end-1 to j >= start: unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
                          if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
                             {
@@ -585,14 +671,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                   }
                  else
                   {
+                 // DQ (12/27/2018): Now that we enforce uniformally that the end is in bounds of the token vector, we DO want to unparse the end.
+                 // It seems that we can't handle this issue this way.
                  // We don't want to unparse the token at the end.
+                 // for (int j = start; j < end; j++)
                     for (int j = start; j < end; j++)
                        {
                       // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
                           ROSE_ASSERT(j < (int)tokenVector.size());
 
 #if DEBUG_TOKEN_STREAM_UNPARSING
-                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                         printf ("iterate j=start to j < end: unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                          *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
@@ -5528,6 +5617,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::after);
 
 #if 0
+     printf("Leaving Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseAttachedPreprocessingInfo() \n");
      curprint("/* Leaving Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseAttachedPreprocessingInfo() */ ");
 #endif
    }
