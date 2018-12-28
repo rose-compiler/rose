@@ -29,6 +29,8 @@ int main(int argc,char *argv[])
         mu = abs(a[i][k]);
         p[k] = i;
       }
+       else {
+      }
     }
     for (j = k; j <= 49; j += 1) {
       t = a[k][j];

@@ -111,7 +111,7 @@ public:
     const FeasiblePath::VarDetails& varDetails() const {
         return varDetails_;
     }
-    
+
     // Detail for variable name.
     const FeasiblePath::VarDetail& varDetail(const std::string &varName) const {
         return varDetails_.getOrDefault(varName);
@@ -133,24 +133,26 @@ public:
     FeasiblePath *fpAnalyzer_;
     FeasiblePath::PathProcessor *pathProcessor_;
     SmtSolver::Ptr nullPtrSolver_;
+    const P2::CfgPath *path_;
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL),
-          pathProcessor_(NULL) {
+          pathProcessor_(NULL), path_(NULL){
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
-        : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL), pathProcessor_(NULL) {
+        : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL), pathProcessor_(NULL),
+          path_(NULL) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath *fpAnalyzer, FeasiblePath::PathProcessor *pathProcessor,
+                                     FeasiblePath *fpAnalyzer, const P2::CfgPath *path, FeasiblePath::PathProcessor *pathProcessor,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         ASSERT_not_null(fpAnalyzer);
         BaseSemantics::SValuePtr protoval = SValue::instance();
@@ -184,6 +186,7 @@ public:
         RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
         ops->fpAnalyzer_ = fpAnalyzer;
         ops->pathProcessor_ = pathProcessor;
+        ops->path_ = path;
         return ops;
     }
 
@@ -221,7 +224,7 @@ public:
     // Solver for doing null pointer analysis. This solver is usually the same one as the main path processing.
     SmtSolver::Ptr nullPtrSolver() const { return nullPtrSolver_; }
     void nullPtrSolver(const SmtSolver::Ptr &solver) { nullPtrSolver_ = solver; }
-    
+
     const FeasiblePath::VarDetail& varDetail(const std::string &varName) const {
         return State::promote(currentState())->varDetail(varName);
     }
@@ -366,7 +369,7 @@ private:
 
         return retval;
     }
-    
+
 public:
     virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         ASSERT_not_null(partitioner_);
@@ -418,8 +421,11 @@ public:
             return dflt_;
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr))
-            pathProcessor_->nullDeref(FeasiblePath::READ, addr, currentInstruction());
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::READ, addr, currentInstruction());
+        }
         
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
@@ -468,7 +474,7 @@ public:
         // Callback for the memory access
         if (pathProcessor_)
             pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::READ, addr, retval, shared_from_this());
-        
+
         return retval;
     }
 
@@ -482,9 +488,12 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr))
-            pathProcessor_->nullDeref(FeasiblePath::WRITE, addr, currentInstruction());
-
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::WRITE, addr, currentInstruction());
+        }
+        
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
@@ -651,7 +660,8 @@ FeasiblePath::virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &ve
 }
 
 BaseSemantics::DispatcherPtr
-FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, PathProcessor *pathProcessor, const SmtSolver::Ptr &solver) {
+FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgPath *path, PathProcessor *pathProcessor,
+                              const SmtSolver::Ptr &solver) {
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
@@ -677,7 +687,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, PathProcessor 
     }
 
     // Create the RiscOperators and Dispatcher.
-    RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, pathProcessor);
+    RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
     ops->nullPtrSolver(solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
@@ -740,7 +750,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
         SymbolicSemantics::Formatter fmt = symbolicFormat("          ");
         debug <<"        state before block:\n" <<(*ops->currentState() + fmt);
     }
-    
+
     // Process each instruction in the basic block
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
@@ -793,7 +803,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
               <<"    state before summarized function:\n"
               <<(*ops->currentState() + fmt);
     }
-    
+
     SymbolicSemantics::SValuePtr retval;
     if (functionSummarizer_ && functionSummarizer_->process(*this, summary, ops)) {
         retval = functionSummarizer_->returnValue(*this, summary, ops);
@@ -948,72 +958,6 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
 
     SAWYER_MESG(mlog[DEBUG]) <<prefix <<"trivially feasible at edge " <<partitioner().edgeName(pathEdge) <<"\n";
     return SymbolicExpr::makeBoolean(true);             // trivially feasible
-}
-
-boost::logic::tribool
-FeasiblePath::isPathFeasible(const P2::CfgPath &path, const SmtSolverPtr &solver,
-                             std::vector<SymbolicExpr::Ptr> endConstraints,
-                             const SymbolicExprParser::RegisterSubstituter::Ptr &subber,
-                             PathProcessor *pathProcessor,
-                             std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
-                             BaseSemantics::DispatcherPtr &cpu /*out*/) {
-    static const char *prefix = "      ";
-    ASSERT_not_null2(partitioner_, "analysis is not initialized");
-    ASSERT_not_null(solver);
-    cpu = buildVirtualCpu(partitioner(), pathProcessor, solver);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    setInitialState(cpu, path.frontVertex());
-
-    // Replace placeholders in the endConstraints with current values of registers.
-    if (subber) {
-        for (size_t i=0; i<endConstraints.size(); ++i)
-            endConstraints[i] = subber->substitute(endConstraints[i], ops);
-    }
-    
-    size_t pathInsnIndex = 0;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
-        processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
-        const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
-        if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
-            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
-                                     <<" because settings().nonAddressIsFeasible is false\n";
-            return false;
-        } else if (ip->is_number()) {
-            if (!hasVirtualAddress(pathEdge->target())) {
-                // If the IP register is pointing to an instruction but the path vertex is indeterminate (or undiscovered or
-                // nonexisting) then consider this path to be not-feasible. If the CFG is accurate then there's probably
-                // a sibling edge that points to the correct vertex.
-                SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
-                                         <<StringUtility::addrToString(ip->get_number()) <<" and edge target has no address\n";
-                return false;
-            } else if (ip->get_number() != virtualAddress(pathEdge->target())) {
-                // Executing the path forces us to go a different direction than where the path indicates we should go. We
-                // don't need an SMT solver to tell us that when the values are just integers.
-                SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
-                                         <<StringUtility::addrToString(ip->get_number()) <<" and edge target is "
-                                         <<StringUtility::addrToString(virtualAddress(pathEdge->target())) <<"\n";
-                return false;
-            }
-        } else if (hasVirtualAddress(pathEdge->target())) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
-            SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                                SymbolicSemantics::SValue::promote(ip)->get_expression(),
-                                                                solver);
-            constraint->comment("cfg edge " + partitioner().edgeName(pathEdge));
-            SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner().edgeName(pathEdge)
-                                     <<": " <<*constraint <<"\n";
-            pathConstraints.push_back(constraint);
-        }
-    }
-    
-    // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
-    pathConstraints.insert(pathConstraints.end(), endConstraints.begin(), endConstraints.end());
-    switch (solver->satisfiable(pathConstraints)) {
-        case SmtSolver::SAT_YES: return true;
-        case SmtSolver::SAT_NO: return false;
-        default: return boost::logic::indeterminate;
-    }
 }
 
 void
@@ -1249,7 +1193,7 @@ FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solv
 
     while (solver->nLevels() < 1 + path.nEdges())
         solver->push();
-    
+
     ASSERT_require(solver->nLevels() == 1 + path.nEdges());
 }
 
@@ -1304,8 +1248,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
         solver->memoization(false);
 #endif
-        
-        BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner(), &pathProcessor, solver);
+
+        P2::CfgPath path(pathsBeginVertex);
+        BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner(), &path, &pathProcessor, solver);
         ASSERT_not_null(cpu);
         setInitialState(cpu, pathsBeginVertex);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1313,7 +1258,6 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         BaseSemantics::StatePtr originalState = ops->currentState();
         ASSERT_not_null(originalState);
 
-        P2::CfgPath path(pathsBeginVertex);
         while (!path.isEmpty()) {
             if (debug) {
                 debug <<"  path vertices (" <<path.nVertices() <<"):";
@@ -1361,8 +1305,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             } else {
                 ops->currentState(originalState);
             }
-            
-            
+
             // Check whether this path is feasible. We've already validated the path up to but not including its final edge,
             // and we've processed instructions semantically up to the beginning of the final edge's target vertex (the
             // CPU points to this state).  Furthermore, the SMT solver knows all the path conditions up to but not including
@@ -1434,7 +1377,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     }
                 }
             }
-            
+
             // Call user-supplied path processor when appropriate
             if (atEndOfPath && pathIsFeasible && postConditionsSatisified) {
 
@@ -1445,7 +1388,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     cpu->get_operators()->currentState(saved->clone());
                     processVertex(cpu, path.backVertex(), pathInsnIndex /*in,out*/);
                 }
-                
+
                 SAWYER_MESG(debug) <<"    feasible end of path found; calling user-defined processor\n";
                 switch (pathProcessor.found(*this, path, cpu, solver)) {
                     case PathProcessor::BREAK:

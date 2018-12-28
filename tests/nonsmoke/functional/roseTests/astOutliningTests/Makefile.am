@@ -72,6 +72,7 @@ outlineSelection_LDADD = $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS =			\
 	 array1.c				\
 	 arrayParameter.c			\
+	 jacobi.c                               \
 	 moreTest0.c				\
 	 moreTest1.c				\
 	 moreTest8.c				\
@@ -248,6 +249,10 @@ $(tofile_test_targets): tofile_%.passed: % outline
 		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:new_file -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
+# shortcut to test new_file
+
+test_newfile: $(tofile_test_targets)
+
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file using dlopen
 
@@ -267,6 +272,9 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+
+# shortcut to test the dlopen feature
+test_dlopen: $(dlopen_test_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
