@@ -1,17 +1,21 @@
+
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+if ROSE_WITH_GNU_OCTAVE_PARSER
 
 BASIC_TESTCODES = \
                 belief.m \
                 determ.m \
-                nargin_test.m \
-                sam.m \
-                whileTest.m \
-                matrix_access.m \
                 linearreg.m \
-                numquad_test.m
+                matrix_access.m \
+                numquad_test.m \
+                sam.m \
+                whileTest.m 
 
 FAILING_TESTS = \
-              mcmc_test.m
+              mcmc_test.m \
+	      nargin_test.m 
 
 
 ALL_TESTCODES = \
@@ -20,22 +24,27 @@ ALL_TESTCODES = \
 MATLAB_TEST_OBJECTS = \
                    $(patsubst %.m,output/rose_%.cc,$(ALL_TESTCODES))
 
-#~ m2cxx:
-#~ 	$(MAKE) -C ../src m2cxx
+m2cxx:
+	$(MAKE) -C ../src m2cxx
 
-#~ $(MATLAB_TEST_OBJECTS): output/rose_%.cc: $(srcdir)/%.m m2cxx
-#~ 	../M2Cxx.sh -I $(ARMA_PREFIX)/include $<
+$(MATLAB_TEST_OBJECTS): output/rose_%.cc: $(srcdir)/%.m m2cxx
+	../M2Cxx.sh -I $(ARMA_PREFIX)/include $<
 
-#~ conditional-check-local:
-#~ 	@echo "MatlabTranslation tests."
-#~ 	@$(MAKE) $(MATLAB_TEST_OBJECTS)
-#~ 	@echo "======== make check rule for MatlabTranslation terminated normally ========"
+conditional-check-local:
+	@echo "MatlabTranslation tests."
+	@$(MAKE) $(MATLAB_TEST_OBJECTS)
+	@echo "======== make check rule for MatlabTranslation terminated normally ========"
+
+else
 
 conditional-check-local:
 	@echo "\nROSE MatlabTranslation tests NOT run. To run these reconfigure with:"
 	@echo "*********************************************************************************************"
 	@echo "******************* make check not run here: configure --with-octave ************************"
 	@echo "*********************************************************************************************"
+
+endif
+
 
 check-local: conditional-check-local
 

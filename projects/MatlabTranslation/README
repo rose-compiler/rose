@@ -1,8 +1,11 @@
 
 ==Use==
   (1) download code derived from Octave for the frontend
-      e.g., in some directory /XYZ
-      wget https://gitlab.cs.uab.edu/peterp/rose-octave-frontend/raw/master/octavebits.tar.gz 
+      The code can be obtained from
+        https://github.com/ppete/rose-matlab/blob/master/octavebits.tar.gz?raw=true
+
+      for example in some directory /XYZ
+        wget -O octavebits.tar.gz https://github.com/ppete/rose-matlab/blob/master/octavebits.tar.gz?raw=true
 
   (2) configure ROSE with the experimental Matlab frontend
       --enable-experimental_matlab_frontend --with-octave-parser=/XYZ/octavebits.tar.gz
