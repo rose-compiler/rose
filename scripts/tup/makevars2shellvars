@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+
+=pod
+
+=head NAME
+
+makevars2shellvars - filter that converts GNU Make variables to Bash shell variables
+
+=head SYNOPSIS
+
+makevars2shellvars <I<MAKEFILE_VARIABLES> >I<SHELL_VARIABLES>
+
+=head DESCRIPTION
+
+Reads standard input, which should be a makefile containing only assignments to variables, and produces on standard
+output a shell script that assigns values to variables.  The input does not support the full make syntax; rather, it's
+just some simple regular expression substitutions on a line-by-line basis.
+
+Note: We could support the full make syntax if we wanted to. One easy way to do it is to first scan the makefile to find
+the variable names, then make a temporary copy of the input that has a rule that prints all the variable names and their
+values, then run C<make> on that file to produce the variables and their values, then process that output using the
+simple regular expression rewrites described above.
+
+=cut
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use TupScripts;
+    
+my($arg0) = $0 =~ m(([^/]+)$);
+
+while (@ARGV) {
+    my($arg) = shift;
+
+    # Help
+    if ($arg =~ /^(-h|--help|-\?)$/) {
+	TupScripts::help;
+	exit 0;
+    }
+
+    die "$arg0: incorrect usage\n";
+}
+
+while (<STDIN>) {
+    chomp;
+    if (my($var,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
+	print "$var=", TupScripts::shell_escape($val), "\n";
+    } elsif (/^\s*#/ || /^\s*$/) {
+	print $_, "\n"; # comment or blank
+    } else {
+	die "$arg0: unrecognized syntax for VARIABLE=VALUE: $_\n";
+    }
+}

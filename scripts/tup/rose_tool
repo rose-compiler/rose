@@ -1,0 +1,93 @@
+# Shell functions to help configure tools that use ROSE. -*- shell-script -*-
+
+# Check that the tool knows where ROSE is located.  Returns success, or message and returns falure.
+rose_tool/check_configuration() {
+    if [ ! -r rose.cfg ]; then
+	echo "error: no ./rose.cfg file" >&2
+	echo "info: copy the ROSE configuration from the ROSE installation directory." >&2
+	return 1
+    fi
+    return 0
+}
+
+# Install or update Tup support scripts
+rose_tool/install_tup_scripts() {
+    if [ -d tup-scripts ]; then
+	(cd tup-scripts && git pull https://github.com/matzke1/tup-scripts)
+    else
+	git clone https://github.com/matzke1/tup-scripts
+    fi
+}
+
+# Determine how ROSE was built. Echos either 'make' if ROSE was built with GNU Make or 'tup' if ROSE was built with the
+# Tup build system.
+rose_tool/rose_build_type() {
+    if grep '^ROSE_RPATHS' rose.cfg >/dev/null 2>/dev/null; then
+	echo 'make'
+    else
+	echo 'tup'
+    fi
+}
+
+# Get info about the ROSE C++ compiler. The return value is a colon-separated triplet consisting of the compiler vendor
+# ('gnu', 'llvm', or 'intel'), the language standard (e.g., 'c++11', 'gnu++14', etc), and the version (e.g., '5.4.0').
+rose_tool/cxx_triplet() {
+    local cxx=$(sed -nr '/^ROSE_CXX[ \t]*=/ s/^.*?=[ \t]*(.*?)[ \t]*$/\1/p' <rose.cfg)
+
+    # We can't depend on ROSE having been configured with RMC, although we can assume that RMC is installed. So we can't
+    # use $cxx --spock-triplet to get the Spock compiler specification. Instead, detect compiler characteristics the
+    # hard way.
+    (
+	set -e
+	eval $(spock-ls --shellvars --export)
+	local cxx_quad=$($SPOCK_SCRIPTS/impl/detect-compiler-characteristics --quad --baselang=c++ $cxx)
+	local cxx_vendor=$(echo $cxx_quad |cut -d: -f1)
+	local cxx_lang=$(echo $cxx_quad |cut -d: -f3)
+	local cxx_vers=$(echo $cxx_quad |cut -d: -f4)
+	echo "$cxx_vendor:$cxx_lang:$cxx_vers"
+    )
+}
+
+# Get the Spock specification for the ROSE compiler.
+rose_tool/cxx_spec() {
+    local cxx_triplet=$(rose_tool/cxx_triplet)
+    local cxx_vendor=$(echo $cxx_triplet |cut -d: -f1)
+    local cxx_lang=$(echo $cxx_triplet |cut -d: -f2)
+    local cxx_vers=$(echo $cxx_triplet |cut -d: -f3)
+    echo "${cxx_vendor}-${cxx_lang}=${cxx_vers}"
+}
+    
+# Find the installation prefix for Qt.  If ROSE was configured with Qt (i.e., Qt libraries and header directories appear
+# in the rose.cfg file) then return that Qt prefix, otherwise try to find an RMC-installed version of Qt that's
+# compatible with the compiler used to install ROSE.
+rose_tool/qt_prefix() {
+    local qt_root="$(grep '^ROSE_LDFLAGS' rose.cfg |tr ' ' '\n' |sed -n 's%^-L\(.*/qt\)/lib%\1%p' |sort -u)"
+    if [ "$qt_root" != "" ]; then
+	echo "$qt_root"
+    else
+	local cxx_spec=$(rose_tool/cxx_spec)
+	local qt_spec=$(spock-shell --with "$cxx_spec" spock-ls --usable --used qt |tac |head -1 |cut -d' ' -f1)
+	[ "$qt_spec" != "" ] && spock-shell --with "$qt_spec" bash -c 'echo $QT_ROOT'
+    fi
+    return 0
+}
+
+# Find the installation prefix for Wt.  If ROSE was configured with Wt (i.e., Wt libraries and header directories appear
+# in the rose.cfg file) then return that Wt prefix, otherwise try to find an RMC-installed version of Wt that's
+# compatible with the compiler used to install ROSE.
+rose_tool/wt_prefix() {
+    local wt_root="$(grep '^ROSE_LDFLAGS' rose.cfg |tr ' ' '\n' |sed -n 's%^-L\(.*/wt\)/lib%\1%p' |sort -u)"
+    if [ "$wt_root" != "" ]; then
+	echo "$wt_root"
+    else
+	local cxx_spec=$(rose_tool/cxx_spec)
+	local wt_spec=$(spock-shell --with "$cxx_spec" spock-ls --usable --used wt |tac |head -1 |cut -d' ' -f1)
+	[ "$wt_spec" != "" ] && spock-shell --with "$wt_spec" bash -c 'echo $WT_ROOT'
+    fi
+    return 0
+}
+
+# Print the final configuration file.
+rose_tool/print_tup_config() {
+    grep '^CONFIG_' tup.config |column -t -s=
+}
