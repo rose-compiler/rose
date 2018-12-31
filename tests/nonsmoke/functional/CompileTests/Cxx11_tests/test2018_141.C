@@ -57,7 +57,7 @@ void Class_1<T>::func_1(Class_3<int, Class_2, int> **parm_1) {
 #if 0
 And the error:
 
-identityTranslator: /g/g17/charles/code/ROSE/rose-0.9.10.110/src/frontend/SageIII/sageInterface/sageBuilder.C:13079: SgClassDeclaration *SageBuilder::buildClassDeclaration_nfi(const SgName &, SgClassDeclaration::class_types, SgScopeStatement *, SgClassDeclaration *, bool, std::vector<SgTemplateArgument *, std::allocator<SgTemplateArgument *>> *): Assertion `nondefdecl->get_type()->get_declaration() == nondefdecl' failed.
+// identityTranslator: /g/g17/charles/code/ROSE/rose-0.9.10.110/src/frontend/SageIII/sageInterface/sageBuilder.C:13079: SgClassDeclaration *SageBuilder::buildClassDeclaration_nfi(const SgName &, SgClassDeclaration::class_types, SgScopeStatement *, SgClassDeclaration *, bool, std::vector<SgTemplateArgument *, std::allocator<SgTemplateArgument *>> *): Assertion `nondefdecl->get_type()->get_declaration() == nondefdecl' failed.
 
 ERROR: nondefdecl = 0x2aaab9c058b0 = SgTemplateInstantiationDecl
 ERROR: nondefdecl->get_type() = 0x2aaab9823890 = SgClassType
