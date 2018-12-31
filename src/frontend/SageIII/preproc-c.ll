@@ -741,6 +741,18 @@ void add_preprocessingInfo_to_token_stream (PreprocessingInfo* preprocessingInfo
      printf("This is a PreprocessingInfo object processed as a token: preprocessingInfo = %p \n",preprocessingInfo);
 #endif
 
+#if DEBUG_LEX_PASS
+     for (size_t i = 0; i < p_tok_elem->token_lexeme.length(); i++)
+        {
+          printf("   --- p_tok_elem->token_lexeme[i] = %c = (ascii value) %d \n",p_tok_elem->token_lexeme[i],p_tok_elem->token_lexeme[i]);
+       // if (p_tok_elem->token_lexeme[i+1] == '\r')
+          if (p_tok_elem->token_lexeme[i+1] != '\0')
+             {
+               printf("   --- --- p_tok_elem->token_lexeme[i+1] = %c = (ascii value) %d \n",p_tok_elem->token_lexeme[i+1],p_tok_elem->token_lexeme[i+1]);
+             }
+        }
+#endif
+
      stream_element *p_se = new stream_element;
      p_se->p_tok_elem = p_tok_elem;
 
@@ -1492,6 +1504,9 @@ BEGIN NORMAL;
 
         /*Actions while in a MACRO.*/
 <MACRO>\\\r\n   {   // Escaped DOS line termination
+#if DEBUG_LEX_PASS
+                    printf("%s is an escaped  windows line ending token in a CPP directive (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
                     macroString += yytext;
                     ++preproc_line_num;
                     preproc_column_num = 1;
@@ -1504,7 +1519,11 @@ BEGIN NORMAL;
                 }
 
 <MACRO>\n       {   // End of macro
-                    macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+
+                 // DQ (12/30/2018): This is where windows line endings are normalized, and we need to supress this.
+                 // macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = macroString + yytext;
+
                     preproc_line_num++; 
                     preproc_column_num=1; 
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
@@ -1517,7 +1536,11 @@ BEGIN NORMAL;
                 }
 
 <MACRO><<EOF>>  {   // End of macro
-                    macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+
+                 // DQ (12/30/2018): This is where windows line endings are normalized, and we need to supress this.
+                 // macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = macroString + yytext;
+
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
                                                 preproc_start_line_num, preproc_start_column_num,
                                                 preproc_line_num-preproc_start_line_num);
