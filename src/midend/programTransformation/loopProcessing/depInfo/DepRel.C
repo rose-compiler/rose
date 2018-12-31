@@ -138,7 +138,7 @@ bool DepRel :: IsBottom() const
   return GetRelType( entryType ) == DEPDIR_ALL;
 }
 
-std:: string DepRel :: toString() const 
+std:: string DepRel :: toString(bool dir_only) const 
 {
   std:: string res;
   switch ( GetRelType( entryType)) {
@@ -146,21 +146,24 @@ std:: string DepRel :: toString() const
     res = res + "(); "; 
     break;
   case DEPDIR_ALL:
-    res = res + "* ";
+    res = res + "*";
     break;
   case DEPDIR_EQ :
-    res = res + "== ";
+    res = res + "=";
     break;
   case DEPDIR_LE :
-    res = res + "<= ";
+    if (dir_only && align < 0) res = res + "<"; 
+    else res = res + "<=";
     break;
   case DEPDIR_GE :
-    res = res + ">= ";
+    if (dir_only && align > 0) res = res + ">"; 
+    res = res + ">=";
     break;
   case DEPDIR_NE :
-    res = res + " != ";
+    res = res + "!=";
     break;
   }
+  if (dir_only) return res; 
   char buf[20];
   if (align != ALIGN_ALL) {
     sprintf(buf, "%d", align);

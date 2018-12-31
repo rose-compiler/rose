@@ -87,7 +87,7 @@ namespace CodeThorn {
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
     
-    bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
+    bool accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex);
     
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
