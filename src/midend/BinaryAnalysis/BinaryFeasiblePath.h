@@ -140,7 +140,8 @@ public:
          *  pointer in some situations. For instance, the instruction will be null if the dereference occurs when popping the
          *  return address from the stack for a function that was called but whose implementation is not present (such as when
          *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
-        virtual void nullDeref(IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+        virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
+                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -278,7 +279,7 @@ public:
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
     virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    buildVirtualCpu(const Partitioner2::Partitioner&, PathProcessor*, const SmtSolver::Ptr&);
+    buildVirtualCpu(const Partitioner2::Partitioner&, const Partitioner2::CfgPath*, PathProcessor*, const SmtSolver::Ptr&);
 
     /** Initialize state for first vertex of path.
      *
@@ -370,17 +371,6 @@ public:
      *
      *  This is intended mainly for debugging. */
     void printPath(std::ostream &out, const Partitioner2::CfgPath&) const;
-
-    /** Determine whether a single path is feasible.
-     *
-     *  Returns true if the path is feasible, false if not feasible, or indeterminate if a conclusion cannot be reached.  The
-     *  @p postConditions are additional optional conditions that must be satisified at the end of the path.  The entire set of
-     *  conditions is returned via @p pathConditions argument, which can also initially contain preconditions. */
-    virtual boost::tribool
-    isPathFeasible(const Partitioner2::CfgPath &path, const SmtSolverPtr&,
-                   std::vector<SymbolicExpr::Ptr> postConditions, const SymbolicExprParser::RegisterSubstituter::Ptr&,
-                   PathProcessor *pathProcessor, std::vector<SymbolicExpr::Ptr> &pathConditions /*in,out*/,
-                   InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu /*out*/);
 
     /** Determine whether any ending vertex is reachable.
      *

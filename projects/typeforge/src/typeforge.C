@@ -98,6 +98,10 @@ int main (int argc, char* argv[])
   po::store(parsed, args);
   po::notify(args);
 
+  if (argc == 1) {
+    exit(0);
+  }
+
   if (args.count("help")) {
     cout << toolName <<" <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";

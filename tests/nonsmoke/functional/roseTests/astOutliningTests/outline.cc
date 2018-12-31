@@ -48,8 +48,7 @@ main (int argc, char* argv[])
 
      if (!project->get_skip_transformation ())
         {
-          size_t count = 0;
-          count = Outliner::outlineAll (project);
+          Outliner::outlineAll (project);
 
        // Rerun the test on the AST with the outlined code
        // AstTests::runAllTests(project);

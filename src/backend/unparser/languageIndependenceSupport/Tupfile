@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) unparseLanguageIndependentConstructs.C name_qualification_support.C unparser_opt.C \
+    modified_sage.C unparse_debug.C modified_sage_isUnaryOp.C 
+
+run $(public_header) unparseLanguageIndependentConstructs.h name_qualification_support.h unparser_opt.h \
+    modified_sage.h unparse_debug.h
