@@ -46,7 +46,12 @@ $(TEST_TARGETS): %.passed: $(srcdir)/% %/config TestUnparseHeadersUsingTokens
 testTransformVariable: transformVariable $(srcdir)/badInput.c
 	./transformVariable -rose:unparse_tokens -c $(srcdir)/badInput.c
 
-check-local: $(TEST_TARGETS) testTransformVariable
+# DQ (12/30/2018): This is a test using the Windows line endings (CPP directives were missing there windows line endings).
+# cat -v rose_badInput_with_cpp_directives.c | grep -v "\^M" should report zero lines of difference, so we could test this.
+testTransformVariable2: transformVariable $(srcdir)/badInput2.c
+	./transformVariable -rose:unparse_tokens -c $(srcdir)/badInput2.c
+
+check-local: $(TEST_TARGETS) testTransformVariable testTransformVariable2
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

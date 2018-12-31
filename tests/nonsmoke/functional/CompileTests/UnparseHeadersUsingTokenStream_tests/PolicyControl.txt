@@ -5,3 +5,4 @@
 # that we generally enforce within ROSE).  However, it is not clear to me why
 # if passes, so I need to look into this with Robb.
 badInput.c: disable UnixLineTermination
+badInput2.c: disable UnixLineTermination
