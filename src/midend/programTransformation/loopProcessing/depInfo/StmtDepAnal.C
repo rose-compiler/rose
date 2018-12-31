@@ -164,6 +164,9 @@ int SetDepDirection( DepInfo &edd, int commLevel, Collect &result)
       int i;
       for ( i = 0; i < commLevel; i++) {
         DepRel e1 = edd.Entry(i,i) & lt; 
+        if (DebugDep()) {
+           std::cerr << "at common loop level " << i << ":" << e1.toString() << "\n";
+        }
         if (!e1.IsTop()) {
           DepInfo edd1( edd);
           edd1.Entry( i,i) = e1;
