@@ -20,11 +20,13 @@ mpaValuePropagation_includes=\
 
 
 mpaValuePropagation_la_sources=\
+	$(mpaValuePropagationPath)/ArrayAnnot.C \
 	$(mpaValuePropagationPath)/ValueAnnot.C \
 	$(mpaValuePropagationPath)/ValuePropagate.C
 
 
 mpaValuePropagation_includeHeaders=\
+	$(mpaValuePropagationPath)/ArrayAnnot.h \
 	$(mpaValuePropagationPath)/ValueAnnot.h \
 	$(mpaValuePropagationPath)/ValuePropagate.h
 

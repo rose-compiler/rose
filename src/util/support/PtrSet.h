@@ -66,8 +66,6 @@ class PtrSetWrap
     const_iterator& operator = (const const_iterator& that)
       { 
         Iterator::operator=(that);
-
-     // DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
         return *this;
       }
 
@@ -83,8 +81,6 @@ class PtrSetWrap
     iterator& operator = (const iterator& that)
       {
         Iterator::operator=(that); 
-
-     // DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
         return *this;
       }
 

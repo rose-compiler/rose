@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) unparseAda_expressions.C unparseAda_statements.C unparseAda_types.C
+
+run $(public_header) unparseAda.h

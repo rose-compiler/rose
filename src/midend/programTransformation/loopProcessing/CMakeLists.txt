@@ -27,8 +27,7 @@ if (NOT enable-internalFrontendDevelopment)
     depGraph/DepGraphBuild.C
     depGraph/LoopAnalysis.C
     outsideInterface/ArrayRewrite.C
-    outsideInterface/ArrayAnnot.C
-    outsideInterface/ArrayInterface.C
+    driver/ArrayInterface.C
     driver/CopyArrayAnal.C
     driver/LoopTransformInterface.C
     driver/FusionAnal.C

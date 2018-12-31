@@ -32,8 +32,8 @@ static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
  
            l.push_back(fa.CreateConstInt(1).get_ptr());
            l.push_back(size.CodeGen(fa).get_ptr());
-           std::string name = "getTuningValue";
-           AstNodePtr init = fa.CreateFunctionCall(name, l.begin(), l.end());
+           std::string funname = "getTuningValue";
+           AstNodePtr init = fa.CreateFunctionCall(funname, l.begin(), l.end());
            return SymbolicVar(fa.NewVar(fa.GetType("int"), "",true,true,AST_NULL, init),AST_NULL); 
        }
     }
@@ -137,7 +137,7 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   bool debugloop = DebugLoop();
 
   if (debugloop) {
-        std::cerr << "\n from\n";
+        std::cerr << "\n Apply Loop blocking: from\n";
         top->DumpTree();
   }
   LoopTreeNode* head= ApplyBlocking(nestInfo,comp,op,top);
@@ -157,13 +157,30 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
               LoopTreeDepComp& comp, DependenceHoisting &op, LoopTreeNode *&top)
 {
   const CompSliceNest& slices = *nestInfo.GetNest();
+  if (DebugLoop()) {
+     std::cerr << "\n Blocking slices: " << slices.toString() << "\n";
+  }
   LoopTreeNode *head = 0;
   AstInterface& fa = LoopTransformInterface::getAstInterface();
   for (int j = FirstIndex(); j >= 0; j = NextIndex(j))  {
      top = op.Transform( comp, slices[j], top);
      SymbolicVal b = BlockSize(j);
+     if (DebugLoop()) {
+        std::cerr << "\n after slice " << j << " : \n";
+        //top->DumpTree();
+        comp.DumpTree();
+        comp.DumpDep();
+        std::cerr << "\n blocking size for this loop is " << b.toString() << "\n";
+     }
+      
      if (!(b == 1)) {
          LoopTreeNode *n = LoopTreeBlockLoop()( top, SymbolicVar(fa.NewVar(fa.GetType("int")), AST_NULL), b);
+         if (DebugLoop()) {
+            std::cerr << "\n after tiling loop with size " << b.toString() << " : \n";
+            //top->DumpTree();
+            comp.DumpTree();
+            comp.DumpDep();
+         }
          if (head == 0)
              head = n;
          else {

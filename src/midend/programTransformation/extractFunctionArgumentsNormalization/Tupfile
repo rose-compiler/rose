@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) ExtractFunctionArguments.C functionEvaluationOrderTraversal.C
+
+run $(public_header) ExtractFunctionArguments.h functionEvaluationOrderTraversal.h
