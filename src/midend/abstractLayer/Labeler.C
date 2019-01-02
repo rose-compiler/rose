@@ -423,12 +423,12 @@ long Labeler::numberOfLabels() {
 }
 
 Label Labeler::functionCallLabel(SgNode* node) {
-  assert(SgNodeHelper::Pattern::matchFunctionCall(node));
+  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   return getLabel(node);
 }
 
 Label Labeler::functionCallReturnLabel(SgNode* node) {
-  assert(SgNodeHelper::Pattern::matchFunctionCall(node));
+  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   // in its current implementation it is guaranteed that labels associated with the same node
   // are associated as an increasing sequence of labels
   Label lab=getLabel(node);
@@ -438,11 +438,11 @@ Label Labeler::functionCallReturnLabel(SgNode* node) {
     return lab+1; 
 }
 Label Labeler::blockBeginLabel(SgNode* node) {
-  assert(isSgBasicBlock(node));
+  ROSE_ASSERT(isSgBasicBlock(node));
   return getLabel(node);
 }
 Label Labeler::blockEndLabel(SgNode* node) {
-  assert(isSgBasicBlock(node));
+  ROSE_ASSERT(isSgBasicBlock(node));
   Label lab=getLabel(node);
   if(lab==NO_LABEL) 
     return NO_LABEL;
@@ -450,11 +450,11 @@ Label Labeler::blockEndLabel(SgNode* node) {
     return lab+1; 
 }
 Label Labeler::functionEntryLabel(SgNode* node) {
-  assert(isSgFunctionDefinition(node));
+  ROSE_ASSERT(isSgFunctionDefinition(node));
   return getLabel(node);
 }
 Label Labeler::functionExitLabel(SgNode* node) {
-  assert(isSgFunctionDefinition(node));
+  ROSE_ASSERT(isSgFunctionDefinition(node));
   Label lab=getLabel(node);
   if(lab==NO_LABEL) 
     return NO_LABEL;

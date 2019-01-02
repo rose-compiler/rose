@@ -4,6 +4,7 @@
 // In AST, both varRefExps are pointing to the same variable symbol.
 // This can be confusing to analysis.
 // Liao 7/7/2016
+#include <omp.h> 
 
 struct VectorXY 
 {
@@ -21,6 +22,8 @@ void applyVelocity()
 // which prevent auto parallelization
   
 #pragma autopar remain_dep(4)
+  
+#pragma omp parallel for private (in)
   for (in = 0; in <= 9; in += 1) {
     v1[in] . y = v2[3] . y;
   }

@@ -1,3 +1,0 @@
-include utils.incl
-<xform gen_manycore_stencil_local pars=(oldarray, newarray, dimsizes, body) /> 
-<xform gen_manycore_stencil_boundary pars=(loclist, oldarray, array, dim,dim_idx,local) />

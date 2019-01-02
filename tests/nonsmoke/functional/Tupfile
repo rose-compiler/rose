@@ -1,0 +1,12 @@
+#FIXME: So far, this Tupfile contains only those things which are needed by lower Tupfiles
+include_rules
+
+# This tests the ability to generate pdf file (AST) for the input application.
+run $(tool_compile_linkexe) testPDFGeneration.C
+
+# This tests the ability to read and regenerate the input application and compile it using the backend compiler.
+run $(tool_compile_linkexe) testTranslator.C
+
+# These tests an option to use frontend specific constant folding or the original expression trees (default is no constnt folding).
+run $(tool_compile_linkexe) testTranslatorUnfoldedConstants.C
+run $(tool_compile_linkexe) testTranslatorFoldedConstants.C

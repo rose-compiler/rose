@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile) ControlDependenceGraph.C DataDependenceGraph.C MergedDependenceGraph.C CreateSlice.C \
+    SlicingInfo.C CreateSliceSet.C DependenceGraph.C FunctionDependenceGraph.C SystemDependenceGraph.C \
+    DefUseExtension.C EDefUse.C ControlFlowGraph.C
+
+run $(public_header) DebugTool.h DefUseExtension.h DependenceGraph.h InterproceduralInfo.h SimpleDirectedGraph.h \
+    SlicingInfo.h EDefUse.h SDGLibraryExtender.h CreateSlice.h CreateSliceSet.h ControlFlowGraph.h
