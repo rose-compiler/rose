@@ -3985,7 +3985,6 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           const map<string, SgScopeStatement*>& unparseScopesMap = includedFilesUnparser.getUnparseScopesMap();
 
           prependIncludeOptionsToCommandLine(project, includedFilesUnparser.getIncludeCompilerOptions());
-
 #if 0
        // DQ (10/23/2018): Output report of AST nodes marked as modified!
           SageInterface::reportModifiedStatements("After prependIncludeOptionsToCommandLine()",project);
