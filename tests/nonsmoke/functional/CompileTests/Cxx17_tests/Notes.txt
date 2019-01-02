@@ -1,0 +1,114 @@
+Outline of C++17 features from: 
+   https://stackoverflow.com/questions/38060436/what-are-the-new-features-in-c17
+
+
+X: means that I have gathered an example of the new C++17 example code.
+
+
+Language features:
+Templates and Generic Code
+
+X    Template argument deduction for class templates
+        Like how functions deduce template arguments, now constructors can deduce the template arguments of the class
+        http://wg21.link/p0433r2 http://wg21.link/p0620r0 http://wg21.link/p0512r0
+
+X    template <auto>
+        Represents a value of any (non-type template argument) type.
+
+X    Non-type template arguments fixes
+
+X    template<template<class...>typename bob> struct foo {}
+
+X    ( Folding + ... + expressions ) and Revisions
+
+X    auto x{8}; is an int
+
+X    modernizing using with ... and lists
+
+Lambda
+
+X    constexpr lambdas
+        Lambdas are implicitly constexpr if they qualify
+
+x    Capturing *this in lambdas
+        [*this]{ std::cout << could << " be " << useful << '\n'; }
+
+Attributes
+
+X    [[fallthrough]], [[nodiscard]], [[maybe_unused]] attributes
+
+X    [[attributes]] on namespaces and enum { erator[[s]] }
+
+X    using in attributes to avoid having to repeat an attribute namespace.
+
+X    Compilers are now required to ignore non-standard attributes they don't recognize.
+        The C++14 wording allowed compilers to reject unknown scoped attributes.
+
+Syntax cleanup
+
+X    Inline variables
+        Like inline functions
+        Compiler picks where the instance is instantiated
+        Deprecate static constexpr redeclaration, now implicitly inline.
+
+X    namespace A::B
+
+X    Simple static_assert(expression); with no string
+
+X    no throw unless throw(), and throw() is noexcept(true).
+
+Cleaner multi-return and flow control
+
+X    Structured bindings
+        Basically, first-class std::tie with auto
+        Example:
+            const auto [it, inserted] = map.insert( {"foo", bar} );
+            Creates variables it and inserted with deduced type from the pair that map::insert returns.
+        Works with tuple/pair-likes & std::arrays and relatively flat structs
+        Actually named structured bindings in standard
+
+X    if (init; condition) and switch (init; condition)
+        if (const auto [it, inserted] = map.insert( {"foo", bar} ); inserted)
+        Extends the if(decl) to cases where decl isn't convertible-to-bool sensibly.
+
+X    Generalizing range-based for loops
+        Appears to be mostly support for sentinels, or end iterators that are not the same type as begin iterators, which helps with null-terminated loops and the like.
+
+X    if constexpr
+        Much requested feature to simplify almost-generic code.
+
+Misc
+
+    Hexadecimal float point literals
+
+    Dynamic memory allocation for over-aligned data
+
+    Guaranteed copy elision
+        Finally!
+        Not in all cases, but distinguishes syntax where you are "just creating something" that was called elision, from "genuine elision".
+
+    Fixed order-of-evaluation for (some) expressions with some modifications
+        Not including function arguments, but function argument evaluation interleaving now banned
+        Makes a bunch of broken code work mostly, and makes .then on future work.
+
+    Direct list-initialization of enums
+
+    Forward progress guarantees (FPG) (also, FPGs for parallel algorithms)
+        I think this is saying "the implementation may not stall threads forever"?
+
+    u8'U', u8'T', u8'F', u8'8' character literals (string already existed)
+
+    "noexcept" in the type system
+
+    __has_include
+        Test if a header file include would be an error
+        makes migrating from experimental to std almost seamless
+
+    Arrays of pointer conversion fixes
+
+    inherited constructors fixes to some corner cases (see P0136R0 for examples of behavior changes)
+
+    aggregate initialization with inheritance.
+
+    std::launder, type punning, etc
+

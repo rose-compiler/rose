@@ -3996,6 +3996,11 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           for (map<string, string>::const_iterator unparseMapEntry = unparseMap.begin(); unparseMapEntry != unparseMap.end(); unparseMapEntry++)
              {
                const string & originalFileName = unparseMapEntry -> first;
+
+             // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
+             // location collissions when compileing either multiple files or multiple files in parallel.
+             // unparseRootPath += "/" + originalFileName;
+
                const string & outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
 
                printf ("   ---  originalFileName = %s \n",originalFileName.c_str());
@@ -4066,6 +4071,10 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                     string filenameWithOutPath = FileHelper::getFileName(originalFileName);
 
                     string adjusted_header_file_directory = unparseRootPath;
+
+                  // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
+                  // location collissions when compileing either multiple files or multiple files in parallel.
+                  // adjusted_header_file_directory += "/" + filenameWithOutPath;
 
                     SgIncludeFile* associated_include_file = unparsedFile->get_associated_include_file();
                     ROSE_ASSERT(associated_include_file != NULL);
@@ -4233,6 +4242,13 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
             // the include directive with a path prefix.  If this is the case then it is recomputed below.
                string adjusted_header_file_directory = unparseRootPath;
 
+            // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
+            // location collissions when compileing either multiple files or multiple files in parallel.
+            // string filenameWithOutPath = FileHelper::getFileName(originalFileName);
+            // adjusted_header_file_directory += "/" + filenameWithOutPath;
+#if 0
+               printf ("Modified adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+#endif
                SgHeaderFileBody* associated_header_file_body = isSgHeaderFileBody(unparsedFile->get_parent());
                if (associated_header_file_body != NULL)
                   {
@@ -4273,8 +4289,14 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 
                               adjusted_header_file_directory = unparseRootPath + "/" + directoryPathPrefix;
-#if 0
+#if 1
                               printf ("adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+#endif
+                           // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
+                           // location collissions when compileing either multiple files or multiple files in parallel.
+                           // adjusted_header_file_directory += "/" + filenameWithOutPath;
+#if 0
+                              printf ("Modified adjusted_header_file_directory = %s (part 2) \n",adjusted_header_file_directory.c_str());
 #endif
                            // DQ (11/6/2018): Build the path.
                               boost::filesystem::path pathPrefix(adjusted_header_file_directory);
