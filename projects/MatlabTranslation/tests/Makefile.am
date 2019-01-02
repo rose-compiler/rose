@@ -9,13 +9,13 @@ BASIC_TESTCODES = \
                 determ.m \
                 linearreg.m \
                 matrix_access.m \
+	        nargin_test.m \
                 numquad_test.m \
                 sam.m \
                 whileTest.m 
 
 FAILING_TESTS = \
               mcmc_test.m \
-	      nargin_test.m 
 
 
 ALL_TESTCODES = \

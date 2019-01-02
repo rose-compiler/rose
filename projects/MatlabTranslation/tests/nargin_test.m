@@ -8,13 +8,15 @@ end
 function c = addme(a,b)
     if nargin == 0 
       c = 0
-    elseif nargin == 1
-      c = a
-    elseif nargin == 2
-      c = a+b
-    else 
-      c = -(a+b)
+    %~ elseif nargin == 1
+      %~ c = a
+    %~ elseif nargin == 2
+      %~ c = a+b
+    %~ else 
+      %~ c = -(a+b)
     end
+
+    c = 0
 end
 
 function res = donothing()
