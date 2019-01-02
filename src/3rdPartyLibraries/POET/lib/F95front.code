@@ -1,6 +1,6 @@
 include Ffront.code
 
-<define PREP ParseLine[comment_col=1;continue_endofline="&";text_len=66] />
+<define PREP ParseLine[comment_col=1;continue_endofline="&";text_len=-1] />
 
 <code F95Comment pars=(content:CODE.UnknownUntilEOL)>
 !@content@
