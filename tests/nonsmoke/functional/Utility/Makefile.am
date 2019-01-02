@@ -11,6 +11,21 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD = $(ROSE_LIBS)
 
+########################################################################################################################
+# Test BitFlags
+########################################################################################################################
+
+noinst_PROGRAMS += bitFlags
+bitFlags_SOURCES = bitFlags.C
+
+TEST_TARGETS += bitFlags.passed
+
+bitFlags.passed: $(top_srcdir)/scripts/test_exit_status bitFlags
+	@$(RTH_RUN)				\
+		TITLE="bit flags [$@]"		\
+		USE_SUBIDR=yes			\
+		CMD="$$(pwd)/bitFlags"		\
+		$< $@
 
 ########################################################################################################################
 # Test that Rose::FileSystem::copyFile works

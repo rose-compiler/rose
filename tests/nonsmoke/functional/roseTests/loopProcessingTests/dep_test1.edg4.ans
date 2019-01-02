@@ -1,0 +1,6 @@
+----------------------------------------------
+dependence graph: 
+From SgExprStatement:a[2 * i + 1] = a[i] + 1;:
+To SgExprStatement:a[2 * i + 1] = a[i] + 1;:a[2 * i + 1]@6:5->a[i]@6:14: (<);TRUE_DEP;
+To SgExprStatement:a[2 * i + 1] = a[i] + 1;:a[i]@6:14->a[2 * i + 1]@6:5: (<);ANTI_DEP;
+To SgExprStatement:a[2 * i + 1] = a[i] + 1;:a[i]@6:14->a[2 * i + 1]@6:5: (=);ANTI_DEP;

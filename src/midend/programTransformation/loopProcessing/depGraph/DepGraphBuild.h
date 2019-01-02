@@ -59,10 +59,7 @@ class  BuildAstTreeDepGraph : public AstTreeDepGraphAnal,
   bool ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest);
   bool ProcessIf(AstInterface &fa, const AstNodePtr& l, 
                     const AstNodePtr& cond, const AstNodePtr& truebody,
-                    const AstNodePtr& falsebody, AstInterface::TraversalVisitType t)
-     { if (t == AstInterface::PreVisit) return ProcessStmt(fa, l); 
-       return true;
-     }
+                    const AstNodePtr& falsebody, AstInterface::TraversalVisitType t);
   bool ProcessLoop(AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
                       AstInterface::TraversalVisitType t);
   GraphAccessInterface::Node* LastProcessedStmt() 

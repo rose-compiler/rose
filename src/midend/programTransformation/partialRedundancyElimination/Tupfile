@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) pre.C preControlFlowGraph.C expressionTreeEqual.C
+
+run $(public_header) pre.h preControlFlowGraph.h expressionTreeEqual.h

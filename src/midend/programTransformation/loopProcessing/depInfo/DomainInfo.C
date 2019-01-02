@@ -3,6 +3,8 @@
 
 #include <DomainInfo.h>
 
+extern bool DebugDep();
+
 inline DomainInfoImpl* Clone(const DomainInfoImpl& that)
    { return that.Clone(); }
 
@@ -185,13 +187,18 @@ void DomainCond ::  RestrictDepInfo (DepInfo &dep, DepDirection dir) const
 {
   if (IsTop() || IsBottom())
      return;
+   if (dep.IsTop()) return;
 
-  DepInfo info( *this);
+  DepInfo info( *this), dep1(dep);
   if (dir & DEP_SRC) {
      dep &= info * dep;
   }
   if (dir & DEP_SINK) {
      dep &= dep * info;
+  }
+
+  if (DebugDep() && dep.IsTop()) {
+     std::cerr << "removing dep " << dep1.toString() << " because of constraints: " << toString() << " changing it to " << dep.toString() << "\n";
   }
 }
 

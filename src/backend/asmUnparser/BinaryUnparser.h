@@ -4,6 +4,7 @@
 
 #include <Sawyer/CommandLine.h>
 #include <BaseSemantics2.h>
+#include <BinaryEdgeArrows.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -43,6 +44,7 @@ struct Settings {
             bool showingPredecessors;                   /**< Show basic block predecessors? */
             bool showingSuccessors;                     /**< Show basic block successors? */
             bool showingSharing;                        /**< Show functions when block is shared? */
+            bool showingArrows;                         /**< Draw arrows from one block to another. */
         } cfg;                                          /**< Settings for control flow graphs. */
         struct {
             bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
@@ -89,6 +91,10 @@ struct Settings {
             bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
         } semantics;
     } insn;                                             /**< Settings for instructions. */
+    
+    struct {
+        EdgeArrows::ArrowStylePreset style;             /**< One of the arrow style presets. */
+    } arrow;                                            /**< How to render arrows along the left margin. */
 
     Settings();
     static Settings full();
