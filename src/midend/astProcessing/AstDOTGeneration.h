@@ -15,11 +15,13 @@ class ROSE_DLL_API AstDOTGeneration : public DOTGeneration<SgNode*>
          //traverse full AST , nodes which represent code from include files . name postfix does not need an ending "."
           void generate(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
           void generate(SgNode* node,  std::string filename, traversalType tt = TOPDOWNBOTTOMUP,std::string filenamePostfix = "");
-          // traverse the subtree of AST which represents the files specified on the command line
-          void generateInputFiles(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
+
+       // DQ (12/20/2018): Added support to exclude template instantiations to make the graphs more tractable within large C++ applications.
+       // traverse the subtree of AST which represents the files specified on the command line
+          void generateInputFiles(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="", bool excludeTemplateInstantiations = false);
+
           // only the nodes which represent code of the same file as the start node 
           void generateWithinFile(SgFile* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
-
           void writeIncidenceGraphToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename);
           void addAdditionalNodesAndEdges(SgNode* node);
 

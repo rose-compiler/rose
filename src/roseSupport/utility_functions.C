@@ -977,7 +977,7 @@ generatePDF ( const SgProject & project )
    }
 
 void
-generateDOT ( const SgProject & project, std::string filenamePostfix )
+generateDOT ( const SgProject & project, std::string filenamePostfix, bool excludeTemplateInstantiations )
    {
   // DQ (7/4/2008): Added default parameter to support the filenamePostfix 
   // mechanism in AstDOTGeneration
@@ -988,8 +988,12 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
+  // DQ (12/14/2018): The number of nodes is computed globally, but the graph is genereated only for the input file.
+  // So this can suppress the generation of the graph when there are a large number of IR nodes from header files.
+  // Multiplied the previous value by 10 to support building the smaller graph of the input file.
   // DQ (2/18/2013): Generating a DOT file of over a million IR nodes is too much.
-     int maxSize = 1000000;
+  // int maxSize = 1000000;
+     int maxSize = 10000000;
 
      int numberOfASTnodes = numberOfNodes();
 
@@ -1009,7 +1013,8 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
        // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
        // is not being processed (which appears to be a bug). This is because in the implementation
        // of the generateInputFiles the function traverseInputFiles is called.
-          astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+       // astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+          astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix,excludeTemplateInstantiations);
 #endif
         }
        else

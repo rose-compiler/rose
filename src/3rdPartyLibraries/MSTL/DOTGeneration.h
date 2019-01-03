@@ -17,7 +17,10 @@ class DOTInheritedAttribute : public SgInheritedAttribute
        // These are specific gnu compatability details.
           bool skipSubTree;
 
-          DOTInheritedAttribute() : skipSubTree(false), tdTracePos(0), tdbuTracePos(0) {}
+       // DQ (12/20/2018): Skip template instantiations that can make the DOT files too large to generate or look at easily.
+          bool skipTemplateInstantiations;
+
+          DOTInheritedAttribute() : skipSubTree(false), skipTemplateInstantiations(false), tdTracePos(0), tdbuTracePos(0) {}
           DOTRepresentation<SgNode*>::TraceType tdTracePos; // tdTrace value at node
           DOTRepresentation<SgNode*>::TraceType tdbuTracePos; // tdbuTrace value at node
    };
