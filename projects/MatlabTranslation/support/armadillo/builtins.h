@@ -19,17 +19,17 @@ namespace fastnumbuiltin
     return m.det();
   }
 
-  //~ static inline
-  //~ Matrix<double> randn(int m, int n)
-  //~ {
-    //~ return Matrix<double>(arma::randn(m, n));
-  //~ }
+  static inline
+  Matrix<double> randn(int m, int n)
+  {
+    return Matrix<double>(arma::randn(m, n));
+  }
 
-  //~ static inline
-  //~ auto randn(int m) ->
-  //~ {
-    //~ return ::arma::randn(m,m);
-  //~ }
+  static inline
+  Matrix<double> randn(int m)
+  {
+    return ::arma::randn(m,m);
+  }
 
   static inline
   double randn()
@@ -38,6 +38,7 @@ namespace fastnumbuiltin
 
     return m.at(0);
   }
+
 
   //~ //uniform distribution
   static inline
@@ -182,7 +183,7 @@ namespace fastnumbuiltin
   template <class T>
   static inline
   auto
-  mrdivide(const Matrix<T>& m1, const Matrix<T>& m2)
+  mrdivide(const Matrix<T>& m1, const Matrix<T>& m2) -> decltype(::arma::solve(m2.t(), m1.t()).t())
   {
     return ::arma::solve(m2.t(), m1.t()).t();
   }
