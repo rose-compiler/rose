@@ -2800,6 +2800,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // Unparse the sequence of tokens from e_trailing_whitespace_start to (but excluding) e_trailing_whitespace_end.
                     unparseStatementFromTokenStream (stmt, e_trailing_whitespace_start, e_trailing_whitespace_end, info);
 
+#if 0
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Unparse the last token explicitly: Calling unparseStatementFromTokenStream() \n");
+#endif
                  // Unparse the last token explicitly.
                     unparseStatementFromTokenStream (stmt, e_trailing_whitespace_end, e_trailing_whitespace_end, info);
                   }
