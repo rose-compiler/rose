@@ -6,21 +6,23 @@ if ROSE_WITH_GNU_OCTAVE_PARSER
 
 BASIC_TESTCODES = \
 		belief.m \
-                determ.m \
-                linearreg.m \
 		if_condition.m \ 
                 matrix_access.m \
-		mcmc_test.m \ 
-		nargin_test.m \
                 numquad_test.m \
                 sam.m \
-                whileTest.m 
+                whileTest.m
 
-FAILING_TESTS = 
-              
+CXX_BACKEND_FAILING_TESTS = \
+                determ.m \
+                linearreg.m \
+		mcmc_test.m \ 
+		nargin_test.m
+
+MATLAB_PARSER_FAILING_TESTS =		
 
 ALL_TESTCODES = \
-                $(BASIC_TESTCODES)
+                $(BASIC_TESTCODES) \
+		$(CXX_BACKEND_FAILING_TESTS)
 
 MATLAB_TEST_OBJECTS = \
                    $(patsubst %.m,output/rose_%.cc,$(ALL_TESTCODES))
