@@ -13,7 +13,6 @@
 #include "utility/utils.h"
 #include "utility/FunctionReturnAttribute.h"
 
-
 // #include "ast/SgColonExpression.h"
 
 namespace sb = SageBuilder;
@@ -219,7 +218,7 @@ namespace MatlabToCpp
   // RangeExpressionTransformer
 
   static
-  void tfRangeExpression(SgRangeExp *rangeExp)
+  void tfRangeExpression(SgRangeExp* rangeExp)
   {
     // Skip the range expression inside a for loop
     if (isSgMatlabForStatement(rangeExp->get_parent()))
@@ -285,6 +284,88 @@ namespace MatlabToCpp
   void transformRangeExpression(SgProject *project)
   {
     forAllNodes(project, tfRangeExpression, V_SgRangeExp);
+  }
+
+  //
+  // disp transformer
+
+  /**
+   * flattens out argument lists in the form of
+   * disp({1, 2, 3}) ->  disp(1,2,3)
+   */
+  static
+  void flattenAggregateInitializer(SgExprListExp* args)
+  {
+    ROSE_ASSERT(args);
+    SgExpressionPtrList& exprs = args->get_expressions();
+
+    // nothing to flatten
+    if (exprs.size() != 1) return;
+
+    SgExpression*           fst = exprs.front();
+    SgAggregateInitializer* lst = isSgAggregateInitializer(fst);
+
+    if (lst == NULL) return;
+
+    SgExprListExp*          inner_args = lst->get_initializers();
+    SgCallExpression*       callexp = sg::assert_sage_type<SgCallExpression>(args->get_parent());
+
+    // elevate inner_args
+    callexp->set_args(inner_args);
+    inner_args->set_parent(callexp);
+
+    // remove aggregate initializer + children
+    lst->set_initializers(args);
+    args->set_parent(lst);
+        
+    // remove backlink
+    exprs.pop_back();
+    delete lst; // \todo is this sufficient?
+  }
+
+  static
+  void changeTargetName(SgVarRefExp& n, SgName newname)
+  {
+    SgVarRefExp* newref = sb::buildVarRefExp(newname, n.get_symbol()->get_scope());
+    
+    si::replaceExpression(&n, newref);
+  }
+
+
+  struct CallTransformer
+  {
+    explicit
+    CallTransformer(SgExprListExp* params)
+    : args(params)
+    {}
+        
+    void handle(SgNode&) {}
+
+    void handle(SgVarRefExp& n)
+    {
+      SgName target = n.get_symbol()->get_name();
+      
+      if (SgName("disp") == target)
+        flattenAggregateInitializer(args);
+      else if (SgName("rand") == target)
+        changeTargetName(n, "rand0");
+      else if (SgName("size") == target)
+        changeTargetName(n, "sizeM");
+    }
+
+    SgExprListExp* args;
+  };
+
+  static
+  void tfCalls(SgFunctionCallExp* callExp)
+  {
+    sg::dispatch(CallTransformer(callExp->get_args()), callExp->get_function());
+  }
+
+
+  void transformSelectedCalls(SgProject* project)
+  {
+    forAllNodes(project, tfCalls, V_SgFunctionCallExp);
   }
 
 

@@ -1,7 +1,8 @@
 
 ==Use==
-  (1) download code derived from Octave for the frontend
-      The code can be obtained from
+  (1) The frontend code has been derived from Octave. Since Octave is
+      distributed under a GPL license, the frontend code is maintained
+      in a separate repository. It can be downloaded from:
         https://github.com/ppete/rose-matlab/blob/master/octavebits.tar.gz?raw=true
 
       for example in some directory /XYZ
@@ -13,7 +14,7 @@
   (3) make + make check to compile and test the frontend
 
 ==Contact==
-  Peter Pirkelbauer -- pirkelbauer@uab.edu
+  Peter Pirkelbauer -- pirkelbauer2@llnl.gov
 
 ==Contributors==
   Sujan Khadka
