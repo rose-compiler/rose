@@ -17,6 +17,8 @@
 // C++11 allows the explicit defaulting and deleting of these special member functions. For example, the following 
 // type explicitly declares that it is using the default constructor:
 
+typedef int OtherType;
+
 struct SomeType {
     SomeType() = default; //The default constructor is explicitly stated.
     SomeType(OtherType value);

@@ -16,12 +16,12 @@ struct Derived : Base {
 
 // C++11 provides syntax to solve this problem.
 
-struct Base {
+struct Base2 {
     virtual void some_func(float);
 };
  
-struct Derived : Base {
-    virtual void some_func(int) override; // ill-formed because it doesn't override a base class method
+struct Derived2 : Base2 {
+  // virtual void some_func(int) override; // ill-formed because it doesn't override a base class method
 };
 
 // The override special identifier means that the compiler will check the base class(es) to see if there 
@@ -32,14 +32,14 @@ struct Derived : Base {
 
 struct Base1 final { };
  
-struct Derived1 : Base1 { }; // ill-formed because the class Base1 has been marked final
+// struct Derived1 : Base1 { }; // ill-formed because the class Base1 has been marked final
  
-struct Base2 {
+struct Base3 {
     virtual void f() final;
 };
  
-struct Derived2 : Base2 {
-    void f(); // ill-formed because the virtual function Base2::f has been marked final
+struct Derived3 : Base3 {
+  // void f(); // ill-formed because the virtual function Base3::f has been marked final
 };
 
 // In this example, the virtual void f() final; statement declares a new virtual function, but it also 

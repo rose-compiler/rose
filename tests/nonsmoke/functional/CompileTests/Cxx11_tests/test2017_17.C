@@ -5503,7 +5503,6 @@ int firstIndex(int n, int p, int pid)
 
 
 
-
 template <typename Iter, typename BinFn>
 void inclusive_inplace(const ::RAJA::omp_parallel_for_exec&,
                        Iter begin,
@@ -5513,6 +5512,8 @@ void inclusive_inplace(const ::RAJA::omp_parallel_for_exec&,
   using Value = typename ::std::iterator_traits<Iter>::value_type;
   const int n = end - begin;
   const int p = omp_get_max_threads();
+
+#if 0
   ::std::vector<Value> sums(p, Value());
         
 #pragma omp parallel
@@ -5535,6 +5536,8 @@ void inclusive_inplace(const ::RAJA::omp_parallel_for_exec&,
       *(begin + i) = f(*(begin + i), sums[pid]);
     }
   }
+#endif
+
 }
 
 
@@ -5551,6 +5554,8 @@ void exclusive_inplace(const ::RAJA::omp_parallel_for_exec&,
   using Value = typename ::std::iterator_traits<Iter>::value_type;
   const int n = end - begin;
   const int p = omp_get_max_threads();
+
+#if 0
   ::std::vector<Value> sums(p, v);
         
 #pragma omp parallel
@@ -5577,6 +5582,8 @@ void exclusive_inplace(const ::RAJA::omp_parallel_for_exec&,
       *(begin + i) = f(*(begin + i), sums[pid]);
     }
   }
+#endif
+
 }
 
 
