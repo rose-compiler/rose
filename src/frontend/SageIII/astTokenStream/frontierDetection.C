@@ -1197,7 +1197,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 1
-          if ( SgProject::get_verbose() > -1 )
+          if ( SgProject::get_verbose() > 1 )
              {
                generateDOT ( *project, "_token_unparsing_frontier" );
              }
@@ -1273,7 +1273,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #if 1
      if (project != NULL)
         {
-          if ( SgProject::get_verbose() > -1 )
+          if ( SgProject::get_verbose() > 1 )
              {
                generateDOT(*project,"_token_unparsing_frontier_with_next_previous_edges");
              }
