@@ -63,7 +63,7 @@ public:
         }
 #endif
 
-    protected:
+    public: // "protected" fails for boost-1.58.
         // intentionally undocumented; needed for serialization
         Successor()
             : type_(E_USER_DEFINED), confidence_(ASSUMED) {}
