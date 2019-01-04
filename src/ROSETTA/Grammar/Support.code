@@ -8951,8 +8951,17 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                          printf ("SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): Double check if we had set returnValue to false based on SgTemplateType template arguments (if so, then return true) \n");
 #endif
+
+                      // DQ (12/30/2018): I think a better name for this variable would be "is_matching_template_type_boolean".
                          bool isTemplateType = true;
+#if 0
+                      // DQ (12/30/2018): This is the original code.
                          for (size_t i = 0; i < templateParametersOrArgumentsList->size(); i++)
+#else
+                      // DQ 12/30/2018): We only want to test up to the first template parameter or argument that is not matching.
+                      // Alternatively a "while" loop might be more clear.
+                         for (size_t i = 0; ((isTemplateType == true) && (i < templateParametersOrArgumentsList->size())); i++)
+#endif
                             {
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                               printf("----- (*templateParametersOrArgumentsList)[%zd]        = %p = %s\n", i, (*templateParametersOrArgumentsList)[i],        (*templateParametersOrArgumentsList)[i]->unparseToString().c_str()        );
@@ -8984,9 +8993,15 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                    printf ("-----    --- templateParameterOrArgumentFromSymbol->get_type() = %p = %s \n",templateParameterOrArgumentFromSymbol->get_type(),templateParameterOrArgumentFromSymbol->get_type()->class_name().c_str());
 #endif
                                    isTemplateType = SageInterface::isEquivalentType(templateParameterOrArgumentLocal->get_type(),templateParameterOrArgumentFromSymbol->get_type());
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                   printf ("-----    --- SageInterface::isEquivalentType() returns: isTemplateType = %s \n",(isTemplateType == true) ? "true" : "false");
+#endif
                                  }
                                 else
                                  {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                   printf ("-----    --- T::is_matching_type() == false \n");
+#endif
 #if 1
                                 // DQ (8/10/2013): Test for if the template parameter or arguments type matches (type, nontype, template_template).
                                 // DQ (6/17/2013): This newer code does a better job of resolving if template arguments are equivalent (more can be done still).
@@ -9118,6 +9133,9 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                       }
                                      else
                                       {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("-----    --- T::is_matching_nontype() == false \n");
+#endif
                                      // DQ (8/10/2013): Test for if the template parameter or arguments type matches (type, nontype, template_template).
                                      // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::template_template_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::template_template_argument)
                                         if (T::is_matching_template(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
@@ -9146,6 +9164,9 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                            }
                                           else
                                            {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                             printf ("-----    --- T::is_matching_template() == false \n");
+#endif
                                           // ROSE_ASSERT(templateArgumentLocal->get_argumentType() != templateArgumentFromSymbol->get_argumentType());
                                           // DQ (5/19/2014): Output more debugging information.
                                              if (T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
@@ -9192,14 +9213,26 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #if 0
                                                   printf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): This is the case of a template_pack_expansion: not yet supported (edg calls this tak_start_of_pack_expansion) \n");
 #endif
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                  printf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): This is the case of a template_pack_expansion: not yet supported (edg calls this tak_start_of_pack_expansion) \n");
+#endif
+                                               // DQ (12/28/2018): Return true if both a marked as template pack.
+                                                  isTemplateType = true;
                                                 }
                                                else
                                                 {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                  printf ("-----    --- T::is_matching_template_pack_expansion() == false \n");
+#endif
                                                   ROSE_ASSERT(T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == false);
+
+                                               // DQ (12/28/2018): Return false.
+                                                  isTemplateType = false;
                                                 }
 
+                                          // DQ (12/28/2018): We want to set this differently in the two branches above.
                                           // These are not the same type: so return false.
-                                             isTemplateType = false;
+                                          // isTemplateType = false;
                                            }
                                       }
 #else
@@ -20946,8 +20979,13 @@ SgTemplateArgument::display( const std::string & label) const
              {
                const SgExpression* expr = get_expression();
 
-               printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+            // DQ (12/28/2018): Added assertion.
+            // ROSE_ASSERT(expr != NULL);
 #if 0
+            // DQ (12/28/2018): original version of code.
+               printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+#else
+            // DQ (12/28/2018): This is a better implementation (it was here, but commented out).
                if (expr != NULL)
                   {
                     printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
@@ -20956,7 +20994,10 @@ SgTemplateArgument::display( const std::string & label) const
                   {
                     ROSE_ASSERT(get_initializedName() != NULL);
                     ROSE_ASSERT(get_initializedName()->get_scope() != NULL);
-                    printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+
+                 // DQ (12/28/2018): original version of code, fixed to output the name.
+                 // printf ("SgTemplateArgument::nontype_argument: expr = %s \n",expr->unparseToString().c_str());
+                    printf ("SgTemplateArgument::nontype_argument: initializedName = %s \n",get_initializedName()->get_name().str());
                   }
 #endif
                break;
@@ -20982,6 +21023,11 @@ SgTemplateArgument::display( const std::string & label) const
                printf ("WARNING: In SgTemplateArgument::display(): handling of display for varadic template argument is incomplete! \n");
 #endif
                printf ("In SgTemplateArgument::display(): case SgTemplateArgument::start_of_pack_expansion_argument: varadic_template_argument \n");
+
+            // DQ (12/28/2018): Add support to handle this case.
+               const SgExpression* expr = get_expression();
+               printf ("SgTemplateArgument::start_of_pack_expansion_argument: expr = %s \n",expr->unparseToString().c_str());
+
                break;
              }
 

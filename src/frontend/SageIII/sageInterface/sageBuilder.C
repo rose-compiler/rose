@@ -11498,6 +11498,7 @@ SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buil
      return result;
    }
 
+
 SgClassDeclaration*
 SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
    {
@@ -11508,9 +11509,12 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
   // SgClassDeclaration* nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
      SgClassDeclaration* nondefdecl = NULL;
 
+#define DEBUG_NONDEFINING_CLASS_DECLARATION 0
+
   // DQ (11/26/2011): Debugging EDG 3.3 use of templateArguments.
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
      printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() nameWithoutTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithoutTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+     printf ("   --- scope = %p = %s \n",scope,(scope != NULL) ? scope->class_name().c_str() : "null");
 #endif
 
   // DQ (7/27/2012): Note that the input name should not have template argument syntax.
@@ -11522,7 +11526,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
 
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
           printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
 #endif
 
@@ -11530,17 +11534,19 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
           SgTemplateArgumentPtrList emptyList;
        // nondefdecl = new SgTemplateInstantiationDecl(name,kind,NULL,NULL,NULL,emptyList);
           nondefdecl = new SgTemplateInstantiationDecl(nameWithTemplateArguments,kind,NULL,NULL,NULL,emptyList);
-
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
+          printf ("In buildNondefiningClassDeclaration_nfi(): built new SgTemplateInstantiationDecl: nondefdecl = %p \n",nondefdecl);
+#endif
           ROSE_ASSERT(nondefdecl->get_type() == NULL);
           ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl) != NULL);
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
           printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl->get_name() = %s nondefdecl->get_templateName() = %s \n",
                nondefdecl->get_name().str(),isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().str());
 #endif
        // DQ (6/6/2012): Added support for template arguments so that they can be a part of any generated type.
           ROSE_ASSERT(templateArgumentsList != NULL);
 
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
           printf ("nondefdecl->get_name() = %s \n",nondefdecl->get_name().str());
           printf ("nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
           printf ("Output templateArgumentsList: \n");
@@ -11561,6 +11567,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
        // Calling the assignment operator for the STL container class.
           isSgTemplateInstantiationDecl(nondefdecl)->get_templateArguments() = *templateArgumentsList;
+
+#error "DEAD CODE!"
 
 #if 1
        // DQ (9/13/2012): Refactored this code.
@@ -11592,7 +11600,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
         {
        // nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
           nondefdecl = new SgClassDeclaration(nameWithoutTemplateArguments,kind,NULL,NULL);
-
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
+          printf ("In buildNondefiningClassDeclaration_nfi(): built new SgClassDeclaration: nondefdecl = %p \n",nondefdecl);
+#endif
        // The default name for nameWithTemplateArguments is nameWithoutTemplateArguments so that we can use
        // nameWithTemplateArguments uniformally as the name of the function and it will work from non-template
        // instantiations.
@@ -11813,7 +11823,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                   {
                     setTemplateArgumentsInDeclaration(nondefdecl,templateArgumentsList);
                   }
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
                printf ("BEFORE scope->insert_symbol(): scope = %p = %s nameWithTemplateArguments = %s mysymbol = %p = %s \n",
                     scope,scope->class_name().c_str(),nameWithTemplateArguments.str(),mysymbol,mysymbol->class_name().c_str());
 #endif
@@ -11848,6 +11858,27 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
             // DQ (6/9/2013): Added test to make sure that symbols only reference non-defining declarations.
                SgClassSymbol* temp_classSymbol = nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
+            // DQ (12/28/2018): When can this be NULL?
+               printf ("In buildNondefiningClassDeclaration_nfi(): temp_classSymbol = %p \n",temp_classSymbol);
+               printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl->get_scope() = %p = %s scope = %p \n",nondefdecl->get_scope(),nondefdecl->get_scope()->class_name().c_str(),scope);
+
+               printf ("In buildNondefiningClassDeclaration_nfi(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+               if (templateArgumentsList != NULL)
+                  {
+                    printf ("   --- templateArgumentsList elements: \n");
+                    for (size_t i = 0; i < templateArgumentsList->size(); i++)
+                       {
+                         printf ("   --- --- templateArgumentsList->[%zu] = %p \n",i,templateArgumentsList->operator[](i));
+                         printf ("   --- --- templateArgumentsList->[%zu] = %s \n",i,templateArgumentsList->operator[](i)->class_name().c_str());
+                         templateArgumentsList->operator[](i)->display("In SageBuilder::buildNondefiningClassDeclaration_nfi()");
+                       }
+                  }
+#endif
+            // DQ (12/28/2018): When can this be NULL?  When we call lookup_class_symbol() later it is NULL, so test it here.
+               ROSE_ASSERT(nondefdecl->get_scope()->lookup_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
+               ROSE_ASSERT(nondefdecl->get_scope() == scope);
+
             // TV (07/01/2013): temp_classSymbol can be NULL, but lookup_class_symbol return a symbol
             // ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
                ROSE_ASSERT(temp_classSymbol == NULL || temp_classSymbol->get_declaration()->get_definition() == NULL);
@@ -12578,6 +12609,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
   //    SgClassDeclaration* buildDefiningClassDeclaration    ( SgName name, SgScopeStatement* scope );
   // This might refactor the implementation nicely.
 
+#define DEBUG_CLASS_DECLARATION 0
 
   // Note that the nonDefiningDecl pointer does not appear to be used.
 #if 0
@@ -12663,7 +12695,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
 
-#if 0
+#if DEBUG_CLASS_DECLARATION
       printf ("In SageBuilder::buildClassDeclaration_nfi():\n");
       printf ("  -- nameWithoutTemplateArguments = %s\n", nameWithoutTemplateArguments.str());
       printf ("  -- nameWithTemplateArguments    = %s\n", nameWithTemplateArguments.str());
@@ -12679,7 +12711,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      SgClassSymbol* mysymbol = NULL;
      if (scope != NULL)
         {
-#if 0
+#if DEBUG_CLASS_DECLARATION
           printf ("Looking up the SgClassSymbol in scope = %p = %s nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
 #endif
 
@@ -12698,7 +12730,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // DQ (10/10/2015): look up the correct type of symbol.
           if (buildTemplateDeclaration == true)
              {
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("Note: In SageBuilder::buildClassDeclaration_nfi(): Need to look up a template symbol \n");
 #endif
                ROSE_ASSERT(nonDefiningDecl != NULL);
@@ -12718,21 +12750,44 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              }
             else
              {
+#if DEBUG_CLASS_DECLARATION
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): calling lookup_class_symbol(nameWithTemplateArguments = %s,templateArgumentsList->size() = %zu \n",
+                       nameWithTemplateArguments.str(),(templateArgumentsList != NULL) ? templateArgumentsList->size() : 999);
+               if (templateArgumentsList != NULL)
+                  {
+                    printf ("   --- templateArgumentsList elements: \n");
+                    for (size_t i = 0; i < templateArgumentsList->size(); i++)
+                       {
+                         printf ("   --- --- templateArgumentsList->[%zu] = %p \n",i,templateArgumentsList->operator[](i));
+                         printf ("   --- --- templateArgumentsList->[%zu] = %s \n",i,templateArgumentsList->operator[](i)->class_name().c_str());
+                         templateArgumentsList->operator[](i)->display("In SageBuilder::buildClassDeclaration_nfi()");
+                       }
+                  }
+#endif
                mysymbol = scope->lookup_class_symbol(nameWithTemplateArguments,templateArgumentsList);
-
+#if DEBUG_CLASS_DECLARATION
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+#endif
             // DQ (3/4/2018): The only time I see this failing is when we should have used the nonDefiningDecl (see Cxx11_tests/test2015_08.C).
                if (mysymbol == NULL)
                   {
-#if 0
+#if DEBUG_CLASS_DECLARATION
                     printf ("WARNING: scope->lookup_class_symbol(nameWithTemplateArguments = %s,templateArgumentsList->size() = %zu) == NULL \n",nameWithTemplateArguments.str(),templateArgumentsList->size());
 #endif
                  // ROSE_ASSERT(nonDefiningDecl != NULL);
-#if 0
+
+                 // DQ (12/28/2018): Could it be that we wanted to use the name without template arguments.
+#if DEBUG_CLASS_DECLARATION
+                    printf ("Checking lookup_class_symbol() using nameWithoutTemplateArguments = %s \n",nameWithoutTemplateArguments.str());
+#endif
+                    ROSE_ASSERT(scope->lookup_class_symbol(nameWithoutTemplateArguments,templateArgumentsList) == NULL);
+
+#if DEBUG_CLASS_DECLARATION
                     printf ("nonDefiningDecl = %p \n",nonDefiningDecl);
 #endif
                     if (nonDefiningDecl != NULL)
                        {
-#if 0
+#if DEBUG_CLASS_DECLARATION
                          printf ("nonDefiningDecl = %p = %s \n",nonDefiningDecl,nonDefiningDecl->class_name().c_str());
 #endif
                       // DQ (3/4/2018): I think this is the correct API to use (internal use only).
@@ -12771,7 +12826,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-#if 0
+#if DEBUG_CLASS_DECLARATION
      printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -12781,7 +12836,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
           ROSE_ASSERT(nondefdecl != NULL);
 
-#if 0
+#if DEBUG_CLASS_DECLARATION
           printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol->get_declaration(): nondefdecl = %p = %s nondefdecl->get_definition() = %p = %s \n",
                nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_definition(),
                nondefdecl->get_definition() != NULL ? nondefdecl->get_definition()->class_name().c_str() : "NULL");
@@ -12852,7 +12907,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else // build a nondefnining declaration if it does not exist
         {
-#if 0
+#if DEBUG_CLASS_DECLARATION
           printf ("In SageBuilder::buildClassDeclaration_nfi(): building a nondefining declaration since it does not exist \n");
 #endif
        // DQ (10/10/2015): This should be true.
@@ -12863,7 +12918,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           if (buildTemplateInstantiation == true)
              {
             // This adds: SgTemplateDeclaration *templateDeclaration and SgTemplateArgumentPtrList templateArguments
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("************************************************************************* \n");
                printf ("Building SgTemplateInstantiationDecl with empty SgTemplateArgumentPtrList \n");
                printf ("   --- using nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
@@ -12873,7 +12928,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // nondefdecl = new SgTemplateInstantiationDecl (name,kind,NULL,NULL,NULL,emptyList);
                nondefdecl = new SgTemplateInstantiationDecl (nameWithTemplateArguments,kind,NULL,NULL,NULL,emptyList);
                ROSE_ASSERT(nondefdecl != NULL);
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("In SageBuilder::buildClassDeclaration_nfi(): Build SgTemplateInstantiationDecl: nondefdecl = %p \n",nondefdecl);
 #endif
             // DQ (2/27/2018): Added assertion now that we have implemented more consistant semantics 
@@ -12965,7 +13020,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             else
              {
             // We know that the name without template arguments should be used here (but they are the same).
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("WARNING: In buildClassDeclaration_nfi(): Are we building a new SgClassDeclaration as a nondefining declaration when we should be using the nonDefiningDecl = %p \n",nonDefiningDecl);
                printf ("   --- nameWithoutTemplateArguments = %s \n",nameWithoutTemplateArguments.str());
 #endif
@@ -12973,7 +13028,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                nondefdecl = new SgClassDeclaration(nameWithoutTemplateArguments,kind,NULL,NULL);
 
                ROSE_ASSERT(nondefdecl != NULL);
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("In buildClassDeclaration_nfi(): (no file info set): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
 #endif
             // DQ (10/9/2015): Added assertion. We can't assert this yet (see test2015_87.C).
@@ -13007,7 +13062,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
        // have to think about that a bit more).
           ROSE_ASSERT(scope != NULL);
-#if 0
+#if DEBUG_CLASS_DECLARATION
           printf ("In SageBuilder::buildClassDeclaration_nfi(): Set the scope of the new non-defining declaration to %p = %s \n",scope,scope->class_name().c_str());
 #endif
           nondefdecl->set_scope(scope);
@@ -13021,15 +13076,40 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
           if (nondefdecl->get_type() == NULL)
              {
+#if DEBUG_CLASS_DECLARATION
+            // DQ (12/27/2018): If we have already built a type, then why did we need to build a nondefining declaration?
+               printf ("Calling scope->get_type_table()->lookup_type(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+
+               printf ("WE NEED THE MANGLED NAME FOR THIS TO BE RELEVANT! \n");
+
+            // SgType* existingType = scope->get_type_table()->lookup_type(nameWithTemplateArguments);
+            // ROSE_ASSERT(existingType == NULL);
+#endif
+
+#if DEBUG_CLASS_DECLARATION
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): kind == SgClassDeclaration::e_java_parameter = %s \n",(kind == SgClassDeclaration::e_java_parameter) ? "true" : "false");
+#endif
                SgClassType *class_type = (kind == SgClassDeclaration::e_java_parameter
                                                 ? (SgClassType *) SgJavaParameterType::createType(nondefdecl)
                                                 : (SgClassType *) SgClassType::createType(nondefdecl));
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("In SageBuilder::buildClassDeclaration_nfi(): nondefdecl->get_type() == NULL: building a new class_type = %p = %s \n",class_type,class_type->class_name().c_str());
 #endif
                nondefdecl->set_type(class_type);
-#if 0
+#if DEBUG_CLASS_DECLARATION
                printf ("In SageBuilder::buildNondefiningClassDeclaration(): built class type: part 4: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
+#endif
+               SgClassDeclaration* tmp_classDeclarationFromType = isSgClassDeclaration(class_type->get_declaration());
+               ROSE_ASSERT(tmp_classDeclarationFromType != NULL);
+               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
+#if DEBUG_CLASS_DECLARATION
+               printf ("tmp_classDeclarationFromType: scope = %p = %s \n",scope,scope->class_name().c_str());
+               printf ("tmp_classDeclarationFromType = %p = %s \n",tmp_classDeclarationFromType,tmp_classDeclarationFromType->class_name().c_str());
+               printf ("tmp_classDeclarationFromType name = %s \n",tmp_classDeclarationFromType->get_name().str());
+               if (tmp_classDeclarationFromType->get_file_info() != NULL)
+                  {
+                    tmp_classDeclarationFromType->get_file_info()->display("tmp_classDeclarationFromType: debug");
+                  }
 #endif
              }
 
@@ -13051,7 +13131,20 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                printf ("nondefdecl->get_mangled_name() = %s \n",nondefdecl->get_mangled_name().getString().c_str());
                printf ("nondefdecl->get_type()->get_mangled() = %s \n",nondefdecl->get_type()->get_mangled().getString().c_str());
                printf ("nondefdecl->get_type()->get_declaration()->get_mangled_name() = %s \n",classDeclarationFromType->get_mangled_name().getString().c_str());
-#if 0
+
+            // DQ (12/27/2018): Added additional debugging support.
+               printf ("nondefdecl->get_type()->get_declaration()->get_firstNondefiningDeclaration() = %s \n",classDeclarationFromType->get_firstNondefiningDeclaration() ? "true" : "false");
+               printf ("nondefdecl->get_firstNondefiningDeclaration()                                = %s \n",nondefdecl->get_firstNondefiningDeclaration() ? "true" : "false");
+
+            // DQ (12/27/2018): I think that if this is a base class declaration then it is OK for the type's declaration to not match.
+            // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+               if (nondefdecl->get_parent() != NULL)
+                  {
+                    printf ("nondefdecl->get_parent() = %p = %s \n",nondefdecl->get_parent(),nondefdecl->get_parent()->class_name().c_str());
+                  }
+
+            // DQ (12/27/2018): Activate this debugging support.
+#if DEBUG_CLASS_DECLARATION
                nondefdecl->get_type()->get_declaration()->get_file_info()->display("nondefdecl->get_type()->get_declaration()");
 
             // DQ (7/24/2017): Added more debug information to support debugging test2014_187.C.
@@ -13606,6 +13699,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
      return defdecl;
    }
+
 
 SgClassDeclaration* SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
    {

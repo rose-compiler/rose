@@ -514,13 +514,24 @@ convertToLowerCase(const std::string &inputString) {
 
 std::string
 fixLineTermination(const std::string &input) {
+
+ // DQ (12/30/2018): This is the function that is normalizing the windows line endings in CPP directives.
+ // However, eliminating the function from being called is preferable to modifing this function.
     std::string output;
     size_t nchars = input.size();
     for (size_t i=0; i<nchars; ++i) {
         if ('\r'==input[i] && i+1<nchars && '\n'==input[i+1]) {
             // CR+LF: Microsoft Windows, DEC TOPS-10, RT-11 and most other early non-Unix and non-IBM OSes, CP/M, MP/M, DOS
             // (MS-DOS, PC-DOS, etc.), Atari TOS, OS/2, Symbian OS, Palm OS.
+
+         // DQ (12/30/2018): Detect the code that recognizes the windows line endings.
+         // printf ("In fixLineTermination(): Found a windows line ending \n");
+
+         // DQ (12/30/2018): Fix the output string to reproduce the \r\n windows line ending.
+         // output += '\n';
+         // output += "\r\n";
             output += '\n';
+
             ++i;
         } else if ('\n'==input[i] && i+1<nchars && '\r'==input[i+1]) {
             // LF+CR: Acorn BBC and RISC OS spooled text output.

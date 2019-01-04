@@ -1,0 +1,3 @@
+// Support for hexadecimal floating point numbers.
+
+double d = 0x1.2p3; // hex fraction 1.2 (decimal 1.125) scaled by 2^3, that is 9.0

@@ -81,14 +81,15 @@ Z3Solver::z3Update() {
                 SymbolicExpr::Ptr expr = exprs[i];
 
                 // Create the Z3 expression for this ROSE expression
-                VariableSet vars = findVariables(expr);
+                VariableSet vars;
+                findVariables(expr, vars /*out*/);
                 ctxVariableDeclarations(vars);
                 ctxCommonSubexpressions(expr);
                 z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
                 solver_->add(z3expr);
                 z3Stack_.back().push_back(z3expr);
             }
-            
+
             // Push another level onto the z3 stack
             if (z3Stack_.size() < nLevels()) {
                 solver_->push();
@@ -110,14 +111,14 @@ Z3Solver::z3Update() {
 SmtSolver::Satisfiable
 Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
-    
+
 #ifdef ROSE_HAVE_Z3
     z3Update();
 
     Sawyer::Stopwatch timer;
     z3::check_result result = solver_->check();
     stats.solveTime += timer.stop();
-    
+
     switch (result) {
         case z3::unsat:
             return SAT_NO;
@@ -431,7 +432,7 @@ Z3Solver::mostType(const std::vector<Z3ExprTypePair> &ets) {
     }
     return bestType;
 }
-    
+
 Z3Solver::Z3ExprTypePair
 Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     ASSERT_not_null(expr);
@@ -892,9 +893,9 @@ Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
-        z3::shl(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
-                           ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+        z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
+                            ctxCast(ctxExpression(expr), BIT_VECTOR).first),
+                 ctxCast(ctxExpression(sa), BIT_VECTOR).first)
         .extract(expr->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
@@ -1063,20 +1064,28 @@ Z3Solver::parseEvidence() {
     if (!hasAssertions)
         return;
 
+    // Get all the variables in all the assertions regardless of transaction level. This is somewhat expensive but is needed
+    // below because the Z3 interface lacks a way to get type information from the variables returned as part of the evidence.
+    VariableSet allVariables;
+    std::vector<SymbolicExpr::Ptr> allAssertions = assertions();
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, allAssertions)
+        findVariables(expr, allVariables /*in,out*/);
+
     // Parse the evidence
     ASSERT_not_null(solver_);
     z3::model model = solver_->get_model();
     for (size_t i=0; i<model.size(); ++i) {
         z3::func_decl fdecl = model[i];
+
         if (fdecl.arity() != 0)
             continue;
 
         // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
-        // need to know the number of bits and the value, even if the value is wider than 64 bits.
-
-        // Get the number of bits for the variable by searching the assertions. This is not a fast way to do it!
+        // need to know the number of bits and the value, even if the value is wider than 64 bits. Threfore, we obtain the list
+        // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
+        // variable name and obtain the type information from the ROSE variable.
         SymbolicExpr::LeafPtr var;
-        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, ctxVarDecls_.keys()) {
+        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, allVariables.values()) {
             if (v->toString() == fdecl.name().str()) {
                 var = v;
                 break;
@@ -1086,7 +1095,7 @@ Z3Solver::parseEvidence() {
             mlog[WARN] <<"cannot find evidence variable " <<fdecl.name() <<"\n";
             continue;
         }
-        
+
         // Get the value
         SymbolicExpr::Ptr val;
         z3::expr interp = model.get_const_interp(fdecl);
@@ -1182,7 +1191,7 @@ Z3Solver::selfTest() {
         ASSERT_always_not_null(expr);
         mlog[DEBUG] <<"  " <<name <<" = " <<*expr <<"\n";
     }
-    
+
     ASSERT_always_require(enames.size() == 1);
     ASSERT_always_require(enames[0] == a->isLeafNode()->toString());
     Expr aEvidence = evidenceForName(a->isLeafNode()->toString());
