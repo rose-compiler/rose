@@ -304,7 +304,7 @@ extern int fegetexcept (void) throw();
 // TV (12/29/2018): EDG provides support for __float128 (ROSE-1604)
 /* DQ (3/30/2017): I am unclear how general this is (this will fail for GNU compilers, so we have to only let ROSE see it). */
 /* GNU: error: conflicting declaration 'typedef long double __float128' */
-#if (__EDG_VERSION__ < 500)
+#ifndef ROSE_USE_EDG_LARGE_FLOAT
 typedef long double __float128;
 #endif
 

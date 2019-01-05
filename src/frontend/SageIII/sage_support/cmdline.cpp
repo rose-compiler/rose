@@ -6501,6 +6501,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_USE_EDG_LARGE_FLOAT
+     commandLine.push_back("-DROSE_USE_EDG_LARGE_FLOAT");
+#endif
+
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
