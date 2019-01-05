@@ -313,7 +313,7 @@ class ROSE_DLL_API HasherFnv: public Hasher {
 public:
     HasherFnv(): partial_(0xcbf29ce484222325ull) {}
     const Digest& digest() ROSE_OVERRIDE;
-    void append(const uint8_t *message, size_t messageSize);
+    void append(const uint8_t *message, size_t messageSize) ROSE_OVERRIDE;
     uint64_t partial() const { return partial_; }
 };
 
@@ -329,7 +329,7 @@ public:
     HasherSha256Builtin();
     void clear() ROSE_OVERRIDE;
     const Digest& digest() ROSE_OVERRIDE;
-    void append(const uint8_t *message, size_t messageSize);
+    void append(const uint8_t *message, size_t messageSize) ROSE_OVERRIDE;
 private:
     uint8_t messageByte(size_t index, const uint8_t *message, size_t messageSize);
     bool getNextChunk(const uint8_t* &message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/);

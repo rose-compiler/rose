@@ -2,6 +2,7 @@
 #define FASTNUM_BUILTINS
 
 #include <iostream>
+#include <sstream>
 #include <cmath>
 #include <ctime> // \todo replace with chrono
 #include <tuple>
@@ -14,22 +15,22 @@ namespace fastnumbuiltin
 {
   template <class T>
   static inline
-  double det(Matrix<T> m)
+  double det(const Matrix<T>& m)
   {
-    return m.det();
+    return ::arma::det(m);
   }
 
-  //~ static inline
-  //~ Matrix<double> randn(int m, int n)
-  //~ {
-    //~ return Matrix<double>(arma::randn(m, n));
-  //~ }
+  static inline
+  Matrix<double> randn(int m, int n)
+  {
+    return Matrix<double>(arma::randn(m, n));
+  }
 
-  //~ static inline
-  //~ auto randn(int m) ->
-  //~ {
-    //~ return ::arma::randn(m,m);
-  //~ }
+  static inline
+  Matrix<double> randn(int m)
+  {
+    return ::arma::randn(m,m);
+  }
 
   static inline
   double randn()
@@ -38,6 +39,7 @@ namespace fastnumbuiltin
 
     return m.at(0);
   }
+
 
   //~ //uniform distribution
   static inline
@@ -53,7 +55,7 @@ namespace fastnumbuiltin
   }
 
   static inline
-  double rand()
+  double rand0()
   {
     Matrix<double> m = rand(1);
 
@@ -65,6 +67,14 @@ namespace fastnumbuiltin
   void disp(T item)
   {
     std::cout << item << std::endl;
+  }
+
+  template <class ...T, class E>
+  static inline
+  void disp(E el, T... args)
+  {
+    disp(el);
+    disp(args...);
   }
 
   template <class T>
@@ -171,18 +181,19 @@ namespace fastnumbuiltin
     return ::arma::diagmat(v);
   }
 
-  template <class T>
+
+  template <class U, class V>
   static inline
   auto
-  mldivide(const Matrix<T>& m1, const Matrix<T>& m2) -> decltype(::arma::solve(m1, m2))
+  mldivide(const U& m1, const V& m2) -> decltype(::arma::solve(m1, m2))
   {
     return ::arma::solve(m1, m2);
   }
 
-  template <class T>
+  template <class U, class V>
   static inline
   auto
-  mrdivide(const Matrix<T>& m1, const Matrix<T>& m2)
+  mrdivide(const U& m1, const V& m2) -> decltype(::arma::solve(m2.t(), m1.t()).t())
   {
     return ::arma::solve(m2.t(), m1.t()).t();
   }
@@ -195,12 +206,12 @@ namespace fastnumbuiltin
     return m1 / m2;
   }
 
-  template <class T>
+  template <class U, class V>
   static inline
   auto
-  times(const Matrix<T>& m1, const Matrix<T>& m2) -> decltype(m1 / m2)
+  times(const U& m1, const V& m2) -> decltype(m1 * m2)
   {
-    return m1 % m2;
+    return m1 * m2;
   }
 
 /*
@@ -215,14 +226,36 @@ namespace fastnumbuiltin
   }
 */
 
+  template <class T>
+  static inline
+  std::tuple<int, int> sizeM(const Matrix<T>& mat)
+  {
+    ::arma::SizeMat sz = ::arma::size(mat);
+
+    return std::tuple<int,int>(sz.n_rows, sz.n_cols);
+  }
+
   // using std::sqrt;
   // using arma::sqrt;
+
+
+  //
+  // support for conversions to strings
+  template <class T>
+  static inline
+  std::string num2str(const T& val)
+  {
+    std::stringstream buf;
+
+    buf << val;
+    return buf.str();
+  }
 
   //
   // tic toc support
   // \move to cc file
 
-  double tictoc_timepoint;
+  thread_local double tictoc_timepoint;
 
   static inline
   double currentTime(void)
@@ -253,4 +286,4 @@ namespace fastnumbuiltin
   }
 }
 
-#endif
+#endif /* FASTNUM_BUILTINS */

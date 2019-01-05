@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+# Read a list of words from standard input (multiple words per line is fine) and remove any that also
+# appear as command-line arguments.  The input lines are split on white space to obtain the words.
+# Example:  echo a b c d e |filter-out e c
+# prints "a b d".
+# The original in-line white space is not preserved, but line-feeds are preserved.
+
+use strict;
+my %removals;
+$removals{$_} = 1 for @ARGV;
+print join(" ", grep {!exists $removals{$_}} split), "\n" while <STDIN>;

@@ -1,0 +1,109 @@
+include_rules
+tool_CPPFLAGS += -I.
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+########################################################################################################################
+# Plain command-line tools. See the descriptions at the top of each source file for details.
+########################################################################################################################
+run $(tool_compile_linkexe) --install dumpMemory.C
+run $(tool_compile_linkexe) --install linearDisassemble.C
+run $(tool_compile_linkexe) --install recursiveDisassemble.C
+run $(tool_compile_linkexe) --install nativeExecutionTrace.C
+run $(tool_compile_linkexe) --install checkExecutionAddresses.C
+run $(tool_compile_linkexe) --install magicScanner.C
+run $(tool_compile_linkexe) --install simulate.C
+run $(tool_compile_linkexe) --install stringDecoder.C
+run $(tool_compile_linkexe) --install findDeadCode.C
+run $(tool_compile_linkexe) --install symbolicSimplifier.C
+run $(tool_compile_linkexe) --install binaryToSource.C
+run $(tool_compile_linkexe) --install trace.C
+run $(tool_compile_linkexe) --install generatePaths.C
+run $(tool_compile_linkexe) --install maxBijection.C
+run $(tool_compile_linkexe) --install debugSemantics.C
+run $(tool_compile_linkexe) --install x86-call-targets.C
+run $(tool_compile_linkexe) --install rxml.C
+run $(tool_compile_linkexe) --install dwarf-lines.C
+run $(tool_compile_linkexe) --install xml2json.C
+run $(public_script) missing-semantics
+
+findPath_SOURCES = PathFinder/PathFinder.C PathFinder/semantics.C PathFinder/findPath.C
+run $(tool_compile_linkexe) -o findPath --install $(findPath_SOURCES)
+
+ifneq (@(WITH_DLIB),no)
+    run $(tool_compile_linkexe) --install findSimilarFunctions.C
+endif
+
+########################################################################################################################
+# A web browser interface to ROSE. The bROwSE_server is an HTTP daemon to which you connect with any browser that's
+# capable of running Javascript.
+########################################################################################################################
+ifneq (@(WITH_WT),no)
+
+bROwSE_SOURCES = \
+	bROwSE/Application.C			\
+	bROwSE/bROwSE.C				\
+	bROwSE/FunctionListModel.C		\
+	bROwSE/FunctionUtil.C			\
+	bROwSE/InstructionListModel.C		\
+	bROwSE/Statistics.C			\
+	bROwSE/WAddressComboBox.C		\
+	bROwSE/WAddressSpace.C			\
+	bROwSE/WAssemblyListing.C		\
+	bROwSE/WBusy.C				\
+	bROwSE/WCrossReferences.C		\
+	bROwSE/WFunctionCfg.C			\
+	bROwSE/WFunctionList.C			\
+	bROwSE/WFunctionNavigation.C		\
+	bROwSE/WFunctionSummary.C		\
+	bROwSE/WHexDump.C			\
+	bROwSE/WHexValueEdit.C			\
+	bROwSE/WInstructionList.C		\
+	bROwSE/WMagic.C				\
+	bROwSE/WMemoryMap.C			\
+	bROwSE/WPartitioner.C			\
+	bROwSE/WSemantics.C			\
+	bROwSE/WSplash.C			\
+	bROwSE/WStatus.C			\
+	bROwSE/WStringDetail.C			\
+	bROwSE/WStrings.C			\
+	bROwSE/WToggleButton.C
+
+run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install
+
+endif
+
+########################################################################################################################
+# Tests
+########################################################################################################################
+
+
+run $(test) debugSemantics -o testAdaptiveRegisters \
+    --answer=TestAnswers/testAdaptiveRegisters.ans \
+    --filter='perl -p semanticsFilter' \
+    ./debugSemantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
+
+xml2json_INPUT =				\
+	xml2json-test01.xml			\
+	xml2json-test02.xml			\
+	xml2json-test03.xml			\
+	xml2json-test04.xml			\
+	xml2json-test05.xml			\
+	xml2json-test06.xml			\
+	xml2json-test07.xml			\
+	xml2json-test08.xml			\
+	xml2json-test09.xml			\
+	xml2json-test10.xml			\
+	xml2json-test11.xml			\
+	xml2json-test12.xml
+
+run for iname in $(xml2json_INPUT); do \
+        input=./specimens/${iname}; \
+        basename=`basename ${iname} .xml`; \
+        output=${basename}.json; \
+        answer=./TestAnswers/${basename}.xml.ans; \
+        $(test) xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+	    "./xml2json ${input} ${output} && cat ${output}"; \
+    done
+
+endif

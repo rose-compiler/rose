@@ -40,7 +40,7 @@ namespace MatlabToCpp
 
     void visit(SgNode* n) ROSE_OVERRIDE;
 
-    result_container computeUsers(SgProject* proj)
+    result_container& computeUsers(SgProject* proj)
     {
       traverse(proj, preorder);
 
@@ -102,8 +102,8 @@ namespace MatlabToCpp
 
       std::string                      funname = ru::nameOf(n);
       result_container::const_iterator pos = narginusers.find(funname);
-      ROSE_ASSERT(pos != narginusers.end());
 
+      ROSE_ASSERT(pos != narginusers.end());
       return functionArgumentList((*pos).second);
     }
 

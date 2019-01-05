@@ -1,0 +1,9 @@
+include_rules
+
+# DAG.C is only templates and is #include'd into other source files
+run $(librose_compile) VectorCommandOptions.C CommandOptions.C DAG.C DirectedGraph.C
+
+run $(public_header) DAG.h IteratorCompound.h TreeImpl.h BitVectorRepr.h DirectedGraph.h IteratorTmpl.h PtrMap.h \
+    union_find.h VectorCommandOptions.h CommandOptions.h DoublyLinkedList.h LatticeElemList.h PtrSet.h const.h \
+    FunctionObject.h Matrix.h SinglyLinkedList.h CountRefHandle.h general.h ObserveObject.h StreamIO.h \
+    FileHelper.h CollectionHelper.h  
