@@ -18,7 +18,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_05.C \
    test2012_06.C \
    test2012_07.C \
-   test2012_08.C \
    test2012_09.C \
    test2012_10.C \
    test2012_11.C \
@@ -145,12 +144,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2016_21.C \
    test2016_22.C \
    test2016_25.C \
-   test2016_26.C \
-   test2016_27.C \
    test2016_28.C \
    test2016_29.C \
    test2016_30.C \
-   test2016_31.C \
    test2016_37.C \
    test2016_39.C \
    test2016_40.C \
@@ -224,18 +220,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2018_57.C \
    test2018_58.C \
    test2018_59.C \
-   test2018_60.C \
    test2018_61.C \
    test2018_62.C \
-   test2018_63.C \
-   test2018_64.C \
-   test2018_65.C \
    test2018_66.C \
    test2018_67.C \
    test2018_68.C \
    test2018_69.C \
    test2018_70.C \
-   test2018_71.C \
    test2018_72.C \
    test2018_73.C \
    test2018_74.C \
@@ -263,7 +254,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2018_97.C \
    test2018_98.C \
    test2018_99.C \
-   test2018_100.C \
    test2018_105.C \
    test2018_107.C \
    test2018_108.C \
@@ -315,15 +305,55 @@ TESTCODE_CURRENTLY_FAILING = \
    test2017_18.C 
 
 if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_4_9
+  TESTCODES_REQUIRED_TO_PASS += \
+   test2012_08.C \
+   test2016_26.C \
+   test2016_27.C \
+   test2016_31.C \
+   test2018_60.C \
+   test2018_63.C \
+   test2018_64.C \
+   test2018_65.C \
+   test2018_71.C 
+else
+# DQ (1/4/2019): These tests fail with the EDG 4.9 and GNU 4.8 compiler (Note: EDG 4.9 is only tested with the GNU 4.8 compiler).
+  TESTCODE_CURRENTLY_FAILING += \
+   test2012_08.C \
+   test2016_26.C \
+   test2016_27.C \
+   test2016_31.C \
+   test2018_60.C \
+   test2018_63.C \
+   test2018_64.C \
+   test2018_65.C \
+   test2018_71.C 
+endif
+else
+  TESTCODES_REQUIRED_TO_PASS += \
+   test2012_08.C \
+   test2016_26.C \
+   test2016_27.C \
+   test2016_31.C \
+   test2018_60.C \
+   test2018_63.C \
+   test2018_64.C \
+   test2018_65.C \
+   test2018_71.C 
+endif
+
+if ROSE_USE_EDG_VERSION_4_9
   TESTCODES_REQUIRED_TO_PASS += 
 else
   TESTCODE_CURRENTLY_FAILING += 
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_9
-  TESTCODES_REQUIRED_TO_PASS += 
+  TESTCODES_REQUIRED_TO_PASS += \
+   test2018_100.C 
 else
-  TESTCODE_CURRENTLY_FAILING += 
+  TESTCODE_CURRENTLY_FAILING += \
+   test2018_100.C 
 endif
 
 if OS_MACOSX
