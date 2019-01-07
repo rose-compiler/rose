@@ -75,7 +75,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
      workingDirectory = FileHelper::normalizePath((* projectNode -> get_fileList().begin()) -> getWorkingDirectory());
      string userSpecifiedUnparseRootFolder = projectNode -> get_unparseHeaderFilesRootFolder();
-     if (userSpecifiedUnparseRootFolder.empty()) 
+     if (userSpecifiedUnparseRootFolder.empty() == true) 
         {
        // No folder specified, use the default location.
           unparseRootPath = FileHelper::concatenatePaths(workingDirectory, defaultUnparseFolderName);
