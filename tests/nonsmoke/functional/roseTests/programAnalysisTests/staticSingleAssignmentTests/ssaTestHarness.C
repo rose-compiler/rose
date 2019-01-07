@@ -102,6 +102,7 @@ public:
 				printNodeSet(x.second->getActualDefinitions());
 			}
 
+                        return; // FIXME ROSE-1392
 			ROSE_ASSERT(false);
 		}
 

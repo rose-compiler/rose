@@ -1,7 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TESTCODES_REQUIRED_TO_PASS = \
-   test_001.C
+   int_global_scope.C \
+   int_function_scope.C \
+   int_struct_scope.C \
+   mix_global_scope.C \
+   nonreal_type_template_class_scope.C
 
 TESTCODE_CURRENTLY_FAILING = 
 

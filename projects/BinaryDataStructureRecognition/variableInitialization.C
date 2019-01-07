@@ -13,7 +13,7 @@ DataMemberInitializationAttribute::DataMemberInitializationAttribute ( SgAsmInst
      printf ("Building a DataMemberInitializationAttribute object for instruction = %s \n",unparseInstructionWithAddress(instruction).c_str());
 
   // Identify the offset and if this is a stack reference or a global reference.
-     SgAsmMemoryReferenceExpression* memoryReferenceExpression = isSgAsmMemoryReferenceExpression(instruction->get_operandList()->get_operands()[0]);
+     SgAsmMemoryReferenceExpression* memoryReferenceExpression = isSgAsmMemoryReferenceExpression(instruction->operand(0));
      ROSE_ASSERT(memoryReferenceExpression != NULL);
 
      SgAsmRegisterReferenceExpression* segmentRegister = isSgAsmRegisterReferenceExpression(memoryReferenceExpression->get_segment());
@@ -65,7 +65,7 @@ DataMemberInitializationAttribute::DataMemberInitializationAttribute ( SgAsmInst
              }
         }
 
-     SgAsmValueExpression* valueExpression = isSgAsmValueExpression(instruction->get_operandList()->get_operands()[1]);
+     SgAsmValueExpression* valueExpression = isSgAsmValueExpression(instruction->operand(1));
      ROSE_ASSERT(valueExpression != NULL);
 
      value = get_value(valueExpression);

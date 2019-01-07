@@ -1521,9 +1521,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
 
+#if 0
        // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
           SgScopeStatement* current_scope = topScopeStack();
-#if 0
           printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
 #endif
           varDecl->set_parent(topScopeStack());
@@ -1839,6 +1839,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name), base_type, NULL, base_decl, parent_scope);
      ROSE_ASSERT(type_decl != NULL);
 
+  // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
+     type_decl->set_scope(scope);
+     type_decl->set_parent(scope);
+
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): calling SgTypedefType::createType() using this = %p = %s \n",type_decl,type_decl->class_name().c_str());
 #endif
@@ -1890,45 +1894,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
              }
         }
 
-  // Symbol and SgTypedefType should be associated with the first nondefining declaration
-  // Create SgTypedefType
-  // This is already included in the constructor
-  // SgTypedefType::createType (type_decl);
-     if (scope != NULL)
-        {
-          SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
-          ROSE_ASSERT(typedef_symbol);
+     SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+     ROSE_ASSERT(typedef_symbol);
 
-#if 1
-       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
-          scope->insert_symbol(SgName(name),typedef_symbol);
-          type_decl->set_scope(scope);
-#else
-       // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
-          SgScopeStatement* associatedScope = NULL;
-          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
-          if (namespaceDefinition != NULL)
-             {
-               associatedScope = namespaceDefinition->get_global_definition();
-               if (namespaceDefinition->get_global_definition() == NULL)
-                  {
-                    printf ("ERROR: namespaceDefinition->get_global_definition() == NULL: namespaceDefinition = %p \n",namespaceDefinition);
-                  }
-               ROSE_ASSERT(associatedScope != NULL);
-             }
-            else
-             {
-               associatedScope = scope;
-             }
-          ROSE_ASSERT(associatedScope != NULL);
-
-          associatedScope->insert_symbol(SgName(name),typedef_symbol);
-          type_decl->set_scope(associatedScope);
-#endif
-
-       // DQ (3/20/2012): Commented added only: The parent is always the scope in this case, I think.
-          type_decl->set_parent(scope);
-        }
+     scope->insert_symbol(SgName(name),typedef_symbol);
 
 #if 0
   // DQ (3/20/2012): This is always false...since base_decl is never reset from NULL (above).
@@ -2074,6 +2043,10 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
      SgTemplateTypedefDeclaration* type_decl = new SgTemplateTypedefDeclaration(name, base_type, NULL, base_decl, parent_scope);
      ROSE_ASSERT(type_decl != NULL);
 
+  // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
+     type_decl->set_scope(scope);
+     type_decl->set_parent(scope);
+
   // DQ (2/27/2018): We now have to set the type explicitly.
      ROSE_ASSERT(type_decl->get_type() == NULL);
 
@@ -2096,12 +2069,6 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
   // DQ (2/27/2018): This should be non-null, since we just built the new type.
      ROSE_ASSERT(type_decl->get_type() != NULL);
 
-     ROSE_ASSERT(type_decl->get_scope() == NULL);
-
-     type_decl->set_scope(scope);
-
-     ROSE_ASSERT(type_decl->get_scope() != NULL);
-
 #if 0
      printf ("In buildTemplateTypedefDeclaration_nfi(): After SgTemplateTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
 #endif
@@ -2113,8 +2080,8 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
   // Set the source code position information.
      setOneSourcePositionNull(type_decl);
 
-     if (scope != NULL)
-        {
+//     if (scope != NULL)
+//        {
 #if 0
           printf ("Test 2: Check on the symbol associatd with the declaration associated with the base type \n");
 #endif
@@ -2163,13 +2130,10 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
        // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
        // scope->insert_symbol(SgName(name),typedef_symbol);
           scope->insert_symbol(name, typedef_symbol);
-          type_decl->set_scope(scope);
 
-       // DQ (3/20/2012): Comment added only: The parent is always the scope in this case, I think.
-          type_decl->set_parent(scope);
 
           ROSE_ASSERT(scope->lookup_template_typedef_symbol(name) != NULL);
-        }
+//        }
 
 #if 0
   // We have to setup the template arguments (need specialization and partial specialization support).
@@ -8677,6 +8641,41 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
 #endif
    }
 
+// Rasmussen (9/3/2018): Added build function for a Fortran do construct
+SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body)
+  {
+     ROSE_ASSERT(initialization);
+     ROSE_ASSERT(bound);
+
+     if (increment == NULL)
+       {
+          increment = buildNullExpression();
+       }
+     ROSE_ASSERT(increment);
+
+     if (loop_body == NULL)
+       {
+          loop_body = buildBasicBlock();
+       }
+     ROSE_ASSERT(loop_body);
+
+     SgFortranDo * result = new SgFortranDo(initialization, bound, increment, loop_body);
+     ROSE_ASSERT(result);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+        result->setCaseInsensitive(true);
+
+     setOneSourcePositionForTransformation(result);
+
+     initialization->set_parent(result);
+     bound->set_parent(result);
+     increment->set_parent(result);
+     loop_body->set_parent(result);
+
+     return result;
+   }
+
 // charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
 SgForInitStatement * SageBuilder::buildForInitStatement()
    {
@@ -10864,15 +10863,16 @@ generate_type_list (SgType* type)
   // This function generates a list of types for each level of the type structure.
      string returnString;
 
-     unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+     unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE);
 
      SgType* currentType = type;
 
-     SgModifierType*  modType     = NULL;
-     SgPointerType*   pointType   = NULL;
-     SgReferenceType* refType     = NULL;
-     SgArrayType*     arrayType   = NULL;
-     SgTypedefType*   typedefType = NULL;
+     SgModifierType*        modType     = NULL;
+     SgPointerType*         pointType   = NULL;
+     SgReferenceType*       refType     = NULL;
+     SgRvalueReferenceType* rRefType     = NULL;
+     SgArrayType*           arrayType   = NULL;
+     SgTypedefType*         typedefType = NULL;
 
      while (currentType != NULL)
         {
@@ -10880,44 +10880,33 @@ generate_type_list (SgType* type)
 #if 0
           printf ("In generate_type_list(): returnString = %s \n",returnString.c_str());
 #endif
-       // type = type->findBaseType();
           if ( (bit_array & SgType::STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
              }
-            else
+          else if ( (bit_array & SgType::STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
              {
-               if ( (bit_array & SgType::STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
-                  {
-                    currentType = refType->get_base_type();
-                  }
-                 else
-                  {
-                    if ( (bit_array & SgType::STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
-                       {
-                         currentType = pointType->get_base_type();
-                       }
-                      else
-                       {
-                         if ( (bit_array & SgType::STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
-                            {
-                              currentType = arrayType->get_base_type();
-                            }
-                           else
-                            {
-                              if ( (bit_array & SgType::STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
-                                 {
-                                // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
-                                   currentType = typedefType->get_base_type();
-                                 }
-                                else
-                                 {
-                                // Exit the while(true){} loop!
-                                   break;
-                                 }
-                            }
-                       }
-                  }
+               currentType = refType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_RVALUE_REFERENCE_TYPE) &&  (rRefType = isSgRvalueReferenceType(currentType)) )
+             {
+               currentType = rRefType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+             {
+               currentType = pointType->get_base_type();
+             }
+          else if ( (bit_array & SgType::STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
+             {
+               currentType = arrayType->get_base_type();
+             }
+          else  if ( (bit_array & SgType::STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
+             {
+               currentType = typedefType->get_base_type();
+             }
+          else
+             {
+               break;
              }
 
           if (type != NULL)
@@ -13049,14 +13038,19 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              {
                printf ("ERROR: nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
                printf ("ERROR: nondefdecl->get_type() = %p = %s \n",nondefdecl->get_type(),nondefdecl->get_type()->class_name().c_str());
-               printf ("ERROR: nondefdecl = %p = %s nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
+               printf ("ERROR: nondefdecl->get_type()->get_declaration() = %p = %s \n",nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
 
                SgClassDeclaration* classDeclarationFromType = isSgClassDeclaration(nondefdecl->get_type()->get_declaration());
                ROSE_ASSERT(classDeclarationFromType != NULL);
 
-               printf ("classDeclarationFromType->get_name() = %s \n",classDeclarationFromType->get_name().str());
                printf ("nondefdecl->get_name() = %s \n",nondefdecl->get_name().str());
+               printf ("nondefdecl->get_type()->get_name() = %s \n",nondefdecl->get_type()->get_name().str());
+               printf ("nondefdecl->get_type()->get_declaration()->get_name() = %s \n",classDeclarationFromType->get_name().str());
 
+               printf ("nondefdecl->get_mangled_name() = %s \n",nondefdecl->get_mangled_name().getString().c_str());
+               printf ("nondefdecl->get_type()->get_mangled() = %s \n",nondefdecl->get_type()->get_mangled().getString().c_str());
+               printf ("nondefdecl->get_type()->get_declaration()->get_mangled_name() = %s \n",classDeclarationFromType->get_mangled_name().getString().c_str());
+#if 0
                nondefdecl->get_type()->get_declaration()->get_file_info()->display("nondefdecl->get_type()->get_declaration()");
 
             // DQ (7/24/2017): Added more debug information to support debugging test2014_187.C.
@@ -13079,6 +13073,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                     ROSE_ASSERT(nondefdecl->get_file_info() != NULL);
                     nondefdecl->get_file_info()->display("nondefdecl");
                   }
+#endif
              }
           ROSE_ASSERT(nondefdecl->get_type()->get_declaration() == nondefdecl);
 
@@ -14949,7 +14944,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (2/6/2009): We will be compiling the source code generated in the
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
-     arglist.push_back(sourceFilename);
+  // TV (09/19/2018): only add if not already present
+     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end()) {
+       arglist.push_back(sourceFilename);
+     }
 
   // DQ (2/6/2009): Modified.
   // There is output file name specified for rose translators

@@ -604,8 +604,8 @@ void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
   DivLattice *arg1Lat, *arg2Lat, *resLat;
   getLattices(sgn, arg1Lat, arg2Lat, resLat);
 
-  if (!arg1Lat) {
-    ROSE_ASSERT(!resLat);
+  if (arg1Lat == NULL) {
+    ROSE_ASSERT(resLat == NULL);
     return;
   }
   
@@ -614,10 +614,11 @@ void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
   if (sgn->get_mode() == SgUnaryOp::prefix) {
     //arg1Lat->incr(increment);
     transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
-    if (resLat)
+    if (resLat != NULL)
       resLat->copy(arg1Lat);
-  } else {
-    if (resLat)
+  }
+  else {
+    if (resLat != NULL)
       resLat->copy(arg1Lat);
     transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
     //arg1Lat->incr(increment);
@@ -625,29 +626,41 @@ void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
 
   delete arg2Lat;
 }
+
 void DivAnalysisTransfer::visit(SgPlusPlusOp *sgn) { transferIncrement(sgn); }
 void DivAnalysisTransfer::visit(SgMinusMinusOp *sgn) { transferIncrement(sgn); }
 
 void DivAnalysisTransfer::visit(SgUnaryAddOp *sgn) {
   DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
   getLattices(sgn, arg1Lat, arg2Lat, resLat);
+  ROSE_ASSERT(arg1Lat != NULL);
+  ROSE_ASSERT(resLat != NULL);
   resLat->copy(arg1Lat);
   modified = true;
+  if (arg2Lat != NULL) {
+    delete arg2Lat;
+  }
 }
+
 void DivAnalysisTransfer::visit(SgMinusOp *sgn) {
   DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
   getLattices(sgn, arg1Lat, arg2Lat, resLat);
+  ROSE_ASSERT(arg1Lat != NULL);
+  ROSE_ASSERT(resLat != NULL);
   resLat->copy(arg1Lat);
   modified = true;
   if(resLat->getLevel() == DivLattice::valKnown)
     resLat->set(0 - resLat->getValue());
   else if(resLat->getLevel() == DivLattice::divKnown)
     resLat->set(resLat->getDiv(), (resLat->getDiv() - resLat->getRem()) % resLat->getDiv());
+  if (arg2Lat != NULL) {
+    delete arg2Lat;
+  }
 }
 
 void DivAnalysisTransfer::transferMultiplicative(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
   if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j * k\n";
-  /*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
+          /*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
     printf("arg2Lat = %s\n", arg2Lat->str().c_str());*/
                                 
   // Both Bottom
@@ -679,6 +692,7 @@ void DivAnalysisTransfer::transferMultiplicative(DivLattice *arg1Lat, DivLattice
   else
     updateModified(resLat->setTop());
 }
+
 void DivAnalysisTransfer::visit(SgMultiplyOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMultiplicative); }
 void DivAnalysisTransfer::visit(SgMultAssignOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMultiplicative); }
 

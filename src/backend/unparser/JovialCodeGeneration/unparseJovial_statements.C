@@ -62,8 +62,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
      switch (stmt->variantT())
         {
-       // case V_SgGlobal:                   cout << "Got it !!!" << endl; /* unparseGlobalStmt   (stmt, info); */ break;
-
+       // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // program units
        // case V_SgModuleStatement:            unparseModuleStmt(stmt, info);       break;
@@ -81,6 +80,10 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
           case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
           case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
+          case V_SgSwitchStatement:            unparseSwitchStmt     (stmt, info);  break;
+          case V_SgCaseOptionStmt:             unparseCaseStmt       (stmt, info);  break;
+          case V_SgDefaultOptionStmt:          unparseDefaultStmt    (stmt, info);  break;
+          case V_SgBreakStmt:                  unparseBreakStmt      (stmt, info);  break;
 
           case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
           case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
@@ -94,10 +97,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // executable statements, control flow
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
-          case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
-          case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
-          case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
-          case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
@@ -119,12 +118,12 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 #endif
 
           default:
-             {
-                cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
-                     <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
+            {
+               cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
+                    <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
                ROSE_ASSERT(false);
                break;
-             }
+            }
         }
    }
 
@@ -255,6 +254,90 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
+  {
+ // Sage node corresponding to Jovial CaseStatement;
+    SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
+    ROSE_ASSERT(switch_stmt != NULL);
+
+    curprint("CASE ");
+
+    SgExprStatement* expressionStatement = isSgExprStatement(switch_stmt->get_item_selector());
+    ROSE_ASSERT(expressionStatement != NULL);
+    unparseExpression(expressionStatement->get_expression(), info);
+
+    curprint(";");
+    unp->cur.insert_newline(1);
+    curprint("BEGIN");
+    unp->cur.insert_newline(1);
+
+    if (switch_stmt->get_body())
+      {
+         unparseStatement(switch_stmt->get_body(), info);
+      }
+
+    unp->cur.insert_newline(1);
+    curprint("END");
+    unp->cur.insert_newline(1);
+
+    unp->cur.insert_newline(1);
+  }
+
+void
+Unparse_Jovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
+  {
+ // Sage node corresponding to Jovial CaseAlternative rule
+    SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
+    ROSE_ASSERT(case_stmt != NULL);
+
+    curprint("(");
+    unparseExpression(case_stmt->get_key(), info);
+    curprint("):");
+    unp->cur.insert_newline(1);
+
+    if (case_stmt->get_body())
+      {
+         unparseStatement(case_stmt->get_body(), info);
+      }
+    unp->cur.insert_newline(1);
+
+    if (case_stmt->get_has_fall_through())
+      {
+         curprint("FALLTHRU");
+         unp->cur.insert_newline(1);
+      }
+  }
+
+void 
+Unparse_Jovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
+  {
+ // Sage node corresponding to Jovial DefaultOption rule
+    SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
+    ROSE_ASSERT(default_stmt != NULL);
+
+    curprint("(DEFAULT):");
+    unp->cur.insert_newline(1);
+
+    if (default_stmt->get_body())
+      {
+         unparseStatement(default_stmt->get_body(), info);
+      }
+    if (default_stmt->get_has_fall_through())
+      {
+         curprint("FALLTHRU");
+         unp->cur.insert_newline(1);
+      }
+  }
+
+void
+Unparse_Jovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
+  {
+ // This IR node is compiler generated for no FALLTHRU option in CaseAlternative rule.
+ // It should not be unparsed, unparseCaseOptionStmt and unparseDefaultStmt will
+ // unparse the FALLTHRU keyward as needed.
+  }
+
+void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgStopOrPauseStatement* sp_stmt = isSgStopOrPauseStatement(stmt);
@@ -314,7 +397,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
    {
      SgName name         = initializedName->get_name();
      SgType* type        = initializedName->get_type();
-     SgInitializer* init = initializedName->get_initializer();  
+     SgInitializer* init = initializedName->get_initializer();
      ROSE_ASSERT(type);
 
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);

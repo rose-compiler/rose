@@ -5,6 +5,7 @@
 #include "BinaryNoOperation.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
+#include "AsmUnparser_compat.h"
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -12,6 +13,18 @@ using namespace Rose::BinaryAnalysis;
 
 /** Indicates concrete stack delta is not known or not calculated. */
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
+
+size_t
+SgAsmInstruction::nOperands() const {
+    if (!get_operandList())
+        return 0;
+    return get_operandList()->get_operands().size();
+}
+
+SgAsmExpression*
+SgAsmInstruction::operand(size_t i) const {
+    return i < nOperands() ? get_operandList()->get_operands()[i] : NULL;
+}
 
 void
 SgAsmInstruction::appendSources(SgAsmInstruction *inst) {
@@ -186,4 +199,18 @@ SgAsmInstruction::isUnknown() const
 {
     abort(); // too bad ROSETTA doesn't allow virtual base classes
     return false;
+}
+
+std::string
+SgAsmInstruction::toString() const {
+    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
+    std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
+    if (SgAsmOperandList *opList = insn->get_operandList()) {
+        const SgAsmExpressionPtrList &operands = opList->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            retval += i == 0 ? " " : ", ";
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+        }
+    }
+    return retval;
 }

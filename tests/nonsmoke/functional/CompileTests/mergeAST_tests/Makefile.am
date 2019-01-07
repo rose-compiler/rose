@@ -14,7 +14,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_02.C \
      mergeTest_03.C \
      mergeTest_08.C \
-     mergeTest_09.C \
      mergeTest_10.C \
      mergeTest_11.C \
      mergeTest_12.C \
@@ -113,7 +112,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_131.C \
      mergeTest_133.C \
      mergeTest_134.C \
-     mergeTest_135.C \
      mergeTest_138.C 
 
 # DQ (1/19/2017): These are a problem for GNU 6.1.
@@ -136,6 +134,13 @@ TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_111.C 
 endif
 endif
+endif
+
+# TV (11/15/2018): EDG 5.0 tells us that a forward declaration of an enumeration is "nonstandard".
+if !ROSE_USE_EDG_VERSION_5_0
+TESTCODES_REQUIRED_TO_PASS += \
+     mergeTest_09.C \
+     mergeTest_135.C
 endif
 
 # DQ (8/22/2013): Failing test:

@@ -7,6 +7,8 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Disassembly and partitioning utility functions for M68k. */
 namespace ModulesM68k {
 
 /** Matches an M68k function prologue with LINK instruction.

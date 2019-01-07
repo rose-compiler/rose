@@ -3,6 +3,7 @@
 #define ROSE_BinaryAnalysis_Unparser_H
 
 #include <Sawyer/CommandLine.h>
+#include <BaseSemantics2.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -43,6 +44,9 @@ struct Settings {
             bool showingSuccessors;                     /**< Show basic block successors? */
             bool showingSharing;                        /**< Show functions when block is shared? */
         } cfg;                                          /**< Settings for control flow graphs. */
+        struct {
+            bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
+        } reach;                                        /**< Reachability analysis results. */
     } bblock;                                           /**< Settings for basic blocks. */
 
     struct {
@@ -78,6 +82,12 @@ struct Settings {
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
         } comment;                                      /**< Settings for instruction comments. */
+
+        struct {
+            bool showing;                               /**< Show instruction semantics? */
+            InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
+            bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
+        } semantics;
     } insn;                                             /**< Settings for instructions. */
 
     Settings();

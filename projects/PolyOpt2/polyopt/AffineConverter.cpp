@@ -160,7 +160,7 @@ AffineConverter::createScopLibFromScops(std::vector<SgNode*>& scopRoots,
 						  WRITE_REFERENCES);
 	  statement->nb_iterators = iteratorsMap.size();
 	  statement->iterators = createIteratorsArray(iteratorsMap);
-	  statement->body      = (char*) (*s);
+	  statement->body = (char*) (*s);
 	  if (curr == NULL)
 	    scop->statement = statement;
 	  else
@@ -692,8 +692,8 @@ AffineConverter::getFakeControlIteratorMap()
 {
   if (_fakeControlMap.size() == 0)
     {
-      SgVariableSymbol* symb = new SgVariableSymbol();
-      std::pair<SgVariableSymbol*, int> newelt(symb, 0);
+      // Create a fake NULL-named iterator.
+      std::pair<SgVariableSymbol*, int> newelt(NULL, 0);
       _fakeControlMap.insert(newelt);
     }
 
@@ -1323,4 +1323,3 @@ AffineConverter::convertLinearExpression(SgExpression* e,
 
   return true;
 }
-

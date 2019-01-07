@@ -277,7 +277,7 @@ HiddenListTraversal::associatedDeclaration(SgType* type)
      SgDeclarationStatement* return_declaration = NULL;
 
   // We want to strip away all by typedef types.
-     SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
   // switch (type->variantT())
@@ -1566,7 +1566,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
           if (type != NULL)
              {
             // Reduce the type to the base type stripping off wrappers that would hide the fundamental type inside.
-               SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+               SgType* strippedType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                ROSE_ASSERT(strippedType != NULL);
 
             // SgNamedType* namedType = isSgNamedType(type);

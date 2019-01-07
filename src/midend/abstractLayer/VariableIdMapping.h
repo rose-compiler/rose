@@ -110,7 +110,6 @@ class VariableIdMapping {
   void generateDot(std::string filename,SgNode* astRoot);
 
   VariableIdSet getVariableIdSet();
-
   VariableIdSet determineVariableIdsOfVariableDeclarations(std::set<SgVariableDeclaration*> varDecls);
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
   VariableIdSet variableIdsOfAstSubTree(SgNode* node);
@@ -126,14 +125,21 @@ class VariableIdMapping {
   size_t getArrayElementCount(SgArrayType* t);
   size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
   VariableId idForArrayRef(SgPntrArrRefExp* ref);
-
   
   // memory locations of string literals
   VariableId getStringLiteralVariableId(SgStringVal* sval);
   void registerStringLiterals(SgNode* root);
   int numberOfRegisteredStringLiterals();
   bool isStringLiteralAddress(VariableId stringVarId);
+  // returns true if the variable is a formal parameter in a function definition
+  bool isFunctionParameter(VariableId varId);
   std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+  // determines for struct/class/union's data member if its
+  // SgInitializeName defines an anonymous bitfield (e.g. struct S {
+  // int :0; }). Anonymous bitfields in the same struct are mapped
+  // to the same SgSymbol. This function is used to handle this
+  // special case.
+  static bool isAnonymousBitfield(SgInitializedName* initName);
 
  private:
   std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;

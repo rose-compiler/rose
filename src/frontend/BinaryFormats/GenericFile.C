@@ -42,7 +42,7 @@ SgAsmGenericFile::parse(std::string fileName)
     set_name(fileName);
     p_fd = open(fileName.c_str(), O_RDONLY);
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
-        std::string mesg = "Could not open binary file \"" + StringUtility::cEscape(fileName) + "\"";
+        std::string mesg = "could not open binary file \"" + StringUtility::cEscape(fileName) + "\"";
         throw FormatError(mesg + ": " + strerror(errno));
     }
     size_t nbytes = p_sb.st_size;
@@ -50,12 +50,12 @@ SgAsmGenericFile::parse(std::string fileName)
     /* To be more portable across operating systems, read the file into memory rather than mapping it. */
     unsigned char *mapped = new unsigned char[nbytes];
     if (!mapped)
-        throw FormatError("Could not allocate memory for binary file");
+        throw FormatError("could not allocate memory for binary file \"" + StringUtility::cEscape(fileName) + "\"");
     ssize_t nread = read(p_fd, mapped, nbytes);
     if (nread<0 || (size_t)nread!=nbytes)
     {
       delete [] mapped;
-      throw FormatError("Could not read entire binary file");
+      throw FormatError("could not read entire binary file \"" + StringUtility::cEscape(fileName) + "\"");
     }
 
     /* Decode the memory if necessary */

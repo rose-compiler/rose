@@ -70,9 +70,12 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               
               // every varid is inserted exactly once.
               if(varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end()) {
-
-                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid alread exists."<<endl;
+                variableIdMapping->toStream(cerr);
+                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
                 cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
+                cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
+                cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
+                cerr<<"Declaration: "<<node->unparseToString()<<endl;
                 exit(1);
               }
               //cout<<" DEBUG Offset: "<<offset<<endl;
@@ -85,12 +88,15 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
             } else {
               // could not determine var type
               // ...
+              //cout<<"DEBUG: unknown var type."<<endl;
               numUnknownVarType++;
             }
           } else {
             // non valid var id
             // throw ...
+            cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<
             numNonValidVarId++;
+            exit(1);
           }
         }
       }
