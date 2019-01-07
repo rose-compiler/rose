@@ -77,7 +77,7 @@ AST_FILE_IO :: startUp( SgProject* root )
 
      if ( SgProject::get_verbose() > 0 )
           std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
   // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
@@ -272,7 +272,7 @@ $REPLACE_COMPRESSASTINMEMEORYPOOL
         }
      listOfMemoryPoolSizes[totalNumberOfIRNodes] += getTotalNumberOfNodesOfNewAst();
   // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
   // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
@@ -713,7 +713,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- before AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
   // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
      memoryCheckingTraversal_A.traverseMemoryPool();
@@ -741,7 +741,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
   // AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
      memoryCheckingTraversal_B.traverseMemoryPool();
@@ -771,7 +771,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after marker read .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C;
      memoryCheckingTraversal_C.traverseMemoryPool();
 #endif
@@ -819,7 +819,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after actualRebuildAst = new AstData() .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D;
      memoryCheckingTraversal_D.traverseMemoryPool();
 #endif
@@ -844,7 +844,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Calling AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D2;
      memoryCheckingTraversal_D2.traverseMemoryPool();
 #endif
@@ -855,7 +855,7 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_E;
      memoryCheckingTraversal_E.traverseMemoryPool();
 #endif
@@ -906,7 +906,7 @@ $REPLACE_READASTFROMFILE
      if ( SgProject::get_verbose() > 0 )
           std::cout << " Checking the ast via pool entries .... " << std::endl;
 
-#if 0
+#if FILE_IO_MEMORY_POOL_CHECK
      MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
 #endif

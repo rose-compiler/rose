@@ -64,6 +64,7 @@ int getNodeID(const NodeState& state)
 {
         ROSE_ASSERT(puids);
         NodeID* id = (NodeID*)state.getFact(puids, 0);
+        ROSE_ASSERT(id != NULL);
         return id->getID();
 }
 

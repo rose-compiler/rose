@@ -227,7 +227,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (UseStatement,              "UseStatement",              "USE_STATEMENT" );
      NEW_TERMINAL_MACRO (StopOrPauseStatement,      "StopOrPauseStatement",      "STOP_OR_PAUSE_STATEMENT" );
 
-  // DQ (11/25/2007): Make this the base class of all the IR nodes for Frotran I/O
+  // DQ (11/25/2007): Make this the base class of all the IR nodes for Fortran I/O
   // NEW_TERMINAL_MACRO (IOStatement,               "IOStatement",               "IO_STATEMENT" );
 
   // NEW_TERMINAL_MACRO (InputOutputStatement,      "InputOutputStatement",      "INPUT_OUTPUT_STATEMENT" ); 
@@ -271,6 +271,19 @@ Grammar::setUpStatements ()
           InquireStatement | FlushStatement | BackspaceStatement | RewindStatement | EndfileStatement |
           WaitStatement,
           "IOStatement", "IO_STATEMENT", false);
+
+  // Rasmussen (9/25/2018): Fortran 2018 nodes related to synchronization
+     NEW_TERMINAL_MACRO (SyncAllStatement,     "SyncAllStatement",            "SYNC_ALL_STATEMENT" );
+     NEW_TERMINAL_MACRO (SyncImagesStatement,  "SyncImagesStatement",         "SYNC_IMAGES_STATEMENT" );
+     NEW_TERMINAL_MACRO (SyncMemoryStatement,  "SyncMemoryStatement",         "SYNC_MEMORY_STATEMENT" );
+     NEW_TERMINAL_MACRO (SyncTeamStatement,    "SyncTeamStatement",           "SYNC_TEAM_STATEMENT" );
+     NEW_TERMINAL_MACRO (LockStatement,        "LockStatement",               "LOCK_STATEMENT" );
+     NEW_TERMINAL_MACRO (UnlockStatement,      "UnlockStatement",             "UNLOCK_STATEMENT" );
+
+     NEW_NONTERMINAL_MACRO (ImageControlStatement,
+          SyncAllStatement | SyncImagesStatement | SyncMemoryStatement | SyncTeamStatement |
+          LockStatement    | UnlockStatement,
+          "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
      //SK(08/20/2015): Matlab For-loop
@@ -531,6 +544,7 @@ Grammar::setUpStatements ()
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
+  // Rasmussen (9/20/2018): Added ImageControlStatement
      NEW_NONTERMINAL_MACRO (Statement,
              ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
              LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
@@ -545,7 +559,7 @@ Grammar::setUpStatements ()
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
-             AtomicStmt                | WhenStmt /* | JavaPackageDeclaration */,
+             AtomicStmt                | WhenStmt               | ImageControlStatement /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -918,7 +932,7 @@ Grammar::setUpStatements ()
   // DQ (7/25/2014): Adding support for C11 static assertions.
      StaticAssertionDeclaration.setFunctionPrototype ( "HEADER_STATIC_ASSERTION_DECLARATION", "../Grammar/Statement.code" );
      StaticAssertionDeclaration.setDataPrototype ( "SgExpression*", "condition", "= NULL",
-                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      StaticAssertionDeclaration.setDataPrototype ( "SgName", "string_literal", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2522,6 +2536,10 @@ Grammar::setUpStatements ()
      CaseOptionStmt.setDataPrototype ( "std::string", "case_construct_name", " = \"\"",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
+     CaseOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TryStmt.setFunctionPrototype ( "HEADER_TRY_STATEMENT", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "LIST_DATA_TYPE", "SgStatementPtrList" );
@@ -2574,6 +2592,10 @@ Grammar::setUpStatements ()
 
   // DQ (1/31/2009): Added support for named default case construct.
      DefaultOptionStmt.setDataPrototype ( "std::string", "default_construct_name", " = \"\"",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
+     DefaultOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      BreakStmt.setFunctionPrototype ( "HEADER_BREAK_STATEMENT", "../Grammar/Statement.code" );
@@ -3304,6 +3326,33 @@ Grammar::setUpStatements ()
      IOStatement.setDataPrototype ( "SgExpression*", "iomsg", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+
+  // Rasmussen (9/20/2018): Added F2018 image control statements
+     ImageControlStatement.setFunctionPrototype ( "HEADER_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
+     ImageControlStatement.setDataPrototype     ( "SgImageControlStatement::image_control_statement_enum", "image_control_statement", "= SgImageControlStatement::e_unknown",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "stat", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "err_msg", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ImageControlStatement.setDataPrototype     ( "SgExpression*", "acquired_lock", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Derived from ImageControlStatement
+     SyncAllStatement.setFunctionPrototype      ( "HEADER_SYNC_ALL_STATEMENT", "../Grammar/Statement.code" );
+     SyncImagesStatement.setFunctionPrototype   ( "HEADER_SYNC_IMAGES_STATEMENT", "../Grammar/Statement.code" );
+     SyncImagesStatement.setDataPrototype       ( "SgExpression*", "image_set", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     SyncMemoryStatement.setFunctionPrototype   ( "HEADER_SYNC_MEMORY_STATEMENT", "../Grammar/Statement.code" );
+     SyncTeamStatement.setFunctionPrototype     ( "HEADER_SYNC_TEAM_STATEMENT", "../Grammar/Statement.code" );
+     SyncTeamStatement.setDataPrototype         ( "SgExpression*", "team_value", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LockStatement.setFunctionPrototype         ( "HEADER_LOCK_STATEMENT", "../Grammar/Statement.code" );
+     LockStatement.setDataPrototype             ( "SgExpression*", "lock_variable", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UnlockStatement.setFunctionPrototype       ( "HEADER_UNLOCK_STATEMENT", "../Grammar/Statement.code" );
+     UnlockStatement.setDataPrototype           ( "SgExpression*", "lock_variable", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from IOStatement, this adds the status (either "KEEP" or "DELETE")
      CloseStatement.setFunctionPrototype ( "HEADER_CLOSE_STATEMENT", "../Grammar/Statement.code" );
@@ -4045,6 +4094,17 @@ Grammar::setUpStatements ()
      StopOrPauseStatement.setFunctionSource     ("SOURCE_STOP_OR_PAUSE_STATEMENT", "../Grammar/Statement.code" );
 
      IOStatement.setFunctionSource              ("SOURCE_IO_STATEMENT", "../Grammar/Statement.code" );
+
+  // Rasmussen (9/20/2018): Added F2018 image control statements
+     ImageControlStatement.setFunctionSource    ("SOURCE_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
+
+  // Derived from ImageControlStatement
+     SyncAllStatement.setFunctionSource         ("SOURCE_SYNC_ALL_STATEMENT", "../Grammar/Statement.code" );
+     SyncImagesStatement.setFunctionSource      ("SOURCE_SYNC_IMAGES_STATEMENT", "../Grammar/Statement.code" );
+     SyncMemoryStatement.setFunctionSource      ("SOURCE_SYNC_MEMORY_STATEMENT", "../Grammar/Statement.code" );
+     SyncTeamStatement.setFunctionSource        ("SOURCE_SYNC_TEAM_STATEMENT", "../Grammar/Statement.code" );
+     LockStatement.setFunctionSource            ("SOURCE_LOCK_STATEMENT", "../Grammar/Statement.code" );
+     UnlockStatement.setFunctionSource          ("SOURCE_UNLOCK_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (12/27/2007): Added fortran entry statement.
      EntryStatement.setFunctionSource           ("SOURCE_ENTRY_STATEMENT", "../Grammar/Statement.code" );
