@@ -1,9 +1,12 @@
  #include <vector>
+
+class MemoryPage { int size; public: MemoryPage(int s) : size(s) {} };
+
 using namespace std;
 int main()
    {
      vector<MemoryPage> vm;
-     MemoryPage mp1(1024);//lvalue
+     MemoryPage mp(1024);//lvalue
      vm.push_back(mp); //push_back(const T&)
 
   // However, you can enforce the selection of push_back(T&&) even in this case by casting an lvalue to an rvalue reference using static_cast:

@@ -3,6 +3,8 @@
 // is meant as \u201ca constant expression which evaluates to 0, which is of type int\u201d. 
 // In reality, the constant expression can be of any integral type.
 
+using namespace std;
+
 // Since the dawn of C in 1972, the constant 0 has had the double role of constant integer and 
 // null pointer constant. The ambiguity inherent in the double meaning of 0 was dealt with in C 
 // by the use of the preprocessor macro NULL, which commonly expands to either ((void*)0) or 0. 
@@ -28,8 +30,14 @@ void foo(int);
 
 char *pc = nullptr;     // OK
 int  *pi = nullptr;     // OK
-bool   b = nullptr;     // OK. b is false.
-int    i = nullptr;     // error
+
+// C++11 web pages suggest that this should work, but it fails for GNU g++ version 6.1 C++11 support.
+// bool   b = nullptr;     // OK. b is false.
+
+// int    i = nullptr;     // error
  
-foo(nullptr);           // calls foo(char *), not foo(int);
+void foobar2()
+   {
+     foo(nullptr);           // calls foo(char *), not foo(int);
+   }
 

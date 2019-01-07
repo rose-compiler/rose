@@ -1,5 +1,8 @@
 // Example from C++11 Wiki web page:
 
+#include<vector>
+#include<string>
+
 // Uniform initialization
 // C++03 has a number of problems with initializing types. There are several ways to initialize types, and they 
 // do not all produce the same results when interchanged. The traditional constructor syntax, for example, can 

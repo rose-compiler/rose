@@ -16,9 +16,12 @@
 
 // The following shows how to create string literals for each of these encodings:
 
-u8"I'm a UTF-8 string."
-u"This is a UTF-16 string."
-U"This is a UTF-32 string."
+void foobar()
+   {
+
+     u8"I'm a UTF-8 string.";
+     u"This is a UTF-16 string.";
+     U"This is a UTF-32 string.";
 
 // The type of the first string is the usual const char[]. The type of the second string is const char16_t[]. 
 // The type of the third string is const char32_t[].
@@ -26,9 +29,9 @@ U"This is a UTF-32 string."
 // When building Unicode string literals, it is often useful to insert Unicode codepoints directly into the 
 // string. To do this, C++11 allows the following syntax:
 
-u8"This is a Unicode Character: \u2018."
-u"This is a bigger Unicode Character: \u2018."
-U"This is a Unicode Character: \u2018."
+     u8"This is a Unicode Character: \u2018.";
+     u"This is a bigger Unicode Character: \u2018.";
+     U"This is a Unicode Character: \u2018.";
 
 // The number after the \u is a hexadecimal number; it does not need the usual 0x prefix. The identifier \u 
 // represents a 16-bit Unicode codepoint; to enter a 32-bit codepoint, use \U and a 32-bit hexadecimal number. 
@@ -38,8 +41,8 @@ U"This is a Unicode Character: \u2018."
 // It is also sometimes useful to avoid escaping strings manually, particularly for using literals of XML 
 // files, scripting languages, or regular expressions. C++11 provides a raw string literal:
 
-R"(The String Data \ Stuff " )"
-R"delimiter(The String Data \ Stuff " )delimiter"
+     R"(The String Data \ Stuff " )";
+     R"delimiter(The String Data \ Stuff " )delimiter";
 
 // In the first case, everything between the "( and the )" is part of the string. The " and \ characters 
 // do not need to be escaped. In the second case, the "delimiter( starts the string, and it ends only 
@@ -50,6 +53,8 @@ R"delimiter(The String Data \ Stuff " )delimiter"
 
 // Raw string literals can be combined with the wide literal or any of the Unicode literal prefixes:
 
-u8R"XXX(I'm a "raw UTF-8" string.)XXX"
-uR"*(This is a "raw UTF-16" string.)*"
-UR"(This is a "raw UTF-32" string.)"
+     u8R"XXX(I'm a "raw UTF-8" string.)XXX";
+     uR"*(This is a "raw UTF-16" string.)*";
+     UR"(This is a "raw UTF-32" string.)";
+
+   }
