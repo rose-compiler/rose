@@ -7285,7 +7285,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (4/13/2015): Only add boost path for C++ applications, never for C applications
   // (though this does not to have ever caused an error that I know of).
   // if (get_C_only() || get_Cxx_only())
-     if (get_Cxx_only() == true)
+
+  // TV (01/08/2019): with ubuntu 18.04 using default boost, this causes an issue
+     if (get_Cxx_only() == true && std::string(ROSE_BOOST_PATH) != "/usr")
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.
