@@ -641,6 +641,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
                case T_FLOAT:
                case T_DOUBLE:
+               case T_FLOAT80:
+               case T_FLOAT128:
                case T_LONG_LONG:
                case T_UNSIGNED_LONG_LONG:
                case T_SIGNED_LONG_LONG:
