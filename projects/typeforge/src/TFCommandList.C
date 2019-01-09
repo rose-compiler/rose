@@ -49,7 +49,7 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
 //Returns the SgType* that mathces the type defined by the string in the given scope. If no type matches will exit.
 SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
   SgType* newType=nullptr;
-  regex e("[_A-Za-z]+|\\*|&|const");
+  regex e("[_A-Za-z]+|\\*|&|const|<|>");
   regex_token_iterator<string::iterator> rend;
   regex_token_iterator<string::iterator> a ( type.begin(), type.end(), e );
   bool buildConstType=false;
@@ -57,7 +57,11 @@ SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
   bool isShortType=false;
   while (a!=rend) {
     string typePart=*a++;
-    if(typePart=="float") {
+    if(typePart=="<" || typePart==">") {
+      cerr<<"Error: unsupported type "<<type<<endl;
+      cerr<<"Note: Parameterized types are not supported as type names. Try to use a typename introduced by a typedef instead."<<endl;
+      exit(1);
+    } else if(typePart=="float") {
       if(isLongType||isShortType) {
         cerr<<"Error: wrong type: float cannot be short or long."<<endl;
         exit(1);
