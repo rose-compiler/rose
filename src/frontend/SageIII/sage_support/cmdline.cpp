@@ -4191,7 +4191,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_c99_standard:
           case e_c11_standard:
           case e_c14_standard:
-          case e_c17_standard: {
+          case e_c18_standard: {
             if (get_sourceFileUsesCppFileExtension() == true) {
                printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
                set_C_only(false);
@@ -4300,7 +4300,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          case e_c99_standard:   { printf ("C99 mode ON \n");         break; }
          case e_c11_standard:   { printf ("C11 mode ON \n");         break; }
          case e_c14_standard:   { printf ("C14 mode ON \n");         break; }
-         case e_c17_standard:   { printf ("C17 mode ON \n");         break; }
+         case e_c18_standard:   { printf ("C18 mode ON \n");         break; }
          case e_upc_standard:   { printf ("UPC mode ON \n");         break; }
          case e_cxx98_standard: { printf ("C++98 mode ON \n");       break; }
          case e_cxx03_standard: { printf ("C++03 mode ON \n");       break; }
@@ -6609,7 +6609,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          inputCommandLine.push_back("--c14");
          break;
        }
-       case e_c17_standard: {
+       case e_c18_standard: {
          inputCommandLine.push_back("--c17");
          break;
        }
@@ -7645,6 +7645,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          }
          break;
        }
+
+    // DQ (1/10/2019): Added support for C18 (newest C language standard).
+       case e_c18_standard: {
+         if (is_gnu_standard()) {
+           compilerNameString.push_back("-std=gnu18");
+         } else {
+           compilerNameString.push_back("-std=c18");
+         }
+         break;
+       }
        case e_cxx98_standard: {
          if (is_gnu_standard()) {
            compilerNameString.push_back("-std=gnu++98");
@@ -7702,14 +7712,29 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          break; // FIXME Does the Fortran frontend support -std option?
        }
 
+       // DQ (1/10/2019): Added supporting case for UPC.
+          case e_upc_standard: 
+             {
+#if 0
+               printf ("Case of UPC not supported in -std option mechanism \n");
+#endif
+               break;
+             }
+
+       // DQ (1/10/2019): Added supporting case for UPC++.
+          case e_upcxx_standard:
+             {
+#if 0
+               printf ("Case of UPC++ not supported in -std option mechanism \n");
+#endif
+               break;
+             }
+
        // DQ (1/10/2019): Please add a default for your switch.
-       // compiler warnings also complain that:
-       //    e_c17_standard, e_upc_standard, and e_upcxx_standard
-       // are not handled as cases.
        // Plus there is no such thing as C17 (it is C18, as I recall).
           default:
              {
-               printf ("Unhandled case in switch: get_standard() = %d \n",get_standard());
+               printf ("Unhandled case in switch: get_standard() = %d = %s \n",get_standard(),display_standard(get_standard()).c_str());
                ROSE_ASSERT(false);
              }
      }
