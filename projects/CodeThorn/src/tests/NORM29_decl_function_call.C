@@ -17,6 +17,7 @@ short h(int p) {
 int main() {
   int x=f();
   const int y=g(x);
-  assert(y==2);
+  int z=(int)h(y);
+  assert(z==2);
   return 0;
 }

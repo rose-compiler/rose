@@ -448,13 +448,10 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
-    // TODO: if temporary variables are generated, the initialization-list
-    // must be put into a block, otherwise some generated gotos are
-    // not legal (crossing initialization).
-
     // find all SgExprStatement, SgReturnStmt
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      // match on expr stmts and transform the expression
       if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
         if(!SgNodeHelper::isCond(exprStmt)) {
           //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
@@ -465,7 +462,7 @@ namespace SPRAY {
                 normalizeExpression(exprStmt,expr);
               }
             } else {
-              normalizeExpression(exprStmt,expr);
+              normalizeExpression(exprStmt,expr  );
             }
           }
           i.skipChildrenOnForward();
@@ -500,6 +497,7 @@ namespace SPRAY {
     }
   }
   
+  // stmt is only passed through and used to determine the scope when generating tmp-variables
   void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
     SubExprTransformationList subExprTransformationList;
     if(options.encapsulateNormalizedExpressionsInBlocks) {
@@ -523,6 +521,7 @@ namespace SPRAY {
     exprTransformationList.push_back(subExprTransformationList);
   }
 
+  // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   void Normalization::normalizeSubExpression(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       normalizeSubExpression(stmt,castExp->get_operand(),subExprTransformationList);
