@@ -475,9 +475,15 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
+#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
+  // This was the cause of a bug that contaminated the backend compiler command line for an installation 
+  // or ROSE for a specific sponsor.
+
       { // Expand Javac's @argfile since it may contain filenames
           argList = Rose::Cmdline::Java::ExpandArglist(argList);
       }
+#endif
 
      bool isSourceCodeCompiler = false;
 
@@ -638,11 +644,18 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           Rose::Cmdline::NormalizeIncludePathOptions(
               local_commandLineArgumentList);
   }
+
+#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
+  // This was the cause of a bug that contaminated the backend compiler command line for an installation 
+  // or ROSE for a specific sponsor.
+
   { // Expand Javac's @argfile before CLI processing
       local_commandLineArgumentList =
           Rose::Cmdline::Java::ExpandArglist(
               local_commandLineArgumentList);
   }
+#endif
 
   // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
   vector<string>::iterator pthread =
@@ -7688,6 +7701,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        case e_f18_standard: {
          break; // FIXME Does the Fortran frontend support -std option?
        }
+
+       // DQ (1/10/2019): Please add a default for your switch.
+       // compiler warnings also complain that:
+       //    e_c17_standard, e_upc_standard, and e_upcxx_standard
+       // are not handled as cases.
+       // Plus there is no such thing as C17 (it is C18, as I recall).
+          default:
+             {
+               printf ("Unhandled case in switch: get_standard() = %d \n",get_standard());
+               ROSE_ASSERT(false);
+             }
      }
 
   // printf ("compilerName       = %s \n",compilerName);
