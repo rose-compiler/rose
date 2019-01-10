@@ -475,7 +475,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
-#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
   // This was the cause of a bug that contaminated the backend compiler command line for an installation 
   // or ROSE for a specific sponsor.
@@ -645,7 +645,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
               local_commandLineArgumentList);
   }
 
-#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
   // This was the cause of a bug that contaminated the backend compiler command line for an installation 
   // or ROSE for a specific sponsor.
