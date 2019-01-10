@@ -2006,17 +2006,17 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
   }
   
-  // 1. we handle the edge as outgoing edge
+  // 1. handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
 
   if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
-    // case 1: return f(); pass estate trough
+    // case 1: return f(); pass estate through
     EState newEState=currentEState;
     newEState.setLabel(edge.target());
     return elistify(newEState);
   } else if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
-    // case 2: x=f(); bind variable x to value of $return
+    // case 2a: x=f(); bind variable x to value of $return
     if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
@@ -2042,13 +2042,8 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
 
     if(newPState.varExists(returnVarId)) {
       AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
-      //newPState[lhsVarId]=evalResult;
       newPState.writeToMemoryLocation(lhsVarId,evalResult);
-
-      //cset.addAssignEqVarVar(lhsVarId,returnVarId);
       newPState.deleteVar(returnVarId); // remove $return from state
-      //cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
-
       return elistify(createEState(edge.target(),cs,newPState,cset));
     } else {
       // no $return variable found in state. This can be the case for an extern function.
@@ -2057,7 +2052,46 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
       // for external functions no constraints are generated in the call-return node
       return elistify(createEState(edge.target(),cs,newPState,cset));
     }
-  } else if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
+  } else if(SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(nextNodeToAnalyze1)) {
+    // case 2b: Type x=f(); bind variable x to value of $return for function call in declaration
+    if(args.getBool("rers-binary")) {
+      if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+        string funName=SgNodeHelper::getFunctionName(funCall);
+        if(funName=="calculate_output") {
+          EState newEState=currentEState;
+          newEState.setLabel(edge.target());
+          newEState.callString=cs;
+          return elistify(newEState);
+        }
+      }
+    }
+
+    // these two lines are different to x=f();
+    SgVariableDeclaration* varDecl=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(nextNodeToAnalyze1);
+    VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
+    ROSE_ASSERT(lhsVarId.isValid());
+
+    PState newPState=*currentEState.pstate();
+    // this variable is created here only to be able to find an existing $return variable in the state
+    VariableId returnVarId;
+#pragma omp critical(VAR_ID_MAPPING)
+    {
+      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+    }
+
+    if(newPState.varExists(returnVarId)) {
+      AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
+      newPState.writeToMemoryLocation(lhsVarId,evalResult);
+      newPState.deleteVar(returnVarId); // remove $return from state
+      return elistify(createEState(edge.target(),cs,newPState,cset));
+    } else {
+      // no $return variable found in state. This can be the case for an extern function.
+      // alternatively a $return variable could be added in the external function call to
+      // make this handling here uniform
+      // for external functions no constraints are generated in the call-return node
+      return elistify(createEState(edge.target(),cs,newPState,cset));
+    }
+  } else  if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // case 3: f(); remove $return from state (discard value)
     PState newPState=*currentEState.pstate();
     VariableId returnVarId;
@@ -2067,8 +2101,6 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
     // no effect if $return does not exist
     newPState.deleteVar(returnVarId);
-    //cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
-    //ConstraintSet cset=*currentEState.constraints; ???
     return elistify(createEState(edge.target(),cs,newPState,cset));
   } else {
     logger[FATAL] << "function call-return from unsupported call type:"<<nextNodeToAnalyze1->unparseToString()<<endl;

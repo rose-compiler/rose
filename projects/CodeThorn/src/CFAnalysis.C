@@ -180,11 +180,11 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  cout<<"STATUS: inter-flow established."<<endl;
-  cout<<"INFO: Call labels: "<<callLabNr<<endl;
-  cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-  cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-  cout<<"INFO: functions found: "<<functionsFound<<endl;
+  //cout<<"STATUS: inter-flow established."<<endl;
+  //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+  //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+  //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+  //cout<<"INFO: functions found: "<<functionsFound<<endl;
 
   return interFlow;
 }

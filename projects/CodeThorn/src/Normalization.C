@@ -44,12 +44,16 @@ namespace SPRAY {
       eliminateForStatements=true;
       eliminateWhileStatements=false;
       hoistConditionExpressions=true;
+
       // normalization is not applied to static variables (would be wrong)
-      normalizeVariableDeclarations=true;
+      normalizeVariableDeclarations=false; 
+
       // temporary, until function calls inside variable initializers are supported.
       normalizeVariableDeclarationsWithFunctionCalls=false; 
+
       //eliminateShortCircuitOperators=true; // not implemented yet
       //eliminateConditionalExpressionOp=true; // not implemented yet
+
       encapsulateNormalizedExpressionsInBlocks=false;
       normalizeExpressions=true;
       transformBreakToGotoInSwitchStmt=false;
