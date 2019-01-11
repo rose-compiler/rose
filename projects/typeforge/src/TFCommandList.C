@@ -128,10 +128,11 @@ TypeCommand::TypeCommand(string loc, string fun, string toType, string fromType,
 }
  
 int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-  SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
-  SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
+  if(tt.getTraceFlag()) { cout<<"TRACE: TypeCommand::run started."<<endl;}
   if(funName == "$global") {
+    SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+    SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
+    SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
     tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,listing);
     return false;
   } else {
@@ -148,8 +149,9 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
       }
     }
     for (auto funDef : listOfFunctionDefinitions) {
-      //SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
-      //SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      if(tt.getTraceFlag()) { cout<<"TRACE: TypeCommand::run : adding type transformation to list: "<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;}
       tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+location,base,oldBuiltType,listing);
     }
     return false;
@@ -335,7 +337,7 @@ int SetTypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer&
     } else {
       tt.addNameTransformationToList(_list,builtType,funDef,varName,base,listing);
     }
-  }else{
+  } else {
     vector<SgNode*> nodeVector = TFHandles::getNodeVectorFromString(root, handle);
     for(auto i = nodeVector.begin(); i != nodeVector.end(); ++i){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)){

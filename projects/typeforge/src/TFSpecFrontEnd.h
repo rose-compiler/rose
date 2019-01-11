@@ -10,13 +10,14 @@ class TFSpecFrontEnd {
   // returns true if reading the spec file failed
   // also reports errors
   bool parse(std::string specFileName);
+  bool readJSONFile(std::string fileName);
+  bool readTFFile(std::string fileName);
   int run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation);
-  int convertJSON(std::string fileName);
   int getNumTypeReplace();
   TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
  private:
   int numTypeReplace=0;
-  TFTypeTransformer::VarTypeVarNameTupleList _list;
+  //TFTypeTransformer::VarTypeVarNameTupleList _list;
   CommandList commandList;
 };
 

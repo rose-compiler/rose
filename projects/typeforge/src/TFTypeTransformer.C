@@ -42,8 +42,8 @@ void TFTypeTransformer::addHandleTransformationToList(list<VarTypeVarNameTuple>&
   list.insert(list.begin(),new HandleTransformDirective(handleNode, base, listing, type));
 } 
 
-void TFTypeTransformer::addTypeTransformationToList(list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, string varNames, bool base, SgType* fromType, bool listing){
-  list.push_back(new TypeTransformDirective(varNames, funDef, fromType, base, listing, type));  
+void TFTypeTransformer::addTypeTransformationToList(list<VarTypeVarNameTuple>& list,SgType* toType, SgFunctionDefinition* funDef, string varNames, bool base, SgType* fromType, bool listing){
+  list.push_back(new TypeTransformDirective(varNames, funDef, fromType, base, listing, toType));  
 }
  
 void TFTypeTransformer::addNameTransformationToList(list<VarTypeVarNameTuple>& list,SgType* type, SgFunctionDefinition* funDef, string varNames, bool base, bool listing){
@@ -103,7 +103,7 @@ int Transformer::transform(){
     SgNode* node     = i->first;
     string  location = get<0>(i->second);
     SgType* type     = get<1>(i->second);
-    TFTypeTransformer::trace("Execution: Changing "+location+" type to "+type->unparseToString());
+    TFTypeTransformer::trace("Execution: Changing type @"+location+" to type "+type->unparseToString());
     if(SgInitializedName* initName = isSgInitializedName(node)){
       initName->set_type(type);
     }
@@ -117,7 +117,7 @@ int Transformer::transform(){
 int Transformer::addTransformation(string key, SgType* newType, SgNode* node){
   if(transformations.count(node) != 0){
     return 0;
-  }else{
+  } else {
     ReplacementTuple newTuple = make_tuple(key, newType);
     transformations[node] = newTuple;
     transformationsCount++;
@@ -439,11 +439,17 @@ int TFTypeTransformer::changeVariableType(SgNode* root, string varNameToFind, Sg
           replaceType = rebuildBaseType(funRetType, newType);
         }
         string funName = SgNodeHelper::getFunctionName(root);
-        if(listing) addToActionList("$return", funName, fromType, newType, funDecl, base);
-        else{
-          TFTypeTransformer::trace("Analysis: Found return "+((funName=="")? "" : "in "+funName)+".");
-          _transformer.addTransformation(funName+":$return", funType, replaceType);
-          if(_setFlag) foundVar += changeSet(funDecl, funBaseType, newType, base, listing);
+        if(listing) {
+          addToActionList("$return", funName, fromType, replaceType, funDecl, base);
+        } else {
+          TFTypeTransformer::trace("Analysis: Found return type "+((funName=="")? "" : "in "+funName)+".");
+          int cnt=_transformer.addTransformation(funName+":$return",replaceType,funType);
+          if(cnt==0) {
+            cerr<<"Error: attempted to apply multiple changes to return type of function "<<funName<<endl;
+            exit(1);
+          }
+          if(_setFlag)
+            foundVar += changeSet(funDecl, funBaseType, replaceType, base, listing);
           foundVar++;
         }
       }

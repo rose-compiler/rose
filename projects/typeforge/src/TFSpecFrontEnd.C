@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <list>
 #include "TFTransformation.h"
-#include <ToolConfig.hpp>
+#include "ToolConfig.hpp"
 #include "TFCommandList.h"
 #include <boost/filesystem.hpp>
 
@@ -61,8 +61,8 @@ bool checkTypeforgeExtension(string filePath, string extension){
   return false;
 }
 
-//Read in json then convert the actions to internal command list
-int TFSpecFrontEnd::convertJSON(string fileName){
+//Read in json and generate command list
+bool TFSpecFrontEnd::readJSONFile(string fileName){
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
   for(auto act: actions){
@@ -132,22 +132,29 @@ int TFSpecFrontEnd::convertJSON(string fileName){
       parse(act.getName());
     }
     else{
-      cout<<"Unrecognized Action "<<action<<endl;
+      cout<<"Error: Unrecognized Action "<<action<<endl;
+      return true;
     }
     commandList.nextCommand();
   }
-  return 0;
+  return false;
 }
 
-//parse will either call the json file parser or if it is a .tf file will begin parsing 
+//parse will either call the json file parser or if it is a .tf file will read from tf file.
 bool TFSpecFrontEnd::parse(std::string specFileName) {  
+  if(checkTypeforgeExtension(specFileName, ".tf")){
+    cout<<"Reading TF file "<<specFileName<<endl;
+    return readTFFile(specFileName);
+  } else {
+    cout<<"Reading JSON file "<<specFileName<<endl;
+    return readJSONFile(specFileName);
+  }
+}
+
+bool TFSpecFrontEnd::readTFFile(string specFileName){
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
-  if(!checkTypeforgeExtension(specFileName, ".tf")){
-    convertJSON(specFileName);
-    return false;
-  }
-  else if(fileOK) {
+  if(fileOK) {
     int lineNr=0;
     for (auto line : lines) {
       lineNr++;
@@ -207,7 +214,8 @@ bool TFSpecFrontEnd::parse(std::string specFileName) {
 	string newTypeSpec=typeReplaceSpecSplit[1];
 
         for(auto functionConstructSpec : functionConstructSpecList) {
-          commandList.addTypeCommand(functionConstructSpec, functionName, newTypeSpec, oldTypeSpec, transformBase, false);
+          bool listing=false;
+          commandList.addTypeCommand(functionConstructSpec, functionName, newTypeSpec, oldTypeSpec, transformBase, listing);
         }
       } 
       else if(commandName== TRANSFORM) {
@@ -261,9 +269,7 @@ bool TFSpecFrontEnd::parse(std::string specFileName) {
 }
 
 int TFSpecFrontEnd::run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation){
-  int temp = commandList.runCommands(root, tt, tfTransformation);
-  _list = commandList.getTransformationList();
-  return temp;
+  return commandList.runCommands(root, tt, tfTransformation);
 }
 
 int TFSpecFrontEnd::getNumTypeReplace() {
@@ -272,5 +278,5 @@ int TFSpecFrontEnd::getNumTypeReplace() {
 
 TFTypeTransformer::VarTypeVarNameTupleList
 TFSpecFrontEnd::getTransformationList() {
-  return _list;
+  return commandList.getTransformationList();
 }
