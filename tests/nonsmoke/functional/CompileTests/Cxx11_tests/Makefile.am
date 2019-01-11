@@ -23,8 +23,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
+   test2012_14.C \
    test2012_15.C \
    test2012_16.C \
+   test2012_17.C \
    test2012_18.C \
    test2012_20.C \
    test2012_21.C \
@@ -290,11 +292,14 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1522-0.C \
    test2019_01.C \
    test2019_02.C \
-   test2019_03.C 
+   test2019_03.C \
+   test2019_04.C \
+   test2019_05.C \
+   test2019_06.C \
+   test2019_07.C \
+   test2019_08.C 
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2012_14.C \
-   test2012_17.C \
    test2012_19.C \
    test2012_23.C \
    test2012_24.C \
@@ -305,7 +310,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_85.C \
    test2015_11.C \
    test2016_41.C \
-   test2017_17.C 
+   test2017_17.C \
+   test2019_09.C 
 
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_9
