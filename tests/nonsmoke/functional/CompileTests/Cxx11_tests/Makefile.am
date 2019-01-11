@@ -165,6 +165,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2017_14.C \
    test2017_15.C \
    test2017_16.C \
+   test2017_18.C \
    test2017_19.C \
    test2017_20.C \
    test2017_21.C \
@@ -286,7 +287,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1380.C \
    rose-1437-0.C \
    test2017_10.C \
-   rose-1522-0.C
+   rose-1522-0.C \
+   test2019_01.C \
+   test2019_02.C \
+   test2019_03.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_14.C \
@@ -301,8 +305,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_85.C \
    test2015_11.C \
    test2016_41.C \
-   test2017_17.C \
-   test2017_18.C 
+   test2017_17.C 
 
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_9
@@ -439,7 +442,8 @@ TEST_TRANSLATOR=../../testTranslator
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:Cxx11 
+# ROSE_FLAGS = -rose:Cxx11 
+ROSE_FLAGS = -std=c++11
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
