@@ -301,10 +301,21 @@ extern int fegetexcept (void) throw();
 #endif
 #endif
 
+// TV (12/29/2018): EDG provides support for __float128 (ROSE-1604)
 /* DQ (3/30/2017): I am unclear how general this is (this will fail for GNU compilers, so we have to only let ROSE see it). */
 /* GNU: error: conflicting declaration 'typedef long double __float128' */
+#ifndef ROSE_USE_EDG_LARGE_FLOAT
 typedef long double __float128;
-
+#else
+// TV (01/06/2019): case of _Float128: fix from https://software.intel.com/en-us/forums/intel-c-compiler/topic/742701
+#ifndef __cplusplus
+#define _Float32 float
+#define _Float64 double
+#define _Float128 long double
+#define _Float32x float
+#define _Float64x double
+#endif
+#endif
 
 /* DQ (10/22/2015): Change point at which this is applied from 4.8.3 to 4.8.0. */
 /* DQ (9/23/2015): Adding support for avoid use of non-GNU language features in EDG frontend */

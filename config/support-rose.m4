@@ -276,6 +276,12 @@ else
 fi
 AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 
+# TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
+if test $edg_major_version_number -ge 5; then
+  AC_DEFINE([ROSE_USE_EDG_LARGE_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
+AM_CONDITIONAL(ROSE_USE_EDG_LARGE_FLOAT, [ test $edg_major_version_number -ge 5 ])
+
 # DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
