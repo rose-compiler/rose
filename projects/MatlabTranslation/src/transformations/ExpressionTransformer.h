@@ -16,7 +16,7 @@ namespace MatlabToCpp
   ///   into rdivide(A, B).
   void transformElementwiseRightDivide(SgProject* project);
 
-  /// transform element-by-element multiplication divide A * B
+  /// transform element-by-element multiplication A * B
   ///   into times(A, B).
   void transformElementwiseMultiply(SgProject* project);
 

@@ -1,0 +1,5 @@
+----------------------------------------------
+dependence graph: 
+From SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:u[(this) -> bc3Nodes[in]] . y@37:31->u[(this) -> bc3Nodes[in]] . y@37:31: (<);OUTPUT_DEP;
+To SgExprStatement:u[(this) -> bc3Nodes[in]] . y =(this) -> bcVelocity[3] . y;:u[(this) -> bc3Nodes[in]] . y@37:31->u[(this) -> bc3Nodes[in]] . y@37:31: (<);OUTPUT_DEP;

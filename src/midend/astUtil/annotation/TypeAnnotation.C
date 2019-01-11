@@ -39,7 +39,7 @@ class ReadAnnotCollectionWrap {
          cur = 0;
       }
       if (cur == 0) {
-         throw ReadError("unknown annotation: " + annot );
+         throw ReadError("unknown annotation: \"" + annot + "\"");
       }
       return true;
    }

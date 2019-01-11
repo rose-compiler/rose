@@ -660,11 +660,14 @@ generateDeclaration(const std::string &fileName, const Location &loc, const Scop
     std::cout <<" line " <<(loc.first+1) <<"\n";
     size_t nns = generateNamespaces(outerNamespace, scopes, 1);
     std::cout <<"\n"
-              <<"    /** Convert " + enumName + " enum constant to a string. */\n"
+              <<"    /** Convert " <<enumName <<" enum constant to a string. */\n"
               <<"    const char* " <<scopes.back().name <<"(long);\n"
               <<"\n"
-              <<"    /** Convert " + enumName + " enum constant to a string. */\n"
-              <<"    std::string " <<scopes.back().name <<"(long, const std::string &strip);\n";
+              <<"    /** Convert " <<enumName <<" enum constant to a string. */\n"
+              <<"    std::string " <<scopes.back().name <<"(long, const std::string &strip);\n"
+              <<"\n"
+              <<"    /** Return all " <<enumName <<" member values as a vector. */\n"
+              <<"    const std::vector<long>& " <<scopes.back().name <<"();\n";
     std::cout <<std::string(nns, '}') <<"\n\n";
 }
 
@@ -698,7 +701,6 @@ generateImplementation(const std::string &fileName, const Location &loc,
               <<"        }\n"
               <<"    }\n"
               <<"\n"
-              <<"    /** Convert " + enumName + " enum constant to a string. */\n"
               <<"    std::string " <<scopes.back().name <<"(long i, const std::string &strip) {\n"
               <<"        std::string s = " <<scopes.back().name <<"(i);\n"
               <<"        if (s.empty())\n"
@@ -706,7 +708,26 @@ generateImplementation(const std::string &fileName, const Location &loc,
               <<"        if (boost::starts_with(s, strip))\n"
               <<"            s = s.substr(strip.size());\n"
               <<"        return s;\n"
-              <<"    }\n";
+              <<"    }\n"
+              <<"\n";
+
+    std::cout <<"    const std::vector<long>& " <<scopes.back().name <<"() {\n";
+    if (reverseMembers.isEmpty()) {
+        std::cout <<"        static const std::vector<long> retval;\n"
+                  <<"        return retval;\n";
+    } else {
+        std::cout <<"        static const long values[] = {";
+        BOOST_FOREACH (const ReverseMembers::Node &node, reverseMembers.nodes()) {
+            std::cout <<(node.key() == reverseMembers.nodes().begin()->key() ? "\n" : ",\n")
+                      <<"            " <<node.key() <<"L";
+        }
+        std::cout <<"\n"
+                  <<"        };\n"
+                  <<"        static const std::vector<long> retval(values, values + " <<reverseMembers.size() <<");\n"
+                  <<"        return retval;\n";
+    }
+    std::cout <<"    }\n"
+              <<"\n";
 
     std::cout <<std::string(nns, '}') <<"\n\n";
 }
@@ -735,7 +756,12 @@ generateCompatibleDeclaration(const Scopes &scopes) {
               <<"    std::string " <<compatibleEnumName(scopes) <<"(long int n, const char *strip=NULL, bool canonic=false)";
     if (deprecateCompatible)
         std::cout <<"\n        SAWYER_DEPRECATED(\"use " <<enumName <<"\")";
-    std::cout <<";\n}\n\n";
+    std::cout <<";\n"
+              <<"    const std::vector<long>& " <<compatibleEnumName(scopes) <<"()";
+    if (deprecateCompatible)
+        std::cout <<"\n        SAWYER_DEPRECATED(\"use " <<enumName <<"\")";
+    std::cout <<";\n"
+              <<"}\n\n";
 }
 
 static void
@@ -755,6 +781,10 @@ generateCompatibleImplementation(const Scopes &scopes) {
               <<"                retval = \"" <<enumName <<"::\" + retval;\n"
               <<"        }\n"
               <<"        return retval;\n"
+              <<"    }\n"
+              <<"\n"
+              <<"    const std::vector<long>& " <<compatibleEnumName(scopes) <<"() {\n"
+              <<"        return stringify::" <<enumName <<"();\n"
               <<"    }\n"
               <<"}\n\n";
 }
@@ -918,7 +948,8 @@ main(int argc, char *argv[]) {
     }
     std::cout <<"#include <boost/algorithm/string/predicate.hpp>\n"
               <<"#include <boost/lexical_cast.hpp>\n"
-              <<"#include <string>\n\n";
+              <<"#include <string>\n"
+              <<"#include <vector>\n\n";
     if (!emitImplementations && emitCompatible)
         generateStringifierClass();
 

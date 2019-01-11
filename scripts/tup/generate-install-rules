@@ -1,0 +1,216 @@
+#!/usr/bin/perl
+
+=pod
+
+=head1 NAME
+
+generate-install-rules - generates Tup rules for installing files
+
+=head1 SYNOPSIS
+
+generate-install-rules [I<SWITCHES>] I<FILES>...
+
+=head1 DESCRIPTION
+
+This script generates rules that prepare files to be installed. For header files, this means copying the header and
+inserting a copyright notice at the top.  Other files are just copied as-is.
+
+=head1 SWITCHES
+
+=over
+
+=item --license=FILE
+
+Insert the specified license file at the top of the header file.
+
+=item --c | --cxx | --shell | --language=(c|c++|shell)
+
+When using a license file, one of these switches can be used to force the license to be commented a certain way.
+
+=item -o I<DIRECTOR> | --output=I<DIRECTORY>
+
+Specifies the directory, which should be a name relative to the installation prefix. If no output directory is
+specified, header files are placed in "include" and libraries are placed in "lib". Other file types must have an
+output directory specified.
+
+=item -w I<N> | --width=I<N>
+
+Width of the text being inserted. This is used to format the block comment headers and footers. The default is "auto"
+which causes the block comment delimiters to match the width of the widest line of the license text.
+
+=back
+
+=cut
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use TupScripts;
+
+my($arg0) = $0 =~ m(([^/]+)$);
+
+# Parse the command-line
+my $output; # name of output director w.r.t. $(ROOT)/install-staging
+my @inputs; # names of files that will be staged
+my $license; # name of file containing copyright and/or license text
+my $language; # how to comment the license
+my $width = "auto"; # width of inserted comment text
+
+sub parse_command_line {
+    while (@_) {
+	my $arg = shift @_;
+
+	# Help
+	if ($arg =~ /^(-h|--help|-\?)$/) {
+	    TupScripts::help;
+	    exit 0;
+	}
+
+	# License
+	if ($arg eq "--license") {
+	    die "$arg0: \"$arg\" requires an argument\n" unless @_;
+	    $license = shift @_;
+	    next;
+	}
+	if ($arg =~ /^--license=(.*)/) {
+	    $license = $1;
+	    next;
+	}
+
+	# Language
+	if ($arg =~ /^--?c$/) {
+	    $language = "c";
+	    next;
+	}
+	if ($arg =~ /^(--c\+\+|--cxx|--cpp)$/) {
+	    $language = "c++";
+	    next;
+	}
+	if ($arg eq "--shell") {
+	    $language = "shell";
+	    next;
+	}
+	if ($arg eq "--language") {
+	    die "$arg0: \"$arg\" requires an argument\n" unless @_;
+	    $language = shift @_;
+	    next;
+	}
+	if ($arg =~ /^--language=(.*)/) {
+	    $language = $1;
+	    next;
+	}
+
+	# Output
+	if ($arg =~ /^(-o|--output)$/) {
+	    die "$arg0: \"$arg\" requires an argument\n" unless @_;
+	    $output = shift @_;
+	    next;
+	}
+	if ($arg =~ /^(-o|--output=)(.*)/) {
+	    $output = $2;
+	    next;
+	}
+
+	# Width
+	if ($arg =~ /^(-w|--width)$/) {
+	    die "$arg0: \"$arg\" requires an argument\n" unless @_;
+	    $width = shift @_;
+	    next;
+	}
+	if ($arg =~ /^(-w|--width=)(.*)/) {
+	    $width = $2;
+	    next;
+	}
+
+	# Errors
+	if ($arg =~ /^-/) {
+	    die "$arg0: unknown command-line switch \"$arg\"\n";
+	}
+
+	push @inputs, $arg;
+    }
+    die "$arg0: no inputs\n" unless @inputs;
+    die "$arg0: output path (\"$output\") cannot be an absolute name\n" if $output =~ /^\//;
+    die "$arg0: width must be a non-negative integer or \"auto\"\n" unless $width =~ /^(auto|\d+)$/;
+}
+
+# Some extra error checking
+sub extra_error_checks {
+    my %set;
+    for my $input (@_) {
+	die "$arg0: file specified more than once in this command: $input\n" if $set{$input};
+	$set{$input} = 1;
+    }
+}
+
+# Default destination directory for each file name. Returns a multi-level hash indexed first by directory and second by
+# language. The value of the hash is a reference to an array of file names to be installed at that location.
+#
+# If the global $language is non-empty, then that language is used for all arguments. If the global $output is
+# non-empty, then that directory is used for all outputs.
+#
+# The directory and/or language might be an empty string.
+sub by_directory_language {
+    my %languages;
+    if ($language) {
+	$languages{$language} = [ @_ ];
+    } else {
+	%languages = TupScripts::by_language('shell', @_);
+    }
+
+    my %ret;
+    for my $lang (keys %languages) {
+	my $subdir;
+	if ($output) {
+	    $subdir = $output;
+	} elsif ($lang eq "header") {
+	    $subdir = "include";
+	} elsif ($lang eq "library") {
+	    $subdir = "lib";
+	} elsif ($lang eq "executable") {
+	    $subdir = "bin";
+	}
+	$ret{$subdir}{$lang} = $languages{$lang};
+    }
+    return %ret;
+}
+
+########################################################################################################################
+
+parse_command_line(@ARGV);
+extra_error_checks @inputs;
+
+my %dir_lang_files = by_directory_language @inputs;
+for my $dir (keys %dir_lang_files) {
+    for my $lang (keys %{$dir_lang_files{$dir}}) {
+	my($files) = $dir_lang_files{$dir}{$lang};
+	if (!$dir) {
+	    die "$arg0: output directory must be specified for files: ", join(", ", @{$files}), "\n";
+	}
+
+	# Inputs
+	print ": foreach ", join(" ", @{$files});
+	print " |> ^ PRE-INSTALL %b^";
+
+	# Action: either prepend a license or copy the file directly
+	if ($license) {
+	    if ($lang eq 'c' || $lang eq 'c++' || $lang eq 'header' || $lang eq 'shell') {
+		print " \$(ROOT)/scripts/tup/prepend-comment --$lang -w$width $license <%f >%o";
+		print " && chmod --reference=%f %o"
+	    } elsif ($lang eq 'lib') {
+		# do not prepend a license even if one was requested
+	    } elsif ($lang eq "") {
+		die "$arg0: cannot prepend license to unknown file types: ", join(", ", @{$files}), "\n";
+	    } else {
+		die "$arg0: cannot prepend license to files of type \"$lang\": ", join(", ", @{$files}), "\n";
+	    }
+	} else {
+	    print " cp -p %f %o";
+	}
+
+	# Outputs
+	my($output_dirstring) = $dir;
+	$output_dirstring =~ s/\//-/g;
+	print " |> %b.preinstall-${output_dirstring} \$(ROOT)/install-staging/$dir/<staging>\n";
+    }
+}
