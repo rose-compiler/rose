@@ -134,7 +134,7 @@ namespace SPRAY {
               i.skipChildrenOnForward();
               continue;
             } else {
-              cout<<"DEBUG: Normalizing variable initializer with function call: "<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
+              //cout<<"DEBUG: Normalizing variable initializer with function call: "<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
             }
           }
           if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
@@ -448,28 +448,39 @@ namespace SPRAY {
   }
 
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
-    // find all SgExprStatement, SgReturnStmt
+    // find all SgExprStatement, SgReturnStmt, SgVariableDeclaration
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       // match on expr stmts and transform the expression
+      SgStatement* stmt=0;
+      SgExpression* expr=0;
       if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
         if(!SgNodeHelper::isCond(exprStmt)) {
-          //cout<<"Found SgExprStatement: "<<(*i)->unparseToString()<<endl;
-          SgExpression* expr=exprStmt->get_expression();
-          if(isWithinBlockStmt(expr)) {
-            if(onlyNormalizeFunctionCallExpressions) {
-              if(hasFunctionCall(expr)) {
-                normalizeExpression(exprStmt,expr);
-              }
-            } else {
-              normalizeExpression(exprStmt,expr  );
-            }
-          }
-          i.skipChildrenOnForward();
+          expr=exprStmt->get_expression();
+          stmt=exprStmt;
         }
+      } else if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+        expr=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+        stmt=varDecl;
       }
-      if(isSgReturnStmt(*i)) {
+      if(SgReturnStmt* returnStmt=isSgReturnStmt(*i)) {
         //cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
+        // TODO: normalization
+        expr=returnStmt->get_expression();
+        stmt=returnStmt;
+        i.skipChildrenOnForward();
+      }
+      if(stmt&&expr) {
+        if(isWithinBlockStmt(expr)) {
+          if(onlyNormalizeFunctionCallExpressions) {
+            if(hasFunctionCall(expr)) {
+              normalizeExpression(stmt,expr);
+            }
+          } else {
+            //cout<<"DEBUG: normalizing "<<(expr)->unparseToString()<<endl;
+            normalizeExpression(stmt,expr);
+          }
+        }
         i.skipChildrenOnForward();
       }
     }
@@ -498,7 +509,7 @@ namespace SPRAY {
   }
   
   // stmt is only passed through and used to determine the scope when generating tmp-variables
-  void Normalization::normalizeExpression(SgExprStatement* stmt, SgExpression* expr) {
+  void Normalization::normalizeExpression(SgStatement* stmt, SgExpression* expr) {
     SubExprTransformationList subExprTransformationList;
     if(options.encapsulateNormalizedExpressionsInBlocks) {
       ROSE_ASSERT(options.normalizeVariableDeclarations==true);
@@ -522,7 +533,7 @@ namespace SPRAY {
   }
 
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
-  void Normalization::normalizeSubExpression(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
+  void Normalization::normalizeSubExpression(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       normalizeSubExpression(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/ if(isSgPntrArrRefExp(expr)) {
@@ -561,7 +572,7 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
+  void Normalization::generateTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
     // 1) generate tmp-var assignment node with expr as lhs
     // 2) replace use of expr with tmp-var
     SgVariableDeclaration* tmpVarDeclaration = 0;
@@ -578,7 +589,7 @@ namespace SPRAY {
 
   bool Normalization::isWithinBlockStmt(SgExpression* exp) {
     SgNode* current=exp;
-    while(isSgExpression(current)||isSgExprStatement(current)) {
+    while(!isSgGlobal(current)&&!isSgBasicBlock(current)&&current) {
       current=current->get_parent();
     };
     return isSgBasicBlock(current);
