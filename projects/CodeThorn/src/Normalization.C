@@ -536,16 +536,25 @@ namespace SPRAY {
   void Normalization::normalizeSubExpression(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       normalizeSubExpression(stmt,castExp->get_operand(),subExprTransformationList);
-      } else*/ if(isSgPntrArrRefExp(expr)) {
-        // TODO: normalize index-expressions
-    } else if(SgAssignOp* assignOp=isSgAssignOp(expr)) {
-      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(assignOp)),subExprTransformationList);
-      //TODO: normalize subexpressions of LHS
-      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)),subExprTransformationList);
-    } else if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(expr)) {
-      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)),subExprTransformationList);
-      //TODO: normalize subexpressions of LHS
-      //normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)),subExprTransformationList);
+      } else*/ if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
+      // normalize index-expressions
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)),subExprTransformationList);
+      generateTmpVarAssignment(stmt,expr,subExprTransformationList);
+    } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
+      // normalize rhs of assignment
+      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      // normalize lhs of assignment
+      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
+      ROSE_ASSERT(lhs);
+      // skip normalizing top-most operator of lhs because a
+      // lhs-expression must remain a lhs-expression! Introduction of
+      // temporary would be wrong.
+      if(isSgUnaryOp(lhs)) {
+        normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList);
+      } else if(isSgBinaryOp(lhs)) {
+        normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)),subExprTransformationList);
+        normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)),subExprTransformationList);
+      }
     } else if(isSgBinaryOp(expr)) {
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
