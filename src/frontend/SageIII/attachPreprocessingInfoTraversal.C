@@ -418,6 +418,16 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
             // bool attachCommentOrDirective = (currentPreprocessingInfoPtr != NULL) && (currentPreprocessingInfoPtr->getLineNumber() <= lineNumber);
                bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
+
+            // DQ (1/7/2019): Supress comments and CPP directives onto member functions of the generated labda function class.
+               SgLambdaExp* lambdaExpression = isSgLambdaExp(locatedNode->get_parent());
+               if (lambdaExpression != NULL)
+                  {
+#if 0
+                    printf ("NOTE: Detected lambda expression as parent of the located node = %p = %s: suppress attachment of comments and CPP directives \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+                    attachCommentOrDirective = false;
+                  }
 #if 0
                printf ("attachCommentOrDirective = %s \n",attachCommentOrDirective ? "true" : "false");
 #endif
@@ -433,6 +443,35 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                       // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
                          (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(),
                          PreprocessingInfo::relativePositionName(location).c_str());
+                    SgNode* parentNode = locatedNode->get_parent();
+                    if (parentNode != NULL)
+                       {
+                         printf ("locatedNode->parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
+                         SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
+                         if (classDefinition != NULL)
+                            {
+                              SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                              if (classDeclaration != NULL)
+                                 {
+                                   printf ("parent: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                 }
+                            }
+                           else
+                            {
+                              SgStatement* associatedStatement = isSgStatement(locatedNode);
+                              ROSE_ASSERT(associatedStatement != NULL);
+                              SgScopeStatement* associatedScope = isSgScopeStatement(associatedStatement->get_scope());
+                              SgClassDefinition* classDefinition = isSgClassDefinition(associatedScope);
+                              if (classDefinition != NULL)
+                                 {
+                                   SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                                   if (classDeclaration != NULL)
+                                      {
+                                        printf ("associatedScope: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                      }
+                                 }
+                            }
+                       }
                  // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
 #endif
                  // Mark this PreprocessingInfo object as having been placed into the AST
@@ -1174,9 +1213,18 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
              }
 
-       // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
-       // insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
-          statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
+       // DQ (1/7/2019): This appears to be nearly always an empty list, so we can improve the performance and also simlify the debugging with this test.
+          if (localStatementsToInsertAfter.empty() == false)
+             {
+#if 1
+            // DQ (1/7/2019): Adding debugging support.
+               printf ("Calling insert statements: statementsToInsertAfter.size() = %zu localStatementsToInsertAfter.size() = %zu \n",
+                    statementsToInsertAfter.size(),localStatementsToInsertAfter.size());
+#endif
+            // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
+            // insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
+               statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
+             }
         }
 
   // DQ (12/12/2008): We should not need this state, so why support resetting it, unless the traversal needs to be called multiple times.
@@ -1725,7 +1773,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
           (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
-#if DEBUG_ATTACH_PREPROCESSING_INFO
+// #if DEBUG_ATTACH_PREPROCESSING_INFO
+#if 0
           printf ("Returning without further processing if we are a part of a template declaration or template instantiation declaration \n");
 #endif
           return inheritedAttribute;
@@ -2088,7 +2137,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
           (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
-#if DEBUG_ATTACH_PREPROCESSING_INFO
+// #if DEBUG_ATTACH_PREPROCESSING_INFO
+#if 0
           printf ("Returning without further processing if we are a part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
 #endif
           return returnSynthesizeAttribute;
@@ -2649,7 +2699,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                             SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(n);
                             ROSE_ASSERT(variableDeclaration != NULL);
-
+#if 0
+                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): variableDeclaration = %p \n",variableDeclaration);
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,currentListOfAttributes );
@@ -2670,7 +2722,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                             SgInitializedName *initializedName = isSgInitializedName(n);
                             ROSE_ASSERT(initializedName != NULL);
-
+#if 0
+                            printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
