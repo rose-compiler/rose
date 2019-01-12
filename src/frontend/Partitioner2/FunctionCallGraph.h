@@ -32,16 +32,21 @@ public:
         /** Number of inter-function control flow edges represented by this edge. */
         size_t count() const { return count_; }
     };
-    
-    /** Function call graph. */
-    typedef Sawyer::Container::Graph<FunctionPtr, Edge> Graph;
 
-    /** Maps function address to function call graph vertex. */
-    typedef Sawyer::Container::Map<rose_addr_t, Graph::VertexIterator> Index;
+    class VertexKey {
+    public:
+        rose_addr_t address;
+        VertexKey();
+        explicit VertexKey(rose_addr_t);
+        explicit VertexKey(const FunctionPtr&);
+        bool operator<(VertexKey) const;
+    };
+        
+    /** Function call graph. */
+    typedef Sawyer::Container::Graph<FunctionPtr, Edge, VertexKey> Graph;
 
 private:
     Graph graph_;
-    Index index_;
 
 public:
     /** Underlying function call graph.
@@ -50,20 +55,8 @@ public:
      *  must be done in conjunction with updating the function-to-vertex index. */
     const Graph& graph() const { return graph_; }
 
-    /** Function-to-vertex index.
-     *
-     *  Returns the index mapping function addresses to function call graph vertices. The index is read-only since updating the
-     *  index must be done in conjunction with updating the graph. */
-    const Index& index() const { return index_; }
-
     /** Constructs an empty function call graph. */
     FunctionCallGraph();
-
-    /** Copy constructor. */
-    FunctionCallGraph(const FunctionCallGraph &other);
-
-    /** Assignment operator. */
-    FunctionCallGraph& operator=(const FunctionCallGraph &other);
 
     ~FunctionCallGraph();
 
