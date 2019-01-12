@@ -2,7 +2,7 @@
 #define TYPEFORGE_SPEC_FRONTEND_H
 
 #include "TFTypeTransformer.h"
-#include "TFCommandList.h"
+#include "CommandList.h"
 
 class TFSpecFrontEnd {
  public:

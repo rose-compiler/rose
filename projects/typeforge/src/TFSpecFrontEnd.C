@@ -26,7 +26,7 @@
 #include <list>
 #include "TFTransformation.h"
 #include "ToolConfig.hpp"
-#include "TFCommandList.h"
+#include "CommandList.h"
 #include <boost/filesystem.hpp>
 
 #define CHANGE_EVERY_TYPE  "change_every_type"
