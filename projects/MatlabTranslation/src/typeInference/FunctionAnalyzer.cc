@@ -75,8 +75,8 @@ namespace MatlabAnalysis
         ROSE_ASSERT(fa && proj);
       }
 
-      void handle(SgNode&) {} // base case
-
+      void handle(SgNode& n) {}
+      
       void handle(SgAssignOp& n)
       {
         runBottomUpInference(&n, proj, fa);
@@ -92,6 +92,11 @@ namespace MatlabAnalysis
         TopDownTypeAssigner topDownTypeAssigner(&n);
 
         topDownTypeAssigner.traverse(n.get_lhs_operand(), preorder);
+      }
+
+      void handle(SgExprStatement& n)
+      {
+        runBottomUpInference(n.get_expression(), proj, fa);
       }
 
       void handle(SgMatlabForStatement& n)

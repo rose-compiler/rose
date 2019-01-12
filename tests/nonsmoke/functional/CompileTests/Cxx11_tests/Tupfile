@@ -1,0 +1,137 @@
+include_rules
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+
+TESTCODES_REQUIRED_TO_PASS = \
+test2012_01.C \
+test2012_02.C \
+test2012_05.C \
+test2014_02.C \
+test2014_04.C \
+test2014_05.C \
+test2014_06.C \
+test2014_07.C \
+test2014_08.C \
+test2014_09.C \
+test2014_11.C \
+test2014_12.C \
+test2014_13.C \
+test2014_14.C \
+test2014_15.C \
+test2014_16.C \
+test2014_17.C \
+test2014_18.C \
+test2014_19.C \
+test2014_20.C \
+test2014_21.C \
+test2014_22.C \
+test2014_23.C \
+test2014_27.C \
+test2014_29.C \
+test2014_30.C \
+test2014_32.C \
+test2014_33.C \
+test2014_34.C \
+test2014_36.C \
+test2014_37.C \
+test2014_38.C \
+test2014_39.C \
+test2014_40.C \
+test2014_41.C \
+test2014_42.C \
+test2014_43.C \
+test2014_44.C \
+test2014_45.C \
+test2014_47.C \
+test2014_48.C \
+test2014_49.C \
+test2014_50.C \
+test2014_51.C \
+test2014_52.C \
+test2014_54.C \
+test2014_55.C \
+test2014_56.C \
+test2014_57.C \
+test2014_58.C \
+test2014_70.C \
+test2014_71.C \
+test2014_72.C \
+test2014_73.C \
+test2014_74.C \
+test2014_75.C \
+test2014_76.C \
+test2014_77.C \
+test2014_78.C \
+test2014_79.C \
+test2014_80.C \
+test2014_81.C \
+test2014_83.C \
+test2014_84.C \
+test2014_86.C \
+test2014_87.C \
+test2014_89.C \
+test2014_90.C \
+test2015_01.C \
+test2015_02.C \
+test2015_03.C \
+test2015_04.C \
+test2015_05.C \
+test2015_06.C \
+test2015_07.C \
+test2015_08.C \
+test2015_09.C \
+test2015_10.C \
+test2015_12.C \
+test2015_13.C \
+test2015_14.C \
+test2016_01.C \
+test2016_03.C \
+test2016_04.C \
+test2016_06.C \
+test2016_07.C \
+test2016_10.C \
+test2016_11.C \
+test2016_13.C \
+test2016_14.C \
+test2016_15.C \
+test2016_16.C \
+test2016_17.C \
+test2016_18.C \
+test2016_19.C \
+test2016_21.C \
+test2016_22.C \
+test2016_25.C \
+test2016_29.C \
+test2016_30.C \
+test2016_37.C \
+test2016_42.C \
+test2016_91.C \
+test2016_92.C \
+test2016_93.C \
+test2017_03.C \
+test2017_04.C \
+test2017_07.C \
+test2017_08.C \
+test2017_09.C \
+test2017_11.C \
+test2017_12.C \
+test2017_13.C \
+test2017_14.C \
+test2017_15.C \
+test2017_16.C \
+test2017_19.C \
+test2017_20.C \
+test2017_21.C \
+test2017_22.C \
+test2017_23.C \
+last.C
+
+#FIXME: These tests don't produce any output. Is that intended?
+run for specimen in $(TESTCODES_REQUIRED_TO_PASS); do \
+    $(test) ../../testTranslator -o $specimen \
+        --disabled-if \
+	    'veq("@(EDG_VERSION)","4.9") && "@(CXX_TARGET_VENDOR)" eq "gnu" && vge("@(CXX_TARGET_VERSION)", "5")' \
+	    "C++11 input not supported for EDG-4.9 and GNU>=5" \
+	../../testTranslator -rose:Cxx11 -rose:skip_unparse_asm_commands -rose:verbose 0 -I. -c $specimen; \
+    done
+
+endif

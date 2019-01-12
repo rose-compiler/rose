@@ -51,6 +51,7 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 pkginclude_HEADERS =				\
+	BitFlags.h				\
 	Color.h					\
 	compilationFileDatabase.h		\
 	FileSystem.h				\

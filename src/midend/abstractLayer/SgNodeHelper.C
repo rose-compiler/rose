@@ -112,6 +112,11 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   return ss.str();
 }
 
+std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2014.
@@ -259,6 +264,17 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool sho
   }
   return 0;
 }
+
+SgVariableDeclaration* SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(SgNode* node) {
+  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+    SgExpression* initializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    if(isSgFunctionCallExp(initializer)) {
+      return varDecl;
+    }
+  }
+  return 0;
+}
+
 
 /*! 
   * \author Markus Schordan

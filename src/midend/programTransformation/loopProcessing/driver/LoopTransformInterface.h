@@ -19,12 +19,14 @@ class ArrayAbstractionInterface {
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array, 
                                  int dim, int &lb, int &ub) = 0;
+  virtual bool IsUniqueArray( AstInterface& fa, const AstNodePtr& array) = 0;
+//{ return false; }
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
                                 const AstNodeList& index) = 0;
   virtual SymbolicVal CreateArrayAccess(
                                 const SymbolicVal& arr,
-                                const SymbolicVal& index) 
-     { /*QY: need to be defined by a derived class*/ assert(0); }
+                                const SymbolicVal& index) = 0;
+     //{ /*QY: need to be defined by a derived class*/ assert(0); }
   virtual ~ArrayAbstractionInterface() {}
 };
 
@@ -42,6 +44,7 @@ class ArrayUseAccessFunction
   virtual bool IsArrayAccess( AstInterface& fa,
                                  const AstNodePtr& s, AstNodePtr* array = 0,
                                  AstInterface::AstNodeList* index = 0) ;
+  virtual bool IsUniqueArray( AstInterface& fa, const AstNodePtr& array);
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array,
                                  int dim, int &lb, int &ub);
@@ -103,6 +106,9 @@ class LoopTransformInterface
   static bool IsLoop( const AstNodePtr& s, 
                        SymbolicVal* init = 0, SymbolicVal* cond=0,
                        SymbolicVal* incr =0, AstNodePtr* body=0);
+  static bool IsUniqueArray(const AstNodePtr& array)
+   { assert(fa!=0); 
+     return arrayInfo!=0 && arrayInfo->IsUniqueArray(*fa, array); }
   static bool IsArrayAccess( const AstNodePtr& s, AstNodePtr* array = 0,
                                    AstInterface::AstNodeList* index = 0)  
    { assert(fa != 0);

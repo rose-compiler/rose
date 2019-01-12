@@ -46,7 +46,9 @@ public:
   static std::string AstTypeName(const Ast& n);
   static void unparse(const Ast& n, std::ostream& out, int align);
 
-  static Ast MatchAstTypeName(const Ast& n, const std::string& tname, POETCode* args);
+   /* matching the external AST node with a POET pattern */
+  static POETCode* MatchAstWithPattern(const Ast& n, POETCode* pat);
+  static POETCode* getAstAttribute(const Ast& n, POETCode* attr);
   static POETCode* visitAstChildren(const Ast& n, POETCodeVisitor* visitor);
 
   static void set_Ast2POET(const Ast& n, POETCode* p)

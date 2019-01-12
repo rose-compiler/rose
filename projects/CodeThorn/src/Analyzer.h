@@ -196,6 +196,11 @@ namespace CodeThorn {
     void setCompoundIncVarsSet(set<AbstractValue> ciVars);
     void setSmallActivityVarsSet(set<AbstractValue> ciVars);
     void setAssertCondVarsSet(set<AbstractValue> acVars);
+    /** allows to enable context sensitive analysis. Currently only
+        call strings of arbitrary length are supported (recursion is
+        not supported yet) */
+    void setOptionContextSensitiveAnalysis(bool flag);
+    bool getOptionContextSensitiveAnalysis();
 
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
@@ -233,16 +238,14 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    //EState createEState(Label label, PState pstate, ConstraintSet cset);
+    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
+    //EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
+
     // temporary option
     bool optionStringLiteralsInState=false;
-
-    /** allows to enable context sensitive analysis. Currently only
-        call strings of arbitrary length are supported (recursion is
-        not supported yet) */
-    void setOptionContextSensitiveAnalysis(bool flag);
-    bool getOptionContextSensitiveAnalysis();
 
   protected:
     void printStatusMessage(string s, bool newLineFlag);
@@ -282,6 +285,10 @@ namespace CodeThorn {
     // this function uses the respective function of ExprAnalyzer and
     // extracts the result from the ExprAnalyzer data structure.
     list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+
+    // functions for handling callstring contexts
+    CallString transferFunctionCallContext(CallString cs, Label lab);
+    bool isFeasiblePathContext(CallString& cs,Label lab);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
