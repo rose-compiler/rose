@@ -117,6 +117,7 @@ private:
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
+    Sawyer::Cached<bool> popsStack_;                    // basic block has a net popping effect
 
     void clearCache() const {
         successors_.clear();
@@ -124,6 +125,7 @@ private:
         isFunctionCall_.clear();
         isFunctionReturn_.clear();
         mayReturn_.clear();
+        popsStack_.clear();
     }
 
 public:
@@ -133,6 +135,7 @@ public:
         isFunctionCall_ = other->isFunctionCall_;
         isFunctionReturn_ = other->isFunctionReturn_;
         mayReturn_ = other->mayReturn_;
+        popsStack_ = other->popsStack_;
     }
 
 
@@ -144,7 +147,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
@@ -162,6 +165,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(isFunctionCall_);
         s & BOOST_SERIALIZATION_NVP(isFunctionReturn_);
         s & BOOST_SERIALIZATION_NVP(mayReturn_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(popsStack_);
     }
 #endif
 
@@ -480,7 +485,12 @@ public:
      *  block.  In other words, if control enters this basic block, might the top stack frame eventually be popped? */
     const Sawyer::Cached<bool>& mayReturn() const { return mayReturn_; }
 
+    /** Pops stack property.
+     *
+     *  This property holds a Boolean that indicates whether this basic block is known to have a net stack popping effect. */
+    const Sawyer::Cached<bool>& popsStack() const { return popsStack_; }
 
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Output
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,5 +512,8 @@ private:
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 1);
 
 #endif

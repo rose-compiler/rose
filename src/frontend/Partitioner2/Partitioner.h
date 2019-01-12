@@ -1279,6 +1279,12 @@ public:
      *  Thread safety: Not thread safe. */
     bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const /*final*/;
 
+    /** Determine if the basic block pops at least one byte from the stack.
+     *
+     * Returns true if the basic block has a net effect of popping at least one byte from the stack compared to the original
+     * stack pointer. Returns false if the block does not pop or its behavior cannot be determined. */
+     bool basicBlockPopsStack(const BasicBlock::Ptr&) const /*final*/;
+
     /** Return the stack delta expression.
      *
      *  The stack delta is the value of the stack pointer register at the entrance to the specified block minus the stack delta

@@ -911,6 +911,60 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
 }
 
 bool
+Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
+    ASSERT_not_null(bb);
+    bool shouldDrop = false;
+
+    do {
+        if (bb->popsStack().isCached())
+            break;
+
+        // We need instruction semantics, or return false
+        if (!bb->dispatcher()) {
+            bb->popsStack() = false;
+            break;
+        }
+        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+        ASSERT_not_null(ops);
+
+        // Get the block initial and final states
+        shouldDrop = bb->isSemanticsDropped();
+        bb->undropSemantics();
+        BaseSemantics::StatePtr state0 = bb->initialState();
+        BaseSemantics::StatePtr stateN = bb->finalState();
+        if (!state0 || !stateN) {
+            bb->popsStack() = false;
+            break;
+        }
+
+        // Get initial and final stack pointer values
+        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+        BaseSemantics::SValuePtr sp0 =
+            state0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+        BaseSemantics::SValuePtr spN =
+            stateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+
+        // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
+        // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
+        // value for the stack pointer.
+        SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+        SymbolicExpr::Ptr spNExpr =
+            Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+
+        // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down.
+        // SPn > SP0 == true implies at least one byte popped.
+        SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBoolean(true));
+    } while (0);
+
+    if (shouldDrop)
+        bb->dropSemantics();
+    ASSERT_require(bb->popsStack().isCached());
+    return bb->popsStack().get();
+}
+    
+bool
 Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
     bool retval = false;
@@ -983,40 +1037,19 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                         break;
                     }
 
-                    // Get callee block's initial and final states
-                    BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
-                    BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
-                    if (!calleeState0 || !calleeStateN) {
-                        allCalleesPopWithoutReturning = false;
-                        break;
-                    }
-
-                    // Did the callee block pop the return value from the stack?  This impossible to determine unless we assume
-                    // that the stack has an initial value that's not near the minimum or maximum possible value.  Therefore,
-                    // we'll substitute a concrete value for the stack pointer.
-                    BaseSemantics::SValuePtr sp0 =
-                        calleeState0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-                    BaseSemantics::SValuePtr spN =
-                        calleeStateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
-
-                    SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-                    SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
-                    SymbolicExpr::Ptr spNExpr =
-                        Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
-                    SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
-
-                    // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down
-                    if (cmpExpr->mustEqual(SymbolicExpr::makeBoolean(false))) {
+                    if (!basicBlockPopsStack(calleeBb)) {
                         allCalleesPopWithoutReturning = false;
                         break;
                     }
 
                     // Did the callee return to somewhere other than caller's return address?
-                    BaseSemantics::SValuePtr ipN =
-                        calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
-                    if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
-                        allCalleesPopWithoutReturning = false;
-                        break;
+                    if (BaseSemantics::StatePtr calleeStateN = calleeBb->finalState()) {
+                        BaseSemantics::SValuePtr ipN =
+                            calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                        if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                            allCalleesPopWithoutReturning = false;
+                            break;
+                        }
                     }
                 }
                 if (allCalleesPopWithoutReturning) {

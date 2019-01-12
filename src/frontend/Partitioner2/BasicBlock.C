@@ -152,12 +152,8 @@ BasicBlock::append(SgAsmInstruction *insn) {
     ASSERT_require2(std::find(insns_.begin(), insns_.end(), insn) == insns_.end(),
                     "instruction can only occur once in a basic block");
 
-    if (isSemanticsDropped()) {
-#if 0 // [Robb P. Matzke 2015-01-05]
-        mlog[WARN] <<"recomputing semantics for " <<printableName <<"\n";
-#endif
+    if (isSemanticsDropped())
         undropSemantics();
-    }
 
     // Append instruction to block, switching to O(log N) mode if the block becomes big.
     insns_.push_back(insn);
