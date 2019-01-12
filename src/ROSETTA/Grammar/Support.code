@@ -5616,7 +5616,7 @@ public:
                e_c99_standard,
                e_c11_standard,
                e_c14_standard,
-               e_c17_standard,
+               e_c18_standard,
                e_upc_standard,
                e_cxx98_standard,
                e_cxx03_standard,
@@ -5641,6 +5641,9 @@ public:
           enum standard_enum get_standard(void) const;
           void set_standard(enum standard_enum e_std);
           void set_default_standard(void);
+
+       // DQ (1/10/2019): Add way to output a string to report standard in debug messages.
+          std::string display_standard(enum standard_enum e_std);
 
           bool is_gnu_standard(void) const;
           void set_gnu_standard();
@@ -5676,11 +5679,11 @@ public:
           bool get_C14_gnu_only (void) const;
           void set_C14_gnu_only (void);
 
-          bool get_C17_only (void) const;
-          void set_C17_only (void);
+          bool get_C18_only (void) const;
+          void set_C18_only (void);
 
-          bool get_C17_gnu_only (void) const;
-          void set_C17_gnu_only (void);
+          bool get_C18_gnu_only (void) const;
+          void set_C18_gnu_only (void);
 
           bool get_UPC_only (void) const;
           void set_UPC_only (void);
@@ -15640,6 +15643,45 @@ enum SgFile::standard_enum SgFile::get_standard(void) const { return p_standard;
 void SgFile::set_standard(enum standard_enum e_std) { p_standard = e_std; }
 void SgFile::set_default_standard(void) { p_standard = e_default_standard; }
 
+// DQ (1/10/2019): Add way to output a string to report standard in debug messages.
+std::string SgFile::display_standard(enum standard_enum e_std)
+   {
+     string s;
+
+     switch (e_std)
+        {
+          case e_default_standard: s = "e_default_standard"; break;
+          case e_c89_standard: s = "e_c89_standard"; break;
+          case e_c90_standard: s = "e_c90_standard"; break;
+          case e_c99_standard: s = "e_c99_standard"; break;
+          case e_c11_standard: s = "e_c11_standard"; break;
+          case e_c14_standard: s = "e_c14_standard"; break;
+          case e_c18_standard: s = "e_c18_standard"; break;
+          case e_upc_standard: s = "e_upc_standard"; break;
+          case e_cxx98_standard: s = "e_cxx98_standard"; break;
+          case e_cxx03_standard: s = "e_cxx03_standard"; break;
+          case e_cxx11_standard: s = "e_cxx11_standard"; break;
+          case e_cxx14_standard: s = "e_cxx14_standard"; break;
+          case e_cxx17_standard: s = "e_cxx17_standard"; break;
+          case e_cxx20_standard: s = "e_cxx20_standard"; break;
+          case e_upcxx_standard: s = "e_upcxx_standard"; break;
+          case e_f77_standard: s = "e_f77_standard"; break;
+          case e_f90_standard: s = "e_f90_standard"; break;
+          case e_f95_standard: s = "e_f95_standard"; break;
+          case e_f03_standard: s = "e_f03_standard"; break;
+          case e_f08_standard: s = "e_f08_standard"; break;
+          case e_f18_standard: s = "e_f18_standard"; break;
+
+          default:
+             {
+               printf ("Error default reached in switch: SgFile::display_standard(): e_std = %d \n",e_std);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 bool SgFile::is_gnu_standard(void) const { return p_is_gnu_standard; }
 void SgFile::set_gnu_standard(void) { p_is_gnu_standard = true; }
 void SgFile::unset_gnu_standard(void) { p_is_gnu_standard = false; }
@@ -15674,11 +15716,11 @@ void SgFile::set_C14_only (void) { set_C_only(true); set_Cxx_only(false); p_stan
 bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_is_gnu_standard; }
 void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_is_gnu_standard = true; }
 
-bool SgFile::get_C17_only (void) const { return p_standard == e_c17_standard; }
-void SgFile::set_C17_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; }
+bool SgFile::get_C18_only (void) const { return p_standard == e_c18_standard; }
+void SgFile::set_C18_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; }
 
-bool SgFile::get_C17_gnu_only (void) const { return p_standard == e_c17_standard && p_is_gnu_standard; }
-void SgFile::set_C17_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C18_gnu_only (void) const { return p_standard == e_c18_standard && p_is_gnu_standard; }
+void SgFile::set_C18_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; p_is_gnu_standard = true; }
 
 bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
 void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }

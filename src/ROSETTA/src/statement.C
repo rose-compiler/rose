@@ -2987,6 +2987,10 @@ Grammar::setUpStatements ()
      UsingDeclarationStatement.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/10/2019): Adding support for C++11 inheriting constructor.
+     UsingDeclarationStatement.setDataPrototype("bool","is_inheriting_constructor","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      UsingDirectiveStatement.setFunctionPrototype ( "HEADER_USING_DIRECTIVE_STATEMENT",
                                                     "../Grammar/Statement.code" );
