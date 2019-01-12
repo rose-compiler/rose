@@ -24,6 +24,8 @@ CHECK_DEFAULT=check-typeforge
 
 check-local: $(CHECK_DEFAULT)
 
+CHECK_TRACE_OPTION=
+
 check-typeforge: typeforge
 	@echo ================================================================
 	@echo RUNNING TYPEFORGE TESTS
@@ -34,13 +36,13 @@ check-typeforge: typeforge
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
 	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf ${CHECK_TRACE_OPTION} $(srcdir)/tests/casttest3.C --compile
 	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json --trace $(srcdir)/tests/json_replace_test.C 
-	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json --trace $(srcdir)/tests/json_out_test.C --compile
-	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/json_out_test.C --compile
+	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf ${CHECK_TRACE_OPTION} $(srcdir)/tests/type_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf ${CHECK_TRACE_OPTION} $(srcdir)/tests/basetype_replace_test1.C
+	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/json_replace_test.C 
+	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/json_out_test.C --compile
+	./typeforge --spec-file=craft_initial.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/json_out_test.C --compile
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_compound_test.C
 	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_array_test.C
@@ -50,8 +52,8 @@ check-typeforge: typeforge
 	./typeforge --plugin=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
 	./typeforge --plugin=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
 	./typeforge --plugin=$(srcdir)/tests/set_out_test.json --typeforge-out=set.json $(srcdir)/tests/setTest.C
-	./typeforge --plugin=set.json --trace $(srcdir)/tests/setTest.C
-	./typeforge --plugin=$(srcdir)/tests/var_set_change.json --trace $(srcdir)/tests/setTest.C
+	./typeforge --plugin=set.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/setTest.C
+	./typeforge --plugin=$(srcdir)/tests/var_set_change.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/setTest.C
 	rm -f a.out *.json
 
 #check-typeforge:
