@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "CommandList.h"
-#include "TFSpecFrontEnd.h"
+#include "SpecFrontEnd.h"
 #include "TFTransformation.h"
 #include "CppStdUtilities.h"
 #include "TFHandles.h"

@@ -14,7 +14,7 @@
 #include "AstMatching.h"
 #include "Sawyer/Graph.h"
 #include "TFTypeTransformer.h"
-#include "TFSpecFrontEnd.h"
+#include "SpecFrontEnd.h"
 #include "Analysis.h"
 #include "TFToolConfig.h"
 
@@ -208,7 +208,7 @@ int main (int argc, char* argv[])
     //Setup phase
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
-    TFSpecFrontEnd typeforgeSpecFrontEnd;
+    SpecFrontEnd typeforgeSpecFrontEnd;
     for(auto commandFileName : plugins){
       bool error=typeforgeSpecFrontEnd.parse(commandFileName);
       if(error) {

@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "TFSpecFrontEnd.h"
+#include "SpecFrontEnd.h"
 #include "TFTransformation.h"
 #include <iostream>
 #include "CppStdUtilities.h"
@@ -14,7 +14,7 @@
 #include "AstProcessing.h"
 #include "AstMatching.h"
 #include "TFTypeTransformer.h"
-#include "TFSpecFrontEnd.h"
+#include "SpecFrontEnd.h"
 #include "CastStats.h"
 #include "CastTransformer.h"
 #include "CastGraphVis.h"
@@ -62,7 +62,7 @@ bool checkTypeforgeExtension(string filePath, string extension){
 }
 
 //Read in json and generate command list
-bool TFSpecFrontEnd::readJSONFile(string fileName){
+bool SpecFrontEnd::readJSONFile(string fileName){
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
   for(auto act: actions){
@@ -141,7 +141,7 @@ bool TFSpecFrontEnd::readJSONFile(string fileName){
 }
 
 //parse will either call the json file parser or if it is a .tf file will read from tf file.
-bool TFSpecFrontEnd::parse(std::string specFileName) {  
+bool SpecFrontEnd::parse(std::string specFileName) {  
   if(checkTypeforgeExtension(specFileName, ".tf")){
     cout<<"Reading TF file "<<specFileName<<endl;
     return readTFFile(specFileName);
@@ -151,7 +151,7 @@ bool TFSpecFrontEnd::parse(std::string specFileName) {
   }
 }
 
-bool TFSpecFrontEnd::readTFFile(string specFileName){
+bool SpecFrontEnd::readTFFile(string specFileName){
   CppStdUtilities::DataFileVector lines;
   bool fileOK=CppStdUtilities::readDataFile(specFileName,lines);
   if(fileOK) {
@@ -268,15 +268,15 @@ bool TFSpecFrontEnd::readTFFile(string specFileName){
   return true;
 }
 
-int TFSpecFrontEnd::run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation){
+int SpecFrontEnd::run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation){
   return commandList.runCommands(root, tt, tfTransformation);
 }
 
-int TFSpecFrontEnd::getNumTypeReplace() {
+int SpecFrontEnd::getNumTypeReplace() {
   return numTypeReplace;
 }
 
 TFTypeTransformer::VarTypeVarNameTupleList
-TFSpecFrontEnd::getTransformationList() {
+SpecFrontEnd::getTransformationList() {
   return commandList.getTransformationList();
 }

@@ -4,7 +4,7 @@
 #include "TFTypeTransformer.h"
 #include "CommandList.h"
 
-class TFSpecFrontEnd {
+class SpecFrontEnd {
  public:
   // run frontend for typeforge specification file
   // returns true if reading the spec file failed
