@@ -1854,7 +1854,7 @@ public:
      *  with non-unit counts in the call graph.
      *
      *  Thread safety: Not thread safe. */
-    FunctionCallGraph functionCallGraph(bool allowParallelEdges = true) const /*final*/;
+    FunctionCallGraph functionCallGraph(AllowParallelEdges::Type allowParallelEdges) const /*final*/;
 
     /** Stack delta analysis for one function.
      *

@@ -2248,7 +2248,7 @@ struct CallingConventionWorker {
 void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
-    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    FunctionCallGraph::Graph cg = functionCallGraph(AllowParallelEdges::NO).graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
     progress.suffix(" functions");
@@ -2542,9 +2542,9 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 }
 
 FunctionCallGraph
-Partitioner::functionCallGraph(bool allowParallelEdges) const {
+Partitioner::functionCallGraph(AllowParallelEdges::Type allowParallelEdges) const {
     FunctionCallGraph cg;
-    size_t edgeCount = allowParallelEdges ? 0 : 1;
+    size_t edgeCount = allowParallelEdges == AllowParallelEdges::YES ? 0 : 1;
 
     // Create a vertex for every function.  This is optional -- if commented out then only functions that have incoming or
     // outgoing edges will be present.

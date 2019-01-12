@@ -103,7 +103,7 @@ public:
      *  Inserts an edge representing a call from source (caller) to target (callee). The @p type can be @ref E_FUNCTION_CALL or
      *  @ref E_FUNCTION_XFER.
      *
-     *  If @p edgeCount is non-zero an an edge of the correct type already exists between the @p source and @p target, then the
+     *  If @p edgeCount is non-zero and an edge of the correct type already exists between the @p source and @p target, then the
      *  count on that edge is incremented instead. Otherwise, when @p edgeCount is zero, a new edge with unit count is inserted
      *  even if it means creating an edge parallel to an existing edge.
      *
