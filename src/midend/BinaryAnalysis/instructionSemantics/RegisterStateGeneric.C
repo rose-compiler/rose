@@ -41,6 +41,7 @@ RegisterStateGeneric::zero()
 void
 RegisterStateGeneric::initialize_large()
 {
+    ASSERT_not_null(regdict);
     std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
     initialize_nonoverlapping(regs, false);
 }

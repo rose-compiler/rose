@@ -752,9 +752,11 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         //s & merger_; -- not saved
         s & BOOST_SERIALIZATION_NVP(protoval_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(regdict);
     }
 #endif
 
@@ -762,7 +764,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RegisterState() {}                                  // for serialization
+    RegisterState()
+        : regdict(NULL) {}                                // for serialization
 
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval_(protoval), regdict(regdict) {
@@ -2395,5 +2398,8 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterState, 1);
 
 #endif
