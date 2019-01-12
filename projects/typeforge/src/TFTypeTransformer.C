@@ -145,7 +145,7 @@ bool TFTypeTransformer::changeSetFlag(bool value){
 set<SgNode*>* TFTypeTransformer::getSet(SgNode* node, SgType* type){
   type = type->findBaseType();
   if(typeSets.count(type) == 0){
-    TFAnalysis* sets = new TFAnalysis();
+    Analysis* sets = new Analysis();
     SgProject* project = nullptr;
     SgNode* parent = node;
     while(project == nullptr){
@@ -167,7 +167,7 @@ set<SgNode*>* TFTypeTransformer::getSet(SgNode* node, SgType* type){
 void TFTypeTransformer::writeSets(SgProject* project, SgType* type, string toTypeString){
   type = type->findBaseType();
   if(typeSets.count(type) == 0){
-    TFAnalysis* sets = new TFAnalysis();
+    Analysis* sets = new Analysis();
     sets->variableSetAnalysis(project, type, true);
     typeSets[type] = sets;
   }

@@ -18,7 +18,7 @@ typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge_DEPENDENCIES=
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C TFAnalysis.C TFHandles.C TFToolConfig.C
+typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C Analysis.C TFHandles.C TFToolConfig.C
 
 CHECK_DEFAULT=check-typeforge
 

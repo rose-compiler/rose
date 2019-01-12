@@ -15,7 +15,7 @@
 #include "Sawyer/Graph.h"
 #include "TFTypeTransformer.h"
 #include "TFSpecFrontEnd.h"
-#include "TFAnalysis.h"
+#include "Analysis.h"
 #include "TFToolConfig.h"
 
 //preparation for using the Sawyer command line parser
@@ -149,7 +149,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("set-analysis")){
-    TFAnalysis analysis;
+    Analysis analysis;
     analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
     analysis.writeAnalysis(SageBuilder::buildDoubleType(), "float");    
     analysis.writeGraph("dotGraph.gv");
