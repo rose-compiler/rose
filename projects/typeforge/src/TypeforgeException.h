@@ -4,7 +4,7 @@
 #include <exception>
 #include <string>
 
-namespace CodeThorn {
+namespace Typeforge {
   class Exception : public std::exception {
   public:
     Exception(std::string text) {
@@ -18,5 +18,5 @@ namespace CodeThorn {
   private:
     std::string text;
   };
-} // end of namespace CodeThorn
+} // end of namespace Typeforge
 #endif

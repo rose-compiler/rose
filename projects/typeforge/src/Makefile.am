@@ -67,6 +67,8 @@ clean-local:
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg
+	rm -f rose_*.C
+	rm -f *.ti
 
 distclean-local: clean
 	rm -f *.tgz
