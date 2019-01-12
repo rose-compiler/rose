@@ -61,8 +61,7 @@ public:
         }
         else {
            POETCode* res = eval_AST(output);
-           if (res != output) apply(res);
-           else res->visit(this);
+           res->visit(this);
         }
         output = 0;
     }
@@ -277,7 +276,7 @@ class CodeGenVisitor : public CollectInfoVisitor
          listsep = 0; listelem=0;
          f = e.get_code();
          if (f == 0) { 
-               if (parse==0) { CODE_SYNTAX_UNDEFINED(v->toString()); }
+               if (parse==0) { CODE_SYNTAX_UNDEFINED(e.get_name()->toString()); }
                else f = v->get_args(); 
          }
          else {

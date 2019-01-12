@@ -7,7 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/midend/loopProcessing ${CMAKE_SOURCE
 
 ########### install files ###############
 
-install(FILES  ValueAnnot.h ValuePropagate.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  ArrayAnnot.h ValueAnnot.h ValuePropagate.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
@@ -22,7 +22,7 @@ install(FILES  ValueAnnot.h ValuePropagate.h DESTINATION ${INCLUDE_INSTALL_DIR})
 ### The grammar generator (ROSETTA) should use its own template repository
 #CXX_TEMPLATE_REPOSITORY_PATH = .
 #
-#libvaluePropagationSources = ValueAnnot.C  ValuePropagate.C
+#libvaluePropagationSources = ArrayAnnot.C ValueAnnot.C  ValuePropagate.C
 #
 ## lib_LTLIBRARIES = libvaluePropagation.a
 ## libvaluePropagation_a_SOURCES  = $(libvaluePropagationSources)
@@ -36,7 +36,7 @@ install(FILES  ValueAnnot.h ValuePropagate.h DESTINATION ${INCLUDE_INSTALL_DIR})
 #distclean-local:
 #	rm -rf Templates.DB
 #
-#include_HEADERS =  ValueAnnot.h ValuePropagate.h
+#include_HEADERS =  ArrayAnnot.h ValueAnnot.h ValuePropagate.h
 #
 #
 #

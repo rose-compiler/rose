@@ -1,0 +1,4 @@
+include_rules
+
+run $(librose_compile) unparse_format.C unparseFormatHelp.C
+run $(public_header)   unparse_format.h unparseFormatHelp.h
