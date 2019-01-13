@@ -1886,6 +1886,10 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","sizeOfContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/12/2019): Adding support for objectless nonstatic data member references (C++11 feature).
+     SizeOfOp.setDataPrototype("bool","is_objectless_nonstatic_data_member_reference","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (6/20/2013): Added alignOf operator.
      AlignOfOp.setFunctionPrototype ( "HEADER_ALIGNOF_OPERATOR", "../Grammar/Expression.code" );
      AlignOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
