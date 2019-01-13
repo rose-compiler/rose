@@ -19,7 +19,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_06.C \
    test2012_07.C \
    test2012_09.C \
-   test2012_10.C \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
@@ -28,6 +27,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_16.C \
    test2012_17.C \
    test2012_18.C \
+   test2012_19.C \
    test2012_20.C \
    test2012_21.C \
    test2012_22.C \
@@ -36,6 +36,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_27.C \
    test2012_28.C \
    test2012_29.C \
+   test2012_30.C \
    test2012_31.C \
    test2012_32.C \
    test2012_33.C \
@@ -62,6 +63,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_21.C \
    test2014_22.C \
    test2014_23.C \
+   test2014_24.C \
    test2014_25.C \
    test2014_26.C \
    test2014_27.C \
@@ -89,6 +91,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_50.C \
    test2014_51.C \
    test2014_52.C \
+   test2014_53.C \
    test2014_54.C \
    test2014_55.C \
    test2014_56.C \
@@ -297,21 +300,18 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_05.C \
    test2019_06.C \
    test2019_07.C \
-   test2019_08.C 
+   test2019_08.C \
+   test2019_10.C 
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2012_19.C \
+   test2012_10.C \
    test2012_23.C \
    test2012_24.C \
-   test2012_30.C \
-   test2014_24.C \
    test2014_46.C \
-   test2014_53.C \
    test2014_85.C \
    test2015_11.C \
    test2016_41.C \
-   test2017_17.C \
-   test2019_09.C 
+   test2017_17.C
 
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_9

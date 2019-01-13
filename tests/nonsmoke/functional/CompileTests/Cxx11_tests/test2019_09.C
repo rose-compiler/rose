@@ -1,4 +1,4 @@
-// Unclear if this is legal code!
+// Unclear if this is legal code!  I think it is not legal code!
 
 template <class T> class Array;
 
