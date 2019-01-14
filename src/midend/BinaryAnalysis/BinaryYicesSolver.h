@@ -71,7 +71,7 @@ public:
     /** Virtual constructor.
      *
      *  Create a new solver just like this one. */
-    virtual Ptr create() const {
+    virtual Ptr create() const ROSE_OVERRIDE {
         return instance(linkage());
     }
     

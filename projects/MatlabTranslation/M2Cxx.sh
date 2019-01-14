@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+
 # Get command line arguments
 # http://stackoverflow.com/questions/18003370/script-parameters-in-bash
 if [[ $# -lt 1 ]]; then
@@ -7,7 +9,8 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-baseDir=$(dirname "$0")
+baseDir="$( cd "$(dirname "$0")" ; pwd -P )"
+#~ baseDir=$(dirname "$m2cxxloc")
 
 # Location of the file to convert to C++
 filePath=${*: -1}

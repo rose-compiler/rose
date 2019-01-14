@@ -213,7 +213,6 @@ testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #1 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=1							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -221,7 +220,6 @@ testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #2 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=2							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -382,12 +380,12 @@ TEST_TARGETS += testAssembler.passed
 EXTRA_DIST += testAssembler.ans
 
 testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans conditionalDisable
-	@$(RTH_RUN)												\
-		TITLE="x86 assembler [$@]"									\
-		DISABLED="$$(./conditionalDisable)"								\
-		CMD="$$(pwd)/testAssembler -rose:partitioner_search -leftovers $(SPECIMEN_DIR)/buffer2.bin"	\
-		USE_SUBDIR=yes											\
-		ANS="$(srcdir)/testAssembler.ans"								\
+	@$(RTH_RUN)							\
+		TITLE="x86 assembler [$@]"				\
+		DISABLED="$$(./conditionalDisable)"			\
+		CMD="$$(pwd)/testAssembler $(SPECIMEN_DIR)/buffer2.bin"	\
+		USE_SUBDIR=yes						\
+		ANS="$(srcdir)/testAssembler.ans"			\
 		$< $@
 
 
@@ -1477,6 +1475,53 @@ test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translat
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@
 
+###############################################################################################################################
+# Symbolic substitution in huge expressions with many common subexpressions
+###############################################################################################################################
+
+noinst_PROGRAMS += testSymbolicSubstitution
+testSymbolicSubstitution_SOURCES = testSymbolicSubstitution.C
+testSymbolicSubstitution_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSymbolicSubstitution.passed
+
+testSymbolicSubstitution.passed: testSymbolicSubstitution conditionalDisable
+	@$(RTH_RUN)					\
+	    TITLE="symbolic substitution"		\
+	    DISABLED="$$(./conditionalDisable)"		\
+	    USE_SUBDIR=yes				\
+	    CMD="$$(pwd)/testSymbolicSubstitution"	\
+	    $(top_srcdir)/scripts/test_exit_status $@
+
+###############################################################################################################################
+# Z3 solver with wide constants
+################################################################################################################################
+
+noinst_PROGRAMS += testSmtWideConstant
+testSmtWideConstant_SOURCES = testSmtWideConstant.C
+testSmtWideConstant_LDADD = $(ROSE_SEPARATE_LIBS)
+
+if ROSE_HAVE_Z3
+TEST_TARGETS += testSmtWideConstant-z3exe.passed
+testSmtWideConstant-z3exe.passed: $(top_srcdir)/scripts/test_exit_status testSmtWideConstant conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="SMT wide constant z3-exe [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSmtWideConstant z3-exe"	\
+		$< $@
+endif
+
+if ROSE_HAVE_LIBZ3
+TEST_TARGETS += testSmtWideConstant-z3lib.passed
+testSmtWideConstant-z3lib.passed: $(top_srcdir)/scripts/test_exit_status testSmtWideConstant conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="SMT wide constant z3-lib [$@]"		\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSmtWideConstant z3-lib"	\
+		$< $@
+endif
 
 ###############################################################################################################################
 # Standard boilerplate

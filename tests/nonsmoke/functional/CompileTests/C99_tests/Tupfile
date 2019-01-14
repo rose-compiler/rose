@@ -1,0 +1,34 @@
+include_rules
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+
+TESTCODES_REQUIRED_TO_PASS = \
+    test2005_186.c \
+    test2006_127.c \
+    test2006_143.c \
+    test2008_01.c \
+    test2012_20.c \
+    test2012_23.c \
+    test2012_25.c \
+    test2012_58.c \
+    test2012_100.c \
+    test2012_104.c \
+    test2012_105.c \
+    test2013_01.c \
+    test2013_02.c \
+    test2013_03.c \
+    test2013_04.c \
+    test2014_01.c \
+    complex_01.c \
+    complex_03.c \
+    bool.c \
+    constants.c 
+
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -w --edg:restrict
+
+run for specimen in $(TESTCODES_REQUIRED_TO_PASS); do \
+        $(test) ../../testTranslator -o $specimen \
+	    -x ${specimen%.c}.o -x rose_$specimen \
+            ../../testTranslator $(ROSE_FLAGS) -c $specimen; \
+    done
+
+endif

@@ -75,11 +75,13 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
   // DQ (12/6/2007): Skip the output of this message for Fortran applications 
   // (since we handle Fortran intrinsit functions more directly in the front-end)
   // if (targetFile == NULL)
+  // Rasmussen (3/12/2018): Added check for Jovial language
      if (targetFile == NULL &&
-             ( SageInterface::is_Fortran_language() == false
-                 && SageInterface::is_Java_language() == false
-                 && SageInterface::is_Python_language() == false
-                 && SageInterface::is_binary_executable() == false ) )
+             (     SageInterface::is_Fortran_language() == false
+                && SageInterface::is_Jovial_language() == false
+                && SageInterface::is_Java_language() == false
+                && SageInterface::is_Python_language() == false
+                && SageInterface::is_binary_executable() == false ) )
         {
           printf ("Lookup of Sg_File_Info referencing targetFileName = %s was unsuccessful \n",targetFileName.c_str());
         }

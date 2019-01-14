@@ -125,9 +125,9 @@ namespace FastNumericsRoseSupport
   /// Extracts the type from the attached TypeAttribute
   SgType* getInferredType(SgNode* node)
   {
-    std::cerr << typeid(*node).name() << std::endl;
-
-    TypeAttribute *attachedTypeAttribute = TypeAttribute::get_typeAttribute(node);
+    ROSE_ASSERT(node);
+    
+    TypeAttribute* attachedTypeAttribute = TypeAttribute::get_typeAttribute(node);
     ROSE_ASSERT(attachedTypeAttribute != NULL);
 
     return attachedTypeAttribute->get_inferred_type();
