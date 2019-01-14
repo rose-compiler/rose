@@ -94,6 +94,9 @@ string get_type_name(SgType* t)
           case T_SIGNED_LONG_LONG:        return "signed long long";
           case T_UNSIGNED_LONG_LONG:      return "unsigned long long";
 
+          case T_FLOAT80:                 return "__float80";
+          case T_FLOAT128:                return "__float128";
+
         case T_MATRIX:                    return "Matrix<" + get_type_name(isSgTypeMatrix(t)->get_base_type()) + ">";
 
         case T_TUPLE:
@@ -638,6 +641,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
                case T_FLOAT:
                case T_DOUBLE:
+               case T_FLOAT80:
+               case T_FLOAT128:
                case T_LONG_LONG:
                case T_UNSIGNED_LONG_LONG:
                case T_SIGNED_LONG_LONG:

@@ -481,6 +481,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeLongDouble:
           case V_SgTypeBool:
           case V_SgTypeWchar:
+
+          case V_SgTypeFloat80:
+          case V_SgTypeFloat128:
              {
                return_declaration = NULL;
                break;

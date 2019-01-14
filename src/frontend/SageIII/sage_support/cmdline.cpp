@@ -6515,6 +6515,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_USE_EDG_LARGE_FLOAT
+     commandLine.push_back("-DROSE_USE_EDG_LARGE_FLOAT");
+#endif
+
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
@@ -7295,7 +7299,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (4/13/2015): Only add boost path for C++ applications, never for C applications
   // (though this does not to have ever caused an error that I know of).
   // if (get_C_only() || get_Cxx_only())
-     if (get_Cxx_only() == true)
+
+  // TV (01/08/2019): with ubuntu 18.04 using default boost, this causes an issue
+     if (get_Cxx_only() == true && std::string(ROSE_BOOST_PATH) != "/usr")
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.
