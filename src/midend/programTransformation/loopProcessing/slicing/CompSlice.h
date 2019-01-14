@@ -186,7 +186,7 @@ class CompSliceNest
   CompSliceNest(unsigned _maxsize = 0);
   ~CompSliceNest();
   int NumberOfEntries() const { return size; }
-  const CompSlice* Entry(unsigned index) const 
+  const CompSlice* Entry(int index) const 
             { assert(index < size); return sliceVec[index]; }
   const CompSlice* operator [] (unsigned index) const 
             { assert(index < size); return sliceVec[index]; }

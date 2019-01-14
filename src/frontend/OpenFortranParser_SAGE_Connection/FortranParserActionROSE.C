@@ -644,6 +644,7 @@ void c_action_label(Token_t * lbl)
         SgType* intrinsicType = createType(type);
         ROSE_ASSERT(intrinsicType != NULL);
         astBaseTypeStack.push_front(intrinsicType);
+
         if (hasKindSelector == true)
         {
 #if 0
@@ -733,6 +734,7 @@ void c_action_label(Token_t * lbl)
                 {
                     // Note that this does not have to be an integer value and can be another variable or "c_int" (for example)
                     // DQ (10/4/2010): Moved to new (improved) design of type_kind data member in SgType.
+                    ROSE_ASSERT(kindExpression);
                     ROSE_ASSERT(kindExpression->get_parent() == NULL);
                     SgTypeInt* integerType = SgTypeInt::createType(0, kindExpression);
                     kindExpression->set_parent(integerType);
@@ -3505,12 +3507,21 @@ void c_action_label(Token_t * lbl)
         if (hasInitialization)
         {
             if (isSgClassType(entityType))
-            { // if entityType is a derived type then the initialzer must be a SgConstructorInitializer.
+            {
+             // if entityType is a derived type then the initialzer must be a SgConstructorInitializer.
                 SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
-                ROSE_ASSERT(constructorInitializer);
-                initializer = constructorInitializer;
+             // Rasmussen (1/4/2019): I believe this is too strong
+             // For example: type(c_ptr) = c_null_ptr, in which case c_null_ptr is an SgVarRefExp (I believe)
+             // I removed assertion and changed logic to allow initializer not to be a constructor initializer
+             // ROSE_ASSERT(constructorInitializer);
+                if (constructorInitializer)
+                   {
+                      initializer = constructorInitializer;
+                   }
             }
-            else
+
+         // Rasmussen (1/4/2019): allow for SgClassType as well
+            if (initializer == NULL)
             {
                 initializer = new SgAssignInitializer(initialization, NULL);
                 setSourcePosition(initializer);
@@ -3879,9 +3890,7 @@ void c_action_label(Token_t * lbl)
      * @param id The identifier representing the language binding, must be 'C' or 'c'.
      * @param hasName True if the language-binding-spec has a name expression.
      */
-// void c_action_language_binding_spec(Token_t * id, ofp_bool hasName)
-    void c_action_language_binding_spec(Token_t * keyword, Token_t * id,
-            ofp_bool hasName)
+    void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool hasName)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -3891,6 +3900,9 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(id != NULL);
         astNameStack.push_front(id);
+
+     // Rasmussen (1/6/2019): This required for function declarations
+        DeclAttributes.setHasLangBinding(true);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -4130,9 +4142,7 @@ void c_action_label(Token_t * lbl)
      * be null for all other intents.
      * @param intent The type of intent-spec.
      */
-// void c_action_intent_spec(int intent)
-    void c_action_intent_spec(Token_t * intentKeyword1, Token_t * intentKeyword2,
-            int intent)
+    void c_action_intent_spec(Token_t * intentKeyword1, Token_t * intentKeyword2, int intent)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -4154,7 +4164,6 @@ void c_action_label(Token_t * lbl)
      * @param eos End of statement token.
      * @param hasList True if access-id-list is present.
      */
-// void c_action_access_stmt(Token_t * label, ofp_bool hasList)
     void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -5271,7 +5280,6 @@ void c_action_label(Token_t * lbl)
      * @param keyword The PARAMETER keyword token.
      * @param eos End of statement token.
      */
-// void c_action_parameter_stmt(Token_t * label)
     void c_action_parameter_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -10513,6 +10521,9 @@ void c_action_label(Token_t * lbl)
         SgScopeStatement* currentScope = getTopOfScopeStack();
         currentScope->append_statement(forAllStatement);
         forAllStatement->set_parent(currentScope);
+
+     // Rasmussen (1/8/2019): To be added in future
+     // forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
 
         // Push the if scope (it is a scope in C/C++, even if not in Fortran)
         // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
@@ -18318,8 +18329,6 @@ void c_action_label(Token_t * lbl)
     }
     ;
 
-// void c_action_function_stmt(Token_t * label, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
-// void c_action_function_stmt(Token_t * label, Token_t * functionName, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
     void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name,
             Token_t * eos, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
     {
@@ -18391,6 +18400,14 @@ void c_action_label(Token_t * lbl)
         // Mark this as NOT a subroutine, thus it is a function.
         // functionDeclaration->set_is_a_function(true);
         functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+
+        // hasBindingSpec should be processed before hasDummyArgList
+        // Rasmussen (1/6/2019): Added so that language binding is processed for function declarations
+        if (hasSuffix == true && DeclAttributes.getHasLangBinding())
+           {
+              processBindingAttribute(functionDeclaration);
+              DeclAttributes.setHasLangBinding(false);
+        }
 
         processFunctionPrefix(functionDeclaration);
 
@@ -18527,15 +18544,10 @@ void c_action_label(Token_t * lbl)
         SgName arg_name = astNameStack.front()->text;
 
         // printf ("Warning: type for return parameter to function assumed to be integer (arg_name = %s) \n",arg_name.str());
-#if 1
      // DQ (10/11/2014): Added extra parameter to resolve ambiguity as a result of changing which are marked as constructor parameter in ROSETTA.
         SgInitializedName* initializedName = new SgInitializedName(arg_name, generateImplicitType(arg_name.str()),NULL);
-#else
-        SgInitializedName* initializedName = new SgInitializedName(arg_name, generateImplicitType(arg_name.str()));
-#endif
-        // printf ("In c_action_result_name(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
-        astNodeStack.push_front(initializedName);
 
+        astNodeStack.push_front(initializedName);
         setSourcePosition(initializedName, astNameStack.front());
 
         astNameStack.pop_front();
@@ -18683,7 +18695,6 @@ void c_action_label(Token_t * lbl)
     {
         // Support for subroutines maps to functions with void return type in the ROSE AST.
 
-        // printf ("In c_action_subroutine_stmt() \n");
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
                 "In c_action_subroutine_stmt(): label = %p (routine name) name = %s hasPrefix = %s hasDummyArgList = %s hasBindingSpec = %s hasArgSpecifier = %s \n",
@@ -18740,11 +18751,12 @@ void c_action_label(Token_t * lbl)
 
         // This has to be done before the buildProcedureSupport() function is called (must use values on the stack in a specific order).
 
-        // Need to figure out which data is on the stack (should hasBindingSpec be processed before hasDummyArgList?).
-        if (hasBindingSpec == true)
+        // hasBindingSpec should be processed before hasDummyArgList
+        // Rasmussen (1/6/2019): Modified to be similar to processing of function declarations
+        if (DeclAttributes.getHasLangBinding())
         {
-            // printf ("Process binding spec ... \n");
-            processBindingAttribute(subroutineDeclaration);
+              processBindingAttribute(subroutineDeclaration);
+              DeclAttributes.setHasLangBinding(false);
         }
 
         if (hasPrefix == true)

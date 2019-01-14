@@ -58,6 +58,8 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
 {
   LoopTreeObserveImpl *impl;
  protected:
+  std::string preAnnot,postAnnot;
+ protected:
   LoopTreeNode();
   LoopTreeNode(const LoopTreeNode& that);
   void UpdateDelete();
@@ -83,6 +85,8 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
 
   virtual bool SelfRemove() { return false; }
   virtual LoopTreeNode* Clone() const = 0;
+  LoopTreeNode* CloneTree();
+
 
   void Dump() const { std::cerr << toString() << std::endl; }
   virtual std::string toString() const { return ""; }
@@ -92,12 +96,13 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
         returns the real node where the annotation has been attached; 
         returns 0 if failed to find one */
   virtual LoopTreeNode* set_preAnnot(const std::string& content) 
-         { if (ChildCount() == 1) return FirstChild()->set_preAnnot(content);
-           return 0; }
+         { 
+           preAnnot=content + preAnnot; return this; 
+         }
   virtual LoopTreeNode* set_postAnnot(const std::string& content) 
-         { if (ChildCount() == 1) return FirstChild()->set_postAnnot(content);
-           return 0; }
-
+         { 
+           postAnnot=postAnnot+content; return this; 
+         }
   void AttachObserver( LoopTreeObserver &o) const;
   void DetachObserver( LoopTreeObserver &o) const;
   void Notify( const LoopTreeObserveInfo &info) const;
@@ -119,34 +124,48 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
 class LoopTreeStmtNode : public LoopTreeNode
 {
   AstNodePtr start;
-  std::string preAnnot,postAnnot;
 
-   ~LoopTreeStmtNode();
+ protected:
+   virtual ~LoopTreeStmtNode();
    LoopTreeStmtNode(  const AstNodePtr& s) : start(s) {}
    LoopTreeStmtNode(  const LoopTreeStmtNode& that)
      : LoopTreeNode(that), start(that.start) {}
  public:
-  std::string toString() const;
-  std::string GetClassName() const { return "LoopTreeStmtNode"; }
+  virtual std::string toString() const;
+  virtual std::string GetClassName() const { return "LoopTreeStmtNode"; }
 
   virtual AstNodePtr CodeGen(const AstNodePtr& c) const;
-  AstNodePtr GetOrigStmt() const { return start; }
-  LoopTreeNode* Clone() const { return new LoopTreeStmtNode( *this ); }
+  virtual AstNodePtr GetOrigStmt() const { return start; }
+  virtual LoopTreeNode* Clone() const { return new LoopTreeStmtNode( *this ); }
 
-  virtual LoopTreeNode* set_preAnnot(const std::string& content) 
-         { preAnnot=content + preAnnot; return this; }
-  virtual LoopTreeNode* set_postAnnot(const std::string& content) 
-         { postAnnot=postAnnot+content; return this; }
  friend class LoopTreeCreate;
 };
 
-#define IsSimpleStmt(a)  (a->GetOrigStmt()!= AST_NULL)
+class LoopTreeIfCond : public LoopTreeStmtNode
+{
+   SymbolicVal cond; 
+   virtual ~LoopTreeIfCond() {}
+   LoopTreeIfCond(const AstNodePtr&  _cond) ;
+   LoopTreeIfCond(  const LoopTreeIfCond& that)
+     : LoopTreeStmtNode(that), cond(that.cond) {}
+ public:
+  virtual std::string toString() const { return "if (" + cond.toString() + ")"; }
+  virtual std::string GetClassName() const { return "LoopTreeIfCond"; }
+
+  virtual AstNodePtr CodeGen(const AstNodePtr& c) const;
+  virtual LoopTreeNode* Clone() const { return new LoopTreeIfCond( *this ); }
+ friend class LoopTreeCreate;
+};
+
+//QY: the key difference is whether if-conds should be included here..
+//#define IsSimpleStmt(a)  (a->GetOrigStmt()!=0 && a->ChildCount() == 0)
+#define IsSimpleStmt(a)  (a->GetOrigStmt()!=0)
+
 
 class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
 {
   AstNodePtr orig;
   LoopInfo info;
-  std::string preAnnot,postAnnot;
   virtual bool SelfRemove();
  protected:
   ~LoopTreeLoopNode();
@@ -157,10 +176,10 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
   virtual AstNodePtr CodeGen(const AstNodePtr& c) const;
   void UpdateSwapNode( const SwapNodeInfo& info);
  public:
-  std::string toString() const;
-  std::string GetClassName() const { return "LoopTreeLoopNode"; }
-  int IncreaseLoopLevel() const { return 1; }
-  LoopTreeNode* Clone() const
+  virtual std::string toString() const;
+  virtual std::string GetClassName() const { return "LoopTreeLoopNode"; }
+  virtual int IncreaseLoopLevel() const { return 1; }
+  virtual LoopTreeNode* Clone() const
      { return new LoopTreeLoopNode( *this ); }
   VarInfo GetVarInfo() const { return info; }
   const LoopInfo* GetLoopInfo() const { return &info; }
@@ -169,10 +188,6 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
   /*QY: should not e here b/c loopNodes are created from scratch */
   /*Liao added here as a workaround --- but need to be removed eventually */
   AstNodePtr GetOrigLoop() const { return orig; }
-  virtual LoopTreeNode* set_preAnnot(const std::string& content) 
-         { preAnnot=content + preAnnot; return this; }
-  virtual LoopTreeNode* set_postAnnot(const std::string& content) 
-         { postAnnot=postAnnot + content; return this; }
  friend class LoopTreeCreate;
 };
 
@@ -203,6 +218,10 @@ class LoopTreeCreate
  public:
   virtual LoopTreeNode* CreateStmtNode(AstNodePtr s)
      { LoopTreeNode *r =  new LoopTreeStmtNode(s); AttachObserver(r); return r;}
+  virtual LoopTreeIfCond* CreateIfCond( const AstNodePtr& _cond) { 
+        LoopTreeIfCond* r=  new LoopTreeIfCond(_cond); 
+        AttachObserver(r); return r; 
+      }
   virtual LoopTreeNode* CreateLoopNode( const AstNodePtr& ctrl) { 
         LoopTreeNode* r=  new LoopTreeLoopNode(ctrl); 
         AttachObserver(r); return r; 
@@ -217,8 +236,6 @@ class LoopTreeCreate
       { LoopTreeNode* r= new LoopTreeLoopNode( ivar,SymbolicVal(),SymbolicVal(),
                                      SymbolicVal()); 
         AttachObserver(r); return r; }
-
-  LoopTreeNode* CloneTree( LoopTreeNode *n);
 
   LoopTreeCreate( int _level = 0);
   virtual ~LoopTreeCreate();
