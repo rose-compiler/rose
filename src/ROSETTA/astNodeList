@@ -691,6 +691,8 @@ SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
 SgTypeFloat
+SgTypeFloat128
+SgTypeFloat80
 SgTypeGlobalVoid
 SgTypeIdOp
 SgTypeImaginary
