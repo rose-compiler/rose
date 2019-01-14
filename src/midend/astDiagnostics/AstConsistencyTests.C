@@ -2882,6 +2882,8 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        }
                       else
                        {
+#if 0
+                      // DQ (1/12/2019): This is is output spew but only from Cxx_tests/rose-1541-0.C, as best I can tell.
                          printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
 
                          firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
@@ -2889,6 +2891,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                          printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
                          printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+#endif
                        }
                   }
 
