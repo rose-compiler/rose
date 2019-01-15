@@ -21,6 +21,11 @@ for testNumber in $testNumbers; do
         echo -n "Testing $benchmarkname : "
         g++ $benchmark
         ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
+        if [ ! $? -eq 0 ]
+        then
+	    echo "FAIL"
+            exit 1
+        fi
         g++ rose_${benchmarkname} 
         if [ ! $? -eq 0 ]
         then
