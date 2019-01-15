@@ -1,25 +1,21 @@
-int globalReturnsTrue() 
-{
-    return 1;
-}
+#include <cassert>
 
-int globalReturnsFalse() 
+typedef struct _twoIntsStruct
 {
-    return 0;
-}
+  int intOne;
+  int intTwo;
+} twoIntsStruct;
+
+#define NULL 0
 
 int main() {
   int x=1;
-  if(globalReturnsTrue()) {
-    x++;
-  } else {
-    x-=10;
+  twoIntsStruct* twoIntsStructPointer = NULL;
+  /* FIX: Use && in the if statement so that if the left side of the expression fails then
+   * the right side will not be evaluated */
+  if ((twoIntsStructPointer != NULL) && (twoIntsStructPointer->intOne == 5)) {
+    x=2;
   }
-  if(globalReturnsFalse()) {
-    x-=100;
-  } else {
-    x+=1;
-  }
-  bool res=(x==3);
-  return !res;
+  assert(x==2);
+  return 0;
 }
