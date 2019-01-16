@@ -7,8 +7,8 @@
 #include "MemoryMap.h"
 
 #include <boost/version.hpp>
-#if BOOST_VERSION < 106900
-#include <boost/math/common_factor.hpp>                 // deprecated in 1.69.0
+#if BOOST_VERSION < 106700
+#include <boost/math/common_factor.hpp>                 // deprecated in 1.67.0
 #else
 #include <boost/integer/common_factor.hpp>
 #endif
@@ -843,7 +843,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             Extent ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             if (strchr("RICE", ExtentMap::category(ap, sp))) {
                 rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-#if BOOST_VERSION < 106900
+#if BOOST_VERSION < 106700
                 align = boost::math::lcm(align, x?x:1); // deprecated in boost-1.69.0
 #else
                 align = boost::integer::lcm(align, x?x:1); // not present before boost-1.60.0
