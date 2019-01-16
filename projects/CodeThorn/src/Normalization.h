@@ -161,7 +161,7 @@ namespace SPRAY {
     struct RegisteredSubExprTransformation {
       SubExprTransformationEnum transformation;
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e);
-      RegisteredSubExprTransformation(SubExprTransformationEnum, SgVariableDeclaration* d);
+      RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
       SgStatement* stmt;
       SgExpression* expr;
       SgVariableDeclaration* decl;
@@ -183,7 +183,7 @@ namespace SPRAY {
     void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
     void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
-    void registerFalseBoolVarDecl(SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
+    void registerFalseBoolVarDecl(SgStatement* stmt, SgExpression* node, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     void insertNormalizedSubExpressionFragment(SgStatement* fragment, SgStatement* existing);
 
     /* If the given statement contains any break statements in its body,

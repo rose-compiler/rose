@@ -464,6 +464,14 @@ namespace SPRAY {
     }
   }
 
+  void Normalization::insertNormalizedSubExpressionFragment(SgStatement* fragment, SgStatement* stmt) {
+    if(SgBasicBlock* block=isSgBasicBlock(stmt)) {
+      block->append_statement(fragment);
+    } else {
+      SageInterface::insertStatementBefore(stmt,fragment);
+    }
+  }
+
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // find all SgExprStatement, SgReturnStmt, SgVariableDeclaration
     RoseAst ast(node);
@@ -517,12 +525,7 @@ namespace SPRAY {
           tmpVarDeclaration->set_parent(scope);
           ROSE_ASSERT(tmpVarDeclaration!= 0);
           // 2) insert tmp-var initializer
-          if(SgBasicBlock* block=isSgBasicBlock(stmt)) {
-            block->append_statement(tmpVarDeclaration);
-          } else {
-            SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
-          }
-
+          insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // 2) replace use of expr with tmp-var
           SageInterface::replaceExpression(expr, tmpVarReference);
           //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
@@ -574,10 +577,10 @@ namespace SPRAY {
       decl(0)
   {
   }
-  Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgVariableDeclaration* d)
+  Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e, SgVariableDeclaration* d)
     : transformation(t),
-      stmt(0),
-      expr(0),
+      stmt(s),
+      expr(e),
       decl(d)
   {
   }
@@ -635,7 +638,7 @@ namespace SPRAY {
       cerr<<"DEBUG: found OrOp"<<endl;
       SgScopeStatement* scope=stmt->get_scope();
       SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
-      registerFalseBoolVarDecl(decl,subExprTransformationList);
+      //registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
       //registerTmpVarAssignment(stmt,expr,subExprTransformationList);
@@ -651,8 +654,8 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::registerFalseBoolVarDecl(SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList) {
-    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_FALSE_BOOL_VAR_DECL,decl));
+  void Normalization::registerFalseBoolVarDecl(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList) {
+    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_FALSE_BOOL_VAR_DECL,stmt,expr,decl));
   }
 
   SgVariableDeclaration* Normalization::generateFalseBoolVarDecl(SgScopeStatement* scope) {
