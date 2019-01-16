@@ -534,6 +534,7 @@ namespace SPRAY {
         case Normalization::GEN_FALSE_BOOL_VAR_DECL: {
           SgVariableDeclaration* decl=(*j).decl;
           cout<<"GENERATING BOOL VAR DECL:"<<endl;
+          insertNormalizedSubExpressionFragment(decl,stmt);
           break;
         }
         default:
@@ -638,7 +639,7 @@ namespace SPRAY {
       cerr<<"DEBUG: found OrOp"<<endl;
       SgScopeStatement* scope=stmt->get_scope();
       SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
-      //registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
+      registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
       //registerTmpVarAssignment(stmt,expr,subExprTransformationList);
