@@ -214,6 +214,7 @@ temp_stderr=$(tempfile)
 temp_cmd=$(tempfile)
 echo "$@" >"$temp_cmd"
 
+start_time=$(date '+%s')
 set +e
 (
     echo "+" "$@" >&2
@@ -221,9 +222,15 @@ set +e
     exit ${PIPESTATUS[0]}
 ) >"$temp_stdout" 2>"$temp_stderr"
 exit_status=$?
+end_time=$(date '+%s')
 rm -f "$temp_cmd"
 set -e
-(cat "$temp_stdout"; echo "======== CUT ========"; cat "$temp_stderr") > "$output_file"
+(
+    cat "$temp_stdout"
+    echo "======== CUT ========"
+    cat "$temp_stderr"
+    echo "ELAPSED_TIME" $[ end_time - start_time ]
+) > "$output_file"
 
 # If an answer file was supplied, compare the command standard output with the answer.
 error=
