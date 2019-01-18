@@ -585,8 +585,13 @@ namespace SPRAY {
       ROSE_ASSERT(stmt->get_parent()==block);
       normalizeSubExpression(stmt,expr,subExprTransformationList);
     } else {
+#ifdef EXPR_NORMALIZATION_NEW
+      // normalized subexpressions (and declared variables) are replacing the current expression
+      normalizeSubExpressionNew(stmt,expr);
+#else
       // normalized subexpressions (and declared variables) are replacing the current expression
       normalizeSubExpression(stmt,expr,subExprTransformationList);
+#endif
     }
     // for each expression one SubExprTransformationList is inserted
     exprTransformationList.push_back(subExprTransformationList);
@@ -686,6 +691,79 @@ namespace SPRAY {
       // general case: unary operator
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList);
       registerTmpVarAssignment(stmt,expr,subExprTransformationList);
+    }
+  }
+
+  void insertTmpVarAssignment(SgStatement* stmt, SgExpression* expr) {
+  }
+    // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
+  void Normalization::normalizeSubExpressionNew(SgStatement* stmt, SgExpression* expr) {
+    if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
+      // special case: normalize array index-expressions
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)));
+      insertTmpVarAssignment(stmt,expr);
+    } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
+      // special case: normalize assignment with lhs/rhs-semantics
+      // normalize rhs of assignment
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
+      // normalize lhs of assignment
+      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
+      ROSE_ASSERT(lhs);
+      // skip normalizing top-most operator of lhs because a
+      // lhs-expression must remain a lhs-expression! Introduction of
+      // temporary would be wrong. Note: not all operators can appear as top-most op on lhs.
+      if(isSgUnaryOp(lhs)) {
+        normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)));
+      } else if(isSgBinaryOp(lhs)) {
+        normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)));
+        normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)));
+      }
+    } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
+      // special case: function call with normalization of arguments
+      // and void return type (no temp var generation)
+      SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
+      for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
+        normalizeSubExpressionNew(stmt,*i);
+      }
+      // check if function has a return value
+      SgType* functionReturnType=funCallExp->get_type();
+      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+
+      // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
+      SgNode* parentNode=funCallExp->get_parent();
+      if(!isSgTypeVoid(functionReturnType)
+         &&  isSgExpression(parentNode)
+         && !isSgExpressionRoot(parentNode)) {
+        insertTmpVarAssignment(stmt,expr);
+      }
+    } else if(SgAndOp* andOp=isSgAndOp(expr)) {
+      // special case: short circuit operator normalization
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
+      insertTmpVarAssignment(stmt,expr);
+    } else if(SgOrOp* orOp=isSgOrOp(expr)) {
+      // special case: short circuit operator normalization
+      cerr<<"DEBUG: found OrOp"<<endl;
+      SgScopeStatement* scope=stmt->get_scope();
+      SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
+#if 0
+      registerFalseBoolVarDecl(stmt,expr,decl);
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
+      SgBasicBlock* block=SageBuilder::buildBasicBlock();
+      registerBoolVarIfElseStmt(stmt,expr,decl,block);
+      normalizeSubExpressionNew(block,isSgExpression(SgNodeHelper::getRhs(expr)));
+      registerLogOpReplacement(stmt,expr,decl); // will be used for replacing Or operator
+      registerBoolVarIfElseStmt(block,expr,decl,0);
+#endif
+    } else if(isSgBinaryOp(expr)) {
+      // general case: binary operator
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(expr)));
+      insertTmpVarAssignment(stmt,expr);
+    } else if(isSgUnaryOp(expr)) {
+      // general case: unary operator
+      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
+      insertTmpVarAssignment(stmt,expr);
     }
   }
 

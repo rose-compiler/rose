@@ -16,7 +16,7 @@ class SgSwitchStatement;
 #include "NormalizationInliner.h"
 
 namespace SPRAY {
-
+#define EXPR_NORMALIZATION_NEW
   class Normalization {
     // Not supported yet: 
     // 1. condition hoisting in do-while (into the block, not before the loop)
@@ -113,12 +113,12 @@ namespace SPRAY {
     // assumes correctly configured options (invoked by normalizeAst(root,level))
     void normalizeAst(SgNode* root);
 
-  private:
     /* normalize all label stmts in AST. Every label is attached to an
      * empty statement (instead to S). Inserting a statement before S
      * is then straight-forward.
      * Transformation:  L: S; => L; S;
      */
+  public:
     static void normalizeLabelStmts(SgNode* root);
     // the associated stmt node (= the label node's child) remains unchanged, except for the update of its parent pointer.
     static void normalizeLabel(SgLabelStatement* label);
@@ -129,6 +129,7 @@ namespace SPRAY {
     // transforms Label1: Label2: LabelN: Stmt; ==> Label1:; Label2:; LabelN:; Stmt;
     // requires: normalizeSingleStatementsToBlocks()
 
+  private:
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
@@ -178,6 +179,7 @@ namespace SPRAY {
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
     void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    void normalizeSubExpressionNew(SgStatement* stmt, SgExpression* node);
     void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
     void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
