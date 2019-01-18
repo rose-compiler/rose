@@ -34,6 +34,15 @@ namespace SPRAY {
     }
   }
 
+  // configuration
+  void Normalization::setTmpVarPrefix(std::string prefix) {
+    Normalization::tmpVarPrefix=prefix;
+  }
+
+  void Normalization::setLabelPrefix(std::string prefix) {
+    Normalization::labelPrefix=prefix;
+  }
+
   void Normalization::Options::configureLevel(unsigned int level) {
     if(level==0) {
       normalization=false;
@@ -85,6 +94,95 @@ namespace SPRAY {
     exit(1);
   }
 
+  void Normalization::normalizeAst(SgNode* root, unsigned int level) {
+    options.configureLevel(level);
+    normalizeAst(root);
+#if 0
+    // AST consistency tests
+    if(SgProject* project=isSgProject(root)) {
+      AstTests::runAllTests(project);
+      AstPostProcessing(project);
+    }
+#endif
+  }
+
+  void Normalization::normalizeAst(SgNode* root) {
+    if(options.normalizeSingleStatements) {
+      normalizeSingleStatementsToBlocks(root);
+    }
+    if(options.normalizeLabels) {
+      normalizeLabelStmts(root);
+    }
+    if(options.eliminateForStatements) {
+      convertAllForStmtsToWhileStmts(root);
+    }
+
+    // uses options to select which breaks are transformed (can be none)
+    normalizeBreakAndContinueStmts(root);
+
+    if(options.eliminateWhileStatements) {
+      // transforms while and do-while loops
+      createLoweringSequence(root);
+      applyLoweringSequence();
+    }
+    if(options.hoistConditionExpressions) {
+      hoistConditionsInAst(root,options.restrictToFunCallExpressions);
+    }
+    if(options.normalizeExpressions) {
+      normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+    }
+    if(options.normalizeVariableDeclarations) {
+      normalizeAllVariableDeclarations(root,false);
+    }
+    if(options.normalizeVariableDeclarationsWithFunctionCalls) {
+      bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
+      normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
+    }
+    if(options.inlining) {
+      InlinerBase* inliner=getInliner();
+      ROSE_ASSERT(inliner);
+      inliner->inlineFunctions(root);
+    }
+  }
+
+  /***************************************************************************
+   * QUERY FUNCTIONS
+   **************************************************************************/
+
+  bool Normalization::isVarDeclWithFunctionCall(SgNode* node) {
+    return SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(node);
+  }
+
+  bool Normalization::isWithinBlockStmt(SgExpression* exp) {
+    SgNode* current=exp;
+    while(!isSgGlobal(current)&&!isSgBasicBlock(current)&&current) {
+      current=current->get_parent();
+    };
+    return isSgBasicBlock(current);
+  }
+  
+  bool Normalization::hasFunctionCall(SgExpression* expr) {
+    RoseAst ast(expr);
+    for(auto node:ast) {
+      if(isSgFunctionCallExp(node)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /***************************************************************************
+   * INLINING (obsolete)
+   **************************************************************************/
+
+  void Normalization::setInliningOption(bool flag) {
+    options.inlining=flag;
+  }
+
+  bool Normalization::getInliningOption() {
+    return options.inlining;
+  }
+  
   void Normalization::removeDefaultInliner() {
     if(_defaultInliner) {
       delete _inliner;
@@ -99,8 +197,23 @@ namespace SPRAY {
     _inliner=userDefInliner;
   }
 
-  void Normalization::setTmpVarPrefix(std::string prefix) {
-    Normalization::tmpVarPrefix=prefix;
+  /***************************************************************************
+   * LABEL NORMALIZATION
+   **************************************************************************/
+
+  // Label normalization (breaks up attached labels into separate statements)
+  void Normalization::normalizeLabelStmts(SgNode* root) {
+    RoseAst ast(root);
+    list<SgLabelStatement*> list;
+    // first determine statements to be normalized, then transform.
+    for(auto node:ast) {
+      if(SgLabelStatement* labelStmt=isSgLabelStatement(node)) {
+        list.push_back(labelStmt);
+      }
+    }
+    for(auto labelStmt:list) {
+      normalizeLabel(labelStmt);
+    }
   }
 
   void Normalization::normalizeLabel(SgLabelStatement* label) {
@@ -123,11 +236,11 @@ namespace SPRAY {
     ROSE_ASSERT(label->get_parent()==stmt->get_parent());
   }
 
-  bool Normalization::isVarDeclWithFunctionCall(SgNode* node) {
-    return SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(node);
-  }
+  /***************************************************************************
+   * DECLARATION CONVERSION (obsolete)
+   **************************************************************************/
 
-  // this function is obsolete
+  // converting variable initializations into declarations with separate assignment (obsolete)
   // introduces assignment for initialization of variable declaration
   // cannot be applied to static, const, and ref variables.
   void Normalization::normalizeAllVariableDeclarations(SgNode* root, bool onlyFunctionCalls) {
@@ -189,90 +302,61 @@ namespace SPRAY {
     return nullptr;
   }
 
+  /***************************************************************************
+   * BLOCK NORMALIZATION
+   **************************************************************************/
+
   void Normalization::normalizeSingleStatementsToBlocks(SgNode* root) {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
     singleStatementToBlockNormalizer.Normalize(root);
   }
 
-  void Normalization::setLabelPrefix(std::string prefix) {
-    Normalization::labelPrefix=prefix;
-  }
-
-  string Normalization::newLabelName() {
-    return labelPrefix + StringUtility::numberToString(Normalization::labelNr++);
-  }
+  /***************************************************************************
+   * UTILITY FUNCTIONS
+   **************************************************************************/
 
   string Normalization::newTmpVarName() {
     return tmpVarPrefix + StringUtility::numberToString(Normalization::tmpVarNr++);
   }
 
-  void Normalization::normalizeAst(SgNode* root, unsigned int level) {
-    options.configureLevel(level);
-    normalizeAst(root);
-#if 0
-    // AST consistency tests
-    if(SgProject* project=isSgProject(root)) {
-      AstTests::runAllTests(project);
-      AstPostProcessing(project);
-    }
-#endif
+  // Level 3 normalization (not enabled)
+  string Normalization::newLabelName() {
+    return labelPrefix + StringUtility::numberToString(Normalization::labelNr++);
   }
-  void Normalization::normalizeLabelStmts(SgNode* root) {
-    RoseAst ast(root);
-    list<SgLabelStatement*> list;
-    // first determine statements to be normalized, then transform.
-    for(auto node:ast) {
-      if(SgLabelStatement* labelStmt=isSgLabelStatement(node)) {
-        list.push_back(labelStmt);
+
+  /***************************************************************************
+   * HOISTING OF CONDITION EXPRESSIONS (if, switch, do, do-while)
+   **************************************************************************/
+
+  void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+    list<SgStatement*> hoistingTransformationList;
+    RoseAst ast(node);
+    // build list of stmts to transform
+    for (auto node : ast) {
+      if(SgNodeHelper::isCond(node)) {
+        SgStatement* stmt=isSgStatement(node->get_parent());
+        if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
+          if(onlyNormalizeFunctionCallExpressions) {
+            if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
+              hoistingTransformationList.push_back(stmt);
+            } else {
+              // do not hoist
+            }
+          } else {
+            hoistingTransformationList.push_back(stmt);
+          }
+        }
       }
     }
-    for(auto labelStmt:list) {
-      normalizeLabel(labelStmt);
-    }
-  }
-
-  void Normalization::normalizeAst(SgNode* root) {
-    if(options.normalizeSingleStatements) {
-      normalizeSingleStatementsToBlocks(root);
-    }
-    if(options.normalizeLabels) {
-      normalizeLabelStmts(root);
-    }
-    if(options.eliminateForStatements) {
-      convertAllForStmtsToWhileStmts(root);
-    }
-
-    // uses options to select which breaks are transformed (can be none)
-    normalizeBreakAndContinueStmts(root);
-
-    if(options.eliminateWhileStatements) {
-      // transforms while and do-while loops
-      createLoweringSequence(root);
-      applyLoweringSequence();
-    }
-    if(options.hoistConditionExpressions) {
-      hoistConditionsInAst(root,options.restrictToFunCallExpressions);
-    }
-    if(options.normalizeExpressions) {
-      normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
-    }
-    if(options.normalizeVariableDeclarations) {
-      normalizeAllVariableDeclarations(root,false);
-    }
-    if(options.normalizeVariableDeclarationsWithFunctionCalls) {
-      bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
-      normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
-    }
-    if(options.inlining) {
-      InlinerBase* inliner=getInliner();
-      ROSE_ASSERT(inliner);
-      inliner->inlineFunctions(root);
+    // transform stmts
+    for (auto stmt: hoistingTransformationList) {
+      hoistCondition(stmt);
     }
   }
 
   // transformation: if(C) ... => T t=C; if(t) ...
    // transformation: switch(C) ... => T t=C; switch(t) ...
-  // while/do-while/for: not applicable. Transform those before cond-hoisting.
+  // while/do-while/for: (see below)
   void Normalization::hoistCondition(SgStatement* stmt) {
     // check if this statement has an attached label and if yes: normalize label
     if(SgLabelStatement* label=isSgLabelStatement(stmt->get_parent())) {
@@ -362,116 +446,10 @@ namespace SPRAY {
     }
   }
 
-  void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
-    list<SgStatement*> hoistingTransformationList;
-    RoseAst ast(node);
-    // build list of stmts to transform
-    for (auto node : ast) {
-      if(SgNodeHelper::isCond(node)) {
-        SgStatement* stmt=isSgStatement(node->get_parent());
-        if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
-          if(onlyNormalizeFunctionCallExpressions) {
-            if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
-              hoistingTransformationList.push_back(stmt);
-            } else {
-              // do not hoist
-            }
-          } else {
-            hoistingTransformationList.push_back(stmt);
-          }
-        }
-      }
-    }
-    // transform stmts
-    for (auto stmt: hoistingTransformationList) {
-      hoistCondition(stmt);
-    }
-  }
-
-  void Normalization::setInliningOption(bool flag) {
-    options.inlining=flag;
-  }
-
-  bool Normalization::getInliningOption() {
-    return options.inlining;
-  }
+  /***************************************************************************
+   * NORMALIZE EXPRESSIONS
+   **************************************************************************/
   
-  void Normalization::createLoweringSequence(SgNode* node) {
-    RoseAst ast(node);
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(SgWhileStmt* stmt=isSgWhileStmt(*i)) {
-        loweringSequence.push_back(new NormalizationOpWhileStmt(stmt));
-      } else if(SgDoWhileStmt* stmt=isSgDoWhileStmt(*i)) {
-        loweringSequence.push_back(new NormalizationOpDoWhileStmt(stmt));
-      }
-    }
-  }
-
-  void Normalization::applyLoweringSequence() {
-    BOOST_FOREACH(NormalizationOp* loweringOp,loweringSequence) {
-      loweringOp->analyse();
-      loweringOp->transform();
-    }
-  }
-
-  void Normalization::convertAllForStmtsToWhileStmts(SgNode* top) {
-    SageInterface::convertAllForsToWhiles (top);
-  }
- 
-  void Normalization::transformContinueToGotoStmts(SgWhileStmt* whileStmt) {
-    cerr<<"Error: transforming continue to goto stmt in while loop not supported yet."<<endl;
-    exit(1);
-  }
-
-  void Normalization::transformContinueToGotoStmts(SgDoWhileStmt* whileStmt) {
-    cerr<<"Error: transforming continue to goto stmt in do-while loop not supported yet."<<endl;
-    exit(1);
-  }
-
-  void Normalization::normalizeBreakAndContinueStmts(SgNode* root) {
-    RoseAst ast(root);
-    list<SgStatement*> breakTransformationList;
-    list<SgStatement*> continueTransformationList;
-    // analysis phase
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      SgStatement* stmt=isSgStatement(*i);
-      if(stmt) {
-        if(isSgSwitchStatement(stmt)) {
-          // only change break statements in switch stmt if explicitly requested
-          if(options.transformBreakToGotoInSwitchStmt) {
-            breakTransformationList.push_back(stmt);
-          } 
-        } else {
-          if(options.transformBreakToGotoInLoopStmts && CFAnalysis::isLoopConstructRootNode(stmt)) {
-            breakTransformationList.push_back(stmt);
-          }
-          if(options.transformContinueToGotoInWhileStmts) {
-            continueTransformationList.push_back(stmt);
-          }
-        }
-      }
-    }
-    // transformation phase (must be separate from analysis, since transformations happen ahead of the iterator)
-    for( auto stmt : breakTransformationList) {
-      SageInterface::changeBreakStatementsToGotos(stmt);
-    }
-    for( auto stmt : continueTransformationList) {
-      if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
-        transformContinueToGotoStmts(whileStmt);
-      } else if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
-        transformContinueToGotoStmts(doWhileStmt);
-      }
-    }
-  }
-
-  void Normalization::insertNormalizedSubExpressionFragment(SgStatement* fragment, SgStatement* stmt) {
-    if(SgBasicBlock* block=isSgBasicBlock(stmt)) {
-      block->append_statement(fragment);
-    } else {
-      SageInterface::insertStatementBefore(stmt,fragment);
-    }
-  }
-
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
     // find all SgExprStatement, SgReturnStmt, SgVariableDeclaration
     RoseAst ast(node);
@@ -750,6 +728,14 @@ namespace SPRAY {
       //    }
   }
 
+  void Normalization::insertNormalizedSubExpressionFragment(SgStatement* fragment, SgStatement* stmt) {
+    if(SgBasicBlock* block=isSgBasicBlock(stmt)) {
+      block->append_statement(fragment);
+    } else {
+      SageInterface::insertStatementBefore(stmt,fragment);
+    }
+  }
+
   void Normalization::registerLogOpReplacement(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList) {
     subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_LOG_OP_REPLACEMENT,stmt,expr,decl));
   }
@@ -766,24 +752,79 @@ namespace SPRAY {
     subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_BOOL_VAR_IF_STMT,stmt,expr,decl));
   }
 
-  bool Normalization::isWithinBlockStmt(SgExpression* exp) {
-    SgNode* current=exp;
-    while(!isSgGlobal(current)&&!isSgBasicBlock(current)&&current) {
-      current=current->get_parent();
-    };
-    return isSgBasicBlock(current);
-  }
+  /***************************************************************************
+   * LOWERING (Level 3 Normalization - not completed and not enabled)
+   **************************************************************************/
 
-  bool Normalization::hasFunctionCall(SgExpression* expr) {
-    RoseAst ast(expr);
-    for(auto node:ast) {
-      if(isSgFunctionCallExp(node)) {
-        return true;
+  // eliminates while/do-while
+  void Normalization::createLoweringSequence(SgNode* node) {
+    RoseAst ast(node);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if(SgWhileStmt* stmt=isSgWhileStmt(*i)) {
+        loweringSequence.push_back(new NormalizationOpWhileStmt(stmt));
+      } else if(SgDoWhileStmt* stmt=isSgDoWhileStmt(*i)) {
+        loweringSequence.push_back(new NormalizationOpDoWhileStmt(stmt));
       }
     }
-    return false;
   }
 
+  void Normalization::applyLoweringSequence() {
+    BOOST_FOREACH(NormalizationOp* loweringOp,loweringSequence) {
+      loweringOp->analyse();
+      loweringOp->transform();
+    }
+  }
+
+  void Normalization::convertAllForStmtsToWhileStmts(SgNode* top) {
+    SageInterface::convertAllForsToWhiles (top);
+  }
+ 
+  void Normalization::transformContinueToGotoStmts(SgWhileStmt* whileStmt) {
+    cerr<<"Error: transforming continue to goto stmt in while loop not supported yet."<<endl;
+    exit(1);
+  }
+
+  void Normalization::transformContinueToGotoStmts(SgDoWhileStmt* whileStmt) {
+    cerr<<"Error: transforming continue to goto stmt in do-while loop not supported yet."<<endl;
+    exit(1);
+  }
+
+  void Normalization::normalizeBreakAndContinueStmts(SgNode* root) {
+    RoseAst ast(root);
+    list<SgStatement*> breakTransformationList;
+    list<SgStatement*> continueTransformationList;
+    // analysis phase
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      SgStatement* stmt=isSgStatement(*i);
+      if(stmt) {
+        if(isSgSwitchStatement(stmt)) {
+          // only change break statements in switch stmt if explicitly requested
+          if(options.transformBreakToGotoInSwitchStmt) {
+            breakTransformationList.push_back(stmt);
+          } 
+        } else {
+          if(options.transformBreakToGotoInLoopStmts && CFAnalysis::isLoopConstructRootNode(stmt)) {
+            breakTransformationList.push_back(stmt);
+          }
+          if(options.transformContinueToGotoInWhileStmts) {
+            continueTransformationList.push_back(stmt);
+          }
+        }
+      }
+    }
+    // transformation phase (must be separate from analysis, since transformations happen ahead of the iterator)
+    for( auto stmt : breakTransformationList) {
+      SageInterface::changeBreakStatementsToGotos(stmt);
+    }
+    for( auto stmt : continueTransformationList) {
+      if(SgWhileStmt* whileStmt=isSgWhileStmt(stmt)) {
+        transformContinueToGotoStmts(whileStmt);
+      } else if(SgDoWhileStmt* doWhileStmt=isSgDoWhileStmt(stmt)) {
+        transformContinueToGotoStmts(doWhileStmt);
+      }
+    }
+  }
+  
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
   // ==>  Label: (function-scope is inferred from 'target')
   SgLabelStatement* Normalization::createLabel(SgStatement* target) {
