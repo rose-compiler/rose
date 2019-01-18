@@ -733,7 +733,7 @@ namespace SPRAY {
   }
 
   void Normalization::registerTmpVarAssignment(SgStatement* stmt, SgExpression  * expr, SubExprTransformationList& subExprTransformationList) {
-    if(!isSgBasicBlock(stmt)) {
+    //    if(!isSgBasicBlock(stmt)) {
       // generate tmp-var initializer with expr as lhs
 #if 0
       SgVariableDeclaration* tmpVarDeclaration = 0;
@@ -747,7 +747,7 @@ namespace SPRAY {
       //seTrans.tmpVarDeclaration=tmpVarDeclaration;
       //seTrans.tmpVarReference=tmpVarReference;
       subExprTransformationList.push_back(seTrans);
-    }
+      //    }
   }
 
   void Normalization::registerLogOpReplacement(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList) {
