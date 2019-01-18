@@ -17,7 +17,7 @@ namespace MatlabToCpp
    *     //update every references to i inside loop with *i
    *   }
    */
-  void transformForloop(SgProject * project);
+  void transformForloop(SgProject* project);
 
   /**
    * This class looks at each argument in a function call
@@ -26,10 +26,10 @@ namespace MatlabToCpp
    * Convert Matrix([1, 2], [2, 4]) ==> Matrix({1, 2}, {2, 4})
    * This conversion will map to an overloaded operator () in the Matrix wrapper
    */
-  void transformMatrixOnFunctionCallArguments(SgProject *project);
+  void transformMatrixOnFunctionCallArguments(SgProject* project);
 
   /**
-   * This class goes through every SgRangeExp and changes it to a call to a
+   * This transformer goes through every SgRangeExp and changes it to a call to a
    * getMatrix function
    * ex: x = 1:2:3
    * becomes
@@ -37,17 +37,24 @@ namespace MatlabToCpp
    * r.set(1,2,3)
    * x = r.getMatrix();
   */
-  void transformRangeExpression(SgProject *project);
+  void transformRangeExpression(SgProject* project);
+
+  /**
+   * Transforms selected calls    *
+   * (1) disp({'x', num2str(n)}) -> disp('x', num2str(n))
+   * (2) rand()                  -> rand0()
+   */
+  void transformSelectedCalls(SgProject* project);
 
   /// \todo
-  void transformReturnStatement(SgProject *project);
+  void transformReturnStatement(SgProject* project);
 
   /// \todo
-  void transformTranspose(SgProject *project);
+  void transformTranspose(SgProject* project);
 
   /// \todo documentation, test, and implementation
   /// \note CURRENTLY NOT USED
-  void transformForLoopColon(SgProject *project);
+  void transformForLoopColon(SgProject* project);
 
   /**
    * This class performs AST transformation in which an SgMatrix is present on either LHS or RHS of AssignOp

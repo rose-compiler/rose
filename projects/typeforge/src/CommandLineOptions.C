@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "CommandLineOptions.h"
-#include "CodeThornException.h"
+#include "TypeforgeException.h"
 
 #include <sstream>
 #include <iostream>
@@ -29,36 +29,36 @@ bool CommandLineOptions::isUserProvided(string option) {
 
 bool CommandLineOptions::getBool(string option) {
   if (!isDefined(option)) {
-    throw CodeThorn::Exception("Boolean command line option \"" + option + "\" accessed that is not defined.");
+    throw Typeforge::Exception("Boolean command line option \"" + option + "\" accessed that is not defined.");
   }
   CommandLineOptions::iterator iter = find(option);
   try { 
     return iter->second.as<bool>();
   } catch(...) {
-    throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as Boolean value, but has different type.");
+    throw Typeforge::Exception("Command line option \"" + option + "\" accessed as Boolean value, but has different type.");
   }
 }
 
 int CommandLineOptions::getInt(string option) {
   if (!isDefined(option)) {
-    throw CodeThorn::Exception("Integer command line option \"" + option + "\" accessed that is not defined.");
+    throw Typeforge::Exception("Integer command line option \"" + option + "\" accessed that is not defined.");
   }
   CommandLineOptions::iterator iter = find(option);
   try { 
     return iter->second.as<int>();
   } catch(...) {
-    throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as integer value, but has different type.");
+    throw Typeforge::Exception("Command line option \"" + option + "\" accessed as integer value, but has different type.");
   }
 }
 
 string CommandLineOptions::getString(string option) {
   if (!isDefined(option)) {
-    throw CodeThorn::Exception("String command line option \"" + option + "\" accessed that is not defined.");
+    throw Typeforge::Exception("String command line option \"" + option + "\" accessed that is not defined.");
   }
   CommandLineOptions::iterator iter = find(option);
   try { 
     return iter->second.as<string>();
   } catch(...) {
-    throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
+    throw Typeforge::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
   }
 }

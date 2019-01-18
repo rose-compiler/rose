@@ -37,22 +37,25 @@ namespace SPRAY {
       bool normalization=true;
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
-      // turns single statements into blocks with one statement
+      // transforms single statements in if/while/do-while into blocks with one statement
       bool normalizeSingleStatements=true;
-      // replace for with while
+      // transforms all labels into separate statements
+      bool normalizeLabels=true;
+      // replace for-stmt with while-stmt
       bool eliminateForStatements=true;
       // replace while with if/goto
-      bool eliminateWhileStatements=true; 
+      bool eliminateWhileStatements=false; 
       // eliminate operators '||', '&&' (not supported yet)
       const bool eliminateShortCircuitOperators=false;
       // eliminate operator '?' (not supported yet)
       const bool eliminateConditionalExpressionOp=false;
       bool hoistConditionExpressions=true;
       bool normalizeExpressions=true;
-      bool normalizeVariableDeclarations=true;
+      bool normalizeVariableDeclarations=false;
+      bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
       // puts the sequence of normalized expressions in a block. This
-      // way the scrope of temporary variables ends right after the
+      // way the scope of temporary variables ends right after the
       // last initialization (or assignment) of the normalized
       // expression.
       // requires: normalizeVariableDeclarations==true
@@ -110,6 +113,13 @@ namespace SPRAY {
     void normalizeAst(SgNode* root);
 
   private:
+    /* normalize all label stmts in AST. Every label is attached to an
+     * empty statement (instead to S). Inserting a statement before S
+     * is then straight-forward.
+     * Transformation:  L: S; => L; S;
+     */
+    static void normalizeLabelStmts(SgNode* root);
+
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
@@ -128,7 +138,9 @@ namespace SPRAY {
     void normalizeSingleStatementsToBlocks(SgNode* node);
 
     // normalizes variable declarations T x=init to T x; x=init; 
-    void normalizeAllVariableDeclarations(SgNode* node);
+    // if option onlyFunctionCalls is true, then only transform: T x=f(...) => T x; x=f();
+    // Note: static variable initialization is excluded from normalization (would be wrong)
+    void normalizeAllVariableDeclarations(SgNode* node, bool onlyFunctionCalls);
     /* Given 'Type x=init;' is transformed into 'Type x;' and returns 'x=init;'
        return nullptr if provided declaration is in global scope (cannot be normalized) */
     SgStatement* buildNormalizedVariableDeclaration(SgVariableDeclaration* varDecl);
@@ -148,12 +160,12 @@ namespace SPRAY {
     // generates a block where all the subexpressions of the
     // expression are linearized into a temporyary variable
     // initialization list
-    void normalizeExpression(SgExprStatement* stmt, SgExpression* node);
+    void normalizeExpression(SgStatement* stmt, SgExpression* node);
 
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
-    void normalizeSubExpression(SgExprStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
-    void generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
+    void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    void generateTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
 
     /* If the given statement contains any break statements in its body,
        add a new label below the statement and change the breaks into
@@ -163,6 +175,13 @@ namespace SPRAY {
     void normalizeBreakAndContinueStmts(SgNode *ast);
     void transformContinueToGotoStmts(SgWhileStmt* whileStmt);
     void transformContinueToGotoStmts(SgDoWhileStmt* whileStmt);
+
+    /* check if variable declaration is of the form T x=f(...); 
+       note:
+       type casts are not considered, e.g.: T x=(T)f(...) does not
+       match.
+    */
+    bool isVarDeclWithFunctionCall(SgNode* node);
 
     // counter for generating new variable names (currently not used)
     static int32_t tmpVarNr;

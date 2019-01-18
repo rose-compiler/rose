@@ -364,9 +364,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-MF" ||
           argument == "-MT" || argument == "-MQ" ||
           argument == "-outputdir" ||  // FMZ (12/22/1009) added for caf compiler
-          argument == "-rose:disassembler_search" ||
-          argument == "-rose:partitioner_search" ||
-          argument == "-rose:partitioner_config" ||
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
@@ -3373,47 +3370,6 @@ SgFile::usage ( int status )
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
 "\n"
-"Control Disassembly:\n"
-"     -rose:disassembler_search HOW\n"
-"                             Influences how the disassembler searches for instructions\n"
-"                             to disassemble. HOW is a comma-separated list of search\n"
-"                             specifiers. Each specifier consists of an optional\n"
-"                             qualifier followed by either a word or integer. The\n"
-"                             qualifier indicates whether the search method should be\n"
-"                             added ('+') or removed ('-') from the set. The qualifier\n"
-"                             '=' acts like '+' but first clears the set.  The words\n"
-"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
-"                             enumerated constants without the leading \"SEARCH_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Disassembler::parse_switches class method for full details.\n"
-"     -rose:partitioner_search HOW\n"
-"                             Influences how the partitioner searches for functions.\n"
-"                             HOW is a comma-separated list of search specifiers. Each\n"
-"                             specifier consists of an optional qualifier followed by\n"
-"                             either a word or integer. The qualifier indicates whether\n"
-"                             the search method should be added ('+') or removed ('-')\n"
-"                             from the set. The qualifier '=' acts like '+' but first\n"
-"                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunction::FunctionReason\n"
-"                             enumerated constants without the leading \"FUNC_\" (see\n"
-"                             doxygen documentation for the complete list and and their\n"
-"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
-"                             the usual C notation) can be used to set/clear multiple\n"
-"                             search bits at one time. See doxygen comments for the\n"
-"                             Partitioner::parse_switches class method for full details.\n"
-"     -rose:partitioner_config FILENAME\n"
-"                             File containing configuration information for the\n"
-"                             instruction/block/function partitioner. This config\n"
-"                             file can be used to override block successors,\n"
-"                             alias two or more blocks that have identical\n"
-"                             semantics, assign particular blocks to functions,\n"
-"                             override function return analysis, provide or\n"
-"                             override function names, etc. See documentation for\n"
-"                             the IPDParser class for details.\n"
-"\n"
 "Control code generation:\n"
 "     -rose:unparser:clobber_input_file\n"
 "                               **CAUTION**RED*ALERT**CAUTION**\n"
@@ -5592,7 +5548,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "unparse_edg_normalized_method_ROSE_1392",1);
 
   // TV (11/20/2018): ROSE-1529: removed non-standard standard selection
-     optionCount = sla(argv, "-std=", "($)", "(c|c++|gnu|gnu++|fortran|upc|upcxx)",1);
+  // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
+     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
@@ -6558,6 +6515,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_USE_EDG_LARGE_FLOAT
+     commandLine.push_back("-DROSE_USE_EDG_LARGE_FLOAT");
+#endif
+
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
@@ -7338,7 +7299,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (4/13/2015): Only add boost path for C++ applications, never for C applications
   // (though this does not to have ever caused an error that I know of).
   // if (get_C_only() || get_Cxx_only())
-     if (get_Cxx_only() == true)
+
+  // TV (01/08/2019): with ubuntu 18.04 using default boost, this causes an issue
+     if (get_Cxx_only() == true && std::string(ROSE_BOOST_PATH) != "/usr")
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.

@@ -1,0 +1,8 @@
+include_rules
+
+run $(tool_compile_linkexe) hash.C
+run $(test) hash
+
+run $(tool_compile_linkexe) bitFlags.C
+run $(test) bitFlags
+
