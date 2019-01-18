@@ -39,11 +39,14 @@ namespace SgNodeHelper {
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
 
-  //! returns filename information of AST fragment in format "filename". Used for generating readable output
+  //! returns filename as stored in AST node. Used for generating readable output.
   std::string sourceFilenameToString(SgNode* node);
 
-  //! returns filename information of AST fragment in format "line:col". Used for generating readable output
+  //! returns filename followed by line:column in one string. Used for generating readable output.
   std::string sourceLineColumnToString(SgNode* node);
+
+  //! returns line, column, and unparsed node in one string.
+  std::string lineColumnNodeToString(SgNode* node);
 
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
@@ -408,11 +411,25 @@ namespace SgNodeHelper {
     SgFunctionCallExp* matchFunctionCall(SgNode*);
     //! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
     SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode*);
+
     //! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
     SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode*);
+
     //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp otherwise 0.
     SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode*);
-    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode*);
+
+    //! tests pattern for function call in variable declaration and returns pointer to FunctionCallExp otherwise 0.
+    SgFunctionCallExp* matchFunctionCallExpInVariableDeclaration(SgNode* node);
+
+    //! checks variable declaration with function call, returns variable declaration. Otherwise 0. e.g. int x=f();
+    SgVariableDeclaration* matchVariableDeclarationWithFunctionCall(SgNode* node);
+    //! checks variable declaration with function call, returns both in a pair, or a with (0,0).
+    std::pair<SgVariableDeclaration*,SgFunctionCallExp*> matchVariableDeclarationWithFunctionCall2(SgNode* node);
+
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode* node);
+
+    //! tests pattern for an assert
+    bool matchAssertExpr(SgNode* node);
 
     //! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
     SgVarRefExp* matchSingleVarScanf(SgNode* node);
@@ -431,9 +448,7 @@ namespace SgNodeHelper {
     };
     OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
 
-    //! tests pattern for an assert
-    bool matchAssertExpr(SgNode* node);
-    
+ 
   } // end of namespace Pattern
   
 } // end of namespace SgNodeHelper

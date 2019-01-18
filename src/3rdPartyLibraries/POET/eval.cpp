@@ -426,6 +426,11 @@ class XformEvalVisitor : public ReplInfoVisitor
        if (tuple1 == 0) { TUPLE_ACC_MISMATCH(fc,tuple,access); }
        else tuple = tuple1;
        switch (tuple->get_enum()) {
+         case SRC_UNKNOWN: {
+             access= apply(access);
+             res = POETAstInterface::getAstAttribute(dynamic_cast<POETCode_ext*>(tuple)->get_content(), access); 
+             return;
+            }
          case SRC_TUPLE: {
             access= apply(access);
             if (access->get_enum() == SRC_LVAR) {
@@ -532,13 +537,23 @@ void XformEvalVisitor::visitOperator(POETOperator* op)
      case POET_OP_CODE:
      case POET_OP_EXP:
          assert (r1 == 0); 
-     case TYPE_LIST: case TYPE_LIST1: case TYPE_TOR: 
+     case TYPE_LIST: case TYPE_LIST1: 
      case POET_OP_RANGE:
      case POET_OP_TUPLE:
      case POET_OP_LIST:
      case POET_OP_LIST1:
      case POET_OP_ANNOT:
          res = op; return;
+     case TYPE_TOR:
+           r1->visit(this); r1 = res;
+           for (int i = 1; i < op->numOfArgs();++i) {
+              r2 = op->get_arg(i); 
+              r2->visit(this); r2 = res;
+              r1 = POETProgram::make_typeTor(r1,r2);
+           }
+           res = r1; 
+//std::cerr << "MAKING TOR :" << res->toString() << " FROM " << op->toString() << "\n";
+           return;
      case POET_OP_ASSERT:
        assert(r1 != 0);
        if (r1 == ZERO)  ASSERT_FAIL(op->get_arg(0));

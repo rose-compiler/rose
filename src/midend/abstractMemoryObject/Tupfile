@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) memory_object.cpp memory_object_impl.cpp
+
+run $(public_header) memory_object.h memory_object_impl.h
