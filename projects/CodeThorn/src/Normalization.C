@@ -518,15 +518,22 @@ namespace SPRAY {
         cout<<"DEBUG: TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
         switch((*j).transformation) {
         case Normalization::GEN_TMPVAR: {
+          // 1) generate tmp-var initializer with expr as lhs
+          SgVariableDeclaration* tmpVarDeclaration = 0;
+          SgExpression* tmpVarReference = 0;
+          SgScopeStatement* scope=stmt->get_scope();
+          tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+          tmpVarDeclaration->set_parent(scope);
+          ROSE_ASSERT(tmpVarDeclaration!= 0);
           // 2) insert tmp-var initializer
-          insertNormalizedSubExpressionFragment((*j).tmpVarDeclaration,stmt);
+          insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // 2) replace use of expr with tmp-var
           if(isSgOrOp(expr->get_parent())) {
             cout<<"TRANSFORMATION: detected OR OP (at child)."<<endl;
-            logOpOperandTmpVar=(*j).tmpVarReference;
+            logOpOperandTmpVar=tmpVarReference;
             //SageInterface::replaceExpression(expr, tmpVarReference);
           } else {
-            SageInterface::replaceExpression(expr, (*j).tmpVarReference);
+            SageInterface::replaceExpression(expr, tmpVarReference);
             //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           }
           break;
@@ -728,15 +735,17 @@ namespace SPRAY {
   void Normalization::registerTmpVarAssignment(SgStatement* stmt, SgExpression  * expr, SubExprTransformationList& subExprTransformationList) {
     if(!isSgBasicBlock(stmt)) {
       // generate tmp-var initializer with expr as lhs
+#if 0
       SgVariableDeclaration* tmpVarDeclaration = 0;
       SgExpression* tmpVarReference = 0;
       SgScopeStatement* scope=stmt->get_scope();
       tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
       tmpVarDeclaration->set_parent(scope);
       ROSE_ASSERT(tmpVarDeclaration!= 0);
+#endif
       RegisteredSubExprTransformation seTrans(Normalization::GEN_TMPVAR,stmt,expr);
-      seTrans.tmpVarDeclaration=tmpVarDeclaration;
-      seTrans.tmpVarReference=tmpVarReference;
+      //seTrans.tmpVarDeclaration=tmpVarDeclaration;
+      //seTrans.tmpVarReference=tmpVarReference;
       subExprTransformationList.push_back(seTrans);
     }
   }
