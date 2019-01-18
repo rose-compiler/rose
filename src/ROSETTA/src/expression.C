@@ -2451,22 +2451,25 @@ Grammar::setUpExpressions ()
   // ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/15/2019): Adding support for initializers in for loop tests (conditionals), see Cxx_tests/test2019_02.C).
+     ConstructorInitializer.setDataPrototype     ( "bool", "is_used_in_conditional", "= false",
+                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AssignInitializer.setFunctionPrototype ( "HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      AssignInitializer.setDataPrototype     ( "SgExpression*", "operand_i"      , "= NULL",
