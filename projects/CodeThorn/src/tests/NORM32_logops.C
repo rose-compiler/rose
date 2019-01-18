@@ -6,11 +6,19 @@ bool t() {
 bool f() {
   return false;
 }
+bool g() {
+  return false;
+}
 
 int main() {
   bool x;
-  x=t()||f();
   if(t()||f()) {
+    x=!false;
+  }
+
+  // ======================
+
+  if((t()||f())||g()) {
     x=!false;
   }
   return 0;
