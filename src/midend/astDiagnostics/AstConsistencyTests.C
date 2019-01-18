@@ -3728,12 +3728,12 @@ TestAstAccessToDeclarations::test ( SgNode* node )
                bool associatedWithArrayType = false;
                if ( (tmp->get_declaration() == NULL) && (tmp->get_class_decl() == NULL) && (tmp->get_associated_class_unknown() == false) )
                   {
-#if 1
+#if 0
                     printf ("SgConstructorInitializer::get_declaration() and get_class_decl() both return NULL and get_associated_class_unknown() == false \n");
 #endif
                  // DQ (1/16/2019): Check if this is associated with a SgNewExp with and SgArrayType type.
                     ROSE_ASSERT(tmp->get_parent() != NULL);
-#if 1
+#if 0
                     printf ("tmp->get_parent() = %p = %s \n",tmp->get_parent(),tmp->get_parent()->class_name().c_str());
 #endif
                     SgNewExp* newExp = isSgNewExp(tmp->get_parent());
@@ -3741,14 +3741,16 @@ TestAstAccessToDeclarations::test ( SgNode* node )
                        {
                       // SgType* newExpType = newExp->get_type();
                          SgType* newExpType = newExp->get_specified_type();
-#if 1
+#if 0
                          printf ("newExpType = %p = %s \n",newExpType,newExpType->class_name().c_str());
 #endif
                       // DQ (1/17/2019): If this is just a typedef of an array then check that.
                          SgTypedefType* typedefType = isSgTypedefType(newExpType);
                          if (typedefType != NULL)
                             {
+#if 0
                               printf ("typedefType->get_base_type() = %s \n",typedefType->get_base_type()->class_name().c_str());
+#endif
                               newExpType = typedefType->get_base_type();
                             }
 
@@ -3760,7 +3762,7 @@ TestAstAccessToDeclarations::test ( SgNode* node )
                            else
                             {
                            // DQ (1/17/2019): This case fails for Cxx11_tests/test2016_90.C.
-#if 1
+#if 0
                               printf ("Unclear how to handle this case! \n");
                               newExp->get_file_info()->display("");
 #endif
