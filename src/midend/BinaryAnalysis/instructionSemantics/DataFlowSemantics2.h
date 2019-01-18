@@ -172,9 +172,9 @@ public:
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      const BaseSemantics::SValuePtr &cond, bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              const BaseSemantics::SValuePtr &cond, bool allowSideEffects);
 
 };
 

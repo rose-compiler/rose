@@ -2053,8 +2053,14 @@ public:
      *
      *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
      *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
-     *  part of an instruction emulation. */
+     *  part of an instruction emulation.
+     *
+     * @{ */
     virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+    SValuePtr peekRegister(RegisterDescriptor reg) {
+        return peekRegister(reg, undefined_(reg.get_nbits()));
+    }
+    /** @} */
 
     /** Reads a value from memory.
      *

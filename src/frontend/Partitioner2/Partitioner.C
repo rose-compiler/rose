@@ -383,7 +383,7 @@ Partitioner::basicBlockDropSemantics() const {
     BOOST_FOREACH (const ControlFlowGraph::VertexValue &vertex, cfg_.vertexValues()) {
         if (vertex.type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bblock = vertex.bblock())
-                bblock->dropSemantics();
+                bblock->dropSemantics(*this);
         }
     }
 }
@@ -518,13 +518,13 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
     // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
-    BasicBlock::Ptr retval = BasicBlock::instance(startVa, this);
+    BasicBlock::Ptr retval = BasicBlock::instance(startVa, *this);
     rose_addr_t va = startVa;
     while (1) {
         SgAsmInstruction *insn = discoverInstruction(va);
         if (insn==NULL)                                                 // case: no instruction available
             goto done;
-        retval->append(insn);
+        retval->append(*this, insn);
         if (insn->isUnknown())                                          // case: "unknown" instruction
             goto done;
 
@@ -755,7 +755,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
     }
 
     if (basicBlockSemanticsAutoDrop())
-        bblock->dropSemantics();
+        bblock->dropSemantics(*this);
 
     bblockAttached(placeholder);
 }
@@ -791,12 +791,13 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
     SgAsmInstruction *lastInsn = bb->instructions().back();
     RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
+    BasicBlockSemantics sem = bb->semantics();
     BaseSemantics::StatePtr state;
-    if (precision > Precision::LOW && (state = bb->finalState())) {
+    if (precision > Precision::LOW && (state = sem.finalState())) {
         // Use our own semantics if we have them.
-        ASSERT_not_null(bb->dispatcher());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(ops->readRegister(REG_IP)));
+        ASSERT_not_null(sem.dispatcher);
+        ASSERT_not_null(sem.operators);
+        std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(sem.operators->peekRegister(REG_IP)));
         while (!worklist.empty()) {
             Semantics::SValuePtr pc = worklist.back();
             worklist.pop_back();
@@ -804,10 +805,10 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
             // Special handling for if-then-else expressions
             if (SymbolicExpr::InteriorPtr ifNode = pc->get_expression()->isInteriorNode()) {
                 if (ifNode->getOperator()==SymbolicExpr::OP_ITE) {
-                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
+                    Semantics::SValuePtr expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(1));
                     worklist.push_back(expr);
-                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
+                    expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(2));
                     worklist.push_back(expr);
                     continue;
@@ -913,25 +914,22 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
 bool
 Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
-    bool shouldDrop = false;
 
     do {
         if (bb->popsStack().isCached())
             break;
 
         // We need instruction semantics, or return false
-        if (!bb->dispatcher()) {
+        BasicBlockSemantics sem = bb->undropSemantics(*this);
+        if (!sem.dispatcher) {
             bb->popsStack() = false;
             break;
         }
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
-        ASSERT_not_null(ops);
+        ASSERT_not_null(sem.operators);
 
         // Get the block initial and final states
-        shouldDrop = bb->isSemanticsDropped();
-        bb->undropSemantics();
-        BaseSemantics::StatePtr state0 = bb->initialState();
-        BaseSemantics::StatePtr stateN = bb->finalState();
+        BaseSemantics::StatePtr state0 = sem.initialState;
+        BaseSemantics::StatePtr stateN = sem.finalState();
         if (!state0 || !stateN) {
             bb->popsStack() = false;
             break;
@@ -940,9 +938,9 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // Get initial and final stack pointer values
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         BaseSemantics::SValuePtr sp0 =
-            state0->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+            state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
         BaseSemantics::SValuePtr spN =
-            stateN->readRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+            stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
 
         // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
@@ -950,16 +948,18 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
         SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
         SymbolicExpr::Ptr spNExpr =
-            Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, ops->solver());
+            Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
         // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down.
         // SPn > SP0 == true implies at least one byte popped.
-        SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, ops->solver());
+        SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, sem.operators->solver());
         bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBoolean(true));
     } while (0);
 
-    if (shouldDrop)
-        bb->dropSemantics();
+#if 0 // [Robb Matzke 2019-01-16]: commented out to debug race
+    if (sem.wasDropped)
+        bb->dropSemantics(*this);
+#endif
     ASSERT_require(bb->popsStack().isCached());
     return bb->popsStack().get();
 }
@@ -982,20 +982,22 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
 
     // Use our own semantics if we have them.
     if (precision > Precision::LOW) {
-        if (BaseSemantics::StatePtr state = bb->finalState()) {
+        BasicBlockSemantics sem = bb->semantics();
+        if (BaseSemantics::StatePtr state = sem.finalState()) {
             // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
             // Is the block fall-through address equal to the value on the top of the stack?
-            ASSERT_not_null(bb->dispatcher());
-            BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+            ASSERT_not_null(sem.dispatcher);
+            ASSERT_not_null(sem.operators);
             const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
             const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
             const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
             rose_addr_t returnVa = bb->fallthroughVa();
-            BaseSemantics::SValuePtr returnExpr = ops->number_(REG_IP.get_nbits(), returnVa);
-            BaseSemantics::SValuePtr sp = ops->readRegister(REG_SP);
-            BaseSemantics::SValuePtr topOfStack = ops->undefined_(REG_IP.get_nbits());
-            topOfStack = ops->readMemory(REG_SS, sp, topOfStack, ops->boolean_(true));
-            BaseSemantics::SValuePtr z = ops->equalToZero(ops->add(returnExpr, ops->negate(topOfStack)));
+            BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.get_nbits(), returnVa);
+            BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
+            BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.get_nbits());
+            topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
+            BaseSemantics::SValuePtr z = sem.operators->equalToZero(sem.operators->add(returnExpr,
+                                                                                       sem.operators->negate(topOfStack)));
             bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
             if (!isRetAddrOnTopOfStack) {
                 bb->isFunctionCall() = false;
@@ -1043,9 +1045,9 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                     }
 
                     // Did the callee return to somewhere other than caller's return address?
-                    if (BaseSemantics::StatePtr calleeStateN = calleeBb->finalState()) {
+                    if (BaseSemantics::StatePtr calleeStateN = calleeBb->semantics().finalState()) {
                         BaseSemantics::SValuePtr ipN =
-                            calleeStateN->readRegister(REG_IP, ops->undefined_(REG_IP.get_nbits()), ops.get());
+                            calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.get_nbits()), sem.operators.get());
                         if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
                             allCalleesPopWithoutReturning = false;
                             break;
@@ -1099,11 +1101,12 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
-    if (BaseSemantics::StatePtr state = bb->finalState()) {
+    BasicBlockSemantics sem = bb->semantics();
+    if (BaseSemantics::StatePtr state = sem.finalState()) {
         // This is a function return if the new instruction pointer (after processing this basic block semantically) has a
         // value equal to a return address which is now past the top of the stack.
-        ASSERT_not_null(bb->dispatcher());
-        BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
+        ASSERT_not_null(sem.dispatcher);
+        ASSERT_not_null(sem.operators);
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
@@ -1119,21 +1122,23 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
                 uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
                                   ->get_absoluteValue();
                 nbytes += REG_IP.get_nbits() / 8;       // size of return address
-                stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));
+                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), nbytes));
             }
         }
         if (!stackOffset) {
             // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
             // downward.
-            stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
         }
-        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP), stackOffset);
+        BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sem.operators->peekRegister(REG_SP), stackOffset);
 
         // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
         // pointer. If equal, then the basic block returns to the caller.
-        BaseSemantics::SValuePtr retAddr = ops->undefined_(REG_IP.get_nbits());
-        retAddr = ops->readMemory(REG_SS, retAddrPtr, retAddr, ops->boolean_(true));
-        BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
+        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.get_nbits());
+        retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
+        BaseSemantics::SValuePtr isEqual =
+            sem.operators->equalToZero(sem.operators->add(retAddr,
+                                                          sem.operators->negate(sem.operators->peekRegister(REG_IP))));
         retval = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
         bb->isFunctionReturn() = retval;
         return retval;
@@ -1886,7 +1891,8 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 
         // Show some basic block properties
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (bb->finalState()==NULL)
+            BasicBlockSemantics sem = bb->semantics();
+            if (sem.finalState()==NULL)
                 out <<prefix <<"  no semantics (discarded already, or failed)\n";
 
             // call semantics?
