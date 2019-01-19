@@ -2595,7 +2595,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
           case V_SgVariableDeclaration:
              {
                printf ("Unparsing of SgVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
+
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
+               ROSE_ASSERT(variableDeclaration != NULL);
+
+               unparseVarDeclStmt (variableDeclaration,info);
+#if 0
+               printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
+#endif
                break;
              }
 
