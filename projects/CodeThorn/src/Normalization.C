@@ -493,7 +493,7 @@ namespace SPRAY {
       for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
         SgStatement* stmt=(*j).stmt;
         SgExpression* expr=(*j).expr;
-        cout<<"DEBUG: TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
+        //cout<<"DEBUG: TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
         switch((*j).transformation) {
         case Normalization::GEN_TMPVAR: {
           // 1) generate tmp-var initializer with expr as lhs
@@ -506,8 +506,8 @@ namespace SPRAY {
           // 2) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // 2) replace use of expr with tmp-var
-          if(isSgOrOp(expr->get_parent())) {
-            cout<<"TRANSFORMATION: detected OR OP (at child)."<<endl;
+          if(isSgOrOp(expr->get_parent())||isSgAndOp(expr->get_parent())) {
+            cout<<"TRANSFORMATION: detected binary LOG OP (at child)."<<endl;
             logOpOperandTmpVar=tmpVarReference;
             //SageInterface::replaceExpression(expr, tmpVarReference);
           } else {
@@ -517,43 +517,55 @@ namespace SPRAY {
           break;
         }
         case Normalization::GEN_FALSE_BOOL_VAR_DECL: {
-          cout<<"GENERATING BOOL VAR DECL:"<<endl;
+          //cout<<"GENERATING BOOL VAR DECL:"<<endl;
           SgVariableDeclaration* decl=(*j).decl;
           insertNormalizedSubExpressionFragment(decl,stmt);
           break;
         }
+        case Normalization::GEN_IF_ELSE_STMT: {
+          ROSE_ASSERT(logOpOperandTmpVar);
+          //cout<<"GENERATING IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
+          SgExpression* cond=logOpOperandTmpVar;
+          SgStatement* true_body=(*j).trueBody;
+          SgStatement* false_body=(*j).falseBody;
+          SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
+          insertNormalizedSubExpressionFragment(ifStmt,stmt);
+          break;
+        }
+
         case Normalization::GEN_BOOL_VAR_IF_ELSE_STMT: {
-          cout<<"GENERATING BOOL VAR IF ELSE STMT:"<<endl;
           SgVariableDeclaration* decl=(*j).decl;
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl); // to be used in condition of if-stmt
           SgScopeStatement* scope=stmt->get_scope();
           ROSE_ASSERT(logOpOperandTmpVar);
-          cout<<"GENERATING BOOL VAR IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
+          //cout<<"GENERATING BOOL VAR IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
           SgExpression* cond=logOpOperandTmpVar;
+          SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
-          SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,false_body,scope);
+          SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,false_body,scope);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_BOOL_VAR_IF_STMT: {
-          cout<<"GENERATING BOOL VAR IF STMT:"<<endl;
+          //cout<<"GENERATING BOOL VAR IF STMT:"<<endl;
           SgVariableDeclaration* decl=(*j).decl;
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl); // to be used in condition of if-stmt
           SgScopeStatement* scope=stmt->get_scope();
           ROSE_ASSERT(logOpOperandTmpVar);
           SgExpression* cond=logOpOperandTmpVar;
-          SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,0,scope);
+          SgStatement* true_body=(*j).trueBody;
+          SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
-          if(isSgOrOp(expr)) {
+          if(isSgOrOp(expr)||isSgAndOp(expr)) {
             // replace the binary logical operator with introduced tmp truth variable
-            cout<<"DETECTED OR OP IN TRANSFORMATION."<<endl;
+            cout<<"DETECTED BINARY LOG OP IN TRANSFORMATION."<<endl;
             //ROSE_ASSERT(logOpOperandTmpVar);
             SgVariableDeclaration* decl=(*j).decl;
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
-            cout<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var."<<endl;
+            //cout<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var."<<endl;
             SageInterface::replaceExpression(expr,varRefExp);
           }
           break;
@@ -602,6 +614,7 @@ namespace SPRAY {
       stmt(s),
       expr(e),
       decl(0),
+      trueBody(0),
       falseBody(0)
   {
   }
@@ -610,14 +623,16 @@ namespace SPRAY {
       stmt(s),
       expr(e),
       decl(d),
+      trueBody(0),
       falseBody(0)
   {
   }
-  Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e, SgVariableDeclaration* d, SgStatement* falseBody)
+  Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e, SgVariableDeclaration* d, SgStatement* trueBody, SgStatement* falseBody)
     : transformation(t),
       stmt(s),
       expr(e),
       decl(d),
+      trueBody(trueBody),
       falseBody(falseBody)
   {
   }
@@ -667,9 +682,16 @@ namespace SPRAY {
       }
     } else if(SgAndOp* andOp=isSgAndOp(expr)) {
       // special case: short circuit operator normalization
+      cerr<<"DEBUG: found AndOp"<<endl;
+      SgScopeStatement* scope=stmt->get_scope();
+      SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
+      registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
-      normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
-      registerTmpVarAssignment(stmt,expr,subExprTransformationList);
+      SgBasicBlock* block=SageBuilder::buildBasicBlock();
+      registerIfElseStmt(stmt,expr,decl,block,0,subExprTransformationList);
+      normalizeSubExpression(block,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      registerLogOpReplacement(stmt,expr,decl,subExprTransformationList); // will be used for replacing Or operator
+      registerBoolVarIfElseStmt(block,expr,decl,0,0,subExprTransformationList);
     } else if(SgOrOp* orOp=isSgOrOp(expr)) {
       // special case: short circuit operator normalization
       cerr<<"DEBUG: found OrOp"<<endl;
@@ -677,11 +699,11 @@ namespace SPRAY {
       SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
       registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
-      SgBasicBlock* block=SageBuilder::buildBasicBlock();
-      registerBoolVarIfElseStmt(stmt,expr,decl,block,subExprTransformationList);
-      normalizeSubExpression(block,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
+      registerBoolVarIfElseStmt(stmt,expr,decl,0,elseBlock,subExprTransformationList);
+      normalizeSubExpression(elseBlock,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
       registerLogOpReplacement(stmt,expr,decl,subExprTransformationList); // will be used for replacing Or operator
-      registerBoolVarIfElseStmt(block,expr,decl,0,subExprTransformationList);
+      registerBoolVarIfElseStmt(elseBlock,expr,decl,0,0,subExprTransformationList);
     } else if(isSgBinaryOp(expr)) {
       // general case: binary operator
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
@@ -694,10 +716,22 @@ namespace SPRAY {
     }
   }
 
-  void insertTmpVarAssignment(SgStatement* stmt, SgExpression* expr) {
+  void Normalization::insertTmpVarAssignment(SgStatement* stmt, SgExpression* expr) {
+    // at: op(...)
+    // insert: t_i=op(...);
+    // replace: parent(... op ...) ==> parent( ... t ...)
+    cout<<"DEBUG: @"<<expr->unparseToString()<<endl;
+    SgVariableDeclaration* tmpVarDeclaration = 0;
+    SgExpression* tmpVarReference = 0;
+    SgScopeStatement* scope=stmt->get_scope();
+    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
+    tmpVarDeclaration->set_parent(scope);
+    ROSE_ASSERT(tmpVarDeclaration!= 0);
+    //insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
   }
     // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   void Normalization::normalizeSubExpressionNew(SgStatement* stmt, SgExpression* expr) {
+    cout<<"DEBUG: normalizeSubExpressionNeW: "<<stmt->unparseToString()<<endl;
     if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
       // special case: normalize array index-expressions
       normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)));
@@ -746,15 +780,6 @@ namespace SPRAY {
       cerr<<"DEBUG: found OrOp"<<endl;
       SgScopeStatement* scope=stmt->get_scope();
       SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
-#if 0
-      registerFalseBoolVarDecl(stmt,expr,decl);
-      normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
-      SgBasicBlock* block=SageBuilder::buildBasicBlock();
-      registerBoolVarIfElseStmt(stmt,expr,decl,block);
-      normalizeSubExpressionNew(block,isSgExpression(SgNodeHelper::getRhs(expr)));
-      registerLogOpReplacement(stmt,expr,decl); // will be used for replacing Or operator
-      registerBoolVarIfElseStmt(block,expr,decl,0);
-#endif
     } else if(isSgBinaryOp(expr)) {
       // general case: binary operator
       normalizeSubExpressionNew(stmt,isSgExpression(SgNodeHelper::getLhs(expr)));
@@ -776,12 +801,21 @@ namespace SPRAY {
     return decl;
   }
   
-  SgIfStmt* Normalization::generateBoolVarIfElseStmt(SgExpression* cond, SgVarRefExp* varRefExp,SgStatement* false_body, SgScopeStatement* scope) {
+  SgIfStmt* Normalization::generateIfElseStmt(SgExpression* cond, SgStatement* true_body, SgStatement* false_body) {
+    SgIfStmt* ifStmt=SageBuilder::buildIfStmt(cond,true_body,false_body);
+    return ifStmt;
+  }
+
+  SgIfStmt* Normalization::generateBoolVarIfElseStmt(SgExpression* cond, SgVarRefExp* varRefExp,SgStatement* true_body, SgStatement* false_body, SgScopeStatement* scope) {
     ROSE_ASSERT(varRefExp);
     SgExpression* lhs=varRefExp;
     SgExpression* rhs=SageBuilder::buildBoolValExp(true);
     SgExprStatement* exprStmt=SageBuilder::buildAssignStatement(lhs, rhs);
-    SgStatement* true_body=exprStmt;
+    if(SgBasicBlock* trueBodyBlock=isSgBasicBlock(true_body)) {
+      trueBodyBlock->append_statement(exprStmt);
+    } else {
+      true_body=exprStmt;
+    }
     // generated code has to be normalized code (requires non empty-else branch)
     //SgStatement* false_body=SageBuilder::buildBasicBlock();
     SgIfStmt* ifStmt=SageBuilder::buildIfStmt(cond,true_body,false_body);
@@ -818,8 +852,12 @@ namespace SPRAY {
     subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_LOG_OP_REPLACEMENT,stmt,expr,decl));
   }
 
-  void Normalization::registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
-    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_BOOL_VAR_IF_ELSE_STMT,stmt,expr,decl,falseBody));
+  void Normalization::registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
+    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_BOOL_VAR_IF_ELSE_STMT,stmt,expr,decl,trueBody,falseBody));
+  }
+
+  void Normalization::registerIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
+    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_IF_ELSE_STMT,stmt,expr,decl,trueBody,falseBody));
   }
 
   void Normalization::registerFalseBoolVarDecl(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList) {
