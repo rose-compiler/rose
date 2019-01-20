@@ -578,7 +578,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_05.C \
    test2019_06.C \
    test2019_07.C \
-   test2019_08.C 
+   test2019_08.C \
+   test2019_09.C \
+   test2019_10.C 
 
 FAILING_PLUM_HALL_TESTS = \
    test2018_22.C \
