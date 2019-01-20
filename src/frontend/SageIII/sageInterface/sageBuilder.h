@@ -253,6 +253,9 @@ ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = NULL);
 //! Build a volatile type.
 ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = NULL);
 
+//! Build a const volatile type.
+ROSE_DLL_API SgModifierType* buildConstVolatileType(SgType* base_type = NULL);
+
 //! Build a restrict type.
 ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);
 

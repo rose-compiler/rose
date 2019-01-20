@@ -573,7 +573,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    rose-1541-0.C \
    test2019_01.C \
    test2019_02.C \
-   test2019_03.C 
+   test2019_03.C \
+   test2019_04.C \
+   test2019_05.C \
+   test2019_06.C \
+   test2019_07.C \
+   test2019_08.C 
 
 FAILING_PLUM_HALL_TESTS = \
    test2018_22.C \
