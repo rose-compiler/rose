@@ -30,7 +30,7 @@ m4_define([binary_support_requires],[
 
 
 AC_DEFUN([ROSE_SUPPORT_BINARY],[
-ROSE_CONFIGURE_SECTION([Binary analysis support])
+ROSE_CONFIGURE_SECTION([Checking binary analysis])
 
 dnl  ==================================================================================
 dnl   The following tests check prerequisites for binary analysis in librose.

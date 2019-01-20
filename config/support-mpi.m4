@@ -18,7 +18,7 @@
 
 AC_DEFUN([ROSE_SUPPORT_MPI],
 [
-  ROSE_CONFIGURE_SECTION([Message Passing Interface (MPI)])
+  ROSE_CONFIGURE_SECTION([Checking message passing interface (MPI)])
   dnl --with-mpi=<path>
   dnl
   dnl --show* option of MPICC is used to determine the include and library flags for MPI
