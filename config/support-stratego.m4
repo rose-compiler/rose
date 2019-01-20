@@ -52,7 +52,7 @@ AC_DEFUN([ROSE_SUPPORT_STRATEGO],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_STRATEGO_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([STRATEGO Library])
+  ROSE_CONFIGURE_SECTION([Checking STRATEGO library])
 
   #============================================================================
   # --with-stratego=/path/to/stratego-trunk/stratego.dist/

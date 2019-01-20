@@ -369,7 +369,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the frontend compiler ---
     dnl ------------------------------------------------
 
-    ROSE_CONFIGURE_SECTION([Frontend compiler version])
+    ROSE_CONFIGURE_SECTION([Checking frontend compiler])
     GET_CXX_VERSION_INFO([$CXX], [$FRONTEND_CXX_COMPILER_VENDOR])
     GET_CXX_VERSION_MACROS
     SAVE_CXX_VERSION_INFO(FRONTEND)
@@ -378,7 +378,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the backend compiler  ---
     dnl ------------------------------------------------
 
-    ROSE_CONFIGURE_SECTION([Backend compiler version])
+    ROSE_CONFIGURE_SECTION([Checking backend compiler])
 
     backendCompilerBaseName=$(basename "$BACKEND_CXX_COMPILER")
     GET_CXX_VERSION_INFO([$BACKEND_CXX_COMPILER], [$BACKEND_CXX_COMPILER_VENDOR])

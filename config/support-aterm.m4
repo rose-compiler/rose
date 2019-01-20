@@ -53,7 +53,7 @@ AC_DEFUN([ROSE_SUPPORT_ATERM],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_ATERM_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([ATERM Library])
+  ROSE_CONFIGURE_SECTION([Checking ATERM library])
 
   #============================================================================
   # --with-aterm=/path/to/aterm-trunk/aterm.dist/

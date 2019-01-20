@@ -12,15 +12,13 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
     dnl trying to figure out why their configuration is blacklisted. These are the versions they
     dnl HAVE. The versions that are PROHIBITED will be emitted later in this function.  The version
     dnl number variables should be set wherever we're detecting the dependency, not here.
-    dnl Use "echo" here because we'll need them even in quiet mode.
-    echo "Boost version     = $rose_boost_version"
-    echo "frontend compiler = $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
-    echo "binary analysis   = $support_binaries_frontend"
+    ROSE_SUPPORT_SUMMARY
 
     dnl -----------------------
     dnl  Versions we PROHIBIT
     dnl -----------------------
 
+    ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])
     while true; do
         dnl Boost 1.54 has numerous bugs related to threads. These manifest themselves as compile errors in
         dnl the first ROSE source that happens to include boost thread support, usually something in the

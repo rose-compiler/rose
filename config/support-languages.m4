@@ -10,7 +10,7 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS],
 #
 #  DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 #########################################################################################
-ROSE_CONFIGURE_SECTION([ROSE Frontend])
+ROSE_CONFIGURE_SECTION([Checking analyzable languages])
 ROSE_SUPPORT_X10_FRONTEND()
 
 #########################################################################################
