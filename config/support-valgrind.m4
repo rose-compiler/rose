@@ -18,7 +18,7 @@
 
 AC_DEFUN([ROSE_SUPPORT_VALGRIND],
 [
-  ROSE_CONFIGURE_SECTION([Valgrind])
+  ROSE_CONFIGURE_SECTION([Checking Valgrind])
 
   ROSE_ARG_WITH(
     [valgrind],

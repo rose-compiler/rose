@@ -31,7 +31,7 @@
 
 AC_DEFUN([ROSE_SUPPORT_BOOST],
 [
-  ROSE_CONFIGURE_SECTION([Boost C++ Libraries])
+  ROSE_CONFIGURE_SECTION([Checking Boost])
 
 
   #============================================================================
