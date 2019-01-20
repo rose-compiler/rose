@@ -16,7 +16,7 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 # DQ (2/11/2010): Jeremiah reported this as bad syntax, I think he is correct.
 # I'm not sure how this made it into this file.
 # AMTAR ?= $(TAR)
-AMTAR = $(TAR)
+AMTAR="$TAR"
 
 # DQ (9/9/2009): Added test.
 if test "$am__tar" = "false"; then
@@ -116,7 +116,7 @@ AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 # Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
-ROSE_CONFIGURE_SECTION([GNU Fortran])
+ROSE_CONFIGURE_SECTION([Checking GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
@@ -845,7 +845,7 @@ ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CX
 # SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
 # JJW (12/10/2008): We don't preprocess the header files for the new interface,
 # but we still need to use the original C++ header directories
-ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
+ROSE_CONFIGURE_SECTION([Checking backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
@@ -940,7 +940,7 @@ ROSE_SUPPORT_MAPLE
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
 # DQ (5/21/2017): I don't think we use this anymore.
-ROSE_SUPPORT_VXWORKS
+#ROSE_SUPPORT_VXWORKS
 
 # Setup Automake conditional.
 AM_CONDITIONAL(ROSE_USE_VXWORKS,test ! "$with_vxworks" = no)
@@ -1619,7 +1619,7 @@ dnl ])
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
-ROSE_CONFIGURE_SECTION([Running system checks])
+ROSE_CONFIGURE_SECTION([Checking system capabilities])
 
 AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS="$LIBS"

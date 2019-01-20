@@ -52,7 +52,7 @@ AC_DEFUN([ROSE_SUPPORT_X10],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_X10_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([X10 Compiler])
+  ROSE_CONFIGURE_SECTION([Checking X10])
 
   #============================================================================
   # --with-x10=/path/to/x10-trunk/x10.dist/

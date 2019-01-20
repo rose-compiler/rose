@@ -1,7 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_JAVA],
 [
 # Begin macro ROSE_SUPPORT_JAVA.
-ROSE_CONFIGURE_SECTION([Java])
+ROSE_CONFIGURE_SECTION([Checking Java])
 
 AC_MSG_CHECKING([for Java (javac first, then java, then jvm)])
 

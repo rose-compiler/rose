@@ -89,9 +89,9 @@ AM_PROG_CC_C_O
 
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
 # <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
-true ${CFLAGS:=}
-true ${CXXFLAGS:=}
-true ${FFLAGS:=}
+: ${CFLAGS:=}
+: ${CXXFLAGS:=}
+: ${FFLAGS:=}
 
 dnl Liao 8/17/2010. A work around a undefined SED on NERSC hopper.
 dnl I had to promote it here instead of put it into ROSE_SUPPORT_ROSE_PART_2
@@ -127,7 +127,6 @@ AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
     [Encapsulates some important configuration details for Rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
-ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])
 ROSE_SUPPORT_BLACKLIST
 
 dnl Now generate all the output files (specified above)
@@ -143,8 +142,5 @@ ${T_BM}
 +--------------------------------+
 ${T_NM}
 Now type 'make' and then 'make install'.
-
 Thank you for using ROSE.
-
 X
-

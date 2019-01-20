@@ -30,7 +30,7 @@ AC_DEFUN([ROSE_SUPPORT_COBOL],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_COBOL_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([GnuCOBOL parse-tree library])
+  ROSE_CONFIGURE_SECTION([Checking GnuCOBOL parse-tree library])
 
   #============================================================================
   # --with-cobpt=/path/to/cobpt-install/
