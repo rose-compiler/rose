@@ -330,6 +330,20 @@ string get_type_name(SgType* t)
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
                     res = res + "__attribute__((address_space(" + outstr.str() + ")))";
                   }
+#if 0
+             // DQ (1/19/2019): BUG: Cxx_tests/test2019_04.C demonstrates that "const volatile" is output as "volatile"
+               if (mod_type->get_typeModifier().get_constVolatileModifier().isConstVolatile())
+                  {
+#if 1
+                    printf ("In get_type_name(SgType* t): Found (combined) const volatile modifier \n");
+#endif
+                    res = res + "const volatile";
+#if 1
+                    printf ("Exitng as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
                if (mod_type->get_typeModifier().get_constVolatileModifier().isConst())
                     res = res + "const ";
                if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
@@ -2946,7 +2960,10 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
           if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
              { curprint ( "volatile "); }
 #if 0
-          printf ("mod_type->get_typeModifier().isRestrict() = %s \n",mod_type->get_typeModifier().isRestrict() ? "true" : "false");
+       // DQ (1/19/2019): Cxx_tests/test2019_04.C demonstrates that "const volatile" is output as "volatile"
+          printf ("mod_type->get_typeModifier().get_constVolatileModifier().isConst()    = %s \n",mod_type->get_typeModifier().get_constVolatileModifier().isConst()    ? "true" : "false");
+          printf ("mod_type->get_typeModifier().get_constVolatileModifier().isVolatile() = %s \n",mod_type->get_typeModifier().get_constVolatileModifier().isVolatile() ? "true" : "false");
+          printf ("mod_type->get_typeModifier().isRestrict()                             = %s \n",mod_type->get_typeModifier().isRestrict() ? "true" : "false");
 #endif
           if (mod_type->get_typeModifier().isRestrict())
              {
