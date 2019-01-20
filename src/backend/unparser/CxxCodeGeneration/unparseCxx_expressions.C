@@ -2096,9 +2096,11 @@ Unparse_ExprStmt::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnp
   //
      if ( !orig_this_opt )
           unp->opt.set_this_opt(true);
-#if 0
+
+#if 1
      curprint ("\n /* Inside of unparseUnaryOperator(" + expr->class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
+
      unparseUnaryExpr(expr, newinfo);
 
   //
