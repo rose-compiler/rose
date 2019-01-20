@@ -83,7 +83,7 @@ AC_DEFUN([AX_PYTHON_DEVEL],[
         # User wants python, but we should find it ourselves
         AC_PATH_PROG([PYTHON], [python])
         if test "$PYTHON" = ""; then
-            AC_MSG_ERROR(["python" executable not found but "--with-python=yes" was specified])
+            AC_MSG_FAILURE(["python" executable not found but "--with-python=yes" was specified])
         fi
     elif test "$with_python" = ""; then
         # User doesn't care if we use python or not
@@ -108,11 +108,7 @@ AC_DEFUN([AX_PYTHON_DEVEL],[
             AC_DEFINE([PYTHON_VERSION], ($ac_python_version), "Version of Python selected when building ROSE.")
         else
             AC_MSG_RESULT([no ($ac_python_version)])
-            AC_MSG_ERROR([this package requires Python >= $1 and < $2.
-If you have it installed, but it isn't the default Python
-interpreter in your system path, please configure --with-python=PATH to
-select the correct interpreter. See ``configure --help'' for reference.
-])
+            AC_MSG_ERROR([this package requires Python >= $1 and < $2. If you have it installed, but it isn't the default Python interpreter in your system path, please configure --with-python=PATH to select the correct interpreter. See ``configure --help'' for reference.])
         fi
 
         #
@@ -140,9 +136,7 @@ select the correct interpreter. See ``configure --help'' for reference.
             AC_MSG_RESULT([yes])
         else
             AC_MSG_RESULT([no])
-            AC_MSG_ERROR([cannot import Python module "distutils".
-Please check your Python installation. The error was:
-$ac_distutils_result])
+            AC_MSG_ERROR([cannot import Python module "distutils". Please check your Python installation. The error was: $ac_distutils_result])
         fi
 
         #
@@ -229,8 +223,7 @@ EOD`
             fi
 
             if test -z "PYTHON_LDFLAGS"; then
-                AC_MSG_ERROR([Cannot determine location of your Python DSO. Please check it was installed with
-                              dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.])
+                AC_MSG_ERROR([cannot determine location of your Python DSO. Please check it was installed with dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.])
             fi
 
             # At least on Robb's systems, where python 3 is installed from source code using autoconf's

@@ -84,7 +84,7 @@ ROSE_SUPPORT_I386
 ROSE_SUPPORT_SAT
 
 # Setup Automake conditional in --- (not yet ready for use)
-echo "with_sat = $with_sat"
+AC_MSG_NOTICE([with_sat = "$with_sat"])
 AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
 
 # Call supporting macro to Intel Pin Dynamic Instrumentation
@@ -164,6 +164,7 @@ AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
 AC_SUBST(TEST_SMT_SOLVER)
 
 dnl A blank line to separate binary analysis from some miscellaneous tests in support-rose.m4 that don't have a heading.
-AC_MSG_NOTICE([All seems good for binary analysis if it's enabled.])
-echo
+AC_MSG_NOTICE([all seems good for binary analysis if it's enabled.
+])
+
 ])

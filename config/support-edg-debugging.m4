@@ -14,15 +14,15 @@ if test ! "$enable_edg_union_struct_debugging" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: enable_edg_union_struct_debugging $enable_edg_union_struct_debugging"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: enable_edg_union_struct_debugging = "$enable_edg_union_struct_debugging"])
 
 if test "$enable_edg_union_struct_debugging" = no; then
    # If edg_union_struct_debugging is not specified, then don't use it.
-   echo "Skipping use of EDG Union/Struct debugging support!"
+   AC_MSG_NOTICE([skipping use of EDG Union/Struct debugging support])
    edg_union_struct_debugging_value="union"
 else
    edg_union_struct_debugging_value="struct"
-   echo "Setup EDG Union/Struct debugging support in ROSE! edg_union_struct_debugging_value = $edg_union_struct_debugging_value"
+   AC_MSG_NOTICE([setup EDG Union/Struct debugging support in ROSE. edg_union_struct_debugging_value = "$edg_union_struct_debugging_value"])
 fi
 
 AC_DEFINE([USE_ROSE_EDG_DEBUGGING_SUPPORT],1,[Controls if EDG Union/Struct debugging support is to be used.])

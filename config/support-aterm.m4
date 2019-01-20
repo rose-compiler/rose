@@ -41,10 +41,6 @@
 #       AC_MSG_ERROR([No ATERM/lib])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2013-03-14
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -105,9 +101,9 @@ AC_DEFUN([ROSE_SUPPORT_ATERM],
   fi
 
 # DQ (3/23/2013): debugging...
-echo "ATERM_INSTALL_PATH = "$ATERM_INSTALL_PATH
-echo "ATERM_BIN_PATH     = "$ATERM_BIN_PATH
-echo "ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH
+AC_MSG_NOTICE([ATERM_INSTALL_PATH = "$ATERM_INSTALL_PATH"])
+AC_MSG_NOTICE([ATERM_BIN_PATH     = "$ATERM_BIN_PATH"])
+AC_MSG_NOTICE([ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH"])
 
   #============================================================================
   # Validate installation (if provided)

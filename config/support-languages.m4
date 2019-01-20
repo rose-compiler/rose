@@ -96,7 +96,7 @@ AC_ARG_ENABLE([binary-analysis],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/binaries//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is not supported; use 'yes' or 'no'])]
                  	;;
                 esac
                ,)
@@ -116,7 +116,7 @@ AC_ARG_ENABLE([c],
                   [no)]
                         list_has_cxx="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c++") { printf "yes"; } } }']`"
                         if test "x$list_has_cxx" = "xyes" && test "x$enable_cxx" != "xno" ; then
-                  	  [AC_MSG_FAILURE([Can't disable 'C' language support because 'C++' language support is enabled -- currently both are required to be supported together. If you really don't want 'C' language support, please also disable 'C++' language support (see ./configure --help)])]
+                  	  [AC_MSG_FAILURE([cannot disable 'C' language support because 'C++' language support is enabled -- currently both are required to be supported together. If you really don't want 'C' language support, please also disable 'C++' language support (see ./configure --help)])]
                         else
                           # remove 'C' from support languages list
                           # TOO (3/11/2011): couldn't find a nice way to handle with sed, cases: "c", "c c++", ...
@@ -124,7 +124,7 @@ AC_ARG_ENABLE([c],
                         fi
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-c='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-c="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,)
@@ -140,14 +140,14 @@ AC_ARG_ENABLE([cxx],
                   [no)]
                         list_has_c="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c") { printf "yes"; } } }']`"
                         if test "x$list_has_c" = "xyes" && test "x$enable_c" != "xno" ; then
-                  	  [AC_MSG_FAILURE([Can't disable 'C++' language support because 'C' language support is enabled -- currently both are required to be supported together. If you really don't want 'C++' language support, please also disable 'C' language support (see ./configure --help)])]
+                  	  [AC_MSG_FAILURE([cannot disable C++ language support because C language support is enabled -- currently both are required to be supported together. If you really don't want C++ language support, please also disable C language support (see ./configure --help)])]
                         else
                           # remove 'C++' from support languages list
                   	  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/c++//g'`"
                         fi
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-cxx='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-cxx="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,)
@@ -169,7 +169,7 @@ AC_ARG_ENABLE([cuda],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/cuda//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-cuda='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-cuda="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,)
@@ -182,10 +182,10 @@ AC_ARG_ENABLE([fortran],
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
-                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-fortran=$enableval' enables Fortran-language support, which requires Java, and '--with-java=$with_java' disables Java])]
+                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: --enable-fortran="$enableval" enables Fortran-language support, which requires Java, and --with-java="$with_java" disables Java])]
                         fi
                         if test "x$USE_JAVA" = "x0" ; then
-                          [AC_MSG_FAILURE([[[Fortran Support]] you requested to build Fortran language support with '--enable-fortran=$enableval', which requires Java, but Java was not found. Do you need to explicitly specify your Java using the "--with-java" configure-option? (See ./configure --help)])]
+                          [AC_MSG_FAILURE([[[Fortran Support]] you requested to build Fortran language support with --enable-fortran="$enableval", which requires Java, but Java was not found. Do you need to explicitly specify your Java using the --with-java configure-switch? (See ./configure --help)])]
                         fi
 
                   	if test "x$list_has_fortran" != "xyes" ; then
@@ -198,14 +198,16 @@ AC_ARG_ENABLE([fortran],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-fortran='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-fortran="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,
                 if test "x$with_java" = "xno" ; then
-                  enable_fortran=no
-                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
-                  [echo "[[Fortran support]] disabling Fortran language support, which requires Java, because you specified --with-java='$with_java'"] 
+		  if test "$enable_fortran" != no; then
+                    enable_fortran=no
+                    LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
+                    [echo "[[Fortran support]] disabling Fortran language support, which requires Java, because you specified --with-java='$with_java'"]
+		  fi
                 fi)
 AC_ARG_ENABLE([java],
                AS_HELP_STRING([--enable-java],[Enable Java language support in ROSE (default=yes). Note: --without-java turns off support for ALL components in ROSE that depend on Java, including Java language support]),
@@ -216,10 +218,10 @@ AC_ARG_ENABLE([java],
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
-                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: '--enable-java=$enableval' enables Java-language support, but '--with-java=$with_java' disables it])]
+                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: --enable-java="$enableval" enables Java-language support, but --with-java="$with_java" disables it])]
                         fi
                         if test "x$USE_JAVA" = "x0" ; then
-                          [AC_MSG_FAILURE([[[Java Support]] you requested to build Java language support with '--enable-java=$enableval', which requires Java, but Java was not found. Do you need to explicitly specify your Java using the "--with-java" configure-option? (See ./configure --help)])]
+                          [AC_MSG_FAILURE([[[Java Support]] you requested to build Java language support with --enable-java="$enableval", which requires Java, but Java was not found. Do you need to explicitly specify your Java using the --with-java configure-option? (See ./configure --help)])]
                         fi
 
                   	if test "x$list_has_java" != "xyes" ; then
@@ -232,14 +234,16 @@ AC_ARG_ENABLE([java],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-java='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-java="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,
                 if test "x$with_java" = "xno" ; then
-                  enable_java=no
-                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
-                  [echo "[[Java support]] disabling Java language support, which requires Java, because you specified --with-java='$with_java'"] 
+		  if test "$enable_java" != no; then
+                    enable_java=no
+                    LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
+                    [echo "[[Java support]] disabling Java language support, which requires Java, because you specified --with-java='$with_java'"]
+		  fi
                 fi)
 AC_ARG_ENABLE([x10],
                AS_HELP_STRING([--enable-x10],[Enable X10 language support in ROSE (default=yes). Note: --without-x10 turns off support for ALL components in ROSE that depend on X10, including X10 language support]),
@@ -250,10 +254,10 @@ AC_ARG_ENABLE([x10],
                 case "$enableval" in
                   [yes)]
                         if test "x$rose_with_x10" = "xno" ; then
-                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: --enable-x10="$enableval" enables X10-language support, but --with-x10="$rose_with_x10" disables it])]
                         fi
                         if test "x$USE_X10" = "x0" ; then
-                          [AC_MSG_FAILURE([[[X10 Support]] you requested to build X10 language support with '--enable-x10=$enableval', which requires X10, but X10 was not found. Do you need to explicitly specify your X10 using the "--with-x10" configure-option? (See ./configure --help)])]
+                          [AC_MSG_FAILURE([[[X10 Support]] you requested to build X10 language support with --enable-x10="$enableval", which requires X10, but X10 was not found. Do you need to explicitly specify your X10 using the --with-x10 configure-option? (See ./configure --help)])]
                         fi
 
                   	if test "x$list_has_x10" != "xyes" ; then
@@ -266,14 +270,16 @@ AC_ARG_ENABLE([x10],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-x10='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-x10="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,
                 if test "x$rose_with_x10" = "xno" ; then
-                  enable_x10=no
-                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
-                  [echo "[[X10 support]] disabling X10 language support, which requires Java, because you specified --with-x10='$rose_with_x10'"] 
+		  if test "$enable_x10" != no; then
+                    enable_x10=no
+                    LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
+                    [echo "[[X10 support]] disabling X10 language support, which requires Java, because you specified --with-x10='$rose_with_x10'"]
+		  fi
                 fi)
 AC_ARG_ENABLE([php],
                AS_HELP_STRING([--enable-php],[Enable PHP language support in ROSE (default=yes)]),
@@ -293,7 +299,7 @@ AC_ARG_ENABLE([php],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/php//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-php='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-php="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,)
@@ -313,14 +319,14 @@ AC_ARG_ENABLE([python],
                   [no)]
                     # Fail if --with-python is specified
                     if test "x$with_python" != "x"; then
-                        AC_MSG_FAILURE([Cannot mix flags --with-python and --enable-python=no])
+                        AC_MSG_FAILURE([cannot mix flags --with-python and --enable-python=no])
                     fi
 
                     # remove 'python' from support languages list
                     LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/python//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-python='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-python="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,
@@ -332,7 +338,7 @@ AC_ARG_ENABLE([python],
 		dnl  interpreter (which might be needed by some ROSE projects) without also enabling the python parser
 		dnl  in ROSE's frontend (which has stricter version requirements and might not compile).
                 if test "$with_python" != "" -a "$with_python" != "no"; then
-                    AC_MSG_WARN([--with-python specified without --enable-python. ROSE will not have a python frontend parser.])
+                    AC_MSG_WARN([--with-python specified without --enable-python; ROSE will not have a python frontend parser])
                 fi
                )
 AC_ARG_ENABLE([opencl],
@@ -353,7 +359,7 @@ AC_ARG_ENABLE([opencl],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/opencl//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-opencl='$enableval' is not supported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-opencl="$enableval" is not supported; use "yes" or "no"])]
                  	;;
                 esac
                ,)
@@ -432,16 +438,16 @@ fortran)
 	if test "x$USE_JAVA" = x1; then
 	  if test "x$GFORTRAN_PATH" = "x" -o "x$GFORTRAN_PATH" = "xno"; then
             AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
-                           Do you need to explicitly specify gfortran using the "--with-gfortran=path/to/gfortran" configure-option? (See ./configure --help)])
+                           Do you need to explicitly specify gfortran using the --with-gfortran=path/to/gfortran configure-switch? (See ./configure --help)])
           else
      	    support_fortran_frontend=yes
 	    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
           fi
         elif test "x$with_java" = "xno" ; then
-	  AC_MSG_FAILURE([[[Fortran support]] can't support the Fortran language because you specified --with-java='$with_java'. You can turn off Fortran support with --disable-fortran (See ./configure --help)]) 
+	  AC_MSG_FAILURE([[[Fortran support]] cannot support the Fortran language because you specified --with-java="$with_java". You can turn off Fortran support with --disable-fortran (See ./configure --help)]) 
 	else
 	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
-                         Do you need to explicitly specify Java using the "--with-java" configure-option? (See ./configure --help)])
+	                 Do you need to explicitly specify Java using the --with-java configure-switch? (See ./configure --help)])
 	fi
 	;;
 java)
@@ -450,7 +456,7 @@ java)
 	  AC_DEFINE([ROSE_BUILD_JAVA_LANGUAGE_SUPPORT], [], [Build ROSE to support the Java langauge])
         else
           AC_MSG_FAILURE([[[Java support]] Java dependencies not found: required for parser support in ROSE -- uses the  Eclipse Compiler for Java (ECJ).
-                         Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
+                         Do you need to explicitly specify Java (javac, JDk,...) using the --with-java configure-switch? (See ./configure --help)])
         fi
 	;;
 x10)
@@ -471,7 +477,7 @@ opencl)
         GENERATE_OPENCL_SPECIFIC_HEADERS
 	;;
 *)
-	AC_MSG_FAILURE([unrecognized language '$a_language'])
+	AC_MSG_FAILURE([unrecognized language "$a_language"])
 	;;
 esac
 done
@@ -643,63 +649,63 @@ elif test $count_of_languages_to_support = 1 ; then
   # Haskell
   #
   if test "x$with_haskell" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with haskell"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support with haskell])
   elif test "x$with_haskell" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without haskell"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support without haskell])
   fi
 
   #
   # X10
   #
   if test "x$rose_with_x10" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with X10"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support with X10])
   elif test "x$rose_with_x10" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without X10"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support without X10])
   fi
 
   #
   # PHP
   #
   if test "x$with_php" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with PHP"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support with PHP])
   elif test "x$with_php" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without PHP"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support without PHP])
   fi
 
   #
   # Python
   #
   if test "x$enable_python" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with Python"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support with Python])
   elif test "x$enable_python" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without Python"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support without Python])
   fi
 
   #
   # Binary analysis tests
   #
   if test "x$enable_binary_analysis_tests" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling binary analysis tests"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support enabling binary analysis tests])
   elif test "x$enable_binary_analysis_tests" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling binary analysis tests"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support disabling binary analysis tests])
   fi
 
   #
   # Projects/ directory 
   #
   if test "x$enable_projects_directory" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/projects directory"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support enabling ROSE/projects directory])
   elif test "x$enable_projects_directory" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/projects directory"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support disabling ROSE/projects directory])
   fi
 
   #
   # Tutorial/ directory 
   #
   if test "x$enable_tutorial_directory" = "xyes" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/tutorial directory"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support enabling ROSE/tutorial directory])
   elif test "x$enable_tutorial_directory" = "xno" ; then
-    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/tutorial directory"
+    AC_MSG_NOTICE([$LANGUAGES_TO_SUPPORT-only support disabling ROSE/tutorial directory])
   fi
 fi
 #########################################################################################
@@ -834,10 +840,10 @@ AC_ARG_ENABLE([only-binary-analysis],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-binary-analysis='$enableval' and --disable-only-binary-analysis are no longer supported. Use '--disable-binary-analysis' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-binary-analysis="$enableval" and --disable-only-binary-analysis are no longer supported; use --disable-binary-analysis (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-binary-analysis='$enableval' is not supported. Use '--enable-only-binary-analysis(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-binary-analysis="$enableval" is not supported; use --enable-only-binary-analysis (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -851,10 +857,10 @@ AC_ARG_ENABLE([only-c],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-c='$enableval' and --disable-only-c are no longer supported. Use '--disable-c' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-c="$enableval" and --disable-only-c are no longer supported; use --disable-c (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-c='$enableval' is not supported. Use '--enable-only-c(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-c="$enableval" is not supported; use --enable-only-c (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -868,10 +874,10 @@ AC_ARG_ENABLE([only-cxx],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-cxx='$enableval' and --disable-only-cxx are no longer supported. Use '--disable-cxx' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-cxx="$enableval" and --disable-only-cxx are no longer supported; use --disable-cxx (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-cxx='$enableval' is not supported. Use '--enable-only-cxx(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-cxx="$enableval" is not supported; use --enable-only-cxx (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -882,17 +888,17 @@ AC_ARG_ENABLE([only-fortran],
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
-                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-only-fortran=$enableval' enables Fortran-language support, which requires Java support, and '--with-java=$with_java' disables Java support])]
+                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: --enable-only-fortran="$enableval" enables Fortran-language support, which requires Java support, and --with-java="$with_java" disables Java support])]
                         else  
                   	  LANGUAGES_TO_SUPPORT="fortran"
                           USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                         fi
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' and --disable-only-fortran are no longer supported. Use '--disable-fortran' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-fortran="$enableval" and --disable-only-fortran are no longer supported; use --disable-fortran (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' is not supported. Use '--enable-only-fortran(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-fortran="$enableval" is not supported; use --enable-only-fortran (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -903,17 +909,17 @@ AC_ARG_ENABLE([only-java],
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
-                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: '--enable-only-java=$enableval' enables Java-language support, but '--with-java=$with_java' disables it])]
+                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: --enable-only-java="$enableval" enables Java-language support, but --with-java="$with_java" disables it])]
                         else  
                   	  LANGUAGES_TO_SUPPORT="java"
                           USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                         fi
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-java='$enableval' and --disable-only-java are no longer supported. Use '--disable-java' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-java="$enableval" and --disable-only-java are no longer supported; use --disable-java (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-java='$enableval' is not supported. Use '--enable-only-java(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-java="$enableval" is not supported; use --enable-only-java (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -924,17 +930,17 @@ AC_ARG_ENABLE([only-x10],
                 case "$enableval" in
                   [yes)]
                         if test "x$rose_with_x10" = "xno" ; then
-                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: '--enable-only-x10=$enableval' enables X10-language support, but '--with-x10=$rose_with_x10' disables it])]
+                          [AC_MSG_FAILURE([[[X10 Support]] you specified conflicting configure flags: --enable-only-x10="$enableval" enables X10-language support, but --with-x10="$rose_with_x10" disables it])]
                         else  
                   	  LANGUAGES_TO_SUPPORT="x10"
                           USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                         fi
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' and --disable-only-x10 are no longer supported. Use '--disable-x10' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-x10="$enableval" and --disable-only-x10 are no longer supported; use --disable-x10 (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' is not supported. Use '--enable-only-x10(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-x10="$enableval" is not supported; use --enable-only-x10 (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -948,10 +954,10 @@ AC_ARG_ENABLE([only-php],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-php='$enableval' and --disable-only-php are no longer supported. Use '--disable-php' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-php="$enableval" and --disable-only-php are no longer supported; use --disable-php (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-php='$enableval' is not supported. Use '--enable-only-php(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-php="$enableval" is not supported; use --enable-only-php (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -965,10 +971,10 @@ AC_ARG_ENABLE([only-python],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-python='$enableval' and --disable-only-python are no longer supported. Use '--disable-python' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-python="$enableval" and --disable-only-python are no longer supported; use --disable-python (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-python='$enableval' is not supported. Use '--enable-only-python(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-python="$enableval" is not supported; use --enable-only-python (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -982,10 +988,10 @@ AC_ARG_ENABLE([only-cuda],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-cuda='$enableval' and --disable-only-cuda are no longer supported. Use '--disable-cuda' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-cuda="$enableval" and --disable-only-cuda are no longer supported; use --disable-cuda (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-cuda='$enableval' is not supported. Use '--enable-only-cuda(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-cuda="$enableval" is not supported; use --enable-only-cuda (see ./configure --help)])]
                  	;;
                 esac
                ,)
@@ -999,10 +1005,10 @@ AC_ARG_ENABLE([only-opencl],
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
-                  	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' and --disable-only-opencl are no longer supported. Use '--disable-opencl' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-opencl="$enableval" and --disable-only-opencl are no longer supported; use --disable-opencl (see ./configure --help)])]
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' is not supported. Use '--enable-only-opencl(=yes)' (see ./configure --help)])]
+                  	[AC_MSG_FAILURE([--enable-only-opencl="$enableval" is not supported; use --enable-only-opencl (see ./configure --help)])]
                  	;;
                 esac
                ,)

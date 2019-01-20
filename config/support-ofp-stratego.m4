@@ -28,10 +28,6 @@
 #       AC_MSG_ERROR([No OFP-STRATEGO/bin])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2017-02-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2017 Craig Rasmussen <rasmussen17@llnl.gov>

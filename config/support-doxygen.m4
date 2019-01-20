@@ -176,12 +176,12 @@ dnl Start of some old stuff...
     dnl We might want the default to later be to merge Rose and 
     dnl Sage documentation (change it then).
     if (test "$enable_doxygen_generate_fast_docs" = yes) ; then
-      echo "Permit separation of Sage III doxygen generated documentation from Rose documentation uses doxygen tag file mechanism to connect the two"
+      AC_MSG_NOTICE([permit separation of Sage III doxygen generated documentation from Rose documentation uses doxygen tag file mechanism to connect the two])
       DOXYGEN_ADDED_DIRECTORY_1=""
       DOXYGEN_ADDED_DIRECTORY_2=""
       DOXYGEN_USE_TAG_FILE="@top_pwd@/docs/Rose/SageIntermediateForm/sageDoxygen.tags"
     else
-      echo "Permit Doxygen generation of Rose documentation including Sage III documentation as a single monolithic project; takes longer"
+      AC_MSG_NOTICE([permit Doxygen generation of Rose documentation including Sage III documentation as a single monolithic project; takes longer])
       DOXYGEN_ADDED_DIRECTORY_1="@top_pwd@/src/frontend/SageIII"
       DOXYGEN_ADDED_DIRECTORY_2="$topSourceDirectory/src/frontend/SageIII"
       DOXYGEN_USE_TAG_FILE=""

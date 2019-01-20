@@ -474,14 +474,14 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AM_CONDITIONAL(ROSE_USING_ROSE_AST_FILE_IO, [test "$ROSE_USING_ROSE_AST_FILE_IO" != ""])
 
     if test "$backendCompilerBaseName" = roseAnalysis -o "$backendCompilerBaseName" = testAnalysis; then
-        AC_MSG_NOTICE([Found the ROSE analysis tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE analysis tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_ANALYSIS, 1,
             [Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE)])
     fi
 
     dnl DQ (2/20/2010): Support for testing AST File I/O.
     if test "$backendCompilerBaseName" = roseAstFileIO -o "$backendCompilerBaseName" = testAstFileIO; then
-        AC_MSG_NOTICE([Found the ROSE analysis tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE analysis tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_AST_FILE_IO, 1,
             [Is this the ROSE AST File IO (part of tests to compile ROSE for AST File IO only using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,
@@ -491,7 +491,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     fi
 
     if test "$backendCompilerBaseName" = roseCodeGeneration -o "$backendCompilerBaseName" = testCodeGeneration; then
-        AC_MSG_NOTICE([Found the ROSE code generation tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE code generation tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,
             [Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_ANALYSIS, 1,
@@ -499,7 +499,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     fi
 
     if test "$backendCompilerBaseName" = roseTranslator -o "$backendCompilerBaseName" = testTranslator; then
-        AC_MSG_NOTICE([Found the ROSE translator tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE translator tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_TRANSLATOR, 1,
             [Is this the ROSE translator (part of tests to compile ROSE using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,
