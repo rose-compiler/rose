@@ -40,10 +40,6 @@
 #       AC_MSG_ERROR([No X10/lib])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2013-02-20
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>

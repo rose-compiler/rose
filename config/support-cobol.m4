@@ -50,8 +50,8 @@ AC_DEFUN([ROSE_SUPPORT_COBOL],
     COBPT_LIBRARY_PATH=
   fi
 
-echo "COBPT_INSTALL_PATH = "$COBPT_INSTALL_PATH
-echo "COBPT_LIBRARY_PATH = "$COBPT_LIBRARY_PATH
+  AC_MSG_NOTICE([COBPT_INSTALL_PATH = "$COBPT_INSTALL_PATH"])
+  AC_MSG_NOTICE([COBPT_LIBRARY_PATH = "$COBPT_LIBRARY_PATH"])
 
   #============================================================================
   # Validate installation (if provided)

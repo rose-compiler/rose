@@ -40,10 +40,6 @@
 #       AC_MSG_ERROR([No STRATEGO/lib])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2013-03-14
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -104,9 +100,9 @@ AC_DEFUN([ROSE_SUPPORT_STRATEGO],
   fi
 
 # DQ (3/23/2013): debugging...
-echo "STRATEGO_INSTALL_PATH = "$STRATEGO_INSTALL_PATH
-echo "STRATEGO_BIN_PATH     = "$STRATEGO_BIN_PATH
-echo "STRATEGO_LIBRARY_PATH = "$STRATEGO_LIBRARY_PATH
+AC_MSG_NOTICE([STRATEGO_INSTALL_PATH = "$STRATEGO_INSTALL_PATH"])
+AC_MSG_NOTICE([STRATEGO_BIN_PATH     = "$STRATEGO_BIN_PATH"])
+AC_MSG_NOTICE([STRATEGO_LIBRARY_PATH = "$STRATEGO_LIBRARY_PATH"])
 
   #============================================================================
   # Validate installation (if provided)

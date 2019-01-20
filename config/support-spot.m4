@@ -8,10 +8,6 @@
 #
 #   Determine if support is requested for the SPOT LTL model checking library.
 #
-# LAST MODIFICATION
-#
-#   2017-07-24
-#
 #####
 
 AC_DEFUN([ROSE_SUPPORT_SPOT],

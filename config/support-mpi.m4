@@ -8,10 +8,6 @@
 #
 #   Determine if support is requested for the Message Passing Interface.
 #
-# LAST MODIFICATION
-#
-#   2012-06-08
-#
 # COPYLEFT
 #
 #   Copyright (c) 2012 Justin Too <too1@llnl.gov>

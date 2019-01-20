@@ -21,10 +21,6 @@
 #     AC_DEFINE_UNQUOTED(ROSE_BOOST_PATH)
 #     AC_DEFINE_UNQUOTED(ROSE_WAVE_PATH)
 #
-# LAST MODIFICATION
-#
-#   2013-07-31
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -157,18 +153,18 @@ if test \
    -o "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60" \
    -o "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61"
 then
-    echo "Reasonable version of Boost found!"
+    AC_MSG_NOTICE([reasonable version of Boost found])
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Versions 1.51 to 1.61 (except 1.54) supported.])
+    AC_MSG_FAILURE([unsupported version of Boost: "$rose_boost_version"])
   else
-    AC_MSG_WARN([Unsupported version of Boost is being used])
+    AC_MSG_WARN([unsupported version of Boost is being used: "$rose_boost_version"])
   fi
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
 # not work with ROSE, and use the newer version specified by the user on the configure line.
-echo "In ROSE/configure: ac_boost_path = $ac_boost_path"
+AC_MSG_NOTICE([in ROSE/configure: ac_boost_path = "$ac_boost_path"])
 #AC_DEFINE([ROSE_BOOST_PATH],"$ac_boost_path",[Location of Boost specified on configure line.])
 AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Boost specified on configure line.])
 #AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])

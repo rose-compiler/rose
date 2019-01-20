@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_IOSTREAMS
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>

@@ -46,7 +46,7 @@ AC_DEFUN([ROSE_SUPPORT_OCTAVE],
     OCTAVE_PARSER_INSTALL_TARFILE=
   fi
 
-echo "OCTAVE_PARSER_INSTALL_TARFILE = "$OCTAVE_PARSER_INSTALL_TARFILE
+  AC_MSG_NOTICE([OCTAVE_PARSER_INSTALL_TARFILE = "$OCTAVE_PARSER_INSTALL_TARFILE"])
 
   #============================================================================
   # Validate installation (if provided)

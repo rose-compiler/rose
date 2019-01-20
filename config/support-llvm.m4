@@ -14,13 +14,13 @@ if test ! "$with_llvm" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_llvm $with_llvm"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_llvm = "$with_llvm"])
 
 if test "$with_llvm" = no; then
-   echo "Skipping use of LLVM support (and opt)!"
+   AC_MSG_NOTICE([skipping use of LLVM support (and opt)])
 else
    llvm_path=$with_llvm
-   echo "Setup LLVM support in ROSE! path = $llvm_path"
+   AC_MSG_NOTICE([setup LLVM support in ROSE. path = "$llvm_path"])
    AC_DEFINE([USE_ROSE_LLVM_SUPPORT],1,[Controls use of ROSE support for LLVM.])
 fi
 
@@ -36,7 +36,7 @@ LLVM_COMPILER_MINOR_VERSION_NUMBER=`echo|$LLVM_CONFIG --version | head -1 | cut 
 llvm_version_6_0_0=no
 if test x$LLVM_COMPILER_MAJOR_VERSION_NUMBER == x6; then
    if test x$LLVM_COMPILER_MINOR_VERSION_NUMBER == x0; then
-      echo "Note: we have identified version 6.0.0 of LLVM!"
+      AC_MSG_NOTICE([we have identified version 6.0.0 of LLVM])
       llvm_version_6_0_0=yes
    fi
 fi

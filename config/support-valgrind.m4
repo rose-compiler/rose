@@ -8,10 +8,6 @@
 #
 #   Determine if support is requested for the Valgrind package.
 #
-# LAST MODIFICATION
-#
-#   2013-09-26
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>

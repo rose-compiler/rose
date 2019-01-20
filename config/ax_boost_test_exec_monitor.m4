@@ -19,10 +19,6 @@
 #
 #     HAVE_BOOST_TEST_EXEC_MONITOR
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Dodji Seketeli <dodji@seketeli.org>
@@ -126,7 +122,7 @@ AC_DEFUN([AX_BOOST_TEST_EXEC_MONITOR],
                done
             fi
 			if test "x$link_test_exec_monitor" != "xyes"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
 		fi
 
