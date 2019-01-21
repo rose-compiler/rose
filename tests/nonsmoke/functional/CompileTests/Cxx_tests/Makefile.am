@@ -580,7 +580,13 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_07.C \
    test2019_08.C \
    test2019_09.C \
-   test2019_10.C 
+   test2019_10.C \
+   test2019_11.C \
+   test2019_12.C \
+   test2019_13.C \
+   test2019_14.C \
+   test2019_15.C \
+   test2019_16.C 
 
 FAILING_PLUM_HALL_TESTS = \
    test2018_22.C \
