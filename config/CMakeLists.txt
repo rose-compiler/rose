@@ -11,4 +11,4 @@ install(
     rose_specific_xmmintrin.h
     rose_stdarg.h
     rose_varargs.h
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})
