@@ -16,14 +16,14 @@ AC_DEFUN([ROSE_SUMMARY_HEADING],[
 ])
 
 AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
-    echo
     echo "${T_BM}Configuration summary:${T_NM}"
 
     #--------------------------------------------------------------------------------
-    ROSE_SUMMARY_HEADING([Frontend C++ compiler])
-    echo "    compiler executable              ${FRONTEND_CXX_COMPILER_COMMAND-none}"
-    echo "    vendor                           ${FRONTEND_CXX_COMPILER_VENDOR-unknown}"
-    echo "    version                          ${FRONTEND_CXX_VERSION_TRIPLET-unknown}"
+    ROSE_SUMMARY_HEADING([Compilers for ROSE source code])
+    echo "    C++ compiler                     ${FRONTEND_CXX_COMPILER_COMMAND-none}"
+    echo "    C++ vendor                       ${FRONTEND_CXX_COMPILER_VENDOR-unknown}"
+    echo "    C++ version                      ${FRONTEND_CXX_VERSION_TRIPLET-unknown}"
+    echo "    Bison version                    ${bison_version-unknown}"
 
     #--------------------------------------------------------------------------------
     ROSE_SUMMARY_HEADING([Languages supported for analysis])
@@ -61,17 +61,32 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     echo "    wserialization library           ${BOOST_WSERIALIZATION_LIB-none}"
 
     #--------------------------------------------------------------------------------
+    if test -n "$support_binaries_frontend"; then
+        ROSE_SUMMARY_HEADING([Binary analysis support])
+	echo "    i386 support                     ${CFLAGS32-no}"
+	echo "    libmagic                         ${ROSE_HAVE_LIBMAGIC-no}"
+	echo "    readline                         ${LIBREADLINE_LIBRARY_PATH-no}"
+	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX-no}"
+	echo "    yices executable                 ${ROSE_YICES-no}"
+	echo "    yices library                    ${ROSE_HAVE_LIBYICES-no}"
+	echo "    z3 executable                    ${Z3-no}"
+	echo "    z3 library                       ${Z3_LIBRARY_PATH-no}"
+    fi
+
+    #--------------------------------------------------------------------------------
     if test -n "$support_cxx_frontend"; then
-        ROSE_SUMMARY_HEADING([C++ analysis support])
-	echo "    compiler executable              ${BACKEND_CXX_COMPILER_COMMAND-none}"
-	echo "    vendor                           ${BACKEND_CXX_COMPILER_VENDOR-unknown}"
-	echo "    version                          ${BACKEND_CXX_VERSION_TRIPLET-unknown}"
+        ROSE_SUMMARY_HEADING([C/C++ analysis support])
+	echo "    frontend C++ EDG version         ${edg_major_version_number}.${edg_minor_version_number}"
+	echo "    backend C++ compiler             ${BACKEND_CXX_COMPILER_COMMAND-none}"
+	echo "    C++ vendor                       ${BACKEND_CXX_COMPILER_VENDOR-unknown}"
+	echo "    C++ version                      ${BACKEND_CXX_VERSION_TRIPLET-unknown}"
+	echo "    backend C compiler               ${BACKEND_C_COMPILER-none}"
     fi
 
     #--------------------------------------------------------------------------------
     if test -n "$support_fortran_frontend"; then
         ROSE_SUMMARY_HEADING([Fortran analysis support])
-	echo "    fortran compiler                 ${GFORTRAN_PATH-none}"
+	echo "    fortran compiler                 ${BACKEND_FORTRAN_COMPILER-none}"
     fi
 
     #--------------------------------------------------------------------------------
@@ -114,8 +129,5 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
         echo "    hide undocumented members        ${DOXYGEN_HIDE_UNDOC_MEMBERS-no}"
         echo "    hide undocumented classes        ${DOXYGEN_HIDE_UNDOC_CLASSES-no}"
         echo "    hide friend compounds            ${DOXYGEN_HIDE_FRIEND_COMPOUNDS-no}"
-        echo "    enabled sections                 ${DOXYGEN_ENABLED_SECTIONS-none}"
     fi
-
-    echo
 ])

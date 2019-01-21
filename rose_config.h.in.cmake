@@ -1,4 +1,4 @@
-/* ---  rose_config.h.cmake  ---
+/* ---  rose_config.h.cmake  ---  -*- c -*-
  * DQ (10/16/2010): Comment added to clarify how this works and how to set macros.
  * This is not an automatically generated file, it is checked into git as
  * a regular file. Then it is used to generate the rose_config.h file in the
@@ -15,6 +15,9 @@
 
 /* Git SCM version information for ROSE: commit date (Unix timestamp). */
 #cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+
+/* Define user-friendly ROSE version */
+#cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"
 
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND 1
@@ -76,6 +79,18 @@
 #ifdef Boost_WAVE_FOUND
   #define HAVE_BOOST_WAVE
   #define USE_ROSE_BOOST_WAVE_SUPPORT
+#endif
+
+/* Define if the boost::serialization library is available */
+#cmakedefine Boost_SERIALIZATION_FOUND
+#ifdef Boost_SERIALIZATION_FOUND
+  #define HAVE_BOOST_SERIALIZATION_LIB 1
+#endif
+
+/* Define if Z3 is available */
+#cmakedefine Z3_FOUND
+#ifdef Z3_FOUND
+  #define HAVE_Z3 1
 #endif
 
 /* Define to 1 if you have the <byteswap.h> header file. */
@@ -695,7 +710,7 @@
 /* Version number of package */
 //AS Don't know what to do with this
 
-#define VERSION "0.9.4"
+#define VERSION "0.9.10"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
