@@ -5081,10 +5081,43 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
 
      curprint("sizeof(");
-     if (sizeof_op->get_operand_expr() != NULL)
+
+     SgExpression* sizeofExpression = sizeof_op->get_operand_expr();
+  // if (sizeof_op->get_operand_expr() != NULL)
+     if (sizeofExpression != NULL)
         {
-          ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
-          unparseExpression(sizeof_op->get_operand_expr(), info);
+          ROSE_ASSERT(sizeofExpression != NULL);
+
+       // DQ (1/12/2019): Adding support for C++11 feature (see test2019_10.C).
+          if (sizeof_op->get_is_objectless_nonstatic_data_member_reference() == true)
+             {
+            // Output the name of the class (but don't conside this to be name qualification).
+#if 0
+               printf ("sizeofExpression = %p = %s = %s \n",sizeofExpression,sizeofExpression->class_name().c_str(),SageInterface::get_name(sizeofExpression).c_str());
+#endif
+            // Need to find the member reference.
+               SgArrowExp* arrowExp = isSgArrowExp(sizeofExpression);
+               ROSE_ASSERT(arrowExp != NULL);
+
+            // SgExpression* lhs = arrowExp->get_lhs_operand();
+            // ROSE_ASSERT(lhs != NULL);
+            // printf ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+
+               SgExpression* rhs = arrowExp->get_rhs_operand();
+               ROSE_ASSERT(rhs != NULL);
+#if 0
+               printf ("rhs = %p = %s \n",rhs,rhs->class_name().c_str());
+#endif
+               SgVarRefExp* varRef = isSgVarRefExp(rhs);
+               ROSE_ASSERT(varRef != NULL);
+
+               unparseExpression(varRef, info);
+             }
+            else
+             {
+            // DQ (1/12/2019): Previous code before supporting C++11 objectless non-static data member references.
+               unparseExpression(sizeofExpression, info);
+             }
         }
        else
         {

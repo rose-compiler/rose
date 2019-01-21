@@ -10551,6 +10551,18 @@ SgTypeSignedShort * SageBuilder::buildSignedShortType()
   return result;
 }
 
+SgTypeFloat80*  SageBuilder::buildFloat80Type() {
+  SgTypeFloat80 * result = SgTypeFloat80::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat128* SageBuilder::buildFloat128Type() {
+  SgTypeFloat128 * result = SgTypeFloat128::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
 SgTypeSignedInt * SageBuilder::buildSignedIntType()
 {
   SgTypeSignedInt * result = SgTypeSignedInt::createType();

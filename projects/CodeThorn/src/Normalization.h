@@ -160,12 +160,12 @@ namespace SPRAY {
     // generates a block where all the subexpressions of the
     // expression are linearized into a temporyary variable
     // initialization list
-    void normalizeExpression(SgExprStatement* stmt, SgExpression* node);
+    void normalizeExpression(SgStatement* stmt, SgExpression* node);
 
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
-    void normalizeSubExpression(SgExprStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
-    void generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
+    void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    void generateTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
 
     /* If the given statement contains any break statements in its body,
        add a new label below the statement and change the breaks into

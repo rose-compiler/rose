@@ -2386,7 +2386,18 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
                     ROSE_ASSERT(classDeclaration != NULL);
                     SgName className = classDeclaration->get_name();
-                    curprint ( className.str());
+
+                 // DQ (1/11/2019): Adding support for C++11 inheriting constructor.
+                    if (usingDeclaration->get_is_inheriting_constructor() == true)
+                       {
+#if 0
+                         printf ("Adding support for C++11 inheriting constructor: className = %s \n",className.str());
+#endif
+                         curprint(className.str());
+                         curprint("::");
+                       }
+
+                    curprint (className.str());
                     break;
                   }
 

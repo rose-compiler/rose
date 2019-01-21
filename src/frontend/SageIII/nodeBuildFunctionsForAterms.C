@@ -1553,6 +1553,20 @@ SgTypeDouble* SgTypeDouble::build_node_from_nonlist_children (  )
      return returnNode;
    }
 
+SgTypeFloat80* SgTypeFloat80::build_node_from_nonlist_children (  )
+   {
+     SgTypeFloat80* returnNode = SageBuilder::buildFloat80Type();
+     ROSE_ASSERT(returnNode != NULL);
+     return returnNode;
+   }
+
+SgTypeFloat128* SgTypeFloat128::build_node_from_nonlist_children (  )
+   {
+     SgTypeFloat128* returnNode = SageBuilder::buildFloat128Type();
+     ROSE_ASSERT(returnNode != NULL);
+     return returnNode;
+   }
+
 
 /* #line 1512 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

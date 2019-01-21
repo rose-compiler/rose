@@ -6,5 +6,5 @@ struct Builder
 
 Builder builder;
 
-// demonstrate decltype() with a meber function call expression.
+// demonstrate decltype() with a member function call expression.
 decltype( builder.makeObject() ) x;

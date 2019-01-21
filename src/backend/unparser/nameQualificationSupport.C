@@ -481,6 +481,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeLongDouble:
           case V_SgTypeBool:
           case V_SgTypeWchar:
+
+          case V_SgTypeFloat80:
+          case V_SgTypeFloat128:
              {
                return_declaration = NULL;
                break;
@@ -5875,7 +5878,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgScopeStatement* currentScope = usingDirective->get_scope();
           ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+#endif
+
           int amountOfNameQualificationRequired = nameQualificationDepth(namespaceDeclaration,currentScope,usingDirective);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("SgUsingDirectiveStatement's SgNamespaceDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -5898,13 +5906,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgScopeStatement* currentScope = usingDeclaration->get_scope();
           ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+#endif
+
           int amountOfNameQualificationRequired = 0;
           if (associatedDeclaration != NULL)
              {
-#if 0
-               printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("associatedDeclaration != NULL: associatedDeclaration = %p = %s = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str(),SageInterface::get_name(associatedDeclaration).c_str());
+               printf ("associatedDeclaration != NULL: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                if (currentScope->get_scope() != NULL)
-                    printf ("currentScope->get_scope() = %p = %s \n",currentScope->get_scope(),currentScope->get_scope()->class_name().c_str());
+                    printf ("associatedDeclaration != NULL: currentScope->get_scope() = %p = %s \n",currentScope->get_scope(),currentScope->get_scope()->class_name().c_str());
 #endif
 #if 0
             // DQ (6/22/2011): The declaration in a SgUsingDeclarationStatement must have some qualification else it is not 
@@ -5920,14 +5933,37 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (3/31/2014): Compute the required depth for global qualification (required for using declarations).
                amountOfNameQualificationRequired = depthOfGlobalNameQualification(associatedDeclaration);
 #endif
+
+            // DQ (1/11/2019): Don't outout added global qualification for the case of a inheriting constructor.
             // DQ (6/22/2011): If the amountOfNameQualificationRequired is zero then add one to force at least global qualification.
             // See test2004_80.C for an example.
-               if (isSgGlobal(currentScope->get_scope()) != NULL && amountOfNameQualificationRequired == 0)
+            // if (isSgGlobal(currentScope->get_scope()) != NULL && amountOfNameQualificationRequired == 0)
+               bool is_inheriting_constructor = usingDeclaration->get_is_inheriting_constructor();
+               if (is_inheriting_constructor == false && isSgGlobal(currentScope->get_scope()) != NULL && amountOfNameQualificationRequired == 0)
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("Handling special case to force at least global qualification. \n");
 #endif
                     amountOfNameQualificationRequired += 1;
+                  }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("SgUsingDeclarationStatement's associatedDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+
+            // DQ (1/10/2019): If this is a constructor, member function, then we must qualifiy it to distinquish it from the base class name.
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(associatedDeclaration);
+               if (memberFunctionDeclaration != NULL)
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Found a member function = %p name = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+#endif
+                    if (memberFunctionDeclaration->get_specialFunctionModifier().isConstructor() == true)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("Found a constructor = %p name = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+#endif
+                       }
                   }
 
                setNameQualification(usingDeclaration,associatedDeclaration,amountOfNameQualificationRequired);
@@ -7615,7 +7651,18 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("declarationIsLocatedInDefiningScope = %s \n",declarationIsLocatedInDefiningScope ? "true" : "false");
 #endif
-               if (declarationIsLocatedInDefiningScope == true)
+
+            // DQ (1/11/2019): I think this does not apply to template declarations, since the instantiation always appear later in the global scope.
+               SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+               bool isTemplateInstantiationFunctionDecl = false;
+               if (templateInstantiationFunctionDeclaration != NULL)
+                  {
+                    isTemplateInstantiationFunctionDecl = true;
+                  }
+
+            // DQ (1/11/2019): I think that where we don't want global qualification in the case of a non-template function, we do want one for an instantiation.
+            // if (declarationIsLocatedInDefiningScope == true)
+               if (isTemplateInstantiationFunctionDecl == true || declarationIsLocatedInDefiningScope == true)
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("NOTE: using global qualification because there is a declaration in a defining scope \n");

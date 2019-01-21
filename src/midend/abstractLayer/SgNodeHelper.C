@@ -265,31 +265,6 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool sho
   return 0;
 }
 
-SgVariableDeclaration* SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(SgNode* node) {
-  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-    SgExpression* initializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
-    if(isSgFunctionCallExp(initializer)) {
-      return varDecl;
-    }
-  }
-  return 0;
-}
-
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
-  if(isSgExprStatement(node)) {
-    node=SgNodeHelper::getExprStmtChild(node);
-  }
-  // TODO: refine this to also check for name, paramters, etc.
-  if(isSgConditionalExp(node))
-    return true;
-  return false;
-}
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -1032,6 +1007,10 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchFunctionCall(SgNode* node) {
     return fce;
   if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(node))
     return fce;
+  if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(node))
+    return fce;
+  if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(node))
+    return fce;
   return 0;
 }
 
@@ -1090,6 +1069,40 @@ std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtA
     }
   }
   return std::make_pair((SgVarRefExp*)0,(SgFunctionCallExp*)0);
+}
+
+SgVariableDeclaration* SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(SgNode* node) {
+  std::pair<SgVariableDeclaration*,SgFunctionCallExp*> pair=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(node);
+  return pair.first;
+}
+
+SgFunctionCallExp* SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(SgNode* node) {
+  std::pair<SgVariableDeclaration*,SgFunctionCallExp*> pair=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(node);
+  return pair.second;
+}
+
+std::pair<SgVariableDeclaration*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(SgNode* node) {
+  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+    SgExpression* initializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(initializer)) {
+      return std::make_pair(varDecl,funCall);
+    }
+  }
+  return std::make_pair((SgVariableDeclaration*)0,(SgFunctionCallExp*)0);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
+  if(isSgExprStatement(node)) {
+    node=SgNodeHelper::getExprStmtChild(node);
+  }
+  // TODO: refine this to also check for name, paramters, etc.
+  if(isSgConditionalExp(node))
+    return true;
+  return false;
 }
 
 

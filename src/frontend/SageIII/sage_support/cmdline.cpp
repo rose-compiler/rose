@@ -472,9 +472,15 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
+  // This was the cause of a bug that contaminated the backend compiler command line for an installation 
+  // or ROSE for a specific sponsor.
+
       { // Expand Javac's @argfile since it may contain filenames
           argList = Rose::Cmdline::Java::ExpandArglist(argList);
       }
+#endif
 
      bool isSourceCodeCompiler = false;
 
@@ -635,11 +641,18 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           Rose::Cmdline::NormalizeIncludePathOptions(
               local_commandLineArgumentList);
   }
+
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+  // DQ (1/10/2019): This is an issue when using ROSE for non Java language support in some environment.
+  // This was the cause of a bug that contaminated the backend compiler command line for an installation 
+  // or ROSE for a specific sponsor.
+
   { // Expand Javac's @argfile before CLI processing
       local_commandLineArgumentList =
           Rose::Cmdline::Java::ExpandArglist(
               local_commandLineArgumentList);
   }
+#endif
 
   // Add "-D_REENTRANT" if "-pthread" is present before we save the command-line or do any other processing.
   vector<string>::iterator pthread =
@@ -4134,7 +4147,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_c99_standard:
           case e_c11_standard:
           case e_c14_standard:
-          case e_c17_standard: {
+          case e_c18_standard: {
             if (get_sourceFileUsesCppFileExtension() == true) {
                printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
                set_C_only(false);
@@ -4243,7 +4256,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          case e_c99_standard:   { printf ("C99 mode ON \n");         break; }
          case e_c11_standard:   { printf ("C11 mode ON \n");         break; }
          case e_c14_standard:   { printf ("C14 mode ON \n");         break; }
-         case e_c17_standard:   { printf ("C17 mode ON \n");         break; }
+         case e_c18_standard:   { printf ("C18 mode ON \n");         break; }
          case e_upc_standard:   { printf ("UPC mode ON \n");         break; }
          case e_cxx98_standard: { printf ("C++98 mode ON \n");       break; }
          case e_cxx03_standard: { printf ("C++03 mode ON \n");       break; }
@@ -6502,6 +6515,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#ifdef ROSE_USE_EDG_LARGE_FLOAT
+     commandLine.push_back("-DROSE_USE_EDG_LARGE_FLOAT");
+#endif
+
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
@@ -6553,7 +6570,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          inputCommandLine.push_back("--c14");
          break;
        }
-       case e_c17_standard: {
+       case e_c18_standard: {
          inputCommandLine.push_back("--c17");
          break;
        }
@@ -7282,7 +7299,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (4/13/2015): Only add boost path for C++ applications, never for C applications
   // (though this does not to have ever caused an error that I know of).
   // if (get_C_only() || get_Cxx_only())
-     if (get_Cxx_only() == true)
+
+  // TV (01/08/2019): with ubuntu 18.04 using default boost, this causes an issue
+     if (get_Cxx_only() == true && std::string(ROSE_BOOST_PATH) != "/usr")
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.
@@ -7589,6 +7608,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          }
          break;
        }
+
+    // DQ (1/10/2019): Added support for C18 (newest C language standard).
+       case e_c18_standard: {
+         if (is_gnu_standard()) {
+           compilerNameString.push_back("-std=gnu18");
+         } else {
+           compilerNameString.push_back("-std=c18");
+         }
+         break;
+       }
        case e_cxx98_standard: {
          if (is_gnu_standard()) {
            compilerNameString.push_back("-std=gnu++98");
@@ -7645,6 +7674,32 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        case e_f18_standard: {
          break; // FIXME Does the Fortran frontend support -std option?
        }
+
+       // DQ (1/10/2019): Added supporting case for UPC.
+          case e_upc_standard: 
+             {
+#if 0
+               printf ("Case of UPC not supported in -std option mechanism \n");
+#endif
+               break;
+             }
+
+       // DQ (1/10/2019): Added supporting case for UPC++.
+          case e_upcxx_standard:
+             {
+#if 0
+               printf ("Case of UPC++ not supported in -std option mechanism \n");
+#endif
+               break;
+             }
+
+       // DQ (1/10/2019): Please add a default for your switch.
+       // Plus there is no such thing as C17 (it is C18, as I recall).
+          default:
+             {
+               printf ("Unhandled case in switch: get_standard() = %d = %s \n",get_standard(),display_standard(get_standard()).c_str());
+               ROSE_ASSERT(false);
+             }
      }
 
   // printf ("compilerName       = %s \n",compilerName);

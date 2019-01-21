@@ -222,8 +222,20 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   if(SgNodeHelper::isForIncExpr(node))
     return 1;
 
+  // special case of FunctionCall is matched as : return f(...);
+  if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
+    //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
+    return 3;
+  }
+
+  //special case of FunctionCall is matched as : f(), x=f(); T x=f();
+  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
+    //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
+    return 2;
+  }
+
   switch(node->variantT()) {
-  case V_SgFunctionCallExp:
+    //  case V_SgFunctionCallExp:
   case V_SgBasicBlock:
     return 1;
   case V_SgFunctionDefinition:
@@ -240,7 +252,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgWhileStmt:
   case V_SgDoWhileStmt:
   case V_SgForStatement:
-    //  case V_SgForInitStatement: // TODO: investigate: we might not need this
+    //  case V_SgForInitStatement: // not necessary
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgGotoStatement:
@@ -281,12 +293,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
     return 1;
 
   case V_SgReturnStmt:
-    if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
-      //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
-      return 3;
-    } else {
       return 1;
-    }
   default:
     return 0;
   }

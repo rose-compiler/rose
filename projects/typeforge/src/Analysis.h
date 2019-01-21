@@ -4,9 +4,9 @@
 #include "sage3basic.h"
 #include "AstTerm.h"
 
-class TFAnalysis{
+class Analysis{
   public:
-    TFAnalysis();
+    Analysis();
     int variableSetAnalysis(SgProject* project, SgType* matchType, bool base);
     void writeAnalysis(SgType* type, std::string toTypeString);
     void writeGraph(std::string fileName);

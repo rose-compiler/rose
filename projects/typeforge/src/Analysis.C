@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "TFAnalysis.h"
+#include "Analysis.h"
 #include "TFHandles.h"
 #include <iostream>
 #include <vector>
@@ -77,11 +77,11 @@ set<SgNode*>* copySet(set<SgNode*>* oldSet){
   return newSet;
 }
 
-TFAnalysis::TFAnalysis(){}
+Analysis::Analysis(){}
 
 //searches for locations where types may be connected through assignment, passing as argument and returns
 //then passes the associated node along with the expression to link variables.
-int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool base){
+int Analysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool base){
   RoseAst wholeAST(project);
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
   if(listOfGlobalVars.size() > 0){
@@ -185,7 +185,7 @@ int TFAnalysis::variableSetAnalysis(SgProject* project, SgType* matchType, bool 
 }
 
 //finds the set containing the given node
-set<SgNode*>* TFAnalysis::getSet(SgNode* node){
+set<SgNode*>* Analysis::getSet(SgNode* node){
   for(auto i = listSets.begin(); i != listSets.end(); ++i){
     if((*i)->count(node)) return *i;
   }
@@ -211,7 +211,7 @@ string makeSetString(set<SgNode*>* variableSet){
 }
 
 //writes the sets to a file
-void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
+void Analysis::writeAnalysis(SgType* type, string toTypeString){
   for(auto i = setMap.begin(); i != setMap.end(); ++i){
     string leftName = "";
     string rightFunName = getFunctionNameOfNode(i->first);
@@ -231,7 +231,7 @@ void TFAnalysis::writeAnalysis(SgType* type, string toTypeString){
 }
 
 //writes a dot graph of the sets to the given file
-void TFAnalysis::writeGraph(string fileName){
+void Analysis::writeGraph(string fileName){
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> SetGraph;
   SetGraph graph(0);
   map<SgNode*, SetGraph::vertex_descriptor> desMap;
@@ -261,7 +261,7 @@ void TFAnalysis::writeGraph(string fileName){
 }
 
 //Searches through the expression for variables of the given type then links them with the key node provided
-void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expression){
+void Analysis::linkVariables(SgNode* key, SgType* type, SgExpression* expression){
   RoseAst ast(expression);
   for(RoseAst::iterator i = ast.begin(); i!=ast.end(); i++){
     if(SgExpression* exp = isSgExpression(*i)){
@@ -299,7 +299,7 @@ void TFAnalysis::linkVariables(SgNode* key, SgType* type, SgExpression* expressi
 }
 
 //Adds the nodes to their respective sets and creates the sets if not already created.
-void TFAnalysis::addToMap(SgNode* originNode, SgNode* targetNode){
+void Analysis::addToMap(SgNode* originNode, SgNode* targetNode){
   if(!setMap.count(originNode)){
     setMap[originNode] = new set<SgNode*>;
     setMap[originNode]->insert(originNode);

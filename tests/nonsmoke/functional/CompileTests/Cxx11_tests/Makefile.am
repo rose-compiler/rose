@@ -19,13 +19,15 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_06.C \
    test2012_07.C \
    test2012_09.C \
-   test2012_10.C \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
+   test2012_14.C \
    test2012_15.C \
    test2012_16.C \
+   test2012_17.C \
    test2012_18.C \
+   test2012_19.C \
    test2012_20.C \
    test2012_21.C \
    test2012_22.C \
@@ -34,6 +36,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_27.C \
    test2012_28.C \
    test2012_29.C \
+   test2012_30.C \
    test2012_31.C \
    test2012_32.C \
    test2012_33.C \
@@ -60,6 +63,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_21.C \
    test2014_22.C \
    test2014_23.C \
+   test2014_24.C \
    test2014_25.C \
    test2014_26.C \
    test2014_27.C \
@@ -87,6 +91,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2014_50.C \
    test2014_51.C \
    test2014_52.C \
+   test2014_53.C \
    test2014_54.C \
    test2014_55.C \
    test2014_56.C \
@@ -165,6 +170,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2017_14.C \
    test2017_15.C \
    test2017_16.C \
+   test2017_18.C \
    test2017_19.C \
    test2017_20.C \
    test2017_21.C \
@@ -286,23 +292,26 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1380.C \
    rose-1437-0.C \
    test2017_10.C \
-   rose-1522-0.C
+   rose-1522-0.C \
+   test2019_01.C \
+   test2019_02.C \
+   test2019_03.C \
+   test2019_04.C \
+   test2019_05.C \
+   test2019_06.C \
+   test2019_07.C \
+   test2019_08.C \
+   test2019_10.C 
 
 TESTCODE_CURRENTLY_FAILING = \
-   test2012_14.C \
-   test2012_17.C \
-   test2012_19.C \
+   test2012_10.C \
    test2012_23.C \
    test2012_24.C \
-   test2012_30.C \
-   test2014_24.C \
    test2014_46.C \
-   test2014_53.C \
    test2014_85.C \
    test2015_11.C \
    test2016_41.C \
-   test2017_17.C \
-   test2017_18.C 
+   test2017_17.C
 
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_9
@@ -439,7 +448,8 @@ TEST_TRANSLATOR=../../testTranslator
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:Cxx11 
+# ROSE_FLAGS = -rose:Cxx11 
+ROSE_FLAGS = -std=c++11
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
