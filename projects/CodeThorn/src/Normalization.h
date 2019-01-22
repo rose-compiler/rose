@@ -16,7 +16,6 @@ class SgSwitchStatement;
 #include "NormalizationInliner.h"
 
 namespace SPRAY {
-  //#define EXPR_NORMALIZATION_NEW
   class Normalization {
     // Not supported yet: 
     // 1. condition hoisting in do-while (into the block, not before the loop)
@@ -180,7 +179,6 @@ namespace SPRAY {
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
     void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
-    void normalizeSubExpressionNew(SgStatement* stmt, SgExpression* node);
     void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
     void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
