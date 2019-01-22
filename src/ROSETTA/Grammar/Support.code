@@ -491,10 +491,11 @@ HEADER_CV_TYPE_MODIFIER_START
        */
           enum cv_modifier_enum
              {
-               e_unknown,      /*!< Unknown value (error value) */
-               e_default,      /*!< Default value (default) */
-               e_const,        /*!< Const qualifier */
-               e_volatile,     /*!< Volatile qualifier */
+               e_unknown,        /*!< Unknown value (error value) */
+               e_default,        /*!< Default value (default) */
+               e_const,          /*!< Const qualifier */
+               e_volatile,       /*!< Volatile qualifier */
+               e_const_volatile, /*!< Both const and volatile qualifier */
 
             // DQ (8/11/2011): Added support for Java "transient" modifier.
                e_java_transient,    /*!< Java transient qualifier (specifies no serialization of declaration) */
@@ -529,6 +530,11 @@ HEADER_CV_TYPE_MODIFIER_START
           void setVolatile();
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
+
+       // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+          bool isConstVolatile() const;
+          void setConstVolatile();
+          void unsetConstVolatile();
 
        // DQ (8/11/2011): Java support.
           bool isJavaTransient() const;
@@ -2268,13 +2274,22 @@ void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
 bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
 void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 
-bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+bool $CLASSNAME::isConst() const { return ((p_modifier == e_const) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setConst()      { p_modifier = e_const; }
 void $CLASSNAME::unsetConst()    { setDefault(); }
 
-bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+bool $CLASSNAME::isVolatile() const { return ((p_modifier == e_volatile) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
+
+// DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+bool $CLASSNAME::isConstVolatile() const { return p_modifier == e_const_volatile; }
+void $CLASSNAME::setConstVolatile()      { p_modifier = e_const_volatile; }
+void $CLASSNAME::unsetConstVolatile()    { setDefault(); }
 
 // DQ (8/11/2011): Added support for Java "transient" keyword to disable serialization.
 bool $CLASSNAME::isJavaTransient() const { return p_modifier == e_java_transient; }
@@ -2289,6 +2304,10 @@ $CLASSNAME::displayString() const
      s += std::string("isDefault() = ")       + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
      s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true " : "false ");
+
+  // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+     s += std::string("isConstVolatile() = ") + std::string(isConstVolatile() ? "true " : "false ");
+
      s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true " : "false ");
      s += ")";
      return s;
@@ -2310,19 +2329,23 @@ $CLASSNAME::display ( std::string label ) const
 
 std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m) 
    {
-      os << m.get_modifier(); 
+     os << m.get_modifier(); 
      return os;
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
+   {
 	return
 	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
 	       (lhs.isDefault()  == rhs.isDefault() ) &&
 	       (lhs.isConst()    == rhs.isConst()   ) &&
 	       (lhs.isVolatile() == rhs.isVolatile()) &&
+
+            // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+	       (lhs.isConstVolatile() == rhs.isConstVolatile()) &&
+
 		   true;
-}
+   }
 
 
 // DQ (2/4/2006): Added mechamism to clear all bits
@@ -3700,53 +3723,53 @@ bool SgTypeModifier::isIdentity() const
 
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
-		   (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
-		   (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
-		   (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
-	       (lhs.isUnknown() == rhs.isUnknown()) &&
-	       (lhs.isDefault() == rhs.isDefault()) &&
-           // C specific
-	       (lhs.isRestrict() == rhs.isRestrict()) &&
-           // Fortran specific
-	       (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
-	       (lhs.isBind()         == rhs.isBind()        ) &&
-	       (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
-	       (lhs.isData()         == rhs.isData()        ) &&
-	       (lhs.isDimension()    == rhs.isDimension()   ) &&
-	       (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
-	       (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
-	       (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
-	       (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
-	       (lhs.isOptional()     == rhs.isOptional()    ) &&
-	       (lhs.isSave()         == rhs.isSave()        ) &&
-	       (lhs.isTarget()       == rhs.isTarget()      ) &&
-	       (lhs.isValue()        == rhs.isValue()       ) &&
-           // GNU specific
-	       (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
-	       (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
-	       (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
-	       (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
-	       (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
-	       (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
-	       (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
-	       (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
-	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
-	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
-	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
-           // Address Space
-               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
-               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
-           // OpenCL specific
-               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
-               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
-               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
-           // Vector Type
-               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
-               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
-		   true;
-}
+   {
+     return
+          (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+          (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
+          (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
+          (lhs.isUnknown() == rhs.isUnknown()) &&
+          (lhs.isDefault() == rhs.isDefault()) &&
+       // C specific
+          (lhs.isRestrict() == rhs.isRestrict()) &&
+       // Fortran specific
+          (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
+          (lhs.isBind()         == rhs.isBind()        ) &&
+          (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
+          (lhs.isData()         == rhs.isData()        ) &&
+          (lhs.isDimension()    == rhs.isDimension()   ) &&
+          (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
+          (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
+          (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
+          (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
+          (lhs.isOptional()     == rhs.isOptional()    ) &&
+          (lhs.isSave()         == rhs.isSave()        ) &&
+          (lhs.isTarget()       == rhs.isTarget()      ) &&
+          (lhs.isValue()        == rhs.isValue()       ) &&
+       // GNU specific
+          (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
+          (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
+          (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
+          (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
+          (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
+          (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
+          (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
+          (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
+          (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
+          (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
+          (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+       // Address Space
+          (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+          (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+       // OpenCL specific
+          (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+          (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+          (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+       // Vector Type
+          (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+          (lhs.get_vector_size() == rhs.get_vector_size() ) &&
+          true;
+   }
 
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
