@@ -6031,6 +6031,18 @@ SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION_END
 
 
 SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION_START
+
+void
+SgBitComplementOp::post_construction_initialization() 
+   {
+  // DQ (1/20/2019): This function must be defined here so that we can properly mark this operator as a prefix operator (see test2019_10.C).
+     set_mode(SgUnaryOp::prefix);
+
+#if 0
+     printf ("SgBitComplementOp::post_construction_initialization(): this->get_mode() == SgUnaryOp::prefix is  %s \n",(this->get_mode() == SgUnaryOp::prefix)  ? "true" : "false");
+#endif
+   }
+
 SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION_END
 
 
@@ -7346,6 +7358,17 @@ SgConstructorInitializer::post_construction_initialization()
        // an SgJavaParameterizedType is a class.  However, this is not the case in the current
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
+
+       // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
+          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+             {
+               printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
+               if (p_expression_type != NULL)
+                  {
+                    printf ("   --- What is this failing case?  p_expression_type = %p = %s \n",p_expression_type,p_expression_type->class_name().c_str());
+                  }
+             }
+
           ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
