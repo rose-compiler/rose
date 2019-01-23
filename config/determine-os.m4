@@ -89,8 +89,11 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
             darwin17*)
                OS_release=10.13
                ;;
+            darwin18*)
+               OS_release=10.14
+               ;;
             *)
-             echo "Error: Apple Mac OSX version not recognized as either darwin13 through darwin17 (OSX 10.9-10.13) ... (build_os = $build_os)";
+             echo "Error: Apple Mac OSX version not recognized as either darwin13 through darwin18 (OSX 10.9-10.14) ... (build_os = $build_os)";
              exit 1;
              OS_release="";;
           esac
