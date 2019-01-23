@@ -49,6 +49,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #if 0
      printf ("In Unparser_Nameq::lookup_generated_qualified_name(): referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
 #endif
+
      switch (referencedNode->variantT())
         {
           case V_SgInitializedName:
@@ -108,6 +109,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 
        // DQ (9/12/2016): Adding support for whatever types are used within alignOf operators.
           case V_SgAlignOfOp:
+
+       // DQ (1/19/2019): Added support for SgDotExp (required for some unparseToString_tests test codes (e.g. test2010_24.C, and a dozen others).
+          case V_SgDotExp:
 
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
