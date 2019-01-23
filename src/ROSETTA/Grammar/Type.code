@@ -4455,6 +4455,10 @@ SgModifierType::get_mangled (void) const
 
      if (cv_mod.isConst())       mangled_name << "C";
      if (cv_mod.isVolatile())    mangled_name << "V";
+
+  // DQ (1/19/2019): Adding const volatile modifier.
+     if (cv_mod.isConstVolatile())    mangled_name << "CV";
+
   // DQ (4/22/2004): Removed support for CC++
   // if (isSync())        mangled_name << "SYN";
   // if (isGlobal())      mangled_name << "GLB";
