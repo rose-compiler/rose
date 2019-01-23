@@ -16444,9 +16444,13 @@ SageInterface::isPrefixOperatorName( const SgName & functionName )
 
      if (functionName.is_null() == false)
         {
+       // DQ (1/20/2019): Add operator~() to this list (see test2019_10.C).
+       // if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+       //      functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
+       //      functionName == "operator-"  || functionName == "operator+" )
           if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
                functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
-               functionName == "operator-"  || functionName == "operator+" )
+               functionName == "operator-"  || functionName == "operator+"  || functionName == "operator~")
              {
                returnValue = true;
              }

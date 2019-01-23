@@ -4335,7 +4335,8 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // bool isFunctionType = (isSgFunctionType(unary_op->get_type()) != NULL) ? true : false;
 
 #if 0
-     printf ("unary_op->get_mode() != SgUnaryOp::postfix is %s \n",(unary_op->get_mode() != SgUnaryOp::postfix) ? "true" : "false");
+     printf ("unary_op->get_mode() == SgUnaryOp::prefix is  %s \n",(unary_op->get_mode() == SgUnaryOp::prefix)  ? "true" : "false");
+     printf ("unary_op->get_mode() == SgUnaryOp::postfix is %s \n",(unary_op->get_mode() == SgUnaryOp::postfix) ? "true" : "false");
      printf ("In Unparse_ExprStmt::unparseUnaryExpr: arrow_op = %s \n",arrow_op ? "true" : "false");
   // printf ("isFunctionType = %s \n",(isFunctionType == true) ? "true" : "false");
 
@@ -4355,7 +4356,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
      if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op && !isFunctionType)
 #endif
         {
-       // curprint ( "\n /* Unparsing a prefix unary operator */ \n";
+#if 0
+          curprint ( "\n /* Unparsing a prefix unary operator */ \n");
+#endif
        // DQ (2/25/2005): Trap case of SgPointerDerefExp so that "*" can't be 
        // turned into "/*" if preceeded by a SgDivideOp or overloaded "operator/()"
        // Put in an extra space so that if this happens we only generate "/ *"
@@ -4394,6 +4397,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
 
      if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op)
         {
+#if 0
+          curprint ( "\n /* Unparsing a postfix unary operator */ \n");
+#endif
           curprint(info.get_operator_name());
         }
 
@@ -4811,6 +4817,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
         }
 
+#if DEBUG_BINARY_OPERATORS
+     printf ("In unparseBinaryExpr(): BEFORE resetting current_function_call_uses_operator_syntax: current_function_call_uses_operator_syntax = %s \n",
+          current_function_call_uses_operator_syntax  == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): BEFORE resetting current_function_call_uses_operator_syntax: unp->opt.get_overload_opt()                = %s \n",
+          unp->opt.get_overload_opt() == true ? "true" : "false");
+#endif
+
   // If unp->opt.get_overload_opt() == true then use the overloaded operator names uniformally (Note that this is not well tested).
      current_function_call_uses_operator_syntax = ( (current_function_call_uses_operator_syntax == true) && !(unp->opt.get_overload_opt()) );
 
@@ -4938,9 +4951,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                printf ("In unparseBinaryExp(): Case 1.2 \n");
 #endif
 #if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax == true ? "true" : "false");
-               printf ("In unparseBinaryExp(): current_function_call_uses_operator_syntax = %s (unhandled case) \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
-               printf ("In unparseBinaryExp(): binary_op->get_rhs_operand() = %p = %s \n",binary_op->get_rhs_operand(),binary_op->get_rhs_operand()->class_name().c_str());
+               printf ("In unparseBinaryExp(): parent_function_call_uses_operator_syntax                     = %s \n",parent_function_call_uses_operator_syntax == true ? "true" : "false");
+               printf ("In unparseBinaryExp(): SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) = %s \n",SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) == true ? "true" : "false");
+               printf ("In unparseBinaryExp(): current_function_call_uses_operator_syntax                    = %s (unhandled case) \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
+               printf ("In unparseBinaryExp(): binary_op->get_rhs_operand()                      = %p = %s \n",binary_op->get_rhs_operand(),binary_op->get_rhs_operand()->class_name().c_str());
 #endif
             // DQ (4/13/2013): Adding support for prefix operators.
                if ( (parent_function_call_uses_operator_syntax == true) && (SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) == true) )
@@ -5224,6 +5238,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #if 1
                               isRelevantOverloadedOperator = true;
 #else
+#error "DEAD CODE!"
                            // DQ (7/6/2014): This was a bad idea.
                               if (parent_function_call_is_compiler_generated == false)
                                  {
@@ -5415,7 +5430,6 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
 
 #endif
 
-#if 1
   // DQ (7/6/2014): Simpler approach, but wrong since overloaded operators unparsed 
   // using operator syntax will always be marked as compiler generated.
   // bool is_compiler_generated = binary_op->isCompilerGenerated();
@@ -5428,7 +5442,6 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
         }
 
   // returnValue = (is_compiler_generated == false || isArrowExp);
-#endif
 
   // if (unp->u_sage->isOperator(binary_op->get_rhs_operand()) == false)
   //      returnValue = true;
