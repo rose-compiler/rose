@@ -5306,7 +5306,6 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
 void
 FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      SgDerivedTypeStatement* classdecl_stmt = isSgDerivedTypeStatement(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
@@ -5323,9 +5322,8 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
   // info.display("Inside of unparseClassDeclStmt");
 
-  // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
-
 #if 0
+     printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
@@ -5371,9 +5369,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           curprint ("TYPE ");
 
-       // SgName nm = classdecl_stmt->get_name();
-
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
              {
             // The PUBLIC keyword is only permitted within Modules
@@ -5387,7 +5383,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
              {
             // The PRIVATE keyword is only permitted within Modules
@@ -5401,7 +5397,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
              {
             // The BIND keyword is only permitted within Modules
@@ -5416,7 +5412,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
              {
             // The EXTENDS keyword is only permitted within Modules
@@ -5430,7 +5426,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
              {
             // The ABSTRACT keyword is only permitted within Modules

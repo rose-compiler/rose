@@ -472,7 +472,11 @@ int TFTransformation::instrumentADDecleration(SgInitializer* init){
         string varName   = SgNodeHelper::symbolToString(varSym); 
         string handle    = getHandle(varDec);
         if(handle == "") return 1; 
-        string instrumentationString="AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);";
+
+        string sourceInfo = initName->get_file_info()->get_filenameString() +
+            ":" + SgNodeHelper::sourceLineColumnToString(initName);
+        string instrumentationString="AD_intermediate(" + varName + ",\"" +
+            handle + "\",\"" + sourceInfo + "\");";
         SgNode* stmtSearch=varDec;
         while(!isSgStatement(stmtSearch)) {
           stmtSearch=stmtSearch->get_parent();
@@ -521,7 +525,11 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
           string varNameString=varName;
-          string instrumentationString="AD_intermediate("+assignOp->get_lhs_operand()->unparseToString()+",\""+varHandle+"\", SOURCE_INFO);";
+          string sourceInfo = assignOp->get_file_info()->get_filenameString() +
+              ":" + SgNodeHelper::sourceLineColumnToString(assignOp);
+          string instrumentationString="AD_intermediate(" +
+              assignOp->get_lhs_operand()->unparseToString() + ",\"" +
+              varHandle + "\",\"" + sourceInfo + "\");";
           // locate root node of statement
           SgNode* stmtSearch=assignOp;
           while(!isSgStatement(stmtSearch)) {
