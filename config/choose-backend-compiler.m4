@@ -255,13 +255,18 @@ echo "Testing value of FC = $FC"
                       ;;
               esac
           elif test $XCODE_VERSION_MAJOR -eq 9; then
-              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
             # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
             # Rasmussen (04/04//2018): Added results for clang --version 9.0.1
             # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+            # Pei-Hung (01/16/2019): Revised based on https://en.wikipedia.org/wiki/Xcode#Latest_versions
               case "$XCODE_VERSION_MINOR" in
                   0|1)
-                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=9
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=4
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      ;;
+                  3|4)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=5
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                       ;;
                   *)
                       echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
@@ -275,7 +280,7 @@ echo "Testing value of FC = $FC"
             # see also https://github.com/apple/swift-llvm/blob/swift-4.2-branch/CMakeLists.txt
             # NOTE that this is very tentative and don't know if it will work
               case "$XCODE_VERSION_MINOR" in
-                  0)
+                  0|1)
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                       ;;
                   *)
