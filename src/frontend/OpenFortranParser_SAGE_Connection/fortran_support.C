@@ -4162,11 +4162,12 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 void
 setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
-  // printf ("In setDeclarationAttributeSpec(): variableDeclaration = %p astAttributeSpec = %d \n",variableDeclaration,astAttributeSpec);
+  // This could either be a variable declaration or a class declaration
 
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of setDeclarationAttributeSpec()");
+     printf ("In setDeclarationAttributeSpec(): variableDeclaration = %p astAttributeSpec = %d \n",variableDeclaration,astAttributeSpec);
 #endif
 
      switch(astAttributeSpec)
@@ -4214,7 +4215,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // printf ("Exiting after processing AttrSpec_PUBLIC = %d \n",(int)AttrSpec_PUBLIC);
                break;
 
-          case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
+          case AttrSpec_PRIVATE:   variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
 
        // DQ (9/11/2010): Fortran protected attribute is not the same a C++ protected attribute, so we use a different mechanism 
        // that can be associated with individual variables if required (as required with the protected statment is used with 
