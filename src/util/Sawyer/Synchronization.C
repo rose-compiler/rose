@@ -50,9 +50,17 @@ fastRandomIndex(size_t n) {
     // denominator across compilers is that thread-local storage can only be applied to POD types.
     static SAWYER_THREAD_LOCAL SAWYER_PRN_GENERATOR *generator = NULL;
     if (!generator) {
-#if 1 || (defined(__APPLE__) && defined(__MACH__))
-        // boost::random_device is not available on macOS, so seed the PRN generator with something that's maybe a tiny bit random.
-        // PolyOpt test in Jenkins uses its own list of libraries rather than ROSE libraries and is missing -lboost_random.
+#if defined(BOOST_WINDOWS)
+        // Seed the PRN generator with a random staring point.
+        boost::random_device seeder;
+        generator = new SAWYER_PRN_GENERATOR(seeder());
+#elif defined(__APPLE__) && defined(__MACH__)
+        // boost::random_device is not available on macOS, so seed the PRN generator with something that's maybe a tiny bit
+        // random.
+        generator = new SAWYER_PRN_GENERATOR(getpid());
+#elif 1
+        // FIXME[Robb Matzke 2019-01-25]: ROSE PolyOpt test in Jenkins uses its own list of libraries rather than ROSE
+        // libraries and is missing -lboost_random.
         generator = new SAWYER_PRN_GENERATOR(getpid());
 #else
         // Seed the PRN generator with a random staring point.
