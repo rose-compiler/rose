@@ -15,7 +15,7 @@ class SgSwitchStatement;
 #include "NormalizationOp.h"
 #include "NormalizationInliner.h"
 
-namespace SPRAY {
+namespace CodeThorn {
   class Normalization {
     // Not supported yet: 
     // 1. condition hoisting in do-while (into the block, not before the loop)
@@ -104,9 +104,9 @@ namespace SPRAY {
     void setInliningOption(bool flag);
     bool getInliningOption();
     // calls ROSE SageInterface function for inlining
-    SPRAY::InlinerBase* getInliner();
+    CodeThorn::InlinerBase* getInliner();
     // allows to use custom inliner. Default is the inliner from the SageInterface.
-    void setInliner(SPRAY::InlinerBase*);
+    void setInliner(CodeThorn::InlinerBase*);
 
   protected:
     // assumes correctly configured options (invoked by normalizeAst(root,level))
@@ -117,7 +117,11 @@ namespace SPRAY {
      * is then straight-forward.
      * Transformation:  L: S; => L; S;
      */
+
   public:
+    static void initDiagnostics();
+    static Sawyer::Message::Facility logger;
+
     static void normalizeLabelStmts(SgNode* root);
     // the associated stmt node (= the label node's child) remains unchanged, except for the update of its parent pointer.
     static void normalizeLabel(SgLabelStatement* label);
@@ -232,12 +236,10 @@ namespace SPRAY {
     std::list<NormalizationOp*> loweringSequence;
 
     void removeDefaultInliner();
-    SPRAY::InlinerBase* _inliner=0;
+    CodeThorn::InlinerBase* _inliner=0;
     bool _defaultInliner=true;
-
-    void insertTmpVarAssignment(SgStatement* stmt, SgExpression* expr);
   };
   
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

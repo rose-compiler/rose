@@ -117,6 +117,7 @@ void CodeThorn::initDiagnostics() {
   CounterexampleGenerator::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
+  Normalization::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {
@@ -1289,7 +1290,7 @@ int main( int argc, char * argv[] ) {
      * variables are duplicated by inlining. */
     if(args.getBool("inline")) {
       InlinerBase* inliner=lowering.getInliner();
-      if(RoseInliner* roseInliner=dynamic_cast<SPRAY::RoseInliner*>(inliner)) {
+      if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
         roseInliner->inlineDepth=args.getInt("inlinedepth");
       }
       inliner->inlineFunctions(sageProject);

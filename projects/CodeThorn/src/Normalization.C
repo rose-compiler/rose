@@ -11,12 +11,16 @@
 #include "AstFixup.h"
 #include "astPostProcessing.h"
 
+#include "Diagnostics.h"
+using namespace Sawyer::Message;
+
 // Author: Markus Schordan, 2018
 
 using namespace std;
 using namespace Rose;
+using namespace Sawyer::Message;
 
-namespace SPRAY {
+namespace CodeThorn {
 
   int32_t Normalization::labelNr=1;
   string Normalization::labelPrefix="__label";
@@ -24,6 +28,15 @@ namespace SPRAY {
   int32_t Normalization::tmpVarNr=1;
   string Normalization::tmpVarPrefix="__logOpTmp";
 
+  Sawyer::Message::Facility Normalization::logger;
+  void Normalization::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+      initialized = true;
+      logger = Sawyer::Message::Facility("CodeThorn::Normalization", Rose::Diagnostics::destination);
+      Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+    }
+  }
 
   Normalization::Normalization() {
     _inliner=new RoseInliner();
@@ -192,7 +205,7 @@ namespace SPRAY {
   InlinerBase* Normalization::getInliner() {
     return _inliner;
   }
-  void Normalization::setInliner(SPRAY::InlinerBase* userDefInliner) {
+  void Normalization::setInliner(CodeThorn::InlinerBase* userDefInliner) {
     removeDefaultInliner();
     _inliner=userDefInliner;
   }
@@ -257,7 +270,7 @@ namespace SPRAY {
               i.skipChildrenOnForward();
               continue;
             } else {
-              //cout<<"DEBUG: Normalizing variable initializer with function call: "<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
+              logger[TRACE]<<"Normalizing variable initializer with function call: "<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
             }
           }
           if(SgStatement* newVarAssignment=buildNormalizedVariableDeclaration(varDecl)) {
@@ -266,7 +279,7 @@ namespace SPRAY {
         }
         i.skipChildrenOnForward();
       } else {
-        //cout<<"DEBUG: NOT a variable declaration: "<<node->class_name()<<endl;
+        logger[TRACE]<<"NOT a variable declaration: "<<node->class_name()<<endl;
       }
     }
     for(auto declAssign : declAssignList) {
@@ -283,7 +296,7 @@ namespace SPRAY {
     SgScopeStatement* scopeStatement=varDecl->get_scope();
     ROSE_ASSERT(scopeStatement);
     if(!isSgGlobal(scopeStatement)) {
-      //cout<<"DEBUG normalizing decl: "<<varDecl->unparseToString()<<endl;
+      logger[TRACE]<<"normalizing decl: "<<varDecl->unparseToString()<<endl;
       SgExpression* declInitializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
       // if there is no initializer, the declaration remains unchanged
       if(declInitializer) {
@@ -467,8 +480,7 @@ namespace SPRAY {
         stmt=varDecl;
       }
       if(SgReturnStmt* returnStmt=isSgReturnStmt(*i)) {
-        //cout<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
-        // TODO: normalization
+        logger[TRACE]<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
         expr=returnStmt->get_expression();
         stmt=returnStmt;
         i.skipChildrenOnForward();
@@ -480,7 +492,7 @@ namespace SPRAY {
               normalizeExpression(stmt,expr);
             }
           } else {
-            //cout<<"DEBUG: normalizing "<<(expr)->unparseToString()<<endl;
+            logger[DEBUG]<<"normalizing "<<(expr)->unparseToString()<<endl;
             normalizeExpression(stmt,expr);
           }
         }
@@ -493,7 +505,7 @@ namespace SPRAY {
       for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
         SgStatement* stmt=(*j).stmt;
         SgExpression* expr=(*j).expr;
-        //cout<<"DEBUG: TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
+        logger[TRACE]<<"TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
         switch((*j).transformation) {
         case Normalization::GEN_TMPVAR: {
           // 1) generate tmp-var initializer with expr as lhs
@@ -507,24 +519,22 @@ namespace SPRAY {
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // 2) replace use of expr with tmp-var
           if(isSgOrOp(expr->get_parent())||isSgAndOp(expr->get_parent())) {
-            cout<<"TRANSFORMATION: detected binary LOG OP (at child)."<<endl;
             logOpOperandTmpVar=tmpVarReference;
-            //SageInterface::replaceExpression(expr, tmpVarReference);
           } else {
             SageInterface::replaceExpression(expr, tmpVarReference);
-            //cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
+            logger[DEBUG]<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           }
           break;
         }
         case Normalization::GEN_FALSE_BOOL_VAR_DECL: {
-          //cout<<"GENERATING BOOL VAR DECL:"<<endl;
+          logger[TRACE]<<"GENERATING BOOL VAR DECL:"<<endl;
           SgVariableDeclaration* decl=(*j).decl;
           insertNormalizedSubExpressionFragment(decl,stmt);
           break;
         }
         case Normalization::GEN_IF_ELSE_STMT: {
           ROSE_ASSERT(logOpOperandTmpVar);
-          //cout<<"GENERATING IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
+          logger[TRACE]<<"GENERATING IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
           SgExpression* cond=logOpOperandTmpVar;
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
@@ -538,16 +548,17 @@ namespace SPRAY {
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl); // to be used in condition of if-stmt
           SgScopeStatement* scope=stmt->get_scope();
           ROSE_ASSERT(logOpOperandTmpVar);
-          //cout<<"GENERATING BOOL VAR IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
+          logger[TRACE]<<"GENERATING BOOL VAR IF ELSE STMT: logOpOperandTmpVar: "<<logOpOperandTmpVar->unparseToString()<<endl;
           SgExpression* cond=logOpOperandTmpVar;
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,false_body,scope);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
+          logOpOperandTmpVar=varRefExp; // handle special case: binary log op is operand of other binary log op
           break;
         }
         case Normalization::GEN_BOOL_VAR_IF_STMT: {
-          //cout<<"GENERATING BOOL VAR IF STMT:"<<endl;
+          logger[TRACE]<<"GENERATING BOOL VAR IF STMT:"<<endl;
           SgVariableDeclaration* decl=(*j).decl;
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl); // to be used in condition of if-stmt
           SgScopeStatement* scope=stmt->get_scope();
@@ -556,16 +567,15 @@ namespace SPRAY {
           SgStatement* true_body=(*j).trueBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
+          logOpOperandTmpVar=varRefExp; // handle special case: binary log op is operand of other binary log op
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
           if(isSgOrOp(expr)||isSgAndOp(expr)) {
             // replace the binary logical operator with introduced tmp truth variable
-            cout<<"DETECTED BINARY LOG OP IN TRANSFORMATION."<<endl;
-            //ROSE_ASSERT(logOpOperandTmpVar);
             SgVariableDeclaration* decl=(*j).decl;
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
-            //cout<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var."<<endl;
+            logger[TRACE]<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var."<<endl;
             SageInterface::replaceExpression(expr,varRefExp);
           }
           break;
@@ -666,7 +676,7 @@ namespace SPRAY {
       }
       // check if function has a return value
       SgType* functionReturnType=funCallExp->get_type();
-      //cout<<"DEBUG: function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+      logger[DEBUG]<<"function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
 
       // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
       SgNode* parentNode=funCallExp->get_parent();
@@ -677,9 +687,8 @@ namespace SPRAY {
       }
     } else if(isSgAndOp(expr)) {
       // special case: short circuit operator normalization
-      cerr<<"DEBUG: found AndOp"<<endl;
       SgScopeStatement* scope=stmt->get_scope();
-      SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
+      SgVariableDeclaration* decl=generateFalseBoolVarDecl  (scope);
       registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
       SgBasicBlock* block=SageBuilder::buildBasicBlock();
@@ -689,7 +698,6 @@ namespace SPRAY {
       registerBoolVarIfElseStmt(block,expr,decl,0,0,subExprTransformationList);
     } else if(isSgOrOp(expr)) {
       // special case: short circuit operator normalization
-      cerr<<"DEBUG: found OrOp"<<endl;
       SgScopeStatement* scope=stmt->get_scope();
       SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
       registerFalseBoolVarDecl(stmt,expr,decl,subExprTransformationList);
@@ -709,20 +717,6 @@ namespace SPRAY {
       normalizeSubExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList);
       registerTmpVarAssignment(stmt,expr,subExprTransformationList);
     }
-  }
-
-  void Normalization::insertTmpVarAssignment(SgStatement* stmt, SgExpression* expr) {
-    // at: op(...)
-    // insert: t_i=op(...);
-    // replace: parent(... op ...) ==> parent( ... t ...)
-    cout<<"DEBUG: @"<<expr->unparseToString()<<endl;
-    SgVariableDeclaration* tmpVarDeclaration = 0;
-    SgExpression* tmpVarReference = 0;
-    SgScopeStatement* scope=stmt->get_scope();
-    tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(expr, scope);
-    tmpVarDeclaration->set_parent(scope);
-    ROSE_ASSERT(tmpVarDeclaration!= 0);
-    //insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
   }
 
   SgVariableDeclaration* Normalization::generateFalseBoolVarDecl(SgScopeStatement* scope) {
@@ -852,7 +846,7 @@ namespace SPRAY {
             breakTransformationList.push_back(stmt);
           } 
         } else {
-          if(options.transformBreakToGotoInLoopStmts && CFAnalysis::isLoopConstructRootNode(stmt)) {
+          if(options.transformBreakToGotoInLoopStmts && SPRAY::CFAnalysis::isLoopConstructRootNode(stmt)) {
             breakTransformationList.push_back(stmt);
           }
           if(options.transformContinueToGotoInWhileStmts) {
