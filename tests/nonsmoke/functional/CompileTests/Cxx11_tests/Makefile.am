@@ -309,7 +309,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_13.C \
    test2019_14.C \
    test2019_17.C \
-   test2019_18.C 
+   test2019_18.C \
+   test2019_19.C \
+   test2019_20.C \
+   test2019_21.C \
+   test2019_22.C \
+   test2019_23.C \
+   test2019_24.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_23.C \
