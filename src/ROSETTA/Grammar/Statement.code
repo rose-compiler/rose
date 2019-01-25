@@ -393,6 +393,11 @@ HEADER_SCOPE_STATEMENT_START
        // SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const;
           SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
+       // DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
+       // This is important in handling the viability of symbols through base classes when private base 
+       // class derivation is used.
+          SgAliasSymbol* lookup_alias_symbol(const SgName& n, SgSymbol* sp) const;
+
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
        // SgVariableSymbol*  first_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
@@ -5868,6 +5873,46 @@ SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, co
      }
 
      return p_symbol_table->find_nontemplate_member_function(n,t,templateArgumentsList);
+   }
+
+
+// DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
+// This is important in handling the viability of symbols through base classes when private base 
+// class derivation is used.
+SgAliasSymbol*
+SgScopeStatement::lookup_alias_symbol(const SgName& n, SgSymbol* sp) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+
+          SgAliasSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_aliased_symbol(n,sp);
+          return symbol;
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgAliasSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_aliased_symbol(n,sp);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+#if 0
+     printf ("In SgScopeStatement::lookup_alias_symbol(): Calling p_symbol_table->find_aliased_symbol(n,sp) \n");
+#endif
+
+     return p_symbol_table->find_aliased_symbol(n,sp);
    }
 
 

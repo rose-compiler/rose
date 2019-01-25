@@ -13146,8 +13146,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
                SgClassDeclaration* tmp_classDeclarationFromType = isSgClassDeclaration(class_type->get_declaration());
                ROSE_ASSERT(tmp_classDeclarationFromType != NULL);
-               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
 #if DEBUG_CLASS_DECLARATION
+               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
                printf ("tmp_classDeclarationFromType: scope = %p = %s \n",scope,scope->class_name().c_str());
                printf ("tmp_classDeclarationFromType = %p = %s \n",tmp_classDeclarationFromType,tmp_classDeclarationFromType->class_name().c_str());
                printf ("tmp_classDeclarationFromType name = %s \n",tmp_classDeclarationFromType->get_name().str());
@@ -14951,7 +14951,10 @@ SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
 
      if (isVirtual == true)
         {
-          baseclass->get_baseClassModifier().setVirtual();
+       // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+       // baseclass->get_baseClassModifier().setVirtual();
+          ROSE_ASSERT(baseclass->get_baseClassModifier() != NULL);
+          baseclass->get_baseClassModifier()->setVirtual();
         }
 
   // DQ (4/29/2004): add support to set access specifier

@@ -42,6 +42,14 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
   // DQ (9/22/2012): Allow this to be commented out so that we can see the AST graph of the initial conditions.
      printf ("ERROR: COMMENTED OUT CALL TO FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
 #endif
+
+  // DQ (1/23/2019): The set maintained in SgSymbolTable::get_aliasSymbolCausalNodeSet() should likely be 
+  // cleared after use in this function.
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("In fixupAstSymbolTablesToSupportAliasedSymbols(): SgSymbolTable::get_aliasSymbolCausalNodeSet().size() = %zu (should be cleared) \n",SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
+#endif
+     SgSymbolTable::get_aliasSymbolCausalNodeSet().clear();
+     ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
    }
 
 
@@ -57,6 +65,284 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
    }
 
 
+#if 0
+// DQ (1/21/2019): Added to support Cxx_tests/test2019_21.C (symbol aliasing of data member in private base class of base class of derived class).
+bool
+FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( SgClassDeclaration* classDeclaration, SgSymbol* symbol )
+   {
+  // DQ (1/22/2019): This is the wrong function for where we need it below.  This function (which is recursive over the derived classes)
+  // would be useful as a consistancy test at some point, but does not address the immediate problem to detect only if a symbol is from 
+  // a private base class.  No recursion is required to address this (simpler) question.
+
+  // This function assumes that the first layer of base class has been stripped away.
+  // We also need to make sure that we can't have a circular reference to base classes.  I think this is not allowed by the C++ language.
+
+     bool returnValue = false;
+
+#error "DEAD CODE!"
+
+     ROSE_ASSERT(classDeclaration != NULL);
+     ROSE_ASSERT(symbol           != NULL);
+
+#if 1
+     printf ("In isDefinedThroughPrivateBaseClass(): classDeclaration = %p = %s symbol = %p = %s \n",classDeclaration,SageInterface::get_name(classDeclaration).c_str(),symbol,symbol->class_name().c_str());
+#endif
+
+  // SgNode*        causalNode  = NULL;
+     SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+
+#error "DEAD CODE!"
+
+     if (aliasSymbol != NULL)
+        {
+       // SgNodePtrList causal_nodes
+       // SgNodePtrList & causalNodeList = aliasSymbol->get_causal_nodes();
+       // ROSE_ASSERT(causalNodeList.empty() == false);
+
+       // causalNode = causalNodeList[0];
+       // ROSE_ASSERT(causalNode != NULL);
+
+          symbol = aliasSymbol->get_base();
+
+          ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
+        }
+
+#error "DEAD CODE!"
+
+     ROSE_ASSERT(symbol != NULL);
+
+     SgName name = symbol->get_name();
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+  // printf ("  --- causalNode             = %p = %s \n",causalNode,(causalNode != NULL) ? causalNode->class_name().c_str() : "null");
+     printf ("  --- symbol table name: name = %s \n",name.str());
+     printf ("  --- symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+
+  // SgBaseClass* baseClass = isSgBaseClass(causalNode);
+
+     SgClassDefinition* classDefinition = classDeclaration->get_definition();
+
+     printf ("Class definition from input class declaration: classDefinition = %p \n",classDefinition);
+
+#error "DEAD CODE!"
+
+     if (classDefinition == NULL)
+        {
+          printf ("Get the defining declaration \n");
+          classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+
+       // ROSE_ASSERT(classDeclaration != NULL);
+          if (classDeclaration != NULL)
+             {
+               classDefinition = classDeclaration->get_definition();
+             }
+            else
+             {
+               printf ("DEFINING DECLARATION NOT FOUND! \n");
+             }
+        }
+
+   // ROSE_ASSERT(classDefinition != NULL);
+
+     printf ("After resolving the defining class declaration: classDefinition = %p \n",classDefinition);
+
+#error "DEAD CODE!"
+
+     if (classDefinition != NULL)
+        {
+       // bool symbol_exists (const SgSymbol *sp) const 
+          if (classDefinition->symbol_exists(symbol) == true)
+             {
+               printf ("Found class definition ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
+             }
+            else
+             {
+               printf ("NOT FOUND ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
+
+               SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
+
+               SgBaseClassPtrList::iterator i = baseClassList.begin();
+               while (returnValue == false && i != baseClassList.end())
+                  {
+                    SgBaseClass* baseClass = *i;
+
+#error "DEAD CODE!"
+
+                    if (baseClass != NULL)
+                       {
+#if 1
+                         printf ("Found a base class \n");
+#endif
+                         SgClassDeclaration* baseClass_classDeclaration = baseClass->get_base_class();
+                         ROSE_ASSERT(baseClass_classDeclaration != NULL);
+#if 1
+                         printf ("RECURSIVE CALL: isDefinedThroughPrivateBaseClass(): baseClass_classDeclaration = %p = %s \n",
+                              baseClass_classDeclaration,baseClass_classDeclaration->get_name().str());
+#endif
+                         returnValue = isDefinedThroughPrivateBaseClass(baseClass_classDeclaration,symbol);
+                       }
+
+#error "DEAD CODE!"
+
+                    i++;
+                  }
+             }
+        }
+       else
+        {
+          printf ("NO CLASS DEFINITION FOUND: classDefinition = %p \n",classDefinition);
+        }
+
+     printf ("Leaving isDefinedThroughPrivateBaseClass(): returnValue = %s \n",returnValue ? "true" : "false");
+
+#error "DEAD CODE!"
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnValue;
+   }
+#endif
+
+
+// DQ (1/21/2019): Added to support Cxx_tests/test2019_21.C (symbol aliasing of data member in private base class of base class of derived class).
+bool
+FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( SgClassDeclaration* classDeclaration, SgSymbol* symbol )
+   {
+  // DQ (1/22/2019): This function is only posed on a single class declaration, not a chain of base blasses.
+
+     bool returnValue = false;
+
+     ROSE_ASSERT(classDeclaration != NULL);
+     ROSE_ASSERT(symbol           != NULL);
+
+#if 1
+     printf ("In isDefinedThroughPrivateBaseClass(): classDeclaration = %p = %s symbol = %p = %s \n",classDeclaration,SageInterface::get_name(classDeclaration).c_str(),symbol,symbol->class_name().c_str());
+#endif
+
+  // The symbol is an element of a base class only if it is an SgAliasSymbol.
+     SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+     if (aliasSymbol != NULL)
+        {
+#if 1
+          printf ("In isDefinedThroughPrivateBaseClass(): FOUND SgAliasSymbol! \n");
+#endif
+
+       // SgNodePtrList causal_nodes;
+          SgNodePtrList & causalNodeList = aliasSymbol->get_causal_nodes();
+          ROSE_ASSERT(causalNodeList.empty() == false);
+
+          SgNode* causalNode = causalNodeList[0];
+          ROSE_ASSERT(causalNode != NULL);
+
+          symbol = aliasSymbol->get_base();
+
+          ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
+
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+
+#if 1
+     printf ("Exiting as a test in function scope! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     ROSE_ASSERT(symbol != NULL);
+
+     SgName name = symbol->get_name();
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+  // printf ("  --- causalNode             = %p = %s \n",causalNode,(causalNode != NULL) ? causalNode->class_name().c_str() : "null");
+     printf ("  --- symbol table name: name = %s \n",name.str());
+     printf ("  --- symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+
+  // SgBaseClass* baseClass = isSgBaseClass(causalNode);
+
+     SgClassDefinition* classDefinition = classDeclaration->get_definition();
+
+     printf ("Class definition from input class declaration: classDefinition = %p \n",classDefinition);
+
+     if (classDefinition == NULL)
+        {
+          printf ("Get the defining declaration \n");
+          classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+
+       // ROSE_ASSERT(classDeclaration != NULL);
+          if (classDeclaration != NULL)
+             {
+               classDefinition = classDeclaration->get_definition();
+             }
+            else
+             {
+               printf ("DEFINING DECLARATION NOT FOUND! \n");
+             }
+        }
+
+   // ROSE_ASSERT(classDefinition != NULL);
+
+     printf ("After resolving the defining class declaration: classDefinition = %p \n",classDefinition);
+
+     if (classDefinition != NULL)
+        {
+       // bool symbol_exists (const SgSymbol *sp) const 
+          if (classDefinition->symbol_exists(symbol) == true)
+             {
+               printf ("Found class definition ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
+             }
+            else
+             {
+               printf ("NOT FOUND ROOT for symbol: classDeclaration name = %s symbol = %p = %s \n",classDeclaration->get_name().str(),symbol,symbol->class_name().c_str());
+
+               SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
+
+               SgBaseClassPtrList::iterator i = baseClassList.begin();
+               while (returnValue == false && i != baseClassList.end())
+                  {
+                    SgBaseClass* baseClass = *i;
+
+                    if (baseClass != NULL)
+                       {
+#if 1
+                         printf ("Found a base class \n");
+#endif
+                         SgClassDeclaration* baseClass_classDeclaration = baseClass->get_base_class();
+                         ROSE_ASSERT(baseClass_classDeclaration != NULL);
+#if 1
+                         printf ("RECURSIVE CALL: isDefinedThroughPrivateBaseClass(): baseClass_classDeclaration = %p = %s \n",
+                              baseClass_classDeclaration,baseClass_classDeclaration->get_name().str());
+#endif
+                         returnValue = isDefinedThroughPrivateBaseClass(baseClass_classDeclaration,symbol);
+                       }
+
+                    i++;
+                  }
+             }
+        }
+       else
+        {
+          printf ("NO CLASS DEFINITION FOUND: classDefinition = %p \n",classDefinition);
+        }
+#endif
+
+     printf ("Leaving isDefinedThroughPrivateBaseClass(): returnValue = %s \n",returnValue ? "true" : "false");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnValue;
+   }
+
 
 // DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
@@ -67,6 +353,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
      printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
+     printf ("   --- referencedScope = %s \n",SageInterface::get_name(referencedScope).c_str());
+     printf ("   --- currentScope = %s \n",SageInterface::get_name(currentScope).c_str());
+     printf ("   --- causalNode = %s \n",SageInterface::get_name(causalNode).c_str());
 #endif
 
      SgSymbolTable* symbolTable = referencedScope->get_symbol_table();
@@ -85,6 +374,18 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
           printf ("Injection of symbols from a class definition needs to respect access priviledge (private, protected, public) declarations \n");
 #endif
         }
+
+#if 1
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("Adding causalNode = %p = %s name = %s to SgSymbolTable::get_aliasSymbolCausalNodeSet() \n",causalNode,causalNode->class_name().c_str(),SageInterface::get_name(causalNode).c_str());
+#endif
+
+  // DQ (1/23/2019): Also need to add this to the aliasSymbolCausalNodeSet.
+     if (SgSymbolTable::get_aliasSymbolCausalNodeSet().find(causalNode) == SgSymbolTable::get_aliasSymbolCausalNodeSet().end())
+        {
+          SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(causalNode);
+        }
+#endif
 
      SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
      ROSE_ASSERT(internalTable != NULL);
@@ -105,6 +406,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
           SgSymbol* symbol = (*i).second;
 
           ROSE_ASSERT ( symbol != NULL );
+
+       // DQ (1/22/2019): Save a copy of the symbol before we resolved it to the unaliased base.
+          SgSymbol* original_symbol = symbol;
 
        // Make sure that this is not a SgLabelSymbol, I think these should not be aliased
        // (if only because I don't think that C++ support name qualification for labels).
@@ -180,12 +484,240 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              }
 #endif
 
+       // DQ (1/21/2019): The test2019_21.C demonstrates that while a private base class is visible in the derived 
+       // class, it an subsequent derived class it should not be visible.  So we can't just copy all of the symbols 
+       // from one class into another.  We need to check the causal node and see if it is associated with a private 
+       // base class within the class whose nodes were are copying.
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+          printf ("  --- accessLevel            = %d \n",accessLevel);
+          printf ("  --- declarationAccessLevel = %d \n",declarationAccessLevel);
+          printf ("  --- causalNode             = %p = %s \n",causalNode,(causalNode != NULL) ? causalNode->class_name().c_str() : "null");
+          printf ("  --- symbol table name: name = %s \n",name.str());
+          printf ("  --- symbol          = %p = %s \n",symbol,symbol->class_name().c_str());
+          printf ("  --- original_symbol = %p = %s \n",original_symbol,original_symbol->class_name().c_str());
+#endif
+
+#define DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT 0
+
+       // DQ (1/25/2019): This code should be refactored to a seperate function since it is just about the 
+       // private base class support.  An alternative implementation could use a isInherited flag or 
+       // isInheritedThroughPrivateBaseClass flag that might simplify the implementation (suggested by Tristan).
+       // The flag would be added to the SgAliasSymbol, unclear if this is redundant with the causal node list.
+
+          bool definedThroughPrivateBaseClass = false;
+
+          SgBaseClass* baseClass = isSgBaseClass(causalNode);
+          if (baseClass != NULL)
+             {
+               SgBaseClassModifier* baseClassModifier = baseClass->get_baseClassModifier();
+               ROSE_ASSERT(baseClassModifier != NULL);
+
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+               SgAccessModifier & accessModifier = baseClassModifier->get_accessModifier();
+               printf ("  --- baseClass = %p name = %s \n",baseClass,SageInterface::get_name(baseClass).c_str());
+               printf ("  --- accessModifier = %s \n",accessModifier.displayString().c_str());
+#endif
+            // Check if the symbol here is from another base class and if is a private base class.
+            // Iterate for each symbol through the associated base classes until we reach a non-alias symbol.
+            // Note that the alias symbols do no form an alias chain, so we have to go through the causal 
+            // nodes within each iteration.
+
+               SgClassDefinition* derivedClassDefinition = isSgClassDefinition(baseClass->get_parent());
+               ROSE_ASSERT(derivedClassDefinition != NULL);
+               SgClassDeclaration* derivedClassDeclaration = derivedClassDefinition->get_declaration();
+               ROSE_ASSERT(derivedClassDeclaration != NULL);
+
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+               printf ("derivedClassDeclaration = %p = %s name = %s \n",derivedClassDeclaration,derivedClassDeclaration->class_name().c_str(),derivedClassDeclaration->get_name().str());
+#endif
+            // Need to iterate through base classes chains. iterate past the first layer.
+               SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
+               ROSE_ASSERT(baseClassDeclaration != NULL);
+               SgClassDeclaration* definingBaseClassDeclaration = isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
+               ROSE_ASSERT(definingBaseClassDeclaration != NULL);
+
+               SgClassDefinition* baseClassDefinition = definingBaseClassDeclaration->get_definition();
+               ROSE_ASSERT(baseClassDefinition != NULL);
+
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+               printf ("baseClassDeclaration = %p = %s name = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
+#endif
+            // SgClassDefinition* classDefinition = classDeclaration->get_definition();
+            // ROSE_ASSERT(classDefinition != NULL);
+
+               if (baseClassDefinition->symbol_exists(original_symbol) == true)
+                  {
+                 // Sense we found the original symbol in the base class, we know that the symbol would visible in the derivedClassDeclaration 
+                 // only because of the derivation from the base class.  Then the only point is if the base class is a private base class or not.
+                 // If it is a private base class then we don't want to build the alias symbol, but if it is public or protected then we do want
+                 // to insert the symbol (through a SgAliasSymbol).
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                    printf ("FOUND original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
+
+                 // SgAliasSymbol* aliasSymbol = isSgAliasSymbol(original_symbol);
+                 // size_t count_alias_symbol (const SgName &n);
+
+                    printf ("baseClassDefinition->count_alias_symbol(): name = %s count = %zu \n",name.str(),baseClassDefinition->count_alias_symbol(name));
+                 // baseClassDefinition->print_symboltable("isDefinedThroughPrivateBaseClass");
+#endif
+
+
+                    SgSymbol* baseClassSymbol = NULL;
+                    switch(symbol->variantT())
+                       {
+                         case V_SgVariableSymbol:
+                            {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                              printf ("case V_SgVariableSymbol: Process symbol lookup as a variable \n");
+#endif
+                           // DQ (1/23/2019): We want this to return a SgAliasSymbol associated with the name if it exists,
+                           // and maybe if there is also not a non-alias symbol available.  Teh get_symbol function will
+                           // return the non-aliased version of the symbol even when an aliased version of the symbol exists.
+                           // So we need an additional API function to support this.
+
+                           // SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_variable_symbol(name);
+                           // SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_symbol(name);
+                              SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_alias_symbol(name,symbol);
+                              if (baseClassVariableSymbol == NULL)
+                                 {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                                   printf ("NO SgAliasSymbol was found: search for non-alias symbol \n");
+#endif
+                                   baseClassVariableSymbol = baseClassDefinition->lookup_variable_symbol(name);
+                                 }
+                              ROSE_ASSERT(baseClassVariableSymbol != NULL);
+                              baseClassSymbol = baseClassVariableSymbol;
+                              break;
+                            }
+
+                         case V_SgTypedefSymbol:
+                            {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                              printf ("case V_SgTypedefSymbol: Not supported in private base class symbol alias handling \n");
+#endif
+                              break;
+                            }
+
+                         case V_SgEnumSymbol:
+                         case V_SgEnumFieldSymbol:
+                            {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                              printf ("case V_SgEnumFieldSymbol: Not supported in private base class symbol alias handling \n");
+#endif
+                              break;
+                            }
+
+                         default: 
+                            {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                              printf ("Default reached in switch: Symbol = %p = %s name = %s is not handled in switch \n",symbol,symbol->class_name().c_str(),name.str());
+                           // ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+
+                 // SgSymbol* baseClassSymbol = baseClassDefinition->lookup_class_symbol(name,NULL);
+                 // ROSE_ASSERT(baseClassSymbol != NULL);
+
+                    if (baseClassSymbol != NULL)
+                       {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                         printf ("baseClassSymbol = %p = %s \n",baseClassSymbol,baseClassSymbol->class_name().c_str());
+#endif
+                       }
+
+                 // ROSE_ASSERT(baseClassDefinition->count_alias_symbol(name) > 0);
+                 // SgSymbol* baseClassSymbol = baseClassDefinition->get_symbol(name);
+                 // ROSE_ASSERT(baseClassSymbol != NULL);
+                    SgAliasSymbol* baseClassAliasSymbol = isSgAliasSymbol(baseClassSymbol);
+
+                    if (baseClassAliasSymbol != NULL)
+                       {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                         printf ("baseClassAliasSymbol = %p = %s \n",baseClassAliasSymbol,baseClassAliasSymbol->class_name().c_str());
+                         printf ("In xxxisDefinedThroughPrivateBaseClass(): FOUND SgAliasSymbol! \n");
+#endif
+
+                      // Look up the causal node for the symbol found in the base class.
+                         SgNodePtrList & causalNodeList = baseClassAliasSymbol->get_causal_nodes();
+                         ROSE_ASSERT(causalNodeList.empty() == false);
+
+                         SgNode* base_class_causal_node = causalNodeList[0];
+                         ROSE_ASSERT(base_class_causal_node != NULL);
+
+                         SgBaseClass* basebaseClass = isSgBaseClass(base_class_causal_node);
+
+                      // Need to iterate through base classes chains. iterate past the first layer.
+                         SgClassDeclaration* basebaseClassDeclaration = baseClass->get_base_class();
+                         ROSE_ASSERT(basebaseClassDeclaration != NULL);
+                         SgClassDeclaration* definingBaseBaseClassDeclaration = isSgClassDeclaration(basebaseClassDeclaration->get_definingDeclaration());
+                         ROSE_ASSERT(definingBaseBaseClassDeclaration != NULL);
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                         printf ("definingBaseBaseClassDeclaration = %p = %s \n",definingBaseBaseClassDeclaration,definingBaseBaseClassDeclaration->get_name().str());
+#endif
+#if 1
+                         SgBaseClassModifier* basebaseClassModifier = basebaseClass->get_baseClassModifier();
+                         ROSE_ASSERT(basebaseClassModifier != NULL);
+                         SgAccessModifier & basebaseClassAccessModifier = basebaseClassModifier->get_accessModifier();
+#endif
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                         printf ("  --- basebaseClass = %p name = %s \n",basebaseClass,SageInterface::get_name(basebaseClass).c_str());
+                         printf ("  --- basebaseClassAccessModifier = %s \n",basebaseClassAccessModifier.displayString().c_str());
+#endif
+                         if (basebaseClassAccessModifier.isPrivate() == true)
+                            {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                              printf ("Private base class derivation used: so we don't alias this symbol in the derived class \n");
+#endif
+                           // DQ (1/24/2019): Added to support Cxx_tests/test2019_21.C (symbol aliasing of data member in private base class of base class of derived class).
+                              definedThroughPrivateBaseClass = true;
+
+                           // DQ (1/24/2019): We need to also set the declaration level as private (for the logic below).
+                              declarationAccessLevel = SgAccessModifier::e_private;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                      else
+                       {
+                      // This is not a symbol aliased from an other scope through class derivation.
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                         printf ("NOT a SgAliasSymbol: baseClassSymbol = %p = %s \n",baseClassSymbol,baseClassSymbol->class_name().c_str());
+#endif
+                       }
+                  }
+                 else
+                  {
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+                    printf ("NOT found original_symbol in baseClassDeclaration = %s \n",baseClassDeclaration->get_name().str());
+#endif
+                  }
+
+#if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
+               printf ("definedThroughPrivateBaseClass = %s \n",definedThroughPrivateBaseClass ? "true" : "false");
+               if (definedThroughPrivateBaseClass == true)
+                  {
+                    printf ("symbol is associated with a base class that is private, so it should not be aliased \n");
+                  }
+#endif
+             }
+
+       // DQ (1/24/2019): Added support for where we detect that a symbol should not be aliased because it 
+       // comes from a pribvate base class derivation in a nested derivation.
        // DQ (12/23/2015): See test2015_140.C for where even private base classes will require representations 
        // of it's symbols in the derived class (to support correct name qualification).
        // if (declarationAccessLevel >= accessLevel)
-          if ( (declarationAccessLevel >= accessLevel) || isSgBaseClass(causalNode) != NULL)
+       // if ( (declarationAccessLevel >= accessLevel) || isSgBaseClass(causalNode) != NULL)
+          if ( (declarationAccessLevel >= accessLevel) || (isSgBaseClass(causalNode) != NULL && definedThroughPrivateBaseClass == false))
              {
             // This declaration is visible, so build an alias.
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+               printf ("This declaration is visible, so build an alias \n");
+#endif
 
             // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table 
             // (else injection would be redundant. This is a likely key to the problem we are having with 
@@ -193,6 +725,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
             // the symbol table support.
             // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
                bool alreadyExists = currentScope->symbol_exists(name);
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
+               printf ("alreadyExists = %s \n",alreadyExists ? "true" : "false");
+#endif
+
                if (alreadyExists == true)
                   {
                  // Just because the names match is not strong enough.
@@ -783,16 +1320,21 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
             // printf ("baseClass->get_baseClassModifier().displayString()                      = %s \n",baseClass->get_baseClassModifier().displayString().c_str());
             // printf ("baseClass->get_baseClassModifier().get_accessModifier().displayString() = %s \n",baseClass->get_baseClassModifier().get_accessModifier().displayString().c_str());
-
+#if 0
+            // DQ (1/21/2019): get_baseClassModifier() returns a pointer instead of a value.
             // if (baseClass->get_modifier() == SgBaseClass::e_virtual)
-               if (baseClass->get_baseClassModifier().get_modifier() == SgBaseClassModifier::e_virtual)
+            // if (baseClass->get_baseClassModifier().get_modifier() == SgBaseClassModifier::e_virtual)
+               if (baseClass->get_baseClassModifier()->get_modifier() == SgBaseClassModifier::e_virtual)
                   {
                  // Not clear if virtual as a modifier effects the handling of alias symbols.
                  // printf ("Not clear if virtual as a modifier effects the handling of alias symbols. \n");
                   }
-
+#endif
+            // DQ (1/21/2019): get_baseClassModifier() returns a pointer instead of a value.
             // DQ (6/22/2011): Define the access level for alias symbol's declarations to be included.
-               SgAccessModifier::access_modifier_enum accessLevel = baseClass->get_baseClassModifier().get_accessModifier().get_modifier();
+            // SgAccessModifier::access_modifier_enum accessLevel = baseClass->get_baseClassModifier().get_accessModifier().get_modifier();
+               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
+               SgAccessModifier::access_modifier_enum accessLevel = baseClass->get_baseClassModifier()->get_accessModifier().get_modifier();
 
                SgClassDeclaration* tmpClassDeclaration    = baseClass->get_base_class();
                ROSE_ASSERT(tmpClassDeclaration != NULL);
