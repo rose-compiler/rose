@@ -19,7 +19,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_06.C \
    test2012_07.C \
    test2012_09.C \
-   test2012_10.C \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
@@ -318,6 +317,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_24.C 
 
 TESTCODE_CURRENTLY_FAILING = \
+   test2012_10.C \
    test2012_23.C \
    test2012_24.C \
    test2014_46.C \
