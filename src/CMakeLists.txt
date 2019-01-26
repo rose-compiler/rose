@@ -301,7 +301,7 @@ set_target_properties(ROSE_DLL PROPERTIES
   DEFINE_SYMBOL ROSE_DLL_EXPORTS)
 
 add_dependencies(ROSE_DLL
-  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libpdf
+  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
   generate_rosePublicConfig)
 
 if(enable-poet)
