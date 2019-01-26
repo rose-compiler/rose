@@ -2134,6 +2134,23 @@ SageInterface::get_name ( const SgSupport* node )
                break;
              }
 
+       // DQ (1/21/2019): Implemented case for SgBaseClass
+          case V_SgBaseClass:
+             {
+               const SgBaseClass* base_class_node = isSgBaseClass(node);
+               ROSE_ASSERT(base_class_node != NULL);
+               ROSE_ASSERT(base_class_node->get_base_class() != NULL);
+
+            // Add the access modifier to the output.
+               string access = "";
+               const SgBaseClassModifier* baseClassModifier = base_class_node->get_baseClassModifier();
+               ROSE_ASSERT(baseClassModifier != NULL);
+               access = baseClassModifier->displayString();
+
+               name = "_base_class_" + access + "_" + get_name(base_class_node->get_base_class());
+               break;
+             }
+
           default:
              {
                printf ("Default reached in switch for SgSupport IR node = %s \n",node->class_name().c_str());
@@ -7856,6 +7873,19 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
     SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
     if (temp)
       return isSgClassDefinition(temp);
+    else
+      return NULL;
+ }
+
+
+SgClassDeclaration*
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
+  {
+ // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+ // I'm having trouble making this work for a member function declared outside of the class definition.
+    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
+    if (temp)
+      return isSgClassDeclaration(temp);
     else
       return NULL;
  }
