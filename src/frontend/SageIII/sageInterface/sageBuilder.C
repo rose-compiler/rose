@@ -10543,6 +10543,18 @@ SgTypeSignedShort * SageBuilder::buildSignedShortType()
   return result;
 }
 
+SgTypeFloat80*  SageBuilder::buildFloat80Type() {
+  SgTypeFloat80 * result = SgTypeFloat80::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat128* SageBuilder::buildFloat128Type() {
+  SgTypeFloat128 * result = SgTypeFloat128::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
 SgTypeSignedInt * SageBuilder::buildSignedIntType()
 {
   SgTypeSignedInt * result = SgTypeSignedInt::createType();
@@ -10850,6 +10862,39 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
 #if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildVolatileType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
+     return result2;
+   }
+
+// DQ (1/19/2019): Adding support for const volatile type (both together as another value).
+//! Build a const volatile type.
+SgModifierType* SageBuilder::buildConstVolatileType(SgType* base_type /*=NULL*/)
+   {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+     result->get_typeModifier().get_constVolatileModifier().setConstVolatile();
+
+#if 1
+     printf ("In SageBuilder::buildConstVolatileType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
+  // the type from type table.
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+        {
+#if 0
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildConstVolatileType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
 #else
           delete result;
 #endif
