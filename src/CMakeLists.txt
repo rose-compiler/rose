@@ -187,6 +187,7 @@ endif()
 if(enable-rosehpct)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
 endif()
+
 find_package(Perl REQUIRED)
 
 ########################################################################################################################
@@ -211,8 +212,32 @@ add_dependencies(ROSE_DLL roseUtil)
 set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
 target_link_libraries(ROSE_DLL ${edg_lib} ${link_with_libraries})
 
-if(enable-z3)
-  target_link_libraries(ROSE_DLL ${Z3_LIBRARIES})
+if(SQLITE3_FOUND_LIB)
+  target_link_libraries(ROSE_DLL ${SQLITE3_LIBRARY})
+endif()
+
+if(Z3_FOUND)
+  target_link_libraries(ROSE_DLL ${Z3_LIBRARY})
+endif()
+
+if(YAMLCPP_FOUND)
+  target_link_libraries(ROSE_DLL ${YAMLCPP_LIBRARY})
+endif()
+
+if(DLIB_FOUND)
+  target_link_libraries(ROSE_DLL ${DLIB_LIBRARY})
+endif()
+
+if(GCRYPT_FOUND)
+  target_link_libraries(ROSE_DLL ${GCRYPT_LIBRARY})
+endif()
+
+if(GPGERROR_FOUND)
+  target_link_libraries(ROSE_DLL ${GPGERROR_LIBRARY})
+endif()
+
+if(ZLIB_FOUND)
+  target_link_libraries(ROSE_DLL ${ZLIB_LIBRARY})
 endif()
 
 # Generate the list of libraries that ROSE needs to link against.
