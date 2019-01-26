@@ -59,10 +59,13 @@ if(NOT disable-tutorial-directory)
   #  install(TARGETS ${tutorial}Tutorial DESTINATION bin)
   endforeach()
 
-  install(TARGETS buildCallGraphTutorial DESTINATION bin)
-  install(TARGETS livenessAnalysisTutorial DESTINATION bin)
-  install(TARGETS interproceduralCFGTutorial DESTINATION bin)
-  install(TARGETS virtualCFGTutorial DESTINATION bin)
+  # Install only those executables that are useful to users after ROSE is installed. If the main purpose of compiling
+  # the tool is to ensure that the source code is correct for the purposes of documentation in the various tutorials,
+  # then there's no point in installing that executable.
+  #install(TARGETS buildCallGraphTutorial DESTINATION bin)
+  #install(TARGETS livenessAnalysisTutorial DESTINATION bin)
+  #install(TARGETS interproceduralCFGTutorial DESTINATION bin)
+  #install(TARGETS virtualCFGTutorial DESTINATION bin)
 
   #if ROSE_HAVE_YICES
   #yicesTutorialExample yicesTutorialExample.C)
