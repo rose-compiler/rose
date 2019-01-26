@@ -1311,8 +1311,7 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->initializeVariableIdMapping(sageProject);
-    cout<<"STATUS: registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-
+    logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     
     if(args.getBool("print-varid-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
