@@ -35,15 +35,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(ROSE CXX C)
 
-# CMP0054 causes CMake to only interpret "if()" arguments as variables or keywords when unquoted. CMake 3.1 and above no
-# longer implicitly dereference variables or interpret keywords in an if() command argument when it is a Quoted Argument
-# or a Bracket Argument. The OLD behavior for this policy is to dereference variables and interpret keywords even if
-# they are quoted or bracketed. The NEW behavior is to not dereference variables or interpret keywords that have been
-# quoted or bracketed.
-if(POLICY CMP0054)
-  cmake_policy(SET CMP0054 NEW)
-endif()
-
 # CMake 2.8.12 and newer has support for using @rpath in a target’s install name. This was enabled by setting the target
 # property MACOSX_RPATH. The @rpath in an install name is a more flexible and powerful mechanism than @executable_path
 # or @loader_path for locating shared libraries.
@@ -55,6 +46,29 @@ endif()
 # behavior.
 if(POLICY_CMP0042)
   cmake_policy(SET CMP0042 NEW)
+endif()
+
+# CMP0054 causes CMake to only interpret "if()" arguments as variables or keywords when unquoted. CMake 3.1 and above no
+# longer implicitly dereference variables or interpret keywords in an if() command argument when it is a Quoted Argument
+# or a Bracket Argument. The OLD behavior for this policy is to dereference variables and interpret keywords even if
+# they are quoted or bracketed. The NEW behavior is to not dereference variables or interpret keywords that have been
+# quoted or bracketed.
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
+
+# In CMake 3.12 and above the find_package(<PackageName>) command now searches prefixes specified by the
+# <PackageName>_ROOT CMake variable and the <PackageName>_ROOT environment variable. Package roots are maintained as a
+# stack so nested calls to all find_* commands inside find modules also search the roots as prefixes. This policy
+# provides compatibility with projects that have not been updated to avoid using <PackageName>_ROOT variables for other
+# purposes.  The OLD behavior for this policy is to ignore <PackageName>_ROOT variables. The NEW behavior for this
+# policy is to use <PackageName>_ROOT variables.
+#
+# Behavior is set to "NEW" because ROSE matrix testing, Livermore's LC RZ/CZ resources, Spack, and RMC/Spock seldom
+# install ROSE software dependencies in standard locations because they need to support the ability to install multiple
+# versions and configurations of the dependencies.
+if(POLICY_CMP0074)
+  cmake_policy(SET CMP0074 NEW)
 endif()
 
 # This controls whether the "cmake" command is verbose. It has nothing to do with the verbosity the resulting Makefiles.
@@ -251,7 +265,17 @@ set(INSTALL_TARGETS_DEFAULT_ARGS
 # A new definition to tweak code for cmake
 set(USE_CMAKE 1)
 
-
+# ROSE configuration variables for Boost
+set(HAVE_BOOST ${Boost_FOUND})
+set(HAVE_BOOST_SERIALIZATION_LIB ${Boost_SERIALIZATION_FOUND})
+set(HAVE_BOOST_DATE_TIME ${Boost_DATE_TIME_FOUND})
+set(HAVE_BOOST_FILESYSTEM ${Boost_FILESYSTEM_FOUND})
+set(HAVE_BOOST_PROGRAM_OPTIONS ${Boost_PROGRAM_OPTIONS_FOUND})
+set(HAVE_BOOST_REGEX ${Boost_REGEX_FOUND})
+set(HAVE_BOOST_SYSTEM ${Boost_SYSTEM_FOUND})
+set(HAVE_BOOST_THREAD ${Boost_THREAD_FOUND})
+set(HAVE_BOOST_WAVE ${Boost_WAVE_FOUND})
+set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 
 ########################################################################################################################
 # ROSETTA
@@ -603,18 +627,33 @@ if(enable-yices)
   find_path(with-yices bin/yices DOC "The prefix used to install Yices")
 endif()
 
-option(enable-z3 "Use the Z3 satisfiability modulo theories (SMT) solver" OFF)
-if(enable-z3)
-  find_package(Z3)
-  if(NOT Z3_FOUND)
-    message(FATAL_ERROR "Z3 was not found")
-  endif()
-endif()
+# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=none
+include(FindBison)
+find_bison()
 
-option(enable-yaml "Use the YAML-cpp package" OFF)
-if(enable-yaml)
-  find_package(yaml-cpp)
-endif()
+# To use Z3, set Z3_ROOT to the Z3 installation prefix. To avoid Z3, use Z3_ROOT=none.
+include(FindZ3)
+find_z3()
+
+# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=none.
+include(FindYamlcpp)
+find_yamlcpp()
+
+# To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=none.
+include(FindDlib)
+find_dlib()
+
+# To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
+include(FindGpgError)
+find_gpgerror()
+
+# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=none.
+include(FindGcrypt)
+find_gcrypt()
+
+# Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
+include(FindZlib)
+find_zlib()
 
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
@@ -666,18 +705,13 @@ endif()
 
 if(NOT WIN32)
   include(FindOpenSSL)
-  #include(FindSQLITE3) # fails on many platforms
+  include(FindSqlite3)
+  find_sqlite3()
 endif()
 
 find_package(FLEX)
 if(NOT FLEX_FOUND)
   message(FATAL_ERROR "Could not find flex command")
-endif()
-
-include(FindBison)
-find_bison()
-if(NOT BISON_FOUND)
-  message(FATAL_ERROR "Could not find BISON command")
 endif()
 
 if(NOT WIN32)
@@ -1023,12 +1057,16 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
 
+if(SQLITE3_FOUND)
+  list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)
+endif()
+
 if(enable-poet)
-  set(ROSE_INCLUDES ${ROSE_INCLUDES} ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
+  list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
 endif()
 
 if(WIN32) 
-  set(ROSE_INCLUDES ${ROSE_INCLUDES} ${ROSE_TOP_SRC_DIR}/winspecific)
+  list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/winspecific)
 endif()
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
