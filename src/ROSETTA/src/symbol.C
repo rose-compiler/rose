@@ -278,7 +278,7 @@ Grammar::setUpSymbols ()
   // that caused the sgAliasSymbol symbol to be built.  This is critical to support for name qualification
   // that is different before and after a using declaration; but which forces the sgAliasSymbol to be 
   // generated only once within the AST (before uparsing the associated using declaration of using directive
-  // that caused the generation of the sgAliasSymbol in the symbol tabel for the associated scope.
+  // that caused the generation of the SgAliasSymbol in the symbol tabel for the associated scope).
   // Note that test2014_90.C is a simple example of why this is important.
      AliasSymbol.setDataPrototype("SgNodePtrList", "causal_nodes", "",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
