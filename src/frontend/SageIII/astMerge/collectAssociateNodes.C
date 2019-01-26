@@ -1877,8 +1877,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(baseClass->get_base_class() != NULL);
                nodeList.insert(baseClass->get_base_class());
 
+            // DQ (1/21/2019): I think we don't want the reference to the pointer.
             // The modifer access function returns by reference but this is non-uniform handling of IR nodes within ROSE.
-               nodeList.insert( &(baseClass->get_baseClassModifier()) );
+            // nodeList.insert( &(baseClass->get_baseClassModifier()) );
+               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
+               nodeList.insert(baseClass->get_baseClassModifier());
                break;
              }
 
