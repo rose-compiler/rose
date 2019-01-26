@@ -638,14 +638,18 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               }
                               ROSE_ASSERT(templateArgument_it != NULL && templateArgument_it->get_previous_instance() == NULL);
                               do {
-                                printf ("  Update templateArgument = %p\n", templateArgument);
-                                templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
+#if 0
+                                   printf ("  Update templateArgument = %p\n", templateArgument);
+#endif
+                                   templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
 
-                             // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
-                                templateArgument_it->set_type(suitableTypeAlias);
+                                // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
+                                   templateArgument_it->set_type(suitableTypeAlias);
 
-                                templateArgument_it = templateArgument_it->get_next_instance();
-                              } while (templateArgument_it != NULL);
+                                   templateArgument_it = templateArgument_it->get_next_instance();
+                                 }
+                              while (templateArgument_it != NULL);
+
                               ROSE_ASSERT(templateArgument_it == NULL);
 
 // #if DEBUG_PRIVATE_TYPE_TRANSFORMATION
