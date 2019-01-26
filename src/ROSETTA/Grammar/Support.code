@@ -5334,8 +5334,8 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization() $ROSE_OVERRIDE;
 
-       // ROSE-1499
-          void check_file_id(char * label, bool assertion=true) const;
+       // ROSE-1499, ROSE-1639 (added const to char*)
+          void check_file_id(const char * label, bool assertion=true) const;
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
@@ -13887,8 +13887,8 @@ Sg_File_Info::post_construction_initialization()
      check_file_id("Sg_File_Info::post_construction_initialization");
    }
 
-// ROSE-1499
-void Sg_File_Info::check_file_id(char * label, bool assertion) const {
+// ROSE-1499, ROSE-1639 (added const to char*)
+void Sg_File_Info::check_file_id(const char * label, bool assertion) const {
   if ( ( (p_file_id >= 0) && (p_fileidtoname_map.count(p_file_id) == 0) ) || ( (p_file_id < -6) || ( p_file_id > (int)p_fileidtoname_map.size() ) ) ) {
     printf("ERROR from %s:\n", label);
     printf("  Sg_File_Info::this = %p\n", this);

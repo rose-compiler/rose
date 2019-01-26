@@ -278,9 +278,11 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 
 # TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
 #   Only valid if compiling ROSE using GNU compiler (depends on -lquadmath)
+AC_LANG(C++)
 AX_COMPILER_VENDOR
+
 rose_use_edg_quad_float=no
-if test "x$ax_cv_cxx_compiler_vendor" == xgnu; then
+if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
 if test $edg_major_version_number -ge 5; then
   rose_use_edg_quad_float=yes
   AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
