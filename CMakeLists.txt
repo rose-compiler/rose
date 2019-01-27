@@ -204,7 +204,7 @@ set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
 # Boost libraries
 ########################################################################################################################
 
-set(Boost_USE_STATIC_LIBS FALSE)        
+set(Boost_USE_STATIC_LIBS FALSE)
 set(Boost_DEBUG ${VERBOSE})
 
 # Honor BOOST_HOME environment variable
@@ -215,17 +215,17 @@ endif()
 option(Boost_USE_MULTITHREADED "Should Boost multithreaded libraries be used?" OFF)
 
 if(WIN32)
-  find_package(Boost REQUIRED) 
+  find_package(Boost REQUIRED)
   set(BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS})
   set(BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/)
 
-  message("Boost information:") 
-  message("  BOOST_ROOT: ${BOOST_ROOT}") 
-  message("  Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}") 
-  message("  Boost_LIBRARIES: ${Boost_LIBRARIES}") 
-  message("  Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}") 
-  message("  BOOST_LIBRARYDIR : ${BOOST_LIBRARYDIR}") 
-  message("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}") 
+  message("Boost information:")
+  message("  BOOST_ROOT: ${BOOST_ROOT}")
+  message("  Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+  message("  Boost_LIBRARIES: ${Boost_LIBRARIES}")
+  message("  Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+  message("  BOOST_LIBRARYDIR : ${BOOST_LIBRARYDIR}")
+  message("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}")
 
   include_directories(${Boost_INCLUDE_DIRS})
   link_directories(${Boost_LIBRARY_DIRS})
@@ -504,7 +504,7 @@ elseif(BINARY_EDG)
 else()
   message(STATUS "EDG - not needed; using a nearly empty dummy library")
 endif()
-    
+
 
 
 ########################################################################################################################
@@ -693,7 +693,7 @@ option(with-roseQt "Build with roseQt" OFF)
 if(with-roseQt)
   find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
-endif()  
+endif()
 
 find_path(with-rted rted DOC "Configure option to have RTED enabled.")
 find_path(with-smt-solver smt-solver DOC "Specify the path to an SMT-LIB compatible SMT solver. Used only for testing")
@@ -804,39 +804,39 @@ else()
   set(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER "0")
   set(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER "0")
   set(BACKEND_CXX_COMPILER_PATCH_LEVEL_NUMBER "0")
-endif()  
+endif()
 
 ########################################################################################################################
 # Summary of results
 ########################################################################################################################
 
 if(VERBOSE)
-  # if you are building in-source, this is the same as CMAKE_SOURCE_DIR, otherwise 
-  # this is the top level directory of your build tree 
+  # if you are building in-source, this is the same as CMAKE_SOURCE_DIR, otherwise
+  # this is the top level directory of your build tree
   message(STATUS "CMAKE_BINARY_DIR:                   ${CMAKE_BINARY_DIR}")
 
-  # if you are building in-source, this is the same as CMAKE_CURRENT_SOURCE_DIR, otherwise this 
-  # is the directory where the compiled or generated files from the current CMakeLists.txt will go to 
+  # if you are building in-source, this is the same as CMAKE_CURRENT_SOURCE_DIR, otherwise this
+  # is the directory where the compiled or generated files from the current CMakeLists.txt will go to
   message(STATUS "CMAKE_CURRENT_BINARY_DIR:           ${CMAKE_CURRENT_BINARY_DIR}")
 
-  # this is the directory, from which cmake was started, i.e. the top level source directory 
+  # this is the directory, from which cmake was started, i.e. the top level source directory
   message(STATUS "CMAKE_SOURCE_DIR:                   ${CMAKE_SOURCE_DIR}")
 
-  # this is the directory where the currently processed CMakeLists.txt is located in 
+  # this is the directory where the currently processed CMakeLists.txt is located in
   message(STATUS "CMAKE_CURRENT_SOURCE_DIR:           ${CMAKE_CURRENT_SOURCE_DIR}")
 
-  # contains the full path to the top level directory of your build tree 
+  # contains the full path to the top level directory of your build tree
   message(STATUS "PROJECT_BINARY_DIR:                 ${PROJECT_BINARY_DIR}")
 
   # contains the full path to the root of your project source directory,
-  # i.e. to the nearest directory where CMakeLists.txt contains the PROJECT() command 
+  # i.e. to the nearest directory where CMakeLists.txt contains the PROJECT() command
   message(STATUS "PROJECT_SOURCE_DIR:                 ${PROJECT_SOURCE_DIR}")
 
   # set this variable to specify a common place where CMake should put all executable files
   # (instead of CMAKE_CURRENT_BINARY_DIR)
   message(STATUS "EXECUTABLE_OUTPUT_PATH:             ${EXECUTABLE_OUTPUT_PATH}")
 
-  # set this variable to specify a common place where CMake should put all libraries 
+  # set this variable to specify a common place where CMake should put all libraries
   # (instead of CMAKE_CURRENT_BINARY_DIR)
   message(STATUS "LIBRARY_OUTPUT_PATH:                ${LIBRARY_OUTPUT_PATH}")
 
@@ -844,13 +844,13 @@ if(VERBOSE)
   # when you use FIND_PACKAGE() or INCLUDE()
   message(STATUS "CMAKE_MODULE_PATH:                  ${CMAKE_MODULE_PATH}")
 
-  # this is the complete path of the cmake which runs currently (e.g. /usr/local/bin/cmake) 
+  # this is the complete path of the cmake which runs currently (e.g. /usr/local/bin/cmake)
   message(STATUS "CMAKE_COMMAND:                      ${CMAKE_COMMAND}")
 
-  # this is the CMake installation directory 
+  # this is the CMake installation directory
   message(STATUS "CMAKE_ROOT:                         ${CMAKE_ROOT}")
 
-  # this is the filename including the complete path of the file where this variable is used. 
+  # this is the filename including the complete path of the file where this variable is used.
   message(STATUS "CMAKE_CURRENT_LIST_FILE:            ${CMAKE_CURRENT_LIST_FILE}")
 
   # this is used when searching for include files e.g. using the FIND_PATH() command.
@@ -859,22 +859,22 @@ if(VERBOSE)
   # this is used when searching for libraries e.g. using the FIND_LIBRARY() command.
   message(STATUS "CMAKE_LIBRARY_PATH:                 ${CMAKE_LIBRARY_PATH}")
 
-  # the complete system name, e.g. "Linux-2.4.22", "FreeBSD-5.4-RELEASE" or "Windows 5.1" 
+  # the complete system name, e.g. "Linux-2.4.22", "FreeBSD-5.4-RELEASE" or "Windows 5.1"
   message(STATUS "CMAKE_SYSTEM:                       ${CMAKE_SYSTEM}")
 
   # the short system name, e.g. "Linux", "FreeBSD" or "Windows"
   message(STATUS "CMAKE_SYSTEM_NAME:                  ${CMAKE_SYSTEM_NAME}")
 
-  # only the version part of CMAKE_SYSTEM 
+  # only the version part of CMAKE_SYSTEM
   message(STATUS "CMAKE_SYSTEM_VERSION:               ${CMAKE_SYSTEM_VERSION}")
 
-  # the processor name (e.g. "Intel(R) Pentium(R) M processor 2.00GHz") 
+  # the processor name (e.g. "Intel(R) Pentium(R) M processor 2.00GHz")
   message(STATUS "CMAKE_SYSTEM_PROCESSOR:             ${CMAKE_SYSTEM_PROCESSOR}")
 
   # is TRUE on all UNIX-like OS's, including Apple OS X and CygWin
   message(STATUS "UNIX:                               ${UNIX}")
 
-  # is TRUE on Windows, including CygWin 
+  # is TRUE on Windows, including CygWin
   message(STATUS "WIN32:                              ${WIN32}")
 
   # is TRUE on Apple OS X
@@ -886,10 +886,10 @@ if(VERBOSE)
   # is TRUE on Windows when using the CygWin version of cmake
   message(STATUS "CYGWIN:                             ${CYGWIN}")
 
-  # is TRUE on Windows when using a Borland compiler 
+  # is TRUE on Windows when using a Borland compiler
   message(STATUS "BORLAND:                            ${BORLAND}")
 
-  # Microsoft compiler 
+  # Microsoft compiler
   message(STATUS "MSVC:                               ${MSVC}")
   message(STATUS "MSVC_IDE:                           ${MSVC_IDE}")
   message(STATUS "MSVC60:                             ${MSVC60}")
@@ -898,51 +898,51 @@ if(VERBOSE)
   message(STATUS "MSVC80:                             ${MSVC80}")
   message(STATUS "CMAKE_COMPILER_2005:                ${CMAKE_COMPILER_2005}")
 
-  # set this to true if you don't want to rebuild the object files if the rules have changed, 
-  # but not the actual source files or headers (e.g. if you changed the some compiler switches) 
+  # set this to true if you don't want to rebuild the object files if the rules have changed,
+  # but not the actual source files or headers (e.g. if you changed the some compiler switches)
   message(STATUS "CMAKE_SKIP_RULE_DEPENDENCY:         ${CMAKE_SKIP_RULE_DEPENDENCY}")
 
-  # since CMake 2.1 the install rule depends on all, i.e. everything will be built before installing. 
+  # since CMake 2.1 the install rule depends on all, i.e. everything will be built before installing.
   # If you don't like this, set this one to true.
   message(STATUS "CMAKE_SKIP_INSTALL_ALL_DEPENDENCY:  ${CMAKE_SKIP_INSTALL_ALL_DEPENDENCY}")
 
   # If set, runtime paths are not added when using shared libraries. Default it is set to OFF
   message(STATUS "CMAKE_SKIP_RPATH:                   ${CMAKE_SKIP_RPATH}")
 
-  # set this to true if you are using makefiles and want to see the full compile and link 
-  # commands instead of only the shortened ones 
+  # set this to true if you are using makefiles and want to see the full compile and link
+  # commands instead of only the shortened ones
   message(STATUS "CMAKE_VERBOSE_MAKEFILE:             ${CMAKE_VERBOSE_MAKEFILE}")
 
-  # this will cause CMake to not put in the rules that re-run CMake. This might be useful if 
-  # you want to use the generated build files on another machine. 
+  # this will cause CMake to not put in the rules that re-run CMake. This might be useful if
+  # you want to use the generated build files on another machine.
   message(STATUS "CMAKE_SUPPRESS_REGENERATION:        ${CMAKE_SUPPRESS_REGENERATION}")
 
-  # A simple way to get switches to the compiler is to use ADD_DEFINITIONS(). 
-  # But there are also two variables exactly for this purpose: 
+  # A simple way to get switches to the compiler is to use ADD_DEFINITIONS().
+  # But there are also two variables exactly for this purpose:
   #   CMAKE_C_FLAGS:   the compiler flags for compiling C sources, and
-  #   CMAKE_CXX_FLAGS: the compiler flags for compiling C++ sources 
+  #   CMAKE_CXX_FLAGS: the compiler flags for compiling C++ sources
   message(STATUS "CMAKE_C_FLAGS:                      ${CMAKE_C_FLAGS}")
   message(STATUS "CMAKE_CXX_FLAGS:                    ${CMAKE_CXX_FLAGS}")
 
-  # Choose the type of build.  Example: SET(CMAKE_BUILD_TYPE Debug) 
+  # Choose the type of build.  Example: SET(CMAKE_BUILD_TYPE Debug)
   message(STATUS "CMAKE_BUILD_TYPE:                   ${CMAKE_BUILD_TYPE}")
 
   # if this is set to ON, then all libraries are built as shared libraries by default.
   message(STATUS "BUILD_SHARED_LIBS:                  ${BUILD_SHARED_LIBS}")
 
-  # the compiler used for C files 
+  # the compiler used for C files
   message(STATUS "CMAKE_C_COMPILER:                   ${CMAKE_C_COMPILER}")
 
-  # the compiler used for C++ files 
+  # the compiler used for C++ files
   message(STATUS "CMAKE_CXX_COMPILER:                 ${CMAKE_CXX_COMPILER}")
 
-  # if the compiler is a variant of gcc, this should be set to 1 
+  # if the compiler is a variant of gcc, this should be set to 1
   message(STATUS "CMAKE_COMPILER_IS_GNUCC:            ${CMAKE_COMPILER_IS_GNUCC}")
 
-  # if the compiler is a variant of g++, this should be set to 1 
+  # if the compiler is a variant of g++, this should be set to 1
   message(STATUS "CMAKE_COMPILER_IS_GNUCXX:           ${CMAKE_COMPILER_IS_GNUCXX}")
 
-  # the tools for creating libraries 
+  # the tools for creating libraries
   message(STATUS "CMAKE_AR:                           ${CMAKE_AR}")
   message(STATUS "CMAKE_RANLIB:                       ${CMAKE_RANLIB}")
 endif()
@@ -952,7 +952,7 @@ endif()
 # ROSE headers are scattered throughout the source tree.
 ########################################################################################################################
 
-set(ROSE_INCLUDES 
+set(ROSE_INCLUDES
   ${ROSE_TOP_BINARY_DIR}
   ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
   ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
@@ -960,100 +960,100 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sage_support
   ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
-  ${ROSE_TOP_SRC_DIR}/src 
+  ${ROSE_TOP_SRC_DIR}/src
   ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/
   ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_3.3/src
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astMerge 
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astMerge
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astVisualization
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/includeDirectivesProcessing 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sageInterface 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/virtualCFG 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astTokenStream 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astHiddenTypeAndDeclarationLists 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFromString 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend 
-  ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/includeDirectivesProcessing
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sageInterface
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/virtualCFG
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astTokenStream
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astHiddenTypeAndDeclarationLists
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO
+  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFromString
+  ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection
+  ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend
+  ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend
+  ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats
   ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
-  ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
+  ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers
   ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats
   ${ROSE_TOP_SRC_DIR}/src/frontend
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/CxxCodeGeneration 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/FortranCodeGeneration 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
-  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/CxxCodeGeneration
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/FortranCodeGeneration
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration
+  ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
   ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JovialCodeGeneration
-  ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
-  ${ROSE_TOP_SRC_DIR}/src/util 
-  ${ROSE_TOP_SRC_DIR}/src/util/support 
-  ${ROSE_TOP_SRC_DIR}/src/util/graphs  
-  ${ROSE_TOP_SRC_DIR}/src/util/stringSupport 
-  ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing 
-  ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle 
-  ${ROSE_TOP_SRC_DIR}/src/midend/abstractLayer 
+  ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser
+  ${ROSE_TOP_SRC_DIR}/src/util
+  ${ROSE_TOP_SRC_DIR}/src/util/support
+  ${ROSE_TOP_SRC_DIR}/src/util/graphs
+  ${ROSE_TOP_SRC_DIR}/src/util/stringSupport
+  ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing
+  ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle
+  ${ROSE_TOP_SRC_DIR}/src/midend/abstractLayer
   ${ROSE_TOP_SRC_DIR}/src/midend/abstractMemoryObject
-  ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
-  ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing 
+  ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining
+  ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing
   ${ROSE_TOP_SRC_DIR}/src/midend/astMatching
-  ${ROSE_TOP_SRC_DIR}/src/midend/astQuery 
-  ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism 
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/annotation 
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface 
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astSupport 
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/symbolicVal 
-  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/dataflowanalyses 
-  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/graph 
-  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/instructionSemantics 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/computation 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depGraph 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depInfo 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/driver 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/slicing 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
+  ${ROSE_TOP_SRC_DIR}/src/midend/astQuery
+  ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/annotation
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astSupport
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/symbolicVal
+  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/dataflowanalyses
+  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/graph
+  ${ROSE_TOP_SRC_DIR}/src/midend/BinaryAnalysis/instructionSemantics
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/computation
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depGraph
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depInfo
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/driver
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/slicing
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG
   ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal 
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal
   ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticSingleAssignment
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/valuePropagation 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/partialRedundancyElimination 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/finiteDifferencing 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/functionCallNormalization 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/constantFolding 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/implicitCodeGeneration 
-  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/runtimeTransformation 
-  ${ROSE_TOP_SRC_DIR}/src/roseSupport 
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/MSTL 
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
-  ${ROSE_TOP_SRC_DIR}/projects/dataBase 
-  ${ROSE_TOP_SRC_DIR}/src/util/graphs 
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing
+  ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/valuePropagation
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/partialRedundancyElimination
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/finiteDifferencing
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/functionCallNormalization
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/constantFolding
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/implicitCodeGeneration
+  ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/runtimeTransformation
+  ${ROSE_TOP_SRC_DIR}/src/roseSupport
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/MSTL
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
+  ${ROSE_TOP_SRC_DIR}/projects/dataBase
+  ${ROSE_TOP_SRC_DIR}/src/util/graphs
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
 
@@ -1065,7 +1065,7 @@ if(enable-poet)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
 endif()
 
-if(WIN32) 
+if(WIN32)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/winspecific)
 endif()
 
@@ -1243,8 +1243,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 # Miscellaneous final actions
 ########################################################################################################################
 
-# This has to remain the last subdirectory so that all the targets are installed before bundle.cmake runs.
-add_subdirectory(cmake)
+# These actions don't work on Linux Debian-based systems during "make install" and appear to not be necessary anyway.
+if(NOT UNIX)
+  # This has to remain the last subdirectory so that all the targets are installed before bundle.cmake runs.
+  add_subdirectory(cmake)
 
-# This include file defines how CPack should create our installers.
-include(cmake/ROSECPack.cmake)
+  # This include file defines how CPack should create our installers.
+  include(cmake/ROSECPack.cmake)
+endif()
