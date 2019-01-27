@@ -314,7 +314,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C 
+   test2019_24.C \
+   test2019_27.C \
+   test2019_28.C \
+   test2019_29.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -325,7 +328,9 @@ TESTCODE_CURRENTLY_FAILING = \
    test2016_41.C \
    test2017_17.C \
    test2019_15.C \
-   test2019_16.C 
+   test2019_16.C \
+   test2019_25.C \
+   test2019_26.C 
 
 # NOTE: test2019_15.C fails for the GNU 4.8.5, but passes for everything else (or at least later versions of gnu, versions 5.1 and later).
 
