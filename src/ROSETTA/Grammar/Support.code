@@ -7946,6 +7946,39 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
 #if 0
+  // DQ (1/27/2019): Adding test to check the symbol basis (failing for Cxx11_tests/test2019_31.C).
+     SgNode* symbolBasis = sp->get_symbol_basis();
+     if (isSgClassSymbol(sp) != NULL || isSgAliasSymbol(sp) != NULL)
+        {
+          ROSE_ASSERT(symbolBasis != NULL);
+        }
+
+  // DQ (1/27/2019): Adding test to check the symbol basis (failing for Cxx11_tests/test2019_31.C).
+  // Get a quick pointer into the symbol table using the name (log n complexity)
+     p_iterator = p_table->find(nm);
+
+  // Once we have p_iterator set via the name we don't typically have more than one iteration
+     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
+        {
+          assert(p_iterator->second != NULL);
+#if 0
+          printf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
+          printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
+#endif
+
+       // This is a virtual function call (not defined for function type symbols)
+          SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
+
+          if (isSgAliasSymbol(p_iterator->second) != NULL)
+             { 
+               ROSE_ASSERT(symbolBasis != NULL);
+             }
+
+          p_iterator++;
+        }
+#endif
+
+#if 0
      printf ("********** Leaving SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s \n",
           nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),sp,sp->class_name().c_str());
 #endif
@@ -8132,7 +8165,9 @@ SgSymbolTable::find( const SgStatement* statement)
      assert(p_table != NULL);
      assert(statement != NULL);
 
-#if 0
+#define DEBUG_FIND_SYMBOL_FROM_STATEMENT 0
+
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
 #endif
 
@@ -8143,7 +8178,7 @@ SgSymbolTable::find( const SgStatement* statement)
   // A ResetEmptyNames process to handle this should be used before this find is called.
   // I cannot assert this since this function can be called before the empty name is reset. 
   //   ROSE_ASSERT (name.getString().length() !=0);
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): name = %s \n",name.str());
 #endif
 
@@ -8155,23 +8190,33 @@ SgSymbolTable::find( const SgStatement* statement)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
           assert(p_iterator->second != NULL);
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
           printf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
           printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
 #endif
 
        // This is a virtual function call (not defined for function type symbols)
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
-#if 0
+
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
+          printf ("In loop: statement->variantT() = %d = %s \n",
+               statement->variantT(),Cxx_GrammarTerminalNames[statement->variantT()].name.c_str());
+#endif
+       // DQ (1/27/2019): Test this to see if we can generate a dot graph to debug the problem.
+          ROSE_ASSERT(symbolBasis != NULL);
+
+       // if (symbolBasis != NULL)
+       //    {
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
           printf ("In loop: symbolBasis->variantT() = %d = %s statement->variantT() = %d = %s \n",
                symbolBasis->variantT(),Cxx_GrammarTerminalNames[symbolBasis->variantT()].name.c_str(),
                statement->variantT(),Cxx_GrammarTerminalNames[statement->variantT()].name.c_str());
 #endif
-          assert(symbolBasis != NULL);
+          ROSE_ASSERT(symbolBasis != NULL);
 
           if (symbolBasis->variantT() == statement->variantT())
              {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                printf ("matching variants \n");
 #endif
                returnSymbol = p_iterator->second;
@@ -8181,25 +8226,33 @@ SgSymbolTable::find( const SgStatement* statement)
             // switch which computes the names could normalize this aspect.
                if (returnSymbol->get_symbol_basis() == statement)
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                     printf ("returnSymbol->get_symbol_basis() == statement returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
 #endif
                     return returnSymbol;
                   }
                  else
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                     printf ("returnSymbol->get_symbol_basis() != statement (returnSymbol->get_symbol_basis() = %p statement = %p) \n",returnSymbol->get_symbol_basis(),statement);
 #endif
                   }
              }
             else
              {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                printf ("Some other symbol was found (no matching variants) \n");
 #endif
              }
 
+#if 0
+             }
+            else
+             {
+               printf ("################## In SgSymbolTable::find( const SgStatement* statement): symbolBasis == NULL \n");
+               printf ("   --- statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
+             }
+#endif
           p_iterator++;
         }
 
