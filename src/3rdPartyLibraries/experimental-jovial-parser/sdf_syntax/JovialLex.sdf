@@ -14,6 +14,7 @@ exports
     UnsignedTypeDesc           %% 2.1.1.1
     BitTypeDesc                %% 2.1.1.5
     PointerTypeDesc            %% 2.1.1.7
+    DefString                  %% 2.4
 
   lexical syntax
 
@@ -34,6 +35,13 @@ exports
 %% 2.1.1.7
 %%
   'P'                       -> PointerTypeDesc
+
+
+%%%%%%%%%%
+%% 2.4 DEFINE DECLARATIONS
+%%%%%%%%%%
+
+  [\?] (Mark | Digit | Letter)*  [\?]  -> DefString
 
 
 %%%%%%%%%%
@@ -65,6 +73,42 @@ exports
   'TRUE'                    -> Name     {reject}
   'FALSE'                   -> Name     {reject}
   'NULL'                    -> Name     {reject}
+  ReservedWord              -> Name     {reject}
+
+  'BITSINBYTE'              -> Name     {reject}
+  'BITSINWORD'              -> Name     {reject}
+  'LOCSINWORD'              -> Name     {reject}
+  'BYTEPOS'                 -> Name     {reject}
+  'BYTESINWORD'             -> Name     {reject}
+  'BITSINPOINTER'           -> Name     {reject}
+  'INTPRECISION'            -> Name     {reject}
+  'FLOATPRECISION'          -> Name     {reject}
+  'FIXEDPRECISION'          -> Name     {reject}
+  'FLOATRADIX'              -> Name     {reject}
+  'IMPLFLOATPRECISION'      -> Name     {reject}
+  'IMPLFIXEDPRECISION'      -> Name     {reject}
+  'IMPLINTSIZE'             -> Name     {reject}
+  'MAXFLOATPRECISION'       -> Name     {reject}
+  'MAXFIXEDPRECISION'       -> Name     {reject}
+  'MAXINTSIZE'              -> Name     {reject}
+  'MAXBYTES'                -> Name     {reject}
+  'MAXBITS'                 -> Name     {reject}
+  'MAXINT'                  -> Name     {reject}
+  'MININT'                  -> Name     {reject}
+  'MAXTABLESIZE'            -> Name     {reject}
+  'MAXSTOP'                 -> Name     {reject}
+  'MINSTOP'                 -> Name     {reject}
+  'MAXSIGNDIGITS'           -> Name     {reject}
+  'MINSIZE'                 -> Name     {reject}
+  'MINFRACTION'             -> Name     {reject}
+  'MINSCALE'                -> Name     {reject}
+  'MINRELPRECISION'         -> Name     {reject}
+  'MAXFLOAT'                -> Name     {reject}
+  'MINFLOAT'                -> Name     {reject}
+  'FLOATRELPRECISION'       -> Name     {reject}
+  'FLOATUNDERFLOW'          -> Name     {reject}
+  'MAXFIXED'                -> Name     {reject}
+  'MINFIXED'                -> Name     {reject}
 
 %% 8.2.2 RESERVED WORDS
 %%
@@ -87,6 +131,94 @@ exports
   'CASE'                    -> ReservedWord
   'COMPOOL'                 -> ReservedWord
   'CONDITION*'              -> ReservedWord
+  'CONSTANT'                -> ReservedWord
+
+  'DEF'                     -> ReservedWord
+  'DEFAULT'                 -> ReservedWord
+  'DEFINE'                  -> ReservedWord
+
+  'ELSE'                    -> ReservedWord
+  'ENCAPSULATION*'          -> ReservedWord
+  'END'                     -> ReservedWord
+  'EQV'                     -> ReservedWord
+  'EXIT'                    -> ReservedWord
+  'EXPORTS*'                -> ReservedWord
+
+  'FALLTHRU'                -> ReservedWord
+  'FALSE'                   -> ReservedWord
+  'FIRST'                   -> ReservedWord
+  'FOR'                     -> ReservedWord
+  'FREE*'                   -> ReservedWord
+
+  'GOTO'                    -> ReservedWord
+
+  'HANDLER*'                -> ReservedWord
+
+  'IF'                      -> ReservedWord
+  'IN*'                     -> ReservedWord
+  'INLINE'                  -> ReservedWord
+  'INSTANCE'                -> ReservedWord
+  'INTERRUPT*'              -> ReservedWord
+  'ITEM'                    -> ReservedWord
+
+  'LABEL'                   -> ReservedWord
+  'LAST'                    -> ReservedWord
+  'LBOUND'                  -> ReservedWord
+  'LIKE'                    -> ReservedWord
+  'LOC'                     -> ReservedWord
+
+  'MOD'                     -> ReservedWord
+
+  'NENT'                    -> ReservedWord
+  'NEW*'                    -> ReservedWord
+  'NEXT'                    -> ReservedWord
+  'NOT'                     -> ReservedWord
+  'NULL'                    -> ReservedWord
+  'NWDSEN'                  -> ReservedWord
+
+  'OR'                      -> ReservedWord
+  'OVERLAY'                 -> ReservedWord
+
+  'PARALLEL'                -> ReservedWord
+  'POS'                     -> ReservedWord
+  'PROC'                    -> ReservedWord
+  'PROGRAM'                 -> ReservedWord
+  'PROTECTED*'              -> ReservedWord
+
+  'READONLY*'               -> ReservedWord
+  'REC'                     -> ReservedWord
+  'REF'                     -> ReservedWord
+  'REGISTER*'               -> ReservedWord
+  'RENT'                    -> ReservedWord
+  'REP'                     -> ReservedWord
+  'RETURN'                  -> ReservedWord
+
+  'SGN'                     -> ReservedWord
+  'SHIFTL'                  -> ReservedWord
+  'SHIFTR'                  -> ReservedWord
+  'SIGNAL*'                 -> ReservedWord
+  'START'                   -> ReservedWord
+  'STATIC'                  -> ReservedWord
+  'STATUS'                  -> ReservedWord
+  'STOP'                    -> ReservedWord
+
+  'TABLE'                   -> ReservedWord
+  'TERM'                    -> ReservedWord
+  'THEN'                    -> ReservedWord
+  'TO*'                     -> ReservedWord
+  'TRUE'                    -> ReservedWord
+  'TYPE'                    -> ReservedWord
+
+  'UNBOUND'                 -> ReservedWord
+  'UPDATE*'                 -> ReservedWord
+
+  'WHILE'                   -> ReservedWord
+  'WITH*'                   -> ReservedWord
+  'WORDSIZE'                -> ReservedWord
+  'WRITEONLY*'              -> ReservedWord
+
+  'XOR'                     -> ReservedWord
+  'ZONE*'                   -> ReservedWord
 
 %% 8.3.2 BIT LITERALS
 %%

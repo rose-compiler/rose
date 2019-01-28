@@ -10558,6 +10558,7 @@ void c_action_label(Token_t * lbl)
         SgScopeStatement* currentScope = getTopOfScopeStack();
         currentScope->append_statement(forAllStatement);
         forAllStatement->set_parent(currentScope);
+        forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
 
      // Rasmussen (1/8/2019): To be added in future
      // forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
