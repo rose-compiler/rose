@@ -1189,6 +1189,12 @@ mangleValueExp (const SgValueExp* expr)
         }
         break;
 
+      case V_SgNullptrValExp:
+        {
+          mangled_name = "__nullptr";
+          break;
+        }
+
    // DQ (7/21/2012): Added support for IR node not seen previously except in new C++11 work.
       case V_SgTemplateParameterVal:
         mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
