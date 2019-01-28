@@ -672,6 +672,9 @@ HEADER_UNTYPED_WHILE_STATEMENT_END
 HEADER_UNTYPED_FOR_STATEMENT_START
 HEADER_UNTYPED_FOR_STATEMENT_END
 
+HEADER_UNTYPED_FORALL_STATEMENT_START
+HEADER_UNTYPED_FORALL_STATEMENT_END
+
 HEADER_UNTYPED_EXIT_STATEMENT_START
 HEADER_UNTYPED_EXIT_STATEMENT_END
 
@@ -1483,10 +1486,29 @@ SgLocatedNode::generateMatchingFileInfo()
   // copy constructor instead of the constructor that takes a file name.
   // return new Sg_File_Info( p->get_file_info()->get_filename());
 
+#if 0
+  // DQ (1/27/2019): Skipping the generation of a proper symbol when get_startOfConstruct() == NULL 
+  // so that we can debug the dot graph for a symbol withouth proper basis.
+
   // DQ (11/6/2006): startOfConstruct is the one Sg_File_Info that will always exist and must exist.
+  // ROSE_ASSERT(get_startOfConstruct() != NULL);
+     Sg_File_Info* returnFileInfo = NULL;
+     if (get_startOfConstruct() != NULL)
+        {
+          returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
+        }
+       else
+        {
+          printf ("In SgLocatedNode::generateMatchingFileInfo(): Skipping the generation of a proper symbol when get_startOfConstruct() == NULL \n");
+       // returnFileInfo = new Sg_File_Info();
+          returnFileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+        }
+     ROSE_ASSERT(returnFileInfo != NULL);
+#else
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      Sg_File_Info* returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
      ROSE_ASSERT(returnFileInfo != NULL);
+#endif
 
   // printf ("In New_File_Info: returnFileInfo = %p \n",returnFileInfo);
 
@@ -1765,6 +1787,9 @@ SOURCE_UNTYPED_WHILE_STATEMENT_END
 
 SOURCE_UNTYPED_FOR_STATEMENT_START
 SOURCE_UNTYPED_FOR_STATEMENT_END
+
+SOURCE_UNTYPED_FORALL_STATEMENT_START
+SOURCE_UNTYPED_FORALL_STATEMENT_END
 
 SOURCE_UNTYPED_EXIT_STATEMENT_START
 SOURCE_UNTYPED_EXIT_STATEMENT_END

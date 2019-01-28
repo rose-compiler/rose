@@ -28,11 +28,11 @@ namespace Untyped {
       void
       setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL);
 
-      virtual SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration   (SgUntypedSubroutineDeclaration*   ut_decl, SgScopeStatement* scope);
-      virtual SgProcedureHeaderStatement* convertSgUntypedBlockDataDeclaration    (SgUntypedBlockDataDeclaration*    ut_decl, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedSubroutineDeclaration   (SgUntypedSubroutineDeclaration*   ut_decl, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedBlockDataDeclaration    (SgUntypedBlockDataDeclaration*    ut_decl, SgScopeStatement* scope);
 
-      virtual SgProcedureHeaderStatement* convertSgUntypedFunctionDeclaration     (SgUntypedFunctionDeclaration*     ut_decl, SgScopeStatement* scope);
-      virtual void                        convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope);
+      virtual SgProcedureHeaderStatement* convertUntypedFunctionDeclaration     (SgUntypedFunctionDeclaration*     ut_decl, SgScopeStatement* scope);
+      virtual void                        convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope);
 
    // Declaration statements
    //
@@ -43,7 +43,7 @@ namespace Untyped {
    // Executable statements
    //
       virtual SgStatement* convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
-      virtual SgStatement* convertSgUntypedForStatement        (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement* convertUntypedForStatement          (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
       virtual SgStatement* convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
 
    // Fortran image control statements

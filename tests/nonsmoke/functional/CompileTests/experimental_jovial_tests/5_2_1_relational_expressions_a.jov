@@ -1,0 +1,17 @@
+START
+PROGRAM testRelationalExpression ;
+BEGIN
+  IF ibbr < 3;
+    ibbr = ibbr + 1;
+  IF ibbr <= 0;
+    ibbr = ibbr - 1;
+  IF ibbr > 10;
+    ibbr = ibbr + 1;
+  IF ibbr >= 8;
+    ibbr = ibbr - 2;
+  IF ibbr <> 20;
+    ibbr = ibbr + 2;
+  IF ibbr = 5;
+    ibbr = ibbr + 3;
+END
+TERM
