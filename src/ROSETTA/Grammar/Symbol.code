@@ -979,6 +979,11 @@ SgAliasSymbol::get_name() const
           name = get_alias()->get_name();
         }
 
+#if 0
+  // DQ (1/21/2019): Adding debugging information.
+     printf ("In SgAliasSymbol::get_name(): name = %s \n",name.str());
+#endif
+
      return name;
    }
 
@@ -1006,6 +1011,10 @@ SgAliasSymbol::get_base() const
      SgAliasSymbol* aliasSymbol = isSgAliasSymbol(get_alias());
      while (aliasSymbol != NULL)
         {
+#if 0
+       // DQ (1/21/2019): Adding debugging information.
+          printf ("SgAliasSymbol::get_base(): We want to avoid chains of SgAliasSymbol symbols \n");
+#endif
        // This may be any symbol (even a SgAliasSymbol)
           nonAliasedSymbol = aliasSymbol->get_alias();
 
@@ -1141,6 +1150,11 @@ SgAliasSymbol::get_declaration() const
              }
         }
 
+#if 0
+  // DQ (1/21/2019): Adding debugging information.
+     printf ("In SgAliasSymbol::get_declaration(): returnValue = %p = %s \n",returnValue,(returnValue != NULL) ? returnValue->class_name().c_str() : "null");
+#endif
+
      return returnValue;
    }
 
@@ -1155,6 +1169,7 @@ SgAliasSymbol::SgAliasSymbol( const SgAliasSymbol & X )
      p_causal_nodes = X.p_causal_nodes;
 
 #if 0
+  // DQ (1/21/2019): Adding debugging information.
      printf ("In SgAliasSymbol copy constructor: p_causal_nodes.size() = %zu X.p_causal_nodes = %zu \n",p_causal_nodes.size(),X.p_causal_nodes.size());
 #endif
    }
@@ -1168,6 +1183,7 @@ SgAliasSymbol::post_construction_initialization()
      if (aliasSymbol != NULL)
         {
 #if 0
+       // DQ (1/21/2019): Adding debugging information.
           printf ("WARNING: SgAliasSymbol build from another SgAliasSymbol is not allowed! (automating fix) \n");
 #endif
           p_alias = aliasSymbol->get_alias();
@@ -1181,8 +1197,8 @@ SgAliasSymbol::post_construction_initialization()
         }
    }
 
-
 SOURCE_ALIAS_SYMBOL_END
+
 
 SOURCE_RENAME_SYMBOL_START
 SgName

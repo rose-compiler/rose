@@ -510,7 +510,10 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // DQ (4/16/2015): This is replaced with a better implementation.
   // Make sure the isModified boolean is clear for all newly-parsed nodes.
   // checkIsModifiedFlag(project);
+
+  // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
+  // printf ("ERROR: In frontend(const std::vector<std::string>& argv): commented out unsetNodesMarkedAsModified() \n");
 
    
   // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
