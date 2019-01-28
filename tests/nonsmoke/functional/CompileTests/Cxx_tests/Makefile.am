@@ -1631,6 +1631,7 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
+	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 
 status:
 	@$(MAKE) $(TEST_Source_passed)

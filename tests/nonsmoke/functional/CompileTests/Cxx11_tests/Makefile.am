@@ -323,7 +323,11 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_32.C \
    test2019_33.C \
    test2019_35.C \
-   test2019_36.C 
+   test2019_36.C \
+   test2019_39.C \
+   test2019_40.C \
+   test2019_41.C \
+   test2019_42.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \

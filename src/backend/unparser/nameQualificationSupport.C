@@ -6461,8 +6461,28 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgStatement* currentStatement = TransformationSupport::getStatement(constructorInitializer);
           if (currentStatement == NULL)
              {
-               printf ("Error in constructorInitializer = %p \n",constructorInitializer);
+            // DQ (1/28/2019): This can happen when the expression is used in an array type declaration (e.g. within a variable declaration for an array).
+            // NOTE: this will be possibly incorrect if there is a using declaration in the scope that would be important to the name qualification.
+            // We would then need to know if the declarration declaring the array type was before or after the using declaration.
+            // Not clear what would be the best wayy to solve that problem (though it would not be in the set of directived already processed, so it might be fine).
+#if 0
+               printf ("In name qualification: not possible to locate statement containing constructorInitializer = %p (using first statement from current scope) \n",constructorInitializer);
+#endif
                ROSE_ASSERT(constructorInitializer->get_parent() != NULL);
+
+               SgScopeStatement* tmp_currentScope = inheritedAttribute.get_currentScope();
+               ROSE_ASSERT(tmp_currentScope != NULL);
+#if 0
+               constructorInitializer->get_file_info()->display("Error in constructorInitializer");
+               constructorInitializer->get_parent()->get_file_info()->display("Error in constructorInitializer->get_parent()");
+
+               printf ("inheritedAttribute.get_currentScope() = %p = %s \n",tmp_currentScope,tmp_currentScope->class_name().c_str());
+
+               tmp_currentScope->get_file_info()->display("Error in constructorInitializer: currentScope");
+#endif
+            // If we don't have a statement derived from the expression to reference, then use the first statement in the current scope.
+               currentStatement = tmp_currentScope->firstStatement();
+               ROSE_ASSERT(currentStatement != NULL);
              }
           ROSE_ASSERT(currentStatement != NULL);
 
@@ -6574,8 +6594,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgStatement* currentStatement = TransformationSupport::getStatement(aggregateInitializer);
           if (currentStatement == NULL)
              {
+            // DQ (1/28/2019): This can happen when the expression is used in an array type declaration (e.g. within a variable declaration for an array).
+            // NOTE: this will be possibly incorrect if there is a using declaration in the scope that would be important to the name qualification.
+            // We would then need to know if the declarration declaring the array type was before or after the using declaration.
+            // Not clear what would be the best wayy to solve that problem (though it would not be in the set of directived already processed, so it might be fine).
+#if 0
+               printf ("In name qualification: not possible to locate statement containing aggregateInitializer = %p (using first statement from current scope) \n",aggregateInitializer);
+#endif
+               ROSE_ASSERT(aggregateInitializer->get_parent() != NULL);
+
+               SgScopeStatement* tmp_currentScope = inheritedAttribute.get_currentScope();
+               ROSE_ASSERT(tmp_currentScope != NULL);
+#if 0
                printf ("Error in aggregateInitializer = %p \n",aggregateInitializer);
                ROSE_ASSERT(aggregateInitializer->get_parent() != NULL);
+               aggregateInitializer->get_file_info()->display("Error in aggregateInitializer");
+               aggregateInitializer->get_parent()->get_file_info()->display("Error in aggregateInitializer->get_parent()");
+#endif
+            // If we don't have a statement derived from the expression to reference, then use the first statement in the current scope.
+               currentStatement = tmp_currentScope->firstStatement();
+               ROSE_ASSERT(currentStatement != NULL);
              }
           ROSE_ASSERT(currentStatement != NULL);
 
