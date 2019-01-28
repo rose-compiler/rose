@@ -1,0 +1,8 @@
+START
+PROGRAM ROSE1516;
+BEGIN
+  ITEM MAX'J U 4 = 10;
+  ITEM var U 4;
+  var = MAX'J;
+END
+TERM

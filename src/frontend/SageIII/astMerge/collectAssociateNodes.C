@@ -1877,8 +1877,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(baseClass->get_base_class() != NULL);
                nodeList.insert(baseClass->get_base_class());
 
+            // DQ (1/21/2019): I think we don't want the reference to the pointer.
             // The modifer access function returns by reference but this is non-uniform handling of IR nodes within ROSE.
-               nodeList.insert( &(baseClass->get_baseClassModifier()) );
+            // nodeList.insert( &(baseClass->get_baseClassModifier()) );
+               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
+               nodeList.insert(baseClass->get_baseClassModifier());
                break;
              }
 
@@ -2160,6 +2163,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+       // Rasmussen (11/12/2018): Added support for Jovial COMPOOL module
+          case V_SgJovialCompoolStatement:
+
+       // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
+          case V_SgJovialForThenStatement:
+
           case V_SgMatlabForStatement:
 
        // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
@@ -2340,6 +2349,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // parsing Fortran as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
+          case V_SgUntypedExprListExpression:
              {
                break;
              }

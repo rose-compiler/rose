@@ -110,7 +110,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.6.0"<<endl;
+    cout<<toolName<<" version 0.7.1"<<endl;
     return 0;
   }
 

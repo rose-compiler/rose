@@ -1758,6 +1758,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
             
+          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -2131,6 +2132,23 @@ SageInterface::get_name ( const SgSupport* node )
                          break;
                        }
                   }
+               break;
+             }
+
+       // DQ (1/21/2019): Implemented case for SgBaseClass
+          case V_SgBaseClass:
+             {
+               const SgBaseClass* base_class_node = isSgBaseClass(node);
+               ROSE_ASSERT(base_class_node != NULL);
+               ROSE_ASSERT(base_class_node->get_base_class() != NULL);
+
+            // Add the access modifier to the output.
+               string access = "";
+               const SgBaseClassModifier* baseClassModifier = base_class_node->get_baseClassModifier();
+               ROSE_ASSERT(baseClassModifier != NULL);
+               access = baseClassModifier->displayString();
+
+               name = "_base_class_" + access + "_" + get_name(base_class_node->get_base_class());
                break;
              }
 
@@ -3716,6 +3734,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgJovialForThenStatement:
         case V_SgMatlabForStatement:
           {
             return;
@@ -7856,6 +7875,19 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
     SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
     if (temp)
       return isSgClassDefinition(temp);
+    else
+      return NULL;
+ }
+
+
+SgClassDeclaration*
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
+  {
+ // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+ // I'm having trouble making this work for a member function declared outside of the class definition.
+    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
+    if (temp)
+      return isSgClassDeclaration(temp);
     else
       return NULL;
  }
@@ -16444,9 +16476,13 @@ SageInterface::isPrefixOperatorName( const SgName & functionName )
 
      if (functionName.is_null() == false)
         {
+       // DQ (1/20/2019): Add operator~() to this list (see test2019_10.C).
+       // if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+       //      functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
+       //      functionName == "operator-"  || functionName == "operator+" )
           if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
                functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
-               functionName == "operator-"  || functionName == "operator+" )
+               functionName == "operator-"  || functionName == "operator+"  || functionName == "operator~")
              {
                returnValue = true;
              }

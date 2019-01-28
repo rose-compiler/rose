@@ -1628,6 +1628,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Get the closest class definition enclosing the specified AST node,
   ROSE_DLL_API SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode, const bool includingSelf=false);
 
+  //! Get the closest class declaration enclosing the specified AST node,
+  ROSE_DLL_API SgClassDeclaration* getEnclosingClassDeclaration( SgNode* astNode );
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
