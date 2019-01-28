@@ -7194,11 +7194,19 @@ BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 
 
-// RASMUSSEN (1/25/2018)
+// RASMUSSEN ( 1/25/2018):
+//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
-     ROSE_ASSERT(dim_info  != NULL);
+
+  // There must always be a dim_info object for this function.  If not, the
+  // overloaded function must be used to handle it.
+     if (dim_info == NULL)
+        {
+           SgExpression* index = NULL;
+           return buildArrayType(base_type, index);
+        }
 
      SgExpression* index = new SgNullExpression();
      ROSE_ASSERT(index);
@@ -10870,6 +10878,39 @@ SgModifierType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
      return result2;
    }
 
+// DQ (1/19/2019): Adding support for const volatile type (both together as another value).
+//! Build a const volatile type.
+SgModifierType* SageBuilder::buildConstVolatileType(SgType* base_type /*=NULL*/)
+   {
+  // DQ (9/3/2012): Added assertion.
+     ROSE_ASSERT(base_type != NULL);
+
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+     result->get_typeModifier().get_constVolatileModifier().setConstVolatile();
+
+#if 1
+     printf ("In SageBuilder::buildConstVolatileType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
+#endif
+
+  // DQ (7/29/2010): Insert result type into type table and return it, or
+  // replace the result type, if already available in the type table, with
+  // the type from type table.
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+        {
+#if 0
+       // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
+          printf ("(debugging) In SageBuilder::buildConstVolatileType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
+#else
+          delete result;
+#endif
+        }
+
+     return result2;
+   }
+
 string
 generate_type_list (SgType* type)
    {
@@ -11944,6 +11985,16 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
 #if 0
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): nondefdecl = %p nondefdecl->unparseNameToString() = %s \n",nondefdecl,nondefdecl->unparseNameToString().c_str());
+#endif
+
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
 #endif
 
      return nondefdecl;
@@ -13113,8 +13164,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
                SgClassDeclaration* tmp_classDeclarationFromType = isSgClassDeclaration(class_type->get_declaration());
                ROSE_ASSERT(tmp_classDeclarationFromType != NULL);
-               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
 #if DEBUG_CLASS_DECLARATION
+               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
                printf ("tmp_classDeclarationFromType: scope = %p = %s \n",scope,scope->class_name().c_str());
                printf ("tmp_classDeclarationFromType = %p = %s \n",tmp_classDeclarationFromType,tmp_classDeclarationFromType->class_name().c_str());
                printf ("tmp_classDeclarationFromType name = %s \n",tmp_classDeclarationFromType->get_name().str());
@@ -13709,6 +13760,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      printf ("Leaving buildClassDeclaration_nfi(): defdecl = %p defdecl->unparseNameToString() = %s \n",defdecl,defdecl->unparseNameToString().c_str());
 #endif
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return defdecl;
    }
 
@@ -14127,6 +14188,17 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
 
      testTemplateArgumentParents(nondefdecl);
+
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = nondefdecl;
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
 
      return nondefdecl;
    }
@@ -14604,6 +14676,17 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
      testTemplateArgumentParents(defdecl);
      testTemplateArgumentParents(nondefdecl);
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = defdecl;
+     SgSymbol* test_symbol = defdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(defdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return defdecl;
    }
 #endif
@@ -14918,7 +15001,10 @@ SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
 
      if (isVirtual == true)
         {
-          baseclass->get_baseClassModifier().setVirtual();
+       // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+       // baseclass->get_baseClassModifier().setVirtual();
+          ROSE_ASSERT(baseclass->get_baseClassModifier() != NULL);
+          baseclass->get_baseClassModifier()->setVirtual();
         }
 
   // DQ (4/29/2004): add support to set access specifier

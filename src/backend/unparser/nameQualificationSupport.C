@@ -1280,6 +1280,53 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    printf ("WARNING: classDeclaration->get_firstNondefiningDeclaration() != classSymbol->get_declaration() \n");
 #endif
                                  }
+
+                           // DQ (1/24/2019): Find any associated (outer) class definition scope and check if we need global qualification.
+#if 0
+                              printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                              SgScopeStatement* temp_scope = currentScope;
+                              while (isSgGlobal(temp_scope) == NULL && isSgClassDefinition(temp_scope) == NULL)
+                                 {
+#if 0
+                                   printf ("  --- temp_scope = %p = %s \n",temp_scope,temp_scope->class_name().c_str());
+#endif
+                                   temp_scope = temp_scope->get_scope();
+                                 }
+#if 0
+                              printf ("After loop over parent scopes: temp_scope = %p = %s \n",temp_scope,temp_scope->class_name().c_str());
+#endif
+                              SgClassDefinition* classDefinition = isSgClassDefinition(temp_scope);
+                              if (classDefinition != NULL)
+                                 {
+                                   SgClassDeclaration* definingClassDeclaration = classDefinition->get_declaration();
+                                   ROSE_ASSERT(definingClassDeclaration != NULL);
+                                   SgClassDeclaration* nondefiningClassDeclaration = isSgClassDeclaration(definingClassDeclaration->get_firstNondefiningDeclaration());
+                                   ROSE_ASSERT(nondefiningClassDeclaration != NULL);
+
+                                   if (inaccessibleClassSets.find(nondefiningClassDeclaration) != inaccessibleClassSets.end())
+                                      {
+                                     // If any of the class declarations in the list of inaccessible class declaration match, then we have to add global qualification.
+                                        std::set<SgClassDeclaration*> & inaccessible_classes = inaccessibleClassSets[nondefiningClassDeclaration];
+#if 0
+                                        printf ("classDeclaration = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+                                        SgClassDeclaration* nondefiningClassDeclaration = isSgClassDeclaration(classDeclaration->get_firstNondefiningDeclaration());
+                                     // ROSE_ASSERT(nondefiningClassDeclaration == classDeclaration->get_firstNondefiningDeclaration());
+
+                                        if (inaccessible_classes.find(nondefiningClassDeclaration) != inaccessible_classes.end())
+                                           {
+                                             qualificationDepth++;
+#if 0
+                                             printf ("Found a reference to an inaccessible class --- add global name qualification: qualificationDepth = %d \n",qualificationDepth);
+#endif
+#if 0
+                                             printf ("Exiting as a test! \n");
+                                             ROSE_ASSERT(false);
+#endif
+                                           }
+                                      }
+                                 }
                             }
 
                          break;
@@ -2486,7 +2533,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
                        }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                     printf ("AT SWITCH: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
                     switch (symbol->variantT())
@@ -2507,12 +2554,67 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                               if (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration())
                                  {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+// #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if 0
                                 // This class is visible from where it is referenced.
                                    printf ("This class IS visible from where it is referenced \n");
 
                                 // However, if this is a templated class then we have to dig deeper to identify if the template arguments require name qualification.
                                    printf ("symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
+#if 0
+                                // DQ (1/24/2019): But we need to check if it is hidden by a base class or nested base class that would force name qualification.
+                                   printf ("################## associatedClassDeclaration->get_name() = %s \n",associatedClassDeclaration->get_name().str());
+                                   printf ("privateBaseClassSets.size()  = %zu \n",privateBaseClassSets.size());
+                                   printf ("inaccessibleClassSets.size() = %zu \n",inaccessibleClassSets.size());
+                                   printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+#if 0
+                                // SgClassDeclaration* containingClassDeclaration = SageInterface::getEnclosingClassDeclaration(currentScope);
+                                // SgClassDefinition*  containingClassDefinition  = SageInterface::getEnclosingClassDefinition(currentScope);
+                                // SgClassDefinition*  containingClassDefinition  = TransformationSupport::getClassDefinition(currentScope);
+
+                                   printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+
+                                   SgScopeStatement*   scope                     = currentScope;
+                                   SgClassDefinition*  containingClassDefinition = NULL;
+                                   while (scope != NULL && containingClassDefinition == NULL)
+                                      {
+                                        containingClassDefinition = isSgClassDefinition(scope);
+                                     // SgScopeStatement* outer_scope = scope->get_scope();
+                                        SgScopeStatement* outer_scope = SageInterface::getEnclosingScope(scope);
+
+                                        if (scope == outer_scope)
+                                           {
+#if 0
+                                             printf ("get_scope is not changed: scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+                                           }
+                                          else
+                                           {
+                                             scope = outer_scope;
+                                           }
+                                      }
+#if 0
+                                   printf ("containingClassDefinition = %p \n",containingClassDefinition);
+#endif
+                                   if (containingClassDefinition != NULL)
+                                      {
+                                        ROSE_ASSERT(containingClassDefinition != NULL);
+                                        SgClassDeclaration* containingClassDeclaration = containingClassDefinition->get_declaration();
+#if 0
+                                        printf ("containingClassDeclaration = %p \n",containingClassDeclaration);
+#endif
+                                        if (containingClassDeclaration != NULL)
+                                           {
+                                             printf ("################### containingClassDeclaration = %p = %s name = %s \n",containingClassDeclaration,
+                                                  containingClassDeclaration->class_name().c_str(),containingClassDeclaration->get_name().str());
+                                           }
+                                      }
+#endif
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
 #endif
 #if 0
                                    printf ("I think this is associated with a template, need to stop here! \n");
@@ -4356,19 +4458,124 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgBaseClass* baseClass = *i;
                ROSE_ASSERT(baseClass != NULL);
 
-               SgClassDeclaration* classDeclaration = baseClass->get_base_class();
+            // SgClassDeclaration* classDeclaration = baseClass->get_base_class();
                SgScopeStatement*   currentScope     = classDefinition->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("Calling nameQualificationDepth() for base class classDeclaration name = %s \n",classDeclaration->get_name().str());
+            // Name these better to be more clear.
+               SgClassDeclaration* derivedClassDeclaration = classDefinition->get_declaration();
+               if (derivedClassDeclaration != derivedClassDeclaration->get_firstNondefiningDeclaration())
+                  {
+                    derivedClassDeclaration = isSgClassDeclaration(derivedClassDeclaration->get_firstNondefiningDeclaration());
+#if 0
+                    printf ("RESET derivedClassDeclaration to firstNondefiningDeclaration: %p \n",derivedClassDeclaration);
 #endif
-               int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDefinition);
+                  }
+            // SgClassDeclaration* baseClassDeclaration    = classDeclaration;
+               SgClassDeclaration* baseClassDeclaration    = baseClass->get_base_class();
+               if (baseClassDeclaration != baseClassDeclaration->get_firstNondefiningDeclaration())
+                  {
+                    baseClassDeclaration = isSgClassDeclaration(baseClassDeclaration->get_firstNondefiningDeclaration());
+#if 0
+                    printf ("RESET baseClassDeclaration to firstNondefiningDeclaration: %p \n",baseClassDeclaration);
+#endif
+                  }
+
+               ROSE_ASSERT(derivedClassDeclaration != NULL);
+               ROSE_ASSERT(baseClassDeclaration    != NULL);
+
+            // DQ (1/24/2019): Build a list of private base classes and accumulate them from any base classes.
+            // This is important to support additional name qualification required when derived classes 
+            // reference a nested base class that may be private.
+               SgBaseClassModifier* baseClassDeclarationBaseClassModifier = baseClass->get_baseClassModifier();
+               ROSE_ASSERT(baseClassDeclarationBaseClassModifier != NULL);
+               SgAccessModifier & baseClassDeclarationAccessModifier = baseClassDeclarationBaseClassModifier->get_accessModifier();
+#if 0
+               printf ("  --- derivedClassDeclaration = %p name = %s \n",derivedClassDeclaration,SageInterface::get_name(derivedClassDeclaration).c_str());
+               printf ("  --- baseClassDeclaration    = %p name = %s \n",baseClassDeclaration,SageInterface::get_name(baseClassDeclaration).c_str());
+               printf ("  --- classDeclarationAccessModifier = %s \n",baseClassDeclarationAccessModifier.displayString().c_str());
+
+               printf ("  --- privateBaseClassSets.size()  = %zu \n",privateBaseClassSets.size());
+               printf ("  --- inaccessibleClassSets.size() = %zu \n",inaccessibleClassSets.size());
+#endif
+               if (baseClassDeclarationAccessModifier.isPrivate() == true)
+                  {
+#if 0
+                    printf ("Found private derivation of baseClassDeclaration = %s from derivedClassDeclaration = %s \n",baseClassDeclaration->get_name().str(),derivedClassDeclaration->get_name().str());
+#endif
+                    if (privateBaseClassSets.find(derivedClassDeclaration) != privateBaseClassSets.end())
+                       {
+#if 0
+                         printf ("privateBaseClassSets has an entry for this class: derivedClassDeclaration = %p = %s name = %s \n",
+                              derivedClassDeclaration,derivedClassDeclaration->class_name().c_str(),derivedClassDeclaration->get_name().str());
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                         std::set<SgClassDeclaration*> privateClasses;
+                         privateClasses.insert(baseClassDeclaration);
+                         privateBaseClassSets.insert(std::pair<SgClassDeclaration*,std::set<SgClassDeclaration*> >(derivedClassDeclaration,privateClasses));
+#if 0
+                      // Output the evolving maps.
+                         displayBaseClassMap("private class set accumulation",privateBaseClassSets);
+#endif
+                       }
+
+                  }
+
+            // Build up the inaccessibleClassSets map.
+               if (privateBaseClassSets.find(baseClassDeclaration) != privateBaseClassSets.end())
+                  {
+                    std::set<SgClassDeclaration*> & privateBaseClasses = privateBaseClassSets[baseClassDeclaration];
+#if 0
+                    printf ("In base class: find the set of private base classes: privateBaseClasses.size() = %zu \n",privateBaseClasses.size());
+#endif
+                    std::set<SgClassDeclaration*>::iterator j = privateBaseClasses.begin();
+                    while (j != privateBaseClasses.end())
+                       {
+                         SgClassDeclaration* privateBaseClassDeclaration = *j;
+                         ROSE_ASSERT(privateBaseClassDeclaration != NULL);
+#if 0
+                         printf ("  --- privateBaseClassDeclaration = %p = %s name = %s \n",privateBaseClassDeclaration,privateBaseClassDeclaration->class_name().c_str(),privateBaseClassDeclaration->get_name().str());
+#endif
+                         std::set<SgClassDeclaration*> privateClasses;
+                         privateClasses.insert(privateBaseClassDeclaration);
+                         inaccessibleClassSets.insert(std::pair<SgClassDeclaration*,std::set<SgClassDeclaration*> >(derivedClassDeclaration,privateClasses));
+                                   
+                         j++;
+                       }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("baseClassDeclaration = %p = %s name = %s : has no recorded private base classes \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
+#endif
+                  }
+#if 0
+            // Output the evolving maps.
+               displayBaseClassMap("inaccessible class set accumulation",inaccessibleClassSets);
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Calling nameQualificationDepth() for base class baseClassDeclaration name = %s \n",baseClassDeclaration->get_name().str());
+#endif
+            // int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDefinition);
+               int amountOfNameQualificationRequired = nameQualificationDepth(baseClassDeclaration,currentScope,classDefinition);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("amountOfNameQualificationRequired (base class) = %d \n",amountOfNameQualificationRequired);
 #endif
-               setNameQualification(baseClass,classDeclaration,amountOfNameQualificationRequired);
+            // setNameQualification(baseClass,classDeclaration,amountOfNameQualificationRequired);
+               setNameQualification(baseClass,baseClassDeclaration,amountOfNameQualificationRequired);
 
             // DQ (12/23/2015): Also need to add this to the aliasSymbolCausalNodeSet.
                SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(baseClass);
@@ -5852,12 +6059,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (templateInstantiationTypedefDeclaration != NULL)
              {
             // This point of calling this function is to just have the template arguments evaluated for name qualification (see Cxx11_tests/test2018_68.C).
-               int amountOfNameQualificationRequired = nameQualificationDepth(templateInstantiationTypedefDeclaration,currentScope,templateInstantiationTypedefDeclaration);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               int amountOfNameQualificationRequired = nameQualificationDepth(templateInstantiationTypedefDeclaration,currentScope,templateInstantiationTypedefDeclaration);
                printf ("SgTemplateInstantiationTypedefDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
-#endif
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+
             // DQ (4/14/2018): Report anything that is unusual, i.e. non-zero name qualification length.
                if (amountOfNameQualificationRequired > 0)
                   {
@@ -9882,3 +10088,37 @@ NameQualificationTraversal::depthOfGlobalNameQualification(SgDeclarationStatemen
      return depthOfNameQualification;
    }
 
+
+// DQ (1/24/2019): display accumulated private base class map.
+void
+NameQualificationTraversal::displayBaseClassMap ( const string & label, BaseClassSetMap & x )
+   {
+  // std::map<SgClassDeclaration*,std::set<SgClassDeclaration*> > privateBaseClassSets );
+
+     printf ("In displayBaseClassMap(): label = %s \n",label.c_str());
+
+  // std::map<SgClassDeclaration*,std::set<SgClassDeclaration*> >::iterator i = x.begin();
+     BaseClassSetMap::iterator i = x.begin();
+     while (i != x.end())
+        {
+          SgClassDeclaration*             derivedClassDeclaration = i->first;
+          std::set<SgClassDeclaration*> & privateBaseClasses      = i->second;
+
+          printf ("  --- derivedClassDeclaration = %p = %s name = %s \n",derivedClassDeclaration,derivedClassDeclaration->class_name().c_str(),derivedClassDeclaration->get_name().str());
+          printf ("  --- privateBaseClasses.size() = %zu \n",privateBaseClasses.size());
+
+          std::set<SgClassDeclaration*>::const_iterator j = privateBaseClasses.begin();
+          while (j != privateBaseClasses.end())
+             {
+               SgClassDeclaration* privateBaseClassDeclaration = *j;
+               ROSE_ASSERT(privateBaseClassDeclaration != NULL);
+
+               printf ("  --- --- privateBaseClassDeclaration = %p = %s name = %s \n",privateBaseClassDeclaration,privateBaseClassDeclaration->class_name().c_str(),privateBaseClassDeclaration->get_name().str());
+
+               j++;
+             }
+          i++;
+        }
+
+     printf ("Leaving displayBaseClassMap(): label = %s \n",label.c_str());
+   }

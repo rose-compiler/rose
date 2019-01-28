@@ -491,10 +491,11 @@ HEADER_CV_TYPE_MODIFIER_START
        */
           enum cv_modifier_enum
              {
-               e_unknown,      /*!< Unknown value (error value) */
-               e_default,      /*!< Default value (default) */
-               e_const,        /*!< Const qualifier */
-               e_volatile,     /*!< Volatile qualifier */
+               e_unknown,        /*!< Unknown value (error value) */
+               e_default,        /*!< Default value (default) */
+               e_const,          /*!< Const qualifier */
+               e_volatile,       /*!< Volatile qualifier */
+               e_const_volatile, /*!< Both const and volatile qualifier */
 
             // DQ (8/11/2011): Added support for Java "transient" modifier.
                e_java_transient,    /*!< Java transient qualifier (specifies no serialization of declaration) */
@@ -529,6 +530,11 @@ HEADER_CV_TYPE_MODIFIER_START
           void setVolatile();
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
+
+       // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+          bool isConstVolatile() const;
+          void setConstVolatile();
+          void unsetConstVolatile();
 
        // DQ (8/11/2011): Java support.
           bool isJavaTransient() const;
@@ -2268,13 +2274,22 @@ void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
 bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
 void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 
-bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+bool $CLASSNAME::isConst() const { return ((p_modifier == e_const) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setConst()      { p_modifier = e_const; }
 void $CLASSNAME::unsetConst()    { setDefault(); }
 
-bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+bool $CLASSNAME::isVolatile() const { return ((p_modifier == e_volatile) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
+
+// DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+bool $CLASSNAME::isConstVolatile() const { return p_modifier == e_const_volatile; }
+void $CLASSNAME::setConstVolatile()      { p_modifier = e_const_volatile; }
+void $CLASSNAME::unsetConstVolatile()    { setDefault(); }
 
 // DQ (8/11/2011): Added support for Java "transient" keyword to disable serialization.
 bool $CLASSNAME::isJavaTransient() const { return p_modifier == e_java_transient; }
@@ -2289,6 +2304,10 @@ $CLASSNAME::displayString() const
      s += std::string("isDefault() = ")       + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
      s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true " : "false ");
+
+  // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+     s += std::string("isConstVolatile() = ") + std::string(isConstVolatile() ? "true " : "false ");
+
      s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true " : "false ");
      s += ")";
      return s;
@@ -2310,19 +2329,23 @@ $CLASSNAME::display ( std::string label ) const
 
 std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m) 
    {
-      os << m.get_modifier(); 
+     os << m.get_modifier(); 
      return os;
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
+   {
 	return
 	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
 	       (lhs.isDefault()  == rhs.isDefault() ) &&
 	       (lhs.isConst()    == rhs.isConst()   ) &&
 	       (lhs.isVolatile() == rhs.isVolatile()) &&
+
+            // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+	       (lhs.isConstVolatile() == rhs.isConstVolatile()) &&
+
 		   true;
-}
+   }
 
 
 // DQ (2/4/2006): Added mechamism to clear all bits
@@ -3700,53 +3723,53 @@ bool SgTypeModifier::isIdentity() const
 
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
-		   (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
-		   (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
-		   (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
-	       (lhs.isUnknown() == rhs.isUnknown()) &&
-	       (lhs.isDefault() == rhs.isDefault()) &&
-           // C specific
-	       (lhs.isRestrict() == rhs.isRestrict()) &&
-           // Fortran specific
-	       (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
-	       (lhs.isBind()         == rhs.isBind()        ) &&
-	       (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
-	       (lhs.isData()         == rhs.isData()        ) &&
-	       (lhs.isDimension()    == rhs.isDimension()   ) &&
-	       (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
-	       (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
-	       (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
-	       (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
-	       (lhs.isOptional()     == rhs.isOptional()    ) &&
-	       (lhs.isSave()         == rhs.isSave()        ) &&
-	       (lhs.isTarget()       == rhs.isTarget()      ) &&
-	       (lhs.isValue()        == rhs.isValue()       ) &&
-           // GNU specific
-	       (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
-	       (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
-	       (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
-	       (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
-	       (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
-	       (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
-	       (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
-	       (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
-	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
-	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
-	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
-           // Address Space
-               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
-               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
-           // OpenCL specific
-               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
-               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
-               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
-           // Vector Type
-               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
-               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
-		   true;
-}
+   {
+     return
+          (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+          (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
+          (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
+          (lhs.isUnknown() == rhs.isUnknown()) &&
+          (lhs.isDefault() == rhs.isDefault()) &&
+       // C specific
+          (lhs.isRestrict() == rhs.isRestrict()) &&
+       // Fortran specific
+          (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
+          (lhs.isBind()         == rhs.isBind()        ) &&
+          (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
+          (lhs.isData()         == rhs.isData()        ) &&
+          (lhs.isDimension()    == rhs.isDimension()   ) &&
+          (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
+          (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
+          (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
+          (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
+          (lhs.isOptional()     == rhs.isOptional()    ) &&
+          (lhs.isSave()         == rhs.isSave()        ) &&
+          (lhs.isTarget()       == rhs.isTarget()      ) &&
+          (lhs.isValue()        == rhs.isValue()       ) &&
+       // GNU specific
+          (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
+          (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
+          (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
+          (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
+          (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
+          (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
+          (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
+          (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
+          (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
+          (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
+          (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+       // Address Space
+          (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+          (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+       // OpenCL specific
+          (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+          (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+          (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+       // Vector Type
+          (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+          (lhs.get_vector_size() == rhs.get_vector_size() ) &&
+          true;
+   }
 
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
@@ -4351,6 +4374,11 @@ HEADER_SYMBOL_TABLE_START
 #endif
           SgClassSymbol*     find_class(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
 
+       // DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
+       // This is important in handling the viability of symbols through base classes when private base 
+       // class derivation is used.
+       // SgAliasSymbol* find_alias(const SgName & nm);
+
        // DQ (8/10/2013): I have needed to change the API to support more than just template arguments (adding support for template parameters).
        // DQ (8/8/2013): I have needed to change the API to support more than just classes.
        // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
@@ -4363,7 +4391,12 @@ HEADER_SYMBOL_TABLE_START
        // template <class T> bool hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(T* templateParametersOrArgumentsList, SgSymbol* symbol);
           template <class T> bool hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(std::vector<T*>* templateParametersOrArgumentsList, SgSymbol* symbol);
 
-          SgClassSymbol*     find_class(const SgName & name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
+          SgClassSymbol* find_class(const SgName & name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
+
+       // DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
+       // This is important in handling the viability of symbols through base classes when private base 
+       // class derivation is used.
+       // SgAliasSymbol* find_alias(const SgName & name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
 
           SgFunctionSymbol* find_function(const SgName& name);                //! Complexity O(log n) for first match against name, then O(n)
        // SgFunctionSymbol* find_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
@@ -4605,8 +4638,11 @@ HEADER_BASECLASS_START
           bool operator== (const SgBaseClass& ) const;
           bool operator< (const SgBaseClass&) const;
 
+#if 0
+       // DQ (1/21/2019): This should be an automatically generated access function.
        // DQ (4/25/2004): Part of new modifier interface
           SgBaseClassModifier & get_baseClassModifier();
+#endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -5298,8 +5334,8 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization() $ROSE_OVERRIDE;
 
-       // ROSE-1499
-          void check_file_id(char * label, bool assertion=true) const;
+       // ROSE-1499, ROSE-1639 (added const to char*)
+          void check_file_id(const char * label, bool assertion=true) const;
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
@@ -7910,6 +7946,39 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
 #if 0
+  // DQ (1/27/2019): Adding test to check the symbol basis (failing for Cxx11_tests/test2019_31.C).
+     SgNode* symbolBasis = sp->get_symbol_basis();
+     if (isSgClassSymbol(sp) != NULL || isSgAliasSymbol(sp) != NULL)
+        {
+          ROSE_ASSERT(symbolBasis != NULL);
+        }
+
+  // DQ (1/27/2019): Adding test to check the symbol basis (failing for Cxx11_tests/test2019_31.C).
+  // Get a quick pointer into the symbol table using the name (log n complexity)
+     p_iterator = p_table->find(nm);
+
+  // Once we have p_iterator set via the name we don't typically have more than one iteration
+     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
+        {
+          assert(p_iterator->second != NULL);
+#if 0
+          printf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
+          printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
+#endif
+
+       // This is a virtual function call (not defined for function type symbols)
+          SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
+
+          if (isSgAliasSymbol(p_iterator->second) != NULL)
+             { 
+               ROSE_ASSERT(symbolBasis != NULL);
+             }
+
+          p_iterator++;
+        }
+#endif
+
+#if 0
      printf ("********** Leaving SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s \n",
           nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),sp,sp->class_name().c_str());
 #endif
@@ -8096,7 +8165,9 @@ SgSymbolTable::find( const SgStatement* statement)
      assert(p_table != NULL);
      assert(statement != NULL);
 
-#if 0
+#define DEBUG_FIND_SYMBOL_FROM_STATEMENT 0
+
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
 #endif
 
@@ -8107,7 +8178,7 @@ SgSymbolTable::find( const SgStatement* statement)
   // A ResetEmptyNames process to handle this should be used before this find is called.
   // I cannot assert this since this function can be called before the empty name is reset. 
   //   ROSE_ASSERT (name.getString().length() !=0);
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): name = %s \n",name.str());
 #endif
 
@@ -8119,23 +8190,33 @@ SgSymbolTable::find( const SgStatement* statement)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
           assert(p_iterator->second != NULL);
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
           printf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
           printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
 #endif
 
        // This is a virtual function call (not defined for function type symbols)
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
-#if 0
+
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
+          printf ("In loop: statement->variantT() = %d = %s \n",
+               statement->variantT(),Cxx_GrammarTerminalNames[statement->variantT()].name.c_str());
+#endif
+       // DQ (1/27/2019): Test this to see if we can generate a dot graph to debug the problem.
+          ROSE_ASSERT(symbolBasis != NULL);
+
+       // if (symbolBasis != NULL)
+       //    {
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
           printf ("In loop: symbolBasis->variantT() = %d = %s statement->variantT() = %d = %s \n",
                symbolBasis->variantT(),Cxx_GrammarTerminalNames[symbolBasis->variantT()].name.c_str(),
                statement->variantT(),Cxx_GrammarTerminalNames[statement->variantT()].name.c_str());
 #endif
-          assert(symbolBasis != NULL);
+          ROSE_ASSERT(symbolBasis != NULL);
 
           if (symbolBasis->variantT() == statement->variantT())
              {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                printf ("matching variants \n");
 #endif
                returnSymbol = p_iterator->second;
@@ -8145,25 +8226,33 @@ SgSymbolTable::find( const SgStatement* statement)
             // switch which computes the names could normalize this aspect.
                if (returnSymbol->get_symbol_basis() == statement)
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                     printf ("returnSymbol->get_symbol_basis() == statement returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
 #endif
                     return returnSymbol;
                   }
                  else
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                     printf ("returnSymbol->get_symbol_basis() != statement (returnSymbol->get_symbol_basis() = %p statement = %p) \n",returnSymbol->get_symbol_basis(),statement);
 #endif
                   }
              }
             else
              {
-#if 0
+#if DEBUG_FIND_SYMBOL_FROM_STATEMENT
                printf ("Some other symbol was found (no matching variants) \n");
 #endif
              }
 
+#if 0
+             }
+            else
+             {
+               printf ("################## In SgSymbolTable::find( const SgStatement* statement): symbolBasis == NULL \n");
+               printf ("   --- statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
+             }
+#endif
           p_iterator++;
         }
 
@@ -8320,12 +8409,23 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
   // DQ (5/19/2013): This function finds the symbol for which the alias is sp, not the symbol to be returned being sp.
      assert(p_table != NULL);
 
+     ROSE_ASSERT(sp != NULL);
+
+#if 0
+     printf ("In SgSymbolTable::find_aliased_symbol(): We are only using the name = %s sp = %p = %s (not any template arguments or template parameters) \n",nm.str(),sp,sp->class_name().c_str());
+#endif
+
      p_iterator = p_table->find(nm);
 
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
           p_name    = nm;
           p_no_name = false;
+
+          ROSE_ASSERT(p_iterator->second != NULL);
+#if 0
+          printf ("In SgSymbolTable::find_aliased_symbol(): in loop: nm = %s p_iterator->second = %p = %s \n",nm.str(),p_iterator->second,p_iterator->second->class_name().c_str());
+#endif
 
        // if( p_iterator->second == sp )
           SgAliasSymbol* aliasSymbol = isSgAliasSymbol(p_iterator->second);
@@ -8339,6 +8439,8 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
 
      return NULL;
    }
+
+
 // DQ (1/31/2007): New functions that will replace the depricated find() member function
 bool
 SgSymbolTable::exists ( const SgName & nm ) const
@@ -8504,6 +8606,21 @@ SgSymbolTable::find_class(const SgName & nm)
 
      return s;
    }
+
+#if 0
+// DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
+// This is important in handling the viability of symbols through base classes when private base 
+// class derivation is used.
+SgAliasSymbol*
+SgSymbolTable::find_alias(const SgName & nm)
+   {
+#if 0
+     printf ("In SgSymbolTable::find_alias(): nm = %s \n",nm.str());
+#endif
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgAliasSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
+   }
+#endif
 
 
 #define DEBUG_MATCHING_TEMPLATE_ARGUMENTS 0
@@ -9314,6 +9431,18 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
      return find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
    }
 
+#if 0
+SgAliasSymbol*
+SgSymbolTable::find_alias(const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList)
+   {
+#if 0
+     printf ("In SgSymbolTable::find_alias(): nm = %s \n",nm.str());
+#endif
+
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgAliasSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
+   }
+#endif
 
 
 #if 0
@@ -10133,7 +10262,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (8/13/2013): Note that the effect of this is that if ReturnType == SgFunctionSymbol then symbol will be 
        // valid for both SgFunctionSymbol and SgMemberFunctionSymbol.  However, since SgTemplateFunctionSymbol is derived 
        // from SgFunctionSymbol and SgTemplateMemberFunctionSymbol is derived from SgMemberFunctionSymbol, the same is
-       // not tru for template function and template member function relationship.  A SgTemplateMemberFunctionSymbol
+       // not true for template function and template member function relationship.  A SgTemplateMemberFunctionSymbol
        // is NOT derived from a SgTemplateFunctionSymbol and thus a SgTemplateMemberFunctionSymbol dynamic_cast to a 
        // SgTemplateFunctionSymbol will be a NULL pointer (where for non-templates is will be a valid pointer.
        // The solution is to always know if you want to find the class, function, or member functions symbol for 
@@ -10361,17 +10490,29 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 #if 1
                       // DQ (7/12/2014): To support better symbol handling for name qualification. At this point were 
                       // we have identified the target aliased symbol, we need to check if the associated reason for 
-                      // it being an alias symbol has been see in the AST yet.  The cause for the alias symbol is a
+                      // it being an alias symbol has been seen in the AST yet.  The cause for the alias symbol is a
                       // causal node that is stored in the SgAliasSymbol (new modification to SgAliasSymbol).  The list
-                      // of possible causal nodes for alis symbols to be inserted is help in a static member of the 
+                      // of possible causal nodes for alias symbols to be inserted is held in a static member of the 
                       // SgSymbolTable (new modification to SgSymbolTable).
                       // if (aliasSymbolCausalNodeSet.find(original_aliased_symbol->get_causal_nodes().begin(),original_aliased_symbol->get_causal_nodes().end()) != aliasSymbolCausalNodeSet.end())
                          bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
                          if (foundCausalNode == true)
                             {
-#if 0
-                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",
-                                   aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                           // DQ (1/23/2019): I think that this support is specific to the references to a symbol before 
+                           // a using directive that would make is visible vs after the using directive.  Unfortunately it
+                           // is not sufficent to support when a class is derivied from another class and private derivation 
+                           // would cause alis symbols to be seen or not seen in the subsequent coass derivations (see 
+                           // Cxx_tests/test2019_21.C).
+                           // NOTE: the set defined by get_aliasSymbolCausalNodeSet() is only maintained in the name qualification 
+                           // support and so it is useless within the 
+                           // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope() 
+                           // function.  So to fix this we have added to code in this function to insert the causal nodes into
+                           // the required set.  It might be that this set should be cleared before starting the namequalification 
+                           // phase.
+
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
+                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p = %s original_aliased_symbol = %p = %s \n",
+                                   aliasedSymbol,aliasedSymbol->class_name().c_str(),original_aliased_symbol,original_aliased_symbol->class_name().c_str());
                               ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
                               printf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
                               printf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
@@ -10384,7 +10525,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                            // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist 
                            // yet in the traversal of the AST represented by the symbol table query at this point.
                               original_aliased_symbol = NULL;
-#if 0
+
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                               printf ("associated causal nodes not seen yet in traversal of AST: \n");
                               ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
                               printf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
@@ -11607,6 +11749,8 @@ bool
 SgBaseClass::operator< (const SgBaseClass&) const
    { return false; }
 
+#if 0
+// DQ (1/21/2019): This should be an automatically generated access function.
 // DQ (4/25/2004): Part of new modifier interface
 SgBaseClassModifier & 
 SgBaseClass::get_baseClassModifier()
@@ -11614,7 +11758,7 @@ SgBaseClass::get_baseClassModifier()
      assert ( p_baseClassModifier != NULL);
      return *p_baseClassModifier;
    }
-
+#endif
 
 SgName
 SgBaseClass::get_qualified_name_prefix() const
@@ -13796,8 +13940,8 @@ Sg_File_Info::post_construction_initialization()
      check_file_id("Sg_File_Info::post_construction_initialization");
    }
 
-// ROSE-1499
-void Sg_File_Info::check_file_id(char * label, bool assertion) const {
+// ROSE-1499, ROSE-1639 (added const to char*)
+void Sg_File_Info::check_file_id(const char * label, bool assertion) const {
   if ( ( (p_file_id >= 0) && (p_fileidtoname_map.count(p_file_id) == 0) ) || ( (p_file_id < -6) || ( p_file_id > (int)p_fileidtoname_map.size() ) ) ) {
     printf("ERROR from %s:\n", label);
     printf("  Sg_File_Info::this = %p\n", this);
