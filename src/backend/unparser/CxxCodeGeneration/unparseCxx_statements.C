@@ -8554,7 +8554,11 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (4/25/2004): Use the new modifier interface
             // tmp_spec = (*p).get_base_specifier();
             // SgBaseClassModifier & baseClassModifier = (*p).get_baseClassModifier();
-               SgBaseClassModifier & baseClassModifier = (*p)->get_baseClassModifier();
+
+            // DQ (1/21/2019): Moved to using ROSETTA generated access functions which return a pointer.
+            // SgBaseClassModifier & baseClassModifier = (*p)->get_baseClassModifier();
+               SgBaseClassModifier & baseClassModifier = *((*p)->get_baseClassModifier());
+
             // tmp_decl = (*p).get_base_class();
                tmp_decl = (*p)->get_base_class();
             // specifier
