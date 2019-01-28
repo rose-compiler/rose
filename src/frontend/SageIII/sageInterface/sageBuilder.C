@@ -11979,6 +11979,16 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): nondefdecl = %p nondefdecl->unparseNameToString() = %s \n",nondefdecl,nondefdecl->unparseNameToString().c_str());
 #endif
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return nondefdecl;
    }
 
@@ -13742,6 +13752,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      printf ("Leaving buildClassDeclaration_nfi(): defdecl = %p defdecl->unparseNameToString() = %s \n",defdecl,defdecl->unparseNameToString().c_str());
 #endif
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return defdecl;
    }
 
@@ -14160,6 +14180,17 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
 
      testTemplateArgumentParents(nondefdecl);
+
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = nondefdecl;
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
 
      return nondefdecl;
    }
@@ -14636,6 +14667,17 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 
      testTemplateArgumentParents(defdecl);
      testTemplateArgumentParents(nondefdecl);
+
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = defdecl;
+     SgSymbol* test_symbol = defdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(defdecl->get_symbol_from_symbol_table() != NULL);
+#endif
 
      return defdecl;
    }
