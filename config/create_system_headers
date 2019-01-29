@@ -389,6 +389,12 @@ if [ "$rose_system_cdefs_h" = "" ]; then
 elif [ ! -r "$rose_system_cdefs_h" ]; then
     # The "#include </.../cdefs.h> in the ROSE-specific cdefs.h is wrong, so try to fix it.
     real_system_cdefs_h=$(find /usr/include -follow -name cdefs.h |head -n1)
+
+    # Fix cdefs.h path for later versions of Mac OSX [Craig Rasmussen, 2019-01-23]
+    if [[ "$OSTYPE" == "darwin18" ]]; then
+        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/cdefs.h"
+    fi
+
     if [ ! -r "$real_system_cdefs_h" ]; then
 	(
 	    echo "$0: error: cannot find a system cdefs.h header.  The ROSE-specific version of this header,"

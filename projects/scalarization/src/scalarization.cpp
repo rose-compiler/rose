@@ -98,6 +98,7 @@ vector<string> getFortranTargetnameList(SgNode* root)
 
   // Fortran AST does not support SgPragmaNode.  Need to look for every comment and check if it has valid pragma
   vector<SgLocatedNode*> LocatedNodeList = SageInterface::querySubTree<SgLocatedNode> (root,V_SgLocatedNode);
+
   for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
   {
     AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
@@ -109,25 +110,21 @@ vector<string> getFortranTargetnameList(SgNode* root)
         if(pinfo->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
         {
            string buffer = pinfo->getString();
-           buffer = buffer.substr(buffer.find("!pragma ")+8);
-	   // simple parser to get the name list
-           unsigned int iend=0;
-           string name;
-           while(iend < buffer.size())
+           if(buffer.compare(0,21,"!pragma privatization") == 0)
            {
-             if(buffer[iend] == ',')
-             {
-               resultlist.push_back(name);
-               name.clear();
-             }
-             else if (buffer[iend] != ' ')
-             {
-               name.push_back(buffer[iend]);
-             }
-             iend++;
-           }
-           resultlist.push_back(name);
+             cout << "found pragma!!" << endl;
+             SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
+             ROSE_ASSERT(varDeclStmt);
+             SgInitializedNamePtrList varList = varDeclStmt->get_variables();
 
+             for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
+             {
+               SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
+               ROSE_ASSERT(symbol);
+               SgName varname = symbol->get_name();
+               resultlist.push_back(varname.getString());
+             }
+           }
         }
       }
     }
@@ -152,24 +149,21 @@ vector<string> getTargetnameList(SgNode* root)
     SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
     ROSE_ASSERT(pragma); 
     string srcString = pragma->get_pragma();
-
-    // simple parser to get the name out
-    unsigned int iend = 0;
-    string name;
-    while(iend < srcString.size())
+    if(srcString.compare(0,21,"!pragma privatization") == 0)
     {
-      if(srcString[iend] == ',')
+      cout << "found pragma!!" << endl;
+      SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
+      ROSE_ASSERT(varDeclStmt);
+      SgInitializedNamePtrList varList = varDeclStmt->get_variables();
+
+      for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
       {
-        resultlist.push_back(name);
-        name.clear();
+        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(symbol);
+        SgName varname = symbol->get_name();
+        resultlist.push_back(varname.getString());
       }
-      else if (srcString[iend] != ' ')
-      {
-        name.push_back(srcString[iend]);
-      }
-      iend++;
     }
-    resultlist.push_back(name);
   }
   return resultlist;
 }

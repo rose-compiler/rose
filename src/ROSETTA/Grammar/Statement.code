@@ -1388,6 +1388,18 @@ HEADER_LIST_DECLARATIONS
 HEADER_FOR_INIT_STATEMENT_END
 
 HEADER_FORALL_STATEMENT_START
+  //! This class represents forall statements and the Fortran do concurrent construct.
+  //
+     public:
+       // Rasmussen (11/08/2018): Needed because of addition of do-concurrent-stmt
+          enum forall_statement_kind_enum
+             {
+               e_unknown,
+               e_forall_statement,
+               e_do_concurrent_statement,
+               e_last_forall_statement_kind
+             };
+
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
@@ -1398,6 +1410,25 @@ HEADER_FORALL_STATEMENT_START
 #endif
 HEADER_FORALL_STATEMENT_END
 
+
+HEADER_JOVIAL_FOR_THEN_STATEMENT_START
+/*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif*/
+HEADER_JOVIAL_FOR_THEN_STATEMENT_END
+
+HEADER_JOVIAL_COMPOOL_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+
+#endif
+HEADER_JOVIAL_COMPOOL_STATEMENT_END
 
 
 HEADER_MATLAB_FOR_STATEMENT_START
@@ -6280,6 +6311,12 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
+       // Rasmussen (11/12/2018): Support for Jovial COMPOOL module
+          case V_SgJovialCompoolStatement:
+
+       // Rasmussen (10/22/2018): Adding node specific to Jovial for statements with a then construct.
+          case V_SgJovialForThenStatement:
+
       // SK (08/06/2015): Adding SgMatlabForStatement that represents Matlab for loop
           case V_SgMatlabForStatement:
 
@@ -6874,6 +6911,16 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+       // Rasmussen (10/22/2018): Adding node specific to Jovial for statements with a then construct.
+          case V_SgJovialForThenStatement:
+             {
+               SgJovialForThenStatement* forStatement = isSgJovialForThenStatement(currentScope);
+               ROSE_ASSERT (forStatement != NULL);
+               ROSE_ASSERT (forStatement->get_loop_body() != NULL);
+               currentStatementList = &(forStatement->get_loop_body()->getStatementList());
+               break;
+             }
+
 	     //SK(08/06/2015): Adding support for MatlabForStatement:
 	case V_SgMatlabForStatement:
 	    {
@@ -7097,6 +7144,15 @@ SgScopeStatement::getStatementList () const
                ROSE_ASSERT (doStatement != NULL);
                ROSE_ASSERT (doStatement->get_body() != NULL);
                return doStatement->get_body()->getStatementList();
+               break;
+             }
+
+          case V_SgJovialForThenStatement:
+             {
+               const SgJovialForThenStatement* forStatement = isSgJovialForThenStatement(currentScope);
+               ROSE_ASSERT (forStatement != NULL);
+               ROSE_ASSERT (forStatement->get_loop_body() != NULL);
+               return forStatement->get_loop_body()->getStatementList();
                break;
              }
 
@@ -10825,13 +10881,35 @@ SgForAllStatement::post_construction_initialization()
 SOURCE_FORALL_STATEMENT_END
 
 
+SOURCE_JOVIAL_COMPOOL_STATEMENT_START
+void
+SgJovialCompoolStatement::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJovialCompoolStatement::get_mangled_name(void) const
+   {
+   // Don't believe name mangling required for Jovial
+      return get_name();
+   }
+SOURCE_JOVIAL_COMPOOL_STATEMENT_END
+
+SOURCE_JOVIAL_FOR_THEN_STATEMENT_START
+void
+SgJovialForThenStatement::post_construction_initialization()
+   {
+   }
+SOURCE_JOVIAL_FOR_THEN_STATEMENT_END
+
+
 SOURCE_MATLAB_FOR_STATEMENT_START
 void
 SgMatlabForStatement::post_construction_initialization()
    {
    }
 SOURCE_MATLAB_FOR_STATEMENT_END
-
 
 
 SOURCE_RANGE_BASED_FOR_STATEMENT_START
