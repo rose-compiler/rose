@@ -51,8 +51,9 @@ int ROSE_DEBUG = 0;
 
 // CW: here we should definitly find a better way
 // to specify the cache parameters
-const int roseTargetCacheSize     = 8192;
-const int roseTargetCacheLineSize = 32;
+// Removed unused variables (next two declarations) [Rasmussen 2019.01.29]
+// const int roseTargetCacheSize     = 8192;
+// const int roseTargetCacheLineSize = 32;
 // cacheInfo roseTargetCacheInfo(roseTargetCacheSize,roseTargetCacheLineSize);
 
 // What is this and who put it here?
@@ -513,8 +514,9 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      unsetNodesMarkedAsModified(project);
 
    
-  // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
-     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
+  // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
+  // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
+     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
   // Connect to Ast Plugin Mechanism
