@@ -1,15 +1,14 @@
-struct a_ 
+struct A
    {
-  // trivial dtor
-     int b { 1+2*3 }; // brace-or-equal-init, constant expr
-     int c; // non-static data mem and base classes literal types
-     explicit constexpr a_(int e) : c(e) { } // constexpr ctor
-     constexpr operator int() { return b+c; }
+     int b { 42+42*3 };
+     int x; 
+     explicit constexpr A(int e) : x(e) { }
+     constexpr operator int() { return x+b; }
    };
 
 
 void foobar()
    {
-     a_ a (1);
-     char aa[ a_(1) ];
+     A a (1);
+     char var[ A(1) ];
    }

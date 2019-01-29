@@ -327,7 +327,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_39.C \
    test2019_40.C \
    test2019_41.C \
-   test2019_42.C 
+   test2019_42.C \
+   test2019_45.C \
+   test2019_47.C \
+   test2019_54.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -343,7 +346,18 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_26.C \
    test2019_34.C \
    test2019_37.C \
-   test2019_38.C 
+   test2019_38.C \
+   test2019_43.C \
+   test2019_44.C \
+   test2019_46.C \
+   test2019_48.C \
+   test2019_49.C \
+   test2019_50.C \
+   test2019_51.C \
+   test2019_52.C \
+   test2019_53.C 
+
+# NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
 
 # NOTE: test2019_34.C, test2019_37.C, and test2019_38.C don't compile with at least some versions of GNU g++ (e.g. version 5.1) but will 
 # compile with EDG and ROSE now.  And the generated code is correct,
