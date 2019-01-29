@@ -39,7 +39,8 @@ pkginclude_HEADERS 	= \
 	include/rosetollvm/StringAstAttribute.h \
 	include/rosetollvm/StringSet.h \
 	include/rosetollvm/SwitchAstAttribute.h \
-	include/rosetollvm/WhileAstAttribute.h
+	include/rosetollvm/WhileAstAttribute.h \
+	include/rosetollvm/Utf8.h
 
 lib_LTLIBRARIES = librosetollvm.la
 
@@ -55,6 +56,7 @@ librosetollvm_la_SOURCES = \
 	Option.cpp \
 	Control.cpp \
 	StringSet.cpp \
+	Utf8.cpp \
 	llc.cpp
 
 librosetollvm_la_CPPFLAGS	= \
