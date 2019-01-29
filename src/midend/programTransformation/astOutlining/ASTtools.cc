@@ -434,11 +434,30 @@ string
 ASTtools::getClassName (const SgMemberFunctionDeclaration* mem_func)
 {
   ROSE_ASSERT (mem_func);
-  const SgClassDefinition* cls_def = mem_func->get_class_scope ();
-  ROSE_ASSERT (cls_def);
-  const SgClassDeclaration* cls_decl = cls_def->get_declaration ();
-  ROSE_ASSERT (cls_decl);
-  return cls_decl->get_name ();
+  const SgScopeStatement* scope = mem_func->get_class_scope ();
+  ROSE_ASSERT (scope);
+
+  const SgClassDefinition* cdefn = isSgClassDefinition(scope);
+  const SgDeclarationScope* nrscope = isSgDeclarationScope(scope);
+  if (cdefn != NULL) {
+    const SgClassDeclaration* cls_decl = cdefn->get_declaration ();
+    ROSE_ASSERT (cls_decl);
+    return cls_decl->get_name ();
+  } else if (nrscope != NULL) {
+    const SgNode* parent = nrscope->get_parent();
+    ROSE_ASSERT (parent != NULL);
+    const SgClassDeclaration * xdecl = isSgClassDeclaration(parent);
+    const SgNonrealDecl * nrdecl = isSgNonrealDecl(parent);
+    if (xdecl != NULL) {
+      return xdecl->get_name ();
+    } else if (nrdecl != NULL) {
+      return nrdecl->get_name ();
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else {
+    ROSE_ASSERT(false);
+  }
 }
 
 string
