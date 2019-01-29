@@ -104,13 +104,18 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 9; then
-                    CXX_VERSION_MAJOR=3
                   # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
                   # Rasmussen (04/04//2018): Added results for clang --version 9.0.1
                   # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+                  # Pei-Hung (01/16/2019): Revised based on https://en.wikipedia.org/wiki/Xcode#Latest_versions
                     case "$XCODE_VERSION_MINOR" in
                         0|1)
-                            CXX_VERSION_MINOR=9
+                            CXX_VERSION_MAJOR=4
+                            CXX_VERSION_MINOR=0
+                            ;;
+                        3|4)
+                            CXX_VERSION_MAJOR=5
+                            CXX_VERSION_MINOR=0
                             ;;
                         *)
                             echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
@@ -124,7 +129,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                   # see also https://github.com/apple/swift-llvm/blob/swift-4.2-branch/CMakeLists.txt
                   # NOTE that this is very tentative and don't know if it will work
                     case "$XCODE_VERSION_MINOR" in
-                        0)
+                        0|1)
                             BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                             ;;
                         *)

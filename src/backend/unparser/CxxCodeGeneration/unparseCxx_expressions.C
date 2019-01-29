@@ -557,6 +557,10 @@ Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& inf
      SgTemplateFunctionRefExp* func_ref = isSgTemplateFunctionRefExp(expr);
      ROSE_ASSERT(func_ref != NULL);
 
+#if 0
+     printf ("Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref) \n");
+#endif
+
   // Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref);
   // unparseFuncRefSupport(func_ref,info);
      unparseFuncRefSupport<SgTemplateFunctionRefExp>(expr,info);
@@ -650,6 +654,9 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
              {
                printf ("--- templateArgList[%zu] = %p \n",i,templateArgList[i]);
              }
+#endif
+#if 0
+          printf ("Calling unparseTemplateArgumentList() \n");
 #endif
           unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
         }
@@ -745,6 +752,8 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
   //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
   // It is less clear how to refactor this code.
 
+#define DEBUG_TEMPLATE_ARGUMENT_LIST 0
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
   // DQ (8/24/2012): Print this out a little less often; but still enough so that we know to fix this later.
      static int counter = 0;
@@ -754,8 +763,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
         }
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
      printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+
 #endif
 
      SgUnparse_Info ninfo(info);
@@ -783,8 +793,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 
      if (!templateArgListPtr.empty())
         {
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
           printf ("In unparseTemplateArgumentList(): templateArgListPtr.empty() NOT EMPTY: templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+#endif
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          SgTemplateArgumentPtrList::const_iterator iter = templateArgListPtr.begin();
+          while (iter != templateArgListPtr.end())
+             {
+               ROSE_ASSERT(*iter != NULL);
+
+               printf ("In unparseTemplateArgumentList(): iterate over list: *iter = %p = %s \n",*iter,(*iter)->class_name().c_str());
+
+               iter++;
+             }
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -811,13 +832,13 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
             // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): DONE: Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
 
@@ -831,10 +852,21 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
                        {
+                      // DQ (1/25/2019): Added assertion.
+                      // ROSE_ASSERT(arg->get_type() != NULL);
+#if 0
+                      // printf ("Check if this is a lambda function comming next! arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+#endif
                          if (SgClassType * ctype = isSgClassType (arg->get_type()))
                             {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                              printf ("ctype != NULL \n");
+#endif
                               if (SgNode* pnode = ctype->get_declaration()->get_parent())
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("pnode != NULL \n");
+#endif
                                    if (isSgLambdaExp(pnode))
                                       {
                                         hasLambdaFollowed = true; 
@@ -845,6 +877,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                               bool isAnonymous = isAnonymousClass(ctype);
                               if (isAnonymous == true)
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("isAnonymous == true \n");
+#endif
                                 // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
                                 // which checks for a trailing lambda function.  So we should fix this up later.
                                    hasLambdaFollowed = true; 
@@ -852,6 +887,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                                 else
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("isAnonymous == false \n");
+#endif
                                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(ctype->get_declaration());
                                    if (classDeclaration != NULL)
                                       {
@@ -863,13 +901,18 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                            else
                             {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                              printf ("ctype == NULL \n");
+#endif
+#if 0
                               ROSE_ASSERT(arg->get_type() != NULL);
                               printf ("arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+#endif
                             }
 #endif
                        }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
                printf ("In unparseTemplateArgumentList(): explicitlySpecified = %s \n",(*i)->get_explicitlySpecified() ? "true" : "false");
 #endif
@@ -906,9 +949,34 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
               //
               //  Negate this , we get when to output ,
               //
-              if (!(hasLambdaFollowed  || 
-                  ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
-                    && ((i+1)== templateArgListPtr.end())  )) )
+#if 0
+               bool isStartOfPragmaPackAtEndOfList = ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((i+1)== templateArgListPtr.end())  );
+               SgTemplateArgumentPtrList::const_iterator next_iter = i;
+               if (next_iter != templateArgListPtr.end())
+                  {
+                    next_iter++;
+                  }
+               bool isNextArgumentAnonymousClass   = false;
+               bool isStartOfPragmaPackAtEndOfList = false;
+               if (next_iter != templateArgListPtr.end())
+                  {
+                    SgClassType * next_classtype = isSgClassType ((*next_iter)->get_type());
+                    isNextArgumentAnonymousClass = isAnonymousClass(next_classtype);
+                    isStartOfPragmaPack = ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((next_iter)== templateArgListPtr.end())  );
+                  }
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+               printf ("isStartOfPragmaPackAtEndOfList = %s \n",isStartOfPragmaPackAtEndOfList ? "true" : "false");
+               printf ("isAnonymousClassAtEndOfList    = %s \n",isAnonymousClassAtEndOfList ? "true" : "false");
+#endif
+#endif
+            // DQ (1/25/2019): This might be the simpliest way to exit once we see a start_of_pack_expansion_argument.
+               if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                  {
+                    break;
+                  }
+
+               if (!(hasLambdaFollowed  || ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((i+1)== templateArgListPtr.end())  )) )
+            // if ( !(hasLambdaFollowed  || isStartOfPragmaPackAtEndOfList) )
                   {
                     unp->u_exprStmt->curprint(" , ");
                   }
@@ -949,7 +1017,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           unp->u_exprStmt->curprint(" ");
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
    }
@@ -1371,17 +1439,19 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
    {
      ROSE_ASSERT(templateArgument != NULL);
 
-#if 0
+#define DEBUG_TEMPLATE_ARGUMENT 0
+
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || DEBUG_TEMPLATE_ARGUMENT
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( "\n/* Unparse TemplateArgument */ \n");
      unp->u_exprStmt->curprint ( "\n");
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      unp->u_exprStmt->curprint(string("/* unparseTemplateArgument(): templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 #if 0
@@ -1465,13 +1535,13 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
      if (newInfo.SkipBaseType() == true)
         {
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
           printf ("In unparseTemplateArgument(): unset SkipBaseType() (how was this set? Maybe from the function reference expression?) \n");
 #endif
           newInfo.unset_SkipBaseType();
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d \n",templateArgument->get_argumentType());
 #endif
 
@@ -1748,10 +1818,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
              }
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
 #endif
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 

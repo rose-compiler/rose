@@ -1181,6 +1181,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
   // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+  // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1212,6 +1213,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
           (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
+          (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
@@ -1243,6 +1245,8 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
           (nodeName == "InitializedName"            && variableNameString == "name")  ||
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "JovialCompoolStatement"     && variableNameString == "name")  ||
+          (nodeName == "UntypedArrayReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
@@ -1309,6 +1313,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
   // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
+  // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
@@ -1333,6 +1338,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
           (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
+          (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
@@ -1366,6 +1372,8 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
           (nodeName == "InitializedName"            && variableNameString == "name")  ||
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "JovialCompoolStatement"     && variableNameString == "name")  ||
+          (nodeName == "UntypedArrayReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
