@@ -1,47 +1,40 @@
-struct a_ 
+struct A
    {
-  // trivial dtor
-     int b { 1+2*3 }; // brace-or-equal-init, constant expr
-     int c; // non-static data mem and base classes literal types
-     explicit constexpr a_(int e) : c(e) { } // constexpr ctor
+     int b { 1+2*3 };
+     int c;
+     explicit constexpr A(int e) : c(e) { }
      constexpr operator int() { return b+c; }
    };
 
-struct c_ 
+struct C
    {
-     a_ d; // non-static data mem literal type
-     constexpr c_() : d(4+5*6) { } // ctor call, constant expr
+     A d;
+     constexpr C() : d(4+5*6) { }
      constexpr operator int() { return d.b+d.c; }
    };
 
-struct f_ 
+struct F 
    {
-  // trivial dtor
-     int g { 1+2*3 }; // brace-or-equal-init, constant expr
-  // non-static data mem and base classes literal types
-  // aggregate type 
+     int g { 1+2*3 };
      constexpr operator int() { return g; }
    };
 
-struct h_ : a_ 
-   {  // base class literal type
-  // trivial dtor
-     int i = 1+2*3; // brace-or-equal-init, constant expr
-  // non-static data mem and base classes literal types
+struct H : A 
+   {
+     int i = 1+2*3;
      template<class T>
-     explicit constexpr h_(T e) : a_((int)e) { }
-  // constexpr ctor template
+     explicit constexpr H(T e) : A((int)e) { }
      constexpr int j() { return i+b+c; }
    };
 
 void foobar()
    {
-     a_ a (1);
-     char aa[ a_(1) ];
-     c_ c ;
+     A a (1);
+     char aa[ A(1) ];
+     C c ;
      char ca[ c ];
-     f_ f ;
+     F f ;
      char fa[ f ];
-     h_ h (1);
+     H h (1);
      char ha[ h ];
    }
