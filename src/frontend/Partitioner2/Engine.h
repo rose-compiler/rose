@@ -1492,6 +1492,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
+
+    // Similar to ::frontend but a lot less complicated.
+    SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames);
 };
 
 } // namespace
