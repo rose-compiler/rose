@@ -20,23 +20,26 @@ public:
 
     virtual ~BinaryLoaderElfObj() {}
 
-    /* Override virtual methods from BinaryLoader */
-    virtual BinaryLoaderElfObj *clone() const {
+    // Override virtual methods from BinaryLoader
+    virtual BinaryLoaderElfObj *clone() const ROSE_OVERRIDE {
         return new BinaryLoaderElfObj(*this);
     }
 
-    virtual bool can_load(SgAsmGenericHeader*) const;
+    virtual bool can_load(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
-    /** Same as super class but appends those sections that are not mapped but which contain code. */
-    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*);
+    // Same as super class but appends those sections that are not mapped but which contain code. 
+    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*) ROSE_OVERRIDE;
 
-    /** Same as super class but relaxes alignment constraints for sections that are ELF Sections but not ELF Segments. */
+    // Same as super class but relaxes alignment constraints for sections that are ELF Sections but not ELF Segments.
     virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
-                                             ConflictResolution *resolve);
+                                             ConflictResolution *resolve) ROSE_OVERRIDE;
+
+    // choose permissions based on the section content.
+    virtual unsigned mappingPermissions(SgAsmGenericSection*) const ROSE_OVERRIDE;
 };
 
 } // namespace

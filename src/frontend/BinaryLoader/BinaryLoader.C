@@ -369,6 +369,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
         for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
             SgAsmGenericSection *section = *si;
             section->set_mapped_actual_va(0); /*reset in case previously mapped*/
+            unsigned mapperms = mappingPermissions(section);
 
             if (trace) {
                 trace <<"  mapping section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"";
@@ -446,9 +447,12 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
                               <<StringUtility::addrToString(offset+file_size)
                               <<(section->get_offset()==offset && section->get_size()==file_size ? " (no change)\n" : "\n");
                         trace <<"    Permissions:         "
-                              <<(section->get_mapped_rperm()?'r':'-')
-                              <<(section->get_mapped_wperm()?'w':'-')
-                              <<(section->get_mapped_xperm()?'x':'-') <<"\n";
+                              <<((mapperms & MemoryMap::READABLE)   ? "r" : "-")
+                              <<((mapperms & MemoryMap::WRITABLE)   ? "w" : "-")
+                              <<((mapperms & MemoryMap::EXECUTABLE) ? "x" : "-");
+                        if ((mapperms & ~MemoryMap::READ_WRITE_EXECUTE) != 0)
+                            mfprintf(trace)("0x%x", (mapperms & ~MemoryMap::READ_WRITE_EXECUTE));
+                        trace <<"\n";
                         trace <<"    Internal offset:     " <<StringUtility::addrToString(va_offset)
                               <<" (va " <<StringUtility::addrToString(va+va_offset) <<")\n";
                     }
@@ -505,15 +509,6 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
             /* Save the virtual address where this section is (will be) mapped.  When a section is mapped more than once
              * (perfectly legal to do so) only the last mapping is saved. */
             section->set_mapped_actual_va(va + va_offset);
-
-            /* Permissions */
-            unsigned mapperms=0;
-            if (section->get_mapped_rperm())
-                mapperms |= MemoryMap::READABLE;
-            if (section->get_mapped_wperm())
-                mapperms |= MemoryMap::WRITABLE;
-            if (section->get_mapped_xperm())
-                mapperms |= MemoryMap::EXECUTABLE;
 
             /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
@@ -810,6 +805,18 @@ BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &m
     *anon_hi_p = true;
     *resolve_p = RESOLVE_THROW;
     return CONTRIBUTE_ADD;
+}
+
+unsigned
+BinaryLoader::mappingPermissions(SgAsmGenericSection *section) const {
+    unsigned mapperms=0;
+    if (section->get_mapped_rperm())
+        mapperms |= MemoryMap::READABLE;
+    if (section->get_mapped_wperm())
+        mapperms |= MemoryMap::WRITABLE;
+    if (section->get_mapped_xperm())
+        mapperms |= MemoryMap::EXECUTABLE;
+    return mapperms;
 }
 
 /* Used to be called relocateAllLibraries */

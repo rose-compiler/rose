@@ -19,10 +19,36 @@ BinaryLoaderElfObj::get_remap_sections(SgAsmGenericHeader *header)
     SgAsmGenericSectionPtrList retval = BinaryLoaderElf::get_remap_sections(header);
     const SgAsmGenericSectionPtrList &sections = header->get_sections()->get_sections();
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
-        SgAsmGenericSection *section = *si;
-        if (!section->is_mapped() && section->get_contains_code())
-            retval.push_back(section);
+        if (SgAsmElfSection *section = isSgAsmElfSection(*si)) {
+            std::string name = section->get_name() ? section->get_name()->get_string() : std::string();
+            if (".text" == name || ".data" == name || ".rodata" == name || ".bss" == name)
+                retval.push_back(section);
+        }
     }
+    return retval;
+}
+
+unsigned
+BinaryLoaderElfObj::mappingPermissions(SgAsmGenericSection *section_) const {
+    SgAsmElfSection *section = isSgAsmElfSection(section_);
+    ASSERT_not_null(section);
+    
+    SgAsmElfSectionTableEntry *entry = section->get_section_entry();
+    unsigned retval = BinaryLoaderElf::mappingPermissions(section);
+
+    if (0 == retval && entry != NULL) {
+        // By convention...
+        if (section->get_name()->get_string() == ".text") {
+            retval = MemoryMap::READ_EXECUTE;
+        } else if (section->get_name()->get_string() == ".data") {
+            retval = MemoryMap::READ_WRITE;
+        } else if (section->get_name()->get_string() == ".bss") {
+            retval = MemoryMap::READ_WRITE;
+        } else if (section->get_name()->get_string() == ".rodata") {
+            retval = MemoryMap::READABLE;
+        }
+    }
+
     return retval;
 }
 
