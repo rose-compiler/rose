@@ -1,8 +1,9 @@
 #ifndef CONSTANT_VALUE
 #define CONSTANT_VALUE
 
-#include <string>
 #include <math.h>
+#include <complex>
+#include <string>
 
 using namespace std;
 
@@ -15,6 +16,9 @@ class ConstantValue {
     bool hasFloatValue_;
     bool hasDoubleValue_;
     bool hasLongDoubleValue_;
+    bool hasFloatComplexValue_;
+    bool hasDoubleComplexValue_;
+    bool hasLongDoubleComplexValue_;
     string code;
 
 public:
@@ -33,6 +37,9 @@ public:
     float float_value;
     double double_value;
     long double long_double_value;
+    std::complex<float> float_complex_value;
+    std::complex<double> double_complex_value;
+    std::complex<long double> long_double_complex_value;
     SgStringVal *string_literal;
     SgFunctionRefExp *function_reference;
     SgExpression *other_expression;
@@ -42,14 +49,18 @@ public:
         float_value = NAN;
         double_value = NAN;
         long_double_value = NAN;
+
         hasIntValue_ = false;
         hasFloatValue_ = false;
         hasDoubleValue_ = false;
         hasLongDoubleValue_ = false;
+        hasFloatComplexValue_ = false;
+        hasDoubleComplexValue_ = false;
+        hasLongDoubleComplexValue_ = false;
     }
 
     bool hasArithmeticValue() {
-        return (hasIntValue_ || hasFloatValue_ || hasDoubleValue_ || hasLongDoubleValue_);
+        return (hasIntValue_ || hasFloatValue_ || hasDoubleValue_ || hasLongDoubleValue_ || hasFloatComplexValue_ || hasDoubleComplexValue_ || hasLongDoubleComplexValue_);
     }
 
     bool hasIntValue() {
@@ -68,56 +79,69 @@ public:
         return hasLongDoubleValue_;
     }
 
+    bool hasFloatComplexValue() {
+        return hasFloatComplexValue_;
+    }
+
+    bool hasDoubleComplexValue() {
+        return hasDoubleComplexValue_;
+    }
+
+    bool hasLongDoubleComplexValue() {
+        return hasLongDoubleComplexValue_;
+    }
+
     bool hasValue() {
         return hasArithmeticValue() || string_literal != NULL || function_reference != NULL || other_expression != NULL;
     }
 
     void setIntValue(long long value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
         int_value = value_;
         hasIntValue_ = true;
-
-        hasFloatValue_ = false;
-        float_value = NAN;
-        hasDoubleValue_ = false;
-        double_value = NAN;
-        hasLongDoubleValue_ = false;
-        long_double_value = NAN;
     }
 
     void setFloatValue(float value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
         float_value = value_;
         hasFloatValue_ = true;
-
-        hasDoubleValue_ = false;
-        double_value = NAN;
-        hasLongDoubleValue_ = false;
-        long_double_value = NAN;
-        hasIntValue_ = false;
-        int_value = -1;
     }
 
     void setDoubleValue(double value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
         double_value = value_;
         hasDoubleValue_ = true;
-
-        hasFloatValue_ = false;
-        float_value = NAN;
-        hasLongDoubleValue_ = false;
-        long_double_value = NAN;
-        hasIntValue_ = false;
-        int_value = -1;
     }
 
     void setLongDoubleValue(long double value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
         long_double_value = value_;
         hasLongDoubleValue_ = true;
+    }
 
-        hasFloatValue_ = false;
-        float_value = NAN;
-        hasDoubleValue_ = false;
-        double_value = NAN;
-        hasIntValue_ = false;
-        int_value = -1;
+    void setFloatComplexValue(std::complex<float> value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
+        float_complex_value = value_;
+        hasFloatComplexValue_ = true;
+    }
+
+    void setDoubleComplexValue(std::complex<double> value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
+        double_complex_value = value_;
+        hasDoubleComplexValue_ = true;
+    }
+
+    void setLongDoubleComplexValue(std::complex<long double> value_) {
+        setNoArithmeticValue(); // Clear any prior value;
+
+        long_double_complex_value = value_;
+        hasLongDoubleComplexValue_ = true;
     }
 
     void setStringValue(SgStringVal *literal) {
@@ -125,13 +149,13 @@ public:
         string_literal = literal;
     }
 
-  void setFunctionReference(SgFunctionRefExp *ref, string code_) {
+    void setFunctionReference(SgFunctionRefExp *ref, string code_) {
         setNoArithmeticValue();
         this -> code = code_;
         function_reference = ref;
     }
 
-  void setOtherExpression(SgExpression *exp, string code_) {
+    void setOtherExpression(SgExpression *exp, string code_) {
         setNoArithmeticValue();
         this -> code = code_;
         other_expression = exp;

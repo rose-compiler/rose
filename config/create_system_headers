@@ -59,7 +59,7 @@ process_headers()
     echo "ERROR: Target directory cannot be created (Parent directory $target_parent_dir not writable)"
     exit 5
   fi
-  changesNeededForThisDir=`find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | wc -l`
+  changesNeededForThisDir=`find "$src_dir/." \( -name c++config.h \) -a -type f -a -print 2>/dev/null | wc -l`
   echo "$src_dir needs $changesNeededForThisDir change(s)"
   if test $changesNeededForThisDir -eq 0; then
     echo "$src_dir does not need any changes"
@@ -77,7 +77,7 @@ process_headers()
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
     echo "Done copying"
     # Find the special-case files to process
-    find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | \
+    find "$src_dir/." \( -name c++config.h \) -a -type f -a -print 2>/dev/null | \
     while read srcName; do
      # echo "processing files in directory $srcDirName to put into $targetDirName"
      # this is not the most efficient thing to do ...
@@ -383,6 +383,12 @@ if [ "$rose_system_cdefs_h" = "" ]; then
 elif [ ! -r "$rose_system_cdefs_h" ]; then
     # The "#include </.../cdefs.h> in the ROSE-specific cdefs.h is wrong, so try to fix it.
     real_system_cdefs_h=$(find /usr/include -follow -name cdefs.h |head -n1)
+
+    # Fix cdefs.h path for later versions of Mac OSX [Craig Rasmussen, 2019-01-23]
+    if [[ "$OSTYPE" == "darwin18" ]]; then
+        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/cdefs.h"
+    fi
+
     if [ ! -r "$real_system_cdefs_h" ]; then
 	(
 	    echo "$0: error: cannot find a system cdefs.h header.  The ROSE-specific version of this header,"

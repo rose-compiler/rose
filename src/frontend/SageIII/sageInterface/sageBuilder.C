@@ -7194,11 +7194,19 @@ BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 
 
-// RASMUSSEN (1/25/2018)
+// RASMUSSEN ( 1/25/2018):
+//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
-     ROSE_ASSERT(dim_info  != NULL);
+
+  // There must always be a dim_info object for this function.  If not, the
+  // overloaded function must be used to handle it.
+     if (dim_info == NULL)
+        {
+           SgExpression* index = NULL;
+           return buildArrayType(base_type, index);
+        }
 
      SgExpression* index = new SgNullExpression();
      ROSE_ASSERT(index);
