@@ -6,6 +6,7 @@
 
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
+#include "BinaryLoaderElfObj.h"
 #include "BinaryLoaderPe.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
@@ -60,9 +61,10 @@ BinaryLoader::initclass()
         initialized = true;
         initDiagnostics();
         /* Registered in order from most generic to most specific */
-        register_subclass(new BinaryLoader);            /* generically handles all formats, albeit with limited functionality */
-        register_subclass(new BinaryLoaderElf);         /* POSIX Executable and Linkable Format (ELF) */
-        register_subclass(new BinaryLoaderPe);          /* Windows Portable Executable (PE) */
+        register_subclass(new BinaryLoader);            // generically handles all formats, albeit with limited functionality
+        register_subclass(new BinaryLoaderElf);         // POSIX Executable and Linkable Format (ELF)
+        register_subclass(new BinaryLoaderElfObj);      // ELF loader for object files
+        register_subclass(new BinaryLoaderPe);          // Windows Portable Executable (PE)
     }
 }
 
