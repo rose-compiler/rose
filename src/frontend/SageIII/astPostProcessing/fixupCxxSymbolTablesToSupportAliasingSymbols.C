@@ -532,13 +532,23 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                printf ("derivedClassDeclaration = %p = %s name = %s \n",derivedClassDeclaration,derivedClassDeclaration->class_name().c_str(),derivedClassDeclaration->get_name().str());
 #endif
             // Need to iterate through base classes chains. iterate past the first layer.
-               SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
-               ROSE_ASSERT(baseClassDeclaration != NULL);
-               SgClassDeclaration* definingBaseClassDeclaration = isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
-               ROSE_ASSERT(definingBaseClassDeclaration != NULL);
+            // TV (01/30/2019): changes to handle the case of nonreal base class.
+               SgScopeStatement* baseScope = NULL;
 
-               SgClassDefinition* baseClassDefinition = definingBaseClassDeclaration->get_definition();
-               ROSE_ASSERT(baseClassDefinition != NULL);
+               SgNonrealBaseClass * nrBaseClass = isSgNonrealBaseClass(baseClass);
+               if (nrBaseClass != NULL) {
+                 SgNonrealDecl* baseNonrealDeclaration = nrBaseClass->get_base_class_nonreal();
+                 ROSE_ASSERT(baseNonrealDeclaration != NULL);
+                 baseScope = baseNonrealDeclaration->get_nonreal_decl_scope();
+               } else {
+                 SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
+                 ROSE_ASSERT(baseClassDeclaration != NULL);
+                 SgClassDeclaration* definingBaseClassDeclaration = isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
+                 ROSE_ASSERT(definingBaseClassDeclaration != NULL);
+
+                 baseScope = definingBaseClassDeclaration->get_definition();
+               }
+               ROSE_ASSERT(baseScope != NULL);
 
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
                printf ("baseClassDeclaration = %p = %s name = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
@@ -546,7 +556,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
             // SgClassDefinition* classDefinition = classDeclaration->get_definition();
             // ROSE_ASSERT(classDefinition != NULL);
 
-               if (baseClassDefinition->symbol_exists(original_symbol) == true)
+               if (baseScope->symbol_exists(original_symbol) == true)
                   {
                  // Sense we found the original symbol in the base class, we know that the symbol would visible in the derivedClassDeclaration 
                  // only because of the derivation from the base class.  Then the only point is if the base class is a private base class or not.
@@ -558,8 +568,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                  // SgAliasSymbol* aliasSymbol = isSgAliasSymbol(original_symbol);
                  // size_t count_alias_symbol (const SgName &n);
 
-                    printf ("baseClassDefinition->count_alias_symbol(): name = %s count = %zu \n",name.str(),baseClassDefinition->count_alias_symbol(name));
-                 // baseClassDefinition->print_symboltable("isDefinedThroughPrivateBaseClass");
+                    printf ("baseScope->count_alias_symbol(): name = %s count = %zu \n",name.str(),baseScope->count_alias_symbol(name));
+                 // baseScope->print_symboltable("isDefinedThroughPrivateBaseClass");
 #endif
 
 
@@ -576,15 +586,15 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                            // return the non-aliased version of the symbol even when an aliased version of the symbol exists.
                            // So we need an additional API function to support this.
 
-                           // SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_variable_symbol(name);
-                           // SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_symbol(name);
-                              SgSymbol* baseClassVariableSymbol = baseClassDefinition->lookup_alias_symbol(name,symbol);
+                           // SgSymbol* baseClassVariableSymbol = baseScope->lookup_variable_symbol(name);
+                           // SgSymbol* baseClassVariableSymbol = baseScope->lookup_symbol(name);
+                              SgSymbol* baseClassVariableSymbol = baseScope->lookup_alias_symbol(name,symbol);
                               if (baseClassVariableSymbol == NULL)
                                  {
 #if DEBUG_PRIVATE_BASE_CLASS_ALIAS_SYMBOL_SUPPORT
                                    printf ("NO SgAliasSymbol was found: search for non-alias symbol \n");
 #endif
-                                   baseClassVariableSymbol = baseClassDefinition->lookup_variable_symbol(name);
+                                   baseClassVariableSymbol = baseScope->lookup_variable_symbol(name);
                                  }
                               ROSE_ASSERT(baseClassVariableSymbol != NULL);
                               baseClassSymbol = baseClassVariableSymbol;
@@ -617,7 +627,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                             }
                        }
 
-                 // SgSymbol* baseClassSymbol = baseClassDefinition->lookup_class_symbol(name,NULL);
+                 // SgSymbol* baseClassSymbol = baseScope->lookup_class_symbol(name,NULL);
                  // ROSE_ASSERT(baseClassSymbol != NULL);
 
                     if (baseClassSymbol != NULL)
@@ -627,8 +637,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
                        }
 
-                 // ROSE_ASSERT(baseClassDefinition->count_alias_symbol(name) > 0);
-                 // SgSymbol* baseClassSymbol = baseClassDefinition->get_symbol(name);
+                 // ROSE_ASSERT(baseScope->count_alias_symbol(name) > 0);
+                 // SgSymbol* baseClassSymbol = baseScope->get_symbol(name);
                  // ROSE_ASSERT(baseClassSymbol != NULL);
                     SgAliasSymbol* baseClassAliasSymbol = isSgAliasSymbol(baseClassSymbol);
 

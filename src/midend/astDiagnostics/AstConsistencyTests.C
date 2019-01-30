@@ -1789,8 +1789,8 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
 
   // printf ("astNode = %s \n",astNode->sage_class_name());
 
-     SgNode * parent = astNode->get_parent();
 #if 0
+     SgNode * parent = astNode->get_parent();
      printf ("In TestAstTemplateProperties::visit():\n");
      printf ("  --- astNode = %p (%s)\n", astNode, astNode ? astNode->class_name().c_str() : "");
      printf ("  --- parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");

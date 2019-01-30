@@ -2663,7 +2663,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
      return retval;
    }
 
-void detectCycleInType(SgType * type, char * from = NULL);
+void detectCycleInType(SgType * type, const std::string & from);
 
 }// end of namespace
 

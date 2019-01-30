@@ -21892,11 +21892,11 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                          int Y_template_parameter_position = Y_templateDecl->get_template_parameter_position();
 
                          SgNode * X_parent = X_templateDecl->get_parent();
-                         SgNode * X_parent_parent = X_parent ? X_parent->get_parent() : NULL;
                          SgNode * Y_parent = Y_templateDecl->get_parent();
-                         SgNode * Y_parent_parent = Y_parent ? Y_parent->get_parent() : NULL;
 
 #if DEBUG_TYPE_EQUIVALENCE
+                         SgNode * X_parent_parent = X_parent ? X_parent->get_parent() : NULL;
+                         SgNode * Y_parent_parent = Y_parent ? Y_parent->get_parent() : NULL;
                          printf ("In SageInterface::isEquivalentType(): case SgNonrealType:\n");
                          printf ("  -- X_name = %s Y_name = %s\n", X_name.c_str(),Y_name.c_str());
                          printf ("  -- X_template_parameter_position = %d Y_template_parameter_position = %d\n", X_template_parameter_position,Y_template_parameter_position);
@@ -22530,10 +22530,10 @@ SageInterface::isNormalizedTemplateInstantiation (SgFunctionDeclaration* functio
    }
 #endif
 
-void SageInterface::detectCycleInType(SgType * type, char * from) {
+void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
 #if 0
   printf("In detectCycleInType():\n");
-  if (from != NULL) printf(" -- from = %s\n", from);
+  printf(" -- from = %s\n", from.c_str());
   printf(" -- type = %p (%s)\n", type, type->class_name().c_str());
 #endif
   std::vector<SgType *> seen_types;
@@ -22547,7 +22547,7 @@ void SageInterface::detectCycleInType(SgType * type, char * from) {
         printf("  [%zd] %p (%s)\n", i, *it, (*it)->class_name().c_str());
         i++;
       }
-      if (from != NULL) printf("-> detectCycleInType() was called from: %s\n", from);
+      printf("-> detectCycleInType() was called from: %s\n", from.c_str());
       ROSE_ASSERT(false);
     }
     seen_types.push_back(type);

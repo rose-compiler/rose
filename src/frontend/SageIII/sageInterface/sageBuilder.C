@@ -10815,7 +10815,8 @@ SgModifierType* SageBuilder::buildConstVolatileType(SgType* base_type /*=NULL*/)
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
 
-     result->get_typeModifier().get_constVolatileModifier().setConstVolatile();
+     result->get_typeModifier().get_constVolatileModifier().setConst();
+     result->get_typeModifier().get_constVolatileModifier().setVolatile();
 
 #if 1
      printf ("In SageBuilder::buildConstVolatileType(): Building a SgModifierType: result = %p base_type = %p = %s \n",result,base_type,base_type->class_name().c_str());
@@ -14882,7 +14883,7 @@ SageBuilder::buildNonrealBaseClass ( SgNonrealDecl* nrdecl, SgClassDefinition* c
 
      if (isVirtual == true)
         {
-          baseclass->get_baseClassModifier().setVirtual();
+          baseclass->get_baseClassModifier()->setVirtual();
         }
 
      baseclass->set_parent(classDefinition);
