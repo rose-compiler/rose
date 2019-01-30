@@ -6569,6 +6569,38 @@ SgLongDoubleVal* SageBuilder::buildLongDoubleVal_nfi(long double value, const st
   return result;
 }
 
+SgFloat80Val* SageBuilder::buildFloat80Val(long double value /*= 0.0*/)
+{
+  SgFloat80Val* result = new SgFloat80Val(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat80Val* SageBuilder::buildFloat80Val_nfi(long double value, const string& str)
+{
+  SgFloat80Val* result = new SgFloat80Val(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFloat128Val* SageBuilder::buildFloat128Val(long double value /*= 0.0*/)
+{
+  SgFloat128Val* result = new SgFloat128Val(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat128Val* SageBuilder::buildFloat128Val_nfi(long double value, const string& str)
+{
+  SgFloat128Val* result = new SgFloat128Val(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
   SgStringVal* result = new SgStringVal(value);
