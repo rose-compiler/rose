@@ -69,13 +69,17 @@ BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, const MemoryMap::
                                              resolve_p);
     
     if (section->get_contains_code()) {
+        SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(section);
+        rose_addr_t baseVa = header ? header->get_base_va() : 0;
+
         /* We don't need to worry about file alignment because the Unix loader isn't going to ever be mapping this object file
          * anyway.  We align memory on our best guess of a page boundary, 4096 bytes. */
         rose_addr_t mem_alignment = 4096;
         rose_addr_t size = section->get_size();
+        AddressInterval allocationRegion = AddressInterval::hull(baseVa, AddressInterval::whole().greatest());
 
         *malign_lo_p = *malign_hi_p = mem_alignment;
-        *va_p = *(map->findFreeSpace(size, mem_alignment));
+        *va_p = *(map->findFreeSpace(size, mem_alignment, allocationRegion));
         *mem_size_p = *file_size_p = size;
         *map_private_p = false;
         *offset_p = section->get_offset();
