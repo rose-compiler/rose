@@ -7,6 +7,8 @@ dnl shell variable.
 AC_INIT([ROSE], [0.9.10.150])
 AC_PREREQ([2.59])
 
+test "$verbose" = "" && echo "Run configure with --verbose to see more output"
+
 dnl +--------------------------------------------------------------------------+
 dnl | Utilities
 dnl +--------------------------------------------------------------------------+
