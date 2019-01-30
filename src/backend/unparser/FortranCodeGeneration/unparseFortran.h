@@ -356,7 +356,8 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseFormatStatement  (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFormatItemList   (SgFormatItemList* formatItemList, SgUnparse_Info& info);
 
-          virtual void unparseForAllStatement  (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForAllStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDoConcurrentStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseContainsStatement(SgStatement* stmt, SgUnparse_Info& info);
 
