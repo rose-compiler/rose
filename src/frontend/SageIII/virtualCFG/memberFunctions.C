@@ -241,8 +241,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
         {
           if (labelStatement != NULL)
              {
-               unsigned int idx = parent->cfgFindNextChildIndex(n);
 #if DEBUG_CALLGRAPH
+               unsigned int idx = parent->cfgFindNextChildIndex(n);
                printf ("In getNodeJustAfterInContainer(): FORTRAN case: labelStatement->get_statement() == NULL: idx = %u \n",idx);
 #endif
              }
@@ -373,8 +373,8 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
              {
                if (SageInterface::is_Fortran_language() == true)
                   {
-                    unsigned int idx = parent->cfgFindChildIndex(n);
 #if DEBUG_CALLGRAPH
+                    unsigned int idx = parent->cfgFindChildIndex(n);
                     printf ("In getNodeJustBeforeInContainer(): FORTRAN case: idx = %u \n",idx);
 #endif
                   }
@@ -4186,7 +4186,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
+    ROSE_ASSERT(this != NULL);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
@@ -4211,7 +4211,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
+    ROSE_ASSERT(this != NULL);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;

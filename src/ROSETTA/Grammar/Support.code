@@ -531,11 +531,6 @@ HEADER_CV_TYPE_MODIFIER_START
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
 
-       // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
-          bool isConstVolatile() const;
-          void setConstVolatile();
-          void unsetConstVolatile();
-
        // DQ (8/11/2011): Java support.
           bool isJavaTransient() const;
           void setJavaTransient();
@@ -2296,9 +2291,6 @@ $CLASSNAME::displayString() const
      s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
      s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true " : "false ");
 
-  // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
-     s += std::string("isConstVolatile() = ") + std::string(isConstVolatile() ? "true " : "false ");
-
      s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true " : "false ");
      s += ")";
      return s;
@@ -2330,12 +2322,7 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
 	       (lhs.isDefault()  == rhs.isDefault() ) &&
 	       (lhs.isConst()    == rhs.isConst()   ) &&
-	       (lhs.isVolatile() == rhs.isVolatile()) &&
-
-            // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
-	       (lhs.isConstVolatile() == rhs.isConstVolatile()) &&
-
-		   true;
+	       (lhs.isVolatile() == rhs.isVolatile()) ;
    }
 
 
@@ -13784,8 +13771,8 @@ void Sg_File_Info::check_file_id(const char * label, bool assertion) const {
     printf("ERROR from %s:\n", label);
     printf("  Sg_File_Info::this = %p\n", this);
     printf("  p_file_id = %d\n", p_file_id);
-    printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
-    printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+    printf("  p_nametofileid_map.size() = %zd\n", p_nametofileid_map.size());
+    printf("  p_fileidtoname_map.size() = %zd\n", p_fileidtoname_map.size());
     printf("  isTransformation() = %d\n", isTransformation());
     printf("  isCompilerGenerated() = %d\n", isCompilerGenerated());
     printf("  isFrontendSpecific() = %d\n", isFrontendSpecific());
