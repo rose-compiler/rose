@@ -1,0 +1,9 @@
+START
+PROGRAM testloop ;
+BEGIN
+  ivar = 0;
+  ibbr = 1;
+  FOR ivar:0 then 33 while ivar<25;
+      ibbr = ibbr+2;
+END
+TERM

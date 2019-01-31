@@ -436,6 +436,8 @@ SgIntrinsicSymbol
 SgIsOp
 SgIsNotOp
 SgIorAssignOp
+SgJovialCompoolStatement
+SgJovialForThenStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp
@@ -758,6 +760,7 @@ SgUntypedNamedStatement
 SgUntypedAssignmentStatement
 SgUntypedBlockStatement
 SgUntypedExpressionStatement
+SgUntypedForAllStatement
 SgUntypedFunctionCallStatement
 SgUntypedImageControlStatement
 SgUntypedOtherStatement

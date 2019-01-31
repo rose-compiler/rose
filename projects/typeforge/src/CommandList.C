@@ -49,9 +49,9 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
 //Returns the SgType* that mathces the type defined by the string in the given scope. If no type matches will exit.
 SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
   SgType* newType=nullptr;
-  regex e("[_A-Za-z]+|\\*|&|const|<|>");
+  regex e1("[_A-Za-z:]+|\\*|&|const|<|>");
   regex_token_iterator<string::iterator> rend;
-  regex_token_iterator<string::iterator> a ( type.begin(), type.end(), e );
+  regex_token_iterator<string::iterator> a ( type.begin(), type.end(), e1 );
   bool buildConstType=false;
   bool isLongType=false;
   bool isShortType=false;
@@ -86,17 +86,21 @@ SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
       newType=SageBuilder::buildReferenceType(newType);
     } else if(typePart=="const") {
       buildConstType=true;
-    } else if(regex_match(typePart, regex("^[_A-Za-z]+$"))) {
+    } else if(regex_match(typePart, regex("^[_A-Za-z:]+$"))) {
+      if(newType!=nullptr) goto parseerror;
+      // TV: I kept this logic even if I don't know why it exists...
       if(SgFunctionDefinition* funDef=isSgFunctionDefinition(providedScope)) {
-        SgScopeStatement* funScope=funDef->get_scope();
         SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
         if(userDefinedType) {
           newType=userDefinedType;
-        } else {
-          newType=SageBuilder::buildOpaqueType(typePart, funScope);
         }
-      } else {
-        newType=SageBuilder::buildOpaqueType(typePart, providedScope);
+      }
+      // TV: new logic handling qualified named and building opaque types in the global scope
+      if (newType == nullptr) {
+        SgScopeStatement * globalScope = SageInterface::getGlobalScope(providedScope);
+        ROSE_ASSERT(globalScope != NULL);
+        // TODO handle scoping: split `typePart` using `::` then lookup/create namespaces
+        newType=SageBuilder::buildOpaqueType(typePart, globalScope);
       }
     } else {
     parseerror:

@@ -2452,7 +2452,11 @@ SgProject::parse()
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
+
+                 // DQ (1/27/2019): Comment out enough to generate the dot file to debug symbol with null basis.
+                 // printf ("ERROR: In Project::parse(): Comment out file->secondaryPassOverSourceFile() to generate the dot file to debug symbol with null basis \n");
                     file->secondaryPassOverSourceFile();
+
 #if 0
                     printf ("DONE: Calling secondaryPassOverSourceFile() \n");
 #endif

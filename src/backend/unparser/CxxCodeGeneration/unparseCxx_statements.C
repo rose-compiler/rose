@@ -2595,7 +2595,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
           case V_SgVariableDeclaration:
              {
                printf ("Unparsing of SgVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
+
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
+               ROSE_ASSERT(variableDeclaration != NULL);
+
+               unparseVarDeclStmt (variableDeclaration,info);
+#if 0
+               printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -6493,9 +6501,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                int first = 1;
                SgInitializedNamePtrList::iterator p = mfuncdecl_stmt->get_ctors().begin();
-
-            // printf ("Unparsing the preinitialization list \n");
-
+#if 0
+               printf ("Unparsing the preinitialization list \n");
+#endif
             // DQ (10/17/2004): Skip output of enum and class definitions for return type! C++ standard does not permit 
             // a defining declaration within a return type, function parameter, or sizeof expression. 
             // SgUnparse_Info ninfo3(info);
@@ -7847,7 +7855,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                if (tmp_init != NULL)
                   {
-                    printf ("Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+                    printf ("In unparseVarDeclStmt(): Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
 #if 0
                     tmp_init->get_file_info()->display("Initializer tmp_init: debug");
 #endif
@@ -7874,6 +7882,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
 #endif
                     SgConstructorInitializer* constructor = isSgConstructorInitializer(tmp_init);
+#if 0
+                 // DQ (1/16/2019): Added debug information.
+                    printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor = %p \n",constructor);
+                    if (constructor != NULL)
+                      {
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_need_name()                = %s \n",constructor->get_need_name() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_associated_class_unknown() = %s \n",constructor->get_associated_class_unknown() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo.inConditional()                       = %s \n",ninfo.inConditional() ? "true" : "false");
+                      }
+#endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
                          (tmp_init->variant() == AGGREGATE_INIT) ||
                       // ( (constructor != NULL) && constructor->get_need_name() && constructor->get_is_explicit_cast() ) )
@@ -7885,6 +7903,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // I think that this was always cosmetic anyway.
                       // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                       // ( false ) )
+                      // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                          ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                        {
                       // DQ (11/9/2009): Skip the case of when we are in a isSgForInitStmt, since this is a bug in GNU g++ (at least version 4.2)
@@ -7921,7 +7940,35 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                               printf ("This is the MORE general case of a constructor call \n");
 #endif
-                              curprint (" = ");
+                           // DQ (1/16/2019): only use the "=" syntax if we are going to output the name.
+                           // curprint (" = ");
+                              if ( (constructor != NULL) && (constructor->get_need_name() == true) && (constructor->get_is_explicit_cast() == true) )
+                                 {
+                                // This is the syntax: class X = X(arg)
+#if 0
+                                   printf ("Output the = syntax \n");
+#endif
+                                   curprint (" = ");
+                                 }
+                                else
+                                 {
+                                // DQ (1/16/2019): Output the equals operator in the case of a assignment or aggregate initializer.
+                                   if ( (tmp_init->variant() == ASSIGN_INIT) || (tmp_init->variant() == AGGREGATE_INIT) )
+                                      {
+#if 0
+                                        printf ("Output the = syntax in the case of a assignment or aggregate initializer \n");
+#endif
+                                        curprint (" = ");
+                                      }
+                                     else
+                                      {
+                                     // This is the alternative syntax: class X(arg)
+                                     // So don't output a "="
+#if 0
+                                        printf ("Skip output of the = syntax \n");
+#endif
+                                      }
+                                 }
                             }
                        }
                       else
@@ -8507,7 +8554,11 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (4/25/2004): Use the new modifier interface
             // tmp_spec = (*p).get_base_specifier();
             // SgBaseClassModifier & baseClassModifier = (*p).get_baseClassModifier();
-               SgBaseClassModifier & baseClassModifier = (*p)->get_baseClassModifier();
+
+            // DQ (1/21/2019): Moved to using ROSETTA generated access functions which return a pointer.
+            // SgBaseClassModifier & baseClassModifier = (*p)->get_baseClassModifier();
+               SgBaseClassModifier & baseClassModifier = *((*p)->get_baseClassModifier());
+
             // tmp_decl = (*p).get_base_class();
                tmp_decl = (*p)->get_base_class();
             // specifier
@@ -9544,6 +9595,7 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -9563,6 +9615,7 @@ Unparse_ExprStmt::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
           i++;
         }
    }
+
 
 void
 Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)

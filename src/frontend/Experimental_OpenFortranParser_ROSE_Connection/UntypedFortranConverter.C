@@ -95,7 +95,7 @@ UntypedFortranConverter::setFortranNumericLabel(SgStatement* stmt, int label_val
 }
 
 void
-UntypedFortranConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
 {
    if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
       {
@@ -117,7 +117,7 @@ UntypedFortranConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunct
 }
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclaration* ut_function, SgScopeStatement* scope)
    {
       SgName name = ut_function->get_name();
 
@@ -145,7 +145,7 @@ printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name
 
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
    SgName name = ut_function->get_name();
 
@@ -174,7 +174,7 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 
 
 SgProcedureHeaderStatement*
-UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
    {
    // The block data statement is implemented to build a function (which initializes data)
    // Note that it can be declared with the "EXTERNAL" statement and as such it works much
@@ -221,7 +221,7 @@ UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDat
       SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(blockDataDeclaration);
       currentScopeOfFunctionDeclaration->insert_symbol(blockDataDeclaration->get_name(), functionSymbol);
 
-      SgBasicBlock*         blockDataBody       = new SgBasicBlock();
+      SgBasicBlock*         blockDataBody       = SageBuilder::buildBasicBlock();
       SgFunctionDefinition* blockDataDefinition = new SgFunctionDefinition(blockDataDeclaration, blockDataBody);
 
       setSourcePositionFrom(blockDataDefinition, ut_block_data);
@@ -230,10 +230,12 @@ UntypedFortranConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDat
       ROSE_ASSERT(blockDataDeclaration->get_definition() != NULL);
 
    // Specify case insensitivity for Fortran.
-      blockDataBody->setCaseInsensitive(true);
       blockDataDefinition->setCaseInsensitive(true);
       blockDataDeclaration->set_scope (currentScopeOfFunctionDeclaration);
       blockDataDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+
+      SageBuilder::pushScopeStack(blockDataDefinition);
+      SageBuilder::pushScopeStack(blockDataBody);
 
    // Convert the labels for the program begin and end statements
       UntypedFortranConverter::convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);
@@ -266,10 +268,9 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
-   SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
+   SgType*        sg_base_type = convertUntypedType(ut_base_type, scope);
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
-   SgUntypedInitializedNamePtrList::const_iterator it;
 
 #if 0
    cout << "--- convertSgUntypedVariableDeclaration: ut_decl: " << ut_decl << endl;
@@ -564,7 +565,7 @@ UntypedFortranConverter::convertSgUntypedExpressionStatement (SgUntypedExpressio
    }
 
 SgStatement*
-UntypedFortranConverter::convertSgUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
+UntypedFortranConverter::convertUntypedForStatement (SgUntypedForStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
    {
       ROSE_ASSERT(children.size() == 4);
 

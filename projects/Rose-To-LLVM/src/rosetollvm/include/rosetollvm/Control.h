@@ -30,14 +30,30 @@ extern void __rose2llvm_fail (const char *__assertion, const char *__file, unsig
 
 #define ROSE2LLVM_ASSERT(expr) ((expr) ? __ASSERT_VOID_CAST (0) : __rose2llvm_fail(__STRING(expr), __FILE__, __LINE__))
 
+class CodeAttributesVisitor;
+class CodeGeneratorVisitor;
+class LLVMAstAttributes;
 class FunctionAstAttribute;
 
 class Control {
 public: 
-    Control(Option &option_) : option(option_)
-    {}
+    Control(Option &option_) : option(option_),
+                               ad_hoc_attributes_visitor(NULL),
+                               ad_hoc_generator_visitor(NULL),
+                               type_char(NULL),
+                               complex_float(NULL),
+                               complex_double(NULL),
+                               complex_long_double(NULL)
+    {
+    }
 
     ~Control();
+
+    void setAdHocAttributesVisitor(CodeAttributesVisitor *ad_hoc_attributes_visitor_) { ad_hoc_attributes_visitor = ad_hoc_attributes_visitor_; }
+    CodeAttributesVisitor *getAdHocAttributesVisitor(LLVMAstAttributes *);
+
+    void setAdHocGeneratorVisitor(CodeGeneratorVisitor *ad_hoc_generator_visitor_) { ad_hoc_generator_visitor = ad_hoc_generator_visitor_; }
+    CodeGeneratorVisitor *getAdHocGeneratorVisitor(LLVMAstAttributes *);
 
     int numLLVMFiles() { return llvm_file_prefixes.size(); }
 
@@ -75,14 +91,15 @@ public:
                       *LLVM_FOR_LABELS,                      // ForAstAttribute - used to associate labels  with a SgForStatement
                       *LLVM_DIMENSIONS,                      // DimensionAstAttribute - used to associated non-constant expressions used as array dimensions with their declarations.
                       *LLVM_DEFAULT_VALUE,                   // StringAstAttribute - used to associate a default value to with an SgType 
-                      *LLVM_EXPRESSION_RESULT_NAME,          // StringAstAttribute - used to associate the name of the final result of an expression evaluation with an SgExpression 
+                      *LLVM_CLASS_MEMBER,                    // IntAstAttrbute - used to associate the index position of a member in a class (first element is indexed at 0)
                       *LLVM_BUFFERED_OUTPUT,                 // ForAstAttribute - used to identify a SgExpression as the increment of a for loop and associate the loop labels with it.
                       *LLVM_TRIVIAL_CAST,                    // AstAttribute - identify a SgCastExpression as trivial (not needed).
                       *LLVM_AGGREGATE,                       // AggregateAstAttribute - used to associate an aggregate initializer or a type with an SgInitializedName or an SgAggregateInitializer
                       *LLVM_NEGATION_NAME,                   // StringAstAttribute - used to associate extra temporary name with SgSubtractOp or SgMinusAssignOp when negation computation needed
                       *LLVM_IS_BOOLEAN,                      // AstAttribute - identify a SgExpression as having a boolean result
                       *LLVM_EXTEND_BOOLEAN,                  // StringAstAttribute - used to associate extra temporary name witn an SgExpression that requires casting from boolean to integer
-                      *LLVM_CLASS_MEMBER,                    // IntAstAttrbute - used to associate the index position of a member in a class (first element is indexed at 0)
+                      *LLVM_EXPRESSION_RESULT_NAME,          // StringAstAttribute - used to associate the name of the final result of an expression evaluation with an SgExpression 
+                      *LLVM_IMAGINARY_RESULT_NAME,           // StringAstAttribute - used to associate the name of the final imaginary result of a complex type expression evaluation with an SgExpression 
 
                       *LLVM_SELECT_CONDITIONAL,
                       *LLVM_CONDITIONAL_LABELS,
@@ -102,7 +119,7 @@ public:
                       *LLVM_STRING_INITIALIZATION,
                       *LLVM_POINTER_TO_INT_CONVERSION,
                       *LLVM_ARRAY_TO_POINTER_CONVERSION,
-                      // Missing Case here that can be used.
+                      *LLVM_ARRAY_NAME_REFERENCE,
                       *LLVM_INTEGRAL_PROMOTION,
                       *LLVM_INTEGRAL_DEMOTION,
                       *LLVM_NULL_VALUE,
@@ -122,6 +139,8 @@ public:
                       *LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION,
                       *LLVM_OP_AND_ASSIGN_FP_PROMOTION,
                       *LLVM_OP_AND_ASSIGN_FP_DEMOTION,
+                      *LLVM_REAL,
+                      *LLVM_IMAGINARY,
                       *LLVM_ARRAY_BIT_CAST,
                       *LLVM_CONSTANT_VALUE,
                       *LLVM_FUNCTION_VISITED,
@@ -135,6 +154,7 @@ public:
                       *LLVM_BOOLEAN_CAST,
                       *LLVM_DECLARATION_TYPE,
                       *LLVM_GLOBAL_CONSTANT_NAME,
+                      *LLVM_NEEDS_STACK,
                       *LLVM_FIELD_OFFSET // IntAstAttribute - specifies, in bytes, the offset of a struct/union field
                       ;
 
@@ -163,7 +183,7 @@ public:
         if (attribute) {
             n -> removeAttribute(code);
             attribute -> removeOwner();
-	}
+        }
     }
 
     /**
@@ -181,6 +201,57 @@ public:
     template <typename T>
     T *ownNode(T *n) { owned_nodes.push_back(n); return n; }
 
+    /**
+     * Construct a chartype with the given subtype.
+     */
+    SgTypeChar *getTypeChar() {
+        if (! type_char) {
+            type_char = ownNode(new SgTypeChar());
+        }
+        return type_char;
+    }
+
+    /**
+     * Construct a complex type with the given subtype.
+     */
+    SgTypeComplex *getComplexType(SgType *base_type) {
+        if (isSgTypeFloat(base_type)) {
+            if (! complex_float) {
+                complex_float = ownNode(new SgTypeComplex(base_type));
+            }
+            return complex_float;
+        }
+        else if (isSgTypeDouble(base_type)) {
+            if (! complex_double) {
+                complex_double = ownNode(new SgTypeComplex(base_type));
+            }
+            return complex_double;
+        }
+        else if (isSgTypeLongDouble(base_type)) {
+            if (! complex_long_double) {
+                complex_long_double = ownNode(new SgTypeComplex(base_type));
+            }
+            return complex_long_double;
+        }
+        else {
+cout << "*** I don't know how to construct Complex type with subtype: "
+     << base_type -> class_name()
+     << endl;
+ cout.flush();
+            ROSE2LLVM_ASSERT(! ("know how to construct Complex type with subtype: " + base_type -> class_name()).c_str());
+        }
+    }
+
+
+    /**
+     * Unpack a CREAL or CIMAG macro call and return its expression argument.
+     */
+    static SgExpression *isComplexMacro(SgFunctionCallExp *n, string macro_name);
+    
+
+    /**
+     * 
+     */
     static std::string APFloatToString(llvm::APFloat &);
     static std::string FloatToString(float f);
     static std::string DoubleToString(double d);
@@ -203,6 +274,15 @@ private:
     Option &option;
     llvm::LLVMContext context;
     llvm::SMDiagnostic error;
+
+    CodeAttributesVisitor *ad_hoc_attributes_visitor;
+    CodeGeneratorVisitor  *ad_hoc_generator_visitor;
+
+    SgTypeChar *type_char;
+
+    SgTypeComplex *complex_float;
+    SgTypeComplex *complex_double;
+    SgTypeComplex *complex_long_double;
 
     std::vector<DimensionAstAttribute *> dimensionAttributes;
 
