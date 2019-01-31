@@ -337,7 +337,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_52.C \
    test2019_53.C \
    test2019_54.C \
-   test2019_55.C 
+   test2019_55.C \
+   test2019_56.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
