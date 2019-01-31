@@ -2268,6 +2268,37 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
      SgUsingDeclarationStatement* usingDeclaration = isSgUsingDeclarationStatement(stmt);
      ROSE_ASSERT (usingDeclaration != NULL);
 
+  // DQ (1/30/2019): This code is required for the output of the access specifier 
+  // (public, protected, private) and applies only within classes.  Use get_parent()
+  // instead of get_scope() since we are looking for the structural position of the 
+  // declaration (is it is a class).
+     SgClassDefinition *classDefinition = isSgClassDefinition(usingDeclaration->get_parent());
+     if (classDefinition != NULL)
+        {
+       // Don't output an access specifier in this is a struct or union!
+       // printf ("Don't output an access specifier in this is a struct or union! \n");
+
+       // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names (supporting auto-documentation).
+       // if (classDefinition->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
+          if (classDefinition->get_declaration()->get_class_type() == SgClassDeclaration::e_class && !info.skipCheckAccess())
+               info.set_CheckAccess();
+       // inClass = true;
+       // inCname = isSgClassDefinition(vardecl_stmt->get_parent())->get_declaration()->get_name();
+        }
+
+#if 0
+     curprint( "\n/* Calling printSpecifier() */ ");
+#endif
+
+  // DQ (1/30/2019): Adding support to output the access specifier when we are in a class definition.
+  // info.set_CheckAccess();
+     unp->u_sage->printSpecifier(usingDeclaration, info);
+     info.unset_CheckAccess();
+
+#if 0
+     curprint( "\n/* DONE: Calling printSpecifier() */ ");
+#endif
+
      curprint ( string("\nusing "));
 
   // DQ (9/11/2004): We only save the declaration and get the name by unparsing the declaration
