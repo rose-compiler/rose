@@ -446,6 +446,56 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.findingFunctionCallFunctions)
               .hidden(true));
 
+    sg.insert(Switch("entry-functions")
+              .intrinsicValue(true, settings_.partitioner.findingEntryFunctions)
+              .doc("Create functions at the program entry point(s). The @s{no-entry-functions} switch turns this feature "
+                   "off. The default is to " + std::string(settings_.partitioner.findingEntryFunctions?"":"not ") +
+                   "perform this analysis."));
+    sg.insert(Switch("no-entry-functions")
+              .key("entry-functions")
+              .intrinsicValue(false, settings_.partitioner.findingEntryFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("error-functions")
+              .intrinsicValue(true, settings_.partitioner.findingErrorFunctions)
+              .doc("Create functions based on error handling information that might be present in the container's tables. "
+                   "The @s{no-error-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingErrorFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-error-functions")
+              .key("error-functions")
+              .intrinsicValue(false, settings_.partitioner.findingErrorFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("import-functions")
+              .intrinsicValue(true, settings_.partitioner.findingImportFunctions)
+              .doc("Create functions based on import information that might be present in the container's tables. The "
+                   "@s{no-import-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingImportFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-import-functions")
+              .key("import-functions")
+              .intrinsicValue(false, settings_.partitioner.findingImportFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("export-functions")
+              .intrinsicValue(true, settings_.partitioner.findingExportFunctions)
+              .doc("Create functions based on export information that might be present in the container's tables. The "
+                   "@s{no-export-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingExportFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-export-functions")
+              .key("export-functions")
+              .intrinsicValue(false, settings_.partitioner.findingExportFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("symbol-functions")
+              .intrinsicValue(true, settings_.partitioner.findingSymbolFunctions)
+              .doc("Create functions based on symbol tables that might be present in the container. The @s{no-symbol-functions} "
+                   "switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingSymbolFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-symbol-functions")
+              .key("symbol-functions")
+              .intrinsicValue(false, settings_.partitioner.findingSymbolFunctions)
+              .hidden(true));
+
     sg.insert(Switch("data-functions")
               .intrinsicValue(true, settings_.partitioner.findingDataFunctionPointers)
               .doc("Scan non-executable areas of memory to find pointers to functions.  This analysis can be disabled "
@@ -1728,17 +1778,33 @@ Engine::makeSymbolFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
 std::vector<Function::Ptr>
 Engine::makeContainerFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
+    Sawyer::Message::Stream where(mlog[WHERE]);
 
-    BOOST_FOREACH (const Function::Ptr &function, makeEntryFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeErrorHandlingFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeImportFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeExportFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeSymbolFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
+    if (settings_.partitioner.findingEntryFunctions) {
+        SAWYER_MESG(where) <<"making entry point functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeEntryFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingErrorFunctions) {
+        SAWYER_MESG(where) <<"making error-handling functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeErrorHandlingFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingImportFunctions) {
+        SAWYER_MESG(where) <<"making import functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeImportFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingExportFunctions) {
+        SAWYER_MESG(where) <<"making export functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeExportFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingSymbolFunctions) {
+        SAWYER_MESG(where) <<"making symbol table functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeSymbolFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
     return retval;
 }
 

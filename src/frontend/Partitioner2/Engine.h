@@ -142,7 +142,7 @@ private:
         void fixFunctionCallEdges(const Args&);
         void addPossibleIndeterminateEdge(const Args&);
     };
-    
+
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
@@ -247,7 +247,7 @@ public:
         progress_(Progress::instance()) {
         init();
     }
-    
+
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -619,7 +619,7 @@ public:
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
     virtual void runPartitionerFinal(Partitioner&);
-    
+
     /** Partitions instructions into basic blocks and functions.
      *
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
@@ -846,7 +846,7 @@ public:
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
-    
+
     /** Attach intra-function basic blocks to functions.
      *
      *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
@@ -1337,6 +1337,55 @@ public:
     virtual void findingFunctionCallFunctions(bool b) { settings_.partitioner.findingFunctionCallFunctions = b; }
     /** @} */
 
+    /** Property: Whether to make functions at program entry points.
+     *
+     *  If set, then all program entry points are assumed to be the start of a function.
+     *
+     * @{ */
+    bool findingEntryFunctions() const /*final*/ { return settings_.partitioner.findingEntryFunctions; }
+    virtual void findingEntryFunctions(bool b) { settings_.partitioner.findingEntryFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make error handling functions.
+     *
+     *  If set and information is available about error handling and exceptions, then that information is used to create entry
+     *  points for functions.
+     *
+     * @{ */
+    bool findingErrorFunctions() const /*final*/ { return settings_.partitioner.findingErrorFunctions; }
+    virtual void findingErrorFunctions(bool b) { settings_.partitioner.findingErrorFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at import addresses.
+     *
+     *  If set and the file contains a table describing the addresses of imported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingImportFunctions() const /*final*/ { return settings_.partitioner.findingImportFunctions; }
+    virtual void findingImportFunctions(bool b) { settings_.partitioner.findingImportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at export addresses.
+     *
+     *  If set and the file contains a table describing the addresses of exported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingExportFunctions() const /*final*/ { return settings_.partitioner.findingExportFunctions; }
+    virtual void findingExportFunctions(bool b) { settings_.partitioner.findingExportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions according to symbol tables.
+     *
+     *  If set and the file contains symbol tables, then symbols that define function addresses cause functions to be created
+     *  at those addresses.
+     *
+     * @{ */
+    bool findingSymbolFunctions() const /*final*/ { return settings_.partitioner.findingSymbolFunctions; }
+    virtual void findingSymbolFunctions(bool b) { settings_.partitioner.findingSymbolFunctions = b; }
+    /** @} */
+
     /** Property: Whether to search static data for function pointers.
      *
      *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to
@@ -1494,7 +1543,7 @@ public:
     // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
     Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
     Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
-        
+
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
