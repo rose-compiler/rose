@@ -37,21 +37,21 @@ public:
     /* Override virtual methods from BinaryLoader */
 public:
 
-    virtual bool can_load(SgAsmGenericHeader*) const;
+    virtual bool canLoad(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
-    /** Returns sections in order of their definition in the PE Section Table. */
-    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*);
+    // Returns sections in order of their definition in the PE Section Table.
+    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) ROSE_OVERRIDE;
 
     /** Windows-specific PE section alignment. */
-    virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                             rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                             rose_addr_t *va, rose_addr_t *mem_size,
-                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
-                                             ConflictResolution *resolve);
+    virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
+                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
+                                            rose_addr_t *va, rose_addr_t *mem_size,
+                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
+                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            ConflictResolution *resolve) ROSE_OVERRIDE;
 };
 
 } // namespace
 } // namespace
 
-#endif /*ROSE_BINARYLOADERPE_H*/
+#endif

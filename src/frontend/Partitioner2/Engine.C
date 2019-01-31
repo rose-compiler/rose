@@ -1096,9 +1096,9 @@ Engine::obtainLoader(const BinaryLoader::Ptr &hint) {
     if (!binaryLoader_ && interp_) {
         if ((binaryLoader_ = BinaryLoader::lookup(interp_))) {
             binaryLoader_ = binaryLoader_->clone();
-            binaryLoader_->set_perform_remap(true);
-            binaryLoader_->set_perform_dynamic_linking(false);
-            binaryLoader_->set_perform_relocations(false);
+            binaryLoader_->performingRemap(true);
+            binaryLoader_->performingDynamicLinking(false);
+            binaryLoader_->performingRelocations(false);
         }
     }
 

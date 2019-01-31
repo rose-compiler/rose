@@ -51,9 +51,9 @@ typedef Sawyer::SharedPointer<class BinaryLoader> BinaryLoaderPtr;
  *  modify properties that control its behavior, and use it to load a binary.
  */
 class BinaryLoader: public Sawyer::SharedObject {
-    /*========================================================================================================================
-     * Types
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Referenc counting pointer to @ref BinaryLoader. */
     typedef Sawyer::SharedPointer<BinaryLoader> Ptr;
@@ -75,12 +75,6 @@ public:
         RESOLVE_REMAP_ABOVE,            /**< Move the section to a higher unused part of the address space. */
     };
 
-
-
-    /*========================================================================================================================
-     * Exceptions
-     *======================================================================================================================== */
-public:
     /** Base class for exceptions thrown by loaders. */
     class Exception: public std::runtime_error {
     public:
@@ -93,22 +87,34 @@ public:
         friend std::ostream& operator<<(std::ostream&, const Exception&);
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
 
+private:
+    static std::vector<Ptr> loaders_;                   // List of loader subclasses.
+    std::vector<std::string> preloads_;                 // Libraries that should be pre-loaded.
+    std::vector<std::string> directories_;              // Directories to search for libraries with relative names.
+    bool performingDynamicLinking_;
+    bool performingRemap_;
+    bool performingRelocations_;
 
-    /*========================================================================================================================
-     * Constructors, etc.
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Constructors, etc.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     BinaryLoader()
-        : p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
+        : performingDynamicLinking_(false), performingRemap_(true), performingRelocations_(false)
         { init(); }
 
     /** Copy constructor. */
     BinaryLoader(const BinaryLoader &other)
-        : p_perform_dynamic_linking(other.p_perform_dynamic_linking),
-          p_perform_remap(other.p_perform_remap), p_perform_relocations(other.p_perform_relocations) {
-        preloads = other.preloads;
-        directories = other.directories;
+        : performingDynamicLinking_(other.performingDynamicLinking_),
+          performingRemap_(other.performingRemap_), performingRelocations_(other.performingRelocations_) {
+        preloads_ = other.preloads_;
+        directories_ = other.directories_;
     }
 
 public:
@@ -136,15 +142,15 @@ private:
 
 
 
-    /*==========================================================================================================================
-     * Registration and lookup methods
-     *========================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Registration and lookup methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Register a loader instance.
      *
      *  More specific loader instances should be registered after more general loaders since the lookup() method will inspect
      *  loaders in reverse order of their registration. */
-    static void register_subclass(const Ptr&);
+    static void registerSubclass(const Ptr&);
 
     /** Predicate determining the suitability of a loader for a specific file header.
      *
@@ -152,7 +158,7 @@ public:
      *  false.  The implementation in BinaryLoader always returns true because BinaryLoader is able to generically load all
      *  types of files, albeit with limited functionality. Subclasses should certainly redefine this method so it returns true
      *  only for certain headers. */
-    virtual bool can_load(SgAsmGenericHeader*) const {
+    virtual bool canLoad(SgAsmGenericHeader*) const {
         return true;
     }
 
@@ -173,103 +179,92 @@ public:
 
 
 
-    /*========================================================================================================================
-     * Accessors for properties.
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Set whether this loader will perform the linking step.
+    /** Property: Whether this loader will perform the linking step.
      *
      *  To "link" means to recursively determine what shared objects are dependencies of the objects already in the AST and to
-     *  parse them, adding them to the AST also. */
-    void set_perform_dynamic_linking(bool b) { p_perform_dynamic_linking = b; }
-
-    /** Returns whether this loader will perform the linking step.
+     *  parse them, adding them to the AST also.
      *
-     *  See also, set_perform_dynamic_linking(). */
-    bool get_perform_dynamic_linking() const { return p_perform_dynamic_linking; }
+     * @{ */
+    bool performingDynamicLinking() const { return performingDynamicLinking_; }
+    void performingDynamicLinking(bool b) { performingDynamicLinking_ = b; }
+    /** @} */
 
-    /** Set whether this loader will perform the mapping step.
+    /** Property: Whether this loader will perform the mapping step.
      *
      *  To "map" a section means to make the section's content available through a MemoryMap object attached to the
      *  interpretation that holds the section.  This step also resolves conflicts between two or more sections that request
-     *  overlapping areas of memory. */
-    void set_perform_remap(bool b) { p_perform_remap = b; }
-
-    /** Returns whether this loader will perform the mapping step.
+     *  overlapping areas of memory.
      *
-     *  See also, set_perform_remap(). */
-    bool get_perform_remap() const { return p_perform_remap; }
+     * @{ */
+    bool performingRemap() const { return performingRemap_; }
+    void performingRemap(bool b) { performingRemap_ = b; }
+    /** @} */
 
-    /** Set whether this loader will perform the relocation step.
+    /** Property: Whether this loader will perform the relocation step.
      *
      *  To "relocate" means to process the relocation sections of an executable and apply "fixups" to parts of memory that have
      *  been mapped. The fixups are computed based on the original contents of that memory and the difference in locations from
      *  the section's preferred memory location and the location chosen by this loader during the mapping phase.  There are
-     *  many kinds of relocation fixups. */
-    void set_perform_relocations(bool b) { p_perform_relocations = b; }
-
-    /** Returns whether this loader will perform the relocation step.
+     *  many kinds of relocation fixups.
      *
-     *  See also, set_perform_relocations(). */
-    bool get_perform_relocations() const { return p_perform_relocations; }
+     * @{ */
+    bool performingRelocations() const { return performingRelocations_; }
+    void performingRelocations(bool b) { performingRelocations_ = b; }
+    /** @} */
 
 
 
 
-    /*========================================================================================================================
-     * Searching for shared objects
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Searching for shared objects
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Adds a library to the list of pre-loaded libraries.
+    /** Property: List of libraries that will be pre-loaded.
      *
      *  These libraries are linked into the AST in the order they were added to the preload list. The @p libname should be
      *  either the base name of a library, such as "libm.so" (in which case the search directories are consulted) or a
-     *  path-qualified name like "/usr/lib/libm.so". */
-    void add_preload(const std::string &libname) {
-        preloads.push_back(libname);
-    }
-
-    /** Returns the list of libraries that will be pre-loaded.
+     *  path-qualified name like "/usr/lib/libm.so".
      *
-     *  These are loaded before other libraries even if the preload libraries would otherwise not be loaded. */
-    const std::vector<std::string>& get_preloads() const {
-        return preloads;
-    }
+     * @{ */
+    const std::vector<std::string>& preloads() const { return preloads_; }
+    std::vector<std::string>& preloads() { return preloads_; }
+    void preloads(const std::vector<std::string> &v) { preloads_ = v; }
+    /** @} */
 
-    /** Adds a directory to the list of directories searched for libraries.
+    /** Property: List of directories searched for libraries.
      *
      *  This is similar to the LD_LIBRARY_PATH environment variable of the ld-linux.so dynamic loader (see the ld.so man
      *  page). ROSE searches for libraries in directories in the order that directories were added.
      *
-     *  See also, StringUtility::splitStringIntoStrings(). */
-    void add_directory(const std::string &dirname) {
-        directories.push_back(dirname);
-    }
+     * @{ */
+    const std::vector<std::string>& directories() const { return directories_; }
+    std::vector<std::string>& directories() { return directories_; }
+    void directories(const std::vector<std::string> &v) { directories_ = v; }
+    /** @} */
 
-    /** Adds directories to the list of directories searched for libraries.
+    /** Appends directories to the list of directories searched for libraries.
      *
      *  This is similar to the LD_LIBRARY_PATH environment variable of the ld-linux.so dynamic loader (see the ld.so man
      *  page). ROSE searches for libraries in directories in the order that directories were added. */
-    void add_directories(const std::vector<std::string> &dirnames) {
-        directories.insert(directories.end(), dirnames.begin(), dirnames.end());
-    }
-
-    /** Returns the list of shared object search directories. */
-    const std::vector<std::string>& get_directories() const {
-        return directories;
+    void appendDirectories(const std::vector<std::string> &dirnames) {
+        directories_.insert(directories_.end(), dirnames.begin(), dirnames.end());
     }
 
     /** Convert name to fully qualified name.
      *
      *  Given the name of a shared object, return the fully qualified name where the library is located in the file system.
      *  Throws a BinaryLoader::Exception if the library cannot be found. */
-    virtual std::string find_so_file(const std::string &libname) const;
+    virtual std::string findSoFile(const std::string &libname) const;
 
 
 
-    /*========================================================================================================================
-     * The main interface.
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // The main interface.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Top-level method to do everything.
      *
@@ -333,17 +328,16 @@ public:
      *  throws the error (BinaryLoader::Exception) or appends it to the @p errors container (if @p errors is non-null). */
     virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL);
 
-    /*========================================================================================================================
-     * Supporting types and functions
-     *======================================================================================================================== */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Supporting types and functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Returns true if the specified file name is already linked into the AST.
      *
      * @{ */
-    virtual bool is_linked(SgBinaryComposite *composite, const std::string &filename);
-    virtual bool is_linked(SgAsmInterpretation *interp, const std::string &filename);
+    virtual bool isLinked(SgBinaryComposite *composite, const std::string &filename);
+    virtual bool isLinked(SgAsmInterpretation *interp, const std::string &filename);
     /** @} */
-
 
     /** Parses a single binary file.
      *
@@ -369,7 +363,7 @@ public:
     /** Selects those sections of a header that should be mapped.
      *
      *  Returns the sections in the order they should be mapped. */
-    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
+    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader *header) {
         return header->get_mapped_sections();
     }
 
@@ -447,13 +441,12 @@ public:
      *  Likewise, this method is allowed to perform the mapping itself if the algorithm in the caller, remap(), cannot
      *  be sufficiently influenced by the values that are returned.  In this case, this method should perform the mapping
      *  and return CONTRIB_NONE to prevent the caller from doing any further mapping. */
-    virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                             rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                             rose_addr_t *va, rose_addr_t *mem_size,
-                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
-                                             ConflictResolution *resolve);
-
+    virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
+                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
+                                            rose_addr_t *va, rose_addr_t *mem_size,
+                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
+                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            ConflictResolution *resolve);
 
     /** Selects loadable sections.
      *
@@ -485,25 +478,58 @@ public:
      *  other permissions without resorting to changing the AST (which would be misleading for other analysis). */
     virtual unsigned mappingPermissions(SgAsmGenericSection*) const;
 
-    /*========================================================================================================================
-     * Data members
-     *======================================================================================================================== */
-public:
-    static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Supporting functions.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();                                        // Further initializations in a *.C file.
 
-    static std::vector<Ptr> loaders;                    // List of loader subclasses.
-    std::vector<std::string> preloads;                  // Libraries that should be pre-loaded.
-    std::vector<std::string> directories;               // Directories to search for libraries with relative names.
 
-    bool p_perform_dynamic_linking;
-    bool p_perform_remap;
-    bool p_perform_relocations;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated members.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    // [Robb Matzke 2019-01-30]: deprecated
+    static void register_subclass(const Ptr &loader) ROSE_DEPRECATED("use registerSubclass") {
+        return registerSubclass(loader);
+    }
+    void set_perform_dynamic_linking(bool b) ROSE_DEPRECATED("use performingDynamicLinking") {
+        performingDynamicLinking(b);
+    }
+    bool get_perform_dynamic_linking() const ROSE_DEPRECATED("use performingDynamicLinking") {
+        return performingDynamicLinking();
+    }
+    void set_perform_remap(bool b) ROSE_DEPRECATED("use performingRemap") {
+        performingRemap(b);
+    }
+    bool get_perform_remap() const ROSE_DEPRECATED("use performingRemap") {
+        return performingRemap();
+    }
+    void set_perform_relocations(bool b) ROSE_DEPRECATED("use performingRelocations") {
+        performingRelocations(b);
+    }
+    bool get_perform_relocations() const ROSE_DEPRECATED("use performingRelocations") {
+        return performingRelocations();
+    }
+    void add_preload(const std::string &libname) ROSE_DEPRECATED("use preloads") {
+        preloads().push_back(libname);
+    }
+    const std::vector<std::string>& get_preloads() const ROSE_DEPRECATED("use preloads") {
+        return preloads();
+    }
+    void add_directory(const std::string &dirname) ROSE_DEPRECATED("use directories") {
+        directories().push_back(dirname);
+    }
+    void add_directories(const std::vector<std::string> &dirnames) ROSE_DEPRECATED("use appendDirectories") {
+        appendDirectories(dirnames);
+    }
+    const std::vector<std::string>& get_directories() const ROSE_DEPRECATED("use directories") {
+        return directories();
+    }
 };
 
 } // namespace
 } // namespace
 
-#endif /* ROSE_BINARYLOADER_H */
+#endif

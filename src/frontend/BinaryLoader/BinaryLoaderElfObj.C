@@ -7,16 +7,14 @@ namespace BinaryAnalysis {
 
 /* This binary loader can handle ELF object files. */
 bool
-BinaryLoaderElfObj::can_load(SgAsmGenericHeader *hdr) const
-{
+BinaryLoaderElfObj::canLoad(SgAsmGenericHeader *hdr) const {
     return isSgAsmElfFileHeader(hdr) && hdr->get_exec_format()->get_purpose()==SgAsmExecutableFileFormat::PURPOSE_LIBRARY;
 }
 
 /* Same as parent, but also includes sections that aren't mapped but which contain code. */
 SgAsmGenericSectionPtrList
-BinaryLoaderElfObj::get_remap_sections(SgAsmGenericHeader *header)
-{
-    SgAsmGenericSectionPtrList retval = BinaryLoaderElf::get_remap_sections(header);
+BinaryLoaderElfObj::getRemapSections(SgAsmGenericHeader *header) {
+    SgAsmGenericSectionPtrList retval = BinaryLoaderElf::getRemapSections(header);
     const SgAsmGenericSectionPtrList &sections = header->get_sections()->get_sections();
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
         if (SgAsmElfSection *section = isSgAsmElfSection(*si)) {
@@ -56,17 +54,16 @@ BinaryLoaderElfObj::mappingPermissions(SgAsmGenericSection *section_) const {
  * contain code (SgAsmGenericSection::get_contains_code() is true) is mapped to an otherwise unused area of the virtual
  * memory. */
 BinaryLoader::MappingContribution
-BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
-                                 rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                                 rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                                 rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                                 rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
-                                 ConflictResolution *resolve_p)
-{
+BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
+                                rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
+                                rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                                rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
+                                rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                                ConflictResolution *resolve_p) {
     if (section->is_mapped())
-        return BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p, mem_size_p,
-                                             offset_p, file_size_p, map_private_p, va_offset_p, anon_lo_p, anon_hi_p,
-                                             resolve_p);
+        return BinaryLoaderElf::alignValues(section, map, malign_lo_p, malign_hi_p, va_p, mem_size_p,
+                                            offset_p, file_size_p, map_private_p, va_offset_p, anon_lo_p, anon_hi_p,
+                                            resolve_p);
 
     if (section->get_contains_code()) {
         SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(section);
