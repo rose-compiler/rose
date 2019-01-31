@@ -144,14 +144,14 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_69, test $rose_boost_version -ge 10
 # DQ (10/22/2015): Added acceptable case 1.54.
 # DQ (8/2/2016): Added acceptable case 1.55 through 1.61.
 # [Matzke, 2016-09-19] Acceptable cases now 1.49-1.53, 1.55-1.60 decided at Jun 17 meeting, but leaving in 1.61
-# [Matzke, 2019-01-31] Acceptable versions no 1.58-1.69. We decided to support only latest 10 versions from now on.
-boost_minimum_version=105800
+# [Matzke, 2019-01-31] Acceptable versions no 1.57-1.69. We decided to support only latest 10 versions from now on.
+boost_minimum_version=105700
 
 if test "$rose_boost_version" -lt "$boost_minimum_version"; then
    if test "$ROSE_ENABLE_BOOST_VERSION_CHECK" = "yes"; then
-       AC_MSG_FAILURE([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later])
+       AC_MSG_FAILURE([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later)])
    else      
-       AC_MSG_WARN([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later])
+       AC_MSG_WARN([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later)])
    fi
 else
    AC_MSG_NOTICE([reasonable version of Boost found: $rose_boost_version])
