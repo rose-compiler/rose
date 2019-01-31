@@ -894,13 +894,50 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
      curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
 #endif
 
+  // DQ (1/18/2019): Test the current SgConstructorInitializer.
+     bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(con_init,info);
+
+#if 0
+     printf ("In unparseOneElemConInit(): this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",(this_constructor_initializer_is_using_Cxx11_initializer_list == true) ? "true" : "false");
+     printf ("In unparseOneElemConInit(): con_init->get_need_name()                                    = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+     printf ("In unparseOneElemConInit(): unp->u_sage->printConstructorName(con_init)                  = %s \n",(unp->u_sage->printConstructorName(con_init) == true) ? "true" : "false");
+#endif
+
+  // DQ (1/30/2019): Refactored code from below.
+     bool outputParenthisis = false;
+  // if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
+     if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) && unp->u_sage->printConstructorName(con_init) == true)
+       {
+          outputParenthisis = true;
+       }
+
+  // DQ (1/30/2019): Copy of code from the unparse function for the constructor initializer.
+  // DQ (1/18/2019): this indicates a silent mode and no output should be generated from where
+  // the constructor initializer is associated with the C++11 initialization_list class.
+     if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
+        {
+#if 0
+          printf ("In unparseOneElemConInit(): Suppress output for constructor initializer from the C++11 initializer_list class: this_constructor_initializer_is_using_Cxx11_initializer_list == true: reset outputParenthisis = false \n");
+#endif
+          outputParenthisis = false;
+        }
+
+#if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@ In unparseOneElemConInit(): outputParenthisis = %s \n",(outputParenthisis == true) ? "true" : "false");
+#endif
+
   // taken from unparseExprList
   // check whether the constructor name was printed. If so, we need to surround
   // the arguments of the constructor with parenthesis.
   // printf ("printConstructorName() = %s \n",(printConstructorName(con_init) == true) ? "true" : "false");
-     if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
+  // if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
+     if (outputParenthisis == true)
         {
-          curprint( "("); 
+#if 0
+          printf ("In unparseOneElemConInit(): output parenthisis \n");
+          curprint( "\n /* Output paren in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
+          curprint("("); 
           unp->u_debug->printDebugInfo("( from OneElemConInit", true);
         }
 
@@ -918,7 +955,8 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
              }
         }
 
-     if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
+  // if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
+     if (outputParenthisis == true)
         {
           curprint( ")");
           unp->u_debug->printDebugInfo(") from OneElemConInit", true);
