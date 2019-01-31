@@ -412,17 +412,33 @@ else
     endif
     # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
     CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_date_time
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_iostreams
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_random
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_regex
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_serialization
+    #LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_signals -- removed in 1.69.0
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_system
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wserialization
 
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_date_time
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_iostreams
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_random
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_regex
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_serialization
+    #LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_signals -- removed in 1.69.0
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_system
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wave
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wserialization
 endif
 
 # Python development
