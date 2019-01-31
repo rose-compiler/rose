@@ -315,6 +315,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_22.C \
    test2019_23.C \
    test2019_24.C \
+   test2019_25.C \
+   test2019_26.C \
    test2019_27.C \
    test2019_28.C \
    test2019_29.C \
@@ -346,8 +348,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2017_17.C \
    test2019_15.C \
    test2019_16.C \
-   test2019_25.C \
-   test2019_26.C \
    test2019_34.C \
    test2019_37.C \
    test2019_38.C \
