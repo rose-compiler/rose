@@ -440,6 +440,12 @@ ROSE_DLL_API SgEnumVal* buildEnumVal(SgEnumFieldSymbol * sym);
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal_nfi(long double value, const std::string& str);
 
+ROSE_DLL_API SgFloat80Val* buildFloat80Val(long double value = 0.0);
+ROSE_DLL_API SgFloat80Val* buildFloat80Val_nfi(long double value, const std::string& str);
+
+ROSE_DLL_API SgFloat128Val* buildFloat128Val(long double value = 0.0);
+ROSE_DLL_API SgFloat128Val* buildFloat128Val_nfi(long double value, const std::string& str);
+
 ROSE_DLL_API SgShortVal* buildShortVal(short value = 0);
 ROSE_DLL_API SgShortVal* buildShortValHex(short value = 0);
 ROSE_DLL_API SgShortVal* buildShortVal_nfi(short value, const std::string& str);
