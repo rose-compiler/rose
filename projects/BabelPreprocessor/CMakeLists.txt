@@ -1,7 +1,6 @@
 add_executable(babelPreprocessor
   sidlFunction.C caselessCompare.C findMethodCalls.C
-  options.C babelTransformation.C babelPreprocessor.C
-)
+  options.C babelTransformation.C babelPreprocessor.C)
 
 target_link_libraries(babelPreprocessor ROSE_DLL ${Boost_LIBRARIES})
 
@@ -11,5 +10,4 @@ target_link_libraries(babelPreprocessor ROSE_DLL ${Boost_LIBRARIES})
 install(
   FILES babelTransformation.h caselessCompare.h findMethodCalls.h simpleA++.h
         transformationOptions.h
-  DESTINATION include
-)
+  DESTINATION ${INCLUDE_INSTALL_DIR})
