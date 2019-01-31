@@ -56,7 +56,7 @@ using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
-using namespace Rose::Diagnostics;
+using namespace Sawyer::Message::Common;
 
 const string FileHelper::pathDelimiter = "/";
 
@@ -1304,14 +1304,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-                                }
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-                               else if (true) {
+                                } else if (true) {
                                    // This is not a source file recognized by ROSE, so it is either a binary executable or
                                    // library archive or something that we can't process.
                                    static bool didWarn = false;
                                    if (!didWarn) {
-                                       SageBuilder::mlog[WARN]
+                                       mlog[WARN]
                                            <<"global \"::frontend\" is being used for parsing binary analysis inputs\n"
                                            <<"  It is better to use the Rose::BinaryAnaysis::Partitioner2::Engine interface\n"
                                            <<"  which is dedicated to binary analysis and has more features and better\n"
@@ -1356,7 +1355,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                         * also has commands that likely won't run on Windows systems, so I'm commenting out the
                                         * whole block. [RPM 2010-11-03] */
                                        ASSERT_not_implemented("Windows not supported");
-#else
+#endif
                                        // This is the case of processing a library archive (*.a) file. We want to process these
                                        // files so that we can test the library identification mechanism to build databases of
                                        // the binary functions in libraries (so that we detect these in staticaly linked
@@ -1381,7 +1380,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                                                                                           archiveName);
                                        BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
                                            binary->get_libraryArchiveObjectFileNameList().push_back(memberName.native());
-#endif // _MSC_VER
                                    }
 #endif // ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                                }
@@ -8071,7 +8069,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           default:
              {
                // Send out error message before the assertion, which may fail and stop first otherwise.
-                 mfprintf(SageBuilder::mlog[DEBUG])("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+                 mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 
