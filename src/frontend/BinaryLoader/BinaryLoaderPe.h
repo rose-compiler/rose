@@ -6,21 +6,36 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Reference counting pointer to @ref BinaryLoaderPe. */
+typedef Sawyer::SharedPointer<class BinaryLoaderPe> BinaryLoaderPePtr;
+
+/** Loader for Windows PE files. */
 class BinaryLoaderPe: public BinaryLoader {
 public:
+    /** Reference counting pointer to @ref BinaryLoaderPe. */
+    typedef Sawyer::SharedPointer<BinaryLoaderPe> Ptr;
+
+protected:
     BinaryLoaderPe() {}
 
     BinaryLoaderPe(const BinaryLoaderPe &other)
         : BinaryLoader(other)
         {}
 
+public:
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new BinaryLoaderPe);
+    }
+
+    virtual BinaryLoaderPtr clone() const {
+        return BinaryLoaderPtr(new BinaryLoaderPe(*this));
+    }
+
     virtual ~BinaryLoaderPe() {}
 
     /* Override virtual methods from BinaryLoader */
 public:
-    virtual BinaryLoaderPe *clone() const {
-        return new BinaryLoaderPe(*this);
-    }
 
     virtual bool can_load(SgAsmGenericHeader*) const;
 

@@ -1,10 +1,15 @@
 #ifndef ROSE_BinaryAnalysis_BinaryLoader_H
 #define ROSE_BinaryAnalysis_BinaryLoader_H
 
-#include "Sawyer/Message.h"
+#include <Sawyer/Message.h>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+
+/** Reference counting pointer to @ref BinaryLoader. */
+typedef Sawyer::SharedPointer<class BinaryLoader> BinaryLoaderPtr;
 
 /** Base class for loading a static or dynamic object.
  *
@@ -27,7 +32,7 @@ namespace BinaryAnalysis {
  *    <li>Relocation: applying relocation fixups to patch pointers and offsets in various parts of the virtual address
  *        space.</li>
  *  </ul>
- * 
+ *
  *  Some goals of this design are:
  *  <ul>
  *    <li>to load an entire binary into memory in a manner similar to how the operating system would do so.</li>
@@ -45,14 +50,16 @@ namespace BinaryAnalysis {
  *  ROSE (or any user of this class) can obtain a suitable loader for a particular SgAsmInterpretation, clone it (if desired),
  *  modify properties that control its behavior, and use it to load a binary.
  */
-class BinaryLoader {
+class BinaryLoader: public Sawyer::SharedObject {
     /*========================================================================================================================
      * Types
      *======================================================================================================================== */
 public:
+    /** Referenc counting pointer to @ref BinaryLoader. */
+    typedef Sawyer::SharedPointer<BinaryLoader> Ptr;
 
     /** Describes how a section contributes to the overall memory map. */
-    enum MappingContribution 
+    enum MappingContribution
         {
         CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
         CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
@@ -60,7 +67,7 @@ public:
     };
 
     /** Describes how conflicts are resolved when mapping a section. */
-    enum ConflictResolution 
+    enum ConflictResolution
         {
         RESOLVE_THROW,                  /**< Throw an exception such as MemoryMap::Inconsistent. */
         RESOLVE_OVERMAP,                /**< Free the part of the original mapping that is in conflict. */
@@ -91,8 +98,7 @@ public:
     /*========================================================================================================================
      * Constructors, etc.
      *======================================================================================================================== */
-public:
-    /** Constructs an empty binary loader. */
+protected:
     BinaryLoader()
         : p_perform_dynamic_linking(false), p_perform_remap(true), p_perform_relocations(false)
         { init(); }
@@ -105,7 +111,21 @@ public:
         directories = other.directories;
     }
 
+public:
     virtual ~BinaryLoader(){}
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new BinaryLoader);
+    }
+
+    /** Creates a new copy of a loader.
+     *
+     *  The new copy has all the same settings as the original. Subclasses that define data methods should certainly provide an
+     *  implementation of this method, although all they'll need to change is the data type for the 'new' operator. */
+    virtual Ptr clone() const {
+        return Ptr(new BinaryLoader(*this));
+    }
 
     /** Initialize diagnostic streams for binary loaders. */
     static void initDiagnostics();
@@ -124,7 +144,7 @@ public:
      *
      *  More specific loader instances should be registered after more general loaders since the lookup() method will inspect
      *  loaders in reverse order of their registration. */
-    static void register_subclass(BinaryLoader*);
+    static void register_subclass(const Ptr&);
 
     /** Predicate determining the suitability of a loader for a specific file header.
      *
@@ -141,23 +161,15 @@ public:
      *  Looks through the list of registered loader instances (from most recently registered to earliest registered) and
      *  returns the first one whose can_load() predicate returns true.  Throws an exception if no suitable loader can be
      *  found. */
-    static BinaryLoader *lookup(SgAsmGenericHeader*);
-    
+    static Ptr lookup(SgAsmGenericHeader*);
+
     /** Finds a suitable loader.
      *
      *  Looks through the list of registered loader instances (from most recently registered to earliest registered) and
      *  returns the first one whose can_load() predicate returns true. This is done for each header contained in the
      *  interpretation and the loader for each header must match the other headers. An exception is thrown if no suitable
      *  loader can be found. */
-    static BinaryLoader *lookup(SgAsmInterpretation*);
-
-    /** Creates a new copy of a loader.
-     *
-     *  The new copy has all the same settings as the original. Subclasses that define data methods should certainly provide an
-     *  implementation of this method, although all they'll need to change is the data type for the 'new' operator. */
-    virtual BinaryLoader *clone() const {
-        return new BinaryLoader(*this);
-    }
+    static Ptr lookup(SgAsmInterpretation*);
 
 
 
@@ -203,7 +215,7 @@ public:
 
 
 
-    
+
     /*========================================================================================================================
      * Searching for shared objects
      *======================================================================================================================== */
@@ -295,7 +307,7 @@ public:
      *
      *  Throws a BinaryLoader::Exception if any error occurs. */
     virtual void link(SgAsmInterpretation *interp);
-    
+
     /** Maps sections of the interpretation into the virtual address space.
      *
      *  This function uses the existing MemoryMap attached to the interpretation if it is available, or creates and attaches a
@@ -441,7 +453,7 @@ public:
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                              ConflictResolution *resolve);
-    
+
 
     /** Selects loadable sections.
      *
@@ -479,10 +491,10 @@ public:
 public:
     static Sawyer::Message::Facility mlog;              /**< Logging facility initialized by initDiagnostics(). */
 
-private: 
+private:
     void init();                                        // Further initializations in a *.C file.
 
-    static std::vector<BinaryLoader*> loaders;          // List of loader subclasses.
+    static std::vector<Ptr> loaders;                    // List of loader subclasses.
     std::vector<std::string> preloads;                  // Libraries that should be pre-loaded.
     std::vector<std::string> directories;               // Directories to search for libraries with relative names.
 

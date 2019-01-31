@@ -6,19 +6,33 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Reference counting pointer to @ref BinaryLoaderElf. */
+typedef Sawyer::SharedPointer<class BinaryLoaderElf> BinaryLoaderElfPtr;
+
+/** Loader for ELF files. */
 class BinaryLoaderElf: public BinaryLoader {
 public:
+    /** Reference counting pointer to @ref BinaryLoaderElf. */
+    typedef Sawyer::SharedPointer<class BinaryLoaderElf> Ptr;
+
+protected:
     BinaryLoaderElf() {}
 
     BinaryLoaderElf(const BinaryLoaderElf &other)
         : BinaryLoader(other)
         {}
 
+public:
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new BinaryLoaderElf);
+    }
+
     virtual ~BinaryLoaderElf() {}
 
     /** Copy constructor. See super class. */
-    virtual BinaryLoaderElf *clone() const ROSE_OVERRIDE {
-        return new BinaryLoaderElf(*this);
+    virtual BinaryLoaderPtr clone() const ROSE_OVERRIDE {
+        return BinaryLoaderPtr(new BinaryLoaderElf(*this));
     }
 
     /** Capability query. See super class. */
@@ -81,7 +95,7 @@ public:
 
         /** Returns true if this symbol is a reference to an object rather than the definition of the object. */
         bool is_reference() const;
-        
+
         /** Returns tru if this symbol is a base definition.  A base definition is either an unversioned symbol or a version
          *  definition with the VER_FLG_BASE flag set. */
         bool is_base_definition() const;
@@ -90,7 +104,7 @@ public:
         void set_symbol(SgAsmElfSymbol *symbol) {
             p_symbol = symbol;
         }
-        
+
         /** Returns the symbol part of this versioned symbol. */
         SgAsmElfSymbol *get_symbol() const {
             return p_symbol;
@@ -102,18 +116,18 @@ public:
             ROSE_ASSERT(retval!=NULL);
             return retval;
         }
-        
+
         /** Returns the version string of this symbol. The empty string is returned if the symbol has no associated version. */
         std::string get_version() const;
-        
+
         /** Returns the name of this symbol. */
         std::string get_name() const {
             return p_symbol->get_name()->get_string();
         }
-        
+
         /** Returns the full, versionioned name of this symbol. Used for debugging. */
         std::string get_versioned_name() const;
-        
+
         /** Set the version pointer for this symbol. */
         void set_version_entry(SgAsmElfSymverEntry *entry) {
             p_version_entry = entry;
@@ -276,7 +290,7 @@ protected:
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
+                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                              ConflictResolution *resolve) ROSE_OVERRIDE;
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information

@@ -32,7 +32,7 @@ unsigned
 BinaryLoaderElfObj::mappingPermissions(SgAsmGenericSection *section_) const {
     SgAsmElfSection *section = isSgAsmElfSection(section_);
     ASSERT_not_null(section);
-    
+
     SgAsmElfSectionTableEntry *entry = section->get_section_entry();
     unsigned retval = BinaryLoaderElf::mappingPermissions(section);
 
@@ -60,14 +60,14 @@ BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, const MemoryMap::
                                  rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                  rose_addr_t *va_p, rose_addr_t *mem_size_p,
                                  rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                                 rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p, 
+                                 rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                                  ConflictResolution *resolve_p)
 {
     if (section->is_mapped())
         return BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p, mem_size_p,
                                              offset_p, file_size_p, map_private_p, va_offset_p, anon_lo_p, anon_hi_p,
                                              resolve_p);
-    
+
     if (section->get_contains_code()) {
         SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(section);
         rose_addr_t baseVa = header ? header->get_base_va() : 0;

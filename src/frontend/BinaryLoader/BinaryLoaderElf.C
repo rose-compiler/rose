@@ -230,7 +230,7 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
         for (; iter!=iterEnd; ++iter)
             add_directory(*iter);
     }
-    
+
     /* Add the paths from the LD_LIBRARY_PATH environment variable */
     const char *ld_library_path_env = getenv("LD_LIBRARY_PATH");
     if (ld_library_path_env) {
@@ -242,7 +242,7 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
         for (; iter!=iterEnd; ++iter)
             add_directory(*iter);
     }
-    
+
     /* Add paths from the .dynamic DT_RUNPATH variable */
     if (!runpath.empty()) {
         boost::regex re;
@@ -252,7 +252,7 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
         for (; iter!=iterEnd; ++iter)
             add_directory(*iter);
     }
-    
+
     /* Add architecture-specific libraries */
     if (hdr) {
         switch (hdr->get_isa() & SgAsmGenericHeader::ISA_FAMILY_MASK) {
@@ -293,7 +293,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 
         /* There must be zero or one ELF Section named ".dynsym" under this header.  If the section does not exist then the
          * header is not dynamically linked and neither provides nor requires dynamic symbol resolution.
-         * 
+         *
          * Manual 1-10 under SHT_SYMTAB and SHT_DYNSYM: ...SHT_DYNSYM section holds a minimal set of dynamic linking symbols.
          * FIXME: Technically, the dynsym may be omitted, and we should truly use the .dynamic section's DT_SYMTAB entry(ies) */
         SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_section_by_name(".dynsym"));
@@ -322,7 +322,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 //            } else
             if (symver.is_reference()) {
                 /* Symbol versioning lets us determine which symbols are 'references' i.e.  that are only used to help
-                 * relocating */     
+                 * relocating */
                 trace <<" reference (ignoring)\n";
             } else {
                 std::string symName = symver.get_name();
@@ -415,7 +415,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
     }
     return retval;
 }
-    
+
 /*========================================================================================================================
  * VersionedSymbol methods
  *======================================================================================================================== */
@@ -892,7 +892,7 @@ BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSec
         trace <<"    target: no suitable section at preferred va " <<StringUtility::addrToString(reloc->get_r_offset()) <<"\n";
         throw Exception("reloc target " + StringUtility::addrToString(reloc->get_r_offset()) + " is not mapped");
     }
-            
+
     rose_addr_t target_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
 
@@ -1103,7 +1103,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const
     }
 }
 
-    
+
 void
 BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
                                          const MemoryMap::Ptr &memmap)
@@ -1113,7 +1113,7 @@ BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const Symver
     rose_addr_t target_va = fixup_info_target_va(reloc);
     rose_addr_t symbol_va = fixup_info_symbol_va(symbol);
     size_t symbol_sz = symbol->get_size();
-    
+
     trace <<"    copying " <<StringUtility::plural(symbol_sz, "bytes")
           <<" from " <<StringUtility::addrToString(symbol_va) <<" to " <<StringUtility::addrToString(target_va) <<"\n";
     while (symbol_sz>0) {
@@ -1167,7 +1167,7 @@ D 0x208b jmp *0x00002018 <basically a call to dynamic linker>
       .got.plt [NOT EXECUTABLE WRITABLE]
         ...
 Z 0x3030 : 0x2086
-        
+
 
 
 LIBRARY :
@@ -1214,7 +1214,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
     SgAsmGenericHeader* header = parentSection->get_header();
     ASSERT_not_null2(header, "ELF file header for relocation entry");
     SgAsmGenericHeader::InsSetArchitecture isa = header->get_isa();
-    
+
     SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
     ASSERT_not_null2(linkedSymbolSection, "linked ELF section for relocation entry");
     ASSERT_require(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
@@ -1299,7 +1299,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 }
                 case SgAsmElfRelocEntry::R_X86_64_32S: {
                     /* FIXME: Not sure if this is correct. Why would we need to sign extend to 64 bits if we're only
-                     *        writing 32 bits back to memory? [RPM 2010-09-16] */    
+                     *        writing 32 bits back to memory? [RPM 2010-09-16] */
                     rose_addr_t value = fixup_info_expr("4SA+", reloc, resolver, memmap, &target_va);
                     value = IntegerOps::signExtend<32, 64>(value);
                     fixup_apply(value, reloc, memmap, target_va, 4);
@@ -1507,7 +1507,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //       for(; iter != sections.end(); ++iter){
 //      SgAsmGenericSection* section = *iter;
 //      SgAsmElfSection* elfSection = isSgAsmElfSection(section);
-//      
+//
 //      // TODO document this
 //      if((!elfSection) ||
 //            (elfSection->get_section_entry() &&
@@ -1515,7 +1515,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //      {
 //        continue;
 //      }
-//      
+//
 //      ElfSymbolMapEntry addr;
 //      addr.section = *iter;
 //      addr.symbol = symbol;
@@ -1604,7 +1604,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //       entry.reloc = reloc;
 //       entry.symbol = symtab->get_symbols()->get_symbols()[reloc->get_sym()];
 //       relocs.push_back(entry);
-//     }        
+//     }
 //   }
 // #endif
 // }
@@ -1671,7 +1671,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //     }
 //   }
 //   return segment;
-// }                                    
+// }
 //
 // // TODO use sh_type instead of sectionName
 // SgAsmElfSection*
@@ -1762,7 +1762,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //     printSymbolMapEntry(entry,extentSortedSections);
 //   }
 // }
-// 
+//
 // ElfSymbolMapEntry
 // BinaryLoaderElf::chooseSymbol(const ElfSymbolMapEntryList& entries, SgAsmElfSectionTableEntry::SectionType sh_type)
 // {
@@ -1771,22 +1771,22 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //     bool bestGlobalBinding = false;
 //     bool bestIsSection = false;
 //     bool checkSectionType = (sh_type != SgAsmElfSectionTableEntry::SHT_NULL); /* is the section type is an important filter? */
-// 
+//
 //     for (size_t i=0; i<entries.size(); ++i) {
 //         SgAsmElfSection* section = isSgAsmElfSection(entries[i].section);
 //         SgAsmElfSectionTableEntry* sectionEntry = NULL;
 //         if (section)
 //             sectionEntry = section->get_section_entry();
-// 
+//
 //         if (checkSectionType && (!sectionEntry || sectionEntry->get_sh_type() != sh_type)) {
 //             /* We're asked to check the section type, but it is not a section or it's the wrong type, so we just drop it
 //              * completely. */
 //             continue;
 //         }
-// 
+//
 //         bool globalBinding = entries[i].symbol->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL;
 //         bool isSection = (sectionEntry != NULL);/* sections must have a section entry */
-// 
+//
 //         if (bestGlobalBinding == globalBinding && (bestIsSection || !isSection)) {
 //             /* If the global binding is the same and we are not a section (and best IS), we lose. */
 //             continue;
@@ -1802,8 +1802,8 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //     }
 //     return best;
 // }
-//                      
-// 
+//
+//
 //
 //
 // /**
@@ -1823,7 +1823,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //       .got.plt [NOT EXECUTABLE WRITABLE]
 //         ...
 // Z 0x3030 : 0x2086
-//      
+//
 //
 //
 // LIBRARY :

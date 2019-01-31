@@ -220,7 +220,7 @@ private:
 private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoader *binaryLoader_;                        // how to remap, link, and fixup
+    BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
@@ -234,7 +234,7 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
@@ -242,7 +242,7 @@ public:
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : settings_(settings), interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
@@ -505,7 +505,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref binaryLoader property is set to this method's return value. */
-    virtual BinaryLoader *obtainLoader(BinaryLoader *hint=NULL);
+    virtual BinaryLoader::Ptr obtainLoader(const BinaryLoader::Ptr &hint = BinaryLoader::Ptr());
 
     /** Loads memory from binary containers.
      *
@@ -992,8 +992,8 @@ public:
      *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
      *
      * @{ */
-    BinaryLoader* binaryLoader() const /*final*/ { return binaryLoader_; }
-    virtual void binaryLoader(BinaryLoader *loader) { binaryLoader_ = loader; }
+    BinaryLoader::Ptr binaryLoader() const /*final*/ { return binaryLoader_; }
+    virtual void binaryLoader(const BinaryLoader::Ptr &loader) { binaryLoader_ = loader; }
     /** @} */
 
     /** Property: when to remove execute permission from zero bytes.

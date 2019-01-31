@@ -57,7 +57,7 @@ Engine::init() {
 void
 Engine::reset() {
     interp_ = NULL;
-    binaryLoader_ = NULL;
+    binaryLoader_ = BinaryLoader::Ptr();
     disassembler_ = NULL;
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
@@ -931,6 +931,7 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
                     containerFiles = nonLinkedFiles;
                     containerFiles.push_back(linkerOutput.name().native());
                 } else {
+                    mlog[ERROR] <<"linking objects and/or archives failed; falling back to internal (incomplete) linker\n";
                     filesToLink.clear();
                     linkerFailed = true;
                 }
@@ -1090,8 +1091,8 @@ Engine::areSpecimensLoaded() const {
     return map_!=NULL && !map_->isEmpty();
 }
 
-BinaryLoader*
-Engine::obtainLoader(BinaryLoader *hint) {
+BinaryLoader::Ptr
+Engine::obtainLoader(const BinaryLoader::Ptr &hint) {
     if (!binaryLoader_ && interp_) {
         if ((binaryLoader_ = BinaryLoader::lookup(interp_))) {
             binaryLoader_ = binaryLoader_->clone();
