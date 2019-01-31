@@ -327,6 +327,7 @@ struct PartitionerSettings {
     size_t findingIntraFunctionCode;                /**< Suck up unused addresses as intra-function code (number of passes).. */
     bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
     bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
+    bool findingFunctionCallFunctions;              /**< Create functions from function calls. */
     AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
     bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
     bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
@@ -371,6 +372,8 @@ private:
         }
         s & BOOST_SERIALIZATION_NVP(findingIntraFunctionData);
         s & BOOST_SERIALIZATION_NVP(findingInterFunctionCalls);
+        if (version >= 4)
+            s & BOOST_SERIALIZATION_NVP(findingFunctionCallFunctions);
         s & BOOST_SERIALIZATION_NVP(interruptVector);
         s & BOOST_SERIALIZATION_NVP(doingPostAnalysis);
         s & BOOST_SERIALIZATION_NVP(doingPostFunctionMayReturn);
@@ -406,10 +409,10 @@ public:
     PartitionerSettings()
         : followingGhostEdges(false), discontiguousBlocks(true), maxBasicBlockSize(0), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(10), findingIntraFunctionData(true),
-          findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
-          doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
-          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), functionReturnAnalysisMaxSorts(50), findingDataFunctionPointers(false),
-          findingCodeFunctionPointers(false), findingThunks(true), splittingThunks(false),
+          findingInterFunctionCalls(true), findingFunctionCallFunctions(true), doingPostAnalysis(true),
+          doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true), doingPostCallingConvention(false),
+          doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES), functionReturnAnalysisMaxSorts(50),
+          findingDataFunctionPointers(false), findingCodeFunctionPointers(false), findingThunks(true), splittingThunks(false),
           semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true), namingSyscalls(true),
           demangleNames(true) {}
 };
@@ -451,6 +454,6 @@ typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 3);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 4);
 
 #endif

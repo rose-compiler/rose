@@ -1327,6 +1327,16 @@ public:
     virtual void findingInterFunctionCalls(bool b) { settings_.partitioner.findingInterFunctionCalls = b; }
     /** @} */
 
+    /** Property: Whether to turn function call targets into functions.
+     *
+     *  If set, then sequences of instructions that behave like a function call (including plain old function call
+     *  instructions) will cause a function to be created at the call's target address under most circumstances.
+     *
+     * @{ */
+    bool findingFunctionCallFunctions() const /*final*/ { return settings_.partitioner.findingFunctionCallFunctions; }
+    virtual void findingFunctionCallFunctions(bool b) { settings_.partitioner.findingFunctionCallFunctions = b; }
+    /** @} */
+
     /** Property: Whether to search static data for function pointers.
      *
      *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to

@@ -433,6 +433,19 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.findingInterFunctionCalls)
               .hidden(true));
 
+    sg.insert(Switch("called-functions")
+              .intrinsicValue(true, settings_.partitioner.findingFunctionCallFunctions)
+              .doc("Look for function call instructions or sequences of instructions with similar behavior and assume "
+                   "that the target address is the entry point for a function under most circumstances. The "
+                   "@s{no-called-functions} switch turns this feature off, which can be useful when analyzing virtual "
+                   "memory where targets of call-like sequences have not been initialized (such as in object files). "
+                   "The default is to " + std::string(settings_.partitioner.findingFunctionCallFunctions?"":"not ") +
+                   "perform this analysis."));
+    sg.insert(Switch("no-called-functions")
+              .key("called-functions")
+              .intrinsicValue(false, settings_.partitioner.findingFunctionCallFunctions)
+              .hidden(true));
+
     sg.insert(Switch("data-functions")
               .intrinsicValue(true, settings_.partitioner.findingDataFunctionPointers)
               .doc("Scan non-executable areas of memory to find pointers to functions.  This analysis can be disabled "
@@ -1501,7 +1514,10 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
 
     // Try to attach basic blocks to functions
     SAWYER_MESG(where) <<"marking function call targets\n";
-    makeCalledFunctions(partitioner);
+    if (settings_.partitioner.findingFunctionCallFunctions) {
+        SAWYER_MESG(where) <<"finding called functions\n";
+        makeCalledFunctions(partitioner);
+    }
 
     SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
@@ -2153,7 +2169,8 @@ Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
             break;
         retval += n;
         discoverBasicBlocks(partitioner);
-        makeCalledFunctions(partitioner);
+        if (settings_.partitioner.findingFunctionCallFunctions)
+            makeCalledFunctions(partitioner);
         attachBlocksToFunctions(partitioner);
     }
     return retval;
