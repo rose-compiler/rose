@@ -1,3 +1,9 @@
+add_custom_command(
+  OUTPUT license.h
+  COMMAND ${CMAKE_SOURCE_DIR}/scripts/to-c-string.pl <${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt >license.h
+  DEPENDS ${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt
+  COMMENT "Generating license C string...")
+
 ########### build library ###############
 add_definitions(-DROSE_DLL_EXPORTS)
 add_library(roseSupport OBJECT
