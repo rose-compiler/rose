@@ -286,6 +286,13 @@ Grammar::setUpStatements ()
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
+  // Rasmussen (11/12/2018): Support for Jovial IR nodes
+     NEW_TERMINAL_MACRO (JovialCompoolStatement, "JovialCompoolStatement", "JOVIAL_COMPOOL_STATEMENT" );
+
+  // Rasmussen (10/22/2018): Node specific to Jovial for statements with a then construct.
+     NEW_TERMINAL_MACRO (JovialForThenStatement, "JovialForThenStatement", "JOVIAL_FOR_THEN_STATEMENT");
+
+
      //SK(08/20/2015): Matlab For-loop
      NEW_TERMINAL_MACRO (MatlabForStatement,    "MatlabForStatement",    "MATLAB_FOR_STATEMENT");
      
@@ -434,12 +441,14 @@ Grammar::setUpStatements ()
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
+  // Rasmussen (10/22/2018): Added JovialForThenStatement
      NEW_NONTERMINAL_MACRO (ScopeStatement,
           Global                       | BasicBlock           | IfStmt                    | ForStatement       | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo          | ForAllStatement    |
           UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement | MatlabForStatement |
-          FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement /* | TemplateInstantiationDefn */,
+          FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement
+     /* | TemplateInstantiationDefn */ ,
           "ScopeStatement","SCOPE_STMT", false);
 
   // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as AstNodeClass)
@@ -539,7 +548,8 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement            |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
-          StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
+          StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
+          JovialCompoolStatement                /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -3263,6 +3273,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Fortran 95 specific construct (different from C/C++ for loop).
+  // Rasmussen (10/25/2018): Added forall_statement_kind_enum to allow specifying as a DO CONCURRENT statement
      ForAllStatement.setFunctionPrototype ( "HEADER_FORALL_STATEMENT", "../Grammar/Statement.code" );
      ForAllStatement.setDataPrototype ( "SgExprListExp*", "forall_header", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
@@ -3271,10 +3282,29 @@ Grammar::setUpStatements ()
      ForAllStatement.setDataPrototype ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ForAllStatement.setDataPrototype ( "SgForAllStatement::forall_statement_kind_enum",
+                                        "forall_statement_kind", "= SgForAllStatement::e_forall_statement",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/22/2018): Added JovialForThenStatement; An SgForStatement is used for other
+  // forms of Jovial for statements to allow analysis be the same as C.
+     JovialForThenStatement.setFunctionPrototype ( "HEADER_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "then_expression", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgExpression*", "while_expression", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialForThenStatement.setDataPrototype     ( "SgBasicBlock*", "loop_body", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (11/12/2018): Added to support Jovial COMPOOL modules
+     JovialCompoolStatement.setFunctionPrototype ( "HEADER_JOVIAL_COMPOOL_STATEMENT", "../Grammar/Statement.code" );
+     JovialCompoolStatement.setDataPrototype     ( "SgName", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      //SK: Matlab specific for loop
      MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
@@ -4181,8 +4211,11 @@ Grammar::setUpStatements ()
      ForAllStatement.setFunctionSource            ( "SOURCE_FORALL_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
+  // Rasmussen (11/12/2018): Added to support Jovial COMPOOL modules
+     JovialCompoolStatement.setFunctionSource     ( "SOURCE_JOVIAL_COMPOOL_STATEMENT",  "../Grammar/Statement.code" );
+     JovialForThenStatement.setFunctionSource     ( "SOURCE_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
 
-     MatlabForStatement.setFunctionSource            ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
+     MatlabForStatement.setFunctionSource         ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
 
 #if 0
   // Every node needs a definition of the post_construction_initialization() member function

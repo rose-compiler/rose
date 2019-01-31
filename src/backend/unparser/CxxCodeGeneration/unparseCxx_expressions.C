@@ -557,6 +557,10 @@ Unparse_ExprStmt::unparseTemplateFuncRef(SgExpression* expr, SgUnparse_Info& inf
      SgTemplateFunctionRefExp* func_ref = isSgTemplateFunctionRefExp(expr);
      ROSE_ASSERT(func_ref != NULL);
 
+#if 0
+     printf ("Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref) \n");
+#endif
+
   // Calling the template function unparseFuncRef<SgFunctionRefExp>(func_ref);
   // unparseFuncRefSupport(func_ref,info);
      unparseFuncRefSupport<SgTemplateFunctionRefExp>(expr,info);
@@ -650,6 +654,9 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
              {
                printf ("--- templateArgList[%zu] = %p \n",i,templateArgList[i]);
              }
+#endif
+#if 0
+          printf ("Calling unparseTemplateArgumentList() \n");
 #endif
           unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
         }
@@ -745,6 +752,8 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
   //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
   // It is less clear how to refactor this code.
 
+#define DEBUG_TEMPLATE_ARGUMENT_LIST 0
+
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
   // DQ (8/24/2012): Print this out a little less often; but still enough so that we know to fix this later.
      static int counter = 0;
@@ -754,8 +763,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
         }
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
      printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+
 #endif
 
      SgUnparse_Info ninfo(info);
@@ -783,8 +793,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 
      if (!templateArgListPtr.empty())
         {
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
           printf ("In unparseTemplateArgumentList(): templateArgListPtr.empty() NOT EMPTY: templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
+#endif
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          SgTemplateArgumentPtrList::const_iterator iter = templateArgListPtr.begin();
+          while (iter != templateArgListPtr.end())
+             {
+               ROSE_ASSERT(*iter != NULL);
+
+               printf ("In unparseTemplateArgumentList(): iterate over list: *iter = %p = %s \n",*iter,(*iter)->class_name().c_str());
+
+               iter++;
+             }
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -811,13 +832,13 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                unp->u_exprStmt->curprint ( string("/* unparseTemplateArgumentList(): templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
             // unparseTemplateArgument(*i,info);
                unparseTemplateArgument(*i,ninfo);
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): DONE: Calling unparseTemplateArgument(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
 
@@ -831,10 +852,21 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
                        {
+                      // DQ (1/25/2019): Added assertion.
+                      // ROSE_ASSERT(arg->get_type() != NULL);
+#if 0
+                      // printf ("Check if this is a lambda function comming next! arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+#endif
                          if (SgClassType * ctype = isSgClassType (arg->get_type()))
                             {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                              printf ("ctype != NULL \n");
+#endif
                               if (SgNode* pnode = ctype->get_declaration()->get_parent())
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("pnode != NULL \n");
+#endif
                                    if (isSgLambdaExp(pnode))
                                       {
                                         hasLambdaFollowed = true; 
@@ -845,6 +877,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                               bool isAnonymous = isAnonymousClass(ctype);
                               if (isAnonymous == true)
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("isAnonymous == true \n");
+#endif
                                 // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
                                 // which checks for a trailing lambda function.  So we should fix this up later.
                                    hasLambdaFollowed = true; 
@@ -852,6 +887,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                                 else
                                  {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                                   printf ("isAnonymous == false \n");
+#endif
                                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(ctype->get_declaration());
                                    if (classDeclaration != NULL)
                                       {
@@ -863,13 +901,18 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #if 0
                            else
                             {
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+                              printf ("ctype == NULL \n");
+#endif
+#if 0
                               ROSE_ASSERT(arg->get_type() != NULL);
                               printf ("arg->get_type() = %p = %s \n",arg->get_type(),arg->get_type()->class_name().c_str());
+#endif
                             }
 #endif
                        }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
                printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
                printf ("In unparseTemplateArgumentList(): explicitlySpecified = %s \n",(*i)->get_explicitlySpecified() ? "true" : "false");
 #endif
@@ -906,9 +949,34 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
               //
               //  Negate this , we get when to output ,
               //
-              if (!(hasLambdaFollowed  || 
-                  ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument 
-                    && ((i+1)== templateArgListPtr.end())  )) )
+#if 0
+               bool isStartOfPragmaPackAtEndOfList = ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((i+1)== templateArgListPtr.end())  );
+               SgTemplateArgumentPtrList::const_iterator next_iter = i;
+               if (next_iter != templateArgListPtr.end())
+                  {
+                    next_iter++;
+                  }
+               bool isNextArgumentAnonymousClass   = false;
+               bool isStartOfPragmaPackAtEndOfList = false;
+               if (next_iter != templateArgListPtr.end())
+                  {
+                    SgClassType * next_classtype = isSgClassType ((*next_iter)->get_type());
+                    isNextArgumentAnonymousClass = isAnonymousClass(next_classtype);
+                    isStartOfPragmaPack = ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((next_iter)== templateArgListPtr.end())  );
+                  }
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+               printf ("isStartOfPragmaPackAtEndOfList = %s \n",isStartOfPragmaPackAtEndOfList ? "true" : "false");
+               printf ("isAnonymousClassAtEndOfList    = %s \n",isAnonymousClassAtEndOfList ? "true" : "false");
+#endif
+#endif
+            // DQ (1/25/2019): This might be the simpliest way to exit once we see a start_of_pack_expansion_argument.
+               if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                  {
+                    break;
+                  }
+
+               if (!(hasLambdaFollowed  || ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((i+1)== templateArgListPtr.end())  )) )
+            // if ( !(hasLambdaFollowed  || isStartOfPragmaPackAtEndOfList) )
                   {
                     unp->u_exprStmt->curprint(" , ");
                   }
@@ -949,7 +1017,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           unp->u_exprStmt->curprint(" ");
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
      printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
 #endif
    }
@@ -1371,17 +1439,19 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
    {
      ROSE_ASSERT(templateArgument != NULL);
 
-#if 0
+#define DEBUG_TEMPLATE_ARGUMENT 0
+
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("In unparseTemplateArgument() = %p (explicitlySpecified = %s) \n",templateArgument,(templateArgument->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || DEBUG_TEMPLATE_ARGUMENT
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
      unp->u_exprStmt->curprint ( "\n/* Unparse TemplateArgument */ \n");
      unp->u_exprStmt->curprint ( "\n");
 #endif
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      unp->u_exprStmt->curprint(string("/* unparseTemplateArgument(): templateArgument is explicitlySpecified = ") + ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
 #if 0
@@ -1465,13 +1535,13 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
      if (newInfo.SkipBaseType() == true)
         {
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
           printf ("In unparseTemplateArgument(): unset SkipBaseType() (how was this set? Maybe from the function reference expression?) \n");
 #endif
           newInfo.unset_SkipBaseType();
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d \n",templateArgument->get_argumentType());
 #endif
 
@@ -1748,10 +1818,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
              }
         }
 
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
 #endif
-#if 0
+#if DEBUG_TEMPLATE_ARGUMENT
      curprint("\n/* Bottom of unparseTemplateArgument */ \n");
 #endif
 
@@ -2096,9 +2166,11 @@ Unparse_ExprStmt::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnp
   //
      if ( !orig_this_opt )
           unp->opt.set_this_opt(true);
+
 #if 0
      curprint ("\n /* Inside of unparseUnaryOperator(" + expr->class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
+
      unparseUnaryExpr(expr, newinfo);
 
   //
@@ -6722,7 +6794,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 #define DEBUG_AGGREGATE_INITIALIZER 0
 
 #if DEBUG_AGGREGATE_INITIALIZER || 0
-     printf ("In unparseAggrInit(): aggr_init = %p = %s aggr_init->get_uses_compound_literal() = %s \n",aggr_init,aggr_init->class_name().c_str(),aggr_init->get_uses_compound_literal() ? "true" : "false");
+     printf ("\nIn unparseAggrInit(): aggr_init = %p = %s aggr_init->get_uses_compound_literal() = %s \n",aggr_init,aggr_init->class_name().c_str(),aggr_init->get_uses_compound_literal() ? "true" : "false");
      curprint ("/* In unparseAggrInit() */ ");
 #endif
 
@@ -7193,22 +7265,24 @@ isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, Sg
 
      bool is_cxx11_initialization_list = false;
 
+#define DEBUG_CXX11_INITIALIZATION_LIST 0
+
      if (con_init != NULL)
         {
           SgMemberFunctionDeclaration* memberFunctionDeclaration = con_init->get_declaration();
           if (memberFunctionDeclaration != NULL)
              {
                string name = memberFunctionDeclaration->get_name();
-#if 0
-               printf ("In Unparse_ExprStmt::unparseConInit(): memberFunctionDeclaration name = %s \n",name.c_str());
+#if DEBUG_CXX11_INITIALIZATION_LIST
+               printf ("In isAssociatedWithCxx11_initializationList(): memberFunctionDeclaration name = %s \n",name.c_str());
 #endif
             // I don't feel comfortable with detecting the name of a specific class and having behavior depend upon this, 
             // but this is actually the way in works in C++ (at least in EDG specifically).
                if (name == "initializer_list")
                   {
                  // Found special type used in C++ to indicate special syntax for C++11 initiazation list support.
-#if 0
-                    printf ("Found special type used in C++ to indicate special syntax for C++11 initiazation list support \n");
+#if DEBUG_CXX11_INITIALIZATION_LIST
+                    printf ("In isAssociatedWithCxx11_initializationList(): Found special type used in C++ to indicate special syntax for C++11 initiazation list support \n");
 #endif
 #if 0
                  // TV (07/18/18): happens in C++ 14 . With Kripke, EDG auto-detect C++14 (forcing C++11 causes C++14 related errors)
@@ -7225,7 +7299,28 @@ isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, Sg
 #endif
                   }
              }
+            else
+             {
+            // DQ (1/14/2019): Added debugging code.
+            // ROSE_ASSERT(con_init->get_declaration() != NULL);
+               if (con_init->get_declaration() != NULL)
+                 {
+#if DEBUG_CXX11_INITIALIZATION_LIST
+                    printf ("In isAssociatedWithCxx11_initializationList(): con_init->get_declaration() = %s \n",con_init->get_declaration()->class_name().c_str());
+#endif
+                 }
+               else
+                 {
+#if DEBUG_CXX11_INITIALIZATION_LIST
+                   printf ("In isAssociatedWithCxx11_initializationList(): con_init->get_declaration() = NULL \n");
+#endif
+                 }
+             }
         }
+
+#if DEBUG_CXX11_INITIALIZATION_LIST
+     printf ("Leaving isAssociatedWithCxx11_initializationList(): is_cxx11_initialization_list = %s \n",is_cxx11_initialization_list ? "true" : "false");
+#endif
 
      return is_cxx11_initialization_list;
    }
@@ -7233,8 +7328,10 @@ isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, Sg
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
-     printf ("In Unparse_ExprStmt::unparseConInit(): expr = %p \n",expr);
+#define DEBUG_CONSTRUCTOR_INITIALIZER 0
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("\nIn Unparse_ExprStmt::unparseConInit(): expr = %p \n",expr);
      printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualified names!) \n");
      curprint ("\n /* In unparseConInit(): TOP */ \n");
 #endif
@@ -7245,13 +7342,22 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
      SgUnparse_Info newinfo(info);
      bool outputParenthisis = false;
 
-#if 0
-     printf ("In unparseConInit(): con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
-     printf ("In unparseConInit(): con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("In unparseConInit(): con_init->get_need_name()                   = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_is_explicit_cast()            = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_is_braced_initialized()       = %s \n",(con_init->get_is_braced_initialized() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_associated_class_unknown()    = %s \n",(con_init->get_associated_class_unknown() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_need_parenthesis_after_name() = %s \n",(con_init->get_need_parenthesis_after_name() == true) ? "true" : "false");
   // curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
   // curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
+  // DQ (1/18/2019): Test the current SgConstructorInitializer.
+     bool this_constructor_initializer_is_using_Cxx11_initializer_list = isAssociatedWithCxx11_initializationList(con_init,info);
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("In unparseConInit(): this_constructor_initializer_is_using_Cxx11_initializer_list = %s \n",(this_constructor_initializer_is_using_Cxx11_initializer_list == true) ? "true" : "false");
+#endif
 
   // DQ (2/7/2016): Adding support for C++11 specific initialization lists (different from non-C++11 specific initialization lists).
   // C++11 rules for parsing give special attention to the use of "std::initialization_list<>" template.
@@ -7264,14 +7370,26 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   // This is the signature of C++11 using the "std::initialization_list<>" template and in this case the syntax we generate has 
   // to be different (incredible, but true).  These guys should be ashamed of themselves.
      SgExprListExp* argumentList = con_init->get_args();
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("In unparseConInit(): argumentList = %zu \n",argumentList->get_expressions().size());
+#endif
+
      if (argumentList->get_expressions().size() == 1)
         {
        // Look ahead to the use of the "std::initialization_list<>" template class.
           SgConstructorInitializer* nested_con_init = isSgConstructorInitializer(argumentList->get_expressions()[0]);
 
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("In unparseConInit(): nested_con_init = %p \n",nested_con_init);
+#endif
+
           if (nested_con_init != NULL)
              {
             // Test the nested SgConstructorInitializer, if it was found.
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("In unparseConInit(): nested_con_init = %p = %s \n",nested_con_init,nested_con_init->class_name().c_str());
+#endif
                process_using_cxx11_initialization_list_syntax = isAssociatedWithCxx11_initializationList(nested_con_init,info);
              }
         }
@@ -7284,11 +7402,19 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
         }
 
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("newinfo.get_cxx11_initialization_list() = %s \n",newinfo.get_cxx11_initialization_list() ? "true" : "false");
+     curprint ("\n /* In unparseConInit(): after call to get_cxx11_initialization_list() */ \n");
+
+     printf ("process_using_cxx11_initialization_list_syntax                             = %s \n",process_using_cxx11_initialization_list_syntax ? "true" : "false");
+     printf ("current_constructor_initializer_is_for_initialization_list_member_function = %s \n",current_constructor_initializer_is_for_initialization_list_member_function ? "true" : "false");
 #endif
 
+
+
      bool use_braces_instead_of_parenthisis = false;
+#if 0
+  // DQ (1/18/2019): Set use_braces_instead_of_parenthisis directly from the con_init->get_is_braced_initialized() data member.
      if (process_using_cxx11_initialization_list_syntax == true || current_constructor_initializer_is_for_initialization_list_member_function == true)
         {
           use_braces_instead_of_parenthisis = true;
@@ -7303,27 +7429,35 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                use_braces_instead_of_parenthisis = true;
              }
         }
+#endif
 
-#if 0
+  // DQ (1/15/2019): Added support for braced initialization.
+     if (con_init->get_is_braced_initialized() == true)
+        {
+          use_braces_instead_of_parenthisis = true;
+        }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("In unparseConInit(): use_braces_instead_of_parenthisis = %s \n",use_braces_instead_of_parenthisis ? "true" : "false");
 #endif
 
      SgNode* nodeReferenceToType = newinfo.get_reference_node_for_qualification();
 
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("In unparseConInit(): nodeReferenceToType = %p \n",nodeReferenceToType);
+     curprint ("\n /* In unparseConInit(): nodeReferenceToType */ \n");
 #endif
 
      if (nodeReferenceToType != NULL)
         {
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
           printf ("In unparseConInit(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
           curprint ("\n /* In unparseConInit(): nodeReferenceToType = " + nodeReferenceToType->class_name() + " */ \n");
 #endif
         }
        else
         {
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
           curprint ("\n /* In unparseConInit(): nodeReferenceToType = NULL */ \n");
 #endif
        // DQ (6/4/2011): If it is not set then set it to the SgConstructorInitializer expression.
@@ -7337,11 +7471,24 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
 
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER || 0
      printf ("con_init->get_need_name()                      = %s \n",con_init->get_need_name() ? "true" : "false");
      printf ("con_init->get_is_explicit_cast()               = %s \n",con_init->get_is_explicit_cast() ? "true" : "false");
+  // printf ("con_init->get_is_braced_initializer()          = %s \n",con_init->get_is_braced_initializer() ? "true" : "false");
+     printf ("con_init->get_is_braced_initialized()          = %s \n",con_init->get_is_braced_initialized() ? "true" : "false");
      printf ("unp->u_sage->printConstructorName(con_init)    = %s \n",unp->u_sage->printConstructorName(con_init) ? "true" : "false");
      printf ("process_using_cxx11_initialization_list_syntax = %s \n",process_using_cxx11_initialization_list_syntax ? "true" : "false");
+     printf ("con_init->get_is_braced_initialized()          = %s \n",con_init->get_is_braced_initialized() ? "true" : "false");
+     printf ("con_init->get_declaration()                    = %p \n",con_init->get_declaration());
+     if (con_init->get_declaration() != NULL)
+        {
+          printf ("con_init->get_declaration()                    = %p = %s \n",con_init->get_declaration(),con_init->get_declaration()->class_name().c_str());
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(con_init->get_declaration());
+          if (templateInstantiationMemberFunction != NULL)
+             {
+               printf ("templateInstantiationMemberFunction->get_name() = %s \n",templateInstantiationMemberFunction->get_name().str());
+             }
+        }
 #endif
 
   // DQ (5/26/2013): Combined these predicates so that we could rewrite this to not generate a SgName and ouput it later.  
@@ -7354,29 +7501,32 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // for foo(B())
           ROSE_ASSERT(con_init->get_associated_class_unknown() == true || con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
 
+       // DQ (1/17/2019): Test by turning this off.
        // DQ (2/7/2016): I think that if we need the name then this can't be true.
-          ROSE_ASSERT(process_using_cxx11_initialization_list_syntax == false);
+       // ROSE_ASSERT(process_using_cxx11_initialization_list_syntax == false);
 
        // DQ (4/27/2006): Maybe we can finally assert this!
        // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
 
        // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
        // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() can be NULL where in a struct there is no constructor defined.
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
           printf ("con_init->get_declaration() = %p \n",con_init->get_declaration());
-       // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
+#endif
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
 #endif
           if (con_init->get_declaration() != NULL)
              {
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                printf ("In unparseConInit(): nameQualifier = %s \n",nameQualifier.str());
                printf ("In unparseConInit(): con_init->get_declaration()->get_name() = %s \n",con_init->get_declaration()->get_name().str());
 #endif
             // DQ (5/26/2013): This is the newer version of the code.
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                printf("In unparseConInit(): nameQualifier = %s (must be modified for GNU g++ 4.5 compilers) \n",nameQualifier.str());
 #endif
             // DQ (2/8/2014): Added support to generate names that are suitable for the later versions of the GNU g++ compiler.
@@ -7400,11 +7550,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
             // DQ (6/21/2011): Support for new name qualification (output of generated function name).
                ROSE_ASSERT(declaration != NULL);
             // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
             // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
                printf ("In unparseConInit(): put out func_name = %s \n",func_name.str());
 #endif
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
 #endif
 
@@ -7448,8 +7598,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
             else
              {
             // In this case there is no constructor member function to name, and so there is only the name of the class to use as a default constructor call.
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+               curprint ("\n /* In unparseConInit(): con_init->get_class_decl() */ \n");
 #endif
                if (con_init->get_class_decl() != NULL)
                   {
@@ -7457,8 +7608,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                  // nm = con_init->get_class_decl()->get_qualified_name();
 
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
+                    curprint ("\n /* In unparseConInit(): con_init->get_class_decl() != NULL */ \n");
 #endif
                  // DQ (2/8/2014): I think this process of trimming the generated name is not required where there is not 
                  // associated member function and we are using the class name directly.
@@ -7476,7 +7628,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                  // to be eliminated in the generation of the intial string as part of the generation of the name qualification.
                  // printf ("In unparseOneElemConInit(): calling set_SkipClassSpecifier() \n");
                     newinfo.set_SkipClassSpecifier();
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("In unparseConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
 #endif
                  // unp->u_type->unparseType(con_init->get_type(),newinfo);
@@ -7484,7 +7636,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                        {
                          unp->u_type->unparseType(con_init->get_type(),newinfo);
                        }
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("DONE: In unparseConInit(): unparseType() \n");
 #endif
                   }
@@ -7492,7 +7644,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
                  else
                   {
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("In unparseConInit(): Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
                     printf ("In unparseConInit(): Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
 #endif
@@ -7502,8 +7654,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                   }
              }
 
-#if 0
-          printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+       // printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
+          curprint ("\n /* In unparseConInit(): nm != NULL */ \n");
 #endif
 
        // DQ (8/4/2012): Commented out this test since we output the type name using unparseType() for the case of a primative type.
@@ -7519,6 +7672,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
           if (unp->u_sage->printConstructorName(con_init) == true)
              {
             // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               curprint ("\n /* In unparseConInit(): set outputParenthisis = true */ \n");
+#endif
 
             // DQ (5/26/2013): In this rewritten part of the function we no longer output the name as a SgName (it was unparsed directly as needed).
             // curprint(nm.str());
@@ -7526,19 +7682,41 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
         }
 
-            // DQ (2/7/2016): Adding support for C++11 specific initialization list syntax.
-     if (process_using_cxx11_initialization_list_syntax == true)
+     if (con_init->get_is_used_in_conditional() == true)
         {
-#if 0
-          printf ("In Unparse_ExprStmt::unparseConInit: output C++11 initialization list syntax \n");
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("In Unparse_ExprStmt::unparseConInit: output for use in conditional \n");
 #endif
           curprint(" = ");
-       // curprint(" /* output C++11 initialization list syntax */ ");
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          curprint(" /* output for use in conditional */ ");
+#endif
+#if 0
+          printf ("Case of con_init->get_is_used_in_conditional() == true: exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 0
+  // DQ (1/18/2019): This does not appear to be needed (fails for Cxx11_tests/test2019_15.C).
+  // DQ (2/7/2016): Adding support for C++11 specific initialization list syntax.
+     if (process_using_cxx11_initialization_list_syntax == true)
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("In Unparse_ExprStmt::unparseConInit: output C++11 initialization list syntax \n");
+#endif
+
+          curprint(" = ");
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          curprint(" /* output C++11 initialization list syntax */ ");
+#endif
 #if 0
           printf ("Case of process_using_cxx11_initialization_list_syntax == true: exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
         }
+#endif
 
   // printf ("Now unparse the constructor arguments \n");
   // newinfo.display("Unparse_ExprStmt::unparseConInit");
@@ -7550,20 +7728,96 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
         }
      ROSE_ASSERT(con_init->get_args() != NULL);
 
-  // Note that this might not be the correct condition upon which to use the "{ }" syntax for the C++11 initialization list support.
-     if ( con_init->get_need_parenthesis_after_name() == true )
-        {
 #if 0
+#if 0
+  // DQ (1/13/2019): Bug fix for C++11_tests/test2014_85.C
+  // if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) && unp->u_sage->printConstructorName(con_init) == true)
+  // Note that this might not be the correct condition upon which to use the "{ }" syntax for the C++11 initialization list support.
+  // if ( con_init->get_need_parenthesis_after_name() == true )
+  // if ( (con_init->get_need_name() == true) && (con_init->get_need_parenthesis_after_name() == true) )
+     if ( ( (con_init->get_need_name() == true) || 
+            (con_init->get_is_explicit_cast() == true) || 
+            (unp->u_sage->printConstructorName(con_init) == true) ) && 
+          ( (con_init->get_need_parenthesis_after_name() == true) ) && 
+            (process_using_cxx11_initialization_list_syntax == true))
+#else
+  // DQ (1/16/2019): Since the explicit caset data member is now set properly in the EDG/ROSE translation, we can't depend on it to always be true.
+  // if ((con_init->get_is_explicit_cast() == true) && unp->u_sage->printConstructorName(con_init) == true)
+  // if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) && unp->u_sage->printConstructorName(con_init) == true)
+     if ((con_init->get_need_name() == true) && unp->u_sage->printConstructorName(con_init) == true)
+#endif
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
           printf ("Output the parenthisis after the class name \n");
           curprint(" /* set outputParenthisis == true */ ");
 #endif
           outputParenthisis = true;
         }
+#endif
+
+  // DQ (1/15/2019): If we have use_braces_instead_of_parenthisis then set outputParenthisis since in 
+  // that logic is the code to alternatively output the braces.
+     if (use_braces_instead_of_parenthisis == true)
+        {
+          outputParenthisis = true;
+        }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("In unparseConInit(): con_init->get_need_parenthesis_after_name() = %s \n",(con_init->get_need_parenthesis_after_name() == true) ? "true" : "false");
+#endif
+
+  // DQ (1/16/2019): This appears to be required to handle the preinitializaztion lists (see test2019_13.C).
+     if (con_init->get_need_parenthesis_after_name() == true)
+        {
+          outputParenthisis = true;
+        }
+
+  // DQ (1/17/2019): If there are arguments, then output parenthesis to contain them.
+     if (unp->u_sage->printConstructorName(con_init) == true)
+        {
+          SgExprListExp* expressionList = isSgExprListExp(con_init->get_args());
+          ROSE_ASSERT(expressionList != NULL);
+          if (expressionList->get_expressions().empty() == false)
+             {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("In unparseConInit(): Found non-empty expression list in the SgConstructorInitializer \n");
+#endif
+
+            // Check if this is an aggregate initializer, or just a SgInitializer, if so then suppress the parenthesis.
+            // outputParenthisis = true;
+               SgInitializer* initializer = isSgInitializer(expressionList->get_expressions()[0]);
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("In unparseConInit(): Found non-empty expression list expression is: initializer = %p = %s \n",
+                    initializer,(initializer != NULL) ? initializer->class_name().c_str() : "null");
+#endif
+               if (initializer == NULL)
+                  {
+                    outputParenthisis = true;
+                  }
+                 else
+                  {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+                    printf ("Found a SgInitializer, so don't output parenthesis due to unp->u_sage->printConstructorName(con_init) == true \n");
+#endif
+                  }
+             }
+        }
+
+
+  // DQ (1/18/2019): this indicates a silent mode and no output should be generated from where
+  // the constructor initializer is associated with the C++11 initialization_list class.
+     if (this_constructor_initializer_is_using_Cxx11_initializer_list == true)
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("Suppress output for constructor initializer from the C++11 initializer_list class: this_constructor_initializer_is_using_Cxx11_initializer_list == true: reset outputParenthisis = false \n");
+#endif
+          outputParenthisis = false;
+        }
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
      if (outputParenthisis == true)
         {
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
        // curprint(" /* output the opening parenthisis */ ");
           curprint(string(" /* output the opening parenthisis: process_using_cxx11_initialization_list_syntax = ") + (process_using_cxx11_initialization_list_syntax ? "true" : "false") + " */ ");
           curprint(string(" /* output the opening parenthisis: current_constructor_initializer_is_for_initialization_list_member_function = ") + (current_constructor_initializer_is_for_initialization_list_member_function ? "true" : "false") + " */ ");
@@ -7575,6 +7829,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              {
                if (con_init->get_args()->get_expressions().empty() == true)
                   {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+                    printf ("RESETTING use_braces_instead_of_parenthisis to FALSE \n");
+#endif
                     use_braces_instead_of_parenthisis = false;
                   }
              }
@@ -7586,15 +7843,29 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
             // Supress the inner set of "{"
             // curprint("{");
                if (current_constructor_initializer_is_for_initialization_list_member_function == false)
+            // if (con_init->get_is_used_in_conditional() == false)
                   {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+                    printf ("use_braces_instead_of_parenthisis == true: current_constructor_initializer_is_for_initialization_list_member_function == false: output { \n");
+#endif
                     curprint("{");
                   }
              }
             else
              {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               curprint ("\n /* In unparseConInit(): output open parenthisis */ \n");
+#endif
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("use_braces_instead_of_parenthisis == false: output ( \n");
+#endif
                curprint("(");
              }
         }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("output constructor arguments \n");
+#endif
 
      if (con_init->get_args() != NULL)
         {
@@ -7606,8 +7877,12 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
        // if (con_init->get_is_explicit_cast() == true)
        //      curprint ( "(";
-#if 0
-          curprint(" /* output args */ ");
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          curprint(" /* output each arg */ ");
+#endif
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("output each arg \n");
 #endif
 
        // DQ (2/7/2016): The output of the arguments is also special when using the C++11 initializer list syntax.
@@ -7671,8 +7946,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
-#if 0
+#if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("Leaving Unparse_ExprStmt::unparseConInit \n");
+#endif
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     curprint ("\n /* Leaving Unparse_ExprStmt::unparseConInit() */ \n");
 #endif
    }
 
@@ -7723,6 +8001,7 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseBracedInit(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -7769,6 +8048,7 @@ Unparse_ExprStmt::unparseBracedInit(SgExpression* expr, SgUnparse_Info& info)
      curprint ("/* Leaving unparseBracedInit() */ ");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)

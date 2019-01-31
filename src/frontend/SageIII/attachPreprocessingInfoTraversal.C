@@ -2149,13 +2149,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
      SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
 
+#if 0
+  // DQ (1/25/2019): A case option without a body is allowed, and comments should be allowed here..
   // DQ (11/25/2017): Added debugging info to support new switch implementation.
      if (caseOptionStm != NULL && caseOptionStm->get_body() == NULL)
         {
           printf ("Error: In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm = %p \n",caseOptionStm);
           caseOptionStm->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm: debug");
         }
-     ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
+  // DQ (1/25/2019): A case option without a body is allowed.
+  // ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
+#endif
 
   // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".
   // ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);

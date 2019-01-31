@@ -1487,8 +1487,7 @@ void c_action_label(Token_t * lbl)
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_derived_type_stmt() label = %p id = %p \n", label,
-                id);
+        printf("In c_action_derived_type_stmt() label = %p id = %p \n", label, id);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -1541,7 +1540,6 @@ void c_action_label(Token_t * lbl)
      * @param id Identifier if extends or bind. Otherwise, null.
      * @param specType "Enum"  on type: access_spec, extnds, abstrct, or bind. (Weird spelling of extnds and abstrct avoids overrriding java keywords.)
      */
-// void c_action_type_attr_spec(Token_t * id, int specType)
     void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -1550,8 +1548,55 @@ void c_action_label(Token_t * lbl)
                 keyword, keyword != NULL ? keyword->text : "NULL", id,
                 id != NULL ? id->text : "NULL", specType);
 
-        // TODO: need to think about attr_spec that are not accessspec
-        DeclAttributes.setAccessAttr(specType);
+        switch (specType)
+        {
+           case TypeAttrSpec_extends:
+           {
+              std::cerr << "In c_action_type_attr_spec: TypeAttrSpec_extends not implemented" << std::endl;
+              break;
+           }
+
+           case TypeAttrSpec_abstract:
+           {
+              std::cerr << "In c_action_type_attr_spec: TypeAttrSpec_abstract not implemented" << std::endl;
+              break;
+           }
+
+           case TypeAttrSpec_bind:
+           {
+              DeclAttributes.setHasBindC(true);
+              DeclAttributes.setBindCAttr(AttrSpec_BINDC);  // Note translation to AttrSpec
+              break;
+           }
+
+           case TypeAttrSpec_access_spec:
+           {
+              DeclAttributes.setHasAccessSpec(true);
+              DeclAttributes.setAccessAttr(AttrSpec_access);
+              break;
+           }
+
+           case AttrSpec_PUBLIC:
+           {
+              DeclAttributes.setIsPublic(true);
+              DeclAttributes.setPublicAttr(AttrSpec_PUBLIC);
+              break;
+           }
+
+           case AttrSpec_PRIVATE:
+           {
+              DeclAttributes.setIsPrivate(true);
+              DeclAttributes.setPrivateAttr(AttrSpec_PRIVATE);
+              break;
+           }
+
+           default:
+           {
+              std::cerr << "In c_action_type_attr_spec: found unknown TypeAttrSpec " << specType << std::endl;
+              ROSE_ASSERT(false);
+              break;
+           }
+        }
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -1566,10 +1611,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param count The number of items in the list.
      */
-    void c_action_type_attr_spec_list__begin()
-    {
-        // I think there is nothing required to be done here.
-    }
+    void c_action_type_attr_spec_list__begin()    { }
     void c_action_type_attr_spec_list(int count)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -2934,8 +2976,7 @@ void c_action_label(Token_t * lbl)
         // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_type_declaration_stmt: numAttributes = %d \n",
-                numAttributes);
+        printf("In c_action_type_declaration_stmt: numAttributes = %d \n", numAttributes);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
         ROSE_ASSERT(eos != NULL);
@@ -3132,7 +3173,6 @@ void c_action_label(Token_t * lbl)
      * be null in the cases of access_sepc and language_binding_spec.
      * @param attr The attribute specification
      */
-// void c_action_attr_spec(int attr)
     void c_action_attr_spec(Token_t * attrKeyword, int attr)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -4375,9 +4415,7 @@ void c_action_label(Token_t * lbl)
      * @param keyword The ASYNCHRONOUS keyword token.
      * @param eos End of statement token.
      */
-// void c_action_asynchronous_stmt(Token_t * label)
-    void c_action_asynchronous_stmt(Token_t * label, Token_t * keyword,
-            Token_t * eos)
+    void c_action_asynchronous_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
     {
     }
 
@@ -4388,7 +4426,6 @@ void c_action_label(Token_t * lbl)
      * @param label Optional statement label
      * @param eos End of statement token.
      */
-// void c_action_bind_stmt(Token_t * label)
     void c_action_bind_stmt(Token_t * label, Token_t * eos)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -10521,6 +10558,7 @@ void c_action_label(Token_t * lbl)
         SgScopeStatement* currentScope = getTopOfScopeStack();
         currentScope->append_statement(forAllStatement);
         forAllStatement->set_parent(currentScope);
+        forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
 
      // Rasmussen (1/8/2019): To be added in future
      // forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
@@ -16821,7 +16859,6 @@ void c_action_label(Token_t * lbl)
         if (moduleDefinition != NULL)
         {
             ROSE_ASSERT(moduleDefinition == astScopeStack.front());
-            // SgClassDeclaration* module = isSgClassDeclaration(moduleDefinition->get_declaration());
             SgClassDeclaration* moduleDeclaration = moduleDefinition->get_declaration();
             ROSE_ASSERT(moduleDeclaration != NULL);
             moduleName = moduleDeclaration->get_name();

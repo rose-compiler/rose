@@ -299,6 +299,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
 
+       // Rasmussen (10/02/2018): This is temporary fix (actual ForAllStatements aren't created)
           case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
 
           case V_SgContainsStatement:          unparseContainsStatement(stmt, info); break;
@@ -311,7 +312,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgDeallocateStatement:        unparseDeallocateStatement(stmt, info); break;
 
-          case V_SgCAFWithTeamStatement:           unparseWithTeamStatement(stmt, info); break;
+          case V_SgCAFWithTeamStatement:       unparseWithTeamStatement(stmt, info); break;
 
        // Language independent code generation (placed in base class)
        // scope
@@ -2124,7 +2125,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
 void
 FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt \n");
+  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt %p\n", stmt);
 
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
@@ -2371,6 +2372,19 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
      SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
      ROSE_ASSERT(forAllStatement != NULL);
 
+  // The FORALL statement has been deprecated and replaced by a DO CONCURRENT construct.
+  // Since they are very similar they share the same Sage node and are distinguished by an enum.
+  //
+     if (forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_do_concurrent_statement)
+        {
+           unparseDoConcurrentStatement(stmt, info);
+           return;
+        }
+
+  // Note the return in the preceding for DO CONCURRENT.  What follows unparses a FORALL construct.
+  //
+     ROSE_ASSERT(forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_forall_statement);
+
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);
 
@@ -2405,6 +2419,70 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
         {
           unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
           curprint("END FORALL");
+        }
+   }
+
+
+void
+FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
+     ROSE_ASSERT(forAllStatement != NULL);
+
+     SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
+     ROSE_ASSERT(forAllHeader != NULL);
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+
+  // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
+     ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
+     int num_vars = forAllHeader->get_expressions().size() / 2;
+
+     curprint("DO CONCURRENT (");
+
+     for (int i = 0; i <= num_vars; i += 2)
+        {
+           if (i != 0) curprint(", ");
+
+        // variable
+           unparseExpression(header[i],  info);
+           curprint("=");
+        // subscripts
+           unparseExpression(header[i+1],info);
+        }
+
+     curprint(")");
+
+  // Unparse the body
+     SgStatement* statement = NULL;
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          statement = forAllStatement->get_body();
+          ROSE_ASSERT(statement != NULL);
+
+          unparseStatement(statement,info);
+        }
+       else
+        {
+          SgBasicBlock* body = isSgBasicBlock(forAllStatement->get_body());
+          ROSE_ASSERT(body != NULL);
+
+          SgStatementPtrList & statementList = body->get_statements();
+          ROSE_ASSERT(statementList.size() == 1);
+          statement = *(statementList.begin());
+          ROSE_ASSERT(statement != NULL);
+
+          unparseLanguageSpecificStatement(statement,info);
+        }
+
+     unp->cur.insert_newline(1);
+
+  // Unparse the end statement
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
+          curprint("END DO");
+          unp->cur.insert_newline(1);
         }
    }
 
@@ -5228,7 +5306,6 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
 void
 FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      SgDerivedTypeStatement* classdecl_stmt = isSgDerivedTypeStatement(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
@@ -5245,9 +5322,8 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
   // info.display("Inside of unparseClassDeclStmt");
 
-  // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
-
 #if 0
+     printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
@@ -5293,9 +5369,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           curprint ("TYPE ");
 
-       // SgName nm = classdecl_stmt->get_name();
-
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
              {
             // The PUBLIC keyword is only permitted within Modules
@@ -5309,7 +5383,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
              {
             // The PRIVATE keyword is only permitted within Modules
@@ -5323,7 +5397,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
              {
             // The BIND keyword is only permitted within Modules
@@ -5338,7 +5412,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
              {
             // The EXTENDS keyword is only permitted within Modules
@@ -5352,7 +5426,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
              {
             // The ABSTRACT keyword is only permitted within Modules

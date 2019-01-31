@@ -1027,10 +1027,11 @@ CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
   // Rasmussen (11/08/2017): Changed Jovial file extension to reflect usage found on web
+  // Rasmussen (11/11/2018): Added Jovial COMPOOL file extension "cpl"
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+     if ( suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" )
 #else //It is a case insensitive system
-     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+     if ( suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" )
 #endif
         {
           returnValue = true;
