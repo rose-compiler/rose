@@ -933,7 +933,7 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
     if (mayEqualCallback) {
         boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
         if (true == result || false == result)
-            return result;
+            return result ? true : false;
     }
 
     // Two addition operations of the form V + C1 and V + C2 where V is a variable and C1 and C2 are constants, are equal if
@@ -2948,7 +2948,7 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
     if (mayEqualCallback) {
         boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
         if (true == result || false == result)
-            return result;
+            return result ? true : false;
     }
 
     // The other cases are variable, memory, or constant compared to variable, memory, or constant as long as both are not
