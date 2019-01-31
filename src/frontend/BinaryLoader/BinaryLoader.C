@@ -93,7 +93,7 @@ BinaryLoader::Ptr
 BinaryLoader::lookup(SgAsmGenericHeader *header) {
     initclass();
     for (size_t i=loaders_.size(); i>0; --i) {
-        ASSERT_not_null(loaders[i-1]);
+        ASSERT_not_null(loaders_[i-1]);
         if (loaders_[i-1]->canLoad(header))
             return loaders_[i-1];
     }

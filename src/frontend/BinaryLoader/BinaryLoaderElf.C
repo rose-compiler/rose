@@ -549,7 +549,7 @@ BinaryLoaderElf::SymbolMapEntry::addVersion(const VersionedSymbol& vsymbol) {
         // There can be only one "base" version, so if one already exists, move it to the end of the list (vector) and insert
         // our new base version at the beginning.
         if (!versions_.empty()) {
-             ASSERT_require(versions_.empty() || false == get_vsymbol().is_base_definition());
+            ASSERT_require(versions_.empty() || false == getVSymbol().isBaseDefinition());
             versions_.push_back(versions_.front());
             versions_[0] = vsymbol;
         } else {
@@ -718,7 +718,7 @@ BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* d
     for (size_t symbol_idx=0; symbol_idx<symbols.size(); symbol_idx++) {
         SgAsmElfSymbol *symbol = symbols[symbol_idx];
 
-        ASSERT_require(p_versionedSymbolMap.end() == p_versionedSymbolMap.find(symbol));
+        ASSERT_require(versionedSymbolMap_.end() == versionedSymbolMap_.find(symbol));
         VersionedSymbol* versionedSymbol = new VersionedSymbol(symbol);
         versionedSymbolMap_.insert(std::make_pair(symbol,versionedSymbol));
 
