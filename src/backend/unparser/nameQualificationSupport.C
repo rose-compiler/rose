@@ -6343,20 +6343,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        ROSE_ASSERT(nrdecl != NULL);
 
        SgStatement* currentStatement = TransformationSupport::getStatement(nrRefExp);
-       SgScopeStatement* currentScope = currentStatement->get_scope();
+       if (currentStatement != NULL) {
+         SgScopeStatement* currentScope = currentStatement->get_scope();
 
-       evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, currentStatement);
+         evaluateNameQualificationForTemplateArgumentList(nrdecl->get_tpl_args(), currentScope, currentStatement);
 
-       SgDeclarationStatement * declstmt = nrdecl;
-       if (nrdecl->get_templateDeclaration() != NULL) {
-         declstmt = nrdecl->get_templateDeclaration();
-       }
+         SgDeclarationStatement * declstmt = nrdecl;
+         if (nrdecl->get_templateDeclaration() != NULL) {
+           declstmt = nrdecl->get_templateDeclaration();
+         }
 
-       int amountOfNameQualificationRequired = nameQualificationDepth(declstmt, currentScope, currentStatement);
+         int amountOfNameQualificationRequired = nameQualificationDepth(declstmt, currentScope, currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-       printf (" --- amountOfNameQualificationRequired = %d\n", amountOfNameQualificationRequired);
+         printf (" --- amountOfNameQualificationRequired = %d\n", amountOfNameQualificationRequired);
 #endif
-       setNameQualification(nrRefExp, declstmt, amountOfNameQualificationRequired);
+         setNameQualification(nrRefExp, declstmt, amountOfNameQualificationRequired);
+       }
+     } else {
+#if WARNING_FOR_NONREAL_DEVEL
+       printf ("Skipping name-qualification of SgNonrealRefExp as no enclosing statement could be found ROSE-1701 (not an issue while template are unparsed from string).\n");
+#endif
      }
 
 
