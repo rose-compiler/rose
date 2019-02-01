@@ -2173,7 +2173,6 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
-projects/StencilManyCore/Makefile
 projects/TemplateAnalysis/Makefile
 projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/include/ROSE/proposed/Makefile
