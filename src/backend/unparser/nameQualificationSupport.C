@@ -6245,7 +6245,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgStatement* currentStatement = TransformationSupport::getStatement(functionRefExp);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("case SgFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("!!!!!!!!!!!!!!! case SgFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 #endif
             // DQ (9/17/2011); Added escape for where the currentStatement == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
             // ROSE_ASSERT(currentStatement != NULL);
@@ -6254,6 +6254,30 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (9/17/2011): this is the original case we want to restore later...
                     SgScopeStatement* currentScope = currentStatement->get_scope();
                  // ROSE_ASSERT(currentScope != NULL);
+
+                 // DQ (1/31/2019): If this is a member function or template member function instantiation, AND it is definted 
+                 // outside of the class scope THEN we need to use the structural scope instead of the logical scope.
+                    if (currentScope != NULL)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("!!!!!!!!!!!!!!! currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                         SgStatement* parentStatement = isSgStatement(currentStatement->get_parent());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("!!!!!!!!!!!!!!! parentStatement = %p = %s \n",parentStatement,parentStatement->class_name().c_str());
+#endif
+                         if (parentStatement != currentScope)
+                            {
+                              currentScope = parentStatement->get_scope();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("!!!!!!!!!!!!!!! RESETTING VIA PARENT: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                            }
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("case SgFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
