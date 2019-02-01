@@ -982,8 +982,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2013_248.C \
    test2013_249.C \
    test2013_254.C \
-   test2013_255.h \
-   test2013_256.h \
    test2013_262.C \
    test2013_263.C \
    test2013_264.C \
@@ -993,7 +991,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2013_268.C \
    test2013_269.C \
    test2013_270.C \
-   test2013_289.h \
    test2013_309.C \
    test2013_321.C \
    test2013_322.C \
@@ -1037,7 +1034,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_104.C \
    test2014_105.C \
    test2014_106.C \
-   test2014_112.h \
    test2014_113.C \
    test2014_118.C \
    test2014_119.C \
@@ -1632,9 +1628,6 @@ clean-local:
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
 
-status:
-	@$(MAKE) $(TEST_Source_passed)
-
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
 #------------------------------------------------------------------------------
@@ -1720,4 +1713,7 @@ $(TEST_Source_passed:.C.passed=.timed_with_threshold):
 	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                 \
 	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&     \
 	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 
