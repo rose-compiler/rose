@@ -1113,8 +1113,8 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
     // this case cannot happen for normalized code
-    logger[ERROR]<<"Function call detected (not represented in ICFG). Normalization required."<<endl;
-    bool useConstraints=false;
+    logger[ERROR]<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
+    //bool useConstraints=false;
     exit(1);
     //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
   } else {
