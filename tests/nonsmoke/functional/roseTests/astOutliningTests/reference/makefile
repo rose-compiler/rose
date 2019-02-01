@@ -3,9 +3,9 @@ all: jacobi.out
 #.c.so:
 #	gcc -fpic -shared -lc $< 
 
-SO_Files = jacobi_with_OUT.so
+SO_Files = rose_jacobi_lib.so
 
-jacobi_with_OUT.so: jacobi_with_OUT.c
+rose_jacobi_lib.so: rose_jacobi_lib.c
 	gcc -fpic -shared -lc $<  -o $@
 
 jacobi.out: rose_jacobi.c $(SO_Files) autotuning_lib.c

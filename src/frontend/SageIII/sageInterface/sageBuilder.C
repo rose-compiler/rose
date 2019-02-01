@@ -15304,32 +15304,24 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 
      return sourceFile;
 
-#if 0
-  // This is a more direct, alternative implementation (not sure if it is better).
-     SgSourceFile* newFile = new SgSourceFile();
-     ROSE_ASSERT(newFile != NULL);
-
-  // Mark as a C file for now.
-     newFile->set_C_only(true);
-
-  // Specify the name of the file (and line and column numbers), using a Sg_File_Info object.
-     Sg_File_Info* fileInfo = new Sg_File_Info(outputFileName,0,0);
-     ROSE_ASSERT(fileInfo != NULL);
-
-     newFile->set_startOfConstruct(fileInfo);
-     fileInfo->set_parent(newFile);
-
-     SgGlobal* globalScope = new SgGlobal();
-     ROSE_ASSERT(globalScope != NULL);
-
-     newFile->set_globalScope(globalScope);
-     globalScope->set_parent(newFile);
-
-     ROSE_ASSERT(newFile->get_globalScope() != NULL);
-
-     return newFile;
-#endif
    }
+
+SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
+{
+
+     SgFile* file = buildFile(inputFileName, outputFileName,project);
+     ROSE_ASSERT(file != NULL);
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
+     // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
+     attachPreprocessingInfo (sourceFile);
+     
+     return sourceFile;
+}
 
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)

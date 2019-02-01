@@ -1,11 +1,13 @@
-void (*OUT_3_jacobi_134p)(void **);
-void (*OUT_2_jacobi_199p)(void **);
-void (*OUT_1_jacobi_242p)(void **);
+/* OUTLINED FUNCTION PROTOTYPE */
+void OUT_3_jacobi_134(void **__out_argv);
+/* OUTLINED FUNCTION PROTOTYPE */
+void OUT_2_jacobi_199(void **__out_argv);
+/* OUTLINED FUNCTION PROTOTYPE */
+void OUT_1_jacobi_242(void **__out_argv);
 #include <stdio.h>
 #include <math.h>
 // Add timing support
 #include <sys/time.h>
-#include "autotuning_lib.h" 
 
 double diff_ratio(double val,double ref,int significant_digits)
 {
@@ -121,7 +123,6 @@ void driver()
 * Assumes exact solution is u(x,y) = (1-x^2)*(1-y^2)
 *
 ******************************************************/
-void OUT_3_jacobi_134(void **__out_argv);
 
 void initialize()
 {
@@ -132,21 +133,18 @@ void initialize()
 //double PI=3.1415926;
   dx = 2.0 / (n - 1);
   dy = 2.0 / (m - 1);
-  void *__out_argv3__1527__[11];
-  __out_argv3__1527__[0] = ((void *)(&yy));
-  __out_argv3__1527__[1] = ((void *)(&xx));
-  __out_argv3__1527__[2] = ((void *)(&j));
-  __out_argv3__1527__[3] = ((void *)(&i));
-  __out_argv3__1527__[4] = ((void *)(&dy));
-  __out_argv3__1527__[5] = ((void *)(&dx));
-  __out_argv3__1527__[6] = ((void *)(&f));
-  __out_argv3__1527__[7] = ((void *)(&u));
-  __out_argv3__1527__[8] = ((void *)(&alpha));
-  __out_argv3__1527__[9] = ((void *)(&m));
-  __out_argv3__1527__[10] = ((void *)(&n));
-  OUT_3_jacobi_134p = findFunctionUsingDlopen("OUT_3_jacobi_134","./rose_jacobi_lib.so");
 /* Initialize initial condition and RHS */
-  ( *OUT_3_jacobi_134p)(__out_argv3__1527__);
+  
+#pragma rose_outline
+  for (i = 0; i < n; i++) 
+    for (j = 0; j < m; j++) {
+/* -1 < x < 1 */
+      xx = ((int )((- 1.0) + dx * (i - 1)));
+/* -1 < y < 1 */
+      yy = ((int )((- 1.0) + dy * (j - 1)));
+      u[i][j] = 0.0;
+      f[i][j] = (- 1.0) * alpha * (1.0 - (xx * xx)) * (1.0 - (yy * yy)) - 2.0 * (1.0 - (xx * xx)) - 2.0 * (1.0 - (yy * yy));
+    }
 }
 /*      subroutine jacobi (n,m,dx,dy,alpha,omega,u,f,tol,maxit)
 ******************************************************************
@@ -168,7 +166,6 @@ void initialize()
 *
 * Output : u(n,m) - Solution 
 *****************************************************************/
-void OUT_2_jacobi_199(void **__out_argv);
 
 void jacobi()
 {
@@ -193,7 +190,7 @@ void jacobi()
 /* Y-direction coef */
   ay = 1.0 / (dy * dy);
 /* Central coeff */
-  b = - 2.0 / (dx * dx) - 2.0 / (dy * dy) - alpha;
+  b = (- 2.0) / (dx * dx) - 2.0 / (dy * dy) - alpha;
   error = 10.0 * tol;
   k = 1;
   while(k <= mits && error > tol){
@@ -202,22 +199,16 @@ void jacobi()
     for (i = 0; i < n; i++) 
       for (j = 0; j < m; j++) 
         uold[i][j] = u[i][j];
-    void *__out_argv2__1527__[13];
-    __out_argv2__1527__[0] = ((void *)(&b));
-    __out_argv2__1527__[1] = ((void *)(&ay));
-    __out_argv2__1527__[2] = ((void *)(&ax));
-    __out_argv2__1527__[3] = ((void *)(&resid));
-    __out_argv2__1527__[4] = ((void *)(&error));
-    __out_argv2__1527__[5] = ((void *)(&j));
-    __out_argv2__1527__[6] = ((void *)(&i));
-    __out_argv2__1527__[7] = ((void *)(&omega));
-    __out_argv2__1527__[8] = ((void *)(&uold));
-    __out_argv2__1527__[9] = ((void *)(&f));
-    __out_argv2__1527__[10] = ((void *)(&u));
-    __out_argv2__1527__[11] = ((void *)(&m));
-    __out_argv2__1527__[12] = ((void *)(&n));
-    OUT_2_jacobi_199p = findFunctionUsingDlopen("OUT_2_jacobi_199","./rose_jacobi_lib.so");
-    ( *OUT_2_jacobi_199p)(__out_argv2__1527__);
+    
+#pragma rose_outline
+    for (i = 1; i < n - 1; i++) 
+      for (j = 1; j < m - 1; j++) {
+        resid = (ax * (uold[i - 1][j] + uold[i + 1][j]) + ay * (uold[i][j - 1] + uold[i][j + 1]) + b * uold[i][j] - f[i][j]) / b;
+        u[i][j] = uold[i][j] - omega * resid;
+//        if ((i+j)%500==0) 
+//          printf("test something here. \n");
+        error = error + resid * resid;
+      }
 /* Error check */
     k = k + 1;
     if (k % 500 == 0) 
@@ -236,7 +227,6 @@ void jacobi()
 * Checks error between numerical and exact solution 
 *
 ************************************************************/
-void OUT_1_jacobi_242(void **__out_argv);
 
 void error_check()
 {
@@ -249,22 +239,111 @@ void error_check()
   dx = 2.0 / (n - 1);
   dy = 2.0 / (m - 1);
   error = 0.0;
-  void *__out_argv1__1527__[11];
-  __out_argv1__1527__[0] = ((void *)(&error));
-  __out_argv1__1527__[1] = ((void *)(&temp));
-  __out_argv1__1527__[2] = ((void *)(&yy));
-  __out_argv1__1527__[3] = ((void *)(&xx));
-  __out_argv1__1527__[4] = ((void *)(&j));
-  __out_argv1__1527__[5] = ((void *)(&i));
-  __out_argv1__1527__[6] = ((void *)(&dy));
-  __out_argv1__1527__[7] = ((void *)(&dx));
-  __out_argv1__1527__[8] = ((void *)(&u));
-  __out_argv1__1527__[9] = ((void *)(&m));
-  __out_argv1__1527__[10] = ((void *)(&n));
-  OUT_1_jacobi_242p = findFunctionUsingDlopen("OUT_1_jacobi_242","./rose_jacobi_lib.so");
-  ( *OUT_1_jacobi_242p)(__out_argv1__1527__);
+  
+#pragma rose_outline
+  for (i = 0; i < n; i++) 
+    for (j = 0; j < m; j++) {
+      xx = (- 1.0) + dx * (i - 1);
+      yy = (- 1.0) + dy * (j - 1);
+      temp = u[i][j] - (1.0 - xx * xx) * (1.0 - yy * yy);
+      error = error + temp * temp;
+    }
   error = sqrt(error) / (n * m);
   printf("Solution Error :%E \n",error);
   diff_ratio(error,9.378232E-04,6);
   printf("Solution Error's Correctness verification passed.\n");
+}
+/* REQUIRED CPP DIRECTIVES */
+/* REQUIRED DEPENDENT DECLARATIONS */
+/* OUTLINED FUNCTION */
+
+void OUT_1_jacobi_242(void **__out_argv)
+{
+  int n =  *((int *)__out_argv[10]);
+  int m =  *((int *)__out_argv[9]);
+  double (*u)[500][500] = (double (*)[500][500])__out_argv[8];
+  double dx =  *((double *)__out_argv[7]);
+  double dy =  *((double *)__out_argv[6]);
+  int i =  *((int *)__out_argv[5]);
+  int j =  *((int *)__out_argv[4]);
+  double xx =  *((double *)__out_argv[3]);
+  double yy =  *((double *)__out_argv[2]);
+  double temp =  *((double *)__out_argv[1]);
+  double error =  *((double *)__out_argv[0]);
+  for (i = 0; i < n; i++) 
+    for (j = 0; j < m; j++) {
+      xx = - 1.0 + dx * ((double )(i - 1));
+      yy = - 1.0 + dy * ((double )(j - 1));
+      temp = ( *u)[i][j] - (1.0 - xx * xx) * (1.0 - yy * yy);
+      error = error + temp * temp;
+    }
+   *((double *)__out_argv[0]) = error;
+   *((double *)__out_argv[1]) = temp;
+   *((double *)__out_argv[2]) = yy;
+   *((double *)__out_argv[3]) = xx;
+   *((int *)__out_argv[4]) = j;
+   *((int *)__out_argv[5]) = i;
+}
+/* REQUIRED CPP DIRECTIVES */
+/* REQUIRED DEPENDENT DECLARATIONS */
+/* OUTLINED FUNCTION */
+
+void OUT_2_jacobi_199(void **__out_argv)
+{
+  int n =  *((int *)__out_argv[12]);
+  int m =  *((int *)__out_argv[11]);
+  double (*u)[500][500] = (double (*)[500][500])__out_argv[10];
+  double (*f)[500][500] = (double (*)[500][500])__out_argv[9];
+  double (*uold)[500][500] = (double (*)[500][500])__out_argv[8];
+  double omega =  *((double *)__out_argv[7]);
+  int i =  *((int *)__out_argv[6]);
+  int j =  *((int *)__out_argv[5]);
+  double error =  *((double *)__out_argv[4]);
+  double resid =  *((double *)__out_argv[3]);
+  double ax =  *((double *)__out_argv[2]);
+  double ay =  *((double *)__out_argv[1]);
+  double b =  *((double *)__out_argv[0]);
+  for (i = 1; i < n - 1; i++) 
+    for (j = 1; j < m - 1; j++) {
+      resid = (ax * (( *uold)[i - 1][j] + ( *uold)[i + 1][j]) + ay * (( *uold)[i][j - 1] + ( *uold)[i][j + 1]) + b * ( *uold)[i][j] - ( *f)[i][j]) / b;
+      ( *u)[i][j] = ( *uold)[i][j] - omega * resid;
+//        if ((i+j)%500==0) 
+//          printf("test something here. \n");
+      error = error + resid * resid;
+    }
+   *((double *)__out_argv[3]) = resid;
+   *((double *)__out_argv[4]) = error;
+   *((int *)__out_argv[5]) = j;
+   *((int *)__out_argv[6]) = i;
+}
+/* REQUIRED CPP DIRECTIVES */
+/* REQUIRED DEPENDENT DECLARATIONS */
+/* OUTLINED FUNCTION */
+
+void OUT_3_jacobi_134(void **__out_argv)
+{
+  int n =  *((int *)__out_argv[10]);
+  int m =  *((int *)__out_argv[9]);
+  double alpha =  *((double *)__out_argv[8]);
+  double (*u)[500][500] = (double (*)[500][500])__out_argv[7];
+  double (*f)[500][500] = (double (*)[500][500])__out_argv[6];
+  double dx =  *((double *)__out_argv[5]);
+  double dy =  *((double *)__out_argv[4]);
+  int i =  *((int *)__out_argv[3]);
+  int j =  *((int *)__out_argv[2]);
+  int xx =  *((int *)__out_argv[1]);
+  int yy =  *((int *)__out_argv[0]);
+  for (i = 0; i < n; i++) 
+    for (j = 0; j < m; j++) {
+/* -1 < x < 1 */
+      xx = ((int )(- 1.0 + dx * ((double )(i - 1))));
+/* -1 < y < 1 */
+      yy = ((int )(- 1.0 + dy * ((double )(j - 1))));
+      ( *u)[i][j] = 0.0;
+      ( *f)[i][j] = - 1.0 * alpha * (1.0 - ((double )(xx * xx))) * (1.0 - ((double )(yy * yy))) - 2.0 * (1.0 - ((double )(xx * xx))) - 2.0 * (1.0 - ((double )(yy * yy)));
+    }
+   *((int *)__out_argv[0]) = yy;
+   *((int *)__out_argv[1]) = xx;
+   *((int *)__out_argv[2]) = j;
+   *((int *)__out_argv[3]) = i;
 }

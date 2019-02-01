@@ -1,23 +1,17 @@
 #include <stdio.h>
 #include <math.h>
-#include <assert.h>
 // Add timing support
 #include <sys/time.h>
 
-/*
-Example use: 
-  printf(" checking error diff ratio \n");
-  diff_ratio (error, error_ref, 5); // 6 is better, 7 is very restrictive 
-*/
-// value, reference value, and the number of significant digits to be ensured.
-double diff_ratio (double val, double ref, int significant_digits)
+double diff_ratio(double val,double ref,int significant_digits)
 {
-  assert (significant_digits>=1);
-  double diff_ratio = fabs(val - ref )/fabs(ref);
-  double upper_limit = pow (0.1, significant_digits); // 1.0/(double(10^significant_digits)) ;
+  significant_digits >= 1?((void )0) : __assert_fail("significant_digits>=1","jacobi.c",15,__PRETTY_FUNCTION__);
+  double diff_ratio = fabs(val - ref) / fabs(ref);
+// 1.0/(double(10^significant_digits)) ;
+  double upper_limit = pow(0.1,significant_digits);
   if (diff_ratio >= upper_limit)
-    printf("value :%E  ref_value: %E  diff_ratio: %E >= upper_limit: %E \n",val, ref, diff_ratio, upper_limit);
-  assert ( diff_ratio < upper_limit);
+    printf("value :%E  ref_value: %E  diff_ratio: %E >= upper_limit: %E \n",val,ref,diff_ratio,upper_limit);
+  diff_ratio < upper_limit?((void )0) : __assert_fail("diff_ratio < upper_limit","jacobi.c",20,__PRETTY_FUNCTION__);
   return diff_ratio;
 }
 
@@ -136,7 +130,6 @@ void initialize( )
   dy = 2.0 / (m-1);
 
   /* Initialize initial condition and RHS */
-
 #pragma rose_outline
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)      
@@ -210,6 +203,8 @@ void jacobi( )
             + ay*(uold[i][j-1] + uold[i][j+1])+ b * uold[i][j] - f[i][j])/b;
 
         u[i][j] = uold[i][j] - omega * resid;
+//        if ((i+j)%500==0) 
+//          printf("test something here. \n");
         error = error + resid*resid ;
       }
 
@@ -223,10 +218,8 @@ void jacobi( )
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
-  diff_ratio (error, 2.512265E-08 , 6);
-  printf ("Residual's Correctness verification passed.\n");
-
-
+  diff_ratio(error,2.512265E-08,6);
+  printf("Residual's Correctness verification passed.\n");
 }
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
       implicit none 
@@ -254,114 +247,10 @@ void error_check ( )
       temp  = u[i][j] - (1.0-xx*xx)*(1.0-yy*yy);
       error = error + temp*temp; 
     }
-
   error = sqrt(error)/(n*m);
-
   printf("Solution Error :%E \n",error);
-  diff_ratio (error, 9.378232E-04 , 6);
-  printf ("Solution Error's Correctness verification passed.\n");
-
+  diff_ratio(error,9.378232E-04,6);
+  printf("Solution Error's Correctness verification passed.\n");
 }
 
-
-/* OUTLINED FUNCTION PROTOTYPE */
-void OUT_1_jacobi_249(void **__out_argv);
-/* REQUIRED CPP DIRECTIVES */
-/* REQUIRED DEPENDENT DECLARATIONS */
-/* OUTLINED FUNCTION */
-
-void OUT_1_jacobi_249(void **__out_argv)
-{
-  int n =  *((int *)__out_argv[10]);
-  int m =  *((int *)__out_argv[9]);
-  double (*u)[500][500] = (double (*)[500][500])__out_argv[8];
-  double dx =  *((double *)__out_argv[7]);
-  double dy =  *((double *)__out_argv[6]);
-  int i =  *((int *)__out_argv[5]);
-  int j =  *((int *)__out_argv[4]);
-  double xx =  *((double *)__out_argv[3]);
-  double yy =  *((double *)__out_argv[2]);
-  double temp =  *((double *)__out_argv[1]);
-  double error =  *((double *)__out_argv[0]);
-  for (i = 0; i < n; i++) 
-    for (j = 0; j < m; j++) {
-      xx = - 1.0 + dx * ((double )(i - 1));
-      yy = - 1.0 + dy * ((double )(j - 1));
-      temp = ( *u)[i][j] - (1.0 - xx * xx) * (1.0 - yy * yy);
-      error = error + temp * temp;
-    }
-   *((double *)__out_argv[0]) = error;
-   *((double *)__out_argv[1]) = temp;
-   *((double *)__out_argv[2]) = yy;
-   *((double *)__out_argv[3]) = xx;
-   *((int *)__out_argv[4]) = j;
-   *((int *)__out_argv[5]) = i;
-}
-
-/* OUTLINED FUNCTION PROTOTYPE */
-void OUT_2_jacobi_206(void **__out_argv);
-/* REQUIRED CPP DIRECTIVES */
-/* REQUIRED DEPENDENT DECLARATIONS */
-/* OUTLINED FUNCTION */
-
-void OUT_2_jacobi_206(void **__out_argv)
-{
-  int n =  *((int *)__out_argv[12]);
-  int m =  *((int *)__out_argv[11]);
-  double (*u)[500][500] = (double (*)[500][500])__out_argv[10];
-  double (*f)[500][500] = (double (*)[500][500])__out_argv[9];
-  double (*uold)[500][500] = (double (*)[500][500])__out_argv[8];
-  double omega =  *((double *)__out_argv[7]);
-  int i =  *((int *)__out_argv[6]);
-  int j =  *((int *)__out_argv[5]);
-  double error =  *((double *)__out_argv[4]);
-  double resid =  *((double *)__out_argv[3]);
-  double ax =  *((double *)__out_argv[2]);
-  double ay =  *((double *)__out_argv[1]);
-  double b =  *((double *)__out_argv[0]);
-  for (i = 1; i < n - 1; i++) 
-    for (j = 1; j < m - 1; j++) {
-      resid = (ax * (( *uold)[i - 1][j] + ( *uold)[i + 1][j]) + ay * (( *uold)[i][j - 1] + ( *uold)[i][j + 1]) + b * ( *uold)[i][j] - ( *f)[i][j]) / b;
-      ( *u)[i][j] = ( *uold)[i][j] - omega * resid;
-      error = error + resid * resid;
-    }
-   *((double *)__out_argv[3]) = resid;
-   *((double *)__out_argv[4]) = error;
-   *((int *)__out_argv[5]) = j;
-   *((int *)__out_argv[6]) = i;
-}
-
-/* OUTLINED FUNCTION PROTOTYPE */
-void OUT_3_jacobi_141(void **__out_argv);
-/* REQUIRED CPP DIRECTIVES */
-/* REQUIRED DEPENDENT DECLARATIONS */
-/* OUTLINED FUNCTION */
-
-void OUT_3_jacobi_141(void **__out_argv)
-{
-  int n =  *((int *)__out_argv[10]);
-  int m =  *((int *)__out_argv[9]);
-  double alpha =  *((double *)__out_argv[8]);
-  double (*u)[500][500] = (double (*)[500][500])__out_argv[7];
-  double (*f)[500][500] = (double (*)[500][500])__out_argv[6];
-  double dx =  *((double *)__out_argv[5]);
-  double dy =  *((double *)__out_argv[4]);
-  int i =  *((int *)__out_argv[3]);
-  int j =  *((int *)__out_argv[2]);
-  int xx =  *((int *)__out_argv[1]);
-  int yy =  *((int *)__out_argv[0]);
-  for (i = 0; i < n; i++) 
-    for (j = 0; j < m; j++) {
-/* -1 < x < 1 */
-      xx = ((int )(- 1.0 + dx * ((double )(i - 1))));
-/* -1 < y < 1 */
-      yy = ((int )(- 1.0 + dy * ((double )(j - 1))));
-      ( *u)[i][j] = 0.0;
-      ( *f)[i][j] = - 1.0 * alpha * (1.0 - ((double )(xx * xx))) * (1.0 - ((double )(yy * yy))) - 2.0 * (1.0 - ((double )(xx * xx))) - 2.0 * (1.0 - ((double )(yy * yy)));
-    }
-   *((int *)__out_argv[0]) = yy;
-   *((int *)__out_argv[1]) = xx;
-   *((int *)__out_argv[2]) = j;
-   *((int *)__out_argv[3]) = i;
-}
 

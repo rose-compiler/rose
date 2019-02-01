@@ -2,6 +2,19 @@
 #include <math.h>
 // Add timing support
 #include <sys/time.h>
+
+double diff_ratio(double val,double ref,int significant_digits)
+{
+  significant_digits >= 1?((void )0) : __assert_fail("significant_digits>=1","jacobi.c",15,__PRETTY_FUNCTION__);
+  double diff_ratio = fabs(val - ref) / fabs(ref);
+// 1.0/(double(10^significant_digits)) ;
+  double upper_limit = pow(0.1,significant_digits);
+  if (diff_ratio >= upper_limit)
+    printf("value :%E  ref_value: %E  diff_ratio: %E >= upper_limit: %E \n",val,ref,diff_ratio,upper_limit);
+  diff_ratio < upper_limit?((void )0) : __assert_fail("diff_ratio < upper_limit","jacobi.c",20,__PRETTY_FUNCTION__);
+  return diff_ratio;
+}
+
 inline void time_stamp(char* notes)
 {
   struct timeval t;
@@ -70,11 +83,6 @@ int main (void)
   tol=0.0000000001;
   mits=5000;
   driver ( ) ;
-  printf("------------------------\n");     
-  printf("Correct output should be:\n");
-  printf("Total Number of Iterations:5001\n");
-  printf("Residual:2.512265E-08\n");
-  printf("Solution Error :9.378232E-04\n");
   return 0;
 }
 
@@ -122,7 +130,7 @@ void initialize( )
   dy = 2.0 / (m-1);
 
   /* Initialize initial condition and RHS */
-
+#pragma rose_outline
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)      
     {
@@ -195,8 +203,8 @@ void jacobi( )
             + ay*(uold[i][j-1] + uold[i][j+1])+ b * uold[i][j] - f[i][j])/b;
 
         u[i][j] = uold[i][j] - omega * resid;
-        if ((i+j)%500==0) 
-          printf("test something here. \n");
+//        if ((i+j)%500==0) 
+//          printf("test something here. \n");
         error = error + resid*resid ;
       }
 
@@ -210,7 +218,8 @@ void jacobi( )
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
-
+  diff_ratio(error,2.512265E-08,6);
+  printf("Residual's Correctness verification passed.\n");
 }
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
       implicit none 
@@ -229,6 +238,7 @@ void error_check ( )
   dy = 2.0 / (m-1);
   error = 0.0 ;
 
+#pragma rose_outline
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)
     { 
@@ -238,9 +248,9 @@ void error_check ( )
       error = error + temp*temp; 
     }
   error = sqrt(error)/(n*m);
-
   printf("Solution Error :%E \n",error);
-
+  diff_ratio(error,9.378232E-04,6);
+  printf("Solution Error's Correctness verification passed.\n");
 }
 
 
