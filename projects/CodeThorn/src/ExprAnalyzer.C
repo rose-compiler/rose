@@ -406,9 +406,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
       default:
-        cerr << "@NODE:"<<node->sage_class_name()<<endl;
-        string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
-        throw exceptionInfo; 
+        logger[ERROR]<<"evaluateExpression::unknown unary operation @"<<node->sage_class_name()<<endl;
+        exit(1);
       } // end switch
     }
     return  resultList;
@@ -432,7 +431,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   case V_SgVarRefExp:
     return evalRValueVarRefExp(isSgVarRefExp(node),estate);
   case V_SgFunctionCallExp: {
-    //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate);
   }
   case V_SgNullExpression: {
@@ -440,6 +438,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     SingleEvalResultConstInt anyResult;
     resultList.push_front(anyResult);
     return resultList;
+  }
+  case V_SgFunctionRefExp: {
+    logger[ERROR]<<"function pointers are not supported yet: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+    exit(1);
   }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
@@ -1441,6 +1443,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // ignoring fflush
       // res initialized above
       return evalFunctionCallArguments(funCall,estate);
+    } else if(funName=="time"||funName=="srand"||funName=="rand") {
+      // arguments must already be analyzed (normalized code) : TODO check that it is a single variable
+      // result is top (time returns any value)
+      return listify(res); // return top (initialized at beginning of function)
+    } else {
+      logger[ERROR]<<"Function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<endl;
+      exit(1);
     }
   }
   if(getSkipSelectedFunctionCalls()) {
@@ -1619,7 +1628,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate) {
-  logger[TRACE]<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  logger[TRACE]<<"evaluating semantic function for strlen: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   // memcpy is a void function, no return value
   res.init(estate,AbstractValue(CodeThorn::Top())); 
@@ -1659,6 +1668,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
       if(cmpResult.isTrue()) {
         // found 0
         res.init(estate,AbstractValue(pos));
+        logger[TRACE]<<"evaluating semantic function for strlen finished: "<<funCall->unparseToString()<<endl;
         return listify(res);
       } else if(cmpResult.isFalse()) {
         pos++;
@@ -1670,6 +1680,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
   }
   // fallthrough for top/bot
   // return top for unknown (or out-of-bounds access)
+  logger[TRACE]<<"evaluating semantic function for strlen - no result, assuming top: "<<funCall->unparseToString()<<endl;
   res.init(estate,AbstractValue(CodeThorn::Top()));
   return listify(res);
 }

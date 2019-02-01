@@ -649,9 +649,13 @@ check-codethorn-internal:
 	@./codethorn --internal-checks	
 
 check-domain:
+	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+check-domain-old:
 	@echo ================================================================
 	@echo DOMAIN TESTS
 	@echo ================================================================
+	@xxx
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C

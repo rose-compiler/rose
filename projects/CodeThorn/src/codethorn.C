@@ -470,6 +470,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-vis", "Show options for visualization output files.")
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
+    ("list-unknown-functions","show all functions in provided input-program for which the semantics are unknown (external functions).")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "Run internal consistency checks (without input program).")
@@ -577,7 +578,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.9.0\n";
+    cout << "CodeThorn version 1.9.1\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1298,13 +1299,27 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
-    if(args.getBool("program-stats")) {
-      ProgramInfo programInfo(sageProject);
-      programInfo.compute();
-      programInfo.printDetailed();
-      exit(0);
+    {
+      bool listUnknownFunctions=args.isUserProvided("list-unknown-functions");
+      bool showProgramStats=args.getBool("program-stats");
+      bool showInfos=listUnknownFunctions||showProgramStats;
+      if(showInfos) {
+        ProgramInfo programInfo(sageProject);
+        programInfo.compute();
+        if(showProgramStats) {
+          programInfo.printDetailed();
+        }
+        exit(0);
+      }
     }
 
+    {
+      bool listUnknownFunctions=args.isUserProvided("list-unknown-functions");
+      bool listKnownFunctions=args.isUserProvided("list-unknown-functions");
+      if(listUnknownFunctions||listKnownFunctions) {
+        //
+      }
+    }
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
       exit(0);
