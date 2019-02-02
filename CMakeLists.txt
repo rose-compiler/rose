@@ -538,11 +538,12 @@ find_package(Perl REQUIRED)
 # Miscellaneous user-selectable features
 ########################################################################################################################
 
+# FIXME: All options should be in the affirmative (i.e., enable-whatever instead of disable-whatever)
 option(disable-binary-analysis-tests "Disable tests of ROSE binary analysis code" ON)
 option(disable-example-translators-directory "Disable compilation and testing of exampleTranslators directory" ON)
 option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" OFF)
 option(disable-tutorial-directory "Disable compilation and testing of the ROSE/tutorial directory" OFF)
-option(disable-projects-directory "Disable compilation and testing of the ROSE/projects directory" ON)
+option(enable-projects-directory "Build projects ('projects' directory)" ON)
 
 option(enable-advanced-warnings "Support for an advanced uniform warning level for ROSE development" OFF)
 if(enable-advanced-warnings)
@@ -654,7 +655,7 @@ find_dlib()
 # To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=none.
 include(FindGcrypt)
 find_gcrypt()
-if(FOUND_GCRYPT)
+if(GCRYPT_FOUND)
   # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
   include(FindGpgError)
   find_gpgerror()
@@ -1061,7 +1062,6 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
-  ${ROSE_TOP_SRC_DIR}/projects/dataBase
   ${ROSE_TOP_SRC_DIR}/src/util/graphs
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
@@ -1154,11 +1154,6 @@ add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
-add_subdirectory(tools)
-enable_testing()
-add_subdirectory(tests)
-add_subdirectory(tutorial)
-add_subdirectory(projects)
 
 # Copy CTestCustom.cmake into the binary directory.  This file tells CTest to ignore some output that it otherwise
 # considers compilation errors.
@@ -1247,6 +1242,15 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 # scripts/publicConfiguration.pl for details.
 
 
+########################################################################################################################
+# Ancillary ROSE components. These are things that are not part of the ROSE library.
+########################################################################################################################
+
+add_subdirectory(tools)
+enable_testing()
+add_subdirectory(tests)
+add_subdirectory(tutorial)
+add_subdirectory(projects)
 
 ########################################################################################################################
 # Miscellaneous final actions
