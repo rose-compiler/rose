@@ -23,6 +23,5 @@ if(with-roseQt)
 
   include_directories(${ROSE_SOURCE_DIR}/src/roseExtensions/sqlite3x)
   add_executable(evaluateAllBinaries evaluateAllBinaries.C)
-  target_link_libraries(evaluateAllBinaries
-    ROSE_DLL RoseSQLite3xDatabase ${Boost_LIBRARIES})
+  target_link_libraries(evaluateAllBinaries ROSE_DLL ${Boost_LIBRARIES})
 endif()

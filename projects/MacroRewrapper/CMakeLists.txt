@@ -1,5 +1,5 @@
 if(SQLITE3_FOUND)
-  set(MacroRewrapper_libs ROSE_DLL RoseSQLite3xDatabase ${Boost_LIBRARIES})
+  set(MacroRewrapper_libs ROSE_DLL ${Boost_LIBRARIES})
 
   add_executable(macroRewrapper
     waveHelpers.C access-macros.cpp macroRewrapper.C argumentFilterer.C main.C helpFunctions.C)
