@@ -1,8 +1,10 @@
 add_custom_command(
-  OUTPUT license.h
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/license.h
   COMMAND ${CMAKE_SOURCE_DIR}/scripts/to-c-string.pl <${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt >license.h
   DEPENDS ${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt
   COMMENT "Generating license C string...")
+
+add_custom_target(generate_license_header DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/license.h)
 
 ########### build library ###############
 add_definitions(-DROSE_DLL_EXPORTS)
@@ -11,7 +13,7 @@ add_library(roseSupport OBJECT
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
   utility_functions.C memoryUsage.C IncludeDirective.C
   SqlDatabase.C Diagnostics.C stringify.C initialize.C CommandLine.C)
-add_dependencies(roseSupport rosetta_generated)
+add_dependencies(roseSupport rosetta_generated generate_license_header)
 
 ########### install files ###############
 

@@ -15,6 +15,7 @@ arg0="${0##*/}"
 dir0="${0%/*}"
 dry_run=
 config_timestamp=.config-timestamp
+: VERBOSE # if non-empty, be verbose. Also set by the --verbose switch.
 
 : ${TUP_SCRIPTS_URL=https://github.com/matzke1/tup-scripts}
 
@@ -205,11 +206,14 @@ edg_version() {
 # Execute the arguments as a command, or just show them
 dry_run() {
     local comment_out=""
-    [ -n "$dry_run" ] && comment_out=":"
-    (
-	set -ex
-	$comment_out "$@"
-    )
+    if [ -n "$dry_run" ]; then
+	echo "+" "$@"
+    else
+	if [ -n "$VERBOSE" ]; then
+	    echo "+" "$@"
+	fi
+	"$@"
+    fi
 }
 
 ########################################################################################################################
@@ -217,6 +221,9 @@ dry_run() {
 
 if is_present --dry-run "$@" || is_present -n "$@"; then
     dry_run=yes
+fi
+if is_present --verbose "$@"; then
+    VERBOSE=yes
 fi
 
 RG_SRC="$(cd .. && pwd)"
@@ -314,7 +321,12 @@ if [ ! -r tup.debug ]; then
     dry_run rsync -a .stash/ .
 else
     # Generated makefiles aren't needed by tup and just pollute, so trash them
-    dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
+    if [ -n "$VERBOSE" ]; then
+	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
+    else
+	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty rm
+    fi
+	
 
     # Any files that were just created or modified by ROSE's configure script should be copied
     # into the stash so that Tupfile rules that copy them back out into the build tree will
