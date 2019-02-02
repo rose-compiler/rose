@@ -5155,6 +5155,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Calling setNameQualificationOnName() (operating DIRECTLY on the SgInitializedName) \n");
 #endif
+
+                           // DQ (2/2/2019): NOTE: constructorInitializer->get_declaration() == NULL when there is not associated 
+                           // constructor for the class (e.g. the case where the default constructor (compiler generated) is used).
                            // DQ (1/13/2014): This only get's qualification when the name being used matches the class name, 
                            // else this is a data member and should not be qualified.  See test2014_01.C.
                            // SgName functionName = (functionType != NULL) ? functionType->get_name() : memberFunctionType->get_name();
@@ -5163,15 +5166,57 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: functionDeclaration = %p \n",functionDeclaration);
 #endif
-                              SgName functionName = functionDeclaration->get_name();
+                           // DQ (2/2/2019): This is non-null for all but EDG 5.0, so this is debugging support.
+                              if (functionDeclaration == NULL)
+                                 {
+#if 0
+                                // DQ (2/2/2019): Adding debugging code to better understand this case demonstrated for EDG 5.0 on Cxx11_tests/test2019_55.C.
+                                   SgExpression* initialzerExpression = initializedName->get_initptr();
+                                   printf ("initialzerExpression               = %p = %s \n",initialzerExpression,initialzerExpression->class_name().c_str());
+                                   printf ("constructorInitializer             = %p = %s \n",constructorInitializer,constructorInitializer->class_name().c_str());
+                                   printf ("constructorInitializer->get_type() = %p = %s \n",constructorInitializer->get_type(),constructorInitializer->get_type()->class_name().c_str());
+
+                                   printf ("constructorInitializer->get_declaration() = %p \n",constructorInitializer->get_declaration());
+                                   printf ("constructorInitializer->get_args()        = %p \n",constructorInitializer->get_args());
+                                   SgExprListExp* expressionList = constructorInitializer->get_args();
+                                   if (expressionList != NULL)
+                                      {
+                                        printf ("expressionList->get_expressions().size() = %zu \n",expressionList->get_expressions().size());
+                                        SgExpressionPtrList::iterator i = expressionList->get_expressions().begin();
+                                        while (i != expressionList->get_expressions().end())
+                                           {
+                                             printf ("  --- *i = %p = %s \n",*i,(*i)->class_name().c_str());
+                                             i++;
+                                           }
+                                      }
+
+                                   printf ("functionType                       = %p \n",functionType);
+                                   printf ("memberFunctionType                 = %p \n",memberFunctionType);
+
+                                   printf ("initializedName->get_name() = %s \n",initializedName->get_name().str());
+                                   printf ("initializedName->get_name() = %s \n",initializedName->get_name().str());
+                                   printf ("functionDeclaration == NULL: (EDG 5.0 issue): constructorInitializer->get_declaration() = %p \n",constructorInitializer->get_declaration());
+                                   if (constructorInitializer->get_declaration() != NULL)
+                                      {
+                                        printf ("functionDeclaration == NULL: (EDG 5.0 issue): constructorInitializer->get_declaration() = %p = %s \n",
+                                             constructorInitializer->get_declaration(),constructorInitializer->get_declaration()->class_name().c_str());
+                                      }
+                                   initializedName->get_file_info()->display("initializedName");
+#endif
+                                 }
+                                else
+                                 {
+                                // DQ (2/2/2019): Original code. Works for all but EDG 5.0.
+                                   SgName functionName = functionDeclaration->get_name();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: functionName = %s \n",functionName.str());
-                              printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: initializedName->get_name() = %s \n",initializedName->get_name().str());
+                                   printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: functionName = %s \n",functionName.str());
+                                   printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: initializedName->get_name() = %s \n",initializedName->get_name().str());
 #endif
-                              if (initializedName->get_name() == functionName)
-                                 {
-                                   setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                                   if (initializedName->get_name() == functionName)
+                                      {
+                                        setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+                                      }
                                  }
                             }
                            else

@@ -346,7 +346,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_64.C \
    test2019_65.C \
    test2019_66.C \
-   test2019_67.C 
+   test2019_67.C \
+   test2019_68.C \
+   test2019_69.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
