@@ -48,8 +48,10 @@ macro(find_gcrypt)
   if(VERBOSE)
     message(STATUS "GCRYPT_ROOT       = '${GCRYPT_ROOT}'")
     message(STATUS "GCRYPT_FOUND      = '${GCRYPT_FOUND}'")
-    message(STATUS "GCRYPT_LIBRARY    = '${GCRYPT_LIBRARY}'")
-    message(STATUS "GCRYPT_LIBRARIES  = '${GCRYPT_LIBRARIES}'")
+    if(GCRYPT_FOUND)
+      message(STATUS "GCRYPT_LIBRARY    = '${GCRYPT_LIBRARY}'")
+      message(STATUS "GCRYPT_LIBRARIES  = '${GCRYPT_LIBRARIES}'")
+    endif()
   endif()
 
   # ROSE variables

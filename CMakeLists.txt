@@ -204,6 +204,14 @@ set(ROSE_CONFIG_TOKEN "rose-${ROSE_SCM_VERSION_ID}")
 # Boost libraries
 ########################################################################################################################
 
+message(STATUS
+  "If you get a whole bunch of warnings saying 'New Boost version may have incorrect or missing dependencies and "
+  "imported targets' it is probably because you're using a Boost version that was released after your CMake version. "
+  "See [https://github.com/Kitware/CMake/commits/master/Modules/FindBoost.cmake] to see latest supported version and "
+  "[https://github.com/Microsoft/vcpkg/issues/2459] for a description of the problem. Note that CMake versions "
+  "3.11.0 through 3.13.2 and possibly later) cannot be compiled (syntax errors) with a GNU C++ compiler that's "
+  "configured to use a non-default language standard (e.g., C++11 with GCC-5.4 whose default is GNU++03).")
+
 set(Boost_USE_STATIC_LIBS FALSE)
 set(Boost_DEBUG ${VERBOSE})
 
@@ -524,7 +532,7 @@ include(FindMySQL)
 
 find_package(OpenSSL)
 
-
+find_package(Perl REQUIRED)
 
 ########################################################################################################################
 # Miscellaneous user-selectable features
@@ -643,13 +651,14 @@ find_yamlcpp()
 include(FindDlib)
 find_dlib()
 
-# To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
-include(FindGpgError)
-find_gpgerror()
-
 # To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=none.
 include(FindGcrypt)
 find_gcrypt()
+if(FOUND_GCRYPT)
+  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
+  include(FindGpgError)
+  find_gpgerror()
+endif()
 
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)

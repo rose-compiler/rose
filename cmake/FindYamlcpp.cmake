@@ -48,8 +48,10 @@ macro(find_yamlcpp)
   if(VERBOSE)
     message(STATUS "YAMLCPP_ROOT       = '${YAMLCPP_ROOT}'")
     message(STATUS "YAMLCPP_FOUND      = '${YAMLCPP_FOUND}'")
-    message(STATUS "YAMLCPP_LIBRARY    = '${YAMLCPP_LIBRARY}'")
-    message(STATUS "YAMLCPP_LIBRARIES  = '${YAMLCPP_LIBRARIES}'")
+    if(YAMLCPP_FOUND)
+      message(STATUS "YAMLCPP_LIBRARY    = '${YAMLCPP_LIBRARY}'")
+      message(STATUS "YAMLCPP_LIBRARIES  = '${YAMLCPP_LIBRARIES}'")
+    endif()
   endif()
 
   # ROSE variables
