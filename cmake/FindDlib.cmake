@@ -48,8 +48,10 @@ macro(find_dlib)
   if(VERBOSE)
     message(STATUS "DLIB_ROOT       = '${DLIB_ROOT}'")
     message(STATUS "DLIB_FOUND      = '${DLIB_FOUND}'")
-    message(STATUS "DLIB_LIBRARY    = '${DLIB_LIBRARY}'")
-    message(STATUS "DLIB_LIBRARIES  = '${DLIB_LIBRARIES}'")
+    if(DLIB_FOUND)
+      message(STATUS "DLIB_LIBRARY    = '${DLIB_LIBRARY}'")
+      message(STATUS "DLIB_LIBRARIES  = '${DLIB_LIBRARIES}'")
+    endif()
   endif()
 
   # ROSE variables
