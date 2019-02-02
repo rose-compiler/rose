@@ -1066,7 +1066,7 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
 
-if(SQLITE3_FOUND)
+if(SQLITE3_FOUND_LIB)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)
 endif()
 
