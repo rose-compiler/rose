@@ -13,4 +13,4 @@ install(FILES
     Optional.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h SharedPointer.h
     SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h
     Trace.h Type.h WarningsOff.h WarningsRestore.h
-  DESTINATION ${INCLUDE_INSTALL_DIR}/Sawyer)
+  DESTINATION include/Sawyer) # installed in $PREFIX/Sawyer, not $PREFIX/rose/Sawyer.
