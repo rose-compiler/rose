@@ -43,7 +43,7 @@ add_custom_command(
   COMMAND ${BISON_EXECUTABLE}
     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy -o
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
-  DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
+  DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy ${ROSE_BINARY_DIR}/src/frontend/SageIII/ompparser.h)
 
 #BISON generates a ompparser.H file and we need a ompparser.h file
 add_custom_command(
