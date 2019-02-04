@@ -12,14 +12,13 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
     dnl trying to figure out why their configuration is blacklisted. These are the versions they
     dnl HAVE. The versions that are PROHIBITED will be emitted later in this function.  The version
     dnl number variables should be set wherever we're detecting the dependency, not here.
-    AC_MSG_NOTICE([boost version     = $rose_boost_version])
-    AC_MSG_NOTICE([frontend compiler = $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR])
-    AC_MSG_NOTICE([binary analysis   = $support_binaries_frontend])
+    ROSE_SUPPORT_SUMMARY
 
     dnl -----------------------
     dnl  Versions we PROHIBIT
     dnl -----------------------
 
+    ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])
     while true; do
         dnl Boost 1.54 has numerous bugs related to threads. These manifest themselves as compile errors in
         dnl the first ROSE source that happens to include boost thread support, usually something in the
@@ -55,7 +54,7 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
     dnl    Output results
     dnl -----------------------
     if test "$prohibited" != ""; then
-        AC_MSG_NOTICE([
+        AC_MSG_ERROR([
             The following combination of ROSE software dependencies is blacklisted. The ROSE
             team occassionally blacklists combinations that are known to cause failures in
             perhaps subtle ways. If you would like to continue with this configuration at your
@@ -70,8 +69,8 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
         if test "$should_die" = "yes"; then
             AC_MSG_FAILURE([blacklisted: $prohibited])
         else
-            AC_MSG_NOTICE([blacklisted: $prohibited])
-            AC_MSG_NOTICE([blacklisted, but user chose to continue at their own risk])
+            AC_MSG_WARN([blacklisted: $prohibited])
+            AC_MSG_WARN([blacklisted, but user chose to continue at their own risk])
         fi
     fi
 ])
