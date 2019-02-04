@@ -17,10 +17,6 @@
 #   general documentation, as well as the sample configure.in, is included
 #   in the AC_PROG_JAVA macro.
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
@@ -91,9 +87,9 @@ rm -f Test.uue])
 fi
 if test x$ac_cv_prog_uudecode_base64 != xyes; then
         rm -f Test.class
-        AC_MSG_WARN([I have to compile Test.class from scratch])
+        AC_MSG_NOTICE([I have to compile Test.class from scratch])
         if test x$ac_cv_prog_javac_works = xno; then
-                AC_MSG_ERROR([Cannot compile java source. $JAVAC does not work properly])
+                AC_MSG_ERROR([cannot compile java source; "$JAVAC" does not work properly])
         fi
         if test x$ac_cv_prog_javac_works = x; then
                 AC_PROG_JAVAC
@@ -118,7 +114,7 @@ if test x$ac_cv_prog_uudecode_base64 != xyes; then
         else
           echo "configure: failed program was:" >&AC_FD_CC
           cat $JAVA_TEST >&AC_FD_CC
-          AC_MSG_ERROR(The Java compiler $JAVAC failed (see config.log, check the CLASSPATH?))
+          AC_MSG_ERROR([the Java compiler "$JAVAC" failed (see config.log, check the CLASSPATH)])
         fi
 fi
 if AC_TRY_COMMAND($JAVA $JAVAFLAGS $TEST) >/dev/null 2>&1; then
@@ -126,7 +122,7 @@ if AC_TRY_COMMAND($JAVA $JAVAFLAGS $TEST) >/dev/null 2>&1; then
 else
   echo "configure: failed program was:" >&AC_FD_CC
   cat $JAVA_TEST >&AC_FD_CC
-  AC_MSG_ERROR(The Java VM $JAVA failed (see config.log, check the CLASSPATH?))
+  AC_MSG_ERROR([the Java VM "$JAVA" failed (see config.log, check the CLASSPATH)])
 fi
 rm -fr $JAVA_TEST $CLASS_TEST Test.uue
 ])

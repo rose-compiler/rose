@@ -4,6 +4,7 @@
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
+#include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/ProgressBar.h>
 #include <stringify.h>
@@ -42,7 +43,7 @@ void initDiagnostics() {
 State::State(const P2::Partitioner &p, const Settings &settings, const Base &frontUnparser)
     : partitioner_(p), registerNames_(p.instructionProvider().registerDictionary()), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
-        cg_ = p.functionCallGraph(false);
+        cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);

@@ -11,12 +11,11 @@ dnl *********************************************************************
 dnl * Set the sanitizer tool compiler flags in CXXFLAGS and CFLAGS
 dnl *********************************************************************
 
-echo "Setup CXXFLAGS and CFLAGS for CXX = $CXX"
+AC_MSG_NOTICE([setup CXXFLAGS and CFLAGS for CXX = "$CXX"])
 
 AC_ARG_ENABLE(sanitizer, AS_HELP_STRING([--enable-sanitizer], [Support address sanitizer and related sanitizer tools (compiler options) for ROSE development]),[enableval=yes],[enableval=no])
 
-echo "enableval = $enableval"
-echo "enable_sanitizer = $enable_sanitizer"
+AC_MSG_NOTICE([enable_sanitizer = "$enable_sanitizer"])
 
 if test "x$enable_sanitizer" = "x"; then
    if test "x$enableval" = "xyes"; then
@@ -27,14 +26,14 @@ if test "x$enable_sanitizer" = "x"; then
       fi
    fi
 else
-   echo "enable_sanitizer is explictly set to: $enable_sanitizer"
+   AC_MSG_NOTICE([enable_sanitizer is explictly set to "$enable_sanitizer"])
 fi
 
-echo "After initialization: enable_sanitizer = $enable_sanitizer"
+AC_MSG_NOTICE([after initialization: enable_sanitizer = "$enable_sanitizer"])
 
 if test "x$enable_sanitizer" = "xyes"; then
 # enable_sanitizer was activated but not specified, so set it.
-  echo "Using default options for maximal warnings (true case)"
+  AC_MSG_NOTICE([using default options for maximal warnings (true case)])
   case $CXX in
     g++)
     # For GNU the support for sanitizer captured using a single options (I think).
@@ -43,11 +42,11 @@ if test "x$enable_sanitizer" = "xyes"; then
       ;;
     clang)
     # For LLVM the support for sanitizer is the best (but add this later).
-      echo "Clang compilers do support sanitizer tools (but support in ROSE not implemented)."
+      AC_MSG_NOTICE([Clang compilers do support sanitizer tools (but support in ROSE not implemented)])
       ;;
     icpc)
     # For Intel turn on 64bit migration/portability warnings
-      echo "Intel compilers don't support sanitizer tools."
+      AC_MSG_NOTICE([Intel compilers don't support sanitizer tools])
       ;;
   esac
 fi
@@ -60,8 +59,8 @@ fi
 
 AM_CONDITIONAL(ROSE_USE_SANITIZER,test "$enable_sanitizer" = yes)
 
-echo "debugging: CXXFLAGS = $CXXFLAGS"
-echo "debugging: CFLAGS   = $CFLAGS"
+AC_MSG_NOTICE([CXXFLAGS = "$CXXFLAGS"])
+AC_MSG_NOTICE([CFLAGS   = "$CFLAGS"])
 
 # exit 1
 

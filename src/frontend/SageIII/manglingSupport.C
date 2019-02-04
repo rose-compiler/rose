@@ -1189,6 +1189,12 @@ mangleValueExp (const SgValueExp* expr)
         }
         break;
 
+      case V_SgNullptrValExp:
+        {
+          mangled_name = "__nullptr";
+          break;
+        }
+
    // DQ (7/21/2012): Added support for IR node not seen previously except in new C++11 work.
       case V_SgTemplateParameterVal:
         mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
@@ -1207,15 +1213,289 @@ string
 mangleExpression (const SgExpression* expr)
   {
     ostringstream mangled_name;
-    if (expr)
-      {
-     // Handle value types and simple casts as a special case:
-        const SgValueExp* val = isSgValueExp (expr);
-        if (val)
-          mangled_name << mangleValueExp (val);
-        else // Punt on the rest.
-          mangled_name << "EXPR";
+    ROSE_ASSERT(expr != NULL);
+
+#if 0
+    printf("In mangleExpression: expr = %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
+    printf("                     expr : %s\n", expr ? expr->unparseToString().c_str() : "");
+#endif
+    const SgValueExp* val = isSgValueExp (expr);
+    if (val != NULL) {
+      mangled_name << mangleValueExp (val);
+    } else {
+      switch (expr->variantT()) {
+        case V_SgVarRefExp: {
+          const SgVarRefExp* e = isSgVarRefExp (expr);
+          SgVariableSymbol * vsym = e->get_symbol();
+          ROSE_ASSERT(vsym != NULL);
+          SgInitializedName * iname = vsym->get_declaration();
+          ROSE_ASSERT(iname != NULL);
+          mangled_name << iname->get_mangled_name().str();
+          break;
+        }
+        case V_SgFunctionRefExp: {
+          const SgFunctionRefExp* e = isSgFunctionRefExp (expr);
+          SgFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
+        case V_SgTemplateFunctionRefExp: {
+          const SgTemplateFunctionRefExp* e = isSgTemplateFunctionRefExp (expr);
+          SgTemplateFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
+        case V_SgMemberFunctionRefExp: {
+          const SgMemberFunctionRefExp* e = isSgMemberFunctionRefExp (expr);
+          SgMemberFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgMemberFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
+        case V_SgTemplateMemberFunctionRefExp: {
+          const SgTemplateMemberFunctionRefExp* e = isSgTemplateMemberFunctionRefExp (expr);
+          SgTemplateMemberFunctionSymbol * fsym = e->get_symbol_i();
+          ROSE_ASSERT(fsym != NULL);
+          SgMemberFunctionDeclaration * fdecl = fsym->get_declaration();
+          ROSE_ASSERT(fdecl != NULL);
+          mangled_name << fdecl->get_mangled_name().str();
+          break;
+        }
+        case V_SgCastExp: {
+          const SgCastExp* e = isSgCastExp (expr);
+          mangled_name << "_bCastExp_" << e->get_type()->get_mangled().getString() << "__" << mangleExpression (e->get_operand_i()) << "_eCastExp_";
+          break;
+        }
+        case V_SgNotOp: {
+          const SgNotOp* e = isSgNotOp (expr);
+          mangled_name << "_bNotOp_" << mangleExpression (e->get_operand_i()) << "_eNotOp_";
+          break;
+        }
+        case V_SgMinusOp: {
+          const SgMinusOp* e = isSgMinusOp (expr);
+          mangled_name << "_bMinusOp_" << mangleExpression (e->get_operand_i()) << "_eMinusOp_";
+          break;
+        }
+        case V_SgAddressOfOp: {
+          const SgAddressOfOp* e = isSgAddressOfOp (expr);
+          mangled_name << "_bAddressOfOp_" << mangleExpression (e->get_operand_i()) << "_eAddressOfOp_";
+          break;
+        }
+        case V_SgNoexceptOp: {
+          const SgNoexceptOp* e = isSgNoexceptOp (expr);
+          mangled_name << "_bNoexceptOp_" << mangleExpression (e->get_operand_expr()) << "_eNoexceptOp_";
+          break;
+        }
+        case V_SgSizeOfOp: {
+          const SgSizeOfOp* e = isSgSizeOfOp (expr);
+          mangled_name << "_bSizeOfOp_";
+          if (e->get_operand_expr() != NULL) {
+            mangled_name << "_expr_" << mangleExpression (e->get_operand_expr());
+          } else if (e->get_operand_type()) {
+            mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
+          } else {
+            ROSE_ASSERT(false);
+          }
+          mangled_name << "_eSizeOfOp_";
+          break;
+        }
+        case V_SgAlignOfOp: {
+          const SgAlignOfOp* e = isSgAlignOfOp (expr);
+          mangled_name << "_bAlignOfOp_";
+          if (e->get_operand_expr() != NULL) {
+            mangled_name << "_expr_" << mangleExpression (e->get_operand_expr());
+          } else if (e->get_operand_type()) {
+            mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
+          } else {
+            ROSE_ASSERT(false);
+          }
+          mangled_name << "_eAlignOfOp_";
+          break;
+        }
+        case V_SgAddOp: {
+          const SgAddOp* e = isSgAddOp (expr);
+          mangled_name << "_bAddOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAddOp_";
+          break;
+        }
+        case V_SgAndOp: {
+          const SgAndOp* e = isSgAndOp (expr);
+          mangled_name << "_bAndOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAndOp_";
+          break;
+        }
+        case V_SgBitAndOp: {
+          const SgBitAndOp* e = isSgBitAndOp (expr);
+          mangled_name << "_bBitAndOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitAndOp_";
+          break;
+        }
+        case V_SgBitXorOp: {
+          const SgBitXorOp* e = isSgBitXorOp (expr);
+          mangled_name << "_bBitXorOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitXorOp_";
+          break;
+        }
+        case V_SgOrOp: {
+          const SgOrOp* e = isSgOrOp (expr);
+          mangled_name << "_bOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eOrOp_";
+          break;
+        }
+        case V_SgMultiplyOp: {
+          const SgMultiplyOp* e = isSgMultiplyOp (expr);
+          mangled_name << "_bMultiplyOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eMultiplyOp_";
+          break;
+        }
+        case V_SgDivideOp: {
+          const SgDivideOp* e = isSgDivideOp (expr);
+          mangled_name << "_bDivideOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDivideOp_";
+          break;
+        }
+        case V_SgEqualityOp: {
+          const SgEqualityOp* e = isSgEqualityOp (expr);
+          mangled_name << "_bEqualityOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eEqualityOp_";
+          break;
+        }
+        case V_SgSubtractOp: {
+          const SgSubtractOp* e = isSgSubtractOp (expr);
+          mangled_name << "_bSubtractOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eSubtractOp_";
+          break;
+        }
+        case V_SgDotExp: {
+          const SgDotExp* e = isSgDotExp (expr);
+          mangled_name << "_bDotExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotExp_";
+          break;
+        }
+        case V_SgModOp: {
+          const SgModOp* e = isSgModOp (expr);
+          mangled_name << "_bModOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eModOp_";
+          break;
+        }
+        case V_SgArrowExp: {
+          const SgArrowExp* e = isSgArrowExp (expr);
+          mangled_name << "_bArrowExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowExp_";
+          break;
+        }
+        case V_SgLessThanOp: {
+          const SgLessThanOp* e = isSgLessThanOp (expr);
+          mangled_name << "_bLessThanOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLessThanOp_";
+          break;
+        }
+        case V_SgLessOrEqualOp: {
+          const SgLessOrEqualOp* e = isSgLessOrEqualOp (expr);
+          mangled_name << "_bLessOrEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLessOrEqualOp_";
+          break;
+        }
+        case V_SgGreaterThanOp: {
+          const SgGreaterThanOp* e = isSgGreaterThanOp (expr);
+          mangled_name << "_bGreaterThanOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eGreaterThanOp_";
+          break;
+        }
+        case V_SgGreaterOrEqualOp: {
+          const SgGreaterOrEqualOp* e = isSgGreaterOrEqualOp (expr);
+          mangled_name << "_bGreaterOrEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eGreaterOrEqualOp_";
+          break;
+        }
+        case V_SgAssignOp: {
+          const SgAssignOp* e = isSgAssignOp (expr);
+          mangled_name << "_bAssignOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAssignOp_";
+          break;
+        }
+        case V_SgNotEqualOp: {
+          const SgNotEqualOp* e = isSgNotEqualOp (expr);
+          mangled_name << "_bNotEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eNotEqualOp_";
+          break;
+        }
+        case V_SgRshiftOp: {
+          const SgRshiftOp* e = isSgRshiftOp (expr);
+          mangled_name << "_bRshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eRshiftOp_";
+          break;
+        }
+        case V_SgLshiftOp: {
+          const SgLshiftOp* e = isSgLshiftOp (expr);
+          mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
+          break;
+        }
+        case V_SgConditionalExp: {
+          const SgConditionalExp* e = isSgConditionalExp (expr);
+          mangled_name << "_bConditionalExp_";
+          mangled_name << mangleExpression(e->get_conditional_exp());
+          mangled_name << "__";
+          mangled_name << mangleExpression(e->get_true_exp());
+          mangled_name << "__";
+          mangled_name << mangleExpression(e->get_false_exp());
+          mangled_name << "_eConditionalExp_";
+          break;
+        }
+        case V_SgFunctionCallExp: {
+          const SgFunctionCallExp* e = isSgFunctionCallExp (expr);
+          mangled_name << "_bFunctionCallExp_" << mangleExpression (e->get_function()) << "__" << mangleExpression (e->get_args()) << "_eFunctionCallExp_";
+          break;
+        }
+        case V_SgConstructorInitializer: {
+          const SgConstructorInitializer* e = isSgConstructorInitializer (expr);
+
+          mangled_name << "_bConstructorInitializer_";
+
+          mangled_name << e->get_type()->get_mangled().getString();
+
+          mangleExpression (e->get_args());
+
+          mangled_name << "_eConstructorInitializer_";
+
+          break;
+        }
+        case V_SgPntrArrRefExp: {
+          const SgPntrArrRefExp * e = isSgPntrArrRefExp(expr);
+          mangled_name << "_bPntrArrRefExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_ePntrArrRefExp_";
+          break;
+        }
+        case V_SgTypeTraitBuiltinOperator: {
+          const SgTypeTraitBuiltinOperator* e = isSgTypeTraitBuiltinOperator (expr);
+          mangled_name << "_bTypeTraitBuiltinOperator_" << e->get_name().getString();
+          mangled_name << "_bNodePtrList_";
+          SgNodePtrList::const_iterator it;
+          const SgNodePtrList & args = e->get_args();
+          for (it = args.begin(); it != args.end(); it++) {
+            if (it != args.begin())
+              mangled_name << "__sep__";
+            SgType * tit = isSgType(*it);
+            SgExpression * eit = isSgExpression(*it);
+            if (tit != NULL) {
+              mangled_name << tit->get_mangled().getString();
+            } else if (eit != NULL) {
+              mangled_name << mangleExpression(eit);
+            } else {
+              ROSE_ASSERT(false);
+            }
+          }
+          mangled_name << "_eNodePtrList_";
+          mangled_name << "_eTypeTraitBuiltinOperator_";
+          break;
+        }
+        case V_SgExprListExp: {
+          const SgExprListExp* e = isSgExprListExp (expr);
+          mangled_name << "_bExprListExp_";
+          SgExpressionPtrList::const_iterator it;
+          const SgExpressionPtrList & args = e->get_expressions();
+          for (it = args.begin(); it != args.end(); it++) {
+            if (it != args.begin())
+              mangled_name << "__sep__";
+            mangled_name << mangleExpression (*it);
+          }
+          mangled_name << "_eExprListExp_";
+          break;
+        }
+        default: {
+          printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
+          ROSE_ASSERT(false);
+        }
       }
+    }
 
     return mangled_name.str ();
   }

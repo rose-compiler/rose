@@ -32,7 +32,7 @@ if test "x$haskellsetting" != xno; then
 			GHCBIN="$haskellsetting"
 			USE_HASKELL=1
 		else
-			AC_MSG_ERROR([Argument to --with-haskell must be path to bin directory, but argument is not a directory])
+			AC_MSG_ERROR([argument to --with-haskell must be path to bin directory, but argument is not a directory])
 		fi
 	fi
 fi

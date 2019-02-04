@@ -8,12 +8,12 @@ AC_DEFUN([ROSE_SUPPORT_LIBPQXX],[
 				 On Debian-based systems its available as "libpqxx-dev".  The C PostgreSQL
 				 library (libpq) must be installed before you can use libpqxx.])],
 		[pqxx=$withval],
-		[pqxx=default])
+		[pqxx=no])
 
     ROSE_HAVE_LIBPQXX=
 
     # Does the user tell us where to find libpqxx?
-    if test $pqxx = yes -o $pqxx = default; then
+    if test "$pqxx" = yes -o "$pqxx" = default; then
         ROSE_LIBPQXX_PREFIX=
 	old_LIBS="$LIBS"
 	LIBS="$LIBS -lpqxx -lpq"
