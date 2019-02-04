@@ -1290,14 +1290,31 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           if (tmp_type != NULL)
              {
                SgUnparse_Info ninfo(info);
+#if 0
+               printf ("In unparseFunctionParameterDeclaration(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+#endif
+            // DQ (2/3/2019): In the case of function parameters, the member pointer types need an extra parenthesis.
+            // This might just apply to arrays of SgMemberPointerType.
+               SgPointerMemberType* pointerToMemberType = isSgPointerMemberType(tmp_type);
+               if (pointerToMemberType != NULL)
+                  {
+                    ninfo.set_inArgList();
+                  }
 
-               if (initializedName->get_needs_definitions()) {
-                 ninfo.unset_SkipClassDefinition();
-                 ninfo.unset_SkipEnumDefinition();
-               }
+               if (initializedName->get_needs_definitions())
+                  {
+                    ninfo.unset_SkipClassDefinition();
+                    ninfo.unset_SkipEnumDefinition();
+                  }
 
             // DQ (5/5/2013): Refactored code used here and in the unparseTemplateArgument().
                unp->u_type->outputType<SgInitializedName>(initializedName,tmp_type,ninfo);
+
+            // DQ (2/3/2019): In the case of function parameters, the member pointer types need an extra parenthesis.
+               if (pointerToMemberType != NULL)
+                  {
+                    ninfo.unset_inArgList();
+                  }
              }
             else
              {
@@ -5022,6 +5039,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // printf ("Comment out call to get_suppress_atomic(funcdecl_stmt) \n");
 #if 0
+#error "DEAD CODE!"
           if (get_suppress_atomic(funcdecl_stmt))
                ninfo.set_SkipAtomic();   // attributes.h
 #endif
@@ -5101,7 +5119,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if OUTPUT_FUNCTION_DECLARATION_DATA
           curprint ("\n/* output the return type */ \n");
 #endif
-
+#if 0
+          curprint ("\n/* output the return type */ \n");
+#endif
        // DQ (5/30/2011): Added support for name qualification.
           ninfo_for_type.set_reference_node_for_qualification(funcdecl_stmt);
           ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
@@ -5122,15 +5142,23 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("funcdecl_stmt->isForward() = %s \n",funcdecl_stmt->isForward() ? "true" : "false");
           printf ("ninfo.SkipSemiColon()      = %s \n",ninfo.SkipSemiColon() ? "true" : "false");
 #endif
-#if 1
+
+// #if 1
        // DQ (6/23/2015): Output the GNU attribute where it appears between the return type and the function name.
        // unp->u_sage->printAttributes(funcdecl_stmt,info);
        // if (funcdecl_stmt->isForward() == false && !ninfo.SkipSemiColon())
           if (funcdecl_stmt->isForward() == false)
              {
-               unp->u_sage->printAttributes(funcdecl_stmt,info);
-             }
+#if 0
+               curprint ("/* before unparsing the printAttributes */");
 #endif
+               unp->u_sage->printAttributes(funcdecl_stmt,info);
+
+#if 0
+               curprint ("/* after unparsing the printAttributes */");
+#endif
+             }
+// #endif
 
        // DQ (10/15/2006): Mark that we are unparsing a function declaration (or member function declaration)
        // this will help us know when to trim the "::" prefix from the name qualiciation.  The "::" global scope
@@ -5871,6 +5899,11 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
   // Note that we pass a reference to the return type so that we can call unparseType a second time to unparse the second part 
   // (not yet refactored, since it is much simpler).
 
+#if 0
+     printf ("In unparseReturnType(): funcdecl_stmt = %p funcdecl_stmt->get_name() = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
+     curprint ("/* In unparseReturnType(): */ \n ");
+#endif
+
      SgClassDefinition *parent_class = isSgClassDefinition(funcdecl_stmt->get_parent());
 
        // This is a test for if the member function is structurally in the class where it is defined.
@@ -5905,8 +5938,10 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                   funcdecl_stmt->get_specialFunctionModifier().isDestructor()  ||
                   funcdecl_stmt->get_specialFunctionModifier().isConversion() ) )
              {
-            // printf ("In unparser: NOT a constructor, destructor or conversion operator \n");
-
+#if 0
+               printf ("In unparseReturnType(): NOT a constructor, destructor or conversion operator \n");
+               curprint ("/* In unparseReturnType(): NOT a constructor, destructor or conversion operator */ \n ");
+#endif
             // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
 
                if (funcdecl_stmt->get_orig_return_type() != NULL)
@@ -5992,8 +6027,18 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());
                ninfo_for_type.set_type_elaboration_required(funcdecl_stmt->get_type_elaboration_required_for_return_type());
 
+#if 0
+               printf ("In unparseReturnType(): calling unparseType: rtype = %p = %s \n",rtype,rtype->class_name().c_str());
+               curprint ("/* In unparseReturnType(): calling unparseType */ \n ");
+#endif
+
             // unp->u_type->unparseType(rtype, ninfo);
                unp->u_type->unparseType(rtype, ninfo_for_type);
+
+#if 0
+               printf ("In unparseReturnType(): DONE: calling unparseType: rtype = %p = %s \n",rtype,rtype->class_name().c_str());
+               curprint ("/* In unparseReturnType(): DONE: calling unparseType */ \n ");
+#endif
 
                ninfo.unset_SkipClassSpecifier();
             // printf ("In unparser: DONE with NOT a constructor, destructor or conversion operator \n");
@@ -6010,6 +6055,11 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                ROSE_ASSERT(funcdecl_stmt->get_orig_return_type() != NULL);
                ROSE_ASSERT(funcdecl_stmt->get_type()->get_return_type() != NULL);
              }
+
+#if 0
+     printf ("Leaving unparseReturnType(): funcdecl_stmt = %p funcdecl_stmt->get_name() = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
+     curprint ("/* Leaving unparseReturnType(): */ \n ");
+#endif
    }
                 
 
@@ -6435,6 +6485,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
 #if 1
+
 #if 0
           printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): calling unparseTrailingFunctionModifiers() \n");
 #endif
@@ -6678,6 +6729,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+     curprint ("/*  Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stm) */ ");
 #endif
    }
 
@@ -10372,14 +10424,16 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (pointerToType != NULL)
           functionType = isSgFunctionType(pointerToType->get_base_type());
 
-  // SgPointerMemberType* pointerToMemberType = isSgPointerMemberType(typedef_stmt->get_base_type());
+  // DQ (2/3/2019): Adding support to unparse SgPointerMemberType with parenthesis now that they have been 
+  // discovered to not be required in the unparse type code for SgPointerMemberType.  See Cxx11_tests/test2019_77.C.
+     SgPointerMemberType* pointerToMemberType = isSgPointerMemberType(typedef_stmt->get_base_type());
 
   // DQ (9/15/2004): Added to support typedefs of member pointers
      SgMemberFunctionType* pointerToMemberFunctionType = isSgMemberFunctionType(typedef_stmt->get_base_type());
 
 #if 0
      printf ("In unp->u_type->unparseTypedef: functionType                = %p \n",functionType);
-  // printf ("In unp->u_type->unparseTypedef: pointerToMemberType         = %p \n",pointerToMemberType);
+     printf ("In unp->u_type->unparseTypedef: pointerToMemberType         = %p \n",pointerToMemberType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberFunctionType = %p \n",pointerToMemberFunctionType);
 #endif
 
@@ -10390,15 +10444,17 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // code for function pointers allows for easier debugging.  When typedefs of defining class 
   // declarations is fixed we might be able to unify these separate cases.
 
+  // DQ (2/3/2019): See if this is a better branch for handling the SgPointerMemberType.
   // This handles pointers to functions and member function (but not pointers to members!)
   // if ( (functionType != NULL) || (pointerToMemberType != NULL) )
      if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) )
+   // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (pointerToMemberType != NULL) )
         {
        // Newly implemented case of typedefs for function and member function pointers
 #if 0
           printf ("In unparseTypeDefStmt(): case of typedefs for function and member function pointers \n");
 #endif
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 1
           curprint("\n/* Case of typedefs for function and member function pointers */ \n");
 #endif
           ninfo.set_SkipFunctionQualifier();
@@ -10409,7 +10465,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // function pointer declaration)
           ninfo.set_isTypeFirstPart();
 
-#if OUTPUT_DEBUGGING_UNPARSE_INFO
+#if OUTPUT_DEBUGGING_UNPARSE_INFO || 0
           curprint ( string("\n/* " ) + ninfo.displayString("After return Type now output the base type (first part then second part)") + " */ \n");
 #endif
 
@@ -10418,7 +10474,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
 #if 0
-          curprint("\n/* Output base type (first part) */ \n");
+          curprint("\n/* Output base type (first part) (for functionType or pointerToMemberFunctionType) */ \n");
 #endif
 
 #if 0
@@ -10477,16 +10533,17 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("Not a typedef for a function type or member function type \n");
 #endif
 
-// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
-          curprint("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n");
-#endif
-
           ninfo.set_SkipFunctionQualifier();
           curprint ("typedef ");
 
           ninfo.set_SkipSemiColon();
           SgType *btype = typedef_stmt->get_base_type();
+
+       // DQ (2/3/2019): Make the unparse_info object so that the unparseType() can output the required parenthesis when the base type is a pointer to member.
+          if ( pointerToMemberType != NULL )
+             {
+               ninfo.set_inTypedefDecl();
+             }
 
           ninfo.set_isTypeFirstPart();
 
@@ -10559,7 +10616,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: Before first part of type */ \n";
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
 #if 0
-          curprint("\n/* Output base type (first part) */ \n");
+          curprint("\n/* Output base type (first part) (Not a typedef for a function type or member function type) */ \n");
 #endif
 
        // DQ (5/30/2011): Added support for name qualification.
@@ -10645,6 +10702,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseTypedefStmt(): (first part): btype = %p = %s \n",btype,btype->class_name().c_str());
 #endif
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+               curprint("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n");
+#endif
+
             // DQ (5/7/2013): Using ninfoallows test2013_156.C to work.
             // unp->u_type->unparseType(btype, ninfo_for_type);
             // unp->u_type->unparseType(btype, ninfo);
@@ -10680,6 +10742,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint(" ");
 #endif
 
+#if 0
+          curprint("\n/* Output typedef name */ \n");
+#endif
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;
           curprint(typedef_stmt->get_name().str());
@@ -10711,6 +10776,8 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( string(";"));
              }
 #endif
+       // DQ (2/3/2019): Unset this to avoid use outside of typedef unparsing.
+          ninfo.unset_inTypedefDecl();
         }
 
 #if 0
