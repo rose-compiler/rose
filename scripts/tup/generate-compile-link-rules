@@ -150,6 +150,11 @@ Qt has a number of source-generating translation tools including "rcc", "uic", a
 The name of the resulting executable or library. By default, the name of the output is computed from the name of the
 first input file by removing path components and the extension, then adding an extension appropriate for the type of output.
 
+=item --osname=I<NAME>
+
+Overrides the automatically detected operating system name. This is useful in order to generate rules on one operating
+system that are intended to run on another operating system. The I<NAME> should be "linux", "macos", or "windows".
+
 =item --phase=I<PHASE>
 
 This script generates rules with the assumption that a project is built in multiple phases. For instance, a large
@@ -417,6 +422,17 @@ sub parse_command_line {
             next;
         }
 
+	# --osname=OS
+	if ($arg eq "--osname") {
+	    die "$arg0: \"$arg\" expects an argument\n" unless @_;
+	    TupScripts::osname(shift @_);
+	    next;
+	}
+	if ($arg =~ /^--osname=(.*)/) {
+	    TupScripts::osname($1);
+	    next;
+	}
+
         # --phase=NAME
         if ($arg eq "--phase") {
             die "$arg0: \"$arg\" expects an argument\n" unless @_;
@@ -474,13 +490,9 @@ sub parse_command_line {
 
     # Convert the compilation database name into a Tup group
     if ($emit_compilation_db ne "") {
-	if ($emit_compilation_db =~ /<\w+>$/) {
-	    # already a Tup group
-	} elsif ($emit_compilation_db =~ /^(.*\/)?(\w+)$/) {
-	    $emit_compilation_db = "$1<$2>";
-	} else {
-	    die "$arg0: compilation database is not a Tup group \"$emit_compilation_db\"\n";
-	}
+	my($group) = TupScripts::make_group_name($emit_compilation_db);
+	die "$arg0: compilation database is not a Tup group \"$emit_compilation_db\"\n" if $group eq "";
+	$emit_compilation_db = $group;
     }
 }
 
@@ -508,16 +520,6 @@ sub linker_language {
 }
 
 ########################################################################################################################
-# Fix the a group specification by adding angle brackets around the last component of the path.
-sub make_group_name {
-    my($input) = @_;
-    return "" unless $input;
-    my @parts = split "/", $input;
-    $parts[-1] = "<" . $parts[-1] . ">" unless $parts[-1] =~ /^<.*>$/;
-    return join "/", @parts;
-}
-
-########################################################################################################################
 # Choose the $link and $linkage based on output file name.
 sub choose_linking {
     if ($link eq "") {
@@ -528,7 +530,7 @@ sub choose_linking {
             } elsif ($linkage ne "static") {
                 die "$arg0: invalid linkage \"$linkage\" for output \"$output\"\n";
             }
-        } elsif ($output =~ /\.so$/) {
+        } elsif ($output =~ /\.(so|ldd)$/) {
             $link = "lib";
             if ($linkage eq "") {
                 $linkage = "shared";
@@ -661,24 +663,24 @@ sub generate_compile_rules {
             $uc_lang = "CXX" if $uc_lang eq "C++";
             $compile_macro = "${phase}compile_" . lc($uc_compiler);
             push @rule_outputs, "${output}-%B.o";
-            push @extra_compiler_args, cxx_debug_prefix_map(), '-o', '%o', '-c', '%f';
+            push @extra_compiler_args, cxx_debug_prefix_map(), "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } elsif ($lang eq 'd') {
             push @rule_outputs, TupScripts::make_variable($output) . '-%B.o';
-            push @extra_compiler_args, '-of=%o', '-c', '%f';
+            push @extra_compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } elsif ($lang eq "moc") {
             push @rule_outputs, "moc_%B.cpp";
-            push @extra_compiler_args, '-o', '%o', '%f';
+            push @extra_compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } elsif (TupScripts::is_source_code($sources->{$lang}[0])) {
             push @rule_outputs, "${output}-%B.o";
-            push @extra_compiler_args, '-o', '%o', '%f';
+            push @extra_compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } elsif (TupScripts::is_qt_ui($sources->{$lang}[0])) {
             $uc_lang = "UIC";
             push @rule_outputs, "ui_%B.h";
-            push @extra_compiler_args, '-o', '%o', '%f';
+            push @extra_compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } elsif (TupScripts::is_qt_resource($sources->{$lang}[0])) {
             $uc_lang = "RCC";
             push @rule_outputs, "qrc_%B.C";
-            push @extra_compiler_args, '-o', '%o', '%f';
+            push @extra_compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", "\@(${uc_compiler}_C_SWITCH)\%f";
         } else {
             next; # not something to be compiled
         }
@@ -731,6 +733,7 @@ sub generate_link_rules {
     die unless ref($sources) eq 'HASH';
 
     my $lang = linker_language(keys %{$sources});
+    my $uc_compiler = TupScripts::compiler_exe($lang);
 
     # Get the list of linker inputs
     my @linker_inputs;
@@ -743,9 +746,9 @@ sub generate_link_rules {
     if ($link eq "exe") {
 	$link_macro = "${phase}linkexe_" . linker_language(keys %{$sources});
 	if ($lang eq 'd') {
-	    push @compiler_args, '-of=%o', TupScripts::tup_input_variable(@linker_inputs);
+	    push @compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
 	} else {
-	    push @compiler_args, '-o', '%o', TupScripts::tup_input_variable(@linker_inputs);
+	    push @compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
 	}
     } elsif ($link eq "lib" || $link eq "python") {
 	if ($linkage eq "static") {
@@ -754,11 +757,11 @@ sub generate_link_rules {
 	    die unless $linkage eq "shared";
             $link_macro = "${phase}linklib_" . linker_language(keys %{$sources});
             if ($lang eq 'cxx' || $lang eq 'c') {
-                push @compiler_args, '-shared', '-o', '%o', TupScripts::tup_input_variable(@linker_inputs);
+                push @compiler_args, '-shared', "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
             } elsif ($lang eq 'd') {
-                push @compiler_args, '-lib', '-of=%o', TupScripts::tup_input_variable(@linker_inputs);
+                push @compiler_args, '-lib', "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
             } else {
-                push @compiler_args, '-o', '%o', TupScripts::tup_input_variable(@linker_inputs);
+                push @compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
             }
 	}
     } else {
@@ -773,23 +776,27 @@ sub generate_link_rules {
     for my $l (@{$sources->{library}}) {
 	# Normalize the library name by making sure it ends with the proper file extension for the $linkage mode
 	my($lib) = $l;
-	$lib = $1 if $lib =~ /^((.*\/)?lib[^.].*?)(\.(a|so))?$/;
+	$lib = $1 if $lib =~ /^((.*\/)?lib[^.].*?)(\.(a|so|dll))?$/;
 	$lib .= ".a" if $linkage eq "static";
-	$lib .= ".so" if $linkage eq "shared";
+	if (TupScripts::osname eq 'windows') {
+	    $lib .= ".dll" if $linkage eq "shared";
+	} else {
+	    $lib .= ".so" if $linkage eq "shared";
+	}
 
 	# Get a library base name like "foo" if the input is "/some/libdir/libfoo.so"
 	my $lib_basename = TupScripts::base_name($lib);
 	my $lib_name = $lib_basename;
 	$lib_name = $1 if $lib_name =~ /^lib([^.].*)/;
-	$lib_name = $1 if $lib_name =~ /^(.+)\.(a|so)$/;
+	$lib_name = $1 if $lib_name =~ /^(.+)\.(a|so|dll)$/;
 
 	#my($lib_dirname) = TupScripts::canonical_name(TupScripts::absolute_name(TupScripts::directory_name($lib)));
 	my($lib_dirname) = TupScripts::directory_name($lib);
 	push @linker_order_inputs, $lib unless $lib =~ /^\//; # absolute names are not managed by Tup
 	if ($lang eq 'cxx' || $lang eq 'c') {
-	    unshift @linker_args, "-L$lib_dirname", "-Wl,-rpath,$lib_dirname", "-l$lib_name";
+	    unshift @linker_args, "\@(${uc_compiler}_LIBDIR_SWITCH)$lib_dirname", "\@(${uc_compiler}_RPATH_SWITCH)$lib_dirname", "\@(${uc_compiler}_LIB_SWITCH)$lib_name";
 	} elsif ($lang eq 'd') {
-	    unshift @linker_args, $lib, "-L=-rpath", "-L=$lib_dirname";
+	    unshift @linker_args, $lib, "\@(${uc_compiler}_L_SWITCH)-rpath", "\@(${uc_compiler}_L_SWITCH)$lib_dirname";
 	} else {
 	    unshift @linker_args, $lib;
 	}
@@ -827,7 +834,7 @@ sub generate_link_rules {
 ########################################################################################################################
 
 parse_command_line @ARGV;
-$group = make_group_name $group;
+$group = TupScripts::make_group_name $group;
 
 # If any header files are specified in the inputs, move them to the order-only inputs instead because headers are not
 # normally compiled directly.

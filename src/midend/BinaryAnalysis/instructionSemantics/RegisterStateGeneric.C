@@ -41,6 +41,7 @@ RegisterStateGeneric::zero()
 void
 RegisterStateGeneric::initialize_large()
 {
+    ASSERT_not_null(regdict);
     std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
     initialize_nonoverlapping(regs, false);
 }
@@ -119,12 +120,12 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
 #endif
 }
 
-RegisterStateGeneric::RegPairs&
-RegisterStateGeneric::scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops, bool markOverlapping,
-                                            RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) {
+void
+RegisterStateGeneric::scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops,
+                                            RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) const {
     BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
-    RegPairs &pairList = registers_.insertMaybeDefault(reg);
-    BOOST_FOREACH (RegPair &regpair, pairList) {
+    const RegPairs &pairList = registers_.getOrDefault(reg);
+    BOOST_FOREACH (const RegPair &regpair, pairList) {
         BitRange storedLocation = regpair.location();   // the thing that's already stored in this state
         BitRange overlap = storedLocation & accessedLocation;
         if (overlap.isEmpty())
@@ -153,18 +154,24 @@ RegisterStateGeneric::scanAccessedLocations(RegisterDescriptor reg, RiscOperator
             size_t extractEnd = extractBegin + nbits;
             preservedParts.push_back(RegPair(subreg, ops->extract(regpair.value, extractBegin, extractEnd)));
         }
+    }
+}
 
-        // If we're allowed to modify the storage locations so as to match the accessed register then mark this pair with a
-        // null value so we can erase it in the next step.
-        if (markOverlapping)
+void
+RegisterStateGeneric::clearOverlappingLocations(RegisterDescriptor reg) {
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+    RegPairs emptyPairList;
+    RegPairs &pairList = registers_.getOrElse(reg, emptyPairList);
+    BOOST_FOREACH (RegPair &regpair, pairList) {
+        BitRange storedLocation = regpair.location();
+        BitRange overlap = storedLocation & accessedLocation;
+        if (!overlap.isEmpty())
             regpair.value = SValuePtr();
     }
-    return pairList;
 }
 
 SValuePtr
-RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops)
-{
+RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_require(reg.is_valid());
     ASSERT_not_null(dflt);
     ASSERT_require(reg.get_nbits() == dflt->get_width());
@@ -194,7 +201,10 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     // and which parts of those overlapping storage locations are not accessed.
     RegPairs accessedParts;                             // parts of existing overlapping locations we access
     RegPairs preservedParts;                            // parts of existing overlapping locations we don't access
-    RegPairs &pairList = scanAccessedLocations(reg, ops, adjustLocations, accessedParts /*out*/, preservedParts /*out*/);
+    RegPairs &pairList = registers_.insertMaybeDefault(reg);
+    scanAccessedLocations(reg, ops, accessedParts /*out*/, preservedParts /*out*/);
+    if (adjustLocations)
+        clearOverlappingLocations(reg);
 
     // Figure out which part of the access does not exist in the state
     typedef Sawyer::Container::IntervalSet<BitRange> Locations;
@@ -262,12 +272,51 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
 
 BaseSemantics::SValuePtr
 RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
-    AccessModifiesExistingLocationsGuard amelGuard(this, false);
-    AccessCreatesLocationsGuard aclGuard(this, false);
+    ASSERT_require(reg.is_valid());
+    ASSERT_not_null(dflt);
+    ASSERT_require(reg.get_nbits() == dflt->get_width());
+    ASSERT_not_null(ops);
+    assertStorageConditions("at start of read", reg);
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
 
-    // Use the RegisterStateGeneric implementation rather than any subclass implementation. Suggested by Cory to
-    // avoid an inifinite loop since the subclass readRegister is written in terms of peekRegister.
-    return RegisterStateGeneric::readRegister(reg, dflt, ops);
+    if (!registers_.exists(reg))
+        return dflt;                                    // no part of the register is stored in the state
+
+    // Iterate over the storage/value pairs to figure out what parts of the register are already in existing storage locations,
+    // and which parts of those overlapping storage locations are not accessed.
+    RegPairs accessedParts;                             // parts of existing overlapping locations we access
+    RegPairs preservedParts;                            // parts of existing overlapping locations we don't access
+    scanAccessedLocations(reg, ops, accessedParts /*out*/, preservedParts /*out*/);
+
+    // Figure out which part of the access does not exist in the state
+    typedef Sawyer::Container::IntervalSet<BitRange> Locations;
+    Locations newLocations;
+    newLocations.insert(accessedLocation);
+    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+        newLocations -= regpair.location();
+
+    // Create values for the parts of the accessed register that weren't stored in the state
+    RegPairs newParts;
+    BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+        RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
+        ASSERT_require(newLocation.least() >= reg.get_offset());
+        SValuePtr newval = ops->extract(dflt,
+                                        newLocation.least()-reg.get_offset(),
+                                        newLocation.greatest()+1-reg.get_offset());
+        newParts.push_back(RegPair(subreg, newval));
+    }
+
+    // Construct the return value by combining all the parts we found or created.
+    SValuePtr retval;
+    RegPairs retvalParts = accessedParts;
+    retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
+    std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
+    BOOST_FOREACH (const RegPair &regpair, retvalParts)
+        retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
+    ASSERT_require(retval->get_width() == reg.get_nbits());
+
+    assertStorageConditions("at end of peek", reg);
+    return retval;
 }
 
 void
@@ -302,8 +351,10 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
     // and which parts of those overlapping storage locations are not accessed.
     RegPairs accessedParts;                             // parts of existing overlapping locations we access
     RegPairs preservedParts;                            // parts of existing overlapping locations we don't access
-    RegPairs &pairList = scanAccessedLocations(reg, ops, accessModifiesExistingLocations_,
-                                               accessedParts /*out*/, preservedParts /*out*/);
+    RegPairs &pairList = registers_.insertMaybeDefault(reg);
+    scanAccessedLocations(reg, ops, accessedParts /*out*/, preservedParts /*out*/);
+    if (accessModifiesExistingLocations_)
+        clearOverlappingLocations(reg);
 
     // Figure out which part of the access does not exist in the state
     typedef Sawyer::Container::IntervalSet<BitRange> Locations;

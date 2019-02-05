@@ -4,7 +4,7 @@
 # compiler, but what we want to do instead is hand it the vendor name.
 
 if test $# -ne 3; then
-  echo "Usage: $0 <compilerName> <language> <compilerVendorName>" >&2
+  echo "usage: $0 <compilerName> <language> <compilerVendorName>" >&2
   exit 1
 fi
 
@@ -12,10 +12,12 @@ compilerName="`basename $1`"
 language=$2
 compilerVendorName=$3
 
-echo "In get_compiler_header_dirs: compiler name with path = $1" >&2
-echo "In get_compiler_header_dirs: compilerName            = $compilerName" >&2
-echo "In get_compiler_header_dirs: compilerVendorName      = $compilerVendorName" >&2
-echo "In get_compiler_header_dirs: language                = $language" >&2
+if [ -n "$VERBOSE" ]; then
+    echo "In get_compiler_header_dirs: compiler name with path = $1" >&2
+    echo "In get_compiler_header_dirs: compilerName            = $compilerName" >&2
+    echo "In get_compiler_header_dirs: compilerVendorName      = $compilerVendorName" >&2
+    echo "In get_compiler_header_dirs: language                = $language" >&2
+fi
 
 # case "$compilerName" in
 case "$compilerVendorName" in
@@ -37,11 +39,11 @@ case "$compilerVendorName" in
          ;;
 
   # DQ (2/2/2016): Added case for unknown compiler vendor (m4 macro will return this value).
-    unknown) echo "ERROR: Not able to recognize compiler (vendor marked as unknown) $1"
+    unknown) echo "$0: error: not able to recognize compiler (vendor marked as unknown) $1" >&2
        exit 1
        ;;
 
-    *) echo "ERROR: Not able to recognize compiler (error) $1"
+    *) echo "$0: error: not able to recognize compiler (error) $1" >&2
        exit 1
        ;;
 esac

@@ -19,7 +19,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_06.C \
    test2012_07.C \
    test2012_09.C \
-   test2012_10.C \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
@@ -309,9 +308,25 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_13.C \
    test2019_14.C \
    test2019_17.C \
-   test2019_18.C 
+   test2019_18.C \
+   test2019_19.C \
+   test2019_20.C \
+   test2019_21.C \
+   test2019_22.C \
+   test2019_23.C \
+   test2019_24.C \
+   test2019_27.C \
+   test2019_28.C \
+   test2019_29.C \
+   test2019_30.C \
+   test2019_31.C \
+   test2019_32.C \
+   test2019_33.C \
+   test2019_35.C \
+   test2019_36.C 
 
 TESTCODE_CURRENTLY_FAILING = \
+   test2012_10.C \
    test2012_23.C \
    test2012_24.C \
    test2014_46.C \
@@ -319,8 +334,15 @@ TESTCODE_CURRENTLY_FAILING = \
    test2016_41.C \
    test2017_17.C \
    test2019_15.C \
-   test2019_16.C 
+   test2019_16.C \
+   test2019_25.C \
+   test2019_26.C \
+   test2019_34.C \
+   test2019_37.C \
+   test2019_38.C 
 
+# NOTE: test2019_34.C, test2019_37.C, and test2019_38.C don't compile with at least some versions of GNU g++ (e.g. version 5.1) but will 
+# compile with EDG and ROSE now.  And the generated code is correct,
 # NOTE: test2019_15.C fails for the GNU 4.8.5, but passes for everything else (or at least later versions of gnu, versions 5.1 and later).
 
 # NOTE: test2012_10.C works on with GNU 5.1, but not GNU 6.1 (something different in the header files, not handled by EDG 4.12).

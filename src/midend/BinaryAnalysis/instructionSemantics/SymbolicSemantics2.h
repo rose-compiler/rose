@@ -605,11 +605,11 @@ public:
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      BaseSemantics::RiscOperators *addrOps,
-                                                      BaseSemantics::RiscOperators *valOps,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              BaseSemantics::RiscOperators *addrOps,
+                                              BaseSemantics::RiscOperators *valOps,
+                                              bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -1202,10 +1202,10 @@ public:
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
-                                                      const BaseSemantics::SValuePtr &addr,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
+                                              const BaseSemantics::SValuePtr &addr,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              bool allowSideEffects);
 };
 
 } // namespace

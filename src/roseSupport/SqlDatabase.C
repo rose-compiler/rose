@@ -173,7 +173,7 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
 }
 
  // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
-#ifdef ROSE_HAVE_LIBPQXX
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -312,12 +312,13 @@ ConnectionImpl::conn_for_transaction()
         driver_connections.resize(retval+10);
     }
 
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
+    DriverConnection &dconn = driver_connections[retval];
+#endif
+
     // Fill in the necessary info for the driver connection and establish the connection
     switch (driver) {
 #ifdef ROSE_HAVE_SQLITE3
- // Moved declaration here to remove unused variable warning [Rasmussen, 2019.01.28]
-    DriverConnection & dconn = driver_connections[retval];
-
         case SQLITE3: {
             if (dconn.sqlite3_connection==NULL) {
                 bool has_debug_param = false;
@@ -549,8 +550,10 @@ TransactionImpl::init()
     postgres_tranx = NULL;
 #endif
     assert(drv_conn_idx < conn->impl->driver_connections.size());
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     ConnectionImpl::DriverConnection &dconn = conn->impl->driver_connections[drv_conn_idx];
     assert(dconn.nrefs>0);
+#endif
 
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3

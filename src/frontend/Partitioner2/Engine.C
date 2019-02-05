@@ -1296,14 +1296,14 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         SgAsmBlock *blockAst = isSgAsmBlock(node);
         if (!blockAst || !blockAst->has_instructions())
             continue;
-        BasicBlock::Ptr bblock = BasicBlock::instance(blockAst->get_address(), &partitioner);
+        BasicBlock::Ptr bblock = BasicBlock::instance(blockAst->get_address(), partitioner);
         bblock->comment(blockAst->get_comment());
 
         // Instructions
         const SgAsmStatementPtrList &stmts = blockAst->get_statementList();
         for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
             if (SgAsmInstruction *insn = isSgAsmInstruction(*si))
-                bblock->append(insn);
+                bblock->append(partitioner, insn);
         }
 
         // Successors
@@ -2275,17 +2275,17 @@ Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
 
 // Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get an
 // indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in which case
-// RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
-// its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::readMemory
+// RiscOperators::peekMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
+// its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::peekMemory
 // would have returned the value stored there but also marked the value as being INDETERMINATE.  The
 // SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
 // [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
 void
 Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
-    if (args.bblock->finalState() == NULL)
+    BasicBlockSemantics sem = args.bblock->semantics();
+    if (sem.finalState() == NULL)
         return;
-    BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
-    ASSERT_not_null(ops);
+    ASSERT_not_null(sem.operators);
 
     bool addIndeterminateEdge = false;
     size_t addrWidth = 0;
@@ -2303,7 +2303,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     // Add an edge
     if (addIndeterminateEdge) {
         ASSERT_require(addrWidth != 0);
-        BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
+        BaseSemantics::SValuePtr addr = sem.operators->undefined_(addrWidth);
         EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
         args.bblock->insertSuccessor(addr, type);
         SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()

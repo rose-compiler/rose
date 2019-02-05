@@ -11,14 +11,14 @@ if test ! "$with_rted" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_rted $with_rted"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_rted = "$with_rted"])
 
 if test "$with_rted" = no; then
    # If RTED is not specified, then don't use it.
-   echo "Skipping use of RTED support!"
+   AC_MSG_NOTICE([skipping use of RTED support])
 else
    rted_path=$with_rted
-   echo "Setup RTED support in ROSE! path = $rted_path"
+   AC_MSG_NOTICE([setup RTED support in ROSE. path = "$rted_path"])
    AC_DEFINE([USE_ROSE_RTED_SUPPORT],1,[Controls use of ROSE support for RTED library.])
 fi
 

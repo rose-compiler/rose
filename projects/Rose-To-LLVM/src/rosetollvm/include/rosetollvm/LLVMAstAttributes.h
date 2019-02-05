@@ -41,6 +41,7 @@ class LLVMAstAttributes : public RootAstAttribute {
               defined_function_table;
     std::vector<SgNode *> global_declaration;
     bool needs_memcopy;
+    bool needs_stacksave;
     std::vector<SgInitializedName *> remote_global_declarations;
 
     std::string intPointerTarget;
@@ -81,8 +82,7 @@ public:
                                                                                     option(option_),
                                                                                     control(control_),
                                                                                     needs_memcopy(false),
-                                                                                    tmp_count(0),
-                                                                                    tmp_int_count(0),
+                                                                                    needs_stacksave(false),
                                                                                     context(control.getGlobalContext()),
                                                                                     builder(context)
     {
@@ -109,6 +109,9 @@ public:
 
         intPointerTarget = ((StringAstAttribute *) pointerSizeIntegerType -> getAttribute(Control::LLVM_TYPE)) -> getValue();
     }
+
+    Control &getControl() { return control; }
+    Option &getOption() { return  option;}
 
     CodeEmitter &getCodeOut() {
         return codeOut;
@@ -172,9 +175,11 @@ public:
         TEMP_POINTER_DIFFERENCE_DIVISION,
         TEMP_LABEL
     };
-    long tmp_count,
-         tmp_int_count;
-    void resetIntCount() { tmp_int_count = 0; }
+
+    static long tmp_count,
+                tmp_int_count;
+    static void resetIntCount() { tmp_int_count = 0; }
+
     const std::string getTemp(TEMP_KIND k);
     const std::string getFunctionTemp(std::string, std::string);
 
@@ -182,6 +187,9 @@ public:
 
     bool needsMemcopy() { return needs_memcopy; }
     void setNeedsMemcopy() { needs_memcopy = true; }
+
+    bool needsStacksave() { return needs_stacksave; }
+    void setNeedsStacksave() { needs_stacksave = true; }
 
     class StringLiteral {
     public:
@@ -269,6 +277,7 @@ public:
     const std::string getFunctionSignature(SgFunctionSymbol *);
     const std::string getGlobalStringConstantName(int);
     const std::string getGlobalStringReference(int);
+    const std::string getGlobalStringReference(int, string);
 
     /**
      * This map is only required because there is a bad bug in the Rose compiler - The declaration
@@ -300,6 +309,13 @@ public:
     SgType *getVoidStarType() {
         return voidStarType;
     }
+
+
+    /**
+     * Check whether or not type1 is identical to type2.
+     */
+    static bool isTrivialCast(SgType *type1, SgType *type2);
+
 
     /**
      *
