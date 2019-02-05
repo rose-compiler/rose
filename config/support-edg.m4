@@ -8,60 +8,58 @@ AC_ARG_ENABLE(edg-version,
 [ echo "Setting up EDG version"
 ])
 
-echo "enable_edg_version = $enable_edg_version"
+AC_MSG_NOTICE([enable_edg_version = "$enable_edg_version"])
 if test "x$enable_edg_version" = "x"; then
 # DQ (5/22/2016): Changed the default version of EDG to 4.9.
-   echo "Default version of EDG used (4.9)"
+   AC_MSG_NOTICE([default version of EDG used (4.9)])
    edg_major_version_number=4
    edg_minor_version_number=9
 else
-   echo "Specifying EDG version is not recommended"
+   AC_MSG_NOTICE([specifying EDG version is not recommended])
    edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
    edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
 fi
 
-echo "edg_major_version_number = $edg_major_version_number"
-echo "edg_minor_version_number = $edg_minor_version_number"
+AC_MSG_NOTICE([edg_version: major = "$edg_major_version_number", minor = "$edg_minor_version_number"])
 
 if test "x$edg_major_version_number" = "x4"; then
-  echo "Recognized an accepted major version number."
+  AC_MSG_NOTICE([recognized an accepted major version number])
   if test "x$edg_minor_version_number" = "x4"; then
-    echo "Recognized an accepted minor version number."
+    AC_MSG_NOTICE([recognized an accepted minor version number])
     enable_edg_version44=yes
     AC_DEFINE([ROSE_USE_EDG_VERSION_4_4], [], [Whether to use the new EDG version 4.4])
   else
     if test "x$edg_minor_version_number" = "x7"; then
-      echo "Recognized an accepted minor version number."
+      AC_MSG_NOTICE([recognized an accepted minor version number])
       enable_edg_version47=yes
       AC_DEFINE([ROSE_USE_EDG_VERSION_4_7], [], [Whether to use the new EDG version 4.7])
     else
       if test "x$edg_minor_version_number" = "x8"; then
-        echo "Recognized an accepted minor version number."
+        AC_MSG_NOTICE([recognized an accepted minor version number])
         enable_edg_version48=yes
         AC_DEFINE([ROSE_USE_EDG_VERSION_4_8], [], [Whether to use the new EDG version 4.8])
       else
         if test "x$edg_minor_version_number" = "x9"; then
-          echo "Recognized an accepted minor version number."
+          AC_MSG_NOTICE([recognized an accepted minor version number])
           enable_edg_version49=yes
           AC_DEFINE([ROSE_USE_EDG_VERSION_4_9], [], [Whether to use the new EDG version 4.9])
         else
           if test "x$edg_minor_version_number" = "x11"; then
-            echo "Recognized an accepted minor version number."
+            AC_MSG_NOTICE([recognized an accepted minor version number])
             enable_edg_version411=yes
             AC_DEFINE([ROSE_USE_EDG_VERSION_4_11], [], [Whether to use the new EDG version 4.11])
           else
             if test "x$edg_minor_version_number" = "x12"; then
-              echo "Recognized an accepted minor version number."
+              AC_MSG_NOTICE([recognized an accepted minor version number])
               enable_edg_version412=yes
               AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
             else
               if test "x$edg_minor_version_number" = "x14"; then
-                echo "Recognized an accepted minor version number."
+                AC_MSG_NOTICE([recognized an accepted minor version number])
                 enable_edg_version414=yes
                 AC_DEFINE([ROSE_USE_EDG_VERSION_4_14], [], [Whether to use the new EDG version 4.14])
               else
-                echo "ERROR: Could not identify the EDG minor version number."
-                exit 1
+                AC_MSG_FAILURE([could not identify the EDG minor version number])
               fi
             fi
           fi

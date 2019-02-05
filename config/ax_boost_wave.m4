@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_WAVE
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -103,7 +99,7 @@ AC_DEFUN([AX_BOOST_WAVE],
                done
             fi
 			if test "x$link_wave" != "xyes"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
             # DQ (4/7/2006): build a macro to use in source code to know when WAVE is to be used.
             AC_DEFINE([USE_ROSE_BOOST_WAVE_SUPPORT],1,[Controls use of BOOST WAVE support in ROSE.])

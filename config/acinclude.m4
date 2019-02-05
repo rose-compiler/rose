@@ -39,7 +39,7 @@ dnl Adds separator title configure output (idea borrowed from mm)
 dnl
 AC_DEFUN([ROSE_CONFIGURE_SECTION],[
   AC_MSG_RESULT()
-  AC_MSG_RESULT([${T_BM}$1${T_NM}])
+  echo "${T_BM}$1${T_NM}"
 ])
 
 dnl ----------------------------------------------------------------------------

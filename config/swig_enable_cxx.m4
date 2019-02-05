@@ -8,10 +8,6 @@
 #
 #   Enable SWIG C++ support. This affects all invocations of $(SWIG).
 #
-# LAST MODIFICATION
-#
-#   2006-10-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2006 Sebastian Huber <sebastian-huber@web.de>

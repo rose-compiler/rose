@@ -28,7 +28,7 @@ AC_DEFUN([ROSE_SUPPORT_OCTAVE],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_OCTAVE_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([Modified GNU Octave parser])
+  ROSE_CONFIGURE_SECTION([Checking modified GNU Octave parser])
 
   #============================================================================
   # --with-octave-parser=/path/to/octave-parser-install/
@@ -46,7 +46,7 @@ AC_DEFUN([ROSE_SUPPORT_OCTAVE],
     OCTAVE_PARSER_INSTALL_TARFILE=
   fi
 
-echo "OCTAVE_PARSER_INSTALL_TARFILE = "$OCTAVE_PARSER_INSTALL_TARFILE
+  AC_MSG_NOTICE([OCTAVE_PARSER_INSTALL_TARFILE = "$OCTAVE_PARSER_INSTALL_TARFILE"])
 
   #============================================================================
   # Validate installation (if provided)
