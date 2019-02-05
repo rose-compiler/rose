@@ -11092,14 +11092,14 @@ SgAsmInstruction* SgAsmInstruction::build_node_from_nonlist_children ( rose_addr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmx86Instruction* SgAsmx86Instruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize )
+SgAsmX86Instruction* SgAsmX86Instruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize )
    {
 #if 0
   // debugging information!
-     printf ("In SgAsmx86Instruction::build_node_from_nonlist_children (rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgAsmX86Instruction::build_node_from_nonlist_children (rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-     SgAsmx86Instruction* returnNode = NULL;
+     SgAsmX86Instruction* returnNode = NULL;
 
      return returnNode;
    }
