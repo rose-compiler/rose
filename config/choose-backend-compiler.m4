@@ -375,11 +375,13 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 
 # Test that we have correctly evaluated the major and minor versions numbers...
   if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-    AC_MSG_WARN([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
+  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
+    AC_MSG_ERROR([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
   fi
 
   if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-    AC_MSG_WARN([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
+  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
+    AC_MSG_ERROR([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
   fi
 
 # DQ (9/16/2009): GNU gfortran 4.0 has special problems so we avoid some tests where it fails.
