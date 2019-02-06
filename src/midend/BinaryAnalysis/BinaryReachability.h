@@ -1,7 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Reachability_H
 #define ROSE_BinaryAnalysis_Reachability_H
 
+#include <BitFlags.h>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <set>
 #include <vector>
@@ -28,10 +30,13 @@ public:
         ALL_REASONS             = 0xffffffff            /**< All reason bits. */
     };
 
+    /** Bit flags for reachability. */
+    typedef BitFlags<Reason, uint32_t> ReasonFlags;
+
 private:
     Partitioner2::ControlFlowGraph cfg_;                // CFG upon which we're operating
-    std::vector<unsigned> intrinsicReachability_;      // intrinsic reachability of each vertex in the CFG
-    std::vector<unsigned> reachability_;                // computed reachability of each vertex in the CFG
+    std::vector<ReasonFlags> intrinsicReachability_;    // intrinsic reachability of each vertex in the CFG
+    std::vector<ReasonFlags> reachability_;             // computed reachability of each vertex in the CFG
     bool savingCfg_;                                    // whether to save the CFG when serializing.
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -39,16 +44,52 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_NVP(savingCfg_);
         if (savingCfg_)
             s & BOOST_SERIALIZATION_NVP(cfg_);
         s & BOOST_SERIALIZATION_NVP(intrinsicReachability_);
         s & BOOST_SERIALIZATION_NVP(reachability_);
     }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_NVP(savingCfg_);
+        if (savingCfg_)
+            s & BOOST_SERIALIZATION_NVP(cfg_);
+        s & BOOST_SERIALIZATION_NVP(intrinsicReachability_);
+        s & BOOST_SERIALIZATION_NVP(reachability_);
+
+        if (version < 1) {
+            // Old versions stored an array of unsigned long
+            {
+                std::vector<unsigned long> tmp;
+                s & boost::serialization::make_nvp("intrinsicReachability_", tmp);
+                intrinsicReachability_.reserve(tmp.size());
+                BOOST_FOREACH (unsigned long v, tmp)
+                    intrinsicReachability_.push_back(v);
+            }
+            {
+                std::vector<unsigned long> tmp;
+                s & boost::serialization::make_nvp("reachability_", tmp);
+                reachability_.reserve(tmp.size());
+                BOOST_FOREACH (unsigned long v, tmp)
+                    intrinsicReachability_.push_back(v);
+            }
+        } else {
+            // Newer versions store an array of bit vectors
+            s & BOOST_SERIALIZATION_NVP(intrinsicReachability_);
+            s & BOOST_SERIALIZATION_NVP(reachability_);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
 public:
+    /** Default constructor.
+     *
+     *  Constructs a new analysis object with an empty control flow graph. */
     Reachability()
         : savingCfg_(true) {}
 
@@ -90,7 +131,7 @@ public:
      *
      *  Returns the intrinsic reachability for a vertex. The vertex ID numst be valid for the graph being analyzed. The return
      *  value is a bit vector of @ref Reason bits, some of which might be user-defined. */
-    unsigned isIntrinsicallyReachable(size_t vertexId) const;
+    ReasonFlags isIntrinsicallyReachable(size_t vertexId) const;
 
     /** Controls immediate propagation. */
     struct Propagate {
@@ -106,18 +147,18 @@ public:
      *  bits. Changing the intrinsic reachability of a vertex to @ref NOT_REACHABLE does not necessarily mark the vertex as
      *  unreachable since it might be reachable from other reachable vertices. The new reachability will be immediately
      *  propagated through the graph if @p doPropagate is set. */
-    void intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::Boolean propagate = Propagate::YES);
+    void intrinsicallyReachable(size_t vertexId, ReasonFlags how, Propagate::Boolean propagate = Propagate::YES);
 
     /** Query computed reachability.
      *
      *  Returns the computed reachability for a vertex.  The return value is always a superset of the vertex's intrinsic
      *  reachability and is a bit vector of @ref Reason bits. The vertex ID must be valid. */
-    unsigned isReachable(size_t vertexId) const;
+    ReasonFlags isReachable(size_t vertexId) const;
 
     /** Computed reachability for all vertices.
      *
      *  The return value is a vector of @ref Reason bit flags for each vertex, indexed by vertex ID. */
-    const std::vector<unsigned>& reachability() const;
+    const std::vector<ReasonFlags>& reachability() const;
 
     /** Mark special vertices for containers.
      *
@@ -135,5 +176,8 @@ public:
 
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Reachability, 1);
 
 #endif

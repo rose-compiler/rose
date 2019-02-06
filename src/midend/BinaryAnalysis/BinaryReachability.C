@@ -11,7 +11,7 @@ namespace BinaryAnalysis {
 
 void
 Reachability::clearReachability() {
-    intrinsicReachability_ = reachability_ = std::vector<unsigned>(cfg_.nVertices(), NOT_REACHABLE);
+    intrinsicReachability_ = reachability_ = std::vector<ReasonFlags>(cfg_.nVertices());
 }
 
 void
@@ -31,40 +31,40 @@ Reachability::replaceCfg(const P2::ControlFlowGraph &g) {
     cfg_ = g;
 }
 
-unsigned
+Reachability::ReasonFlags
 Reachability::isIntrinsicallyReachable(size_t vertexId) const {
     ASSERT_require(vertexId < cfg_.nVertices());
     return intrinsicReachability_[vertexId];
 }
 
-unsigned
+Reachability::ReasonFlags
 Reachability::isReachable(size_t vertexId) const {
     ASSERT_require(vertexId < cfg_.nVertices());
     return reachability_[vertexId];
 }
 
 struct TransferFunction {
-    unsigned operator()(const P2::ControlFlowGraph&, size_t vertexId, unsigned state) {
+    Reachability::ReasonFlags operator()(const P2::ControlFlowGraph&, size_t vertexId, Reachability::ReasonFlags state) {
         return state;
     }
 
-    std::string printState(unsigned state) {
-        return StringUtility::toHex2(state, 8*sizeof(state), false, false);
+    std::string printState(Reachability::ReasonFlags state) {
+        return StringUtility::toHex2(state.vector(), 32, false, false);
     }
 };
 
 struct MergeFunction {
-    bool operator()(unsigned &a, unsigned b) {
+    bool operator()(Reachability::ReasonFlags &a, Reachability::ReasonFlags b) {
         if (a == b)
             return false;
-        a |= b;
+        a.set(b);
         return true;
     }
 };
 
 void
 Reachability::propagate() {
-    typedef DataFlow::Engine<const P2::ControlFlowGraph, unsigned, TransferFunction, MergeFunction> DfEngine;
+    typedef DataFlow::Engine<const P2::ControlFlowGraph, ReasonFlags, TransferFunction, MergeFunction> DfEngine;
     TransferFunction xfer;
     MergeFunction merge;
     DfEngine engine(cfg_, xfer, merge);
@@ -72,7 +72,8 @@ Reachability::propagate() {
 
     // Initialize the data-flow states for vertices with intrinsic reachability.
     for (size_t i=0; i<cfg_.nVertices(); ++i) {
-        if (unsigned r = intrinsicReachability_[i])
+        ReasonFlags r = intrinsicReachability_[i];
+        if (r.isAnySet())
             engine.insertStartingVertex(i, r);
     }
 
@@ -85,7 +86,7 @@ Reachability::propagate() {
 }
 
 void
-Reachability::intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::Boolean doPropagate) {
+Reachability::intrinsicallyReachable(size_t vertexId, ReasonFlags how, Propagate::Boolean doPropagate) {
     ASSERT_require(vertexId < cfg_.nVertices());
     if (how == intrinsicReachability_[vertexId])
         return;
@@ -94,7 +95,7 @@ Reachability::intrinsicallyReachable(size_t vertexId, unsigned how, Propagate::B
         propagate();
 }
 
-const std::vector<unsigned>&
+const std::vector<Reachability::ReasonFlags>&
 Reachability::reachability() const {
     return reachability_;
 }
@@ -106,13 +107,13 @@ Reachability::markSpecialFunctions(const P2::Partitioner &partitioner) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(func->address());
         ASSERT_require(partitioner.cfg().isValidVertex(vertex));
 
-        unsigned wasReachable = isIntrinsicallyReachable(vertex->id());
-        unsigned reachable = wasReachable;
+        ReasonFlags wasReachable = isIntrinsicallyReachable(vertex->id());
+        ReasonFlags reachable = wasReachable;
         
         if (0 != (func->reasons() & SgAsmFunction::FUNC_ENTRY_POINT))
-            reachable |= ENTRY_POINT;
+            reachable.set(ENTRY_POINT);
         if (0 != (func->reasons() & SgAsmFunction::FUNC_EXPORT))
-            reachable |= EXPORTED_FUNCTION;
+            reachable.set(EXPORTED_FUNCTION);
 
         if (reachable != wasReachable) {
             intrinsicallyReachable(vertex->id(), reachable, Propagate::NO);
