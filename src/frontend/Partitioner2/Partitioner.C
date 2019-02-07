@@ -2,6 +2,7 @@
 #include <Partitioner2/Partitioner.h>
 
 #include <Partitioner2/AddressUsageMap.h>
+#include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Utility.h>
@@ -2619,6 +2620,83 @@ Partitioner::functionCallGraph(AllowParallelEdges::Type allowParallelEdges) cons
         }
     }
     return cg;
+}
+
+std::set<rose_addr_t>
+Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+
+    std::set<rose_addr_t> retval;
+    BaseSemantics::RiscOperatorsPtr ops = newOperators();
+    BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
+    if (!cpu)
+        return retval;
+
+    // Build the data flow engine. We're using parts from a variety of locations.
+    typedef DataFlow::DfCfg DfCfg;
+    typedef BaseSemantics::StatePtr StatePtr;
+    typedef DataFlow::TransferFunction TransferFunction;
+    typedef BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+    typedef BinaryAnalysis::DataFlow::Engine<DfCfg, StatePtr, TransferFunction, MergeFunction> Engine;
+
+    ControlFlowGraph::ConstVertexIterator startVertex = findPlaceholder(function->address());
+    ASSERT_require2(cfg_.isValidVertex(startVertex), "function does not exist in partitioner");
+    DfCfg dfCfg = DataFlow::buildDfCfg(*this, cfg_, startVertex); // not interprocedural
+    size_t dfCfgStartVertexId = 0; // dfCfg vertex corresponding to function's entry ponit.
+    TransferFunction xfer(cpu);
+    MergeFunction mergeFunction(cpu);
+    Engine dfEngine(dfCfg, xfer, mergeFunction);
+    dfEngine.maxIterations(2 * dfCfg.nVertices());        // arbitrary limit for non-convergent flow
+
+    StatePtr initialState = xfer.initialState();
+    const RegisterDescriptor SP = cpu->stackPointerRegister();
+    const RegisterDescriptor memSegReg;
+    BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
+    size_t wordSize = SP.get_nbits() >> 3;              // word size in bytes
+
+    // Run the data flow
+    try {
+        dfEngine.runToFixedPoint(dfCfgStartVertexId, initialState);
+    } catch (const BaseSemantics::Exception &e) {
+        mlog[ERROR] <<function->printableName() <<": " <<e <<"\n"; // probably missing semantics capability for an instruction
+        return retval;
+    } catch (const BinaryAnalysis::DataFlow::NotConverging &e) {
+        mlog[WARN] <<function->printableName() <<": " <<e.what() <<"\n";
+    } catch (const BinaryAnalysis::DataFlow::Exception &e) {
+        mlog[ERROR] <<function->printableName() <<": " <<e.what() <<"\n";
+        return retval;
+    }
+
+
+    // Scan all outgoing states and accumulate any concrete values we find.
+    BOOST_FOREACH (StatePtr state, dfEngine.getFinalStates()) {
+        if (state) {
+            ops->currentState(state);
+            BaseSemantics::RegisterStateGenericPtr regs =
+                BaseSemantics::RegisterStateGeneric::promote(state->registerState());
+            BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
+                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                    retval.insert(kv.value->get_number());
+            }
+
+            BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
+                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
+                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
+                if (value->is_number() && value->get_width() <= SP.get_nbits())
+                    retval.insert(value->get_number());
+            }
+
+            BOOST_FOREACH (const AbstractLocation &var, DataFlow::findGlobalVariables(ops, wordSize)) {
+                if (var.isAddress()) {
+                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
+                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
+                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                        retval.insert(value->get_number());
+                }
+            }
+        }
+    }
+    return retval;
 }
 
 void
