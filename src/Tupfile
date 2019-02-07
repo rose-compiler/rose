@@ -34,14 +34,18 @@ run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"
 : rose-config |> ^ GEN %o^ \
     ( \
         echo "# Things that the 'rose-config' tool can report"; \
-        echo "cc       = $(tool_CC)" ; \
-        echo "cxx      = $(tool_CXX)" ; \
-        echo "cppflags = -I@(INSTALLATION_PREFIX)/include/rose $(CPPFLAGS)" ; \
-        echo "cflags   = $(CFLAGS)" ; \
-        echo "cxxflags = $(CXXFLAGS)" ; \
-        echo "ldflags  = -Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED)" ; \
-        echo "libdirs  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')" ; \
-        echo "prefix   = @(INSTALLATION_PREFIX)" ; \
+        echo "ROSE_CC       = $(tool_CC)"; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
+        echo "ROSE_CPPFLAGS = -I@(INSTALLATION_PREFIX)/include/rose $(CPPFLAGS)" ; \
+        echo "ROSE_CFLAGS   = $(CFLAGS)"; \
+        echo "ROSE_CXXFLAGS = $(CXXFLAGS)"; \
+        echo "ROSE_LDFLAGS  = -Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED)"; \
+	echo "ROSE_LDFLAGS_SHARED = \$(ROSE_LDFLAGS)"; \
+        echo "ROSE_LIBDIRS  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')"; \
+        echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
+	echo "# Additional items useful to include in Makefiels"; \
+	echo "ROSE_RPATHS      ="; \
+	echo "ROSE_LINK_RPATHS ="; \
     ) |$(ROSE)/scripts/absolute-paths >%o \
   |> rose-config.cfg
 
@@ -64,7 +68,7 @@ export SPOCK_EMPLOYED
         echo "ROSE_SOURCE   = `readlink -f @(ROSE_SOURCE)`"; \
         echo "ROSE_BUILD    = `readlink -f $(ROSE)`"; \
         echo "ROSE_CC       = $(tool_CC)" ; \
-        echo "ROSE_CXX      = $(tool_CXX)" ; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
         echo "ROSE_CPPFLAGS = $(CPPFLAGS) -I@(INSTALLATION_PREFIX)/include @(LIBROSE_CPPFLAGS) @(TOOL_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
@@ -89,17 +93,17 @@ run $(public_header) --language=shell -o include rose-installed-make.cfg
         eval `cd $(ROSE) && ./scripts/tup/vars-from-configure`; \
         echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
         : no ROSE_PREFIX necessary for in-tree builds; \
-        echo "ROSE_CC       = $(tool_CC)" ; \
-        echo "ROSE_CXX      = $(tool_CXX)" ; \
-        echo "ROSE_CPPFLAGS = $(tool_CPPFLAGS)" ; \
+        echo "ROSE_CC       = $(tool_CC)"; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
+        echo "ROSE_CPPFLAGS = $(tool_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
         echo "ROSE_LINKAGE  = @(LINKAGE)"; \
         echo "ROSE_LDFLAGS  = $(ROSE_BUILD_LDFLAGS_DEFAULT)"; \
         [ "@(LINKAGE)" = "static" ] && echo "ROSE_LDFLAGS = $(tool_LDFLAGS_STATIC)"; \
         [ "@(LINKAGE)" != "static" ] && echo "ROSE_LDFLAGS = $(tool_LDFLAGS_SHARED)"; \
-        echo "ROSE_LDFLAGS_STATIC  = $(tool_LDFLAGS_STATIC)" ; \
-        echo "ROSE_LDFLAGS_SHARED  = $(tool_LDFLAGS_SHARED)" ; \
+        echo "ROSE_LDFLAGS_STATIC  = $(tool_LDFLAGS_STATIC)"; \
+        echo "ROSE_LDFLAGS_SHARED  = $(tool_LDFLAGS_SHARED)"; \
     ) |$(ROSE)/scripts/absolute-paths \
       |$(ROSE)/scripts/tup/prepend-comment --language=shell $(ROSE)/LicenseInformation/ROSE_BSD_License.txt >%o \
   |> rose-build-make.cfg
