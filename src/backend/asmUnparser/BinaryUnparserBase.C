@@ -63,23 +63,23 @@ State::cg() const {
     return cg_;
 }
 
-const std::vector<unsigned>
+const std::vector<Reachability::ReasonFlags>
 State::cfgVertexReachability() const {
     return cfgVertexReachability_;
 }
 
 void
-State::cfgVertexReachability(const std::vector<unsigned> &reachability) {
+State::cfgVertexReachability(const std::vector<Reachability::ReasonFlags> &reachability) {
     cfgVertexReachability_ = reachability;
 }
 
-unsigned
+Reachability::ReasonFlags
 State::isCfgVertexReachable(size_t vertexId) const {
     return vertexId < cfgVertexReachability_.size() ? cfgVertexReachability_[vertexId] : Reachability::ASSUMED;
 }
 
 void
-State::reachabilityName(unsigned value, const std::string &name) {
+State::reachabilityName(Reachability::Reason value, const std::string &name) {
     if (name.empty()) {
         reachabilityNames_.erase(value);
     } else {
@@ -88,31 +88,31 @@ State::reachabilityName(unsigned value, const std::string &name) {
 }
 
 std::string
-State::reachabilityName(unsigned value) const {
+State::reachabilityName(Reachability::ReasonFlags value) const {
     std::string s;
-    if (reachabilityNames_.getOptional(value).assignTo(s))
+    if (reachabilityNames_.getOptional(value.vector()).assignTo(s))
         return s;
 
     std::vector<std::string> names;
-    for (size_t i = 0; i < 8*sizeof(unsigned); ++i) {
-        unsigned bit = 1U << i;
-        if ((value & bit) != 0) {
-            if (reachabilityNames_.getOptional(bit).assignTo(s)) {
+    for (size_t i = 0; i < 8*sizeof(Reachability::ReasonFlags::Vector); ++i) {
+        Reachability::ReasonFlags bit(1U << i);
+        if (value.isAllSet(bit)) {
+            if (reachabilityNames_.getOptional(bit.vector()).assignTo(s)) {
                 // void
-            } else if (bit >= Reachability::USER_DEFINED_0) {
+            } else if (bit.vector() >= Reachability::USER_DEFINED_0) {
                 s = "user-defined";
-                for (size_t j=0; j < 8*sizeof(unsigned); j++) {
-                    if (bit >> j == Reachability::USER_DEFINED_0) {
+                for (size_t j=0; j < 8*sizeof(Reachability::ReasonFlags::Vector); j++) {
+                    if (bit.vector() >> j == Reachability::USER_DEFINED_0) {
                         s += "-" + StringUtility::numberToString(j);
                         break;
                     }
                 }
-            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit)) {
+            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit.vector())) {
                 s = cs;
                 BOOST_FOREACH (char &ch, s)
                     ch = tolower(ch);
             } else {
-                s = StringUtility::toHex2(bit, 8*sizeof(unsigned), false, false);
+                s = StringUtility::toHex2(bit.vector(), 8*sizeof(Reachability::ReasonFlags::Vector), false, false);
             }
             names.push_back(s);
         }
@@ -1289,7 +1289,8 @@ Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &b
     } else if (!state.cfgVertexReachability().empty()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
         if (vertex != state.partitioner().cfg().vertices().end()) {
-            if (unsigned reachable = state.isCfgVertexReachable(vertex->id())) {
+            Reachability::ReasonFlags reachable = state.isCfgVertexReachable(vertex->id());
+            if (reachable.isAnySet()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<"\t;; reachable from: " <<state.reachabilityName(reachable) <<"\n";
             } else {

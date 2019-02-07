@@ -172,14 +172,31 @@ public:
     /** Create a new vector that's the union of two vectors.
      *
      * @{ */
-    BitFlags operator|(BitFlags other) {
+    BitFlags operator|(BitFlags other) const {
         return vector_ | other.vector_;
     }
-    BitFlags operator|(Enum e) {
+    BitFlags operator|(Enum e) const {
         return vector_ | Vector(e);
     }
     /** @} */
 
+    /** Create a new vector that's the intersection of two vectors.
+     *
+     * @{ */
+    BitFlags intersection(BitFlags other) const {
+        return vector_ & other.vector_;
+    }
+    BitFlags intersection(Enum e) const {
+        return vector_ & Vector(e);
+    }
+    BitFlags operator&(BitFlags other) const {
+        return intersection(other);
+    }
+    BitFlags operator&(Enum e) const {
+        return intersection(e);
+    }
+    /** @} */
+    
     /** Compare two vectors.
      *
      * @{ */
