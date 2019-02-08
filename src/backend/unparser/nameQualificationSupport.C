@@ -9,7 +9,7 @@ using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
-#define DEBUG_NAME_QUALIFICATION_LEVEL 0
+#define DEBUG_NAME_QUALIFICATION_LEVEL 4
 
 // ***********************************************************
 // Main calling function to support name qualification support
@@ -6881,7 +6881,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // We need to store the information about the required name qualification in the SgVarRefExp IR node.
 
           SgStatement* currentStatement = TransformationSupport::getStatement(varRefExp);
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Case of SgVarRefExp: varRefExp = %p currentStatement = %p = %s \n",varRefExp,currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
 #endif
 
@@ -6893,11 +6894,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // so we need to look at the parent of a SgVarRefExp and see if it is a SgAddressOfOp when it is a reference to a data member.
           bool isDataMemberReference = SageInterface::isDataMemberReference(varRefExp);
           bool isAddressTaken        = SageInterface::isAddressTaken(varRefExp);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Case of SgVarRefExp: isDataMemberReference = %s isAddressTaken = %s \n",isDataMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
+#endif
           if (isDataMemberReference == true && isAddressTaken == true)
              {
                nameQualificationInducedFromPointerMemberType = true;
              }
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Case of SgVarRefExp: nameQualificationInducedFromPointerMemberType = %s \n",nameQualificationInducedFromPointerMemberType ? "true" : "false");
+#endif
 #if 0
        // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
 
@@ -7246,10 +7254,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
                     if (nameQualificationInducedFromPointerMemberType == true)
                        {
-#if 0
-                         printf ("Found case of name qualification required because the variable is associated with SgPointerMemberType \n");
+                      // DQ (2/8/2019): Only add name qualification if not present (else we can get over qualification 
+                      // that can show up as pointer names in the name qualification, see Cxx11_tests/test2019_86.C).
+                         if (amountOfNameQualificationRequired == 0)
+                            {
+                              amountOfNameQualificationRequired++;
+                            }
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("Found case of name qualification required because the variable is associated with SgPointerMemberType: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                         amountOfNameQualificationRequired++;
                        }
 #endif
 
