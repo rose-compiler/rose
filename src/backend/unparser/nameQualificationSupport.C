@@ -9,7 +9,7 @@ using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
-#define DEBUG_NAME_QUALIFICATION_LEVEL 4
+#define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
 // ***********************************************************
 // Main calling function to support name qualification support
