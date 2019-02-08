@@ -119,6 +119,16 @@ NameQualificationInheritedAttribute::NameQualificationInheritedAttribute()
   // instead of being computed at each IR node which is a problem for template arguments.
   // See test2013_187.C for an example of this.
      currentScope = NULL;
+
+#if 0
+  // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+  // DQ (2/7/2019): Namen qualification can under rare circumstances depend on the type.
+     usingPointerToMemberType = NULL;
+
+  // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+     containsFunctionArgumentsOfPointerMemberType = false;
+#endif
    }
 
 NameQualificationInheritedAttribute::NameQualificationInheritedAttribute ( const NameQualificationInheritedAttribute & X )
@@ -130,6 +140,15 @@ NameQualificationInheritedAttribute::NameQualificationInheritedAttribute ( const
   // See test2013_187.C for an example of this.
      currentScope = X.currentScope;
 
+#if 0
+  // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+  // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+     usingPointerToMemberType = X.usingPointerToMemberType;
+
+  // DQ (2/7/2019): Namen qualification can under rare circumstances depend on the type.
+     containsFunctionArgumentsOfPointerMemberType = X.containsFunctionArgumentsOfPointerMemberType;
+#endif
 #if 0
      printf ("In NameQualificationInheritedAttribute(): copy constructor: currentScope = %p = %s \n",currentScope,currentScope != NULL ? currentScope->class_name().c_str() : "NULL");
 #endif
@@ -145,6 +164,29 @@ void NameQualificationInheritedAttribute::set_currentScope(SgScopeStatement* sco
      currentScope = scope;
    }
 
+#if 0
+  // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+SgPointerMemberType* NameQualificationInheritedAttribute::get_usingPointerToMemberType()
+   {
+     return usingPointerToMemberType;
+   }
+
+void NameQualificationInheritedAttribute::set_usingPointerToMemberType(SgPointerMemberType* type)
+   {
+     usingPointerToMemberType = type;
+   }
+
+bool NameQualificationInheritedAttribute::get_containsFunctionArgumentsOfPointerMemberType()
+   {
+     return containsFunctionArgumentsOfPointerMemberType;
+   }
+
+void NameQualificationInheritedAttribute::set_containsFunctionArgumentsOfPointerMemberType( bool x )
+   {
+     containsFunctionArgumentsOfPointerMemberType = x;
+   }
+#endif
 
 // *********************
 // Synthesized Attribute
@@ -5052,7 +5094,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
        // We want to handle types from every where a SgInitializedName might be used.
           SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Case of SgInitializedName: getDeclarationAssociatedWithType(): type = %p = %s declaration = %p \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str(),declaration);
 #endif
           if (declaration != NULL)
@@ -5132,6 +5175,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (12/17/2013): Added support for name qualification of preinitialization list elements (see test codes: test2013_285-288.C).
                if (initializedName->get_initptr() != NULL)
                   {
+                 // DQ (2/7/2019): I think this can't be a SgPointerMemberType, so the code specific to this case does not go here.
+                    ROSE_ASSERT(isSgPointerMemberType(initializedName->get_type()) == NULL);
+
                     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializedName->get_initptr());
                  // ROSE_ASSERT(constructorInitializer != NULL);
                     if (constructorInitializer != NULL)
@@ -5270,13 +5316,29 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
             else
              {
-            // DQ (8/23/2014): This case is deomonstrated by test2014_145.C. where a SgInitializedName is used in a SgArrayType.
+            // DQ (8/23/2014): This case is demonstrated by test2014_145.C. where a SgInitializedName is used in a SgArrayType.
             // However, it would provide greater symetry to handle the SgInitializedName objects in the processing of the 
             // SgFunctionParameterList similar to how they are handling in the SgVariableDeclaration.
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("Case of SgInitializedName: getDeclarationAssociatedWithType() == NULL (this not associated with a type)  \n");
 #endif
+
+#if 0
+            // DQ (2/7/2019): Set the pointer to member type in the inherited attribute so that we can know when to
+            // add name qualification to variables or function arguments being assigned to this initializedName.
+               SgPointerMemberType* pointerMemberType = isSgPointerMemberType(initializedName->get_type());
+               if (pointerMemberType != NULL)
+                  {
+                    inheritedAttribute.set_usingPointerToMemberType(pointerMemberType);
+                    ROSE_ASSERT(inheritedAttribute.get_usingPointerToMemberType() != NULL);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#endif
+
 #if 0
             // DQ (8/23/2014): Adding this to support SgInitializedName in SgArrayType in function parameter lists.
             // SgDeclarationStatement* associatedDeclaration = NULL;
@@ -6277,6 +6339,82 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
         }
 
+#if 0
+  // Nothing useful happens here!
+  // DQ (2/7/2019): We need to handle name qualification induced by pointer-to-member types.
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(n);
+     if (functionCallExp != NULL)
+        {
+       // This might be the best place to iterate over the function arguments and mark where the function parameters are a SgPointerMemberType.
+       // Alternatively we might want to pass this job of marking to a lower level of the AST so that the seperate function arguments can be marked seperately.
+#if 0
+          printf ("Found a SgFunctionCallExp: functionCallExp = %p = %s \n",functionCallExp,functionCallExp->class_name().c_str());
+#endif
+#if 0
+          printf ("Exiting as a test: in SgFunctionCallExp \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+
+#if 0
+  // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+  // DQ (2/7/2019): Check is this is a SgExprListExp from a SgFunctionCallExp that has SgPointerMemberType arguments.
+     SgExprListExp* exprList = isSgExprListExp(n);
+     if (exprList != NULL)
+        {
+#if 0
+          printf ("Found a SgExprListExp: check if this is associated with a SgFunctionCallExp \n");
+#endif
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exprList->get_parent());
+          if (functionCallExp != NULL)
+             {
+#if 0
+               printf ("Found a SgExprListExp: inside of a SgFunctionCallExp \n");
+#endif
+            // Look at the function parameter types.
+            // SgFunctionDeclaration* functionDeclaration = functionCallExp->getAssociatedFunctionDeclaration();
+               SgFunctionDeclaration* functionDeclaration = SageInterface::getFunctionDeclaration(functionCallExp);
+
+            // DQ (2/7/2019): Unclear if this is always true.
+            // ROSE_ASSERT(functionDeclaration != NULL);
+               if (functionDeclaration != NULL)
+                  {
+                    SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+
+                    ROSE_ASSERT(functionType != NULL);
+                    SgTypePtrList & functionParameterTypeList = functionType->get_arguments();
+#if 0
+                    printf ("functionParameterTypeList.size() = %zu \n",functionParameterTypeList.size());
+#endif
+                    for (size_t i = 0; i < functionParameterTypeList.size(); i++)
+                       {
+                         SgType* argumentType = functionParameterTypeList[i];
+                         ROSE_ASSERT(argumentType != NULL);
+                         SgPointerMemberType* pointerMemberType = isSgPointerMemberType(argumentType);
+                         if (pointerMemberType != NULL)
+                            {
+#if 0
+                              printf ("Found funcation call argument type which is SgPointerMemberType: index = %zu \n",i);
+#endif
+                           // Mark this as a function argument list with (at least one) pointer-to-member type arguments.
+                              inheritedAttribute.set_containsFunctionArgumentsOfPointerMemberType(true);
+                            }
+                       }
+                  }
+#if 0
+               printf ("Exiting as a test: in SgExprListExp \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
+          printf ("Exiting as a test: in SgExprListExp \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
   // DQ (5/12/2011): We want to located name qualification information about referenced functions 
   // at the SgFunctionRefExp and SgMemberFunctionRefExp IR node instead of the SgFunctionCallExp IR node.
@@ -6746,6 +6884,88 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("Case of SgVarRefExp: varRefExp = %p currentStatement = %p = %s \n",varRefExp,currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
 #endif
+
+       // DQ (2/7/2019): Adding support for name qualification induced from SgPointerMemberType function paramters.
+          bool nameQualificationInducedFromPointerMemberType = false;
+
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+       // DQ (2/8/2019): An alternative to supporting pointer-to-member name qualification would be to detect member data accessed via a pointer.
+       // so we need to look at the parent of a SgVarRefExp and see if it is a SgAddressOfOp when it is a reference to a data member.
+          bool isDataMemberReference = SageInterface::isDataMemberReference(varRefExp);
+          bool isAddressTaken        = SageInterface::isAddressTaken(varRefExp);
+          if (isDataMemberReference == true && isAddressTaken == true)
+             {
+               nameQualificationInducedFromPointerMemberType = true;
+             }
+
+#if 0
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+       // DQ (2/7/2019): Adding support for name qualification induced from SgPointerMemberType function paramters.
+          if (inheritedAttribute.get_containsFunctionArgumentsOfPointerMemberType() == true)
+             {
+#if 0
+               printf ("Found SgVarRefExp in expression tree in function argument list that contains as SgPointerMemberType function parameter type \n");
+#endif
+            // Need to matchup the operand with the function parameter type,
+               SgExprListExp* exprListExp = SageInterface::getEnclosingExprListExp(varRefExp);
+
+               if (exprListExp != NULL)
+                  {
+#if 0
+                    printf ("Found the associated SgExprListExp with varRefExp: exprListExp = %p \n",exprListExp);
+#endif
+                    SgExpressionPtrList & expressionPtrList = exprListExp->get_expressions();
+                    SgExpressionPtrList::iterator i = expressionPtrList.begin();
+                    bool foundInSubTree = false;
+                    int index_position = 0;
+                    while (foundInSubTree == false && i != expressionPtrList.end())
+                      {
+                        SgExpression* subtree = *i;
+                        foundInSubTree = SageInterface::isInSubTree(subtree,varRefExp);
+                        if (foundInSubTree == false)
+                           {
+                             index_position++;
+                           }
+                        i++;
+                      }
+
+                    if (foundInSubTree == true)
+                       {
+                       // Check is the associated type is a SgPointerMemberType.
+                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exprListExp->get_parent());
+                         if (functionCallExp != NULL)
+                            {
+                           // SgFunctionDeclaration* functionDeclaration = functionCallExp->getAssociatedFunctionDeclaration();
+                              SgFunctionDeclaration* functionDeclaration = SageInterface::getFunctionDeclaration(functionCallExp);
+                              ROSE_ASSERT(functionDeclaration != NULL);
+                              SgFunctionType* functionType = functionDeclaration->get_type();
+
+                              ROSE_ASSERT(functionType != NULL);
+                              SgTypePtrList & functionParameterTypeList = functionType->get_arguments();
+#if 0
+                              printf ("functionParameterTypeList.size() = %zu \n",functionParameterTypeList.size());
+#endif
+                              SgType* argumentType = functionParameterTypeList[index_position];
+                              ROSE_ASSERT(argumentType != NULL);
+                              SgPointerMemberType* pointerMemberType = isSgPointerMemberType(argumentType);
+                              if (pointerMemberType != NULL)
+                                 {
+#if 0
+                                   printf ("Found variable reference in subtree of funcation call argument type which is SgPointerMemberType: index_position = %d \n",index_position);
+#endif
+                                   nameQualificationInducedFromPointerMemberType = true;
+                                 }
+                            }
+                       }
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
+
        // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/nonsmoke/functional/roseTests/programTransformationTests/test1.C
        // ROSE_ASSERT(currentStatement != NULL);
           if (currentStatement != NULL)
@@ -6995,6 +7215,43 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
                     int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
+#if 0
+                 // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+                 // DQ (2/7/2019): Adding support for SgPointerMemberType lvalue types that force rvalue name qualification (see Cxx11_tests/test2019_80.C).
+                    SgPointerMemberType* pointerMemberType = inheritedAttribute.get_usingPointerToMemberType();
+                    if (pointerMemberType != NULL)
+                       {
+#if 0
+                         printf ("Found case of name qualification required because the lhs type is SgPointerMemberType: pointerMemberType = %p \n",pointerMemberType);
+#endif
+                         amountOfNameQualificationRequired++;
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                      // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
+                         if (nameQualificationInducedFromPointerMemberType == true)
+                            {
+#if 0
+                              printf ("Found case of name qualification required because the function parameter type is SgPointerMemberType \n");
+#endif
+                              amountOfNameQualificationRequired++;
+                            }
+                      }
+#else
+                 // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
+                    if (nameQualificationInducedFromPointerMemberType == true)
+                       {
+#if 0
+                         printf ("Found case of name qualification required because the variable is associated with SgPointerMemberType \n");
+#endif
+                         amountOfNameQualificationRequired++;
+                       }
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
