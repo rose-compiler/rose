@@ -1114,8 +1114,15 @@ else
      test2014_65.C \
      test2014_66.C \
      test2014_69.C
+
+# DQ (2/2/2019): EDG 5.0 fails for this use of __Float128, but Tristan is fixing it.
+if ROSE_USE_EDG_VERSION_5_0
+  TESTCODE_CURRENTLY_FAILING += \
+     test2017_12.C
+else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_12.C
+endif
 endif
 
 if !ROSE_USE_EDG_VERSION_4_7
@@ -1631,6 +1638,7 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
+	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 
 status:
 	@$(MAKE) $(TEST_Source_passed)
