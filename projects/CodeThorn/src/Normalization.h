@@ -78,6 +78,9 @@ namespace CodeThorn {
       bool inlining=false;
     } options;
 
+    // type for tmp var counter
+    typedef int32_t TmpVarNrType;
+
     // applies normalization on entire AST with normalization level 0-3.
     // level 0: no normalization
     // level 1: all expressions with a function call (and all implied normalizations)
@@ -158,6 +161,7 @@ namespace CodeThorn {
     struct RegisteredSubExprTransformation {
       SubExprTransformationEnum transformation;
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e);
+      RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e);
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d, SgStatement* trueBody, SgStatement* falseBody);
       SgStatement* stmt;
@@ -167,6 +171,7 @@ namespace CodeThorn {
       SgStatement* falseBody;
       SgVariableDeclaration* tmpVarDeclaration;
       SgExpression* tmpVarReference;
+      TmpVarNrType tmpVarNr;
     };
     typedef std::list<RegisteredSubExprTransformation> SubExprTransformationList;
     typedef std::list<SubExprTransformationList> ExprTransformationList;
@@ -182,8 +187,10 @@ namespace CodeThorn {
 
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
-    void normalizeSubExpression(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerSubExpressionTempVars(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    // uses current tmpvar number by default
     void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
+    void registerTmpVarAssignment(Normalization::TmpVarNrType tmpVarNrParam,SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
     void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
     void registerFalseBoolVarDecl(SgStatement* stmt, SgExpression* node, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
@@ -223,11 +230,26 @@ namespace CodeThorn {
     void transformContinueToGotoStmts(SgWhileStmt* whileStmt);
     void transformContinueToGotoStmts(SgDoWhileStmt* whileStmt);
 
+  public:
+  // create a new variable declaration with the type of the provided expression and if requested also initializes it with this expression.
+  // initWithExpression: use expression as initializer for declared variable, otherwise with no initializer
+  // shareInitializerExpression: shares the provided expression as initializer, otherwise the expression is cloned. This option has no effect if initWithExpression is false.
+    SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool shareExpression=false);
+    SgVariableDeclaration* buildVariableDeclarationWithInitializerForExpression(SgExpression* expression, SgScopeStatement* scope, bool shareExpression=false);
+
+    SgVarRefExp* buildVarRefExpForVariableDeclaration(SgVariableDeclaration* decl);
+    std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName);
+    void setUniqueVariablePrefix(std::string);
+    void setUniqueVariablePostfix(std::string);
+  private:
+    SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
     // private member variables
     
     // counter for generating new variable names
-    static int32_t tmpVarNr;
+    Normalization::TmpVarNrType getTmpVarNr();
+    static TmpVarNrType tmpVarNrCounter;
     static std::string tmpVarPrefix;
+    std::string _tmpVarBaseName="tmp";
 
     // counter for generating new label names
     static int32_t labelNr;
@@ -238,6 +260,9 @@ namespace CodeThorn {
     void removeDefaultInliner();
     CodeThorn::InlinerBase* _inliner=0;
     bool _defaultInliner=true;
+    string _uniqueVarPrefix="__";
+    string _uniqueVarPostfix="__";
+    static int32_t uniqueVarCounter;
   };
   
 } // end of namespace CodeThorn
