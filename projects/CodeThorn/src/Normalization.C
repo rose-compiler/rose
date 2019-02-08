@@ -427,17 +427,9 @@ namespace CodeThorn {
     if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
       // (i) build tmp var with cond as initializer
       SgScopeStatement* scope=stmt->get_scope();
-#if 0
-      SgVariableDeclaration* tmpVarDeclaration = 0;
-      SgExpression* tmpVarReference = 0;
-      tie(tmpVarDeclaration, tmpVarReference) = SageInterface::createTempVariableAndReferenceForExpression(condExpr, scope);
-      tmpVarDeclaration->set_parent(scope);
-#else
       auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
       tmpVarDeclaration->set_parent(scope);
       auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
-
-#endif
       ROSE_ASSERT(tmpVarDeclaration!= 0);
       
       // (ii) replace cond with new tmp-varref
@@ -564,6 +556,8 @@ namespace CodeThorn {
           // TODO: create tmp var, and set initializer for expression
           bool shareExpression=false;
           auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
+          addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
+
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(scope);
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
@@ -657,6 +651,8 @@ namespace CodeThorn {
   // stmt is only passed through and used to determine the scope when generating tmp-variables
   void Normalization::normalizeExpression(SgStatement* stmt, SgExpression* expr) {
     logger[TRACE]<<"normalizing "<<(expr)->unparseToString()<<endl;
+    // clear mapping for each expression normalization
+    tmpVarMapping.clear();
     SubExprTransformationList subExprTransformationList;
     if(!options.encapsulateNormalizedExpressionsInBlocks) {
       // normalized subexpressions (and declared variables) are replacing the current expression
@@ -1054,6 +1050,8 @@ namespace CodeThorn {
     return SageBuilder::buildVarRefExp(decl);
   }
 
-
+  void Normalization::addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl) {
+    tmpVarMapping.insert(TmpVarMappingPair(tmpVarNr,decl));
+  }
 } // end of namespace CodeThorn
 

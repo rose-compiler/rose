@@ -242,6 +242,7 @@ namespace CodeThorn {
     void setUniqueVariablePrefix(std::string);
     void setUniqueVariablePostfix(std::string);
   private:
+    
     SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
     // private member variables
     
@@ -250,6 +251,11 @@ namespace CodeThorn {
     static TmpVarNrType tmpVarNrCounter;
     static std::string tmpVarPrefix;
     std::string _tmpVarBaseName="tmp";
+    typedef TmpVarNrType TmpVarMappingType1;
+    typedef SgVariableDeclaration* TmpVarMappingType2;
+    typedef std::pair<TmpVarMappingType1,TmpVarMappingType2> TmpVarMappingPair;
+    std::map<TmpVarMappingType1,TmpVarMappingType2> tmpVarMapping;
+    void addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl);
 
     // counter for generating new label names
     static int32_t labelNr;
