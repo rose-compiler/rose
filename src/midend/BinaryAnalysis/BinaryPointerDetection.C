@@ -363,7 +363,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         SymbolicSemantics::SValuePtr ip =
-            SymbolicSemantics::SValue::promote(state->readRegister(IP, ops->undefined_(IP.get_nbits()), ops.get()));
+            SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.get_nbits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {
             bool isSignificant = false;

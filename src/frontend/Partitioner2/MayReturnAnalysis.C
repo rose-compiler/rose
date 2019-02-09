@@ -459,7 +459,7 @@ Partitioner::functionOptionalMayReturn(const Function::Ptr &function) const {
 void
 Partitioner::allFunctionMayReturn() const {
     using namespace Sawyer::Container::Algorithm;
-    FunctionCallGraph cg = functionCallGraph();
+    FunctionCallGraph cg = functionCallGraph(AllowParallelEdges::NO);
     size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "may-return analysis");

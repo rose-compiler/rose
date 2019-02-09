@@ -70,10 +70,6 @@
 #
 #      AC_OUTPUT(Makefile)
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
