@@ -162,6 +162,7 @@ namespace CodeThorn {
       SubExprTransformationEnum transformation;
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e);
       RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e);
+      RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d, SgStatement* trueBody, SgStatement* falseBody);
       SgStatement* stmt;
@@ -171,7 +172,10 @@ namespace CodeThorn {
       SgStatement* falseBody;
       SgVariableDeclaration* tmpVarDeclaration;
       SgExpression* tmpVarReference;
-      TmpVarNrType tmpVarNr;
+      TmpVarNrType tmpVarNr=0;
+      TmpVarNrType lhsTmpVarNr=0; // cond op uses all 3
+      TmpVarNrType rhsTmpVarNr=0;
+      TmpVarNrType unaryTmpVarNr=0;
     };
     typedef std::list<RegisteredSubExprTransformation> SubExprTransformationList;
     typedef std::list<SubExprTransformationList> ExprTransformationList;
@@ -184,13 +188,16 @@ namespace CodeThorn {
     // expression are linearized into a temporyary variable
     // initialization list
     void normalizeExpression(SgStatement* stmt, SgExpression* node);
-
+  
     // transform subexpression with root ExprStatement into a list of separate assignments
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
     Normalization::TmpVarNrType registerSubExpressionTempVars(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
-    // uses current tmpvar number by default
+
     void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
-    void registerTmpVarAssignment(Normalization::TmpVarNrType tmpVarNrParam,SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
+    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType unaryTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType lhsTmpVarNr, Normalization::TmpVarNrType rhsTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType condTmpVarNr, Normalization::TmpVarNrType tbTmpVarNr, Normalization::TmpVarNrType fbTmpVarNr, SubExprTransformationList& subExprTransformationList);
+
     void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
     void registerFalseBoolVarDecl(SgStatement* stmt, SgExpression* node, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
@@ -256,6 +263,7 @@ namespace CodeThorn {
     typedef std::pair<TmpVarMappingType1,TmpVarMappingType2> TmpVarMappingPair;
     std::map<TmpVarMappingType1,TmpVarMappingType2> tmpVarMapping;
     void addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl);
+    SgVarRefExp* getVarRefExpForTmpVarNr(TmpVarNrType tmpVarNr);
 
     // counter for generating new label names
     static int32_t labelNr;
