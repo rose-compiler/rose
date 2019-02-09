@@ -21,10 +21,6 @@
 #
 #     HAVE_BOOST
 #
-# LAST MODIFICATION
-#
-#   2008-03-24
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Thomas Porschberg <thomas@randspringer.de>
@@ -59,7 +55,7 @@ AC_ARG_WITH([boost-libdir],
         then
                 ac_boost_lib_path="$withval"
         else
-                AC_MSG_ERROR(--with-boost-libdir expected directory name)
+                AC_MSG_ERROR([--with-boost-libdir expected directory name])
         fi
         ],
         [ac_boost_lib_path=""]
@@ -123,7 +119,7 @@ if test "x$want_boost" = "xyes"; then
    for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
 		if test "x${ac_boost_path_tmp}/include" != "x${ROSE_BOOST_INCLUDE_PATH}" && test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 			PREVIOUSLY_INSTALLED_BOOST="$ac_boost_path_tmp/include/boost"
-         echo "Detected a previously installed version of boost library: PREVIOUSLY_INSTALLED_BOOST = $PREVIOUSLY_INSTALLED_BOOST"
+                        AC_MSG_WARN([detected a previously installed version of boost library: "$PREVIOUSLY_INSTALLED_BOOST"])
 			break;
 		fi
 	done
@@ -205,7 +201,7 @@ if test "x$want_boost" = "xyes"; then
 			        	stage_version_shorten=`expr $stage_version : '\([[0-9]]*\.[[0-9]]*\)'`
 					V_CHECK=`expr $stage_version_shorten \>\= $_version`
                     if test "$V_CHECK" = "1" -a "$ac_boost_lib_path" = "" ; then
-						AC_MSG_NOTICE(We will use a staged boost library from $BOOST_ROOT)
+						AC_MSG_NOTICE([will use a staged boost library from $BOOST_ROOT])
 						BOOST_CPPFLAGS="-I$BOOST_ROOT"
 						BOOST_LDFLAGS="-L$BOOST_ROOT/stage/lib"
 					fi
@@ -240,7 +236,7 @@ if test "x$want_boost" = "xyes"; then
 	fi
 
  # DQ (2/4/2010): Added to get version information for what we are using.
-   echo "In boost base macro -- Boost version being used is: $_version"
+   AC_MSG_NOTICE([in boost base macro -- Boost version being used is: "$_version"])
  # rose_boost_version_number=$_version
  # export rose_boost_version_number
 
@@ -248,10 +244,9 @@ if test "x$want_boost" = "xyes"; then
 		if test "$_version" = "0" ; then
        # This was always a confusing error message so make it more explicit for users.
        # AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
-			AC_MSG_ERROR([[Boost libraries (version $boost_lib_version_req_shorten or higher) must be specified on the configure line (using the --with-boost=<path> option) and the boost libraries must be in your LD_LIBRARY_PATH.]])
+			AC_MSG_ERROR([Boost libraries (version $boost_lib_version_req_shorten or higher) must be specified on the configure line (using the --with-boost switch) and the boost libraries must be in your LD_LIBRARY_PATH])
 		else
-			AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
-			exit 1
+			AC_MSG_FAILURE([your boost libraries seems to old (version $_version)])
 		fi
 	else
 		AC_SUBST(BOOST_CPPFLAGS)
@@ -274,16 +269,16 @@ fi
 # Note that use of "-isystem" option with g++ will cause SWIG to fail.
 if test "$PREVIOUSLY_INSTALLED_BOOST" != ""; then
  # echo "Using the -isystem option of g++ to force the use of the specified version of Boost ahead of a previously installed version of boost on your system at: $PREVIOUSLY_INSTALLED_BOOST"
-   AC_MSG_NOTICE(Using the -isystem option of g++ to force the use of the specified version of Boost ahead of a previously installed version of boost on your system at: $PREVIOUSLY_INSTALLED_BOOST)
-   AC_MSG_WARN([Note that the --with-javaport can NOT be used with the -isystem option])
+   AC_MSG_NOTICE(using the -isystem option of g++ to force the use of the specified version of Boost ahead of a previously installed version of boost on your system at: $PREVIOUSLY_INSTALLED_BOOST)
+   AC_MSG_WARN([--with-javaport cannot be used with the -isystem option])
    ROSE_BOOST_PREINCLUDE_PATH="-isystem $ROSE_BOOST_INCLUDE_PATH"
    ROSE_BOOST_NORMAL_INCLUDE_PATH=""
-   AC_MSG_WARN([[Detected previously installed version of boost (please remove older version of Boost before installing ROSE) (continuing but expect Boost to be a problem...)]])
+   AC_MSG_WARN([detected previously installed version of boost (please remove older version of Boost before installing ROSE); continuing but expect Boost to be a problem])
  # AC_MSG_ERROR([[Detected previously installed version of boost (please remove older version of Boost before installing ROSE) (continuing but expect Boost to be a problem...)]])
  # Remove this exit (as a test) after detecting what I expect is a problem...
  # exit 1
 else
-   AC_MSG_NOTICE(No previously installed version of boost detected: using boost include directories with normal -I option)
+   AC_MSG_NOTICE(no previously installed version of boost detected: using boost include directories with normal -I option)
    ROSE_BOOST_PREINCLUDE_PATH=""
    ROSE_BOOST_NORMAL_INCLUDE_PATH="-I$ROSE_BOOST_INCLUDE_PATH"
 fi

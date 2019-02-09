@@ -6716,6 +6716,10 @@ HEADER_UNPARSE_INFO_START
             // DQ (2/8/2016): Adding support for C++11 specific initialization lists.
                b_cxx11_initialization_list = 51, /*!< Indicate when we are in a C++11 specific initialization list. */
 
+            // DQ (2/3/2019): Need to know when we are unparsing the base type within a typedef so that member pointers can be output with parenthesis (see Cxx11_tests/test2019_77.C).
+           //! to setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis.
+               b_inTypedefDecl             = 52, /*!< setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -7027,6 +7031,12 @@ HEADER_UNPARSE_INFO_START
           bool get_cxx11_initialization_list() const;
           void set_cxx11_initialization_list();
           void unset_cxx11_initialization_list();
+
+       // DQ (2/3/2019): unparsing for base type in typedefs when base type is a member pointer.
+          bool inTypedefDecl() const;
+          void set_inTypedefDecl();
+          void unset_inTypedefDecl();
+
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -20011,6 +20021,21 @@ void
 SgUnparse_Info::unset_cxx11_initialization_list()
    { unsetBit(b_cxx11_initialization_list); }
 
+// DQ (2/3/2019): We need to record when we are in a typedef declaration so that when a member pointer base type is used, extra parenthesis can be unparsed).
+bool
+SgUnparse_Info::inTypedefDecl() const
+   { return checkBit(b_inTypedefDecl); }
+
+// DQ (2/3/2019): We need to record when we are in a typedef declaration so that when a member pointer base type is used, extra parenthesis can be unparsed).
+void
+SgUnparse_Info::set_inTypedefDecl()
+   { setBit(b_inTypedefDecl); }
+
+// DQ (2/3/2019): We need to record when we are in a typedef declaration so that when a member pointer base type is used, extra parenthesis can be unparsed).
+void
+SgUnparse_Info::unset_inTypedefDecl()
+   { unsetBit(b_inTypedefDecl); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -20099,6 +20124,9 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
 
      printf ("parentStatementListBeingUnparsedUsingPartialTokenSequence = %s \n",( parentStatementListBeingUnparsedUsingPartialTokenSequence() == true ) ? "true" : "false");
+
+  // DQ (2/3/2019): Ading support to know when we are in a typedef.
+     printf ("inTypedefDecl                          = %s \n",( inTypedefDecl() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -20218,6 +20246,9 @@ SgUnparse_Info::displayString ( const std::string & label ) const
      STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(SkipFunctionDefinition)
      STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(SkipClassDefinition)
      STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(AddSemiColonAfterDeclaration)
+
+  // DQ (2/3/2019): Adding support to know when we are in a typedef.
+     STRINGIFY_INFO_MEMBER_DATA_OUTPUT_MACRO(inTypedefDecl)
 
      switch (p_access_attribute)
         {

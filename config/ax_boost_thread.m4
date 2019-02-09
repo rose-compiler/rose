@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_THREAD
 #
-# LAST MODIFICATION
-#
-#   Modified by the ROSE team (use the repo's history).
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -136,7 +132,7 @@ AC_DEFUN([AX_BOOST_THREAD],
             fi
 
             if test "x$link_thread" != "xyes"; then
-                AC_MSG_ERROR(Could not link against -lboost_thread. ROSE requires this library in $BOOSTLIBDIR")
+                AC_MSG_ERROR([could not link against -lboost_thread; ROSE requires this library in "$BOOSTLIBDIR"])
             else
                 case "x$build_os" in
                     *bsd* ) BOOST_LDFLAGS="-pthread $BOOST_LDFLAGS" ;;

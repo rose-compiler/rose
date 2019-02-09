@@ -2,7 +2,9 @@
 #define Rose_getline_H
 
 #include "rosedll.h"
+#include <istream>
 #include <stdio.h>
+#include <string>
 
 #ifdef _MSC_VER
     #include <windows.h>
@@ -35,7 +37,22 @@
  *
  *  This is the recommended way to read lines from a stream.  The alternative standard functions are unreliable.
  *
- *  If an error occurs or end of file is reached without any bytes read, getline() returns -1. */
+ *  If an error occurs or end of file is reached without any bytes read, getline() returns -1.
+ *
+ * @{ */
 ROSE_UTIL_API ssize_t rose_getline(char **lineptr, size_t *n, FILE *stream);
+ROSE_UTIL_API ssize_t rose_getline(char **lineptr, size_t *n, std::istream &stream);
+/** @} */
+
+/** Reads a line of text from a stream.
+ *
+ *  This function reads an entire line from @p stream and returns the line along with any line termination characters that were
+ *  present.  Returns an empty string when the end of the stream is reached. NUL characters that appear as part of the input
+ *  are preserved in the return value.
+ *
+ * @{ */
+ROSE_UTIL_API std::string rose_getline(FILE *stream);
+ROSE_UTIL_API std::string rose_getline(std::istream &stream);
+/** @} */
 
 #endif

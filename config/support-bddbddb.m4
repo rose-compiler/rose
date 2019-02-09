@@ -17,7 +17,7 @@ fi
 
 if test "$with_bddbddb" = no; then
   # If bddbddb is not specified, then don't use it.
-  echo "Skipping use of bddbddb!"
+  AC_MSG_NOTICE([skipping use of bddbddb])
 else
     if test -n "$python_path";
     then
@@ -26,7 +26,7 @@ else
         bddbddb_path=$with_bddbddb
         AC_DEFINE([USE_ROSE_BDDBDDB_SUPPORT],1,[Controls use of ROSE support for bddbddb (Binary decision diagrams (BDD) BDD-Based Deductive DataBase.])
     else
-        AC_MSG_ERROR([--with-bddbddb was passed but Python 2.4 or above was not found.  Try setting the --with-python option to the location of a good python interpreter: --with-python=/path/to/python/bin/python])
+        AC_MSG_ERROR([--with-bddbddb was passed but Python 2.4 or above was not found; try setting the --with-python option to the location of a good python interpreter: --with-python=/path/to/python/bin/python])
     fi
 
 fi
