@@ -6569,6 +6569,38 @@ SgLongDoubleVal* SageBuilder::buildLongDoubleVal_nfi(long double value, const st
   return result;
 }
 
+SgFloat80Val* SageBuilder::buildFloat80Val(long double value /*= 0.0*/)
+{
+  SgFloat80Val* result = new SgFloat80Val(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat80Val* SageBuilder::buildFloat80Val_nfi(long double value, const string& str)
+{
+  SgFloat80Val* result = new SgFloat80Val(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFloat128Val* SageBuilder::buildFloat128Val(long double value /*= 0.0*/)
+{
+  SgFloat128Val* result = new SgFloat128Val(value,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat128Val* SageBuilder::buildFloat128Val_nfi(long double value, const string& str)
+{
+  SgFloat128Val* result = new SgFloat128Val(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
   SgStringVal* result = new SgStringVal(value);
@@ -7194,11 +7226,19 @@ BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 
 
-// RASMUSSEN (1/25/2018)
+// RASMUSSEN ( 1/25/2018):
+//           (10/30/2018): Fixed case when this function is called with NULL dim_info object.
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_info)
    {
      ROSE_ASSERT(base_type != NULL);
-     ROSE_ASSERT(dim_info  != NULL);
+
+  // There must always be a dim_info object for this function.  If not, the
+  // overloaded function must be used to handle it.
+     if (dim_info == NULL)
+        {
+           SgExpression* index = NULL;
+           return buildArrayType(base_type, index);
+        }
 
      SgExpression* index = new SgNullExpression();
      ROSE_ASSERT(index);
@@ -11979,6 +12019,16 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): nondefdecl = %p nondefdecl->unparseNameToString() = %s \n",nondefdecl,nondefdecl->unparseNameToString().c_str());
 #endif
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return nondefdecl;
    }
 
@@ -13146,8 +13196,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
                SgClassDeclaration* tmp_classDeclarationFromType = isSgClassDeclaration(class_type->get_declaration());
                ROSE_ASSERT(tmp_classDeclarationFromType != NULL);
-               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
 #if DEBUG_CLASS_DECLARATION
+               SgScopeStatement* scope = tmp_classDeclarationFromType->get_scope();
                printf ("tmp_classDeclarationFromType: scope = %p = %s \n",scope,scope->class_name().c_str());
                printf ("tmp_classDeclarationFromType = %p = %s \n",tmp_classDeclarationFromType,tmp_classDeclarationFromType->class_name().c_str());
                printf ("tmp_classDeclarationFromType name = %s \n",tmp_classDeclarationFromType->get_name().str());
@@ -13742,6 +13792,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      printf ("Leaving buildClassDeclaration_nfi(): defdecl = %p defdecl->unparseNameToString() = %s \n",defdecl,defdecl->unparseNameToString().c_str());
 #endif
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return defdecl;
    }
 
@@ -14160,6 +14220,17 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT(nondefdecl->get_templateName().is_null() == false);
 
      testTemplateArgumentParents(nondefdecl);
+
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = nondefdecl;
+     SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildNondefiningTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
+#endif
 
      return nondefdecl;
    }
@@ -14637,6 +14708,17 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
      testTemplateArgumentParents(defdecl);
      testTemplateArgumentParents(nondefdecl);
 
+#if 0
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
+     SgClassDeclaration* tmp_classDeclaration = defdecl;
+     SgSymbol* test_symbol = defdecl->get_scope()->find_symbol_from_declaration(tmp_classDeclaration);
+
+  // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
+     printf ("Leaving buildTemplateClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
+     ROSE_ASSERT(defdecl->get_symbol_from_symbol_table() != NULL);
+#endif
+
      return defdecl;
    }
 #endif
@@ -14951,7 +15033,10 @@ SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefin
 
      if (isVirtual == true)
         {
-          baseclass->get_baseClassModifier().setVirtual();
+       // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+       // baseclass->get_baseClassModifier().setVirtual();
+          ROSE_ASSERT(baseclass->get_baseClassModifier() != NULL);
+          baseclass->get_baseClassModifier()->setVirtual();
         }
 
   // DQ (4/29/2004): add support to set access specifier
@@ -15251,32 +15336,24 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 
      return sourceFile;
 
-#if 0
-  // This is a more direct, alternative implementation (not sure if it is better).
-     SgSourceFile* newFile = new SgSourceFile();
-     ROSE_ASSERT(newFile != NULL);
-
-  // Mark as a C file for now.
-     newFile->set_C_only(true);
-
-  // Specify the name of the file (and line and column numbers), using a Sg_File_Info object.
-     Sg_File_Info* fileInfo = new Sg_File_Info(outputFileName,0,0);
-     ROSE_ASSERT(fileInfo != NULL);
-
-     newFile->set_startOfConstruct(fileInfo);
-     fileInfo->set_parent(newFile);
-
-     SgGlobal* globalScope = new SgGlobal();
-     ROSE_ASSERT(globalScope != NULL);
-
-     newFile->set_globalScope(globalScope);
-     globalScope->set_parent(newFile);
-
-     ROSE_ASSERT(newFile->get_globalScope() != NULL);
-
-     return newFile;
-#endif
    }
+
+SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
+{
+
+     SgFile* file = buildFile(inputFileName, outputFileName,project);
+     ROSE_ASSERT(file != NULL);
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
+     // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
+     attachPreprocessingInfo (sourceFile);
+     
+     return sourceFile;
+}
 
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)

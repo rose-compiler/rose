@@ -1950,17 +1950,22 @@ if (!sgClassType) { \
         
         // No virtual base classes
         SgBaseClassPtrList  & baseClasses = classDefinition->get_inheritances();
-        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
-            // Base class can't be virtual
-            if((*it)->get_baseClassModifier().isVirtual())
-                return false;
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it)
+           {
+          // Base class can't be virtual
+
+          // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+          // if((*it)->get_baseClassModifier().isVirtual())
+             ROSE_ASSERT((*it)->get_baseClassModifier() != NULL);
+             if ((*it)->get_baseClassModifier()->isVirtual())
+                  return false;
             
-            // Base classes must be empty as well
-            SgClassDeclaration * baseClass = (*it)->get_base_class();
-            ROSE_ASSERT(baseClass != NULL);
-            if (!IsEmpty(baseClass->get_type()))
-                return false;
-        }
+          // Base classes must be empty as well
+             SgClassDeclaration * baseClass = (*it)->get_base_class();
+             ROSE_ASSERT(baseClass != NULL);
+             if (!IsEmpty(baseClass->get_type()))
+                  return false;
+           }
         
         return true;
     }
@@ -2101,12 +2106,15 @@ if (!sgClassType) { \
         
         // No virtual base classes
         SgBaseClassPtrList  & baseClasses = classDef->get_inheritances();
-        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
-            // Base class can't be virtual
-            if((*it)->get_baseClassModifier().isVirtual())
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it)
+           {
+          // Base class can't be virtual
+          // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+          // if((*it)->get_baseClassModifier().isVirtual())
+             ROSE_ASSERT((*it)->get_baseClassModifier() != NULL);
+             if((*it)->get_baseClassModifier()->isVirtual())
                 return false;
-        }
-        
+           }
         
         bool haveNonStaticData = false;
         SgType * firstNonStaticDataMember = NULL;

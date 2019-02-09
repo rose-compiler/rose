@@ -29,6 +29,17 @@ class NameQualificationInheritedAttribute
      private:
           SgScopeStatement* currentScope;
 
+#if 0
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+       // DQ (2/7/2019): Namen qaulification can under rare circumstances depende on the type.  And we need 
+       // to pass the type through from the lhs to the rhs to get the name qualification correct on the rhs.
+       // See Cxx11_tests/test2019_80.C and test2019_81.C for examples of this.
+          SgPointerMemberType* usingPointerToMemberType;
+
+          bool containsFunctionArgumentsOfPointerMemberType;
+#endif
+
      public:
 
           NameQualificationInheritedAttribute();
@@ -39,6 +50,17 @@ class NameQualificationInheritedAttribute
        // See test2013_187.C for an example of this.
           SgScopeStatement* get_currentScope();
           void set_currentScope(SgScopeStatement* scope);         
+#if 0
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+       // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+          SgPointerMemberType* get_usingPointerToMemberType();
+          void set_usingPointerToMemberType(SgPointerMemberType* type);
+
+       // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+          bool get_containsFunctionArgumentsOfPointerMemberType();
+          void set_containsFunctionArgumentsOfPointerMemberType( bool x );
+#endif
    };
 
 
@@ -81,6 +103,17 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (6/3/2011): This is to save the names of types where they can be named differently when referenced 
        // from different locations in the source code.
           std::map<SgNode*,std::string> & typeNameMap;
+
+       // DQ (1/24/2019): We need to accumulate the list of possible classes that are private base classes so 
+       // that additional name qualification can be added to prevent the access of base classes that have been 
+       // made private in nested chass hierarchies.
+          typedef std::map<SgClassDeclaration*,std::set<SgClassDeclaration*> > BaseClassSetMap;
+
+       // DQ (1/24/2019): This is the list of private base classes.
+          BaseClassSetMap privateBaseClassSets;
+
+       // DQ (1/24/2019): From the set of private base classes we construct the set of unaccessible base classes
+          BaseClassSetMap inaccessibleClassSets;
 
        // DQ (7/22/2011): Alternatively we should treat array types just like templated types that can
        // contain subtypes that require arbitrarily complex name qualification for their different parts.
@@ -255,6 +288,10 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (4/5/2018): Debugging support.
           void functionReport(SgFunctionDeclaration* functionDeclaration);
+
+       // DQ (1/24/2019): display accumulated private base class map.
+       // void displayBaseClassMap (BaseClassSetMap & x);
+          void displayBaseClassMap ( const std::string & label, BaseClassSetMap & x );
    };
 
 

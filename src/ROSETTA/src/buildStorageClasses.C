@@ -846,6 +846,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTemplateClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
+                 ( varTypeString == "SgForAllStatement::forall_statement_kind_enum" ) ||
                  ( varTypeString == "SgImageControlStatement::image_control_statement_enum" ) ||
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||

@@ -1758,6 +1758,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
             
+          case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -2131,6 +2132,23 @@ SageInterface::get_name ( const SgSupport* node )
                          break;
                        }
                   }
+               break;
+             }
+
+       // DQ (1/21/2019): Implemented case for SgBaseClass
+          case V_SgBaseClass:
+             {
+               const SgBaseClass* base_class_node = isSgBaseClass(node);
+               ROSE_ASSERT(base_class_node != NULL);
+               ROSE_ASSERT(base_class_node->get_base_class() != NULL);
+
+            // Add the access modifier to the output.
+               string access = "";
+               const SgBaseClassModifier* baseClassModifier = base_class_node->get_baseClassModifier();
+               ROSE_ASSERT(baseClassModifier != NULL);
+               access = baseClassModifier->displayString();
+
+               name = "_base_class_" + access + "_" + get_name(base_class_node->get_base_class());
                break;
              }
 
@@ -3716,6 +3734,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                break;
              }
 
+        case V_SgJovialForThenStatement:
         case V_SgMatlabForStatement:
           {
             return;
@@ -7860,6 +7879,161 @@ SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool including
       return NULL;
  }
 
+
+SgClassDeclaration*
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
+  {
+ // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+ // I'm having trouble making this work for a member function declared outside of the class definition.
+    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
+    if (temp)
+      return isSgClassDeclaration(temp);
+    else
+      return NULL;
+ }
+
+SgExprListExp*
+SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/)
+   {
+     SgNode* temp = getEnclosingNode<SgExprListExp>(astNode,includingSelf);
+     if (temp)
+          return isSgExprListExp(temp);
+       else
+          return NULL;
+   }
+
+bool
+SageInterface::isInSubTree(SgExpression* subtree, SgExpression* exp)
+   {
+     bool returnValue = false;
+
+     struct Visitor: public AstSimpleProcessing 
+        {
+          SgExpression* expression_target;
+          bool in_subtree;
+          virtual void visit(SgNode* n) 
+             {
+               if (n == expression_target) 
+                  {
+                    in_subtree = true;
+                  }
+             }
+
+          Visitor(SgExpression* expr) : expression_target(expr), in_subtree(false) {}
+        };
+
+     Visitor traversal(exp);
+
+     traversal.traverse(subtree, preorder);
+
+     returnValue = traversal.in_subtree;
+
+     return returnValue;
+   }
+
+
+SgFunctionDeclaration*
+SageInterface::getFunctionDeclaration ( SgFunctionCallExp* functionCallExp )
+   {
+  // DQ (2/7/2019): Added more general function to support extraction of the associated function declaration.
+  // The lower level functions are more robust on the SgFunctionRefExp and SgMemberFunctionRefExp than 
+  // when called on the SgFunctionCallExp for example.
+
+  // SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+     ROSE_ASSERT (functionCallExp != NULL);
+
+     SgExpression* expression = functionCallExp->get_function();
+     ROSE_ASSERT (expression != NULL);
+
+     SgFunctionDeclaration* returnDeclaration = NULL;
+
+     SgDotExp* dotExp = isSgDotExp(expression);
+     if (dotExp != NULL)
+        {
+          ROSE_ASSERT (dotExp != NULL);
+
+          SgExpression* rhsOperand = dotExp->get_rhs_operand();
+          ROSE_ASSERT (rhsOperand != NULL);
+
+          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
+
+       // ROSE_ASSERT (memberFunctionRefExp != NULL);
+          if (memberFunctionRefExp != NULL)
+             {
+               returnDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+             }
+        }
+
+     SgFunctionRefExp* functionReferenceExp = isSgFunctionRefExp(expression);
+     if (functionReferenceExp != NULL)
+        {
+          returnDeclaration = functionReferenceExp->getAssociatedFunctionDeclaration();
+        }
+
+     SgArrowExp* arrowExp = isSgArrowExp(expression);
+     if ( arrowExp != NULL)
+        {
+          ROSE_ASSERT (arrowExp != NULL);
+         
+          SgExpression* rhsOperand = arrowExp->get_rhs_operand();
+          ROSE_ASSERT (rhsOperand != NULL);
+         
+          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
+
+       // ROSE_ASSERT (memberFunctionRefExp != NULL);
+          if (memberFunctionRefExp != NULL)
+             {
+               returnDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+             }
+        }
+     
+     return returnDeclaration;
+   }
+
+
+bool 
+SageInterface::isDataMemberReference(SgVarRefExp* varRefExp)
+   {
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+     ROSE_ASSERT(varRefExp != NULL);
+
+     bool returnValue = false;
+
+     SgVariableSymbol* symbol = varRefExp->get_symbol();
+     ROSE_ASSERT(symbol != NULL);
+
+     SgInitializedName* initializedName = symbol->get_declaration();
+     ROSE_ASSERT(initializedName != NULL);
+
+     SgScopeStatement* scope = initializedName->get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+     if (classDefinition != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+bool
+SageInterface::isAddressTaken(SgVarRefExp* varRefExp)
+   {
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+     ROSE_ASSERT(varRefExp != NULL);
+
+     bool returnValue = false;
+
+     SgAddressOfOp* addressOfOp = isSgAddressOfOp(varRefExp->get_parent());
+
+     if (addressOfOp != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
    {
