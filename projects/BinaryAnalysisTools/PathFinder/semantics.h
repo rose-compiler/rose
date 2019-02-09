@@ -191,7 +191,7 @@ private:
 
 public:
     virtual void
-    startInstruction(SgAsmInstruction *insn);
+    startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     virtual void
     finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;

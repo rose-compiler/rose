@@ -111,7 +111,7 @@ AC_ARG_ENABLE(sage-backend,
 )
 
 if test "$cp_backend" = "yes" -a "$sage_backend" = "yes"; then 
-  AC_MSG_ERROR(Cannot have both sage and c++ backend)
+  AC_MSG_ERROR(cannot have both sage and c++ backend)
 fi
 
 # Initialized values

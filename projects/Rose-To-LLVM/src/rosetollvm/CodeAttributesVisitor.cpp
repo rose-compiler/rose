@@ -10,45 +10,6 @@ using namespace std;
 using namespace NodeQuery;
 using namespace llvm;
 
-/**
- * Check whether or not casting is required between type1 and type2.
- */
-bool CodeAttributesVisitor::isTrivialCast(SgType *type1, SgType *type2) {
-    SgPointerType *pointer1 = isSgPointerType(type1),
-                  *pointer2 = isSgPointerType(type2);
-    if (pointer1 && pointer2) {
-        return isTrivialCast(attributes -> getSourceType(pointer1 -> get_base_type()),
-                             attributes -> getSourceType(pointer2 -> get_base_type()));
-    }
-    SgArrayType *array1 = isSgArrayType(type1),
-                *array2 = isSgArrayType(type2);
-    if (array1 && array2) {
-      return (((IntAstAttribute *) array1 -> getAttribute(Control::LLVM_SIZE)) -> getValue() ==
-              ((IntAstAttribute *) array2 -> getAttribute(Control::LLVM_SIZE)) -> getValue())
-              &&
-              ((IntAstAttribute *) array1 -> getAttribute(Control::LLVM_SIZE)) -> getValue() != 0
-              &&
-              ((IntAstAttribute *) array2 -> getAttribute(Control::LLVM_SIZE)) -> getValue() != 0 // this test is not needed...
-              &&
-              isTrivialCast(attributes -> getSourceType(array1 -> get_base_type()),
-                            attributes -> getSourceType(array2 -> get_base_type()));
-    }
-
-    bool result = (// type1 -> variantT() == type2 -> variantT() || // same class type?
-                   (isSgTypeFloat(type1) && isSgTypeFloat(type2)) ||
-                   (isSgTypeDouble(type1) && isSgTypeDouble(type2)) ||
-                   (isSgTypeLongDouble(type1) && isSgTypeLongDouble(type2)) ||
-                   (isSgTypeComplex(type1) && isSgTypeComplex(type2)) ||
-                   (
-                    (type1 -> isIntegerType() || isSgEnumType(type1)) &&
-                    (type2 -> isIntegerType() || isSgEnumType(type2)) &&
-                    ((IntAstAttribute *) type1 -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue() == ((IntAstAttribute *) type2 -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue()
-                   )
-                  );
-
-    return result;
-}
-
 void CodeAttributesVisitor::processRemainingComponents() {
     /**
      * Note that NO MORE attributes will be added to revisitAttributes as we only revisit function declarations here.
@@ -229,25 +190,84 @@ cout.flush();
      * If we are dealing with a variable with an array type without specified bounds that is initialized
      * with an aggregate then we need to compute the  size of the array from the aggregate.
      */
-    if (array_type && initializer && (! array_type -> get_index() -> attributeExists(Control::LLVM_CONSTANT_VALUE))) { 
-        size_t size;
-        if (isSgAggregateInitializer(initializer)) {
-            size = isSgAggregateInitializer(initializer) -> get_initializers() -> get_expressions().size();
+    if (array_type) {
+        ROSE2LLVM_ASSERT(array_type -> attributeExists(Control::LLVM_SIZE));
+        if (initializer && (! array_type -> get_index() -> attributeExists(Control::LLVM_CONSTANT_VALUE))) {
+            size_t size;
+            if (isSgAggregateInitializer(initializer)) {
+                size = isSgAggregateInitializer(initializer) -> get_initializers() -> get_expressions().size();
+            }
+            else { // a string is an array of characters.
+                SgAssignInitializer *assign_initializer = isSgAssignInitializer(initializer);
+                ROSE2LLVM_ASSERT(assign_initializer);
+                SgStringVal *str = isSgStringVal(assign_initializer -> get_operand());
+                ROSE2LLVM_ASSERT(str);
+                size = str -> get_value().size() + 1;
+            }
+            // To be sure to get new nodes that we can
+            // later free, don't use SageBuilder for types.
+            SgLongIntVal *expr = isSgLongIntVal(control.ownNode(SageBuilder::buildLongIntVal(size)));
+            ROSE2LLVM_ASSERT(expr);
+            array_type = control.ownNode(new SgArrayType(array_type -> get_base_type(), expr)); // create new array type with bound
+            type = array_type;
+            attributes -> setLLVMTypeName(type);
         }
-        else { // a string is an array of characters.
-            SgAssignInitializer *assign_initializer = isSgAssignInitializer(initializer);
-            ROSE2LLVM_ASSERT(assign_initializer);
-            SgStringVal *str = isSgStringVal(assign_initializer -> get_operand());
-            ROSE2LLVM_ASSERT(str);
-            size = str -> get_value().size() + 1;
+        else if (((IntAstAttribute *) array_type -> getAttribute(Control::LLVM_SIZE)) -> getValue() == 0) { // an unsized array?
+// TODO: Remove this !
+/*  
+ROSE2LLVM_ASSERT(array_type -> get_base_type() -> attributeExists(Control::LLVM_TYPE));
+ROSE2LLVM_ASSERT(array_type -> get_index());
+cout << n -> get_name().getString()
+     << " is an unsized array ==> "
+     << ((IntAstAttribute *) array_type -> getAttribute(Control::LLVM_SIZE)) -> getValue()
+     << "; its subtype is "
+     << ((StringAstAttribute *) array_type -> get_base_type() -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+     << "; the constant is "
+     << (array_type -> get_index() -> attributeExists(Control::LLVM_CONSTANT_VALUE)
+                     ? ((IntAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_CONSTANT_VALUE)) -> getValue()
+                     : 0)
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isUnknown () ? "isUnknown ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isDefault () ? "isDefault ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isExtern () ? "isExtern ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isStatic () ? "isStatic ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isAuto () ? "isAuto ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isUnspecified () ? "isUnspecified ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isRegister () ? "isRegister ()" : "") << endl
+     << (n -> get_declaration() -> get_declarationModifier().get_storageModifier().isMutable () ? "isMutable ()" : "") << endl
+     << endl;
+ cout.flush();
+*/ 
+            if (n -> /* get_storageModifier(); */ get_declaration() -> get_declarationModifier().get_storageModifier().isUnspecified() && (! isSgNullExpression(array_type -> get_index()))) {
+// TODO: Remove this !
+/*  
+cout
+  << "The array "
+  << n -> get_name().getString()
+  << " is an auto variable with an array type that has non-constant bound"
+  << "; index() is "
+  << array_type -> get_index() -> class_name()
+  << endl;
+cout.flush();
+*/
+                SgFunctionDeclaration *current_function = current_function_attribute.top() -> getFunctionDeclaration();
+                ROSE2LLVM_ASSERT(current_function);
+                control.SetAttribute(n, Control::LLVM_NEEDS_STACK); // indicate that this declaration has an array type with a bound expression that needs to be evaluated at run time.
+                if (! current_function -> attributeExists(Control::LLVM_NEEDS_STACK)) {
+                    control.SetAttribute(current_function, Control::LLVM_NEEDS_STACK);
+                }
+                attributes -> setNeedsStacksave();
+            }
+            type = control.ownNode(new SgPointerType(array_type -> get_base_type())); // create new pointer type to replace the unbounded array;
+            attributes -> setLLVMTypeName(type);
+            array_type = NULL;
+// TODO: Remove this !
+/*  
+cout
+  << "The array type was replaced by a pointer type"
+  << endl;
+cout.flush();    
+*/
         }
-        // To be sure to get new nodes that we can
-        // later free, don't use SageBuilder for types.
-        SgLongIntVal *expr = isSgLongIntVal(control.ownNode(SageBuilder::buildLongIntVal(size)));
-        ROSE2LLVM_ASSERT(expr);
-        array_type = control.ownNode(new SgArrayType(array_type -> get_base_type(), expr)); // create new array type with bound
-        type = array_type;
-        attributes -> setLLVMTypeName(type);
     }
     else if (function_type) {
 //
@@ -327,7 +347,7 @@ cout.flush();
     //
     // 
     //
-    SgStorageModifier &sm = n -> get_storageModifier(); // get_declaration() -> get_declarationModifier().get_storageModifier();
+    SgStorageModifier &sm = n -> /* get_storageModifier(); */ get_declaration() -> get_declarationModifier().get_storageModifier();
     string name;
 
     /**
@@ -575,36 +595,65 @@ cout.flush();
             attributes -> setNeedsMemcopy();
         }
         else {
-            SgCastExp *cast_expression = isSgCastExp(assign_initializer -> get_operand());
             ConstantExpressionEvaluator evaluator(attributes);
-            ConstantValue x = evaluator.traverse(cast_expression);
+            SgExpression *init_expression = assign_initializer -> get_operand();
+            ConstantValue x = evaluator.traverse(init_expression);
+
             if (x.hasValue()) {
-                control.SetAttribute(cast_expression, Control::LLVM_IGNORE); // Ignore this subtree from now on.
-                SgType *target_type = attributes -> getExpressionType(cast_expression),
-                       *source_type = attributes -> getExpressionType(cast_expression -> get_operand());
-                ROSE2LLVM_ASSERT((StringAstAttribute *) target_type -> getAttribute(Control::LLVM_TYPE));
-                string target_type_name = ((StringAstAttribute *) target_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
-                string value_string = Control::primitiveCast(x, target_type);
-                string value_code = ((source_type -> isIntegerType() || isSgEnumType(source_type)) && isSgPointerType(target_type) && value_string.compare("null") != 0
-                                            ? (string) ("inttoptr (i64 " + value_string + " to " + target_type_name + ")")
-                                            : value_string);
-  
-// TODO: Remove this !!!
+                control.SetAttribute(initializer, Control::LLVM_IGNORE); // Ignore this subtree from now on.
+                SgType *target_type = attributes -> getExpressionType(init_expression);
+                SgTypeComplex *complex_target_type = isSgTypeComplex(target_type);
+                string value_code;
+                if (complex_target_type) {
+                    string imaginary_value_code;
+                    SgType *base_type = isSgTypeComplex(target_type) -> get_base_type();
+                    if (isSgTypeFloat(base_type)) {
+                        ROSE2LLVM_ASSERT(x.hasFloatComplexValue());
+                        value_code = Control::FloatToString((float) x.float_complex_value.real());
+                        imaginary_value_code = Control::FloatToString((float) x.float_complex_value.imag());
+                    }
+                    else if (isSgTypeDouble(base_type)) {
+                        ROSE2LLVM_ASSERT(x.hasDoubleComplexValue());
+                        value_code = Control::DoubleToString((double) x.double_complex_value.real());
+                        imaginary_value_code = Control::DoubleToString((double) x.double_complex_value.imag());
+                    }
+                    else if (isSgTypeLongDouble(base_type)) {
+                        ROSE2LLVM_ASSERT(x.hasLongDoubleComplexValue());
+                        value_code = Control::LongDoubleToString((long double) x.long_double_complex_value.real());
+                        imaginary_value_code = Control::LongDoubleToString((long double) x.long_double_complex_value.imag());
+                    }
+                    else {
+                        ROSE2LLVM_ASSERT(! "yet support a complex value with this precision type");
+                    }
 /*
-cout << "This is where the IGNORE flag was set !"
-     << "... the type is "
-     << attributes -> getExpressionType(value) -> class_name()
-     << "; the value is " << value_code
-     << "; the target type name is " << target_type_name
-     << "; value_string = " << value_string
-     << "; value_code = " << value_code
-     << "; source type = " << source_type -> class_name()
-     << "; target type = " << target_type -> class_name()
+cout << "Found complex type: "
+     << value_code
+     << "+"
+     << imaginary_value_code
+     << "i"
      << endl;
 cout.flush();
 */
-                control.SetAttribute(cast_expression, Control::LLVM_NAME, new StringAstAttribute(value_code));
-                control.SetAttribute(cast_expression, Control::LLVM_EXPRESSION_RESULT_NAME, new StringAstAttribute(value_code));
+                    control.SetAttribute(init_expression, Control::LLVM_IMAGINARY_RESULT_NAME, new StringAstAttribute(imaginary_value_code));
+                }
+                else {
+                    string value_string = Control::primitiveCast(x, target_type);
+                    SgCastExp *cast_expression = isSgCastExp(init_expression);
+                    if (cast_expression) {
+                        SgType *source_type = attributes -> getExpressionType(cast_expression -> get_operand());
+                        ROSE2LLVM_ASSERT((StringAstAttribute *) target_type -> getAttribute(Control::LLVM_TYPE));
+                        string target_type_name = ((StringAstAttribute *) target_type -> getAttribute(Control::LLVM_TYPE)) -> getValue();
+                        value_code = ((source_type -> isIntegerType() || isSgEnumType(source_type)) && isSgPointerType(target_type) && value_string.compare("null") != 0
+                                                ? (string) ("inttoptr (i64 " + value_string + " to " + target_type_name + ")")
+                                                : value_string);
+                    }
+                    else {
+                        value_code = value_string;
+                    }
+                }
+
+                control.SetAttribute(init_expression, Control::LLVM_NAME, new StringAstAttribute(value_code));
+                control.SetAttribute(init_expression, Control::LLVM_EXPRESSION_RESULT_NAME, new StringAstAttribute(value_code));
             }
         }
 
@@ -1155,12 +1204,12 @@ bool CodeAttributesVisitor::preVisitEnter(SgNode *node) {
              <<  (isSgFunctionDeclaration(node) ? isSgFunctionSymbol(isSgFunctionDeclaration(node) -> search_for_symbol_from_symbol_table()) -> get_name().getString() : "")
              <<  (isSgFunctionDeclaration(node) ? ") " : "")
              << node -> class_name() << endl;  // Used for Debugging
-if (isSgVarRefExp(node)) {
-SgVarRefExp *n = isSgVarRefExp(node);
- cerr << "    var is ===> " << n -> get_symbol() -> get_name()
-   << endl; 
-}
-        cerr.flush();
+         if (isSgVarRefExp(node)) {
+             SgVarRefExp *n = isSgVarRefExp(node);
+             cerr << "    var is ===> " << n -> get_symbol() -> get_name()
+             << endl; 
+         }
+         cerr.flush();
      }
 
      /**
@@ -1773,6 +1822,10 @@ void CodeAttributesVisitor::preVisit(SgNode *node) {
 
          if (false)
             ;
+     //*            SgCompoundLiteralExp:
+         else if (dynamic_cast<SgCompoundLiteralExp *>(node)) { // preVisit SgCompoundLiteralExp
+             SgCompoundLiteralExp *n = isSgCompoundLiteralExp(node);
+         }
      //*            SgUnaryOp:
      //*                SgExpressionRoot
      //*                SgMinusOp
@@ -2008,6 +2061,74 @@ cout.flush();
      //*                SgLshiftOp
      //*                SgRshiftOp
      //*                SgPntrArrRefExp
+         else if (dynamic_cast<SgPntrArrRefExp *>(node)) { // preVisit SgExpression
+             SgPntrArrRefExp *n = isSgPntrArrRefExp(node);
+             ROSE2LLVM_ASSERT(n -> get_type());
+             ROSE2LLVM_ASSERT(n -> get_lhs_operand() -> get_type());
+             ROSE2LLVM_ASSERT(n -> get_rhs_operand() -> get_type());
+             SgType *element_type = attributes -> getSourceType(n -> get_type()),
+                    *lhs_type = attributes -> getSourceType(n -> get_lhs_operand() -> get_type()),
+                    *rhs_type = attributes -> getSourceType(n -> get_rhs_operand() -> get_type());
+/*
+             if (isSgTypeString(lhs_type)) {
+                 ROSE2LLVM_ASSERT(isSgStringVal(n -> get_lhs_operand()));
+                 control.SetAttribute(n -> get_lhs_operand(), Control::LLVM_ARRAY_NAME_REFERENCE);
+             }
+             else if (isSgTypeString(rhs_type)) {
+                 ROSE2LLVM_ASSERT(isSgStringVal(n -> get_rhs_operand()));
+                 control.SetAttribute(n -> get_rhs_operand(), Control::LLVM_ARRAY_NAME_REFERENCE);
+             }
+             else {
+*/
+             if (! (isSgTypeString(lhs_type) || isSgTypeString(rhs_type))) {
+                 SgType *lhs_element_type = (isSgArrayType(lhs_type)
+                                                 ? attributes -> getSourceType(isSgArrayType(lhs_type) -> get_base_type())
+                                                 : isSgPointerType(lhs_type)
+                                                       ? attributes -> getSourceType(isSgPointerType(lhs_type) -> get_base_type()) : NULL),
+                        *rhs_element_type = (isSgArrayType(rhs_type)
+                                                 ? attributes -> getSourceType(isSgArrayType(rhs_type) -> get_base_type())
+                                                 : isSgPointerType(rhs_type)
+                                                       ? attributes -> getSourceType(isSgPointerType(rhs_type) -> get_base_type()) : NULL);
+
+                 ROSE2LLVM_ASSERT(lhs_element_type || rhs_element_type);
+
+                 /**
+                  * TODO: Note that the reason why the trivial cast test against the resulting type is 
+                  *       commented out is because of a bug in Rose. When the index is placed to the right
+                  *       of the array operator, Rose does not properly resolve the type of the dereference.
+                  *
+                  *       For example, consider the following fragment:
+                  *
+                  *           struct C {};
+                  *           struct C* S[10];
+                  *           . . .
+                  *           0[S] = '\0'
+                  *
+                  *       In this case, the SgPntrArrRefExp generated for the above statement has a resulting
+                  *       type of "int" instead of "struct C*". Rose generates the proper AST for:
+                  *
+                  *           S[0] = '\0'
+                  */
+                 if (lhs_element_type /* && attributes -> isTrivialCast(element_type, lhs_element_type) */ && dynamic_cast<SgVarRefExp *>(n -> get_lhs_operand())) {
+                     SgVarRefExp *var_ref = isSgVarRefExp(n -> get_lhs_operand());
+                     checkVariableDeclaration(var_ref);
+                     control.SetAttribute(var_ref, Control::LLVM_ARRAY_NAME_REFERENCE);
+                 }
+                 else if (rhs_element_type /* && attributes -> isTrivialCast(element_type, rhs_element_type) */ && dynamic_cast<SgVarRefExp *>(n -> get_rhs_operand())) {
+                     SgVarRefExp *var_ref = isSgVarRefExp(n -> get_rhs_operand());
+                     checkVariableDeclaration(var_ref);
+                     control.SetAttribute(var_ref, Control::LLVM_ARRAY_NAME_REFERENCE);
+                 }
+
+                 /**
+                  * If the parent of this array dereference is itself an array dereference, then mark this one as being only a reference.
+                  */
+                 if (isSgPntrArrRefExp(n -> get_parent())) {
+                     control.SetAttribute(n, Control::LLVM_REFERENCE_ONLY);
+                 }
+             }
+         }
+
      //*                SgScopeOp
      //*                SgAssignOp
          else if (dynamic_cast<SgAssignOp *>(node)) { // preVisit SgExpression
@@ -2192,6 +2313,45 @@ cout.flush();
                  out << Control::LongDoubleToString(isSgLongDoubleVal(n) -> get_value());
              }
      //*                SgComplexVal
+             else if (dynamic_cast<SgComplexVal *>(n)) { // preVisit SgExpression, SgValueExp
+                 SgComplexVal *complex_val = isSgComplexVal(node);
+                 SgType *precision_type = attributes -> getSourceType(complex_val -> get_precisionType());
+                 string imaginary_value;
+/*
+cout <<  "The precision type of this complex value is "
+    << precision_type -> class_name()
+    << endl;
+cout.flush();
+*/
+                 if (isSgTypeFloat(precision_type)) {
+                     ROSE2LLVM_ASSERT(isSgFloatVal(complex_val -> get_real_value()));
+                     out << Control::FloatToString(isSgFloatVal(complex_val -> get_real_value()) -> get_value());
+                     imaginary_value = Control::FloatToString(isSgFloatVal(complex_val -> get_imaginary_value()) -> get_value());
+                 }
+                 else if (isSgTypeDouble(precision_type)) {
+                     ROSE2LLVM_ASSERT(isSgFloatVal(complex_val -> get_real_value()));
+                     out << Control::DoubleToString(isSgDoubleVal(complex_val -> get_real_value()) -> get_value());
+                     imaginary_value = Control::DoubleToString(isSgDoubleVal(complex_val -> get_imaginary_value()) -> get_value());
+                 }
+                 else if (isSgTypeLongDouble(precision_type)) {
+                     ROSE2LLVM_ASSERT(isSgLongDoubleVal(complex_val -> get_real_value()));
+                     out << Control::LongDoubleToString(isSgLongDoubleVal(complex_val -> get_real_value()) -> get_value());
+                     imaginary_value = Control::LongDoubleToString(isSgLongDoubleVal(complex_val -> get_imaginary_value()) -> get_value());
+                 }
+                 else {
+                     ROSE2LLVM_ASSERT(! "yet know how to proccess a complex value with this precision type");
+                 }
+
+                 control.SetAttribute(complex_val, Control::LLVM_IMAGINARY_RESULT_NAME, new StringAstAttribute(imaginary_value));
+/*
+cout <<  "The real value is "
+    << out.str()
+    << "; the imaginary value is "
+    << imaginary_value
+    << endl;
+cout.flush();
+*/
+             }
      //*                SgUpcThreads
      //*                SgUpcMythread
 
@@ -2215,6 +2375,7 @@ cout.flush();
              SgSizeOfOp *n = isSgSizeOfOp(node);
              SgExpression *expr_operand = n -> get_operand_expr();
              SgType *operand_type = attributes -> getSourceType(n -> get_operand_type() ? n -> get_operand_type() : expr_operand -> get_type());
+
 //
 // TODO: Remove this !
 //
@@ -2249,7 +2410,7 @@ cout.flush();
 // TODO: Remove this !
 //
 /*
- cout
+cout
   << "Dealing with sizeof a "
   << (expr_operand ? expr_operand -> class_name() : "???")
   << " with type "
@@ -2258,20 +2419,80 @@ cout.flush();
   << size
   << endl;
 cout.flush();
-*/ 
+if (isSgArrayType(operand_type)) {
+}
+*/
                  if (size > 0) {
                      out << size;
                      control.SetAttribute(n, Control::LLVM_SIZE, new IntAstAttribute(size));
                      control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(out.str()));
                  }
                  else {
-                     ROSE2LLVM_ASSERT(expr_operand);   
-                     SgVarRefExp *var_ref = isSgVarRefExp(expr_operand);
-                     SgInitializedName *var_decl = (var_ref ? var_ref -> get_symbol() -> get_declaration() : NULL);
-                     ROSE2LLVM_ASSERT((! var_ref) || var_ref -> get_symbol() -> get_declaration());
-                     if (var_decl) {
-                         SgTypeAstAttribute *type_attribute = (SgTypeAstAttribute *) var_decl -> getAttribute(Control::LLVM_DECLARATION_TYPE);
-                         size = ((IntAstAttribute *) type_attribute -> getType() -> getAttribute(Control::LLVM_SIZE)) -> getValue();
+                     SgArrayType *array_type =  isSgArrayType(operand_type);
+                     if (array_type && (! isSgNullExpression(array_type -> get_index()))) {
+                         string bound_expression_name = ((StringAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
+// TODO: Remove this !
+/*  
+cout
+  << "Found an array with a non-constant bound expression - Its root is "
+  << ((StringAstAttribute *) isSgArrayType(operand_type) -> get_index() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue()
+  << endl;
+cout.flush();
+ */
+                         SgType *base_type = array_type -> get_base_type();
+                         size = ((IntAstAttribute *) base_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
+                         if (size == 1) {
+cout
+  << "Type "
+  << base_type -> class_name()
+  << " has size 1"
+  << endl;
+cout.flush();
+
+                             control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(bound_expression_name));
+                         }
+                         else {
+cout
+  << "Original computed bound is in variable "
+  << bound_expression_name
+  << endl;
+cout.flush();
+                             while (array_type) {
+                                 base_type = array_type -> get_base_type();
+                                 size = ((IntAstAttribute *) base_type -> getAttribute(Control::LLVM_SIZE)) -> getValue();
+                                 if (size > 0) {
+cout
+  << "Type "
+  << base_type -> class_name()
+  << " has size "
+  << size
+  << endl;
+cout.flush();
+                                     break;
+                                 }
+
+                                 array_type = isSgArrayType(base_type);
+                                 bound_expression_name = ((StringAstAttribute *) array_type -> get_index() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_NAME)) -> getValue();
+cout
+  << "computed bound is in variable "
+  << bound_expression_name
+  << endl;
+cout.flush();
+                             }
+                             control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(bound_expression_name)); // TODO: Compute the proper name!!!
+                         }
+cout
+  << endl;
+cout.flush();
+                     }
+                     else {
+                         ROSE2LLVM_ASSERT(expr_operand);   
+                         SgVarRefExp *var_ref = isSgVarRefExp(expr_operand);
+                         SgInitializedName *var_decl = (var_ref ? var_ref -> get_symbol() -> get_declaration() : NULL);
+                         ROSE2LLVM_ASSERT((! var_ref) || var_ref -> get_symbol() -> get_declaration());
+                         if (var_decl) { // An array that gets its size from its initialization?  ex:   int A[] = { 1, 2, 3, 4 };
+                             SgTypeAstAttribute *type_attribute = (SgTypeAstAttribute *) var_decl -> getAttribute(Control::LLVM_DECLARATION_TYPE);
+                             size = ((IntAstAttribute *) type_attribute -> getType() -> getAttribute(Control::LLVM_SIZE)) -> getValue();
 //
 // TODO: Remove this !
 //
@@ -2286,11 +2507,20 @@ cout
   << endl;
 cout.flush();
 */
-                         out << size;
-                         control.SetAttribute(n, Control::LLVM_SIZE, new IntAstAttribute(size));
-                         control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(out.str()));
+                             if (size > 0) {
+                                 out << size;
+                                 control.SetAttribute(n, Control::LLVM_SIZE, new IntAstAttribute(size));
+                                 control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(out.str()));
+                             }
+                         }
                      }
-                     else control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC)));
+
+                     /**
+                      *
+                      */
+                     if (size == 0) {
+                         ROSE2LLVM_ASSERT(! "know how to compute the size of this type!");
+                     }
                  }
              }
              visit_suspended_by_node = node; // Do not bother visiting children of SizeOfOp node - constant.
@@ -2699,7 +2929,7 @@ void CodeAttributesVisitor::addBooleanExtensionAttributeIfNeeded(SgExpression *n
         result_name_attribute -> resetValue(extend_name);
 
         SgTypeAstAttribute *type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
-        if (target_type && (! isTrivialCast(type_attribute -> getType(), target_type))) {
+        if (target_type && (! attributes -> isTrivialCast(type_attribute -> getType(), target_type))) {
 // TODO: Remove this !!!
 /*
 cout
@@ -3589,6 +3819,11 @@ cout.flush();
      //                     SgOmpSectionsStatement
      //             SgSequenceStatement
      //         SgExpression:
+     //             SgCompoundLiteralExp:
+         else if (dynamic_cast<SgCompoundLiteralExp *>(node)) { // postVisit SgCompoundLiteralExp
+             SgCompoundLiteralExp *n = isSgCompoundLiteralExp(node);
+             ROSE2LLVM_ASSERT(! "Yet support compound literal expressions");
+         }
      //             SgUnaryOp:
      //                 SgExpressionRoot
      //                 SgMinusOp
@@ -3720,7 +3955,7 @@ cout.flush();
               *    . both the operand and the result type are exactly the same type
               *    . both the operand and the result type are integer types and they have the same alignment.
               */
-             else if (isTrivialCast(result_type, operand_type)) {
+             else if (attributes -> isTrivialCast(result_type, operand_type)) {
 // TODO: Remove this !
 /*       
 cout
@@ -3932,7 +4167,7 @@ cout.flush();
 
          //
          // TODO: ROSE does not properly resolve the type of an SgPntrArrRefExp  when the
-         // index is placed in from of the square bracket.  This problem can get propagated
+         // index is placed in front of the square bracket.  This problem can get propagated
          // upward when integer values are added to such a result.
          //
 // TODO: Remove this !!!
@@ -3950,26 +4185,34 @@ cout.flush();
          if (isSgArrayType(attributes -> getExpressionType(n -> get_lhs_operand()))) {
              SgType *type = control.ownNode(new SgPointerType(isSgArrayType(attributes -> getExpressionType(n -> get_lhs_operand())) -> get_base_type()));
              attributes -> setLLVMTypeName(type);
-             SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+             SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> get_lhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
              result_type_attribute -> resetType(type);
+             result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+             result_type_attribute -> resetType(type);
+             result_type = type;
          }
          else if (isSgPointerType(attributes -> getExpressionType(n -> get_lhs_operand()))) {
              SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
-             result_type_attribute -> resetType(attributes -> getExpressionType(n -> get_lhs_operand()));
+             result_type = attributes -> getExpressionType(n -> get_lhs_operand());
+             result_type_attribute -> resetType(result_type);
          }
          else if (isSgArrayType(attributes -> getExpressionType(n -> get_rhs_operand()))) {
              SgType *type = control.ownNode(new SgPointerType(isSgArrayType(attributes -> getExpressionType(n -> get_rhs_operand())) -> get_base_type()));
              attributes -> setLLVMTypeName(type);
-             SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+             SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> get_rhs_operand() -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
              result_type_attribute -> resetType(type);
+             result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+             result_type_attribute -> resetType(type);
+             result_type = type;
          }
          else if (isSgPointerType(attributes -> getExpressionType(n -> get_rhs_operand()))) {
              SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
              ROSE2LLVM_ASSERT(result_type_attribute);
-             result_type_attribute -> resetType(attributes -> getExpressionType(n -> get_rhs_operand()));
+             result_type = attributes -> getExpressionType(n -> get_rhs_operand());
+             result_type_attribute -> resetType(result_type);
          }
 
          addBooleanExtensionAttributeIfNeeded(n -> get_lhs_operand(), result_type);
@@ -4225,23 +4468,61 @@ cout.flush();
          else  {
              array_pointer = n -> get_rhs_operand();
              array_index = n -> get_lhs_operand();
-
-             //
-             // TODO: ROSE does not properly resolve the type of this resulting operation when the
-             // index is placed in from of the square bracket.  We fix this problem here for now.
-             //
-             SgType *type = attributes -> getExpressionType(array_pointer);
-             SgArrayType *array_type = isSgArrayType(type);
-             SgPointerType *pointer_type = isSgPointerType(type);
-             SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
-             ROSE2LLVM_ASSERT(result_type_attribute);
-             if (array_type)
-                  result_type_attribute -> resetType(attributes -> getSourceType(array_type -> get_base_type()));
-             else if (pointer_type)
-                  result_type_attribute -> resetType(attributes -> getSourceType(pointer_type -> get_base_type()));
-             else ROSE2LLVM_ASSERT(! "This is not supposed to happen !!!");
          }
 
+         //
+         // TODO: ROSE does not properly resolve the type of this resulting operation when the
+         // index is placed in from of the square bracket.  We fix this problem here for now.
+         //
+         SgType *type = attributes -> getExpressionType(array_pointer);
+         /**
+          * If the array in question is a string constant, convert SgTypeString to an array of characters.
+          */
+         if (isSgTypeString(type)) {
+             /**
+              * Now, reset the type of the string as an array of characters.
+              * TODO: This has to be revisited when we are also processing large characters.
+              */
+             ROSE2LLVM_ASSERT(isSgStringVal(array_pointer));
+             SgExpression *expr = control.ownNode(SageBuilder::buildLongIntVal(isSgStringVal(array_pointer) -> get_value().size() + 1));
+             type = control.ownNode(new SgArrayType(control.getTypeChar(), expr));
+             attributes -> setLLVMTypeName(type);
+             SgTypeAstAttribute *operand_attribute = (SgTypeAstAttribute *) array_pointer -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+             operand_attribute -> resetType(type);
+         }
+
+         SgArrayType *array_type = isSgArrayType(type);
+         SgPointerType *pointer_type = isSgPointerType(type);
+         SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+         ROSE2LLVM_ASSERT(result_type_attribute);
+         if (array_type) {
+              result_type_attribute -> resetType(attributes -> getSourceType(array_type -> get_base_type()));
+         }
+         else if (pointer_type) {
+              result_type_attribute -> resetType(attributes -> getSourceType(pointer_type -> get_base_type()));
+         }
+         else {
+/*
+cout
+  << "* The resulting type is a "
+  << type -> class_name()
+  << " with name "
+  << ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+  << endl;
+cout.flush();
+*/
+             ROSE2LLVM_ASSERT(! "This is not supposed to happen !!!");
+         }
+// TODO: Remove this !
+/*  
+cout
+  << "* The resulting type is a "
+  << result_type_attribute -> getType() -> class_name()
+  << " "
+  << ((StringAstAttribute *) result_type_attribute -> getType() -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+  << endl;
+cout.flush();
+*/ 
 // TODO: Remove this !!!
 /*
 SgType *array_type = attributes -> getExpressionType(array_pointer);
@@ -4261,6 +4542,8 @@ cout
   << "; however, the sub array type is "
   << (isSgArrayType(array_type) ? isSgArrayType(array_type) -> get_base_type() -> class_name() : "")
   << (isSgPointerType(array_type) ? isSgPointerType(array_type) -> get_base_type() -> class_name() : "")
+  << ";  The resulting type is "
+  << attributes -> getExpressionType(n)) -> class_name()  
   << endl;
 cout.flush();
 */
@@ -4316,6 +4599,21 @@ cout.flush();
          SgType *lhs_type = attributes -> getExpressionType(lhs_operand),
                 *rhs_type = attributes -> getExpressionType(rhs_operand);
 
+// TODO: Remove this !
+/*  
+cout << "*** ASSIGNMENT from right operand "
+     << rhs_operand -> class_name()
+     << " with type "
+     << ((StringAstAttribute *) rhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+     << " to left operand "
+     << lhs_operand -> class_name()
+     << " with type "
+     << ((StringAstAttribute *) lhs_type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+     << " and resulting type "
+     << ((StringAstAttribute *) attributes -> getExpressionType(n) -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+     << endl;
+cout.flush();
+*/
          addBooleanExtensionAttributeIfNeeded(rhs_operand, lhs_type);
 
          if ((lhs_type -> isIntegerType() || isSgEnumType(lhs_type)) && (rhs_type -> isIntegerType() || isSgEnumType(rhs_type)) &&
@@ -4467,13 +4765,59 @@ cout.flush();
      //             SgVarRefExp
      else if (dynamic_cast<SgVarRefExp *>(node)) { // postVisit
          SgVarRefExp *n = isSgVarRefExp(node);
-         if (! n -> attributeExists(Control::LLVM_CLASS_MEMBER)) { // class members are processed at DotExp or ArrowExp level
-             SgVariableSymbol *sym = n -> get_symbol();
-             ROSE2LLVM_ASSERT(sym);
-             SgInitializedName *decl = sym -> get_declaration();
-             ROSE2LLVM_ASSERT(decl);
-             string var_name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_NAME)) -> getValue();
 
+         SgVariableSymbol *sym = n -> get_symbol();
+         ROSE2LLVM_ASSERT(sym);
+         SgInitializedName *decl = sym -> get_declaration();
+         ROSE2LLVM_ASSERT(decl);
+         string var_name = ((StringAstAttribute *) decl -> getAttribute(Control::LLVM_NAME)) -> getValue();
+
+         SgType *type = attributes -> getSourceType(n -> get_type()); // Get the original type specified. The getExpressionType will return a pointer. See preVisit.
+
+         // 12/11/2018
+         SgType *var_type = ((SgTypeAstAttribute *) decl -> getAttribute(Control::LLVM_DECLARATION_TYPE)) -> getType();
+         ROSE2LLVM_ASSERT(var_type);
+         SgTypeAstAttribute *result_type_attribute = (SgTypeAstAttribute *) n -> getAttribute(Control::LLVM_EXPRESSION_RESULT_TYPE);
+         ROSE2LLVM_ASSERT(result_type_attribute);
+         if (! attributes -> isTrivialCast(type, var_type)) {
+// TODO: Remove this !
+/*  
+cout
+  << "* The declaration type of "
+  << decl -> get_name().getString()
+  << ", "
+  << ((StringAstAttribute *) var_type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+  << ", does not match the node type "
+  << ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+  << endl;
+cout.flush();
+*/
+             result_type_attribute -> resetType(var_type);
+             type = var_type;
+         }
+// TODO: Remove this !
+/*  
+else {
+cout
+  << "* The declaration type of "
+  << decl -> get_name().getString()
+  << " matches the node type: "
+  << ((StringAstAttribute *) type -> getAttribute(Control::LLVM_TYPE)) -> getValue()
+  << endl;
+cout.flush();
+}
+*/
+         /**
+          *
+          */
+         if (n -> attributeExists(Control::LLVM_CLASS_MEMBER) || n -> attributeExists(Control::LLVM_ARRAY_NAME_REFERENCE)) {
+             /**
+              * Ignore class member variable references as they will be processed at SgDotExp or SgArrowExp level.
+              * Also, ignore variables that are used in array element dereferences. They will be processed at the SgPntrArrRefExp level.
+              */
+             control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(var_name));
+         }
+         else {
              // Set the alignment on the SgVarRefExp so it can easily be
              // retrieved during code generation.
              if (decl -> attributeExists(Control::LLVM_ALIGN_VAR)) {
@@ -4484,9 +4828,9 @@ cout.flush();
 
              if (decl -> attributeExists(Control::LLVM_AGGREGATE)) {
                  AggregateAstAttribute *aggregate_attribute = (AggregateAstAttribute *) decl -> getAttribute(Control::LLVM_AGGREGATE);
-                 SgType *type = attributes -> getSourceType(n -> get_type()); // Get the original type specified. The getExpressionType will return a pointer. See preVisit.
                  SgArrayType *array_type = isSgArrayType(type);
                  SgClassType *class_type = isSgClassType(type);
+
                  ROSE2LLVM_ASSERT(array_type || class_type);
 
                  if (array_type) {
@@ -4495,7 +4839,7 @@ cout.flush();
                      control.SetAttribute(n, Control::LLVM_REFERENCE_NAME, new StringAstAttribute(temp));
                      control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(temp));
                  }
-                 else if (class_type) {
+                 else {
                      control.SetAttribute(n, Control::LLVM_AGGREGATE, new AggregateAstAttribute(aggregate_attribute));
                      control.SetAttribute(n, Control::LLVM_REFERENCE_NAME, new StringAstAttribute(var_name));
                      string name = (n -> attributeExists(Control::LLVM_REFERENCE_ONLY)
@@ -4507,10 +4851,15 @@ cout.flush();
              else {
                  ROSE2LLVM_ASSERT((StringAstAttribute *) decl -> getAttribute(Control::LLVM_NAME));
                  control.SetAttribute(n, Control::LLVM_REFERENCE_NAME, new StringAstAttribute(var_name));
-                 string name = (n -> attributeExists(Control::LLVM_REFERENCE_ONLY)
+                 string name = (n -> attributeExists(Control::LLVM_REFERENCE_ONLY) && (! isSgTypeComplex(type))
                                    ? var_name
                                    : attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC));
                  control.SetAttribute(n, Control::LLVM_NAME, new StringAstAttribute(name));
+
+                 if (isSgTypeComplex(type)) {
+                     control.SetAttribute(n, Control::LLVM_REAL, new StringAstAttribute(attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC)));
+                     control.SetAttribute(n, Control::LLVM_IMAGINARY, new StringAstAttribute(attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC)));
+                 }
              }
          }
      }
@@ -4578,17 +4927,20 @@ cout.flush();
      }
      //                 SgFloatVal
      else if (dynamic_cast<SgFloatVal*>(node)) { // postVisit
-         SgFloatVal *fval = isSgFloatVal(node);
+         SgFloatVal *n = isSgFloatVal(node);
      }
      //                 SgDoubleVal
      else if (dynamic_cast<SgDoubleVal*>(node)) { // postVisit
-         SgDoubleVal *dval = isSgDoubleVal(node);
+         SgDoubleVal *n = isSgDoubleVal(node);
      }
      //                 SgLongDoubleVal
      else if (dynamic_cast<SgLongDoubleVal *>(node)) { // postVisit
          SgLongDoubleVal *n = isSgLongDoubleVal(node);
      }
      //                 SgComplexVal
+     else if (dynamic_cast<SgComplexVal*>(node)) { // postVisit
+         SgComplexVal *n = isSgComplexVal(node);
+     }
      //                 SgUpcThreads
      //                 SgUpcMythread
      //                 SgFunctionCallExp
@@ -5279,6 +5631,13 @@ void CodeAttributesVisitor::postVisitExit(SgNode *node) {
                  string name = ((StringAstAttribute *) n -> getAttribute(Control::LLVM_NAME)) -> getValue();
                  control.SetAttribute(n, Control::LLVM_EXPRESSION_RESULT_NAME, new StringAstAttribute(name));
              }
+         }
+
+         /**
+          * Add imaginary temporary for complex subexpressions.
+          */
+         if (isSgTypeComplex(attributes -> getExpressionType(n))) {
+             control.SetAttribute(n, Control::LLVM_IMAGINARY_RESULT_NAME, new StringAstAttribute(attributes -> getTemp(LLVMAstAttributes::TEMP_GENERIC)));
          }
 
          /**

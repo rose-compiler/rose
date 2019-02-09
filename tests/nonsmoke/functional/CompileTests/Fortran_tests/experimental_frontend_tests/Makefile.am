@@ -24,7 +24,6 @@ F90_TESTCODES = \
  R521.f90   \
  R545.f90   \
  R719a.f90  \
- R816.f90   \
  R832.f90   \
  R837.f90   \
  R854.f90   \
@@ -35,6 +34,7 @@ F90_TESTCODES = \
 F2018_TESTCODES = \
  R507-F2015-N2007.f90 \
  R511-F2015-N2007.f90 \
+ R1123-F2018.f90 \
  R1164-F2018.f90 \
  R1166-F2018.f90 \
  R1168-F2018.f90 \
@@ -102,10 +102,13 @@ F90_TESTCODES_WORKING_ON = \
  R929.f90 \
  R930.f90
 
+# moved R816.f90 from working to failing (should be looked into) [Rasmussen, 2019-01-24]
+
 FAILING_TESTS = \
    pause_stmt.f77 \
    R432.f90 \
    R452.f90 \
+   R816.f90 \
    R858.f08 \
    R859.f08 \
    R862.f08

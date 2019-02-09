@@ -440,6 +440,12 @@ ROSE_DLL_API SgEnumVal* buildEnumVal(SgEnumFieldSymbol * sym);
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
 ROSE_DLL_API SgLongDoubleVal* buildLongDoubleVal_nfi(long double value, const std::string& str);
 
+ROSE_DLL_API SgFloat80Val* buildFloat80Val(long double value = 0.0);
+ROSE_DLL_API SgFloat80Val* buildFloat80Val_nfi(long double value, const std::string& str);
+
+ROSE_DLL_API SgFloat128Val* buildFloat128Val(long double value = 0.0);
+ROSE_DLL_API SgFloat128Val* buildFloat128Val_nfi(long double value, const std::string& str);
+
 ROSE_DLL_API SgShortVal* buildShortVal(short value = 0);
 ROSE_DLL_API SgShortVal* buildShortValHex(short value = 0);
 ROSE_DLL_API SgShortVal* buildShortVal_nfi(short value, const std::string& str);
@@ -1465,7 +1471,12 @@ ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::strin
 //! Build a SgFile node and attach it to SgProject
 /*! The file will be build with an empty global scope to support declarations being added.
  */
-SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+
+//! Build a SgSourceFile node and attach it to SgProject
+/*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
+ */
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
 
 //! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
 ROSE_DLL_API PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,

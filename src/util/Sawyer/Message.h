@@ -1603,15 +1603,6 @@ public:
      *  The destination facility will point to the same streams as the source facility. */
     Facility& operator=(const Facility &src);
 
-    /** Create a named facility with default destinations.  All streams are enabled and all output goes to file descriptor
-     *  2 (standard error) via unbuffered system calls.  Facilities initialized to this state can typically be used before the
-     *  C++ runtime is fully initialized and before @ref Sawyer::initializeLibrary is called. */
-    explicit Facility(const std::string &name): constructed_(CONSTRUCTED_MAGIC), name_(name) {
-        //initializeLibrary() //delay until later
-        initStreams(FdSink::instance(2));
-    }
-
-    /** Creates streams of all importance levels. */
     Facility(const std::string &name, const DestinationPtr &destination): constructed_(CONSTRUCTED_MAGIC), name_(name) {
         initStreams(destination);
     }
@@ -1619,6 +1610,14 @@ public:
     ~Facility() {
         constructed_ = 0;
     }
+
+    /** Initializes this facility with default destinations.
+     *
+     *  All streams are enabled and all output goes to file descriptor 2 (standard error) via unbuffered system calls. */
+    Facility& initialize(const std::string &name);
+
+    /** Initialize all streams with specified destination. */
+    Facility& initialize(const std::string &name, const DestinationPtr &destination);
 
     /** Returns true if called on an object that has been constructed.
      *

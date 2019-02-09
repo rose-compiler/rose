@@ -586,176 +586,42 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_13.C \
    test2019_14.C \
    test2019_15.C \
-   test2019_16.C 
+   test2019_16.C \
+   test2019_17.C \
+   test2019_18.C \
+   test2019_19.C \
+   test2019_20.C \
+   test2019_21.C \
+   test2019_22.C \
+   test2019_23.C \
+   test2019_24.C 
 
-FAILING_PLUM_HALL_TESTS = \
+FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
    test2018_23.C \
    test2018_25.C \
    test2018_26.C \
    test2018_28.C \
    test2018_31.C
- 
+
 TESTCODE_CURRENTLY_FAILING = \
-   $(FAILING_PLUM_HALL_TESTS) \
-   test2017_20.C \
-   test2017_24.C \
-   test2017_59.C \
-   test2017_67.C \
-   test2017_99.C \
-   test2017_85.C \
-   test2017_86.C \
-   test2017_99.C \
-   test2017_33.C \
-   test2017_34.C \
-   test2017_20.C \
-   test2017_24.C \
-   test2017_29.C \
-   test2017_05.C \
-   test2017_06.C \
-   test2017_07.C \
-   test2017_08.C \
-   test2015_72_icpc.C \
-   test2015_82.C \
-   test2015_83.C \
-   test2015_84.C \
-   test2015_87.C \
-   test2015_92.C \
-   test2015_93.C \
-   test2015_98.C \
-   test2015_105.C \
-   test2015_109.C  \
-   test2009_25.C \
-   test2012_252.C \
-   test2012_261.C \
-   test2012_272.C \
-   test2012_273.C \
-   test2012_274.C \
-   test2012_275.C \
-   test2012_276.C \
-   test2012_277.C \
-   test2012_278.C \
-   test2013_185.C \
-   test2013_224.C \
-   test2013_233.C \
-   test2013_245.C \
-   test2013_247.C \
-   test2013_248.C \
-   test2013_249.C \
-   test2013_254.C \
-   test2013_255.h \
-   test2013_256.h \
-   test2013_262.C \
-   test2013_263.C \
-   test2013_264.C \
-   test2013_265.C \
-   test2013_266.C \
-   test2013_267.C \
-   test2013_268.C \
-   test2013_269.C \
-   test2013_270.C \
-   test2013_289.h \
-   test2013_309.C \
-   test2013_321.C \
-   test2013_322.C \
-   test2013_323.C \
-   test2014_99.C \
-   test2014_100.C \
-   test2014_101.C \
-   test2014_102.C \
-   test2014_103.C \
-   test2014_104.C \
-   test2014_105.C \
-   test2014_106.C \
-   test2014_112.h \
-   test2014_113.C \
-   test2014_118.C \
-   test2014_119.C \
-   test2014_120.C \
-   test2014_121.C \
-   test2014_138.C \
-   test2014_158.C \
-   test2014_164.C \
-   test2014_173.C \
-   test2014_180.C \
-   test2014_181.C \
-   test2014_213.C \
-   test2014_214.C \
-   test2014_227.C \
-   test2014_228.C \
-   test2014_229.C \
-   test2014_237.C \
-   test2015_25.C  \
-   test2013_195.C \
-   test2013_197.C \
-   test2004_35.C \
-   test2011_178.C \
-   test2011_196.C \
-   test2011_197.C \
-   test2011_198.C \
-   test2011_199.C \
-   test2011_200.C \
-   test2011_201.C \
-   test2011_202.C \
-   test2011_203.C \
-   test2012_133.C \
-   test2012_134.C \
-   test2012_135.C \
-   test2012_35.C \
-   test2012_79.C \
+   $(FAILING_TEST_SUITE_TESTS) \
    c++trick.C \
-   test2007_95.C \
-   test2008_07.C \
-   test2008_15.C \
-   test2009_23.C \
-   test2009_26.C \
-   test2010_20.C \
-   test2010_21.C \
-   test2010_23.C \
-   test2011_102.C \
-   test2011_103.C \
-   test2011_104.C \
-   test2011_105.C \
-   test2011_106.C \
-   test2011_107.C \
-   test2011_108.C \
-   test2011_109.C \
-   test2011_112.C \
-   test2011_122.C \
-   test2011_123.C \
-   test2011_124.C \
-   test2011_125.C \
-   test2011_126.C \
-   test2011_127.C \
-   test2011_128.C \
-   test2011_129.C \
-   test2011_130.C \
-   test2011_131.C \
-   test2011_132.C \
-   test2011_134.C \
-   test2011_144.C \
-   test2011_145.C \
-   test2011_148.C \
-   test2012_139.C \
-   test2012_140.C \
-   test2012_189.C \
-   test2013_13.C \
-   test2013_14.C \
-   test2013_15.C \
-   test2013_16.C \
-   test2013_17.C \
-   test2013_19.C \
-   test2013_24.C \
-   test2013_30.C \
-   test2013_35.C \
-   test2013_41.C \
-   test2013_42.C \
-   test2013_43.C \
-   test2013_45.C \
-   test2013_49.C \
    test_gnu.C \
    certSignalExample.C \
    longFile.C \
+   test2004_35.C \
+   test2004_25.C \
+   test2005_69.C \
+   test2005_85.C \
+   test2005_115.C \
+   test2005_151.C \
+   test2005_188.C \
+   test2005_200.C \
+   test2005_201.C \
+   test2005_204.C \
+   test2005_205.C \
+   test2005_06.C \
    test2005_151.C \
    test2005_200.C \
    test2005_204.C \
@@ -777,94 +643,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2006_188.C \
    test2006_27.C \
    test2006_64.C \
-   test2007_100.C \
-   test2007_104.C \
-   test2007_106.C \
-   test2007_107.C \
-   test2007_110.C \
-   test2007_111.C \
-   test2007_114.C \
-   test2007_116.C \
-   test2007_117.C \
-   test2007_118.C \
-   test2007_119.C \
-   test2007_120.C \
-   test2007_121.C \
-   test2007_122.C \
-   test2007_126.C \
-   test2007_127.C \
-   test2007_129.C \
-   test2007_131.C \
-   test2007_132.C \
-   test2007_134.C \
-   test2007_136.C \
-   test2007_143.C \
-   test2007_145.C \
-   test2007_148.C \
-   test2007_149.C \
-   test2007_156.C \
-   test2007_168.C \
-   test2007_174.C \
-   test2007_176.C \
-   test2007_18.C \
-   test2007_19.C \
-   test2007_20.C \
-   test2007_22.C \
-   test2007_27.C \
-   test2007_31.C \
-   test2007_32.C \
-   test2007_33.C \
-   test2007_34.C \
-   test2007_36.C \
-   test2007_37.C \
-   test2007_39.C \
-   test2007_45.C \
-   test2007_51.C \
-   test2007_52.C \
-   test2007_56.C \
-   test2007_58.C \
-   test2007_61.C \
-   test2007_63.C \
-   test2007_67.C \
-   test2007_68.C \
-   test2007_71.C \
-   test2007_73.C \
-   test2007_74.C \
-   test2007_76.C \
-   test2007_80.C \
-   test2007_86.C \
-   test2007_87.C \
-   test2007_88.C \
-   test2007_89.C \
-   test2007_91.C \
-   test2007_96.C \
-   test2007_97.C \
-   test2007_99.C \
-   test2009_07.C \
-   test2009_13.C \
-   test2009_22.C \
-   test2009_33.C \
-   test2009_34.C \
-   test2009_38.C \
-   test2009_44.C \
-   test2009_46.C \
-   test2009_47.C \
-   test2010_07.C \
-   test2010_09.C \
-   test2010_10.C \
-   test2010_11.C \
-   test2010_15.C \
-   lexPhase2003_02.C \
-   test2004_25.C \
-   test2005_69.C \
-   test2005_85.C \
-   test2005_115.C \
-   test2005_151.C \
-   test2005_188.C \
-   test2005_200.C \
-   test2005_201.C \
-   test2005_204.C \
-   test2005_205.C \
    test2006_09.C \
    test2006_11.C \
    test2006_15.C \
@@ -898,6 +676,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2006_186.C \
    test2006_187.C \
    test2006_188.C \
+   test2007_62.C \
    test2007_18.C \
    test2007_19.C \
    test2007_20.C \
@@ -989,6 +768,84 @@ TESTCODE_CURRENTLY_FAILING = \
    test2007_174.C \
    test2007_175.C \
    test2007_176.C \
+   test2007_100.C \
+   test2007_104.C \
+   test2007_106.C \
+   test2007_107.C \
+   test2007_110.C \
+   test2007_111.C \
+   test2007_114.C \
+   test2007_116.C \
+   test2007_117.C \
+   test2007_118.C \
+   test2007_119.C \
+   test2007_120.C \
+   test2007_121.C \
+   test2007_122.C \
+   test2007_126.C \
+   test2007_127.C \
+   test2007_129.C \
+   test2007_131.C \
+   test2007_132.C \
+   test2007_134.C \
+   test2007_136.C \
+   test2007_143.C \
+   test2007_145.C \
+   test2007_148.C \
+   test2007_149.C \
+   test2007_156.C \
+   test2007_168.C \
+   test2007_174.C \
+   test2007_176.C \
+   test2007_18.C \
+   test2007_19.C \
+   test2007_20.C \
+   test2007_22.C \
+   test2007_27.C \
+   test2007_31.C \
+   test2007_32.C \
+   test2007_33.C \
+   test2007_34.C \
+   test2007_36.C \
+   test2007_37.C \
+   test2007_39.C \
+   test2007_45.C \
+   test2007_51.C \
+   test2007_52.C \
+   test2007_56.C \
+   test2007_58.C \
+   test2007_61.C \
+   test2007_63.C \
+   test2007_67.C \
+   test2007_68.C \
+   test2007_71.C \
+   test2007_73.C \
+   test2007_74.C \
+   test2007_76.C \
+   test2007_80.C \
+   test2007_86.C \
+   test2007_87.C \
+   test2007_88.C \
+   test2007_89.C \
+   test2007_91.C \
+   test2007_96.C \
+   test2007_97.C \
+   test2007_99.C \
+   test2007_95.C \
+   test2008_07.C \
+   test2008_15.C \
+   test2009_23.C \
+   test2009_26.C \
+   test2009_25.C \
+   test2009_07.C \
+   test2009_13.C \
+   test2009_22.C \
+   test2009_33.C \
+   test2009_34.C \
+   test2009_38.C \
+   test2009_44.C \
+   test2009_46.C \
+   test2009_47.C \
    test2009_07.C \
    test2009_13.C \
    test2009_17.C \
@@ -1006,6 +863,15 @@ TESTCODE_CURRENTLY_FAILING = \
    test2009_45.C \
    test2009_46.C \
    test2009_47.C \
+   test2010_20.C \
+   test2010_21.C \
+   test2010_23.C \
+   test2010_07.C \
+   test2010_09.C \
+   test2010_10.C \
+   test2010_11.C \
+   test2010_15.C \
+   lexPhase2003_02.C \
    test2010_01.C \
    test2010_02.C \
    test2010_07.C \
@@ -1018,6 +884,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2010_16.C \
    test2010_17.C \
    test2010_22.C \
+   test2010_26.C \
    test2010_27.C \
    test2011_01.C \
    test2011_02.C \
@@ -1035,35 +902,116 @@ TESTCODE_CURRENTLY_FAILING = \
    test2011_16.C \
    test2011_17.C \
    test2011_18.C \
+   test2011_191.C \
+   test2011_178.C \
+   test2011_196.C \
+   test2011_197.C \
+   test2011_198.C \
+   test2011_199.C \
+   test2011_200.C \
+   test2011_201.C \
+   test2011_202.C \
+   test2011_203.C \
+   test2011_102.C \
+   test2011_103.C \
+   test2011_104.C \
+   test2011_105.C \
+   test2011_106.C \
+   test2011_107.C \
+   test2011_108.C \
+   test2011_109.C \
+   test2011_112.C \
+   test2011_122.C \
+   test2011_123.C \
+   test2011_124.C \
+   test2011_125.C \
+   test2011_126.C \
+   test2011_127.C \
+   test2011_128.C \
+   test2011_129.C \
+   test2011_130.C \
+   test2011_131.C \
+   test2011_132.C \
+   test2011_134.C \
+   test2011_144.C \
+   test2011_145.C \
+   test2011_148.C \
+   test2012_139.C \
+   test2012_140.C \
+   test2012_189.C \
+   test2012_133.C \
+   test2012_134.C \
+   test2012_135.C \
+   test2012_35.C \
+   test2012_79.C \
+   test2012_81.C \
+   test2012_57.C \
+   test2012_59.C \
    longFile.C \
    certSignalExample.C \
-   test2010_26.C \
-   test2007_62.C \
     math.C \
    test2012_86.C \
+   test2012_252.C \
+   test2012_261.C \
+   test2012_272.C \
+   test2012_273.C \
+   test2012_274.C \
+   test2012_275.C \
+   test2012_276.C \
+   test2012_277.C \
+   test2012_278.C \
+   test2013_13.C \
+   test2013_14.C \
+   test2013_15.C \
+   test2013_16.C \
+   test2013_17.C \
+   test2013_19.C \
+   test2013_24.C \
+   test2013_30.C \
+   test2013_35.C \
+   test2013_41.C \
+   test2013_42.C \
+   test2013_43.C \
+   test2013_45.C \
+   test2013_49.C \
+   test2013_185.C \
+   test2013_224.C \
+   test2013_233.C \
+   test2013_245.C \
+   test2013_247.C \
+   test2013_248.C \
+   test2013_249.C \
+   test2013_254.C \
+   test2013_262.C \
+   test2013_263.C \
+   test2013_264.C \
+   test2013_265.C \
+   test2013_266.C \
+   test2013_267.C \
+   test2013_268.C \
+   test2013_269.C \
+   test2013_270.C \
+   test2013_309.C \
+   test2013_321.C \
+   test2013_322.C \
+   test2013_323.C \
+   test2013_195.C \
+   test2013_197.C \
    test2013_09.C \
    test2013_242.C\
-   test2016_90.C \
-   test2016_92.C \
-   test2016_94.C \
-   test2016_95.C \
-   test2016_35.C \
-   test2016_39.C \
-   test2016_58.C \
-   restrict_template_parameter.C \
-   test2016_22.C \
-   test2016_23.C \
-   test2016_24.C \
-   test2015_90.C \
-   test2015_91.C \
-   test2015_94.C \
-   test2015_95.C \
-   test2015_96.C \
-   test2015_62.C \
-   test2015_63.C \
-   test2015_64.C \
    test2013_257.C \
    test2013_260.C \
+   test2013_234.C \
+   test2013_235.C \
+   test2013_240.C \
+   test2013_241.C \
+   test2013_246.C \
+   test2013_84.C \
+   test2013_85.C \
+   test2013_96.C \
+   test2013_62.C \
+   test2013_40.C \
+   test2013_236.C \
    test2014_175.C \
    test2014_51.C \
    test2014_52.C \
@@ -1078,22 +1026,77 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_42.C \
    test2014_44.C \
    test2014_46.C \
-   test2013_234.C \
-   test2013_235.C \
-   test2013_240.C \
-   test2013_241.C \
-   test2013_246.C \
-   test2013_84.C \
-   test2013_85.C \
-   test2013_96.C \
-   test2013_62.C \
-   test2013_40.C \
-   test2011_191.C \
-   test2012_81.C \
-   test2005_06.C \
-   test2012_57.C \
-   test2012_59.C \
-   test2013_236.C
+   test2014_99.C \
+   test2014_100.C \
+   test2014_101.C \
+   test2014_102.C \
+   test2014_103.C \
+   test2014_104.C \
+   test2014_105.C \
+   test2014_106.C \
+   test2014_113.C \
+   test2014_118.C \
+   test2014_119.C \
+   test2014_120.C \
+   test2014_121.C \
+   test2014_138.C \
+   test2014_158.C \
+   test2014_164.C \
+   test2014_173.C \
+   test2014_180.C \
+   test2014_181.C \
+   test2014_213.C \
+   test2014_214.C \
+   test2014_227.C \
+   test2014_228.C \
+   test2014_229.C \
+   test2014_237.C \
+   test2015_72_icpc.C \
+   test2015_82.C \
+   test2015_83.C \
+   test2015_84.C \
+   test2015_87.C \
+   test2015_92.C \
+   test2015_93.C \
+   test2015_98.C \
+   test2015_105.C \
+   test2015_109.C  \
+   test2015_25.C  \
+   test2015_90.C \
+   test2015_91.C \
+   test2015_94.C \
+   test2015_95.C \
+   test2015_96.C \
+   test2015_62.C \
+   test2015_63.C \
+   test2015_64.C \
+   test2016_90.C \
+   test2016_92.C \
+   test2016_94.C \
+   test2016_95.C \
+   test2016_35.C \
+   test2016_39.C \
+   test2016_58.C \
+   restrict_template_parameter.C \
+   test2016_22.C \
+   test2016_23.C \
+   test2016_24.C \
+   test2017_05.C \
+   test2017_06.C \
+   test2017_07.C \
+   test2017_08.C \
+   test2017_20.C \
+   test2017_24.C \
+   test2017_29.C \
+   test2017_33.C \
+   test2017_34.C \
+   test2017_59.C \
+   test2017_67.C \
+   test2017_99.C \
+   test2017_85.C \
+   test2017_86.C \
+   test2017_99.C \
+   test2019_25.C 
 
 if ROSE_USE_EDG_VERSION_4_9
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -1107,8 +1110,15 @@ else
      test2014_65.C \
      test2014_66.C \
      test2014_69.C
+
+# DQ (2/2/2019): EDG 5.0 fails for this use of __Float128, but Tristan is fixing it.
+if ROSE_USE_EDG_VERSION_5_0
+  TESTCODE_CURRENTLY_FAILING += \
+     test2017_12.C
+else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_12.C
+endif
 endif
 
 if !ROSE_USE_EDG_VERSION_4_7
@@ -1624,9 +1634,7 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
-
-status:
-	@$(MAKE) $(TEST_Source_passed)
+	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
@@ -1713,4 +1721,7 @@ $(TEST_Source_passed:.C.passed=.timed_with_threshold):
 	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                 \
 	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&     \
 	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 
