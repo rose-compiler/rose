@@ -15429,3 +15429,15 @@ SgAutoType* SgAutoType::build_node_from_nonlist_children()
      return returnNode;
    }
 
+SgFloat80Val* SgFloat80Val::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, long double value, std::string valueString)
+   {
+     SgFloat80Val* returnNode = NULL;
+     return returnNode;
+   }
+
+SgFloat128Val* SgFloat128Val::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, long double value, std::string valueString)
+   {
+     SgFloat128Val* returnNode = NULL;
+     return returnNode;
+   }
+

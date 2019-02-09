@@ -34,7 +34,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
                 AC_DEFINE([ROSE_HAVE_Z3], [1], [Define to 1 if you have Z3 libs and headers.])
                 USE_Z3=1
             else
-                AC_MSG_ERROR([Argument to --with-z3 must be a path to prefix directory, but argument is not a directory])
+                AC_MSG_ERROR([argument to --with-z3 must be a path to prefix directory, but argument is not a directory])
             fi
         fi
     fi

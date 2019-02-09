@@ -269,11 +269,11 @@ XMLPlatformUtils::Initialize();
                         AC_MSG_RESULT([yes])
                     else
                         AC_MSG_RESULT([no])
-                        AC_MSG_WARN([Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Possible compilation failure.])
+                        AC_MSG_WARN([found Xerces C++ Parser $XERCES_VERSION, which is older than required; possible compilation failure])
                     fi
                 else
                     AC_MSG_RESULT([no])
-                    AC_MSG_WARN([Missing header XercesVersion.hpp. Unable to determine Xerces version.])
+                    AC_MSG_WARN([missing header XercesVersion.hpp; unable to determine Xerces version])
                 fi
             fi
         fi
@@ -283,7 +283,7 @@ XMLPlatformUtils::Initialize();
         AC_MSG_RESULT([$HAVE_XERCES])
 
         if test "$xerces_requested" = "yes"; then
-            AC_MSG_WARN([Xerces C++ Parser support requested but headers or library not found. Specify valid prefix of Xerces C++ using --with-xerces=@<:@DIR@:>@ or provide include directory and linker flags using --with-xerces-inc and --with-xerces-lib])
+            AC_MSG_FAILURE([Xerces C++ parser support requested but headers or library not found; specify valid prefix of Xerces C++ using --with-xerces=@<:@DIR@:>@ or provide include directory and linker flags using --with-xerces-inc and --with-xerces-lib])
         fi
     fi
 ])

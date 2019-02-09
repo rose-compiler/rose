@@ -1523,6 +1523,23 @@ testSmtWideConstant-z3lib.passed: $(top_srcdir)/scripts/test_exit_status testSmt
 		$< $@
 endif
 
+########################################################################################################################
+# Test RegisterStateGeneric's peekRegister method
+########################################################################################################################
+
+noinst_PROGRAMS += testPeekRegister
+testPeekRegister_SOURCES = testPeekRegister.C
+testPeekRegister_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testPeekRegister.passed
+testPeekRegister.passed: $(top_srcdir)/scripts/test_exit_status testPeekRegister conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="RegisterStateGeneric::peekRegister [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testPeekRegister"			\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

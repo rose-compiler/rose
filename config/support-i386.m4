@@ -42,7 +42,7 @@ AC_DEFUN([ROSE_SUPPORT_I386],[
 
 		dnl It is an error if --enable-i386 was specified but we could not figure out how to generate such a file.
 		if test "$RSI386_SPECIFIED" = "yes" -a "$ac_cv_enable_i386" = "no"; then
-			AC_MSG_ERROR([The --enable-i386 was specified but common switches to produce such a file don't work])
+			AC_MSG_ERROR([--enable-i386 was specified but common switches to produce such a file don't work])
 		fi
 
 	elif test "$ac_cv_enable_i386" != "no"; then
@@ -53,7 +53,7 @@ AC_DEFUN([ROSE_SUPPORT_I386],[
 			: all ok
 		else
 			AC_MSG_RESULT($ac_cv_enable_i386)
-			AC_MSG_ERROR([User-specified --enable-i386 value ($ac_cv_enable_i386) does not work properly.])
+			AC_MSG_ERROR([user-specified --enable-i386 value ($ac_cv_enable_i386) does not work properly])
 		fi
 	fi
 

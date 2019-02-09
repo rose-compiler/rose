@@ -30,8 +30,6 @@ protected:
 private:
 #ifdef ROSE_HAVE_LIBYICES
     yices_context context;
-#else
-    void *context; /*unused for now*/
 #endif
     ExprExprMap varsForSets_;                           // variables to use for sets
 protected:
@@ -55,7 +53,11 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     explicit YicesSolver(unsigned linkages = LM_ANY)
-        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {
+        : SmtSolver("yices", (LinkMode)(linkages & availableLinkages()))
+#ifdef ROSE_HAVE_LIBYICES
+          , context(NULL)
+#endif
+        {
         memoization(false);                             // not supported in this solver
     }
 

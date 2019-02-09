@@ -124,19 +124,19 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     SAWYER_MESG(debug) <<"LibcStartMain analysis: found call to __libc_start_main\n";
 
     // One of the arguments to the function call is the address of "main". We need instruction semantics to get its value.
-    args.bblock->undropSemantics();
-    BaseSemantics::DispatcherPtr cpu = args.bblock->dispatcher();
-    BaseSemantics::StatePtr state = args.bblock->finalState();
-    if (!cpu || !state) {
+    args.bblock->undropSemantics(args.partitioner);
+    BasicBlockSemantics sem = args.bblock->semantics();
+    BaseSemantics::StatePtr state = sem.finalState();
+    if (!sem.dispatcher || !state) {
         try {
             // Map-based memory seems to work best for this. Maybe we should use that also when the partitioners semantics are
             // enabled in general?
             if (BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators(MAP_BASED_MEMORY)) {
-                cpu = args.partitioner.newDispatcher(ops);
-                if (cpu) {
+                sem.dispatcher = args.partitioner.newDispatcher(ops);
+                if (sem.dispatcher) {
                     BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
-                        cpu->processInstruction(insn);
-                    state = cpu->currentState();
+                        sem.dispatcher->processInstruction(insn);
+                    state = sem.dispatcher->currentState();
                 }
             }
         } catch (...) {
@@ -150,21 +150,22 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     // Location and size of argument varies by architecture
     Semantics::SValuePtr mainVa;
     if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
-        if (cpu->addressWidth() == 64) {
-            const RegisterDescriptor REG_RCX = cpu->findRegister("rcx", 64, true /*allowMissing*/);
+        if (sem.dispatcher->addressWidth() == 64) {
+            const RegisterDescriptor REG_RCX = sem.dispatcher->findRegister("rcx", 64, true /*allowMissing*/);
             ASSERT_require(!REG_RCX.isEmpty());
             
-            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, cpu->undefined_(64), &*cpu->get_operators());
+            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, sem.dispatcher->undefined_(64), sem.operators.get());
             if (rcx->is_number())
                 mainVa = Semantics::SValue::promote(rcx);
 
-        } else if (cpu->addressWidth() == 32) {
-            cpu->get_operators()->currentState(state);
+        } else if (sem.dispatcher->addressWidth() == 32) {
+            sem.dispatcher->get_operators()->currentState(state);
             const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
             ASSERT_require(!REG_ESP.isEmpty());
-            BaseSemantics::SValuePtr esp = cpu->get_operators()->peekRegister(REG_ESP, cpu->undefined_(32));
-            BaseSemantics::SValuePtr arg0addr = cpu->get_operators()->add(esp, cpu->number_(32, 4));
-            BaseSemantics::SValuePtr arg0 = cpu->get_operators()->peekMemory(RegisterDescriptor(), arg0addr, cpu->undefined_(32));
+            BaseSemantics::SValuePtr esp = sem.dispatcher->get_operators()->peekRegister(REG_ESP, sem.dispatcher->undefined_(32));
+            BaseSemantics::SValuePtr arg0addr = sem.dispatcher->get_operators()->add(esp, sem.dispatcher->number_(32, 4));
+            BaseSemantics::SValuePtr arg0 = sem.dispatcher->get_operators()->peekMemory(RegisterDescriptor(),
+                                                                                        arg0addr, sem.dispatcher->undefined_(32));
             SAWYER_MESG(debug) <<"LibcStartMain analysis: x86-32 arg0 addr  = " <<*arg0addr <<"\n"
                                <<"LibcStartMain analysis: x86-32 arg0 value = " <<*arg0 <<"\n";
             if (arg0->is_number())

@@ -20,10 +20,6 @@
 #   general documentation, as well as the sample configure.in, is included
 #   in the AC_PROG_JAVA macro.
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
@@ -58,6 +54,6 @@ AC_DEFUN([AC_CHECK_RQRD_CLASS],[
 CLASS=`echo $1|sed 's/\./_/g'`
 AC_CHECK_CLASS($1)
 if test "$HAVE_LAST_CLASS" = "no"; then
-        AC_MSG_ERROR([Required class $1 missing, exiting.])
+        AC_MSG_ERROR([required class $1 missing, exiting])
 fi
 ])

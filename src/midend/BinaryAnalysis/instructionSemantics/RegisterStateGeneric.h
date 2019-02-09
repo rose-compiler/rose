@@ -644,8 +644,19 @@ public:
 protected:
     void deep_copy_values();
 
-    RegPairs& scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops, bool markOverlapping,
-                                    RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/);
+    // Given a register descriptor return information about what's stored in the state. The two return values are:
+    //
+    //     accessedParts represent the parts of the reigster (matching major and minor numbers) that are present in the
+    //     state and overlap with the specified register.
+    //
+    //     preservedParts represent the parts of the register that are present in the state but don't overlap with the
+    //     specified register.
+    void scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops,
+                               RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) const;
+
+    // Given a register descriptor, zero out all the stored parts of the same register (by matching major and minor numbers)
+    // if the stored part overlaps with the specified register.
+    void clearOverlappingLocations(RegisterDescriptor);
 
     void assertStorageConditions(const std::string &where, RegisterDescriptor what) const;
 };

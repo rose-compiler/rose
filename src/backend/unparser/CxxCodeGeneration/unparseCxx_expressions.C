@@ -7034,8 +7034,9 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
 
 
 
+// DQ (1/30/2019): Add this to the Unparse_ExprStmt namespace so that we can call it from unparseCxxStatement().
 bool
-isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info )
+Unparse_ExprStmt::isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info )
    {
   // This is a suppoting function to detect the use of the C++11 signature which will 
   // trigger the unparsing of C++11 initializer list syntax.

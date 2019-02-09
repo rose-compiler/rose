@@ -370,6 +370,8 @@ SgExpressionRoot
 SgFile
 SgFileList
 SgFloatVal
+SgFloat128Val
+SgFloat80Val
 SgFlushStatement
 SgForAllStatement
 SgForInitStatement
