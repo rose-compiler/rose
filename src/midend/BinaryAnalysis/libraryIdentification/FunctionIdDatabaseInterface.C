@@ -8,6 +8,23 @@ using namespace LibraryIdentification;
 using namespace Sawyer::Message::Common;
 using namespace Rose::Diagnostics;
 
+enum DUPLICATE_OPTION LibraryIdentification::duplicateOptionFromString(std::string option)
+{
+    char opChar = ::toupper(option[0]);
+    if(opChar == 'C') {
+        return COMBINE;
+    } 
+    if(opChar == 'R') {
+        return REPLACE;
+    } 
+    if(opChar == 'N') {
+        return NO_ADD;
+    } 
+    return UNKNOWN;    
+}
+
+
+
 FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(std::string dbName) 
 {
     database_name = dbName;

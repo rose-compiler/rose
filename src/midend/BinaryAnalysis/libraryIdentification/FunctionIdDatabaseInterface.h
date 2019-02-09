@@ -33,23 +33,7 @@ namespace LibraryIdentification
         NO_ADD
     };
     
-    enum DUPLICATE_OPTION duplicateOptionFromString(std::string option) 
-    {
-        char opChar = ::toupper(option[0]);
-        if(opChar == 'C') {
-            return COMBINE;
-        } 
-        if(opChar == 'R') {
-            return REPLACE;
-        } 
-        if(opChar == 'N') {
-            return NO_ADD;
-        } 
-        return UNKNOWN;
-        
-    }
-    
-
+    enum DUPLICATE_OPTION duplicateOptionFromString(std::string option);
 
 
 /** @class FunctionIdDatabaseInterface 
