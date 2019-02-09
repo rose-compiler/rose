@@ -27,13 +27,13 @@ AC_MSG_CHECKING([for fatal rose warnings support])
 
 AC_ARG_ENABLE(fatal-rose-warnings,
 [  --enable-fatal-rose-warnings     support for an explicit list of warnings that are treated as errors (e.g. -Wunused-variable).],
-[ echo "Setting up list of fatal rose warnings"
+[ AC_MSG_NOTICE([setting up list of fatal rose warnings])
 ])
 
 AM_CONDITIONAL(ROSE_USE_FATAL_ROSE_WARNINGS_SUPPORT, [test "x$enable_fatal_rose_warnings" = xyes])
 
 if test "x$enable_fatal_rose_warnings" = "xyes"; then
-  AC_MSG_WARN([Using a list of warnings that will be treated as errors for ROSE development.])
+  AC_MSG_WARN([using a list of warnings that will be treated as errors for ROSE development])
   AC_DEFINE([ROSE_USE_FATAL_ROSE_WARNINGS_SUPPORT], [], [Support for a list of warnings that will be treated as errors for ROSE development])
 
 # Clear all previously defined warnings.
@@ -41,18 +41,18 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
   C_WARNINGS=""
 
 # Implement support to select warnings based on compiler version used to compile ROSE source code.
-  echo "CXX_COMPILER_VENDOR = $CXX_COMPILER_VENDOR"
-  echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+  AC_MSG_NOTICE([CXX_COMPILER_VENDOR = "$CXX_COMPILER_VENDOR"])
+  AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
-  echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
-  echo "FRONTEND_CXX_VERSION_MINOR = $FRONTEND_CXX_VERSION_MINOR"
+  AC_MSG_NOTICE([FRONTEND_CXX_VERSION_MAJOR = "$FRONTEND_CXX_VERSION_MAJOR"])
+  AC_MSG_NOTICE([FRONTEND_CXX_VERSION_MINOR = "$FRONTEND_CXX_VERSION_MINOR"])
 
   case "$FRONTEND_CXX_COMPILER_VENDOR" in
     gnu)
-      echo "Setup fatal warnings specific to GNU compiler use."
+      AC_MSG_NOTICE([Setup fatal warnings specific to GNU compiler use])
 
-      echo "GNU compiler version: GCC_VERSION = $GCC_VERSION"
-      echo "GNU compiler version: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+      AC_MSG_NOTICE([GNU compiler version: GCC_VERSION = "$GCC_VERSION"])
+      AC_MSG_NOTICE([GNU compiler version: GCC_MINOR_VERSION = "$GCC_MINOR_VERSION"])
 
       CXX_WARNINGS="-Wall -Wextra "
       C_WARNINGS="-Wall -Wextra "
@@ -122,7 +122,7 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
     ;;
 
     clang)
-      echo "Setup fatal warnings specific to Clang compiler use."
+      AC_MSG_NOTICE([setup fatal warnings specific to Clang compiler use])
 
     # DQ (12/7/2016): For a truely insane perspective, all Clang warnings can be turned on 
     # using -Weverything (at least on Clang Version 3.8).  However I don't think this is 
@@ -185,7 +185,7 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
     ;;
 
     intel)
-      echo "Setup fatal warnings specific to Intel compiler use: no Intel specific warnings are setup as errors."
+      AC_MSG_NOTICE([setup fatal warnings specific to Intel compiler use: no Intel specific warnings are setup as errors])
       CXX_WARNINGS="-Wall -Wextra "
       C_WARNINGS="-Wall -Wextra "
 
@@ -239,7 +239,7 @@ if test "x$enable_fatal_rose_warnings" = "xyes"; then
     ;;
 
     *)
-      echo "Setup fatal warnings specific to an unknown compiler being used (this is currently an error)."
+      AC_MSG_NOTICE([setup fatal warnings specific to an unknown compiler being used (this is currently an error)])
       exit 1
     ;;
   esac
@@ -249,20 +249,20 @@ fi
 # ROSE_USE_UNIFORM_DEBUG_SUPPORT=7
 AC_SUBST(ROSE_USE_FATAL_ROSE_WARNINGS_SUPPORT)
 
-echo "After processing --enable-fatal-rose-warnings: CXX_WARNINGS = ${CXX_WARNINGS}"
-echo "After processing --enable-fatal-rose-warnings: C_WARNINGS   = ${C_WARNINGS}"
+AC_MSG_NOTICE([after processing --enable-fatal-rose-warnings: CXX_WARNINGS = "${CXX_WARNINGS}"])
+AC_MSG_NOTICE([after processing --enable-fatal-rose-warnings: C_WARNINGS   = "${C_WARNINGS}"])
 
-echo "CFLAGS   = $CFLAGS"
-echo "CXXFLAGS = $CXXFLAGS"
-echo "CPPFLAGS = $CPPFLAGS"
+AC_MSG_NOTICE([CFLAGS   = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS = "$CXXFLAGS"])
+AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
-echo "Adding fatal warnings to compiler flags"
+AC_MSG_NOTICE([adding fatal warnings to compiler flags])
 
 CXXFLAGS="$CXXFLAGS $CXX_WARNINGS"
 CFLAGS="$CFLAGS $C_WARNINGS"
 
-echo "After being reset: CFLAGS   = $CFLAGS"
-echo "After being reset: CXXFLAGS = $CXXFLAGS"
+AC_MSG_NOTICE([after being reset: CFLAGS   = "$CFLAGS"])
+AC_MSG_NOTICE([after being reset: CXXFLAGS = "$CXXFLAGS"])
 
 # echo "Exiting as a test in fatal-rose-warnings support!"
 # exit 1

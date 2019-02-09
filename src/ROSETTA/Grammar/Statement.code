@@ -2288,7 +2288,7 @@ HEADER_LABEL_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // DQ (1/7/2018): Fix this to reflect design change in AST required to represent labels as compound statements.
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
 
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
