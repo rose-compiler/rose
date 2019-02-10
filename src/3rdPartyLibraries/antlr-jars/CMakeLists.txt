@@ -1,2 +1,2 @@
-install(FILES  antlr-3.2.jar antlr-3.3-complete.jar
+install(FILES  antlr-3.5.2-complete.jar
         DESTINATION lib)

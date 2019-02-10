@@ -12,8 +12,8 @@ if(NOT EXISTS ${jar_file})
 endif()
 
 install(
-  FILES OpenFortranParser-0.8.3.jar
-        OpenFortranParser-20111001.jar
+  FILES OpenFortranParser-0.8.5.jar
+        OpenFortranParser-20190206.jar
         ${jar_file}
   DESTINATION lib)
 
