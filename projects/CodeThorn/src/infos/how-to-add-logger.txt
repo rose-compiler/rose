@@ -1,3 +1,7 @@
+-------------------------------------------------
+HEADER FILE:
+-------------------------------------------------
+
 Adding logger to class A:
 class A {
   ...
@@ -7,7 +11,12 @@ class A {
   ...
 };
 
----
+-------------------------------------------------
+SOURCE FILE:
+-------------------------------------------------
+
+#include "Diagnostics.h"
+using namespace Sawyer::Message;
 
 Sawyer::Message::Facility A::logger;
 
@@ -20,7 +29,9 @@ void A::initDiagnostics() {
   }
 }
 
----
+-------------------------------------------------
+USAGE IN CODE:
+-------------------------------------------------
 
 usage in methods of class A:
 logger[TRACE|DEBUG|...]<<...;

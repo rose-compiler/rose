@@ -206,7 +206,12 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Generate a new source file for the outlined function, if requested
   SgSourceFile* new_file = NULL;
   if (Outliner::useNewFile)
-    new_file = generateNewSourceFile(s,func_name_str);
+  {
+      if (copy_origFile) // single new file
+        new_file = getLibSourceFile(s);
+      else
+        new_file = generateNewSourceFile(s,func_name_str);
+  }
 
   // Save some preprocessing information for later restoration. 
   AttachedPreprocessingInfoType ppi_before, ppi_after;
@@ -363,7 +368,16 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
     SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
     // build the argument list
-    string lib_name = output_path+"/"+func_name_str+".so"; 
+    string lib_name; 
+    if (Outliner::copy_origFile)
+    {
+        string lib_file_base_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(generateLibSourceFileName (s))); 
+        lib_name = output_path+"/"+ lib_file_base_name +".so"; 
+    }
+    else 
+        lib_name = output_path+"/"+func_name_str+".so"; 
+    // the new option copy_origFile will ask the outliner to generate rose_input_lib.c/cxx and compile to a .so later
+    
     SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
     SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
     SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
@@ -417,8 +431,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   ROSE_ASSERT(s != NULL);
   ROSE_ASSERT(s->get_statements().empty() == true);
-
-  if (useNewFile == true)
+// if we generate a new file, and we don't copy entire original input file to the new file
+  if (useNewFile == true && copy_origFile==false)
   {
     // DQ (2/6/2009): I need to write this function to support the
     // insertion of the function into the specified scope.  If the
@@ -704,10 +718,88 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
   }
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
+  // par1: input file, par 2: output file name, par 3: the project to attach the new file
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
   //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
   ROSE_ASSERT(new_file != NULL);
   return new_file;
 }
+
+/*!\brief the lib source file's name convention is rose_input_lib.[c|cxx].
+ * 
+ * target is the input code block for outlining. It provides SgProject and input file name info. 
+ * 
+ */
+std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
+    std::string lib_file_name;
+ 
+    // s could be transformation generated, so use the root SgFile for file name
+    SgFile* input_file = getEnclosingNode<SgFile> (target);
+    ROSE_ASSERT(input_file != NULL);
+    //grab the file suffix, 
+    std::string input_file_name = input_file->get_file_info()->get_filenameString();
+    std::string file_suffix = StringUtility::fileNameSuffix(input_file_name);
+    std::string file_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(input_file_name));
+    ROSE_ASSERT(file_suffix != "");
+    lib_file_name = "rose_" + file_name + "_lib." + file_suffix;
+    if (!output_path.empty()) { // save the outlined function into a specified path
+        lib_file_name = StringUtility::stripPathFromFileName(lib_file_name);
+        lib_file_name = output_path + "/" + lib_file_name;
+    }
+    
+    return lib_file_name; 
+}
+    
+/*!\brief Obtain the file handle to the separated source file storing outlined functions.  
+ * This file will be compiled to .so dynamically loadable library.
+ * target is the input code block for outlining. It provides SgProject and input file name info. 
+ * the lib source file's name convention is rose_input_lib.[c|cxx] by default. Or overrided by file_name.  
+ */
+SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
+
+    SgSourceFile* new_file = NULL;
+    SgProject * project = getEnclosingNode<SgProject> (target);
+    ROSE_ASSERT(project != NULL);
+
+    SgFile* input_file = getEnclosingNode<SgFile> (target);
+    ROSE_ASSERT(input_file != NULL);
+    std::string input_file_name = input_file->get_file_info()->get_filenameString();
+
+    std::string new_file_name =   generateLibSourceFileName (target);
+    
+    // Search if the lib file already exists. 
+    SgFilePtrList file_list = project->get_files();
+    SgFilePtrList::iterator iter;
+    //cout<<"debugging: getLibSourceFile(): checking current file list of count of "<<file_list.size() <<endl;
+    for (iter= file_list.begin(); iter!=file_list.end(); iter++)
+    {   
+      SgFile* cur_file = *iter;
+      SgSourceFile * sfile = isSgSourceFile(cur_file);
+      if (sfile!=NULL)
+      {
+          string cur_file_name =sfile->get_file_info()->get_filenameString();
+//          cout<<"\t Debug: compare cur vs. new file name:"<<cur_file_name <<" vs. " << new_file_name <<endl;
+          if (cur_file_name == new_file_name)
+          {
+              new_file = sfile;
+              break;
+          }
+      }        
+    } // end for SgFile
+    
+    if (new_file == NULL)
+    {
+      // par1: input file, par 2: output file name, par 3: the project to attach the new file
+        // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
+      new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
+      // buildFile() will set filename to be input file name by default. 
+      // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
+      new_file->get_file_info()->set_filenameString(new_file_name);;
+    }
+    //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
+    ROSE_ASSERT(new_file != NULL);
+    return new_file;
+}
+
 
 // eof
