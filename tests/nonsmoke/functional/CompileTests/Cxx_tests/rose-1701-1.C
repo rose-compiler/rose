@@ -12,3 +12,4 @@ struct Y {
 };
 
 static_assert(sizeof(Y<int, 5>) == 5 * sizeof(int));
+
