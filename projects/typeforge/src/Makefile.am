@@ -15,8 +15,6 @@ AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/typeforge/src -g -rdynamic
 
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-typeforge_DEPENDENCIES=
-typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C SpecFrontEnd.C ToolConfig.cpp CommandList.C Analysis.C TFHandles.C TFToolConfig.C
 
@@ -55,12 +53,6 @@ check-typeforge: typeforge
 	./typeforge --plugin=set.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/setTest.C
 	./typeforge --plugin=$(srcdir)/tests/var_set_change.json ${CHECK_TRACE_OPTION} $(srcdir)/tests/setTest.C
 	rm -f a.out *.json
-
-#check-typeforge:
-#	@echo ================================================================
-#	@echo RUNNING DEADCODE TESTS
-#	@echo ================================================================
-#	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
 
 docs:
 	cd "$(srcdir)" && doxygen

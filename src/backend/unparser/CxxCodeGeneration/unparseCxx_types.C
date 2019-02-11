@@ -221,30 +221,49 @@ string get_type_name(SgType* t)
                 }
 
           case T_MEMBER_POINTER:
-               {
-                  SgPointerMemberType* mpointer_type = isSgPointerMemberType(t);
-                  ROSE_ASSERT(mpointer_type != NULL);
+             {
+               SgPointerMemberType* mpointer_type = isSgPointerMemberType(t);
+               ROSE_ASSERT(mpointer_type != NULL);
 
-                  SgType *btype = mpointer_type->get_base_type();
-                  SgMemberFunctionType *ftype = NULL;
+               SgType *btype = mpointer_type->get_base_type();
+               SgMemberFunctionType *ftype = NULL;
 
-                  if ( (ftype = isSgMemberFunctionType(btype)) != NULL) {
-                      string res = get_type_name(ftype->get_return_type()) +  "("
-                        +get_type_name(mpointer_type->get_class_type())
-                        + "::*" + ")" + "(" ;
-                      SgTypePtrList::iterator p = ftype->get_arguments().begin();
-                      while ( p != ftype->get_arguments().end() )
+#if 0
+               printf ("In get_type_name(): output name: btype = %p = %s \n",btype,btype->class_name().c_str());
+            // unp->u_sage->curprint ("/* In get_type_name(): output name */ \n ");
+#endif
+
+               if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
+                  {
+#if 0
+                     printf ("In get_type_name(): ftype != NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
+                  // unp->u_sage->curprint ("/* In get_type_name(): ftype != NULL: output name */ \n ");
+#endif
+                    string res = get_type_name(ftype->get_return_type()) +  "("
+                                + get_type_name(mpointer_type->get_class_type())
+                                + "::*" + ")" + "(" ;
+                    SgTypePtrList::iterator p = ftype->get_arguments().begin();
+                    while ( p != ftype->get_arguments().end() )
                        {
                          res = res + get_type_name(*p);
                          p++;
                          if (p != ftype->get_arguments().end()) { res = res + ","; }
                        }
-                       return res + ")";
+                    return res + ")";
                   }
-                  else {
-                     return get_type_name(btype) + "(" +
-                       get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
+                 else
+                  {
+#if 0
+                     printf ("In get_type_name(): ftype == NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
+                  // unp->u_sage->curprint ("/* In get_type_name(): ftype == NULL: output name */ \n ");
+#endif
+                    return get_type_name(btype) + "(" + get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
                   }
+
+#if 0
+                  printf ("In get_type_name(): DONE: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
+               // unp->u_sage->curprint ("/* In get_type_name(): DONE: output name */ \n ");
+#endif
                }
 
           case T_CLASS:
@@ -1575,12 +1594,30 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
             // DQ (9/16/2004): This appears to be an error, btype should not be unparsed here (of maybe btype is not set properly)!
             // printf ("Handling the first part \n");
-            // curprint ( "\n/* start of btype */ \n";
+#if 0
+               curprint ( "\n/* start of btype */ \n");
+#endif
                unparseType(btype, info);
-            // curprint ( "\n/* end of btype */ \n";
-               curprint ( "(");
+#if 0
+               curprint ( "\n/* end of btype */ \n");
+#endif
+            // DQ (2/3/2019): Suppress parenthesis (see Cxx11_tests/test2019_76.C)
+            // Not clear yet where this was required in the first place.
+            // curprint ( "(");
+            // if ( info.inTypedefDecl() == true)
+               if ( info.inTypedefDecl() == true || info.inArgList() == true)
+                  {
+                    curprint ("(");
+                  }
+
+#if 0
+               curprint ( "\n/* calling get_type_name */ \n");
+#endif
                curprint ( get_type_name(mpointer_type->get_class_type()) );
                curprint ( "::*");
+#if 0
+               curprint ( "\n/* DONE: calling get_type_name */ \n");
+#endif
              }
             else
              {
@@ -1590,7 +1627,16 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                 //  printf ("In unparseMemberPointerType(): Handling the second part \n");
                     printf ("In unparseMemberPointerType(): pointer to member data: second part of type \n");
 #endif
-                    curprint(")");
+#if 0
+                    curprint ( "\n/* start of second type part processing */ \n");
+#endif
+                 // DQ (2/3/2019): Suppress parenthesis (see Cxx11_tests/test2019_76.C)
+                 // curprint(")");
+                 // if ( info.inTypedefDecl() == true)
+                    if ( info.inTypedefDecl() == true || info.inArgList() == true)
+                       {
+                         curprint(")");
+                       }
 
                  // DQ (8/19/2014): Handle array types (see test2014_129.C).
                     SgArrayType* arrayType = isSgArrayType(btype);
