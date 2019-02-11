@@ -142,13 +142,16 @@ namespace SgNodeHelper {
   //! is true if 'node' is the root node of the AST representing the condition of a Loop construct (While, DoWhile, For).
   bool isLoopCond(SgNode* node);
 
-  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, CondExp, switch.
+  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, switch, CondExp.
   bool isCondStmtOrExpr(SgNode* node);
 
   //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, switch.
   bool isCondStmt(SgNode* node);
 
-  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp, switch.
+  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, switch.
+  bool isCondInBranchStmt(SgNode* node);
+
+  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, switch, CondExp.
   bool isCond(SgNode* node);
 
   //! sets 'cond' as the root node of the AST representing the condition in statements if, while, dowhile, for, switch.
