@@ -9,7 +9,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2018_03.C \
    test2018_04.C \
    test2018_12.C \
-   test2018_13.C \
    test2018_19.C
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -21,6 +20,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_09.C \
    test2018_10.C \
    test2018_11.C \
+   test2018_13.C \
    test2018_14.C \
    test2018_15.C \
    test2018_16.C \
