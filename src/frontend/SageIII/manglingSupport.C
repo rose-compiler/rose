@@ -1483,6 +1483,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_eExprListExp_";
           break;
         }
+        case V_SgAggregateInitializer: {
+          const SgAggregateInitializer* e = isSgAggregateInitializer (expr);
+          mangled_name << "_bAggregateInitializer_" << mangleExpression (e->get_initializers()) << "_eAggregateInitializer_";
+          break;
+        }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
           ROSE_ASSERT(false);
