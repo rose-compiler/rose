@@ -1113,8 +1113,10 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
     // this case cannot happen for normalized code
-    bool useConstraints=false;
-    return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
+    logger[ERROR]<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
+    //bool useConstraints=false;
+    exit(1);
+    //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
   } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
@@ -1313,6 +1315,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   initializeCommandLineArgumentsInState(initialPState);
   if(optionStringLiteralsInState) {
     initializeStringLiteralsInState(initialPState);
+    cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
   }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);

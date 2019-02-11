@@ -15,6 +15,10 @@
  **/
 namespace LibraryIdentification
 {
+    const std::string unknownLibraryName = "UNKNOWN";
+    const std::string multiLibraryName = "MULTIPLE_LIBS";
+    
+
     class LibraryInfo
     {
     public:
@@ -83,9 +87,14 @@ namespace LibraryIdentification
          *
          * @param[in] libHash  Unique Hash of the library to add
          **/
-    LibraryInfo(const std::string& ilibHash) : libHash(ilibHash) { };
+    LibraryInfo(const std::string& ilibHash) : libName(unknownLibraryName), libVersion(unknownLibraryName), libHash(ilibHash), architecture(unknownLibraryName) { };
         
 
+        /**
+         *  operator<
+         *
+         *  Lessthan operator for sorting and recognizing duplicates
+         **/
         friend bool operator<(const LibraryInfo& lhs,const LibraryInfo& rhs) 
         {
             return lhs.libHash < rhs.libHash;
@@ -100,9 +109,32 @@ namespace LibraryIdentification
          **/
         static LibraryInfo getUnknownLibraryInfo() 
         {
-            return LibraryInfo("UNKNOWN", "UNKNOWN", "UNKNOWN",  "UNKNOWN");
+            return LibraryInfo(unknownLibraryName, unknownLibraryName, unknownLibraryName,  unknownLibraryName);
         };
+
+        /**
+         *  getMultiLibraryInfo
+         *
+         *  Constructs and returns the special sentinal "Multi
+         *  Library" instance for functions that couldn't be uniquely
+         *  identified. ie, a function with this hash appears in
+         *  multiple libraries (probably with multiple names)
+         **/
+        static LibraryInfo getMultiLibraryInfo() 
+        {
+            return LibraryInfo(multiLibraryName, multiLibraryName, multiLibraryName,  multiLibraryName);
+        };
+
         
+        /**
+         *  toString
+         *
+         *  Human readable libary identifier
+         **/
+        std::string toString()
+        {
+            return libName + "." + libVersion;
+        }
         
         
 
