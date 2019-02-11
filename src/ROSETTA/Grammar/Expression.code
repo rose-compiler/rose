@@ -640,6 +640,11 @@ HEADER_DOUBLE_VALUE_EXPRESSION_END
 HEADER_LONG_DOUBLE_VALUE_EXPRESSION_START
 HEADER_LONG_DOUBLE_VALUE_EXPRESSION_END
 
+HEADER_FLOAT_80_VALUE_EXPRESSION_START
+HEADER_FLOAT_80_VALUE_EXPRESSION_END
+
+HEADER_FLOAT_128_VALUE_EXPRESSION_START
+HEADER_FLOAT_128_VALUE_EXPRESSION_END
 
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
@@ -4099,6 +4104,12 @@ SOURCE_DOUBLE_VALUE_EXPRESSION_END
 SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_START
 SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_END
 
+SOURCE_FLOAT_80_VALUE_EXPRESSION_START
+SOURCE_FLOAT_80_VALUE_EXPRESSION_END
+
+SOURCE_FLOAT_128_VALUE_EXPRESSION_START
+SOURCE_FLOAT_128_VALUE_EXPRESSION_END
+
 
 SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
@@ -4131,6 +4142,9 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
           printf ("Error: In SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration == NULL: this = %p = %s \n",this,this->class_name().c_str());
         }
+
+#error "DEAD CODE!"
+
      ROSE_ASSERT(templateDeclaration != NULL);
 
      SgTemplateParameterPtrList & templateParameters = templateDeclaration->get_templateParameters();
@@ -4144,7 +4158,7 @@ SgTemplateParameterVal::get_template_parameter_name() const
        // DQ (6/6/2013): If the template parameter is used as a template argument, then we just return a simple name.
        // Nowever, maybe the constant should have been shared so that it would be correctly associated with a template declaration.
           SgName name = "__template_parameter_used_as_template_argument__";
-#if 1
+#if 0
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d I think this is the case of a template parameter used as an argument to another template (see test2013_198.C) \n",template_parameter_position);
 #endif
           return name;
@@ -4156,7 +4170,11 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
           case V_SgTemplateDeclaration:               templateParameters = &(isSgTemplateDeclaration(templateDeclaration)->get_templateParameters());               break;
           case V_SgTemplateClassDeclaration:          templateParameters = &(isSgTemplateClassDeclaration(templateDeclaration)->get_templateParameters());          break;
-          case V_SgTemplateFunctionDeclaration:       templateParameters = &(isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_templateParameters()); break;
+
+       // DQ (2/1/2019): Bug fix, likely copy-paste error, casting to wrong type.
+       // case V_SgTemplateFunctionDeclaration:       templateParameters = &(isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_templateParameters()); break;
+          case V_SgTemplateFunctionDeclaration:       templateParameters = &(isSgTemplateFunctionDeclaration(templateDeclaration)->get_templateParameters());       break;
+
           case V_SgTemplateMemberFunctionDeclaration: templateParameters = &(isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_templateParameters()); break;
           case V_SgTemplateVariableDeclaration:       templateParameters = &(isSgTemplateVariableDeclaration(templateDeclaration)->get_templateParameters());       break;
 
@@ -4177,13 +4195,16 @@ SgTemplateParameterVal::get_template_parameter_name() const
   // if (template_parameter_position >= (long int) templateParameters.size())
      if (template_parameter_position >= numberOfTemplateParameters)
         {
+#if 0
           printf ("This is a reference to a template parameter in an outer scope (e.g. we are a part of a member function with out explicit templates within a templated class declaration) \n");
+#endif
           getParameterNameFromTemplateParameterList = false;
         }
 
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %" PRIuPTR " \n",templateParameters.size());
 
+#if 0
   // if (template_parameter_position >= (long int)(templateParameters.size()))
      if (template_parameter_position >= numberOfTemplateParameters)
         {
@@ -4193,6 +4214,7 @@ SgTemplateParameterVal::get_template_parameter_name() const
         }
 
      printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");
+#endif
 
      SgName name;
      if (getParameterNameFromTemplateParameterList == true)
@@ -4230,10 +4252,12 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
        // This is not the favored case since i think it can be problematic to use template parameter names.
           name = get_valueString();
-          printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
+#if 0
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameter value = %s \n",name.str());
+#endif
         }
 
-#if 1
+#if 0
      printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
 #endif
 
