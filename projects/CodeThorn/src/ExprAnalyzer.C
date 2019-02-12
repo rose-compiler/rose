@@ -37,7 +37,7 @@ void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
   ROSE_ASSERT(node);
   ROSE_ASSERT(_variableIdMapping);
   structureAccessLookup.initializeOffsets(_variableIdMapping,node);
-  cout<<"INFO: Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
+  logger[INFO]<<"Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -301,7 +301,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   res.result=AbstractValue(CodeThorn::Bot());
 #if 0
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    cout << "Error: incdec-op not supported in conditions."<<endl;
+    cerr << "Error: incdec-op not supported in conditions."<<endl;
     exit(1);
   }
 #endif
@@ -406,9 +406,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
       default:
-        cerr << "@NODE:"<<node->sage_class_name()<<endl;
-        string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
-        throw exceptionInfo; 
+        logger[ERROR]<<"evaluateExpression::unknown unary operation @"<<node->sage_class_name()<<endl;
+        exit(1);
       } // end switch
     }
     return  resultList;
@@ -432,7 +431,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   case V_SgVarRefExp:
     return evalRValueVarRefExp(isSgVarRefExp(node),estate);
   case V_SgFunctionCallExp: {
-    //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate);
   }
   case V_SgNullExpression: {
@@ -440,6 +438,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     SingleEvalResultConstInt anyResult;
     resultList.push_front(anyResult);
     return resultList;
+  }
+  case V_SgFunctionRefExp: {
+    logger[ERROR]<<"function pointers are not supported yet: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+    exit(1);
   }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
@@ -466,7 +468,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     ++i;
     SingleEvalResultConstInt singleResult2=*i;
     if((singleResult1.value().operatorEq(singleResult2.value())).isTrue()) {
-      //cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
+      logger[INFO]<<"evaluating condition of conditional operator gives two equal results"<<endl;
     }
   }
   if(condResultList.size()>1) {
@@ -527,7 +529,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAndOp(SgAndOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
   res.result=(lhsResult.result.operatorAnd(rhsResult.result));
   resultList.push_back(res);
   return resultList;
@@ -778,13 +779,13 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
-        //cout<<"DEBUG: pointer-array access."<<endl;
+        logger[DEBUG]<<"pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           logger[TRACE]<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
-            cout<<estate.toString(_variableIdMapping)<<endl;
+            cerr<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
           }
         } else {
@@ -825,7 +826,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         switch(mode) {
         case MODE_VALUE:
           res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
-          //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
+          logger[DEBUG]<<"retrieved array element value:"<<res.result<<endl;
           return listify(res);
         case MODE_ADDRESS:
           res.result=arrayPtrPlusIndexValue;
@@ -854,7 +855,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               ROSE_ASSERT(initExp);
               if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                 int intVal=intValNode->get_value();
-                //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
                 //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(AbstractValue(intVal)));
                 int index2=arrayPtrPlusIndexValue.getIndexIntValue();
                 if(elemIndex==index2) {
@@ -875,7 +875,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           cerr<<"Error: access to element of constant array (not in state). Not supported."<<endl;
           exit(1);
         } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
-          cout<<"Error: Found string literal address, but data not present in state."<<endl;
+          logger[ERROR]<<"Error: Found string literal address, but data not present in state."<<endl;
           exit(1);
         } else {
           cout<<estate.toString(_variableIdMapping)<<endl;
@@ -1061,7 +1061,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
-  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  logger[DEBUG]<<"derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
   // null pointer check
   bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate.label());
   if(continueExec) {
@@ -1197,8 +1197,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueExp(SgNode* node, EState 
     for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
 	liter!=lhsResultList.end();
 	++liter) {
-      //cout<<"DEBUG: lhs-val: "<<(*liter).result.toString()<<endl;
-      //cout<<"DEBUG: rhs-val: "<<(*riter).result.toString()<<endl;
+      logger[DEBUG]<<"lhs-val: "<<(*liter).result.toString()<<endl;
+      logger[DEBUG]<<"rhs-val: "<<(*riter).result.toString()<<endl;
       list<SingleEvalResultConstInt> intermediateResultList;
       if(SgDotExp* dotExp=isSgDotExp(node)) {
 	intermediateResultList=evalDotOp(dotExp,*liter,*riter,estate,MODE_ADDRESS);
@@ -1220,7 +1220,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
   // TODO: assignments in index computations of ignored array ref
   // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
   // since nothing can change (because of being ignored) state remains the same
-  //cout<<"DEBUG: evalLValuePntrArrRefExp"<<endl;
+  logger[DEBUG]<<"evalLValuePntrArrRefExp"<<endl;
   PState oldPState=*estate.pstate();
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
@@ -1262,9 +1262,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
         // in case it is a pointer retrieve pointer value
         AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
         if(pstate2.varExists(ptr)) {
-          //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
+          logger[DEBUG]<<"pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
           arrayPtrValue=pstate2.readFromMemoryLocation(ptr);
-          //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+          logger[DEBUG]<<"arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           // convert integer to VariableId
           if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
             logger[ERROR] <<"Error: unsupported feature:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
@@ -1329,7 +1329,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   if(isStructMember(varId)) {
     int offset=structureAccessLookup.getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
-    cout<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    logger[TRACE]<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     //res.result=AbstractValue(offset);
     //return listify(res);
   }
@@ -1361,7 +1361,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
-  //cout<<"DEBUG: evalRValueVarRefExp: "<<node->unparseToString()<<endl;
+  logger[TRACE]<<"evalRValueVarRefExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
@@ -1443,6 +1443,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // ignoring fflush
       // res initialized above
       return evalFunctionCallArguments(funCall,estate);
+    } else if(funName=="time"||funName=="srand"||funName=="rand") {
+      // arguments must already be analyzed (normalized code) : TODO check that it is a single variable
+      // result is top (time returns any value)
+      return listify(res); // return top (initialized at beginning of function)
+    } else {
+      logger[ERROR]<<"Function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<endl;
+      exit(1);
     }
   }
   if(getSkipSelectedFunctionCalls()) {
@@ -1601,7 +1608,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     }
     if(!errorDetected) {
       // no error occured. Copy region.
-      //cout<<"DEBUG: copy region now. "<<endl;
+      logger[TRACE]<<"DEBUG: copy region now. "<<endl;
       PState newPState=*estate.pstate();
       for(int i=0;i<copyRegionSize;i++) {
         AbstractValue index(i);
@@ -1621,7 +1628,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate) {
-  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  logger[TRACE]<<"evaluating semantic function for strlen: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   // memcpy is a void function, no return value
   res.init(estate,AbstractValue(CodeThorn::Top())); 
@@ -1661,6 +1668,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
       if(cmpResult.isTrue()) {
         // found 0
         res.init(estate,AbstractValue(pos));
+        logger[TRACE]<<"evaluating semantic function for strlen finished: "<<funCall->unparseToString()<<endl;
         return listify(res);
       } else if(cmpResult.isFalse()) {
         pos++;
@@ -1672,6 +1680,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
   }
   // fallthrough for top/bot
   // return top for unknown (or out-of-bounds access)
+  logger[TRACE]<<"evaluating semantic function for strlen - no result, assuming top: "<<funCall->unparseToString()<<endl;
   res.init(estate,AbstractValue(CodeThorn::Top()));
   return listify(res);
 }
