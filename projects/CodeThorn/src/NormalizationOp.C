@@ -12,7 +12,7 @@
 using namespace std;
 using namespace Rose;
 
-namespace SPRAY {
+namespace CodeThorn {
   NormalizationOp::NormalizationOp() {}
   NormalizationOp::~NormalizationOp() {}
   void NormalizationOp::analyse() {}

@@ -134,7 +134,7 @@ main(int argc, char** argv)
 
 
   // Build a Library Identification database (in the current directory).
-     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", libHash, partitioner, true );
+     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", libHash, partitioner, REPLACE );
 
 #if 0
   // Match functions in AST against Library Identification database.
