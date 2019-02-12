@@ -360,7 +360,21 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_81.C \
    test2019_82.C \
    test2019_83.C \
-   test2019_86.C 
+   test2019_86.C \
+   test2019_87.C \
+   test2019_88.C \
+   test2019_89.C \
+   test2019_90.C \
+   test2019_91.C \
+   test2019_92.C \
+   test2019_93.C \
+   test2019_94.C \
+   test2019_95.C \
+   test2019_96.C \
+   test2019_97.C \
+   test2019_98.C \
+   test2019_99.C \
+   test2019_100.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
