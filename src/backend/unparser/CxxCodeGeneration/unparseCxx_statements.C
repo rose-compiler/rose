@@ -9840,11 +9840,12 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
      ROSE_ASSERT(return_stmt != NULL);
 
-     curprint ( string("return "));
+     curprint("return ");
      SgUnparse_Info ninfo(info);
 
   // DQ (3/26/2012): Added assertion.
      ROSE_ASSERT(return_stmt->get_expression() != NULL);
+
 #if 0
      printf ("In unparseReturnStmt(): return_stmt->get_expression() = %p = %s \n",return_stmt->get_expression(),return_stmt->get_expression()->class_name().c_str());
 #endif
@@ -9855,12 +9856,20 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (return_stmt->get_expression())
         {
+       // DQ (2/8/2019): Restricting output of definitions in the return statement.
+          ninfo.set_SkipDefinition();
+
+       // DQ (2/8/2019): Double check that these are all set.
+          ROSE_ASSERT(ninfo.SkipClassDefinition() == true);
+          ROSE_ASSERT(ninfo.SkipEnumDefinition()  == true);
+          ROSE_ASSERT(ninfo.SkipDefinition()      == true);
+
           unparseExpression(return_stmt->get_expression(), ninfo);
         }
 
      if (!ninfo.SkipSemiColon())
         {
-          curprint ( string(";"));
+          curprint(";");
         }
    }
 

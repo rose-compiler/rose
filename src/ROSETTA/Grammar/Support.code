@@ -7229,6 +7229,16 @@ HEADER_TEMPLATE_ARGUMENT_START
        // DQ (3/10/2018): Adding debugging support.
           std::string unparseToStringSupport();
 
+       // DQ (2/10/2019): Adding debugging support.
+          std::string template_argument_kind () const;
+
+       // DQ (2/10/2019): Refactored support for template unparsing.
+          bool isTemplateArgumentFromAnonymousClass() const;
+
+       // DQ (2/11/2019): Refactored support for logic to control when template arguments are unparsed.
+       // Temporarily this code is located in the unparseCxx_expressions.C file.
+          bool outputTemplateArgument();
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -7237,8 +7247,9 @@ HEADER_TEMPLATE_PARAMETER_LIST_END
 
 HEADER_TEMPLATE_ARGUMENT_LIST_START
 
+       // DQ (2/10/2019): I think this IR node is no longer used.
        // DQ (3/10/2018): Adding debugging support.
-          std::string unparseToStringSupport();
+       // std::string unparseToStringSupport();
 
 HEADER_TEMPLATE_ARGUMENT_LIST_END
 
@@ -13956,8 +13967,8 @@ void Sg_File_Info::check_file_id(const char * label, bool assertion) const {
     printf("ERROR from %s:\n", label);
     printf("  Sg_File_Info::this = %p\n", this);
     printf("  p_file_id = %d\n", p_file_id);
-    printf("  p_nametofileid_map.size() = %d\n", p_nametofileid_map.size());
-    printf("  p_fileidtoname_map.size() = %d\n", p_fileidtoname_map.size());
+    printf("  p_nametofileid_map.size() = %zu\n", p_nametofileid_map.size());
+    printf("  p_fileidtoname_map.size() = %zu\n", p_fileidtoname_map.size());
     printf("  isTransformation() = %d\n", isTransformation());
     printf("  isCompilerGenerated() = %d\n", isCompilerGenerated());
     printf("  isFrontendSpecific() = %d\n", isFrontendSpecific());
@@ -20939,6 +20950,157 @@ SgTemplateArgument::get_scope () const
      return scope;
    } 
 #endif
+
+#if 1
+// DQ (2/10/2019): Debugging information
+std::string
+SgTemplateArgument::template_argument_kind () const
+   {
+     std::string kindOfTemplateArgument;
+
+     switch (get_argumentType())
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               const SgType* type = get_type();
+               assert (type != NULL);
+               const SgNamedType* namedType = isSgNamedType(type);
+               if (namedType != NULL)
+                  {
+                    assert(namedType->get_declaration() != NULL);
+                  }
+               kindOfTemplateArgument = "type_argument";
+               break;
+             }
+
+          case SgTemplateArgument::nontype_argument:
+             {
+            // Not clear if the scope should be defined here!
+            // const SgExpression* expr = get_expression();
+            // assert(get_expression() != NULL);
+               if (get_expression() == NULL)
+                  {
+                    printf ("NOTE: In SgTemplateArgument::template_argument_kind(): case SgTemplateArgument::nontype_argument: get_expression() == NULL: what is this? \n");
+                    printf (" --- get_type()                = %p \n",get_type());
+                    printf (" --- get_initializedName()     = %p \n",get_initializedName());
+                    printf (" --- get_templateDeclaration() = %p \n",get_templateDeclaration());
+                  }
+
+               kindOfTemplateArgument = "nontype_argument";
+               break;
+             }
+
+          case SgTemplateArgument::template_template_argument:
+             {
+            // const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
+            // assert (templateDeclaration != NULL);
+
+               kindOfTemplateArgument = "template_template_argument";
+               break;
+             }
+
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+               kindOfTemplateArgument = "start_of_pack_expansion_argument";
+               break;
+             }
+
+          default:
+             {
+               printf ("Error in SgTemplateArgument::template_kind(): default reached! \n");
+               assert (false);
+               break;
+             }
+        }
+
+     return kindOfTemplateArgument;
+   } 
+#endif
+
+
+bool
+SgTemplateArgument::isTemplateArgumentFromAnonymousClass() const
+   {
+     bool isAnonymous = false;
+
+#define DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS 0
+
+     bool hasLambdaFollowed = false;
+
+     if (SgClassType * ctype = isSgClassType (this->get_type()))
+        {
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+          printf ("ctype != NULL \n");
+#endif
+          if (SgNode* pnode = ctype->get_declaration()->get_parent())
+             {
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+               printf ("pnode != NULL \n");
+#endif
+               if (isSgLambdaExp(pnode))
+                  {
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+                    printf ("Found a SgLambdaExp parent for the class: set hasLambdaFollowed = true  \n");
+#endif
+                    hasLambdaFollowed = true; 
+                  }
+             }
+
+       // DQ (1/21/2018): Check if this is an unnamed class (used as a template argument, which is not alloweded, so we should not unparse it).
+       // bool isAnonymous = isAnonymousClass(ctype);
+
+       // SgClassType* classType = isSgClassType(templateArgumentType);
+          SgClassType* classType = ctype;
+          if (classType != NULL)
+             {
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+               printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: classDeclaration = %p = %s classDeclaration->get_name() = %s \n",
+                    classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+               bool isUnnamed = (string(classDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
+#if 0
+               if (isUnnamed == true)
+                  {
+                    printf ("In isAnonymousClass(): case SgTemplateArgument::type_argument: isUnnamed = %s \n",isUnnamed ? "true" : "false");
+                  }
+#endif
+               isAnonymous = isUnnamed;
+             }
+
+          if (isAnonymous == true)
+             {
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS || 0
+               printf ("isAnonymous == true: set hasLambdaFollowed = true \n");
+#endif
+            // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
+            // which checks for a trailing lambda function.  So we should fix this up later.
+               hasLambdaFollowed = true; 
+             }
+#if 0
+            else
+             {
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+               printf ("isAnonymous == false \n");
+#endif
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(ctype->get_declaration());
+               if (classDeclaration != NULL)
+                  {
+                    printf ("In unparseTemplateArgumentList(): last template argument: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                  }
+             }
+#endif
+        }
+
+#if DEBUG_IS_TEMPLATE_ARGUMENT_FROM_ANONYOUS_CLASS
+     printf ("Leaving SgTemplateArgument::isTemplateArgumentFromAnonymousClass(): isAnonymous = %s hasLambdaFollowed = %s \n",isAnonymous ? "true" : "false",hasLambdaFollowed ? "true" : "false");
+#endif
+
+  // return (isAnonymous == true);
+     return (isAnonymous == true) || (hasLambdaFollowed == true);
+   }
+
+
 
 SgName
 SgTemplateArgument::get_qualified_name_prefix() const

@@ -3118,6 +3118,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This typedef IS visible from where it is referenced \n");
 #endif
+                                // DQ (2/8/2019): If type elaboration was required, and the symbol is from a base class.
+                                // Then we need name qualification because the type elaboration will not protect the type 
+                                // reference from being hidden.
+                                   if (typeElaborationIsRequired == true)
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- Since type elaboration was required because it was hidden, add name qualification to support it being unambiguous \n");
+#endif
+                                        qualificationDepth = 1;
+                                      }
                                  }
                                 else
                                  {
@@ -3193,6 +3203,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This enum IS visible from where it is referenced \n");
 #endif
+                                // DQ (2/8/2019): If type elaboration was required, and the symbol is from a base class.
+                                // Then we need name qualification because the type elaboration will not protect the type 
+                                // reference from being hidden.
+                                   if (typeElaborationIsRequired == true)
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- Since type elaboration was required because it was hidden, add name qualification to support it being unambiguous \n");
+#endif
+                                        qualificationDepth = 1;
+                                      }
                                  }
                                 else
                                  {
@@ -3230,6 +3250,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                   }
 #endif
 
+#if 0
+            // DQ (2/8/2019): Adding this test to make sure that we have caught all possible cases.
+               if (typeElaborationIsRequired == true)
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Check that since type elaboration was required because it was hidden, we should have added name qualification to support it being unambiguous \n");
+#endif
+                    ROSE_ASSERT(qualificationDepth > 0);
+                  }
+#endif
              }
             else
              {
@@ -9898,18 +9928,33 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
             // printf ("START: template_name = %s \n",template_name.c_str());
                SgTemplateArgumentPtrList & templateArgumentList = templateClassDeclaration->get_templateArguments();
                SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
+
+               bool previousTemplateArgumentOutput = false;
                while (i != templateArgumentList.end())
                   {
-                    if ((*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) {
-                      if (i != templateArgumentList.begin())
-                             template_name += ",";
-
-                      string template_argument_name = globalUnparseToString(*i,unparseInfoPointer);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                      printf ("templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",*i,template_argument_name.c_str());
+                    bool filterTemplateArgument = ((*i)->outputTemplateArgument() == false);
+#if 0
+                    printf ("filterTemplateArgument = %s \n",filterTemplateArgument ? "true" : "false");
 #endif
-                      template_name += template_argument_name;
-                    }
+                 // if ((*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) 
+                    if (filterTemplateArgument == false)
+                       {
+                      // if (i != templateArgumentList.begin())
+                         if (previousTemplateArgumentOutput == true)
+                            {
+                           // DQ (2/11/2019): Adding debugging information for test2019_93.C.
+                           // template_name += " /* output comma: part 3 */ ";
+                              template_name += ",";
+                            }
+
+                         string template_argument_name = globalUnparseToString(*i,unparseInfoPointer);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ In name qualification: templateArgument = %p template_argument_name (globalUnparseToString()) = %s \n",*i,template_argument_name.c_str());
+                         printf ("   --- template_argument_name.length() = %zu \n",template_argument_name.length());
+#endif
+                         template_name += template_argument_name;
+                         previousTemplateArgumentOutput = true;
+                       }
                     i++;
                   }
 
