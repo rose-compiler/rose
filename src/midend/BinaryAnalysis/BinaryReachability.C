@@ -6,6 +6,7 @@
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
+#include <Sawyer/Tracker.h>
 #include <stringify.h>
 
 using namespace Sawyer::Message::Common;
@@ -263,6 +264,10 @@ Reachability::commandLineSwitches(Settings &settings /*in,out*/) {
                    std::string(ByteOrder::ORDER_UNSPECIFIED == settings.byteOrder ? "\"none\"" :
                                ByteOrder::ORDER_LSB == settings.byteOrder ? "\"little-endian\"" : "\"big-endian\"") + "."));
 
+    sg.insert(Switch("analysis-threads")
+              .argument("n", nonNegativeIntegerParser(settings.nThreads))
+              .doc("Amount of parallelism to use for reachability analysis. If this switch is not specified then the globally-set "
+                   "parallelism amount is used. If @v{n} is zero then the parallelism will be chosen based on hardware."));
 
     return sg;
 }
@@ -274,6 +279,8 @@ Reachability::commandLineSwitches(Settings &settings /*in,out*/) {
 void
 Reachability::clear() {
     clearReachability();
+    dfReferents_.clear();
+    scannedVertexIds_.clear();
 }
 
 void
@@ -616,6 +623,48 @@ Reachability::findImplicitFunctionReferents(const P2::Partitioner &partitioner, 
     return vertexIds;
 }
 
+struct DataFlowReferences {
+    const P2::Partitioner &partitioner;
+    Reachability::FunctionToVertexMap &byFunction;
+
+    DataFlowReferences(const P2::Partitioner &partitioner, Reachability::FunctionToVertexMap &byFunction)
+        : partitioner(partitioner), byFunction(byFunction) {}
+
+    void operator()(size_t taskId, P2::Function::Ptr &function) {
+        ASSERT_not_null(function);
+        std::set<size_t> targetVertexIds = Reachability::findImplicitFunctionReferents(partitioner, function);
+
+        static SAWYER_THREAD_TRAITS::Mutex mutex;
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+        byFunction.insert(function, targetVertexIds);
+    }
+};
+
+void
+Reachability::cacheAllImplicitFunctionReferents(const P2::Partitioner &partitioner) {
+    std::vector<P2::Function::Ptr> functions = partitioner.functions();
+    std::set<P2::Function::Ptr> functionSet(functions.begin(), functions.end());
+    cacheImplicitFunctionReferents(partitioner, functionSet);
+}
+
+void
+Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
+                                             const std::set<P2::Function::Ptr> &functions) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"finding implicit function referents";
+    DataFlowReferences analyzer(partitioner, dfReferents_);
+    Sawyer::Stopwatch timer;
+    Sawyer::Container::Graph<P2::Function::Ptr> depgraph;
+    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+        if (!dfReferents_.exists(function))
+            depgraph.insertVertex(function);
+    }
+    size_t nThreads = settings_.nThreads.orElse(Rose::CommandLine::genericSwitchArgs.threads);
+    Sawyer::workInParallel(depgraph, nThreads, analyzer);
+    debug <<"; took " <<timer <<" seconds\n";
+}
+    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The reachability propagation data-flow functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -683,80 +732,74 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
 // Iterative propagation and marking, in parallel
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef Sawyer::Container::Map<P2::Function::Ptr, std::set<size_t/*vertexId*/> > FunctionDataFlowReferences;
-FunctionDataFlowReferences byFunction;
+size_t
+Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::vector<size_t> &vertexIds) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    size_t nMarked = 0;
+    std::set<P2::Function::Ptr> functionsToAnalyze;
 
-struct DataFlowReferences {
-    const P2::Partitioner &partitioner;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    FunctionDataFlowReferences &byFunction;
+    BOOST_FOREACH (size_t vertexId, vertexIds) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.cfg().findVertex(vertexId);
+        P2::BasicBlock::Ptr bblock;
+        if (vertex->value().type() == P2::V_BASIC_BLOCK)
+            bblock = vertex->value().bblock();
 
-    DataFlowReferences(const P2::Partitioner &partitioner, FunctionDataFlowReferences &byFunction)
-        : partitioner(partitioner), byFunction(byFunction) {}
+        // Explicit constants in instructions
+        if (settings_.markingExplicitInstructionReferents.isAnySet() && bblock)
+            nMarked += markExplicitInstructionReferents(partitioner, bblock, settings_.markingExplicitInstructionReferents);
 
-    void operator()(size_t taskId, P2::Function::Ptr &function) {
-        ASSERT_not_null(function);
-        std::set<size_t> targetVertexIds = Reachability::findImplicitFunctionReferents(partitioner, function);
-        SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-        byFunction.insert(function, targetVertexIds);
+        // Find functions that need to have the data-flow constants calculated
+        if (settings_.markingImplicitFunctionReferents.isAnySet() && bblock) {
+            std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+            BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+                if (!dfReferents_.exists(function))
+                    functionsToAnalyze.insert(function);
+            }
+        }
     }
-};
-
-SAWYER_THREAD_TRAITS::Mutex DataFlowReferences::mutex;
+    
+    // Implicit constants in function data-flow
+    cacheImplicitFunctionReferents(partitioner, functionsToAnalyze); // done in parallel
+    BOOST_FOREACH (const P2::Function::Ptr &function, functionsToAnalyze) {
+        const std::set<size_t> referents = dfReferents_.get(function); // must exist by now, but may be empty
+        nMarked += intrinsicallyReachable(referents.begin(), referents.end(), settings_.markingImplicitFunctionReferents);
+    }
+    return nMarked;
+}
 
 void
 Reachability::iterate(const P2::Partitioner &partitioner) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    std::set<size_t> scannedVertexIds;                  // vertex IDs that have been used for marking intrinsic reachability
-    FunctionDataFlowReferences dfReferences;            // references to CFG vertices found by data-flow analysis
     resize(partitioner);
 
-    // Run the data-flow to find constants in all the functions
-    if (settings_.markingImplicitFunctionReferents.isAnySet()) {
-        SAWYER_MESG(debug) <<"finding implicit constants in all functions";
-        DataFlowReferences analyzer(partitioner, dfReferences);
-        Sawyer::Stopwatch timer;
-        Sawyer::Container::Graph<P2::Function::Ptr> depgraph;
-        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
-            depgraph.insertVertex(function);
-        Sawyer::workInParallel(depgraph, Rose::CommandLine::genericSwitchArgs.threads, analyzer);
-        debug <<"; took " <<timer <<" seconds\n";
-    }
-
+    // Run the data-flow to find constants in all the functions. We do this up front because we can do it in parallel,
+    // although if the reachability set is small, it might be better to calculate this on demand in the loop below.
+    if (settings_.precomputeImplicitFunctionReferents &&
+        settings_.markingImplicitFunctionReferents.isAnySet()&&
+        dfReferents_.isEmpty())
+        cacheAllImplicitFunctionReferents(partitioner);
+    
+    // Before starting, make sure that we've scanned the vertices that are already reachable.
+    SAWYER_MESG(debug) <<"iteration[-1] marking intrinsic reachability";
+    std::vector<size_t> ids = reachableVertices();
+    scannedVertexIds_.removeIfSeen(ids /*in,out*/);
+    size_t nMarked = iterationMarking(partitioner, ids);
+    SAWYER_MESG(debug) <<" changed " <<StringUtility::plural(nMarked, "vertices") <<"\n";
+    
+    // Iterative propgate and mark
     for (size_t passNumber = 0; true; ++passNumber) {
         SAWYER_MESG(debug) <<"iteration " <<passNumber <<"\n";
 
-        // Run the propagation step
+        // Propagate reachability
         SAWYER_MESG(debug) <<"iteration[" <<passNumber <<"] propagating reachability";
-        std::vector<size_t> changedVertexIds;
-        propagate(partitioner, changedVertexIds /*out*/);
-        SAWYER_MESG(debug) <<" changed " <<StringUtility::plural(changedVertexIds.size(), "vertices") <<"\n";
+        propagate(partitioner, ids /*out*/);
+        SAWYER_MESG(debug) <<" changed " <<StringUtility::plural(ids.size(), "vertices") <<"\n";
 
-        // Process changed vertices to look for other intrinsically reachable vertices
+        // Mark other vertices by scanning those changed by the propagate step
         SAWYER_MESG(debug) <<"iteration[" <<passNumber <<"] marking intrinsic reachability";
-        size_t nMarked = 0;
-        BOOST_FOREACH (size_t vertexId, changedVertexIds) {
-            if (!scannedVertexIds.insert(vertexId).second)
-                continue;                               // already scanned
-            P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.cfg().findVertex(vertexId);
-            P2::BasicBlock::Ptr bblock;
-            if (vertex->value().type() == P2::V_BASIC_BLOCK)
-                bblock = vertex->value().bblock();
-
-            // Explicit constants in instructions
-            if (settings_.markingExplicitInstructionReferents.isAnySet() && bblock)
-                nMarked += markExplicitInstructionReferents(partitioner, bblock, settings_.markingExplicitInstructionReferents);
-
-            // Implicit constants in function data-flow
-            if (settings_.markingImplicitFunctionReferents.isAnySet() && bblock) {
-                std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
-                    const std::set<size_t> &markable = dfReferences[function];
-                    nMarked += intrinsicallyReachable(markable.begin(), markable.end(), settings_.markingImplicitFunctionReferents);
-                }
-            }
-        }
-        SAWYER_MESG(debug) <<" marked " <<StringUtility::plural(nMarked, "vertices") <<"\n";
+        scannedVertexIds_.removeIfSeen(ids /*in,out*/);
+        nMarked = iterationMarking(partitioner, ids);
+        SAWYER_MESG(debug) <<" changed " <<StringUtility::plural(nMarked, "vertices") <<"\n";
 
         if (0 == nMarked)
             break;

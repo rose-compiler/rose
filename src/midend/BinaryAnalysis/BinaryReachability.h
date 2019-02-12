@@ -5,6 +5,8 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <Partitioner2/ControlFlowGraph.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Tracker.h>
 #include <set>
 #include <vector>
 
@@ -64,7 +66,11 @@ public:
 
         rose_addr_t addressAlignment;                    /**< Alignment when reading constants from virtual memory. */
         size_t addressNBytes;                            /**< Size of addresses when reading constants from virtual memory. */
-        ByteOrder::Endianness byteOrder;                /**< Byte order to use when reading constants from virtual memory. */
+        ByteOrder::Endianness byteOrder;                 /**< Byte order to use when reading constants from virtual memory. */
+
+        bool precomputeImplicitFunctionReferents;        /**< Implicit function referents are precomputed in parallel. */
+        Sawyer::Optional<size_t> nThreads;               /**< Parallelism; 0 means system; unset means use global value. */
+        
 
         Settings()
             : markingEntryFunctions(PROGRAM_ENTRY_POINT),
@@ -72,18 +78,24 @@ public:
               markingExplicitMemoryReferents(EXPLICIT_MEM_CONSTANT),
               markingExplicitInstructionReferents(EXPLICIT_INSN_CONSTANT),
               markingImplicitFunctionReferents(NOT_REACHABLE), // disabled by default because it's slow
-              addressAlignment(0), addressNBytes(0), byteOrder(ByteOrder::ORDER_UNSPECIFIED)
+              addressAlignment(0), addressNBytes(0), byteOrder(ByteOrder::ORDER_UNSPECIFIED),
+              precomputeImplicitFunctionReferents(true)
             {}
     };
+
+    /* Mapping from functions to sets of CFG vertex IDs. */
+    typedef Sawyer::Container::Map<Partitioner2::Function::Ptr, std::set<size_t/*vertexId*/> > FunctionToVertexMap;
 
 public:
     /** Facility for emitting diagnostics. */
     static Diagnostics::Facility mlog;
 
 private:
-    std::vector<ReasonFlags> intrinsicReachability_;    // intrinsic reachability of each vertex in the CFG
-    std::vector<ReasonFlags> reachability_;             // computed reachability of each vertex in the CFG
-    Settings settings_;
+    Settings settings_;                                   // settings that affect behavior
+    std::vector<ReasonFlags> intrinsicReachability_;      // intrinsic reachability of each vertex in the CFG
+    std::vector<ReasonFlags> reachability_;               // computed reachability of each vertex in the CFG
+    FunctionToVertexMap dfReferents_;                     // results from findImplicitFunctionReferents
+    Sawyer::Container::Tracker<size_t> scannedVertexIds_; // vertex IDs that have been used for marking intrinsic reachability
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -102,6 +114,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(intrinsicReachability_);
         s & BOOST_SERIALIZATION_NVP(reachability_);
         // s & BOOST_SERIALIZATION_NVP(settings_); -- not serialized
+        // s & BOOST_SERIALIZATION_NVP(dfReferents_); -- not serialized
+        // s & BOOST_SERIALIZATION_NVP(scannedVertexIds_); -- not serialized
     }
 #endif
 
@@ -372,6 +386,13 @@ private:
 
     // Resize vectors based on partitioner CFG size
     void resize(const Partitioner2::Partitioner&);
+
+    // Run findImplicitFunctionReferents on all (or specified) functions in parallel and cache the results
+    void cacheAllImplicitFunctionReferents(const Partitioner2::Partitioner&);
+    void cacheImplicitFunctionReferents(const Partitioner2::Partitioner&, const std::set<Partitioner2::Function::Ptr>&);
+
+    // Do the marking part of the "iterate" function.
+    size_t iterationMarking(const Partitioner2::Partitioner&, const std::vector<size_t> &vertexIds);
 };
 
 } // namespace
