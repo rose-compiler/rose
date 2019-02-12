@@ -499,7 +499,10 @@ namespace CodeThorn {
    **************************************************************************/
   
   void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
-    // find all SgExprStatement, SgReturnStmt, SgVariableDeclaration
+    // find all expressions in SgExprStatement, SgReturnStmt,
+    // SgVariableDeclaration. Conditions are normalized in previous
+    // normalization steps to have only one variable in the condition
+    // expression
     RoseAst ast(node);
     // phase one: generate transformation sequence for expression
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -535,7 +538,6 @@ namespace CodeThorn {
       }
     }
     // phase two: apply transformation sequence
-    // sequence consists of: generate(tmpvarnr,operatornode,targetstmt), replace(operatornode,tmpvarnr)
     for(ExprTransformationList::iterator i=exprTransformationList.begin();i!=exprTransformationList.end();++i) {
       SubExprTransformationList subExprTransformationList=*i;
       for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
@@ -547,11 +549,10 @@ namespace CodeThorn {
           // special cases
           if(isSgConditionalExp(expr)) {
             // conditional operator with control flow
-            cout<<"DEBUG: conditional op transformation requested"<<endl;
+            //cout<<"DEBUG: conditional op transformation requested"<<endl;
           } else {
             // i) generate tmp-var initializer with expr as lhs
             SgScopeStatement* scope=stmt->get_scope();
-            // TODO: create tmp var, and set initializer for expression
             bool shareExpression=false;
             auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
             addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
@@ -564,7 +565,9 @@ namespace CodeThorn {
             // ii) insert tmp-var initializer
             insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
             // ii) replace use of expr with tmp-var
-            SageInterface::replaceExpression(expr, tmpVarReference);
+            bool deleteReplacedExpression=false;
+            SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
+            //SageInterface::replaceExpression(expr, tmpVarReference);
             //logger[TRACE]<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           }
           break;
@@ -573,23 +576,19 @@ namespace CodeThorn {
           logger[TRACE]<<"GENERATING FALSE BOOL VAR DECL:"<<endl;
             SgScopeStatement* scope=stmt->get_scope();
             SgVariableDeclaration* tmpVarDeclaration=generateFalseBoolVarDecl(scope);
-            // TODO: create tmp var, and set initializer for expression
-            //            bool shareExpression=false;
-            //auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
             tmpVarDeclaration->set_parent(stmt->get_parent());
             ROSE_ASSERT(tmpVarDeclaration);
-            //cout<<"DEBUG: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
             // using declVarNr instead of tmpVarNr for control-flow operator transformations
             addToTmpVarMapping((*j).declVarNr,tmpVarDeclaration);
-            //tmpVarDeclaration->set_parent(scope);
             insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           break;
         }
         case Normalization::GEN_IF_ELSE_STMT: {
+          // declVarNr is the tmp var nr of the binary log op
           TmpVarNrType condTmpVarNr=(*j).declVarNr;
           logger[TRACE]<<"GENERATING IF ELSE STMT: condtmpvarNr "<<condTmpVarNr<<endl;
           ROSE_ASSERT(isValidTmpVarNr(condTmpVarNr));
-          SgExpression* cond=getVarRefExp(condTmpVarNr); // tmpVarNr is the register Nr of the binary log op
+          SgExpression* cond=getVarRefExp(condTmpVarNr); 
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
@@ -598,7 +597,6 @@ namespace CodeThorn {
         }
 
         case Normalization::GEN_BOOL_VAR_IF_ELSE_STMT: {
-
           SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
           SgScopeStatement* scope=stmt->get_scope();
@@ -652,7 +650,7 @@ namespace CodeThorn {
   void Normalization::normalizeExpression(SgStatement* stmt, SgExpression* expr) {
     logger[TRACE]<<"normalizing "<<(expr)->unparseToString()<<endl;
     // clear mapping for each expression normalization
-    //tmpVarMapping.clear();
+    tmpVarMapping.clear();
     SubExprTransformationList subExprTransformationList;
     if(!options.encapsulateNormalizedExpressionsInBlocks) {
       // normalized subexpressions (and declared variables) are replacing the current expression
@@ -758,6 +756,7 @@ namespace CodeThorn {
       registerTmpVarAssignment(stmt,expr,lhsResultTmpVarNr, rhsResultTmpVarNr, subExprTransformationList);
 #endif
     } else if(SgConditionalExp* conditionalExp=isSgConditionalExp(expr)) {
+#if 0
       // hoist condition
       // register result variable
       logger[DEBUG]<<"detected conditional Exp but not normalized."<<endl;
@@ -773,6 +772,7 @@ namespace CodeThorn {
       // TODO: assign to result variable
       Normalization::TmpVarNrType fbResultTempVarNr=registerSubExpressionTempVars(stmt,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
       registerTmpVarAssignment(stmt,expr,condResultTempVarNr,tbResultTempVarNr,fbResultTempVarNr,subExprTransformationList);
+#endif
     } else if(isSgBinaryOp(expr)) {
       // general case: binary operator
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
