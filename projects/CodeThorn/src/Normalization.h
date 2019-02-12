@@ -79,7 +79,7 @@ namespace CodeThorn {
     } options;
 
     // type for tmp var counter
-    typedef int32_t TmpVarNrType;
+    typedef uint32_t TmpVarNrType;
 
     // applies normalization on entire AST with normalization level 0-3.
     // level 0: no normalization
@@ -162,20 +162,22 @@ namespace CodeThorn {
       SubExprTransformationEnum transformation;
       RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e);
       RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e);
-      RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
-      RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d);
-      RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, SgVariableDeclaration* d, SgStatement* trueBody, SgStatement* falseBody);
-      SgStatement* stmt;
-      SgExpression* expr;
-      SgVariableDeclaration* decl;
-      SgStatement* trueBody;
-      SgStatement* falseBody;
-      SgVariableDeclaration* tmpVarDeclaration;
-      SgExpression* tmpVarReference;
+      RegisteredSubExprTransformation(SubExprTransformationEnum, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* s, SgExpression* e, Normalization::TmpVarNrType declVarNr);
+      RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, Normalization::TmpVarNrType tmpVarNrParam);
+      RegisteredSubExprTransformation(SubExprTransformationEnum, SgStatement* s, SgExpression* e, Normalization::TmpVarNrType tmpVarNrParam, SgStatement* trueBody, SgStatement* falseBody);
+      SgStatement* stmt=0;
+      SgExpression* expr=0;
+      SgVariableDeclaration* decl=0;
+      SgStatement* trueBody=0;
+      SgStatement* falseBody=0;
+      SgVariableDeclaration* tmpVarDeclaration=0;
+      SgExpression* tmpVarReference=0;
       TmpVarNrType tmpVarNr=0;
       TmpVarNrType lhsTmpVarNr=0; // cond op uses all 3
       TmpVarNrType rhsTmpVarNr=0;
       TmpVarNrType unaryTmpVarNr=0;
+      TmpVarNrType declVarNr=0;
+      TmpVarNrType condVarNr=0;
     };
     typedef std::list<RegisteredSubExprTransformation> SubExprTransformationList;
     typedef std::list<SubExprTransformationList> ExprTransformationList;
@@ -193,22 +195,22 @@ namespace CodeThorn {
     // this function is used by normalizeExpression to normalize all sub-expressions of an expression
     Normalization::TmpVarNrType registerSubExpressionTempVars(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
 
-    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
-    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType unaryTmpVarNr, SubExprTransformationList& subExprTransformationList);
-    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType lhsTmpVarNr, Normalization::TmpVarNrType rhsTmpVarNr, SubExprTransformationList& subExprTransformationList);
-    void registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType condTmpVarNr, Normalization::TmpVarNrType tbTmpVarNr, Normalization::TmpVarNrType fbTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType unaryTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType lhsTmpVarNr, Normalization::TmpVarNrType rhsTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerTmpVarAssignment(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType condTmpVarNr, Normalization::TmpVarNrType tbTmpVarNr, Normalization::TmpVarNrType fbTmpVarNr, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerTmpFalseBoolVarDecl(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
 
-    void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
+    void registerLogOpReplacement(SgStatement* stmt, SgExpression* expr, Normalization::TmpVarNrType declVarNr, SubExprTransformationList& subExprTransformationList);
     SgVariableDeclaration* generateFalseBoolVarDecl(SgScopeStatement* scope);
-    void registerFalseBoolVarDecl(SgStatement* stmt, SgExpression* node, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
     void insertNormalizedSubExpressionFragment(SgStatement* fragment, SgStatement* existing);
     // generates: if(cond) { varRefExp=true; } else {}
     SgIfStmt* generateBoolVarIfElseStmt(SgExpression* cond, SgVarRefExp* varRefExp, SgStatement* true_body, SgStatement* false_body, SgScopeStatement* scope);
     SgIfStmt* generateIfElseStmt(SgExpression* cond, SgStatement* true_body, SgStatement* false_body);
-    void registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
-    void registerBoolVarIfStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SubExprTransformationList& subExprTransformationList);
-    void registerIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
-    void registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  * expr, SgVariableDeclaration* decl, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList);
+    void registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, Normalization::TmpVarNrType condVarNr, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
+    void registerBoolVarIfStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SubExprTransformationList& subExprTransformationList);
+    void registerIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
+    void registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList);
     // obsolete functions
     // normalizes variable declarations T x=init to T x; x=init; 
     // if option onlyFunctionCalls is true, then only transform: T x=f(...) => T x; x=f();
@@ -255,6 +257,8 @@ namespace CodeThorn {
     
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
+    void incTmpVarNr();
+    bool isValidTmpVarNr(Normalization::TmpVarNrType tmpVarNr);
     static TmpVarNrType tmpVarNrCounter;
     static std::string tmpVarPrefix;
     std::string _tmpVarBaseName="tmp";
@@ -263,7 +267,8 @@ namespace CodeThorn {
     typedef std::pair<TmpVarMappingType1,TmpVarMappingType2> TmpVarMappingPair;
     std::map<TmpVarMappingType1,TmpVarMappingType2> tmpVarMapping;
     void addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl);
-    SgVarRefExp* getVarRefExpForTmpVarNr(TmpVarNrType tmpVarNr);
+    SgVariableDeclaration* getVarDecl(TmpVarNrType tmpVarNr);
+    SgVarRefExp* getVarRefExp(TmpVarNrType tmpVarNr);
 
     // counter for generating new label names
     static int32_t labelNr;
