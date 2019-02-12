@@ -1896,7 +1896,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              {
             // DQ (10/21/2013): I am not clear if this shuld be a warning, but I disabled the assertion above (required for 
             // Fortran or perhaps masking another issue).  After more investigation, I think this is OK to comment out.
-#if 1
+#if 0
                printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
 #endif
             // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.

@@ -8,6 +8,7 @@
 #include <BinaryLoader.h>
 #include <BinaryString.h>
 #include <Disassembler.h>
+#include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesM68k.h>
@@ -621,7 +622,7 @@ findInstructionConstants(P2::Engine &engine, const P2::Partitioner &partitioner)
 static std::vector<P2::Function::Ptr>
 findCalledFunctions(const P2::Partitioner &partitioner, bool selectCalledFunctions) {
     std::vector<P2::Function::Ptr> retval;
-    P2::FunctionCallGraph cg = partitioner.functionCallGraph();
+    P2::FunctionCallGraph cg = partitioner.functionCallGraph(P2::AllowParallelEdges::NO);
     BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
         bool isCalled = !cg.callers(function).empty();
         if ((selectCalledFunctions && isCalled) || (!selectCalledFunctions && !isCalled))

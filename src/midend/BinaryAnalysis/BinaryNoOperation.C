@@ -87,7 +87,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
     const RegisterDescriptor regIp = cpu->instructionPointerRegister();
     BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
-        BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+        BaseSemantics::SValuePtr ip = ops->peekRegister(cpu->instructionPointerRegister());
         if (ip->is_number()) {
             state = state->clone();
             isCloned = true;
@@ -107,7 +107,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
     // Erase memory that has never been written (i.e., cells that sprang into existence by reading an address) of which appears
     // to have been recently popped from the stack.
-    CellErasurePredicate predicate(ops, ops->readRegister(cpu->stackPointerRegister()), ignorePoppedMemory_);
+    CellErasurePredicate predicate(ops, ops->peekRegister(cpu->stackPointerRegister()), ignorePoppedMemory_);
     if (mem)
         mem->eraseMatchingCells(predicate);
 

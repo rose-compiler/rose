@@ -38,7 +38,7 @@ int main()
   
   FunctionInfo outFuncInfo("hashhashhashhash");
   
-  if( !ident.matchFunction(outFuncInfo) )
+  if( !ident.matchOneFunction(outFuncInfo) )  //TODO: Also test exactMatchFunction?
       {
           std::cerr << "Function not found. Exiting." << std::endl;
           exit(1);

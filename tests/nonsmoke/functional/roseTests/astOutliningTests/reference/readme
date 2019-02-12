@@ -1,0 +1,28 @@
+Self contrained reference input and output files to show expected results for outlining using dlopen().
+The goal is to test copy&paste the entire original source file file A to file B then append outlined functions to the end of file B. 
+
+The original file is
+* ./tests/nonsmoke/functional/roseTests/astOutliningTests/jacobi.c
+
+rose_jacobi.c will use dlopen() to call three outlined functions (from three loops) stored inside jacobi_with_OUT.c.
+
+Some more testing are in projects/autoTuning  
+
+Put all outlined functions into a single separated file (1 shared library storing 3 outlined functions). 
+* autotuning_lib.c   // dlopen helper functions
+* autotuning_lib.h   // helper function prototypes
+* rose_jacobi_lib.c   // the library file with both original input file content + outlined functions.
+* makefile            
+* readme  
+* rose_jacobi.c       // the transformed input file with dlopen to use functions in the library file
+* uthash.h            // a C hash function utitility 
+
+
+To test this program, type 
+  make check
+
+To cleanup, type 
+  make clean
+
+
+Liao, 2019/1/30  

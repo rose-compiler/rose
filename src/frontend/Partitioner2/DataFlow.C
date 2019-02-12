@@ -546,7 +546,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         Function::Ptr callee = vertex->value().callee();
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
-        BaseSemantics::SValuePtr origStackPtr = ops->readRegister(STACK_POINTER_REG);
+        BaseSemantics::SValuePtr origStackPtr = ops->peekRegister(STACK_POINTER_REG);
 
         BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
         if (callee)

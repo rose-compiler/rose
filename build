@@ -360,6 +360,45 @@ if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
     exit 1
 fi
 
+# The configure script is chatty by default. It has a "--quiet" switch and a "--verbose" switch, but these
+# orthogonal. In other words, you can invoke configure with "--quiet --verbose" and it actually means something
+# (although I'm not certain exactly what it means, but it's different than just "--quiet", or just "--verbose", or
+# neither). The following patch makes the configure script quiet by default and causes "--quiet" and "--verbose" to be
+# inverses of one another. Not that bit a deal if the patch fails since the original configure script already accepts
+# "--quiet" and "--verbose", it will just have the wrong defaults and treat them as orthogonal concepts. [Robb Matzke,
+# 2019-01-19]
+patch -p0 <<'EOF'
+--- configure	2019-01-19 15:23:24.640101972 -0500
++++ configure.patched	2019-01-19 15:25:23.344418954 -0500
+@@ -1966,7 +1966,7 @@
+ program_prefix=NONE
+ program_suffix=NONE
+ program_transform_name=s,x,x,
+-silent=
++silent=yes
+ site=
+ srcdir=
+ verbose=
+@@ -2238,7 +2238,7 @@
+ 
+   -q | -quiet | --quiet | --quie | --qui | --qu | --q \
+   | -silent | --silent | --silen | --sile | --sil)
+-    silent=yes ;;
++    silent=yes verbose= ;;
+ 
+   -runstatedir | --runstatedir | --runstatedi | --runstated \
+   | --runstate | --runstat | --runsta | --runst | --runs \
+@@ -2289,7 +2289,7 @@
+     target_alias=$ac_optarg ;;
+ 
+   -v | -verbose | --verbose | --verbos | --verbo | --verb)
+-    verbose=yes ;;
++    verbose=yes silent= ;;
+ 
+   -version | --version | --versio | --versi | --vers | -V)
+     ac_init_version=: ;;
+EOF
+
 ###############################################################################################################################
 # Finishing up details
 ###############################################################################################################################
