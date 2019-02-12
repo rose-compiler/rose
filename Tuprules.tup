@@ -11,7 +11,7 @@
 ROSE = $(TUP_CWD)
 ROOT = $(TUP_CWD)
 
-# Compilers.
+# Compilers
 CXX = @(CXX)
 CC  = @(CC)
 FC  = @(FC)
@@ -143,13 +143,13 @@ endif
 ifneq (@(WITH_DLIB),no)
     DLIB_ROOT = @(WITH_DLIB)
     ifneq (@(WITH_DLIB),system)
-	CPPFLAGS += -DROSE_HAVE_DLIB
-	CPPFLAGS += -I$(DLIB_ROOT)/include
-	LDFLAGS_STATIC += -L$(DLIB_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(DLIB_ROOT)/lib -L$(DLIB_ROOT)/lib
+	CPPFLAGS += @(CPP_DEFINE_SWITCH)ROSE_HAVE_DLIB
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DLIB_ROOT)/include
+	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(DLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -ldlib
-    LDFLAGS_SHARED += -ldlib
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)dlib
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)dlib
 endif
 
 # Doxygen code documentation system
@@ -161,240 +161,243 @@ endif
 ifneq (@(WITH_DWARF),no)
     DWARF_ROOT = @(WITH_DWARF)
     ifneq (@(WITH_DWARF),system)
-	CPPFLAGS += -I$(DWARF_ROOT)/include
-	LDFLAGS_STATIC += -L$(DWARF_ROOT)/lib
-	LDFLAGS_SHARED += -Wl,-rpath,$(DWARF_ROOT)/lib -L$(DWARF_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DWARF_ROOT)/include
+	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
+	LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(DWARF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DWARF_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -ldwarf
-    LDFLAGS_SHARED += -ldwarf
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)dwarf
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)dwarf
 endif
 
 # Elf parser library
 ifneq (@(WITH_ELF),no)
     ELF_ROOT = @(WITH_ELF)
     ifneq (@(WITH_ELF),system)
-	CPPFLAGS += -I$(ELF_ROOT)/include
-	LDFLAGS_STATIC += -L$(ELF_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(ELF_ROOT)/lib -L$(ELF_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ELF_ROOT)/include
+	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ELF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ELF_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lelf
-    LDFLAGS_SHARED += -lelf
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)elf
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)elf
 endif
 
 # Gcrypt cryptographic library
 ifneq (@(WITH_GCRYPT),no)
     GCRYPT_ROOT = @(WITH_GCRYPT)
     ifneq (@(WITH_GCRYPT),system)
-	CPPFLAGS += -I$(GCRYPT_ROOT)/include
-	LDFLAGS_STATIC  += -L$(GCRYPT_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(GCRYPT_ROOT)/lib -L$(GCRYPT_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GCRYPT_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GCRYPT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GCRYPT_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lgcrypt
-    LDFLAGS_SHARED += -lgcrypt
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)gcrypt
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)gcrypt
 endif
 
 # GPG error library
 ifneq (@(WITH_GPG_ERROR),no)
     GPG_ERROR_ROOT = @(WITH_GPG_ERROR)
     ifneq (@(WITH_GPG_ERROR),system)
-	CPPFLAGS += -I$(GPG_ERROR_ROOT)/include
-	LDFLAGS_STATIC  += -L$(GPG_ERROR_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(GPG_ERROR_ROOT)/lib -L$(GPG_ERROR_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GPG_ERROR_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GPG_ERROR_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GPG_ERROR_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lgpg-error
-    LDFLAGS_SHARED += -lgpg-error
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)gpg-error
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)gpg-error
 endif
 
 # GraphicsMagick image manipulation
 ifneq (@(WITH_GRAPHICSMAGICK),no)
     GRAPHICSMAGICK_ROOT = @(WITH_GRAPHICSMAGICK)
     ifneq (@(WITH_GRAPHFICSMAGICK),system)
-        CPPFLAGS += -I$(GRAPHICSMAGICK_ROOT)/include
-	LDFLAGS_STATIC  += -L$(GRAPHICSMAGICK_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(GRAPHICSMAGICK_ROOT)/lib -L$(GRAPHICSMAGICK_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lGraphicsMagick
-    LDFLAGS_SHARED += -lGraphicsMagick
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)GraphicsMagick
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)GraphicsMagick
 endif
 
 # Intel Pin tracing
 ifneq (@(WITH_INTEL_PIN),no)
     INTEL_PIN_ROOT = @(WITH_INTEL_PIN)
     ifneq (@(WITH_INTEL_PIN),system)
-        CPPFLAGS += -I$(INTEL_PIN_ROOT)/include
-	LDFLAGS_STATIC  += -L$(INTEL_PIN_ROOT)/intel64/lib-ext
-	LDFLAGS_SHARED  += -L$(INTEL_PIN_ROOT)/intel64/lib-ext
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(INTEL_PIN_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
+	LDFLAGS_SHARED  += @(CXX_LIBDIR_SWITCH)$(INTEL_PIN_ROOT)/intel64/lib-ext
     endif
-    LDFLAGS_STATIC += -lpin
-    LDFLAGS_SHARED += -lpin
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)pin
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pin
 endif
 
 # JPEG image encoding
 ifneq (@(WITH_JPEG),no)
     JPEG_ROOT = @(WITH_JPEG)
     ifneq (@(WITH_JPEG),system)
-        CPPFLAGS += -I$(JPEG_ROOT)/include
-	LDFLAGS_STATIC  += -L$(JPEG_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(JPEG_ROOT)/lib -L$(JPEG_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(JPEG_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(JPEG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -ljpeg
-    LDFLAGS_SHARED += -ljpeg
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)jpeg
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)jpeg
 endif
 
 # LCMS color managment system
 ifneq (@(WITH_LCMS),no)
     LCMS_ROOT = @(WITH_LCMS)
     ifneq (@(WITH_LCMS),system)
-        CPPFLAGS += -I$(LCMS_ROOT)/include
-	LDFLAGS_STATIC  += -L$(LCMS_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(LCMS_ROOT)/lib -L$(LCMS_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(LCMS_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(LCMS_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(LCMS_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(LCMS_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -llcms2
-    LDFLAGS_SHARED += -llcms2
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)lcms2
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)lcms2
 endif
 
 # LZMA compression
 ifneq (@(WITH_LZMA),no)
     LZMA_ROOT = @(WITH_LZMA)
     ifneq (@(WITH_LZMA),system)
-        CPPFLAGS += -I$(LZMA_ROOT)/include
-	LDFLAGS_STATIC  += -L$(LZMA_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(LZMA_ROOT)/lib -L$(LZMA_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(LZMA_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(LZMA_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -llzma
-    LDFLAGS_SHARED += -llzma
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)lzma
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)lzma
 endif
 
 # Magic file type identification (magic numbers)
 ifneq (@(WITH_MAGIC),no)
     MAGIC_ROOT = @(WITH_MAGIC)
     ifneq (@(WITH_MAGIC),system)
-	CPPFLAGS += -I$(MAGIC_ROOT)/include
-	LDFLAGS_STATIC  += -L$(MAGIC_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(MAGIC_ROOT)/lib -L$(MAGIC_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(MAGIC_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(MAGIC_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(MAGIC_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lmagic
-    LDFLAGS_SHARED += -lmagic
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)magic
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)magic
 endif
 
 # PNG image encoding
 ifneq (@(WITH_PNG),no)
     PNG_ROOT = @(WITH_PNG)
     ifneq (@(WITH_PNG),system)
-        CPPFLAGS += -I$(PNG_ROOT)/include
-	LDFLAGS_STATIC  += -L$(PNG_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(PNG_ROOT)/lib -L$(PNG_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PNG_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PNG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lpng
-    LDFLAGS_SHARED += -lpng
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)png
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)png
 endif
 
 # Postgresql C++ API
 ifneq (@(WITH_PQXX),no)
     PQXX_ROOT = @(WITH_PQXX)
     ifneq (@(WITH_PQXX),system)
-	CPPFLAGS += -I$(PQXX_ROOT)/include
-	LDFLAGS_STATIC  += -L$(PQXX_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(PQXX_ROOT)/lib -L$(PQXX_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PQXX_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PQXX_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PQXX_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lpqxx
-    LDFLAGS_SHARED += -lpqxx
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)pqxx
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pqxx
 endif
 
 # Qt
 ifneq (@(WITH_QT),no)
     QT_ROOT = @(WITH_QT)
     ifneq (@(WITH_QT),system)
-        CPPFLAGS += -I$(QT_ROOT)/include -I$(QT_ROOT)/include/QtCore -I$(QT_ROOT)/include/QtGui -I$(QT_ROOT)/include/QtWidgets
-        LDFLAGS_STATIC += -L$(QT_ROOT)/lib
-        LDFLAGS_SHARED += -Wl,-rpath,$(QT_ROOT)/lib -L$(QT_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtCore
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtGui @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtWidgets
+        LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
+        LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(QT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lQt5Charts -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread
-    LDFLAGS_SHARED += -lQt5Charts -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Charts @(CXX_LIB_SWITCH)Qt5Widgets @(CXX_LIB_SWITCH)Qt5Gui
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Core @(CXX_LIB_SWITCH)GL @(CXX_LIB_SWITCH)pthread
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Charts @(CXX_LIB_SWITCH)Qt5Widgets @(CXX_LIB_SWITCH)Qt5Gui
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Core @(CXX_LIB_SWITCH)GL @(CXX_LIB_SWITCH)pthread
 endif
 
 # Readline command-line editing library
 ifneq (@(WITH_READLINE),no)
     READLINE_ROOT = @(WITH_READLINE)
     ifneq (@(WITH_READLINE),system)
-	CPPFLAGS += -I$(READLINE_ROOT)/include
-	LDFLAGS_STATIC  += -L$(READLINE_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(READLINE)/lib -L$(READLINE_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(READLINE_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(READLINE)/lib @(CXX_LIBDIR_SWITCH)$(READLINE_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lreadline
-    LDFLAGS_SHARED += -lreadline
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)readline
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)readline
 endif
 
 # SQLite database
 ifneq (@(WITH_SQLITE),no)
     SQLITE_ROOT = @(WITH_SQLITE)
     ifneq (@(WITH_SQLITE),system)
-	CPPFLAGS += -I$(SQLITE_ROOT)/include
-	LDFLAGS_STATIC  += -L$(SQLITE_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(SQLITE_ROOT)/lib -L$(SQLITE_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(SQLITE_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(SQLITE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(SQLITE_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lsqlite3
-    LDFLAGS_SHARED += -lsqlite3
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)sqlite3
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)sqlite3
 endif
 
 # TIFF image encoding
 ifneq (@(WITH_TIFF),no)
     TIFF_ROOT = @(WITH_TIFF)
     ifneq (@(WITH_TIFF),system)
-        CPPFLAGS += -I$(TIFF_ROOT)/include
-	LDFLAGS_STATIC  += -L$(TIFF_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(TIFF_ROOT)/lib -L$(TIFF_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(TIFF_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(TIFF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -ltiff
-    LDFLAGS_SHARED += -ltiff
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)tiff
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)tiff
 endif
 
 # Wt web toolkit
 ifneq (@(WITH_WT),no)
     WT_ROOT = @(WITH_WT)
     ifneq (@(WITH_WT),system)
-	CPPFLAGS += -I$(WT_ROOT)/include
-	LDFLAGS_STATIC  += -L$(WT_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(WT_ROOT)/lib -L$(WT_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(WT_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lwt -lwthttp -lwtdbo -lwtdbopostgres
-    LDFLAGS_SHARED += -lwt -lwthttp -lwtdbo -lwtdbopostgres
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt @(CXX_LIB_SWITCH)wthttp @(CXX_LIB_SWITCH)wtdbo @(CXX_LIB_SWITCH)wtdbopostgres
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt @(CXX_LIB_SWITCH)wthttp @(CXX_LIB_SWITCH)wtdbo @(CXX_LIB_SWITCH)wtdbopostgres
 endif
 
 # YamlCPP is a YAML parser and emitter in C++
 ifneq (@(WITH_YAMLCPP),no)
     YAMLCPP_ROOT = @(WITH_YAMLCPP)
     ifneq (@(WITH_YAMLCPP),system)
-	CPPFLAGS += -I$(YAMLCPP_ROOT)/include
-	LDFLAGS_STATIC  += -L$(YAMLCPP_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(YAMLCPP_ROOT)/lib -L$(YAMLCPP_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(YAMLCPP_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(YAMLCPP_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(YAMLCPP_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lyaml-cpp
-    LDFLAGS_SHARED += -lyaml-cpp
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)yaml-cpp
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)yaml-cpp
 endif
 
 # Yices SMT solver
 ifneq (@(WITH_YICES),no)
     YICES_ROOT = @(WITH_YICES)
     ifneq (@(WITH_YICES),system)
-	CPPFLAGS += -I$(YICES_ROOT)/include
-	LDFLAGS_STATIC  += -L$(YICES_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(YICES_ROOT)/lib -L$(YICES_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(YICES_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(YICES_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(YICES_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(YICES_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lyices
-    LDFLAGS_SHARED += -lyices
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)yices
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)yices
 endif
 
 # Z3 SMT solver
 ifneq (@(WITH_Z3),no)
     Z3_ROOT = @(WITH_Z3)
     ifneq (@(WITH_Z3),system)
-	CPPFLAGS += -I$(Z3_ROOT)/include
-	LDFLAGS_STATIC  += -L$(Z3_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(Z3_ROOT)/lib -L$(Z3_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(Z3_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(Z3_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(Z3_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lz3
-    LDFLAGS_SHARED += -lz3
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)z3
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)z3
 endif
 
 # Boost support/portability library (note that -lboost_python is added if we have python, later)
@@ -403,43 +406,48 @@ ifeq (@(WITH_BOOST),no)
 else
     BOOST_ROOT = @(WITH_BOOST)
     ifneq (@(WITH_BOOST),system)
-	CPPFLAGS += -I$(BOOST_ROOT)/include
-	LDFLAGS_STATIC  += -L$(BOOST_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(BOOST_ROOT)/lib -L$(BOOST_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BOOST_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BOOST_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BOOST_ROOT)/lib
     endif
     # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
     CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
-    LDFLAGS_STATIC += -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_iostreams -lboost_program_options
-    LDFLAGS_SHARED += -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_iostreams -lboost_program_options
-    LDFLAGS_STATIC += -lboost_random -lboost_regex -lboost_serialization -lboost_signals -lboost_system -lboost_thread
-    LDFLAGS_SHARED += -lboost_random -lboost_regex -lboost_serialization -lboost_signals -lboost_system -lboost_thread
-    LDFLAGS_STATIC += -lboost_wave -lboost_wserialization
-    LDFLAGS_SHARED += -lboost_wave -lboost_wserialization
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
+
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
 endif
 
 # Python development
 ifneq (@(WITH_PYTHON),no)
     PYTHON_ROOT = @(WITH_PYTHON)
     ifneq (@(WITH_PYTHON),system)
-        CPPFLAGS += -I$(PYTHON_ROOT)/include/python@(PYTHON_VERSION)m
-	LDFLAGS_STATIC += -L$(PYTHON_ROOT)/lib
-	LDFLAGS_SHARED += -Wl,-rpath,$(PYTHON_ROOT)/lib -L$(PYTHON_ROOT)/lib
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PYTHON_ROOT)/include/python@(PYTHON_VERSION)m
+	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
+	LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(PYTHON_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
     endif
     # Note: static linking with python is not yet tested
-    LDFLAGS_STATIC += -lboost_python -lpython@(PYTHON_VERSION)m
-    LDFLAGS_SHARED += -lboost_python -lpython@(PYTHON_VERSION)m
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_python @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_python @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
 endif
 
 # Bzip2 compression library
 ifneq (@(WITH_BZIP2),no)
     BZIP2_ROOT = @(WITH_BZIP2)
     ifneq (@(WITH_BZIP2),system)
-	CPPFLAGS += -I$(BZIP2_ROOT)/include
-	LDFLAGS_STATIC  += -L$(BZIP2_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(BZIP2_ROOT)/lib -L$(BZIP2_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BZIP2_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BZIP2_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
     endif
-    LDFLAGS_STATIC  += -lbz2
-    LDFLAGS_SHARED  += -lbz2
+    LDFLAGS_STATIC  += @(CXX_LIB_SWITCH)bz2
+    LDFLAGS_SHARED  += @(CXX_LIB_SWITCH)bz2
 endif
 
 # Zlib compression library
@@ -448,19 +456,19 @@ ifeq (@(WITH_ZLIB),no)
 else
     ZLIB_ROOT = @(WITH_ZLIB)
     ifneq (@(WITH_ZLIB),system)
-	CPPFLAGS += -I$(ZLIB_ROOT)/include
-	LDFLAGS_STATIC  += -L$(ZLIB_ROOT)/lib
-	LDFLAGS_SHARED  += -Wl,-rpath,$(ZLIB_ROOT)/lib -L$(ZLIB_ROOT)/lib
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(ZLIB_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(ZLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(ZLIB_ROOT)/lib
     endif
-    LDFLAGS_STATIC += -lz
-    LDFLAGS_SHARED += -lz
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)z
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)z
 endif
 
 # The long, fake rpaths are intended to be reserving space in the executable that will be overwritten by
 # new rpaths when the executable is installed.
-LDFLAGS_SHARED += -Wl,-rpath,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-LDFLAGS_SHARED += -Wl,-rpath,YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
-LDFLAGS_SHARED += -Wl,-rpath,ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 ########################################################################################################################
 # Sanity checks
@@ -493,16 +501,16 @@ endif
 # List of compiler flags for searching for ROSE header files for #include files. List here only those directories
 # that are part of the ROSE source distribution -- DO NOT list directories for other software like Boost.
 support_INCDIRS = \
- -I$(ROSE) \
- -I$(ROSE)/src \
- -I$(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include \
- -I$(ROSE)/src/frontend/SageIII \
- -I$(ROSE)/src/frontend/SageIII/sageInterface \
- -I$(ROSE)/src/midend/binaryAnalyses \
- -I$(ROSE)/src/roseSupport \
- -I$(ROSE)/src/util \
- -I$(ROSE)/src/util/commandlineProcessing \
- -I$(ROSE)/src/util/stringSupport
+ @(CPP_INCDIR_SWITCH)$(ROSE) \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sageInterface \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/binaryAnalyses \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/commandlineProcessing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/stringSupport
 
 # Compilers
 support_CC = $(CC)
@@ -585,91 +593,91 @@ support_compile         = $(COMPILER_RULES) --phase=support --link=none --begin-
 # that are part of the ROSE source distribution -- DO NOT list directories for other software like Boost.
 librose_INCDIRS = \
  $(support_INCDIRS) \
- -I$(ROSE)/src/3rdPartyLibraries/MSTL \
- -I$(ROSE)/src/backend/asmUnparser \
- -I$(ROSE)/src/backend/unparser \
- -I$(ROSE)/src/backend/unparser/AdaCodeGeneration \
- -I$(ROSE)/src/backend/unparser/CxxCodeGeneration \
- -I$(ROSE)/src/backend/unparser/formatSupport \
- -I$(ROSE)/src/backend/unparser/FortranCodeGeneration \
- -I$(ROSE)/src/backend/unparser/JavaCodeGeneration \
- -I$(ROSE)/src/backend/unparser/JovialCodeGeneration \
- -I$(ROSE)/src/backend/unparser/languageIndependenceSupport \
- -I$(ROSE)/src/backend/unparser/PHPCodeGeneration \
- -I$(ROSE)/src/backend/unparser/PythonCodeGeneration \
- -I$(ROSE)/src/backend/unparser/X10CodeGeneration \
- -I$(ROSE)/src/frontend \
- -I$(ROSE)/src/frontend/BinaryFormats \
- -I$(ROSE)/src/frontend/BinaryLoader \
- -I$(ROSE)/src/frontend/Disassemblers \
- -I$(ROSE)/src/frontend/DLX/include \
- -I$(ROSE)/src/frontend/PHPFrontend \
- -I$(ROSE)/src/frontend/PythonFrontend \
- -I$(ROSE)/src/frontend/SageIII/astFileIO \
- -I$(ROSE)/src/frontend/SageIII/astFixup \
- -I$(ROSE)/src/frontend/SageIII/astFromString \
- -I$(ROSE)/src/frontend/SageIII/astMerge \
- -I$(ROSE)/src/frontend/SageIII/astPostProcessing \
- -I$(ROSE)/src/frontend/SageIII/astTokenStream \
- -I$(ROSE)/src/frontend/SageIII/astVisualization \
- -I$(ROSE)/src/frontend/SageIII/includeDirectivesProcessing \
- -I$(ROSE)/src/frontend/SageIII/sage_support \
- -I$(ROSE)/src/frontend/SageIII/virtualCFG \
- -I$(ROSE)/src/midend/abstractHandle \
- -I$(ROSE)/src/midend/abstractLayer \
- -I$(ROSE)/src/midend/abstractMemoryObject \
- -I$(ROSE)/src/midend/astDiagnostics \
- -I$(ROSE)/src/midend/astMatching \
- -I$(ROSE)/src/midend/astProcessing \
- -I$(ROSE)/src/midend/astQuery \
- -I$(ROSE)/src/midend/astRewriteMechanism \
- -I$(ROSE)/src/midend/astUtil/annotation \
- -I$(ROSE)/src/midend/astUtil/astInterface \
- -I$(ROSE)/src/midend/astUtil/astSupport \
- -I$(ROSE)/src/midend/astUtil/symbolicVal \
- -I$(ROSE)/src/midend/BinaryAnalysis \
- -I$(ROSE)/src/midend/BinaryAnalysis/instructionSemantics \
- -I$(ROSE)/src/midend/programAnalysis/ \
- -I$(ROSE)/src/midend/programAnalysis/bitvectorDataflow \
- -I$(ROSE)/src/midend/programAnalysis/CallGraphAnalysis \
- -I$(ROSE)/src/midend/programAnalysis/CFG \
- -I$(ROSE)/src/midend/programAnalysis/defUseAnalysis \
- -I$(ROSE)/src/midend/programAnalysis/dominanceAnalysis \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/analysis \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/arrIndexLabeler \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/cfgUtils \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/lattice \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/rwAccessLabeler \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/simpleAnalyses \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/state \
- -I$(ROSE)/src/midend/programAnalysis/genericDataflow/variables \
- -I$(ROSE)/src/midend/programAnalysis/OAWrap \
- -I$(ROSE)/src/midend/programAnalysis/pointerAnal \
- -I$(ROSE)/src/midend/programAnalysis/valuePropagation \
- -I$(ROSE)/src/midend/programAnalysis/VirtualFunctionAnalysis \
- -I$(ROSE)/src/midend/programTransformation/astInlining \
- -I$(ROSE)/src/midend/programTransformation/astOutlining \
- -I$(ROSE)/src/midend/programTransformation/constantFolding \
- -I$(ROSE)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
- -I$(ROSE)/src/midend/programTransformation/finiteDifferencing \
- -I$(ROSE)/src/midend/programTransformation/implicitCodeGeneration \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/computation \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/depGraph \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/depInfo \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/driver \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/outsideInterface \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/prepostTransformation \
- -I$(ROSE)/src/midend/programTransformation/loopProcessing/slicing \
- -I$(ROSE)/src/midend/programTransformation/ompLowering \
- -I$(ROSE)/src/midend/programTransformation/partialRedundancyElimination \
- -I$(ROSE)/src/midend/programTransformation/singleStatementToBlockNormalization \
- -I$(ROSE)/src/midend/programTransformation/transformationTracking \
- -I$(ROSE)/src/ROSETTA/src \
- -I$(ROSE)/src/ROSETTA/src/astFileIO \
- -I$(ROSE)/src/roseExtensions/failSafe \
- -I$(ROSE)/src/util/graphs \
- -I$(ROSE)/src/util/support
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/MSTL \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/asmUnparser \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/AdaCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/CxxCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/formatSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/FortranCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/JavaCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/JovialCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/languageIndependenceSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/PHPCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/PythonCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser/X10CodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryFormats \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryLoader \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/Disassemblers \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/DLX/include \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PHPFrontend \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PythonFrontend \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astFileIO \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astFixup \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astFromString \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astMerge \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astPostProcessing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astTokenStream \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astVisualization \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/includeDirectivesProcessing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sage_support \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/virtualCFG \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractHandle \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractLayer \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractMemoryObject \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astDiagnostics \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astMatching \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astProcessing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astQuery \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astRewriteMechanism \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/annotation \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/astInterface \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/astSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/symbolicVal \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis/instructionSemantics \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/ \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/bitvectorDataflow \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/CallGraphAnalysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/CFG \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/defUseAnalysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/dominanceAnalysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/analysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/arrIndexLabeler \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/cfgUtils \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/lattice \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/rwAccessLabeler \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/simpleAnalyses \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/state \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/genericDataflow/variables \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/OAWrap \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/pointerAnal \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/valuePropagation \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/VirtualFunctionAnalysis \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/astInlining \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/astOutlining \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/constantFolding \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/finiteDifferencing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/implicitCodeGeneration \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/computation \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/depGraph \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/depInfo \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/driver \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/outsideInterface \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/prepostTransformation \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/loopProcessing/slicing \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/ompLowering \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/partialRedundancyElimination \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/singleStatementToBlockNormalization \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programTransformation/transformationTracking \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src/astFileIO \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseExtensions/failSafe \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/graphs \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/support
 
 # Compilers
 librose_CC  	 = $(CC)

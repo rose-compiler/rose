@@ -312,8 +312,8 @@ namespace OmpSupport
           return CUSTOM_OWNERSHIP;
       }
       // MS2018: added to fix warning
-      virtual std::string attribute_class_name() const;
-      virtual OmpAttributeList* copy();
+      virtual std::string attribute_class_name() const ROSE_OVERRIDE;
+      virtual OmpAttributeList* copy() ROSE_OVERRIDE;
   };                      
 
   //! One attribute object stores all information within an OpenMP pragma (directive and clauses)

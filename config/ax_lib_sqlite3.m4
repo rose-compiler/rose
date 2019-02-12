@@ -25,10 +25,6 @@
 #
 #     HAVE_SQLITE3
 #
-# LAST MODIFICATION
-#
-#   2008-03-17
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Mateusz Loskot <mateusz@loskot.net>
@@ -141,7 +137,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
                 if test $ac_sqlite3_version != ""; then
                     SQLITE3_VERSION=$ac_sqlite3_version
                 else
-                    AC_MSG_WARN([Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!])
+                    AC_MSG_WARN([cannot find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version])
                 fi
             fi
 
