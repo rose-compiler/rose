@@ -7976,8 +7976,13 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                                    SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
                                    if (varRefExp == NULL)
                                       {
-                                        dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
-                                        printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        SgNonrealRefExp* nrRefExp = isSgNonrealRefExp(dotExp->get_rhs_operand());
+                                        if (nrRefExp == NULL) {
+                                          dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
+                                          printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        } else {
+                                          // FIXME should we return the non-real symbol?
+                                        }
                                       }
                                      else
                                       {
