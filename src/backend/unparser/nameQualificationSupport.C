@@ -1278,13 +1278,48 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
 #endif
                                    typeElaborationIsRequired = true;
+
+                                // DQ (2/13/2019): Adding more name qualification (debugging test2011_33.C).
+                                // forceMoreNameQualification = true;
                                  }
                                 else
                                  {
                                 // I think we have to force an extra level of name qualification.
-                                   forceMoreNameQualification = true;
+#if 1
+                                // DQ (2/13/2019): I think we need to check if a qualified nondefining declaration 
+                                // has been made for this class, else no qualification should be output.
+                                   SgDeclarationStatement* declarationToSearchForInReferencedNameSet = 
+                                        declaration->get_firstNondefiningDeclaration() != NULL ? declaration->get_firstNondefiningDeclaration() : declaration;
+                                   ROSE_ASSERT(declarationToSearchForInReferencedNameSet != NULL);
+                                   bool skipNameQualification = false;
+                                   if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",
+                                             declaration,declaration->class_name().c_str(),referencedNameSet.size());
+#endif
+                                        skipNameQualification = true;
+                                      }
+                                     else
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- $$$$$$$$$$ FOUND: declaration %p = %s in referencedNameSet \n",declaration,declaration->class_name().c_str());
+#endif
+                                      }
+
+                                // Check if a nondefining declaration has been seen already, if so then this may be a non-defining 
+                                // or defining declaration in another scope and they name qualification would be required.
+                                // forceMoreNameQualification = true;
+                                   if (skipNameQualification == false)
+                                      {
+                                        forceMoreNameQualification = true;
+                                      }
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("Forcing an extra level of name qualification forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+#endif
+#else
+                                // DQ (2/13/2019): Disabled forcing more name qualification.
+                                   printf ("Disabled forcing more name qualification \n");
 #endif
 #if 0
                                    printf ("I think we have to force an extra level of name qualification (not implemented) \n");
@@ -1497,7 +1532,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // DQ (7/25/2018): Type elaboration does not make since for functions.  This is a case where name qualification 
                            // is required because the function is hidden by some non-function. The symbol was non-null and it was not a 
                            // function.  Question: could it be a function that hides the function nane from another function (I think so).
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("########### NOTE: NEED TO FORCE NAME QUALIFICATION SINCE TYPE ELABLORATION IS NOT A SOLUTION FOR declarations hiding a function \n");
                               printf ("functionSymbol == NULL: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
@@ -10025,7 +10060,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                             }
                          ROSE_ASSERT(classDefinition->get_declaration()->get_isUnNamed() == true);
                        }
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("In NameQualificationTraversal::setNameQualificationSupport(): Detected scope_name of un-named scope: scope_name = %s (reset to empty string for name qualification) \n",scope_name.c_str());
 #endif
                     scope_name = "";
@@ -10034,7 +10070,8 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                  // The test2013_145.C demonstrates this case where one part of the name qualification 
                  // is empty string (unnamed scope, specifically a union in the test code).
                     qualifierString = "";
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("In NameQualificationTraversal::setNameQualificationSupport(): Exiting loop prematurely... \n");
 #endif
                     break;
@@ -10135,6 +10172,21 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #endif
                             }
                        }
+
+                 // DQ (2/13/2019): Detect error in use of un-named scope (e.g. SgBasicBlock).
+                 // if (scope_name.substr(0,2) == "0x")
+                    if (scope_name.substr(0,2) == "0x" && isSgGlobal(scope) == NULL)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("WARNING: Detected scope name generated from pointer: i = %d scope = %p = %s skip_over_scope = %s \n",i,scope,scope->class_name().c_str(),skip_over_scope ? "true" : "false");
+                         printf (" --- qualifierString = %s \n",qualifierString.c_str());
+#endif
+                         skip_over_scope = true;
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
                   }
              }
 
@@ -10184,7 +10236,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
             else
              {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("In NameQualificationTraversal::setNameQualificationSupport(): Case of skip_over_scope == true! \n");
+               printf ("In NameQualificationTraversal::setNameQualificationSupport(): Case of skip_over_scope == true! qualifierString = %s \n",qualifierString.c_str());
 #endif
              }
 
