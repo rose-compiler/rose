@@ -988,6 +988,7 @@ namespace sg
     return *res;
   }
 
+/// \private
   template <class SageNode>
   struct TypeRecoveryHandler
   {
@@ -1060,6 +1061,167 @@ namespace sg
     (rhs.*setter)(lhs_child);
 
     swap_parent(lhs_child, rhs_child);
+  }
+
+
+/// \brief executes a functor for a specific node type
+/// \details internal use
+  template <class SageNode>
+  struct TraversalFunction
+  {
+    typedef void (*TransformHandlerFn)(SageNode*);
+
+    explicit
+    TraversalFunction(TransformHandlerFn fun)
+    : fn(fun)
+    {}
+
+    void handle(SgNode&)     { /* ignore */ }
+    void handle(SageNode& n) { fn(&n); }
+
+    TransformHandlerFn fn;
+  };
+
+/// \brief creates a functor that executes code for a specific node type
+/// \details internal use
+  template <class SageNode>
+  static inline
+  TraversalFunction<SageNode>
+  createTraversalFunction(void (* fn)(SageNode*))
+  {
+    return TraversalFunction<SageNode>(fn);
+  }
+
+  //
+  // function type extractor
+  //   see https://stackoverflow.com/questions/28033251/can-you-extract-types-from-template-parameter-function-signature
+
+
+  template <class GVisitor>
+  struct TraversalClass : AstSimpleProcessing
+  {
+    explicit
+    TraversalClass(GVisitor gv)
+    : gvisitor(gv)
+    //~ : gvisitor(std::move(gv))
+    {}
+
+    void visit(SgNode* n)
+    {
+      gvisitor = sg::dispatch(gvisitor, n);
+    }
+
+    // GVisitor&& visitor() { return std::move(gvisitor); }
+    GVisitor visitor() { return gvisitor; }
+
+    GVisitor gvisitor;
+  };
+
+
+
+  /// \brief calls fn with all applicable nodes in the AST
+  /// \details
+  ///   extracts the variant type from the function argument in fn
+  ///   and collects all nodes using querySubTree.
+  ///   After that, iterates through the result list and executes
+  ///   fn all all identified nodes.
+  template <class F>
+  static inline
+  F
+  forAllNodes(F fn, SgNode* root, AstSimpleProcessing::Order order = postorder)
+  {
+    ROSE_ASSERT(root);
+
+    TraversalClass<F> tt(fn);
+    //~ TraversalClass<F> tt(std::move(fn));
+
+    tt.traverse(root, order);
+    return tt.visitor();
+  }
+
+  template <class SageNode>
+  static inline
+  void
+  forAllNodes(void (*fn)(SageNode*), SgNode* root, AstSimpleProcessing::Order order = postorder)
+  {
+    forAllNodes(createTransformExecutor(fn), root, order);
+  }
+
+#if !defined(NDEBUG)
+  static inline
+  std::string nodeType(const SgNode& n)
+  {
+    return typeid(n).name();
+  }
+
+  static inline
+  std::string nodeType(const SgNode* n)
+  {
+    if (n == NULL) return "<null>";
+
+    return nodeType(*n);
+  }
+#endif
+
+  template <class GVisitor>
+  struct DispatchHelper
+  {
+    explicit
+    DispatchHelper(GVisitor gv, SgNode* p)
+    //~ : gvisitor(std::move(gv)), parent(p), cnt(0)
+    : gvisitor(gv), parent(p), cnt(0)
+    {}
+
+    void operator()(SgNode* n)
+    {
+      ++cnt;
+
+#if !defined(NDEBUG)
+      if (n == NULL)
+      {
+        std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
+        return;
+      }
+#endif
+
+      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
+    }
+
+    operator GVisitor() { return gvisitor; }
+    //~ operator GVisitor() { return std::move(gvisitor); }
+
+    GVisitor gvisitor;
+    SgNode*  parent;
+    size_t   cnt;
+  };
+
+
+  template <class GVisitor>
+  static inline
+  DispatchHelper<GVisitor>
+  dispatchHelper(GVisitor gv, SgNode* parent = NULL)
+  {
+    return DispatchHelper<GVisitor>(gv, parent);
+    //~ return DispatchHelper<GVisitor>(std::move(gv), parent);
+  }
+
+
+  template <class GVisitor>
+  static inline
+  GVisitor traverseChildren(GVisitor gv, SgNode& n)
+  {
+    std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
+
+    return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
+  }
+
+
+  template <class GVisitor>
+  static inline
+  GVisitor traverseChildren(GVisitor gv, SgNode* n)
+  {
+    return traverseChildren(gv, sg::deref(n));
+    //~ return traverseChildren(sg::deref(n), std::move(gv));
   }
 }
 #endif /* _SAGEGENERIC_H */

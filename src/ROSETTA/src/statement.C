@@ -1234,6 +1234,10 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ("bool", "is_implicit_function", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/12/2019): Mark this explicitly when it is a literal operator (C++11) (this information is held in the special function modifier).
+  // FunctionDeclaration.setDataPrototype ("bool", "is_literal_operator", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );

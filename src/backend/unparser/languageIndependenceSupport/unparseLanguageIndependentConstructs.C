@@ -8035,6 +8035,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                               if (func_ref != NULL)
                                  {
                                    name = func_ref->get_symbol()->get_name();
+#if 0
+                                   printf ("In getPrecedence(): Get function name = %s \n",name.str());
+#endif
                                  }
                                 else
                                  {

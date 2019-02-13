@@ -1145,7 +1145,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                if (i != templateArgListPtr.end())
                   {
                  // check if this is a class type for C++ 11 lambda function
-                    bool hasLambdaFollowed = false;
+                 // bool hasLambdaFollowed = false;
                     SgTemplateArgument* arg = *i; 
                     if (arg != NULL) 
                        {
@@ -1166,10 +1166,10 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #endif
                                    if (isSgLambdaExp(pnode))
                                       {
-#if DEBUG_TEMPLATE_ARGUMENT_LIST || 1
+#if DEBUG_TEMPLATE_ARGUMENT_LIST || 0
                                         printf ("isSgLambdaExp(pnode) != NULL (also set hasLambdaFollowed = true) \n");
 #endif
-                                        hasLambdaFollowed = true; 
+                                     // hasLambdaFollowed = true; 
                                       }
                                  }
 
@@ -1177,12 +1177,12 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                               bool isAnonymous = isAnonymousClass(ctype);
                               if (isAnonymous == true)
                                  {
-#if DEBUG_TEMPLATE_ARGUMENT_LIST || 1
+#if DEBUG_TEMPLATE_ARGUMENT_LIST || 0
                                    printf ("isAnonymous == true (also set hasLambdaFollowed = true) \n");
 #endif
                                 // DQ (1/21/2018): This is mixing logic for explicitlySpecified with something Liao introduced 
                                 // which checks for a trailing lambda function.  So we should fix this up later.
-                                   hasLambdaFollowed = true; 
+                                // hasLambdaFollowed = true; 
                                  }
 #if 0
                                 else
@@ -2889,7 +2889,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // ROSE_ASSERT(false);
         }
 
-#if DEBUG_FUNCTION_REFERENCE_SUPPORT
+#if DEBUG_FUNCTION_REFERENCE_SUPPORT || 0
      printf ("In unparseFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
 #endif
 
@@ -2915,7 +2915,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      string func_name = func_ref->get_symbol()->get_name().str();
      int diff = 0; // the length difference between "operator" and function
 
-#if DEBUG_FUNCTION_REFERENCE_SUPPORT
+#if DEBUG_FUNCTION_REFERENCE_SUPPORT || 0
      printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
 #endif
 
@@ -2946,6 +2946,23 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         }
 #endif
 
+  // DQ (2/12/2019): Adding support for C++11 user-defined literal operators.
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+     bool is_literal_operator = false;
+     if (functionDeclaration->get_specialFunctionModifier().isUldOperator() == true)
+        {
+#if 0
+          printf ("Detected a literal operator! \n");
+#endif
+          is_literal_operator = true;
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
   // check that this an operator overloading function
   // if (!unp->opt.get_overload_opt() && !strncmp(func_name.c_str(), "operator", 8))
      if (!unp->opt.get_overload_opt() && !strncmp(func_name.c_str(), "operator", 8))
@@ -2954,9 +2971,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // diff = strlen(func_name.c_str()) - strlen("operator");
           diff = (uses_operator_syntax == true) ? strlen(func_name.c_str()) - strlen("operator") : 0;
 #if 0
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Found an operator: func_name = %s \n",func_name.c_str());
-#endif
 #endif
        // DQ (1/6/2006): trap out cases of global new and delete functions called 
        // using ("::operator new" or "::operator delete" syntax).  In these cases 
@@ -2964,6 +2979,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // the AST as SgNewExp and SgDeleteExp.  See test2006_04.C.
           bool isNewOperator    =  (strncmp(func_name.c_str(), "operator new", 12) == 0)    ? true : false;
           bool isDeleteOperator =  (strncmp(func_name.c_str(), "operator delete", 15) == 0) ? true : false;
+
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
           printf ("isNewOperator    = %s \n",isNewOperator    ? "true" : "false");
           printf ("isDeleteOperator = %s \n",isDeleteOperator ? "true" : "false");
@@ -2979,7 +2995,27 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
             // func_name = strchr(func_name.c_str(), func_name[8]);
                if (uses_operator_syntax == true)
                   {
+#if 0
+                    printf ("In unparseFuncRef(): before modification: func_name = |%s| \n",func_name.c_str());
+#endif
                     func_name = strchr(func_name.c_str(), func_name[8]);
+#if 0
+                    printf ("In unparseFuncRef(): using operator syntax: func_name = |%s| \n",func_name.c_str());
+#endif
+                    if (is_literal_operator == true)
+                       {
+                      // func_name = strchr(func_name.c_str(), func_name[8]);
+                      // func_name = strchr(func_name.c_str(), "\"\"");
+                         func_name = strchr(func_name.c_str(), func_name[4]);
+#if 0
+                         printf ("In unparseFuncRef(): using operator syntax for literal operator: func_name = |%s| \n",func_name.c_str());
+#endif
+
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                     printf ("In unparseFuncRef(): using operator syntax: func_name = %s \n",func_name.c_str());
@@ -4801,8 +4837,8 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
      printf ("isUnaryOperator(func_call->get_function())        = %s \n",unp->u_sage->isUnaryOperator(func_call->get_function()) ? "true" : "false");
      printf ("isUnaryPostfixOperator(func_call->get_function()) = %s \n",unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) ? "true" : "false");
-
 #endif
+
 #if DEBUG_FUNCTION_CALL
      printf ("WARNING: unparseOperatorSyntax and uses_operator_syntax are functionally redundant declarations \n");
 #endif
@@ -5052,6 +5088,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
              }
 #if DEBUG_FUNCTION_CALL
           printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->class_name().c_str());
+          printf ("suppress_implicit_conversion_operator = %s \n",suppress_implicit_conversion_operator ? "true" : "false");
           curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
           curprint ( string("/* suppress_implicit_conversion_operator = ") + (uses_operator_syntax == true ? "true" : "false") + " */ \n");
 #endif
@@ -5076,6 +5113,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 #if DEBUG_FUNCTION_CALL
           curprint ( "\n/* In unparseFuncCall(): 2nd part BEFORE: unparseExpression(func_call->get_function(), info); */ \n");
 #endif
+#if DEBUG_FUNCTION_CALL
+          printf ("uses_operator_syntax                                           = %s \n",uses_operator_syntax ? "true" : "false");
+          printf ("unp->u_sage->isUnaryOperator(func_call->get_function())        = %s \n",unp->u_sage->isUnaryOperator(func_call->get_function()) ? "true" : "false");
+          printf ("unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) = %s \n",unp->u_sage->isUnaryPostfixOperator(func_call->get_function()) ? "true" : "false");
+#endif
+
        // DQ (2/2/2018): Handle the case of a non-postfix operator.
        // unparseExpression(func_call->get_function(), alt_info);
           if ( ! ( (uses_operator_syntax == true) &&
@@ -5156,6 +5199,8 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
           SgBinaryOp* binary_op = isSgBinaryOp(func_call->get_function());
 #if DEBUG_FUNCTION_CALL
           curprint ( string(" /* !unp->opt.get_overload_opt() && (uses_operator_syntax == true) = ") + ((!unp->opt.get_overload_opt() && (uses_operator_syntax == true)) ? "true" : "false") + " */ \n ");
+          printf ("In unparseFuncCall(): binary_op = %p \n",binary_op);
+          printf (" --- func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
 #endif
        // if (!unp->opt.get_overload_opt())
           if (!unp->opt.get_overload_opt() && (uses_operator_syntax == true))
@@ -5234,6 +5279,51 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if ( unp->u_sage->isUnaryIncrementOperator(rhs) || unp->u_sage->isUnaryDecrementOperator(rhs) )
                        {
                          printFunctionArguments = false;
+                       }
+                      else
+                       {
+                      // DQ (2/12/2019): We may have to explicitly detect the literal operators here!
+#if 0
+                         printf ("For literal operators we may have to set printFunctionArguments = false \n");
+#endif
+#if 0
+                         ROSE_ASSERT(func_call->get_function() != NULL);
+                         printf ("func_call->get_function() = %p = %s \n",func_call->get_function(),func_call->get_function()->class_name().c_str());
+                         if ( unp->u_sage->isUnaryLiteralOperator(func_call->get_function()) == true )
+                            {
+#if 1
+                              printf ("Found a literal operators: set printFunctionArguments == false \n");
+#endif
+                              printFunctionArguments = false;
+                            }
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // DQ (2/12/2019): Added this branch for when binary_op == NULL.
+                    ROSE_ASSERT(binary_op == NULL);
+
+                 // ROSE_ASSERT(rhs != NULL);
+                 // SgFunctionRefExp*       func_ref  = isSgFunctionRefExp(rhs);
+                 // SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(rhs);
+
+                    ROSE_ASSERT(func_call->get_function() != NULL);
+                    SgFunctionRefExp*       func_ref  = isSgFunctionRefExp(func_call->get_function());
+                    SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
+
+                 // DQ (2/12/2019): Adding support for C++11 uld operators.
+                    if ( (func_ref != NULL) && func_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isUldOperator() )
+                       {
+                         print_paren = false;
+                      // printFunctionArguments = false;
+                       }
+
+                 // DQ (2/12/2019): Adding support for C++11 uld operators.
+                    if ( (mfunc_ref != NULL) && mfunc_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isUldOperator() )
+                       {
+                         print_paren = false;
+                      // printFunctionArguments = false;
                        }
                   }
              }
@@ -5365,8 +5455,19 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          printf ("Suppress the trailing argument of the unary postfix operator \n");
                          curprint("\n/* Suppress the trailing argument of the unary postfix operator in unparseFuncCall */ \n"); 
 #endif
-                         ROSE_ASSERT(arg != list.end());
-                         arg++;
+                      // DQ (2/12/2019): Debugging C++11 literal operators.
+                      // ROSE_ASSERT(arg != list.end());
+                      // arg++;
+                         if (arg != list.end())
+                            {
+                              arg++;
+                            }
+                           else
+                            {
+#if 0
+                              printf ("WARNING: arg == list.end(): could be literal operator \n");
+#endif
+                            }
                        }
                   }
              }
