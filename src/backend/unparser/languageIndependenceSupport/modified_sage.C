@@ -430,6 +430,58 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
      return false;
    }
 
+
+bool
+Unparse_MOD_SAGE::isUnaryLiteralOperator(SgExpression* expr)
+   {
+     ROSE_ASSERT(expr != NULL);
+
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     if (mfunc_ref != NULL)
+        {
+          SgMemberFunctionSymbol* mfunc_sym = mfunc_ref->get_symbol();
+          if (mfunc_sym != NULL)
+             {
+               SgMemberFunctionDeclaration* mfunc_decl = mfunc_sym->get_declaration();
+               if (mfunc_decl != NULL)
+                  {
+                    SgName func_name = mfunc_decl->get_name();
+                    std::string s = func_name.getString();
+                    if (s.find("operator \"\" ",0) != std::string::npos)
+                       {
+                         return true;
+                       }
+                  }
+             }
+        }
+
+    // DQ (2/12/2019): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         std::string s = func_name.getString();
+                         if (s.find("operator \"\" ",0) != std::string::npos)
+                            {
+                              return true;
+                            }
+                       }
+                  }
+             }
+        }
+
+     return false;
+   }
+
+
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryOperator
 //
@@ -505,6 +557,8 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
           isUnaryAddressOperator(expr) ||
           func_name == "operator--" ||
           func_name == "operator++" ||
+       // DQ (2/12/2019): Adding support for C++11 literal operators.
+          isUnaryLiteralOperator(expr) ||
        // DQ (2/1/2018): I don't think this operator can exist.
        // isUnaryOrOperator(mfunc_ref) ||
        // func_name == "operator~")
@@ -578,6 +632,17 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
 #endif
                               return true;
                             }
+                           else
+                            {
+                           // DQ (2/12/2019): Check if this is a literal operator.
+                              if (mfunc_decl->get_specialFunctionModifier().isUldOperator() == true)
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): literal operator: returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
                        }
                   }
              }
@@ -604,6 +669,17 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                                  {
 #if 0
                                    printf ("In isUnaryPostfixOperator(): returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
+                           else
+                            {
+                           // DQ (2/12/2019): Check if this is a literal operator.
+                              if (func_decl->get_specialFunctionModifier().isUldOperator() == true)
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): literal operator: returning true \n");
 #endif
                                    return true;
                                  }

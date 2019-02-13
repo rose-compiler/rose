@@ -6833,6 +6833,8 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
   // DQ (8/11/2014): Added support for final keyword unparsing.
      if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
         {
+       // DQ (2/12/2019): Testing, final can't be used on prototypes (I think).
+       // curprint(" /* output from test 1 */ ");
           curprint(" final");
         }
 
@@ -8551,9 +8553,20 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint("/* After name in Unparse_ExprStmt::unparseClassDeclStmt */ \n");
 #endif
 
+       // DQ (2/12/2019): The "final" keyword can ounly be output on the defining declaration (at least for GNU g++ version 5.1).
+       // It is however consistant in ROSE that it be marked uniformally within the defining and nondefining declaration.
        // DQ (8/11/2014): Added support for final keyword unparsing.
-          if (classdecl_stmt->get_declarationModifier().isFinal() == true)
+       // if (classdecl_stmt->get_declarationModifier().isFinal() == true)
+          if ( (classdecl_stmt->isForward() == false) && (classdecl_stmt->get_declarationModifier().isFinal() == true) )
              {
+            // DQ (2/12/2019): Testing, final can't be used on prototypes (I think).
+            // curprint(" /* output from test 2 */ ");
+#if 0
+               printf ("In unparseClassDeclStmt(): classdecl_stmt         = %p = %s \n",classdecl_stmt,classdecl_stmt->class_name().c_str());
+               printf ("classdecl_stmt->get_firstNondefiningDeclaration() = %p \n",classdecl_stmt->get_firstNondefiningDeclaration());
+               printf ("classdecl_stmt->get_definingDeclaration()         = %p \n",classdecl_stmt->get_definingDeclaration());
+               printf ("classdecl_stmt->isForward()                       = %s \n",classdecl_stmt->isForward() ? "true" : "false");
+#endif
                curprint("final ");
              }
 
