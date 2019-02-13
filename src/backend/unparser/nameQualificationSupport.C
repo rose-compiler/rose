@@ -4722,6 +4722,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     printf ("isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
 #endif
 #else
+
+#error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                     printf ("classDeclaration->get_scope() = %p = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str());
@@ -4733,11 +4736,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     bool isSameNamespace = false;
                     if (currentNamespaceDefinition != NULL && classDeclarationNamespaceDefinition != NULL)
                        {
+#error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("These are both in namespaces and we need to check if it is the same namespace (instead of just matching scope pointers) \n");
 #endif
                          SgNamespaceDeclarationStatement* currentNamespaceDeclaration = isSgNamespaceDeclarationStatement(currentNamespaceDefinition->get_namespaceDeclaration());
                          SgNamespaceDeclarationStatement* classDeclarationNamespaceDeclaration = isSgNamespaceDeclarationStatement(classDeclarationNamespaceDefinition->get_namespaceDeclaration());
+
+#error "DEAD CODE!"
 
                       // Test for equivalent namespaces.
                          if (currentNamespaceDeclaration->get_firstNondefiningDeclaration() == classDeclarationNamespaceDeclaration->get_firstNondefiningDeclaration())
@@ -4751,10 +4758,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                             }
 
+#error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("SgClassDeclaration: (detected equivalent namespaces) isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
 #endif
                        }
+#error "DEAD CODE!"
+
 #endif
                  // DQ (1/21/2013): Added code to support when equivalent namespaces are detected.
                     if (isSameNamespace == false)
@@ -4773,9 +4784,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
                            else
                             {
+                           // DQ (2/12/2019): This branch is taken within Cxx11_tests/test2019_107.C where the associated 
+                           // SgTemplateInstantiationDecl is a specialization and does require name qualification.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("This classDeclaration has not been seen before so skip the name qualification \n");
 #endif
+                           // DQ (2/12/2019): If this is a SgTemplateInstantiationDecl, it might require name qualification.
+                              SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classDeclaration);
+                              if (templateInstantiationDecl != NULL)
+                                 {
+                                   int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("SgClassDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                                   setNameQualification(classDeclaration,amountOfNameQualificationRequired);
+#if 0
+                                // DQ (2/12/2019): debugging Cxx11_tests/test2019_107.C.
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
                             }
                        }
                   }
