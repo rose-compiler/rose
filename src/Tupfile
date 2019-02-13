@@ -40,7 +40,7 @@ run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"
         echo "ROSE_CFLAGS   = $(CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(CXXFLAGS)"; \
         echo "ROSE_LDFLAGS  = -Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED)"; \
-	echo "ROSE_LDFLAGS_SHARED = \$(ROSE_LDFLAGS)"; \
+	echo "ROSE_LDFLAGS_SHARED = \${ROSE_LDFLAGS}"; \
         echo "ROSE_LIBDIRS  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')"; \
         echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
 	echo "# Additional items useful to include in Makefiels"; \
