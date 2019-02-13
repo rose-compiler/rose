@@ -256,8 +256,8 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
                 //For example, obj.setX(3) should only have a def for obj.x rather than for all of obj.
 
                 //Get the scope of variables in this class
-                SgClassDefinition* calleeClassScope = calleeMemFunDecl->get_class_scope();
-                ROSE_ASSERT(calleeClassScope != NULL);
+                SgScopeStatement* calleeScope = calleeMemFunDecl->get_class_scope();
+                ROSE_ASSERT(calleeScope != NULL);
 
                 //If any of the callee's defined variables is a member variable, then the "this" instance has been modified
 
@@ -270,18 +270,21 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
                     //If the modified var is in the callee class scope, we know "this" has been modified
                     SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
                     ROSE_ASSERT(isSgClassDefinition(varScope));
-                    if (varScope == calleeClassScope)
+                    if (varScope == calleeScope)
                     {
                         originalDefTable[callSite].insert(lhsVar);
                         break;
                     }
 
                     //Even if the modified var is not in the callee's class scope, it could be an inherited variable
-                    const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
-                    if (superclasses.find(isSgClassDefinition(varScope)) != superclasses.end())
-                    {
-                        originalDefTable[callSite].insert(lhsVar);
-                        break;
+                    SgClassDefinition* calleeClassScope = isSgClassDefinition(calleeScope);
+                    if (calleeClassScope != NULL) {
+                      const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
+                      if (superclasses.find(isSgClassDefinition(varScope)) != superclasses.end())
+                      {
+                          originalDefTable[callSite].insert(lhsVar);
+                          break;
+                      }
                     }
                 }
             }
