@@ -20,6 +20,4 @@ struct D_ : B_
 void foobar()
    {
      D_ d(4);
-  // ieq(d.B_::b.i, 5);
-  // ieq(d.b.c, B_::R);
    }
