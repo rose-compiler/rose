@@ -61,6 +61,11 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bo
     return std::vector<std::pair<size_t,size_t> >();
 }
 
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    return std::set<rose_addr_t>();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
 
