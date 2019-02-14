@@ -2924,7 +2924,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
         }
 
      SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(declaration);
-     SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
+  // SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
      SgNonrealDecl *             nrdecl                   = isSgNonrealDecl(declaration);
 
      ROSE_ASSERT(classDeclaration != NULL || nrdecl != NULL);
@@ -6096,6 +6096,22 @@ SgNullptrValExp* SageBuilder::buildNullptrValExp_nfi()
      ROSE_ASSERT(nullptrValue);
      setOneSourcePositionNull(nullptrValue);
      return nullptrValue;
+   }
+
+SgVoidVal* SageBuilder::buildVoidVal()
+   {
+     SgVoidVal* voidValue = new SgVoidVal();
+     ROSE_ASSERT(voidValue);
+     setOneSourcePositionForTransformation(voidValue);
+     return voidValue;
+   }
+
+SgVoidVal* SageBuilder::buildVoidVal_nfi()
+   {
+     SgVoidVal* voidValue = new SgVoidVal();
+     ROSE_ASSERT(voidValue);
+     setOneSourcePositionNull(voidValue);
+     return voidValue;
    }
 
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)

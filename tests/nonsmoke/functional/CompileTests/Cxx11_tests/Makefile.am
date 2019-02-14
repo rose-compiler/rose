@@ -425,7 +425,9 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_109.C \
    test2019_122.C \
    test2019_126.C \
-   test2019_127.C 
+   test2019_127.C \
+   test2019_128.C \
+   test2019_129.C 
 
 # NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
 

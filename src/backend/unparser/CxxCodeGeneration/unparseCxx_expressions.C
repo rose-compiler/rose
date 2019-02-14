@@ -214,6 +214,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case LABEL_REF:              { unparseLabelRefExpression(expr, info); break; }
           case NONREAL_REF:            { unparseNonrealRefExpression(expr, info); break; }
 
+       // DQ (2/14/2019): Adding support for C++14 void values.
+          case VOID_VAL:               { unparseVoidValue(expr,info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -231,6 +234,14 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+   }
+
+
+void
+Unparse_ExprStmt::unparseVoidValue(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (2/14/2019): Not clear what to output here.
+     curprint(" /* void value unparsed */ ");
    }
 
 
