@@ -46,6 +46,13 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
         }
      ROSE_ASSERT(referencedNode != NULL);
 
+  // TV (10/24/2018): (ROSE-1399) unparsing template from AST requires to namequal expressions in template arguments
+     SgExpression* expr = isSgExpression(referencedNode);
+     if (expr != NULL) {
+       nameQualifier = expr->get_qualified_name_prefix_for_referenced_type();
+       return nameQualifier;
+     }
+
 #if 0
      printf ("In Unparser_Nameq::lookup_generated_qualified_name(): referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
 #endif

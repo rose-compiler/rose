@@ -106,9 +106,10 @@ private:
         CValKind kind;                                  // kind of characteristic values stored here
         double weight;                                  // weight when combining category distances
         size_t dimensionality;                          // dimensionality of Cartesian points; 0 => unknown
+        double dflt;                                    // default value when one of the functions is null
 
         explicit Category(const std::string &name, CValKind kind, double weight = 1.0)
-            : name(name), kind(kind), weight(weight), dimensionality(0) {}
+            : name(name), kind(kind), weight(weight), dimensionality(0), dflt(1.0) {}
     };
 
     std::vector<Category> categories_;

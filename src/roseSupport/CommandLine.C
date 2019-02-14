@@ -54,6 +54,29 @@ protected:
 
 std::vector<SelfTest::Ptr> selfTests;
 
+const char *licenseText =
+#include "license.h"
+;
+
+// Show license text and exit.
+class ShowLicenseAndExit: public Sawyer::CommandLine::SwitchAction {
+protected:
+    ShowLicenseAndExit() {}
+
+public:
+    typedef Sawyer::SharedPointer<ShowLicenseAndExit> Ptr;
+
+    static Ptr instance() {
+        return Ptr(new ShowLicenseAndExit);
+    }
+
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult&) {
+        std::cout <<licenseText;
+        exit(0);
+    }
+};
+
 ROSE_DLL_API Sawyer::CommandLine::Parser
 createEmptyParser(const std::string &purpose, const std::string &description) {
     Sawyer::CommandLine::Parser parser;
@@ -153,6 +176,10 @@ genericSwitches() {
                .action(SelfTests::instance())
                .doc("Instead of doing any real work, run any self tests registered with this tool then exit with success "
                     "or failure status depending on whether all such tests pass."));
+
+    gen.insert(Switch("license")
+               .action(ShowLicenseAndExit::instance())
+               .doc("Show the ROSE software license and exiit."));
 
     return gen;
 }

@@ -105,17 +105,50 @@ Disassembler::registerSubclass(Disassembler *factory)
 
 /* Class method. Thread safe by virtue of lookup(SgAsmGenericHeader*). */
 Disassembler *
-Disassembler::lookup(SgAsmInterpretation *interp)
-{
-    Disassembler *retval=NULL;
+Disassembler::lookup(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+
+    // Find a disassembler for each header in the interpretation
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    if (headers.empty())
+        throw Exception("no file headers from which to choose disassembler");
+    typedef Sawyer::Container::Map<Disassembler*, size_t> DisassemblerCounts;
+    DisassemblerCounts disassemblerCounts;
     for (size_t i=0; i<headers.size(); i++) {
-        Disassembler *candidate = lookup(headers[i]);
-        if (retval && retval!=candidate)
-            throw Exception("interpretation has multiple disassemblers");
-        retval = candidate;
+        Disassembler *candidate = NULL;
+        try {
+            candidate = lookup(headers[i]);
+        } catch (const Disassembler::Exception&) {
+        }
+        ++disassemblerCounts.insertMaybe(candidate, 0);
     }
-    return retval;
+
+    // Choose the best disassembler based on how often it matched.
+    Disassembler *bestDisassembler = NULL;
+    if (disassemblerCounts.size() == 1) {
+        bestDisassembler = disassemblerCounts.least();
+    } else if (disassemblerCounts.size() > 1) {
+        mlog[WARN] <<"ambiguous disassemblers for file headers\n";
+        size_t bestCount = 0;
+        BOOST_FOREACH (const DisassemblerCounts::Node &node, disassemblerCounts.nodes()) {
+            if (Disassembler *disassembler = node.key()) {
+                mlog[WARN] <<"  " <<StringUtility::plural(node.value(), "file headers")
+                            <<" using " <<disassembler->name() <<" disassember\n";
+            } else {
+                mlog[WARN] <<"  " <<StringUtility::plural(node.value(), "file headers")
+                            <<" using no disassembler\n";
+            }
+            if (node.value() > bestCount && node.key() != NULL) {
+                bestCount = node.value();
+                bestDisassembler = node.key();
+                mlog[WARN] <<"  selected " <<bestDisassembler->name() <<" disassembler\n";
+            }
+        }
+    }
+
+    if (!bestDisassembler)
+        throw Exception("no disassembler for architecture");
+    return bestDisassembler;
 }
 
 /* Class method. Thread safe. */
