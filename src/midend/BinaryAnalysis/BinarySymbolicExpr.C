@@ -1311,8 +1311,8 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // and simplify the add operations
     if (inode->nChildren() == 2) {
         if (InteriorPtr ite = inode->child(0)->isOperator(OP_ITE)) {
-            if (!inode->child(0)->isOperator(OP_ITE)) {
-                // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
+            // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
+            if (!inode->child(1)->isOperator(OP_ITE)) {
                 return makeIte(ite->child(0),
                                makeAdd(ite->child(1), inode->child(1), solver),
                                makeAdd(ite->child(2), inode->child(1), solver),
@@ -1320,6 +1320,7 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             }
         } else if (InteriorPtr ite = inode->child(1)->isOperator(OP_ITE)) {
             // (add Z (ite C X Y)) => (ite (add Z X) (add Z Y))
+            ASSERT_forbid(inode->child(0)->isOperator(OP_ITE));
             return makeIte(ite->child(0),
                            makeAdd(inode->child(0), ite->child(1), solver),
                            makeAdd(inode->child(0), ite->child(2), solver),
