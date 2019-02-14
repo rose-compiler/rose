@@ -1888,6 +1888,11 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return newExtract;
     }
 
+    // Convert a negative condition to a positive condition
+    //   (ite (invert X) A B) => (ite X B A)
+    if (InteriorPtr invert = inode->child(0)->isOperator(OP_INVERT))
+        return makeIte(invert->child(0), inode->child(2), inode->child(1), solver, inode->comment(), inode->flags());
+
     return Ptr();
 }
 
