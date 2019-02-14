@@ -241,8 +241,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
         {
           if (labelStatement != NULL)
              {
-               unsigned int idx = parent->cfgFindNextChildIndex(n);
 #if DEBUG_CALLGRAPH
+               unsigned int idx = parent->cfgFindNextChildIndex(n);
                printf ("In getNodeJustAfterInContainer(): FORTRAN case: labelStatement->get_statement() == NULL: idx = %u \n",idx);
 #endif
              }
@@ -373,8 +373,8 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
              {
                if (SageInterface::is_Fortran_language() == true)
                   {
-                    unsigned int idx = parent->cfgFindChildIndex(n);
 #if DEBUG_CALLGRAPH
+                    unsigned int idx = parent->cfgFindChildIndex(n);
                     printf ("In getNodeJustBeforeInContainer(): FORTRAN case: idx = %u \n",idx);
 #endif
                   }
@@ -3900,6 +3900,30 @@ SgVarRefExp::cfgInEdges(unsigned int idx)
      return result;
    }
 
+unsigned int
+SgNonrealRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgNonrealRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<CFGEdge>
+SgNonrealRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
 // DQ (9/4/2013): This is designed similar to the version for SgVarRefExp (above).
 unsigned int
 SgCompoundLiteralExp::cfgIndexForEnd() const
@@ -4162,7 +4186,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
+    ROSE_ASSERT(this != NULL);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
@@ -4187,7 +4211,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
+    ROSE_ASSERT(this != NULL);
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
