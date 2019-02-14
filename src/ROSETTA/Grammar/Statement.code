@@ -2241,6 +2241,18 @@ HEADER_LIST_DECLARATIONS
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
 HEADER_ENUM_DECLARATION_STATEMENT_END
 
 
@@ -15782,6 +15794,62 @@ SgEnumDeclaration::get_symbol_from_symbol_table() const
    }
 
 
+// DQ (2/14/2019): Added C++11 support for enum prototypes, which mens that name 
+// qualification can be required for the defining declarations.
+int 
+SgEnumDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgEnumDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgEnumDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgEnumDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgEnumDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgEnumDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+
+
 SOURCE_ENUM_DECLARATION_STATEMENT_END
 
 
@@ -16851,6 +16919,9 @@ SgTypedefDeclaration::get_qualified_name() const
 SgName
 SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
    {
+  // DQ (2/14/2019): this feature to support name qualification on typedef base type
+  // declarations appears to not be used, though the design for it is in place.
+
   // DQ (5/29/2011): Added to support for new qualified name generation.
   // this function has a different name from the base class since it requires 
   // a different definition to support using the SgNode::get_globalQualifiedNameMapForTypes() 
@@ -16865,13 +16936,27 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
+#if 0
+     printf ("In SgTypedefDeclaration::get_qualified_name_prefix_for_base_type(): SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",SgNode::get_globalQualifiedNameMapForTypes().size());
+#endif
+
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+          printf ("FOUND a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("COULD NOT find a valid name qualification \n");
+#endif
         }
 
-  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#if 0
+     printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#endif
 
      return nameQualifier;
    }

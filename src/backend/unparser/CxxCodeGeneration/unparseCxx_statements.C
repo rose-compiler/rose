@@ -8968,11 +8968,30 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printDebugInfo("entering unp->u_sage->printSpecifier", true);
           unp->u_sage->printSpecifier(enum_stmt, info);
           info.unset_CheckAccess();
-       // curprint(string("enum ") + enum_stmt->get_name().str() + " ");
-          curprint(enum_string + enum_stmt->get_name().str() + " ");
+
+       // DQ (2/14/2019): Adding name qualification support.
+       // curprint(enum_string + enum_stmt->get_name().str() + " ");
+          curprint(enum_string);
+
+       // DQ (5/12/2011): This might have to be a qualified name...
+          SgUnparse_Info ninfo(info);
+          ninfo.set_name_qualification_length(enum_stmt->get_name_qualification_length());
+          ninfo.set_global_qualification_required(enum_stmt->get_global_qualification_required());
+
+          ROSE_ASSERT(enum_stmt != NULL);
+
+          SgName nameQualifier = enum_stmt->get_qualified_name_prefix();
+
+          curprint(nameQualifier.str());
+
+          curprint(enum_stmt->get_name() + " ");
         }
        else
-        { 
+        {
+       // DQ (2/14/2019): Test if this branch is ever taken.
+          printf ("Exiting as a test (need to know if this branch is ever taken) \n");
+          ROSE_ASSERT(false);
+
        // This is a declaration of an enum appearing within another declaration (e.g. function declaration as a return type).
           SgClassDefinition *cdefn = NULL;
 
@@ -9036,10 +9055,17 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           unp->u_type->unparseType(enum_stmt->get_field_type(),ninfo);           
         }
 
+#if 0
+     printf ("enum_stmt = %p \n",enum_stmt);
+     printf ("enum_stmt->get_definingDeclaration() = %p \n",enum_stmt->get_definingDeclaration());
+#endif
+
   // DQ (6/26/2005): Support for empty enum declarations!
      if (enum_stmt == enum_stmt->get_definingDeclaration())
         {
-       // printf ("In the unparser this is the Enum's defining declaration! \n");
+#if 0
+          printf ("In the unparser this is the Enum's defining declaration! \n");
+#endif
           curprint ("{"); 
         }
 
@@ -9134,6 +9160,10 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(" }");
              }
         }
+
+#if 0
+     printf ("Leaving unparseEnumDeclStmt(): \n");
+#endif
    }
 
 
@@ -10381,7 +10411,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (!info.inEmbeddedDecl())
         {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 0
           curprint("\n/* NOT an embeddedDeclaration */ \n");
 #endif
           SgClassDefinition *cdefn = isSgClassDefinition(typedef_stmt->get_parent());
@@ -10393,7 +10423,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 0
           curprint("\n/* Found an embeddedDeclaration */ \n");
 #endif
         }
@@ -10453,10 +10483,14 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (9/15/2004): Added to support typedefs of member pointers
      SgMemberFunctionType* pointerToMemberFunctionType = isSgMemberFunctionType(typedef_stmt->get_base_type());
 
+  // DQ (2/14/2019): Adding name qualification support for C++11 enum declarations in typedef types.
+     SgEnumType* enumType = isSgEnumType(typedef_stmt->get_base_type());
+
 #if 0
      printf ("In unp->u_type->unparseTypedef: functionType                = %p \n",functionType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberType         = %p \n",pointerToMemberType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberFunctionType = %p \n",pointerToMemberFunctionType);
+     printf ("In unp->u_type->unparseTypedef: enumType                    = %p \n",enumType);
 #endif
 
   // DQ (9/22/2004): It is not clear why we need to handle this case with special code.
@@ -10466,17 +10500,19 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // code for function pointers allows for easier debugging.  When typedefs of defining class 
   // declarations is fixed we might be able to unify these separate cases.
 
+  // DQ (2/14/2019): Adding name qualification support for C++11 enum declarations in typedef types.
   // DQ (2/3/2019): See if this is a better branch for handling the SgPointerMemberType.
   // This handles pointers to functions and member function (but not pointers to members!)
   // if ( (functionType != NULL) || (pointerToMemberType != NULL) )
-     if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) )
-   // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (pointerToMemberType != NULL) )
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) )
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (pointerToMemberType != NULL) )
+     if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) )
         {
        // Newly implemented case of typedefs for function and member function pointers
 #if 0
           printf ("In unparseTypeDefStmt(): case of typedefs for function and member function pointers \n");
 #endif
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 1
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 0
           curprint("\n/* Case of typedefs for function and member function pointers */ \n");
 #endif
           ninfo.set_SkipFunctionQualifier();
@@ -10823,9 +10859,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // info.display ("At base of unp->u_type->unparseTypeDefStmt()");
 #if 0
+     printf ("Leaving unparseTypedefStmt() \n");
      curprint ("/* Leaving unparseTypedefStmt */ \n");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)

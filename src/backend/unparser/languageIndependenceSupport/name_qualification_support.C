@@ -78,6 +78,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
           case V_SgTypedefDeclaration:
              {
                SgTypedefDeclaration* node = isSgTypedefDeclaration(referencedNode);
+#if 0
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case V_SgTypedefDeclaration: calling SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() \n");
+#endif
                nameQualifier = node->get_qualified_name_prefix_for_base_type();
                break;
              }
@@ -186,6 +189,8 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
      return generateNameQualifierSupport(initializedName->get_scope(),info,qualificationOfType);
    }
 
+#error "DEAD CODE!"
+
 SgName
 Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info, bool qualificationOfType )
    {
@@ -235,6 +240,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                          printf ("key not found in node map nameQualificationReferenceNode = %s \n",nameQualificationReferenceNode->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
+#error "DEAD CODE!"
+
                   }
                  else
                   {
@@ -267,6 +274,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                          ROSE_ASSERT(false);
                        }
                   }
+#error "DEAD CODE!"
+
              }
             else
              {
@@ -282,6 +291,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
 
      return qualifiedName;
    }
+
+#error "DEAD CODE!"
 
 #endif
 
