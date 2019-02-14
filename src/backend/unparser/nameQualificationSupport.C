@@ -1201,6 +1201,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           bool foundAnOverloadedFunctionWithSameName = false;
           bool foundAnOverloadedFunctionInSameScope  = false;
 
+       // DQ (2/14/2019): Save a copy of the symbol looked up by name so that we can resolve if a 
+       // variable hides a type (which is where name qualification is not appropriate).
+          SgSymbol* original_symbol_lookedup_by_name = symbol;
+
           if (symbol != NULL)
              {
             // printf ("Lookup symbol based on name only: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
@@ -2174,6 +2178,50 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // DQ (6/22/2011): This is demonstrated by test2011_95.C
                                    printf ("Detected no enum symbol in a parent scope (ignoring this case for now) \n");
                                  }
+#endif
+
+#if 0
+                                // DQ (2/13/2019): I think we have to force an extra level of name qualification.
+#if 1
+                                // DQ (2/13/2019): I think we need to check if a qualified nondefining declaration 
+                                // has been made for this class, else no qualification should be output.
+                                   SgDeclarationStatement* declarationToSearchForInReferencedNameSet = 
+                                        declaration->get_firstNondefiningDeclaration() != NULL ? declaration->get_firstNondefiningDeclaration() : declaration;
+                                   ROSE_ASSERT(declarationToSearchForInReferencedNameSet != NULL);
+                                   bool skipNameQualification = false;
+                                   if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",
+                                             declaration,declaration->class_name().c_str(),referencedNameSet.size());
+#endif
+                                        skipNameQualification = true;
+                                      }
+                                     else
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("   --- $$$$$$$$$$ FOUND: declaration %p = %s in referencedNameSet \n",declaration,declaration->class_name().c_str());
+#endif
+                                      }
+
+                                // Check if a nondefining declaration has been seen already, if so then this may be a non-defining 
+                                // or defining declaration in another scope and they name qualification would be required.
+                                // forceMoreNameQualification = true;
+                                   if (skipNameQualification == false)
+                                      {
+                                        forceMoreNameQualification = true;
+                                      }
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("Forcing an extra level of name qualification forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+#endif
+#else
+                                // DQ (2/13/2019): Disabled forcing more name qualification.
+                                   printf ("Disabled forcing more name qualification \n");
+#endif
+#if 0
+                                   printf ("I think we have to force an extra level of name qualification (not implemented) \n");
+                                   ROSE_ASSERT(false);
+#endif
 #endif
                             }
 
@@ -3246,7 +3294,17 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                         printf ("   --- Since type elaboration was required because it was hidden, add name qualification to support it being unambiguous \n");
 #endif
-                                        qualificationDepth = 1;
+                                     // DQ (2/14/2019): If this is a typedef that is hidden by a variable then we don't require extra name qualification.
+                                        if (isSgVariableSymbol(original_symbol_lookedup_by_name) != NULL)
+                                           {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                             printf ("This enum IS visible and variables can't hide types, so no extra name qualification is required \n");
+#endif
+                                           }
+                                          else
+                                           {
+                                             qualificationDepth = 1;
+                                           }
                                       }
                                  }
                                 else
@@ -5258,7 +5316,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                   }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                printf ("Test of Type used in SgInitializedName: declaration = %p = %s skipGlobalNameQualification = %s \n",declaration,declaration->class_name().c_str(),skipGlobalNameQualification ? "true" : "false");
 #endif
 
@@ -5269,8 +5327,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (initializedName->get_initptr() != NULL)
                   {
                  // DQ (2/7/2019): I think this can't be a SgPointerMemberType, so the code specific to this case does not go here.
-                    ROSE_ASSERT(isSgPointerMemberType(initializedName->get_type()) == NULL);
-
+                 // ROSE_ASSERT(isSgPointerMemberType(initializedName->get_type()) == NULL);
+#if 0
+                    printf ("Case of SgInitializedName: Commented out assertion: testing test2019_122.C \n");
+#endif
                     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initializedName->get_initptr());
                  // ROSE_ASSERT(constructorInitializer != NULL);
                     if (constructorInitializer != NULL)
@@ -7753,6 +7813,147 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
   // Now that this declaration is processed, mark it as being seen (place into set).
   // ******************************************************************************
 
+  // DQ (2/13/2019): I think that this kind of declaration was not previously processed for name qualification.
+  // Likely missed because enums previously could not have a prototype declaration (but can under C++11).
+     SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(n);
+     if (enumDeclaration != NULL)
+        {
+#if 0
+          printf ("Case of SgEnumDeclaration: enumDeclaration              = %p \n",enumDeclaration);
+          printf (" --- enumDeclaration->get_firstNondefiningDeclaration() = %p \n",enumDeclaration->get_firstNondefiningDeclaration());
+          printf (" --- enumDeclaration->get_definingDeclaration()         = %p \n",enumDeclaration->get_definingDeclaration());
+#endif
+       // We need the structural location in scope (not the semantic one).
+          SgScopeStatement* currentScope = isSgScopeStatement(enumDeclaration->get_parent());
+
+       // ROSE_ASSERT(currentScope != NULL);
+          if (currentScope != NULL)
+             {
+            // Only use name qualification where the scopes of the declaration's use (currentScope) is not the same 
+            // as the scope of the class declaration.  However, the analysis should work and determin that the 
+            // required name qualification length is zero.
+
+            // DQ (7/22/2017): Refactored this code.
+               SgScopeStatement* enum_scope = enumDeclaration->get_scope();
+
+            // DQ (7/22/2017): I think we can assert this.
+               ROSE_ASSERT(enum_scope != NULL);
+#if 0
+               printf ("currentScope                 = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("enumDeclaration->get_scope() = %p = %s \n",enum_scope,enum_scope->class_name().c_str());
+#endif
+            // if (currentScope != classDeclaration->get_scope())
+               if (currentScope != enum_scope)
+                  {
+                 // DQ (1/21/2013): We should be able to assert this.
+                    ROSE_ASSERT(enumDeclaration->get_scope() != NULL);
+
+                 // DQ (1/21/2013): Added new static function to support testing for equivalent when the scopes are namespaces.
+                    bool isSameNamespace = SgScopeStatement::isEquivalentScope(currentScope,enumDeclaration->get_scope());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
+#endif
+                 // DQ (1/21/2013): Added code to support when equivalent namespaces are detected.
+                    if (isSameNamespace == false)
+                       {
+                      // DQ (6/11/2013): Added test to make sure that name qualification is ignored for friend function where the class has not yet been seen.
+                      // if (classDeclaration->get_declarationModifier().isFriend() == false)
+                         SgDeclarationStatement* declarationForReferencedNameSet = enumDeclaration->get_firstNondefiningDeclaration();
+                         ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+                         if (referencedNameSet.find(declarationForReferencedNameSet) != referencedNameSet.end())
+                            {
+                              int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,enumDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("SgEnumDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                              setNameQualification(enumDeclaration,amountOfNameQualificationRequired);
+#if 0
+                              if (amountOfNameQualificationRequired > 0)
+                                 {
+                                   printf ("Need setNameQualification() for SgEnumDeclaration \n");
+                                   ROSE_ASSERT(false);
+                                 }
+#endif
+                            }
+                           else
+                            {
+                           // DQ (2/12/2019): This branch is taken within Cxx11_tests/test2019_120.C where the associated 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("This enumDeclaration has not been seen before so skip the name qualification \n");
+#endif
+                            }
+                       }
+                  }
+                 else
+                  {
+                 // Don't know what test code exercises this case (see test2011_62.C).
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("WARNING: SgEnumDeclaration -- currentScope is not available through predicate (currentScope != enumDeclaration->get_scope()), not clear why! \n");
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Commenting out: enumDeclaration->get_parent() == enumDeclaration->get_scope() in name qualitication \n");
+                 // ROSE_ASSERT(classDeclaration->get_parent() == classDeclaration->get_scope());
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("name qualification for enumDeclaration->get_scope()  = %p = %s \n",enumDeclaration->get_scope(),enumDeclaration->get_scope()->class_name().c_str());
+                    printf ("enumDeclaration->get_parent()                        = %p = %s \n",enumDeclaration->get_parent(),enumDeclaration->get_parent()->class_name().c_str());
+#endif
+                 // ROSE_ASSERT(false);
+
+                 // DQ (7/22/2017): I think the template arguments name qualification can be required, but is ignored.
+#if 0
+                    printf ("ERROR: When the scopes are the same we don't require name qualification on the template instnatiation, but it might still be required for it's template arguments! \n");
+#endif
+                 // DQ (7/22/2017): I think the template arguments name qualification can be required. This fixes test2017_56.C.
+                    int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,enumDeclaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("NEW CASE: currentScope != enumDeclaration->get_scope(): SgEnumDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                    setNameQualification(enumDeclaration,amountOfNameQualificationRequired);
+#if 0
+                    if (amountOfNameQualificationRequired > 0)
+                       {
+                         printf ("Need setNameQualification() for SgEnumDeclaration \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+                  }
+             }
+            else
+             {
+            // DQ (2/13/2019): I think this can happen if the enum declaration is in a typedef declaration 
+            // or parameter list, etc (less common places to find enum declarations).
+
+            // NOTE: Cxx_tests/test2019_125.C demonstrates where this kind of enum requires name qualification.
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("WARNING: SgEnumDeclaration -- currentScope is not available, not clear why! \n");
+#endif
+#if 0
+               printf ("@@@@@@@@@@@@@@@@@@@ Cannot determine current scope for SgEnumDeclaration (likely a enum in a typedef declaration) \n");
+#endif
+            // enumDeclaration->get_file_info()->display("Cannot determine current scope for SgEnumDeclaration");
+
+               SgDeclarationStatement* outerDeclaration = isSgDeclarationStatement(enumDeclaration->get_parent());
+               ROSE_ASSERT(outerDeclaration != NULL);
+               currentScope = isSgScopeStatement(outerDeclaration->get_parent());
+               ROSE_ASSERT(currentScope != NULL);
+
+               int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,enumDeclaration);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("NEW CASE: currentScope != enumDeclaration->get_scope(): SgEnumDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+               setNameQualification(enumDeclaration,amountOfNameQualificationRequired);
+
+            // DQ (2/13/2019): Make this an error for now!
+            // ROSE_ASSERT(false);
+             }
+        }
+
+
      SgDeclarationStatement* declaration = isSgDeclarationStatement(n);
      if (declaration != NULL)
         {
@@ -8016,6 +8217,7 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 //       SgVariableDeclaration 
 //       SgTypedefDeclaration
 //       SgClassDeclaration
+//       SgEnumDeclaration
 //
 //    SgStatement IR nodes:
 //       SgForInitStatement is not a problems since it is a list of SgInitializedName
@@ -9935,6 +10137,73 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
 #endif
         }
    }
+
+
+void
+NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired)
+   {
+  // This is used to set the name qualification on the associated SgEnumDeclaration.
+
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgEnumDeclaration*) \n");
+#endif
+
+  // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+     string qualifier = setNameQualificationSupport(enumDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+     enumDeclaration->set_global_qualification_required(outputGlobalQualification);
+     enumDeclaration->set_name_qualification_length(outputNameQualificationLength);
+     enumDeclaration->set_type_elaboration_required(outputTypeEvaluation);
+
+  // There should be no type evaluation required for a variable reference, as I recall.
+     ROSE_ASSERT(outputTypeEvaluation == false);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): enumDeclaration->get_name_qualification_length()     = %d \n",enumDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): enumDeclaration->get_type_elaboration_required()     = %s \n",enumDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): enumDeclaration->get_global_qualification_required() = %s \n",enumDeclaration->get_global_qualification_required() ? "true" : "false");
+#endif
+
+     if (qualifiedNameMapForNames.find(enumDeclaration) == qualifiedNameMapForNames.end())
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Inserting qualifier for name = %s into list at SgEnumDeclaration IR node = %p = %s \n",qualifier.c_str(),enumDeclaration,enumDeclaration->class_name().c_str());
+#endif
+          qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(enumDeclaration,qualifier));
+        }
+       else
+        {
+       // If it already exists then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
+          printf ("Error: name in qualifiedNameMapForNames already exists... \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+   }
+
 
 
 string

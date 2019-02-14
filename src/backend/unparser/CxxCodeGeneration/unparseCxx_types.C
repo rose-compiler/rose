@@ -2277,7 +2277,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
      SgEnumDeclaration *edecl = isSgEnumDeclaration(enum_type->get_declaration());
      ROSE_ASSERT(edecl != NULL);
 #if 0
-     printf ("Inside of unparseEnumType(): edecl = %p = %s \n",edecl,edecl?edecl->class_name().c_str():"");
+     printf ("Inside of unparseEnumType(): edecl = %p = %s \n",edecl,edecl ? edecl->class_name().c_str() : "");
 #endif
 
   // DQ (10/7/2004): We need to output just the name when isTypeFirstPart == false and isTypeSecondPart == false
@@ -2315,6 +2315,11 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                 printf ("Inside of unparseEnumType(): output enum keyword \n");
                 curprint ("/* enum from unparseEnumType() */ ");
 #endif
+            // DQ (2/14/2019): Adding support for C++11 scoped enums (syntax is "enum class ").
+               if (edecl->get_isScopedEnum() == true)
+                  {
+                    curprint ("class ");
+                  }
              }
             else
              {
@@ -2327,6 +2332,12 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
           if ( (info.isTypeFirstPart() == false) && (info.SkipClassSpecifier() == false) && (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true) )
              {
                curprint ("enum ");
+
+            // DQ (2/14/2019): Adding support for C++11 scoped enums (syntax is "enum class ").
+               if (edecl->get_isScopedEnum() == true)
+                  {
+                    curprint ("class ");
+                  }
              }
 #if 0
        // DQ (7/30/2014): Commented out to avoid compiler warning about not being used.
@@ -2364,16 +2375,24 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   {
                     SgName nameQualifierAndType = enum_type->get_qualified_name();
 #if 0
-                    printf ("WARNING: In unparseEnumType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() nameQualifierAndType = %s \n",nameQualifierAndType.str());
+                    printf ("NOTE: In unparseEnumType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() nameQualifierAndType = %s \n",nameQualifierAndType.str());
 #endif
                     curprint(nameQualifierAndType.str());
                   }
                  else
                   {
-
+#if 0
+                    printf ("In unparseEnumType(): info.get_reference_node_for_qualification() = %p \n",info.get_reference_node_for_qualification());
+                    if (info.get_reference_node_for_qualification() != NULL)
+                       {
+                         printf (" --- info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
+                       }
+#endif
                  // DQ (6/2/2011): Newest support for name qualification...
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-
+#if 0
+                    printf ("In unparseEnumType(): nameQualifier = %s \n",nameQualifier.str());
+#endif
                     curprint (nameQualifier.str());
 
                  // DQ (7/28/2012): Added support for un-named types in typedefs.
@@ -2817,9 +2836,6 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      curprint("\n/* Leaving Unparse_Type::unparseTypedefType */ \n");
 #endif
    }
-
-
-
 
 
 void
