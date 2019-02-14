@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-DIRS="C_tests C89_std_c89_tests C99_tests C11_tests Cxx_tests Cxx11_tests Cxx14_tests C_subset_of_Cxx_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests"
+DIRS="C_tests C89_std_c89_tests C99_tests C11_tests Cxx_tests Cxx11_tests Cxx14_tests Cxx17_tests C_subset_of_Cxx_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests"
 
 [ -z $nprocs ] && nprocs=1
 

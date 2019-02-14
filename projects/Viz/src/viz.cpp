@@ -50,7 +50,7 @@ int main(int argc, char ** argv) {
     }
   }
 
-  SgProject * project = new SgProject::SgProject(args);
+  SgProject * project = new SgProject(args);
 
 #if   VIZ_TRAVERSAL == BLANK_VIZ_TRAVERSAL
   Rose::Viz::Traversals::Blank<EmptyAttr, EmptyAttr> traversal;
