@@ -13041,7 +13041,9 @@ SgMemberFunctionDeclaration::get_associatedClassDeclaration () const
             if (tpldecl != NULL) {
               returnValue = tpldecl;
             } else if (nrdecl != NULL) {
+#if 0
               printf ("WARNING: retuning a non-real declaration from SgMemberFunctionDeclaration::get_associatedClassDeclaration \n");
+#endif
               returnValue = nrdecl;
             } else {
               ROSE_ASSERT(false);
