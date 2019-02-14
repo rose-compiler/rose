@@ -2861,14 +2861,14 @@ operator<< ( std::ostream & os, const struct stat & sb )
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, 0);
    }
 
 VirtualCFG::CFGNode
 SgNode::cfgForEnd()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
  
