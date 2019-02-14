@@ -435,6 +435,7 @@ nodeColor( SgExpression* expression )
             // DQ (1/23/2013): Added support for newer IR nodes in edg4x work.
                case V_SgTemplateMemberFunctionRefExp:
                case V_SgTemplateFunctionRefExp:
+               case V_SgNonrealRefExp:
                     returnString = "brown";
                     break;
 
