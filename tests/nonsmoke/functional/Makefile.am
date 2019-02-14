@@ -436,7 +436,7 @@ conditional-check-local:
 endif
 
 testCompiler:
-	ln -s `which $(@BACKEND_CXX_COMPILER@)` testCompiler
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 check-local: conditional-check-local
 
