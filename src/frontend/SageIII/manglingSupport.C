@@ -1180,8 +1180,17 @@ mangleValueExp (const SgValueExp* expr)
 
    // DQ (7/21/2012): Added support for IR node not seen previously except in new C++11 work.
       case V_SgTemplateParameterVal:
-        mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
-        break;
+         {
+           mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
+           break;
+         }
+
+   // DQ (2/14/2019): Adding support for C++14 void values (still unclear what this should look like).
+      case V_SgVoidVal:
+         {
+           mangled_name = "unsupported_SgVoidVal";
+           break;
+         }
 
       default:
         std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
