@@ -99,6 +99,16 @@ for result_file in "$@"; do
     if [ "$answer_file" = "" ]; then
 	validation_cmd="$(sed -n '/^REVALIDATE/ s/^REVALIDATE *//p' "$result_file")"
 	if [ -n "$validation_cmd" ]; then
+	    # If the validation command's filter is "--filter="perl -p FILE" and FILE exists
+	    # in the ROSE source directory, then replace FILE with that name.
+	    srcdir="$(rg-src 2>/dev/null)"
+	    filename="$(echo "$validation_cmd" |perl -ne '/--filter="perl -p (.*?)"/ && print $1')"
+	    if [ -n "$srcdir" -a -n "$filename" -a -r "$srcdir/$filename" ]; then
+		filename="$srcdir/$filename"
+		validation_cmd="$(echo "$validation_cmd" |\
+                                  perl -p -e "\$filename='$filename';" \
+                                          -e 's/--filter="perl -p (.*?)"/--filter="perl -p $filename"/')"
+	    fi
 	    echo "+ $validation_cmd"
 	    diff="$diff" eval "$validation_cmd"
 	    continue
