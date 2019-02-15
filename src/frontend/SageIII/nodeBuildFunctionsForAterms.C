@@ -15441,3 +15441,11 @@ SgFloat128Val* SgFloat128Val::build_node_from_nonlist_children(Sg_File_Info* sta
      return returnNode;
    }
 
+
+SgVoidVal* SgVoidVal::build_node_from_nonlist_children (Sg_File_Info*)
+   {
+     SgVoidVal* returnNode = NULL;
+
+     return returnNode;
+   }
+
