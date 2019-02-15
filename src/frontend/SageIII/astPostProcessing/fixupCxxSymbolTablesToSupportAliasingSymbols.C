@@ -387,6 +387,19 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
 #if ALIAS_SYMBOL_DEBUGGING
           printf ("@@@@@@@@@@@@ Inserted causalNode = %p into SgSymbolTable::get_aliasSymbolCausalNodeSet().size() = %zu \n",causalNode,SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
+          SgBaseClass* baseClass = isSgBaseClass(causalNode);
+          if (baseClass != NULL)
+             {
+               SgClassDeclaration* baseClassDeclaration    = baseClass->get_base_class();
+               ROSE_ASSERT(baseClassDeclaration != NULL);
+
+               SgClassDefinition* derivedClassDefinition   = isSgClassDefinition(currentScope);
+               ROSE_ASSERT(derivedClassDefinition != NULL);
+               SgClassDeclaration* derivedClassDeclaration = derivedClassDefinition->get_declaration();
+               ROSE_ASSERT(derivedClassDeclaration != NULL);
+
+               printf (" --- Adding base class %s to derived class %s \n",baseClassDeclaration->get_name().str(),derivedClassDeclaration->get_name().str());
+             }
 #endif
         }
 #endif
@@ -967,6 +980,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                        }
                   }
+
+            // DQ (2/15/2019): Assume it does not already exist, becuase we want multiple base classes to represent it with multiple (different) SgAliasSymbols.
+               alreadyExists = false;
 
                if ( alreadyExists == false)
                   {
