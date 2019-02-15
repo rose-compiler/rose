@@ -20,7 +20,8 @@ main(int argc, char *argv[])
 
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
     for (std::vector<SgAsmInterpretation*>::iterator ii=interps.begin(); ii!=interps.end(); ++ii) {
-        BinaryLoader *loader = BinaryLoader::lookup(*ii);
+        BinaryLoader::Ptr loader = BinaryLoader::lookup(*ii);
+        ASSERT_not_null(loader);
         //loader->set_debug(stderr);
         loader->remap(*ii);
         MemoryMap::Ptr mm = (*ii)->get_map();

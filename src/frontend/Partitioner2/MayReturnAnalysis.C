@@ -166,7 +166,7 @@ Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeIterato
         return false;
     if (edge->value().type() == E_CALL_RETURN) {
         boost::logic::tribool tb = mayReturnDoesCalleeReturn(edge->source(), vertexInfo);
-        return tb || boost::logic::indeterminate(tb);
+        return tb || boost::logic::indeterminate(tb) ? true : false;
     }
     return true;
 }

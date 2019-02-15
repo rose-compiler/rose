@@ -349,6 +349,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_67.C \
    test2019_68.C \
    test2019_69.C \
+   test2019_70.C \
+   test2019_71.C \
+   test2019_72.C \
    test2019_73.C \
    test2019_74.C \
    test2019_75.C \
@@ -360,7 +363,34 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_81.C \
    test2019_82.C \
    test2019_83.C \
-   test2019_86.C 
+   test2019_86.C \
+   test2019_87.C \
+   test2019_88.C \
+   test2019_89.C \
+   test2019_90.C \
+   test2019_91.C \
+   test2019_92.C \
+   test2019_93.C \
+   test2019_94.C \
+   test2019_95.C \
+   test2019_96.C \
+   test2019_97.C \
+   test2019_98.C \
+   test2019_99.C \
+   test2019_100.C \
+   test2019_105.C \
+   test2019_106.C \
+   test2019_107.C \
+   test2019_108.C \
+   test2019_110.C \
+   test2019_111.C \
+   test2019_112.C \
+   test2019_113.C \
+   test2019_114.C \
+   test2019_115.C \
+   test2019_116.C \
+   test2019_117.C \
+   test2019_118.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -382,9 +412,11 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_49.C \
    test2019_59.C \
    test2019_60.C \
-   test2019_70.C \
-   test2019_71.C \
-   test2019_72.C 
+   test2019_101.C \
+   test2019_102.C \
+   test2019_103.C \
+   test2019_104.C \
+   test2019_109.C 
 
 # NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
 
@@ -523,7 +555,7 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 	cd ../..; $(MAKE) testBackend
 
 ../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+	ln -s `which $(@BACKEND_CXX_COMPILER@)` ../../testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 

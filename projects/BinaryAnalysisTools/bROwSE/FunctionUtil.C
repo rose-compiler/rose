@@ -249,7 +249,7 @@ P2::FunctionCallGraph*
 functionCallGraph(P2::Partitioner &partitioner) {
     P2::FunctionCallGraph *cg = NULL;
     if (!partitioner.optionalAttribute<P2::FunctionCallGraph*>(ATTR_CallGraph).assignTo(cg)) {
-        cg = new P2::FunctionCallGraph(partitioner.functionCallGraph());
+        cg = new P2::FunctionCallGraph(partitioner.functionCallGraph(P2::AllowParallelEdges::YES));
         partitioner.setAttribute(ATTR_CallGraph, cg);
     }
     return cg;
