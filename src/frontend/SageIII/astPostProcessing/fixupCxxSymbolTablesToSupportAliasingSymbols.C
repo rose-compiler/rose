@@ -384,6 +384,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      if (SgSymbolTable::get_aliasSymbolCausalNodeSet().find(causalNode) == SgSymbolTable::get_aliasSymbolCausalNodeSet().end())
         {
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(causalNode);
+
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("@@@@@@@@@@@@ Inserted causalNode = %p into SgSymbolTable::get_aliasSymbolCausalNodeSet().size() = %zu \n",causalNode,SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
+#endif
         }
 #endif
 
@@ -963,10 +967,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                        }
                   }
-               
+
                if ( alreadyExists == false)
                   {
-#if 0
+#if ALIAS_SYMBOL_DEBUGGING
                     printf ("Building a SgAliasSymbol \n");
 #endif
                  // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
