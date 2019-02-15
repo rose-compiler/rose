@@ -594,7 +594,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C 
+   test2019_24.C \
+   rose-1701-0.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
@@ -982,8 +983,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2013_248.C \
    test2013_249.C \
    test2013_254.C \
-   test2013_255.h \
-   test2013_256.h \
    test2013_262.C \
    test2013_263.C \
    test2013_264.C \
@@ -993,7 +992,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2013_268.C \
    test2013_269.C \
    test2013_270.C \
-   test2013_289.h \
    test2013_309.C \
    test2013_321.C \
    test2013_322.C \
@@ -1037,7 +1035,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2014_104.C \
    test2014_105.C \
    test2014_106.C \
-   test2014_112.h \
    test2014_113.C \
    test2014_118.C \
    test2014_119.C \
@@ -1114,8 +1111,15 @@ else
      test2014_65.C \
      test2014_66.C \
      test2014_69.C
+
+# DQ (2/2/2019): EDG 5.0 fails for this use of __Float128, but Tristan is fixing it.
+if ROSE_USE_EDG_VERSION_5_0
+  TESTCODE_CURRENTLY_FAILING += \
+     test2017_12.C
+else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_12.C
+endif
 endif
 
 if !ROSE_USE_EDG_VERSION_4_7
@@ -1170,9 +1174,13 @@ endif
 if ROSE_USING_GCC_VERSION_LATER_6_0
   TESTCODE_CURRENTLY_FAILING += \
      test2018_01.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     rose-1701-1.C
 else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2018_01.C
+  TESTCODE_CURRENTLY_FAILING += \
+     rose-1701-1.C
 endif
 
 if ROSE_USING_BOOST_VERSION_1_57
@@ -1343,7 +1351,7 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 	cd ../..; $(MAKE) testBackend
 
 ../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+	cd ../..; $(MAKE) testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
@@ -1631,9 +1639,7 @@ clean-local:
 	rm -f test2013_260_unparse_headers conftest_configure_test*
 	rm -f conftest.C
 	rm -f *.passed *.failed *.err
-
-status:
-	@$(MAKE) $(TEST_Source_passed)
+	rm -f method-defn-in-tpldecl-0 method-defn-in-tpldecl-1
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
@@ -1720,4 +1726,7 @@ $(TEST_Source_passed:.C.passed=.timed_with_threshold):
 	TIMEOUT="$$((($$gnu_time * $(TIMEOUT_TOLERANCE))))" &&                                 \
 	echo "[INFO] '$@' performance test is set to timeout after '$$TIMEOUT' seconds" &&     \
 	$(MAKE) TIMEOUT="$$TIMEOUT" $(@:.timed_with_threshold=.timed)
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

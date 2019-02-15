@@ -27,7 +27,7 @@ SgProject* SPRAY::ProgramAbstractionLayer::getRoot() {
 
 void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
-  Normalization lowering;
+  CodeThorn::Normalization lowering;
   lowering.setInliningOption(getInliningOption());
   lowering.normalizeAst(root,getNormalizationLevel());
   _variableIdMapping=new VariableIdMapping();

@@ -1226,6 +1226,21 @@ bool SgNodeHelper::isLoopStmt(SgNode* node) {
 
 /*! 
   * \author Markus Schordan
+  * \date 2019.
+ */
+bool SgNodeHelper::isCondInBranchStmt(SgNode* node) {
+  SgNode* parent=node->get_parent();
+  if(isSgExprStatement(parent)) {
+    parent=parent->get_parent();
+  }
+  if(isCondStmt(parent))
+    return SgNodeHelper::getCond(parent)==node && node!=0;
+  else
+    return false;
+}
+
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 bool SgNodeHelper::isCond(SgNode* node) {

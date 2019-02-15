@@ -957,7 +957,8 @@ ResetParentPointers::evaluateInheritedAttribute (
                     ROSE_ASSERT(templateInstantiation != NULL);
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
 
-                    ROSE_ASSERT(templateInstantiation->get_templateDeclaration() != NULL);
+                 // TV (05/29/2018): possible if it is non-real
+                 // ROSE_ASSERT(templateInstantiation->get_templateDeclaration() != NULL);
 
                  // DQ (10/15/2004): Now we have to reset the parents of any declarations appearing in 
                  // the template argument list!  Unless we should define the traversal to traverse that list!

@@ -252,6 +252,7 @@ SgAsteriskShapeExp
 SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
+SgAutoType
 SgBackspaceStatement
 SgBaseClass
 SgExpBaseClass
@@ -369,6 +370,8 @@ SgExpressionRoot
 SgFile
 SgFileList
 SgFloatVal
+SgFloat128Val
+SgFloat80Val
 SgFlushStatement
 SgForAllStatement
 SgForInitStatement
@@ -504,6 +507,11 @@ SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
+SgNonrealDecl
+SgNonrealRefExp
+SgNonrealSymbol
+SgNonrealType
+SgNonrealBaseClass
 SgNullExpression
 SgNullptrValExp
 SgNullStatement

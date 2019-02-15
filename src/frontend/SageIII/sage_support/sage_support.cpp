@@ -346,6 +346,29 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (2/12/2019): Adding support for SgWcharVal.
+          case V_SgWcharVal:
+             {
+               const SgWcharVal* wideCharValueExpression = isSgWcharVal(this);
+               ROSE_ASSERT(wideCharValueExpression != NULL);
+            // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
+            // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
+            // s = charValueExpression->get_value();
+               char value = wideCharValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = wideCharValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
+               break;
+             }
+
           default:
              {
                printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
@@ -7903,8 +7926,13 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                                    SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
                                    if (varRefExp == NULL)
                                       {
-                                        dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
-                                        printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        SgNonrealRefExp* nrRefExp = isSgNonrealRefExp(dotExp->get_rhs_operand());
+                                        if (nrRefExp == NULL) {
+                                          dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
+                                          printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        } else {
+                                          // FIXME should we return the non-real symbol?
+                                        }
                                       }
                                      else
                                       {
