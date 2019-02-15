@@ -320,25 +320,6 @@ public:
         }
     };
 
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    bool coalesceOnRead() const /*final*/ ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        return accessModifiesExistingLocations();
-    }
-
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    virtual void coalesceOnRead(bool b) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        accessModifiesExistingLocations(b);
-    }
-
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    class NoCoalesceOnRead                              // ROSE_DEPRECATED("use AccessModifiesExistingLocationsGuard isntead")
-        : public AccessModifiesExistingLocationsGuard {
-    public:
-        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate)
-            : AccessModifiesExistingLocationsGuard(rstate, false) {}
-    };
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Inherited non-constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -610,33 +591,6 @@ public:
      *  Adds the READ property to all bits of the register. Also adds READ_BEFORE_WRITE and/or READ_UNINITIALIZED as
      *  appropriate depending on writer properties. */
     virtual void updateReadProperties(RegisterDescriptor);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Deprecated APIs
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-
-    // Deprecated [Robb P. Matzke 2015-08-12]
-    virtual void set_latest_writer(RegisterDescriptor, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
-    virtual void clear_latest_writer(RegisterDescriptor) ROSE_DEPRECATED("use eraseWriters instead");
-    virtual void clear_latest_writers() ROSE_DEPRECATED("use eraseWriters instead");
-    virtual std::set<rose_addr_t> get_latest_writers(RegisterDescriptor) const
-        ROSE_DEPRECATED("use getWritersUnion instead");
-
-    virtual bool get_coalesceOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        return accessModifiesExistingLocations();
-    }
-    virtual bool set_coalesceOnRead(bool b=true) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        bool retval=accessModifiesExistingLocations();
-        accessModifiesExistingLocations(b);
-        return retval;
-    }
-    virtual bool clear_coalescOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        bool retval = accessModifiesExistingLocations();
-        accessModifiesExistingLocations(false);
-        return retval;
-    }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Non-public APIs

@@ -5023,7 +5023,7 @@ DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
         if (BaseSemantics::StatePtr ss = operators->currentState()) {
             BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
-                BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
+                BaseSemantics::RegisterStateGeneric::AccessModifiesExistingLocationsGuard guard(rsg, false);
                 switch (mode) {
                     case READ_REGISTER:
                         return operators->readRegister(reg);

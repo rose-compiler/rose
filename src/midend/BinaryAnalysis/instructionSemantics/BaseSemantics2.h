@@ -822,11 +822,6 @@ public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr protoval() const { return protoval_; }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
-
     /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
      *  this time (May 2013) the dictionary is only used when printing.
      * @{ */
@@ -1234,11 +1229,6 @@ public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr protoval() const { return protoval_; }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
-
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();
 
@@ -1259,11 +1249,6 @@ public:
         return registers_;
     }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    RegisterStatePtr get_register_state() ROSE_DEPRECATED("use registerState instead") {
-        return registerState();
-    }
-
     /** Property: Memory state.
      *
      *  This read-only property is the memory substate of this whole state. */
@@ -1271,11 +1256,6 @@ public:
         return memory_;
     }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    MemoryStatePtr get_memory_state() ROSE_DEPRECATED("use memoryState instead") {
-        return memoryState();
-    }
-    
     /** Read a value from a register.
      *
      *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
@@ -1323,16 +1303,6 @@ public:
     virtual void printRegisters(std::ostream &stream, Formatter &fmt) const;
     /** @} */
 
-    // [Robb Matzke 2015-11-16]: deprecated
-    void print_registers(std::ostream &stream, const std::string &prefix = "") ROSE_DEPRECATED("use printRegisters instead") {
-        printRegisters(stream, prefix);
-    }
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    virtual void print_registers(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printRegisters instead") {
-        printRegisters(stream, fmt);
-    }
-
     /** Print memory contents.
      *
      *  This simply calls the MemoryState::print method.
@@ -1341,16 +1311,6 @@ public:
     void printMemory(std::ostream &stream, const std::string &prefix = "") const;
     virtual void printMemory(std::ostream &stream, Formatter &fmt) const;
     /** @} */
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    void print_memory(std::ostream &stream, const std::string prefix = "") const ROSE_DEPRECATED("use printMemory instead") {
-        printMemory(stream, prefix);
-    }
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    virtual void print_memory(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printMemory instead") {
-        printMemory(stream, fmt);
-    }
 
     /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
      * @{ */
@@ -1501,11 +1461,6 @@ public:
      *  The protoval is used to construct other values via its virtual constructors. */
     virtual SValuePtr protoval() const { return protoval_; }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
-
     /** Property: Satisfiability module theory (SMT) solver.
      *
      *  This property holds a pointer to the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT
@@ -1532,16 +1487,6 @@ public:
     virtual StatePtr currentState() const { return currentState_; }
     virtual void currentState(const StatePtr &s) { currentState_ = s; }
     /** @} */
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
-        return currentState();
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
-        currentState(s);
-    }
 
     /** Property: Optional lazily updated initial state.
      *
@@ -1593,10 +1538,6 @@ public:
     virtual void name(const std::string &s) { name_ = s; }
     /** @} */
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual const std::string& get_name() const ROSE_DEPRECATED("use name instead") { return name(); }
-    virtual void set_name(const std::string &s) ROSE_DEPRECATED("use name instead") { name(s); }
-
     /** Print multi-line output for this object.
      * @{ */
     void print(std::ostream &stream, const std::string prefix="") const {
@@ -1638,21 +1579,12 @@ public:
     virtual void nInsns(size_t n) { nInsns_ = n; }
     /** @} */
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual size_t get_ninsns() const ROSE_DEPRECATED("use nInsns instead") { return nInsns(); }
-    virtual void set_ninsns(size_t n) ROSE_DEPRECATED("use nInsns instead") { nInsns(n); }
-
     /** Returns current instruction.
      *
      *  Returns the instruction which is being processed. This is set by @ref startInstruction and cleared by @ref
      *  finishInstruction. Returns null if we are not processing an instruction. */
     virtual SgAsmInstruction* currentInstruction() const {
         return currentInsn_;
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
-        return currentInstruction();
     }
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
@@ -1815,7 +1747,6 @@ public:
      *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
      *
      * @{ */
-    SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
     virtual SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
     virtual SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
@@ -2238,18 +2169,8 @@ public:
      *  convenience. */
     virtual StatePtr currentState() const { return operators ? operators->currentState() : StatePtr(); }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
-        return currentState();
-    }
-
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
     virtual SValuePtr protoval() const { return operators ? operators->protoval() : SValuePtr(); }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
 
     /** Returns the instruction that is being processed.
      *
@@ -2257,11 +2178,6 @@ public:
      *  object. */
     virtual SgAsmInstruction* currentInstruction() const {
          return operators ? operators->currentInstruction() : NULL;
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
-        return currentInstruction();
     }
 
     /** Return a new undefined semantic value. */
