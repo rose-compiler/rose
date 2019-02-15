@@ -3291,7 +3291,9 @@ TestAstSymbolTables::visit ( SgNode* node )
 #if 1
                            // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
                               ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
-                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+
+                           // DQ (2/14/2019): For C++11 this need no longer be true, because enum prototypes can exist.
+                           // ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
 #endif
                             }
 
