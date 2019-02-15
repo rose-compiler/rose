@@ -210,7 +210,7 @@ namespace CodeThorn {
     void registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, Normalization::TmpVarNrType condVarNr, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
     void registerBoolVarIfStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SubExprTransformationList& subExprTransformationList);
     void registerIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SgStatement* true_body, SgStatement* false_body, SubExprTransformationList& subExprTransformationList);
-    void registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList);
+    void registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType condOpVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList);
     // obsolete functions
     // normalizes variable declarations T x=init to T x; x=init; 
     // if option onlyFunctionCalls is true, then only transform: T x=f(...) => T x; x=f();

@@ -632,7 +632,7 @@ namespace CodeThorn {
         }
         case Normalization::GEN_CONDOP_IF_ELSE_STMT: {
           logger[TRACE]<<"GENERATING CONDOP IF ELSE STMT:"<<endl;
-          SgExpression* cond=getVarRefExp((*j).declVarNr); //SageBuilder::buildBoolValExp(true); // temporary dummy
+          SgExpression* cond=getVarRefExp((*j).condVarNr);
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
@@ -763,22 +763,25 @@ namespace CodeThorn {
 #endif
     } else if(SgConditionalExp* conditionalExp=isSgConditionalExp(expr)) {
 #if 1
-      // hoist condition
-      // register result variable
       logger[TRACE]<<"detected conditional Exp."<<endl;
       // determine type of then-branche for tmp var
       SgType* thenExprType=conditionalExp->get_true_exp()->get_type();
       bool isVoidType=isSgTypeVoid(thenExprType);
       Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of conditional-op
+      // hoist condition
       SgExpression* cond=conditionalExp->get_conditional_exp();
       Normalization::TmpVarNrType condResultTempVarNr=registerSubExpressionTempVars(stmt,cond,subExprTransformationList);
+      // handle both branches
       SgBasicBlock* thenBlock=SageBuilder::buildBasicBlock();
       SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
-      //registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // replacing cond operator
       registerCondOpIfElseStmt(stmt,cond,condResultTempVarNr,thenBlock,elseBlock,subExprTransformationList);
-      Normalization::TmpVarNrType tbResultTempVarNr=registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList);
-      Normalization::TmpVarNrType fbResultTempVarNr=registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
-      //registerTmpVarAssignment(stmt,expr,condResultTempVarNr,tbResultTempVarNr,fbResultTempVarNr,subExprTransformationList);
+      Normalization::TmpVarNrType tbResultTempVarNr
+        =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList);
+      //TODO: registerTmpVarAssignment(stmt,expr,declVarNr,tbResultTempVarNr,subExprTransformationList);
+      Normalization::TmpVarNrType fbResultTempVarNr
+        =registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
+      //TODO: registerTmpVarAssignment(stmt,expr,declVarNr,fbResultTempVarNr,subExprTransformationList);
+      registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // replacing cond operator
 #endif
     } else if(isSgCastExp(expr) && isSgTypeVoid(expr->get_type())) {
         // note: other non-void cast expressions are handled by unary operator case
@@ -919,8 +922,11 @@ namespace CodeThorn {
     subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_IF_ELSE_STMT,stmt,expr,declVarNr,trueBody,falseBody));
   }
 
-  void Normalization::registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
-    subExprTransformationList.push_back(RegisteredSubExprTransformation(Normalization::GEN_CONDOP_IF_ELSE_STMT,stmt,expr,declVarNr,trueBody,falseBody));
+  void Normalization::registerCondOpIfElseStmt(SgStatement* stmt, SgExpression  *cond, Normalization::TmpVarNrType condVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
+    auto transOp=RegisteredSubExprTransformation(Normalization::GEN_CONDOP_IF_ELSE_STMT,stmt,cond,condVarNr,trueBody,falseBody);
+    transOp.condVarNr=condVarNr;
+    transOp.declVarNr=0;
+    subExprTransformationList.push_back(transOp);
   }
 
   void Normalization::registerBoolVarIfStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, SubExprTransformationList& subExprTransformationList) {
