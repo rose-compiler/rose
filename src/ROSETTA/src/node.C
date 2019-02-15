@@ -1428,6 +1428,8 @@ Grammar::setUpNodes ()
   // DQ (8/2/2014): Using C++11 auto keyword.
      InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("SgType *","auto_decltype","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
      InitializedName.setDataPrototype("bool","using_device_keyword","= false",
@@ -1438,6 +1440,12 @@ Grammar::setUpNodes ()
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates. 
+     InitializedName.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype     ( "bool", "is_pack_element", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
