@@ -196,6 +196,12 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateMemberFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+
+   ROSE_DLL_API SgTemplateVariableSymbol * lookupTemplateVariableSymbolInParentScopes (const SgName & name, SgTemplateParameterPtrList * tplparams, SgTemplateArgumentPtrList* tplargs, SgScopeStatement *currentScope=NULL);
+
+
 // DQ (8/21/2013): Modified to make newest function parameters be default arguments.
 // DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
 // DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
@@ -203,6 +209,7 @@ struct hash_nodeptr
    ROSE_DLL_API SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
    ROSE_DLL_API SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
 
+   ROSE_DLL_API SgNonrealSymbol*   lookupNonrealSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
 #if 0
  // DQ (8/13/2013): This function does not make since any more, now that we have made the symbol
  // table handling more precise and we have to provide template parameters for any template lookup.
@@ -1631,6 +1638,21 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Get the closest class declaration enclosing the specified AST node,
   ROSE_DLL_API SgClassDeclaration* getEnclosingClassDeclaration( SgNode* astNode );
 
+  // DQ (2/7/2019): Adding support for name qualification of variable references associated with SgPointerMemberType function parameters.
+  //! Get the enclosing SgExprListExp (used as part of function argument index evaluation in subexpressions).
+  ROSE_DLL_API SgExprListExp* getEnclosingExprListExp(SgNode* astNode, const bool includingSelf = false);
+
+  // DQ (2/7/2019): Need a function to return when an expression is in an expression subtree.
+  // This is part of index evaluation ofr expressions in function argument lists, but likely usefule elsewhere as well.
+  ROSE_DLL_API bool isInSubTree(SgExpression* subtree, SgExpression* exp);
+
+  // DQ (2/7/2019): Need a function to return the SgFunctionDeclaration from a SgFunctionCallExp.
+  ROSE_DLL_API SgFunctionDeclaration* getFunctionDeclaration ( SgFunctionCallExp* functionCallExp );
+
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+  ROSE_DLL_API bool isDataMemberReference(SgVarRefExp* varRefExp);
+  ROSE_DLL_API bool isAddressTaken(SgVarRefExp* varRefExp);
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
@@ -2656,7 +2678,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
      return retval;
    }
 
-
+void detectCycleInType(SgType * type, const std::string & from);
 
 }// end of namespace
 

@@ -2997,7 +2997,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      ROSE_ASSERT (expr != NULL);
 
 #if 0
-     printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+     printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",
+          languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
      curprint(string("\n /*    unparseExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
@@ -8034,6 +8035,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                               if (func_ref != NULL)
                                  {
                                    name = func_ref->get_symbol()->get_name();
+#if 0
+                                   printf ("In getPrecedence(): Get function name = %s \n",name.str());
+#endif
                                  }
                                 else
                                  {
@@ -8236,6 +8240,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (4/29/2016): Not clear if this is the correct precedence for these C++11 expressions.
           case V_SgRealPartOp:
           case V_SgImagPartOp:
+                                     precedence_value = 0; break;
+          case V_SgNonrealRefExp:
                                      precedence_value = 0; break;
 
           default:
@@ -8611,6 +8617,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
        // DQ (12/2/2004): Original cases
           case VAR_REF:
+          case NONREAL_REF:
           case CLASSNAME_REF:
           case FUNCTION_REF:
           case MEMBER_FUNCTION_REF:

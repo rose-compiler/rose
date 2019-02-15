@@ -36,17 +36,18 @@ namespace LibraryIdentification
  * @param[in] libraryName  Library names cannot be discovered from all
  *                         library types, so pass in name.
  * @param[in] libraryVersion  Library version, same problem
- * @param[in] project      Rose SgProject that has the functions to
- * write or find
- * @param[in] replace      If a function or library already exisits in
- * the database, replace it?
+ * @param[in] libraryHash  Unique hash identifing the libary.
+ *                         Partitioner can't generate it
+ * @param[in] partitioner  The main ROSE binary anlysis object,
+ *                         contains all functions, code, etc.
+ * @param[in] dupOption    tells what to do with duplicate functions
  **/     
        void generateLibraryIdentificationDataBase    ( const std::string& databaseName, 
                                                        const std::string& libraryName, 
                                                        const std::string& libraryVersion, 
                                                        const std::string& libraryHash, 
                                                        const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner,
-                                                       bool replace = false);
+                                                       enum DUPLICATE_OPTION dupOption = COMBINE);
 
 
 
@@ -61,10 +62,11 @@ namespace LibraryIdentification
  *  the "UNKNOWN" library.
  *
  * @param[in] databaseName Filename of the database to create/access
- * @param[in] project      Rose SgProject that has the functions to
+ * @param[in] partitioner  Binary partitioner has the functions to
  * write or find
  * @return libToFuncsMap Libraries->set(Functions) unmatched
- * functions under "UNKNOWN"
+ * functions under "UNKNOWN", multimatched functions returned in
+ * "MULTIPLE_LIBS" 
  **/     
        LibToFuncsMap matchLibraryIdentificationDataBase (const std::string& databaseName,
                                                          const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner);

@@ -441,9 +441,6 @@ typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
-// RPM (10/1/2014): Temporary to help people migrate from SgAsmx86Instruction to SgAsmX86Instruction
-typedef SgAsmX86Instruction SgAsmx86Instruction;
-
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
 // JJW (3/21/2008): Added support for containers of Arm instructions
@@ -2861,14 +2858,14 @@ operator<< ( std::ostream & os, const struct stat & sb )
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, 0);
    }
 
 VirtualCFG::CFGNode
 SgNode::cfgForEnd()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
  
