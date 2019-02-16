@@ -3,8 +3,8 @@
 0x080480a0: Function does not return to caller.
 
 0x080480a0: Basic block reasons: entry point, CFG head
-0x080480a0: 66 0f 7f 0c 24          |f...$   |<sp+0 >   movdqa dqword ss:[esp], BAD_REGISTER(5.1.0.128)
-0x080480a5: 66 0f 6f 14 24          |f.o.$   |<sp+0 >   movdqa BAD_REGISTER(5.2.0.128), dqword ss:[esp]
+0x080480a0: 66 0f 7f 0c 24          |f...$   |<sp+0 >   movdqa dqword ss:[esp], xmm1
+0x080480a5: 66 0f 6f 14 24          |f.o.$   |<sp+0 >   movdqa xmm2, dqword ss:[esp]
 0x080480a5: Outgoing stack delta: +0
 0x080480a5: Successor blocks: 0x080480aa
 

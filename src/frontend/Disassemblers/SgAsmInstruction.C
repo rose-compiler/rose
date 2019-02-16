@@ -214,3 +214,20 @@ SgAsmInstruction::toString() const {
     }
     return retval;
 }
+
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    struct T1: AstSimpleProcessing {
+        std::set<rose_addr_t> values;
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(node))
+                values.insert(ive->get_absoluteValue());
+        }
+    } t1;
+#if 0 // [Robb Matzke 2019-02-06]: ROSE API deficiency: cannot traverse a const AST
+    t1.traverse(this, preorder);
+#else
+    t1.traverse(const_cast<SgAsmInstruction*>(this), preorder);
+#endif
+    return t1.values;
+}

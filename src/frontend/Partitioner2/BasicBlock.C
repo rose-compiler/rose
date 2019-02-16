@@ -274,6 +274,17 @@ BasicBlock::insertDataBlock(const DataBlock::Ptr &dblock) {
     return insertUnique(dblocks_, dblock, sortDataBlocks);
 }
 
+std::set<rose_addr_t>
+BasicBlock::explicitConstants() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    std::set<rose_addr_t> retval;
+    BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
+        std::set<rose_addr_t> insnConstants = insn->explicitConstants();
+        retval.insert(insnConstants.begin(), insnConstants.end());
+    }
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -2043,8 +2043,14 @@ public:
     void forgetFunctionIsNoop(const Function::Ptr&) const /*final*/;
     /** @} */
 
+    /** Find constants in function using data-flow.
+     *
+     *  This function runs a simple data-flow operation on the specified function and examines all states to obtain a set
+     *  of constants. */
+    std::set<rose_addr_t> functionDataFlowConstants(const Function::Ptr&) const /*final*/;
 
 
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //

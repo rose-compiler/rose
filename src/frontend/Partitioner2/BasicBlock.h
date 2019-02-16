@@ -425,6 +425,14 @@ public:
      *  Thread safety: This method is thread safe. */
     void pop();
 
+    /** Set of explicit constants.
+     *
+     *  Traverses all the instructions of this basic block and returns all explicit constants found in the instruction
+     *  operands. Some architectures call these "immediate values".
+     *
+     *  Thread safety: This method is thread safe. */
+    std::set<rose_addr_t> explicitConstants() const;
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Static data blocks

@@ -66,6 +66,7 @@ SUBDIRS = \
 	RoseBlockLevelTracing \
 	LineDeleter \
 	xgenTranslator \
+        TemplateAnalysis \
 	$(OPTIONAL_PROJECTS)
 
 #QY (6/11/2018): this directory is no longer used; moved code to POET-ROSE/manycore-stencil

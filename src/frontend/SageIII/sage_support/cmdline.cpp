@@ -5373,6 +5373,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_translation_from_edg_ast_to_rose_ast)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_transformation)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(skip_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_line_directives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_syntax)",1);
