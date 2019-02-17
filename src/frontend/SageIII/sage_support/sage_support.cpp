@@ -2011,19 +2011,18 @@ SgProject::parse(const vector<string>& argv)
 // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
 // So use the explicit macros defined in rose_config header file for this level of control.
 #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-                    Rose::Frontend::Fortran::Ofp::jserver_init();
-#endif
+// Rasmussen (2/17/2019): jserver_init() should not be called. Apparently it interferes with
+// the functionality of the JNI functions if called in JNI version 1.8.
+//#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+//
+//                  Rose::Frontend::Fortran::Ofp::jserver_init();
+//#endif
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
 #endif
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
                     Rose::Frontend::X10::X10c::jserver_init();
 #endif
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
 
