@@ -402,6 +402,9 @@ HEADER_SCOPE_STATEMENT_START
        // class derivation is used.
           SgAliasSymbol* lookup_alias_symbol(const SgName& n, SgSymbol* sp) const;
 
+       // DQ (2/16/2019): Added to support detection of ambiguity that drives the generation of name qualification.
+          bool hasAmbiguity(SgName & name, SgSymbol* symbol);
+
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
        // SgVariableSymbol*  first_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
@@ -6247,7 +6250,67 @@ SgScopeStatement::print_symboltable( const std::string& str )
    }
 
 
+bool
+SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
+   {
+  // DQ (2/16/2019): Added to support detection of ambiguity that drives the generation of name qualification.
+     size_t numberOfAliasSymbols = this->count_alias_symbol(name);
 
+#if 0
+     printf ("numberOfAliasSymbols = %zu \n",numberOfAliasSymbols);
+#endif
+
+     bool ambiguityDetected = false;
+     if (numberOfAliasSymbols > 1)
+        {
+       // Detected ambiguity that will require some name qualification.
+#if 0
+          printf ("Using count_alias_symbol(): Detected ambiguity that will require some name qualification \n");
+#endif
+          ambiguityDetected = true;
+        }
+       else
+        {
+       // No ambiguity that will require any name qualification.
+#if 0
+          printf ("Using count_alias_symbol(): No ambiguity that will require any name qualification \n");
+#endif
+       // Lookup the SgAliasSymbol in the class scope.
+          SgAliasSymbol* aliasSymbol = this->lookup_alias_symbol(name,symbol);
+       // ROSE_ASSERT(aliasSymbol != NULL);
+          if (aliasSymbol != NULL)
+             {
+               ROSE_ASSERT(aliasSymbol->get_causal_nodes().empty() == false);
+               if (aliasSymbol->get_causal_nodes().size() > 1)
+                  {
+                 // Detected ambiguity that will require some name qualification.
+#if 0
+                    printf ("Detected ambiguity that will require some name qualification \n");
+#endif
+                    ambiguityDetected = true;
+                  }
+                 else
+                  {
+                 // No ambiguity that will require any name qualification.
+#if 0
+                    printf ("No ambiguity that will require any name qualification \n");
+#endif
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("No SgAliasSymbol is available \n");
+#endif
+             }
+        }
+
+#if 0
+     printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+
+     return ambiguityDetected;
+   }
 
 
 

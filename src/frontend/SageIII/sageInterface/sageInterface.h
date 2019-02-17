@@ -1653,6 +1653,10 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   ROSE_DLL_API bool isDataMemberReference(SgVarRefExp* varRefExp);
   ROSE_DLL_API bool isAddressTaken(SgVarRefExp* varRefExp);
 
+  // DQ (2/15/2019): Adding support for detecting which class a member reference is being made from.
+  // ROSE_DLL_API SgClassType* getClassTypeForDataMemberReference(SgVarRefExp* varRefExp);
+  ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);

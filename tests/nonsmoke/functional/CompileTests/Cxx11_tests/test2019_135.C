@@ -1,4 +1,3 @@
-
 class Base1
 	{
           public:
@@ -18,6 +17,7 @@ void foobar()
   // So "D::" is the only name qualification allowed to be used (and is the 
   // mimimal qualification required to resolve the ambiguity).
      x.D::a;
+     x.E::a;
    }
 
 

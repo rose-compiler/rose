@@ -396,7 +396,14 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_121.C \
    test2019_123.C \
    test2019_124.C \
-   test2019_125.C 
+   test2019_125.C \
+   test2019_129.C \
+   test2019_130.C \
+   test2019_131.C \
+   test2019_133.C \
+   test2019_134.C \
+   test2019_135.C \
+   test2019_136.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -427,7 +434,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_126.C \
    test2019_127.C \
    test2019_128.C \
-   test2019_129.C 
+   test2019_132.C \
+   test2019_137.C 
 
 # NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
 
