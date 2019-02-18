@@ -6760,10 +6760,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
             else
              {
-
-       // if (memberFunctionDeclaration != NULL)
-       //    {
-
                bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
 #if 0
                printf ("isMemberFunctionMemberReference = %s \n",isMemberFunctionMemberReference ? "true" : "false");
@@ -6848,18 +6844,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  }
                             }
                        }
-
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
                   }
-
-                  }
+             }
 
 #if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
 
           if (memberFunctionDeclaration != NULL)
@@ -6868,75 +6862,71 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // if (isMemberFunctionMemberReference == false)
                if (isMemberFunctionMemberReference == false || isAddressTaken == true)
                   {
-               SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
-               if (currentStatement == NULL)
-                  {
-
-                 // DQ (8/19/2014): Because we know where this can happen we don't need to always output debugging info.
-                 // A better test might be to find the type that embeds the expression and make sure it is a SgArrayType.
-                 // DQ (7/11/2014): test2014_83.C demonstrates how this can happen because the SgMemberFunctionRefExp 
-                 // appears in an index expression of an array type in a variable declaration.
-                    SgType* associatedType = TransformationSupport::getAssociatedType(memberFunctionRefExp);
-                    if (associatedType != NULL)
+                    SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+                    if (currentStatement == NULL)
                        {
-                         SgArrayType* arrayType = isSgArrayType(associatedType);
-                         if (arrayType == NULL)
+                      // DQ (8/19/2014): Because we know where this can happen we don't need to always output debugging info.
+                      // A better test might be to find the type that embeds the expression and make sure it is a SgArrayType.
+                      // DQ (7/11/2014): test2014_83.C demonstrates how this can happen because the SgMemberFunctionRefExp 
+                      // appears in an index expression of an array type in a variable declaration.
+                         SgType* associatedType = TransformationSupport::getAssociatedType(memberFunctionRefExp);
+                         if (associatedType != NULL)
                             {
-                              printf ("Warning: Location of where we can NOT associate the expression to a SgArrayType \n");
-                              memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
-                              memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                              SgArrayType* arrayType = isSgArrayType(associatedType);
+                              if (arrayType == NULL)
+                                 {
+                                   printf ("Warning: Location of where we can NOT associate the expression to a SgArrayType \n");
+                                   memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                                   memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                                 }
+                                else
+                                 {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("Note: Location of where we CAN associate the expression to a statement: confirmed unassociated expression is buried in a type: associatedType = %p = %s \n",associatedType,associatedType->class_name().c_str());
+#endif
+                                 }
                             }
                            else
                             {
+                              printf ("Error: Location of where we can NOT associate the expression to a statement \n");
+                              memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                              memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                            }
+
+                      // DQ (7/11/2014): Added wupport for when this is a nested call and the scope where the call is made from is essential.
+                         if (explictlySpecifiedCurrentScope != NULL)
+                            {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Note: Location of where we CAN associate the expression to a statement: confirmed unassociated expression is buried in a type: associatedType = %p = %s \n",associatedType,associatedType->class_name().c_str());
+                              printf ("explictlySpecifiedCurrentScope = %p = %s \n",explictlySpecifiedCurrentScope,explictlySpecifiedCurrentScope->class_name().c_str());
 #endif
+                              currentStatement = explictlySpecifiedCurrentScope;
+                            }
+                           else
+                            {
+                              printf ("Error: explictlySpecifiedCurrentScope == NULL \n");
+
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
                             }
                        }
-                      else
-                       {
-                         printf ("Error: Location of where we can NOT associate the expression to a statement \n");
-                         memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
-                         memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
-                       }
-
-                 // DQ (7/11/2014): Added wupport for when this is a nested call and the scope where the call is made from is essential.
-                    if (explictlySpecifiedCurrentScope != NULL)
-                       {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("explictlySpecifiedCurrentScope = %p = %s \n",explictlySpecifiedCurrentScope,explictlySpecifiedCurrentScope->class_name().c_str());
-#endif
-                         currentStatement = explictlySpecifiedCurrentScope;
-                       }
-                      else
-                       {
-                         printf ("Error: explictlySpecifiedCurrentScope == NULL \n");
-
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-                       }
-
-                  }
-               ROSE_ASSERT(currentStatement != NULL);
+                    ROSE_ASSERT(currentStatement != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+                    printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 #endif
-               SgScopeStatement* currentScope = currentStatement->get_scope();
-               ROSE_ASSERT(currentScope != NULL);
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                    ROSE_ASSERT(currentScope != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-               printf ("***** case of SgMemberFunctionRefExp: Calling nameQualificationDepth() ***** \n");
+                    printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                    printf ("***** case of SgMemberFunctionRefExp: Calling nameQualificationDepth() ***** \n");
 #endif
-               int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+                    int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
-               printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                    printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
+                    printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-
-#if 1
                  // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
                     if (nameQualificationInducedFromPointerMemberType == true)
                        {
@@ -6954,29 +6944,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ROSE_ASSERT(false);
 #endif
                        }
-#else
-            // DQ (6/5/2011): test2005_112.C demonstrates a case where this special case applies.
-            // If this had to be more qualified, (amountOfNameQualificationRequired > 0), then it should be sufficently qualified and not need special case handling.
-               if (amountOfNameQualificationRequired == 0)
-                  {
-                 // GNU reports that: "ISO C++ forbids taking the address of an unqualified or parenthesized non-static member function to form a pointer to member function.  Say '&A::f1'"
-                    ROSE_ASSERT(memberFunctionRefExp->get_parent() != NULL);
-                    SgAddressOfOp* addressOfOp = isSgAddressOfOp(memberFunctionRefExp->get_parent());
-                    if (addressOfOp != NULL)
-                       {
-                      // I think that setting this to 1 is enough, but there could be a case where it must be more qualified than just to include it's qualified class name.
-                         amountOfNameQualificationRequired = 1;
-                       }
-                  }
-#endif
-               setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
-               // }
+
+                    setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
                  // DQ (2/17/2019): Case of xxx !(isDataMemberReference == true && isAddressTaken == true)
                   }
              }
             else
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                printf ("WARNING: memberFunctionDeclaration == NULL in SgMemberFunctionCallExp for name qualification support! \n");
 #endif
              }
@@ -7017,7 +6992,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
              }
         }
-
 
 
   // DQ (5/31/2011): This is a derived class from SgExpression and SgInitializer...
