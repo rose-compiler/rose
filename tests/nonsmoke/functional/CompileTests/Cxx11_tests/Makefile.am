@@ -403,7 +403,11 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_133.C \
    test2019_134.C \
    test2019_135.C \
-   test2019_136.C 
+   test2019_136.C \
+   test2019_137.C \
+   test2019_138.C \
+   test2019_139.C \
+   test2019_140.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
