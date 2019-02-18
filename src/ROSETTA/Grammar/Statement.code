@@ -6249,14 +6249,24 @@ SgScopeStatement::print_symboltable( const std::string& str )
 
    }
 
-
+#if 0
+// DQ (2/17/2019): Move this to the name qualification file so we can work on it more easily.
 bool
 SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
    {
   // DQ (2/16/2019): Added to support detection of ambiguity that drives the generation of name qualification.
+
+  // NOTE: in the case where the declaration associated with the symbol is declared in the current scope, we can't have any ambiguity.
+
+#define DEBUG_HAS_AMBIGUITY 1
+
+#if DEBUG_HAS_AMBIGUITY
+     printf ("In SgScopeStatement::hasAmbiguity(): name = %s symbol = %p = %s \n",name.str(),symbol,symbol->class_name().c_str());
+#endif
+
      size_t numberOfAliasSymbols = this->count_alias_symbol(name);
 
-#if 0
+#if DEBUG_HAS_AMBIGUITY
      printf ("numberOfAliasSymbols = %zu \n",numberOfAliasSymbols);
 #endif
 
@@ -6264,7 +6274,60 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
      if (numberOfAliasSymbols > 1)
         {
        // Detected ambiguity that will require some name qualification.
-#if 0
+
+       // If there are multiple SgAliasSymbols then we need to know if they are associated with the same 
+       // base class or different base classes. If all from the same base class then there is no ambiguity.
+       // else if they are from multiple base classes then it is the derivation that is providing the 
+       // possible ambiguity, which should be resolved via additional name qualification.
+
+          std::vector<SgNode*> causalNodeList;
+
+          rose_hash_multimap * internal_table = currentScope->get_symbol_table()->get_table();
+          ROSE_ASSERT (internal_table != NULL);
+          std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
+          for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
+             {
+               SgSymbol * orig_current_symbol = i->second; 
+               ROSE_ASSERT (orig_current_symbol != NULL);
+
+               SgAliasSymbol* aliasSymbol = isSgAliasSymbol(orig_current_symbol);
+               if (aliasSymbol != NULL)
+                  {
+                    size_t causalNodeCount = aliasSymbol->get_causalNodes().size();
+                    if (causalNodeCount == 1)
+                       {
+                      // We need to know if each of the alis symbols has a different causal node.
+
+                       }
+                      else
+                       {
+                      // We have identified an ambiguity.
+                         ambiguityDetected = true;
+                       }
+                  }
+                 else
+                  {
+                  }
+
+            // strip off alias symbols
+               SgSymbol * non_alias_symbol = orig_current_symbol; 
+               while (isSgAliasSymbol(non_alias_symbol))
+                  {
+                    non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
+                    ROSE_ASSERT (non_alias_symbol != NULL);
+                  }
+               SgNode* associatedDeclaration = i->second->get_symbol_basis();
+               assert(associatedDeclaration != NULL);
+            // same basis and same symbol type
+            // The assumption is that no two symbols can share the same basis declaration TODO double check this!
+               if (associatedDeclaration == symbolBasis && (non_alias_symbol->variantT() == symbol->variantT()))
+                  {
+                    alreadyExists = true;
+                    break;
+                  }
+             } // end for
+
+#if DEBUG_HAS_AMBIGUITY
           printf ("Using count_alias_symbol(): Detected ambiguity that will require some name qualification \n");
 #endif
           ambiguityDetected = true;
@@ -6272,7 +6335,8 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
        else
         {
        // No ambiguity that will require any name qualification.
-#if 0
+
+#if DEBUG_HAS_AMBIGUITY
           printf ("Using count_alias_symbol(): No ambiguity that will require any name qualification \n");
 #endif
        // Lookup the SgAliasSymbol in the class scope.
@@ -6284,7 +6348,8 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                if (aliasSymbol->get_causal_nodes().size() > 1)
                   {
                  // Detected ambiguity that will require some name qualification.
-#if 0
+
+#if DEBUG_HAS_AMBIGUITY
                     printf ("Detected ambiguity that will require some name qualification \n");
 #endif
                     ambiguityDetected = true;
@@ -6292,26 +6357,27 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                  else
                   {
                  // No ambiguity that will require any name qualification.
-#if 0
+
+#if DEBUG_HAS_AMBIGUITY
                     printf ("No ambiguity that will require any name qualification \n");
 #endif
                   }
              }
             else
              {
-#if 0
+#if DEBUG_HAS_AMBIGUITY
                printf ("No SgAliasSymbol is available \n");
 #endif
              }
         }
 
-#if 0
+#if DEBUG_HAS_AMBIGUITY
      printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
 #endif
 
      return ambiguityDetected;
    }
-
+#endif
 
 
 
