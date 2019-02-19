@@ -1,4 +1,4 @@
-// -*- c++-mode -*-
+// -*- c++ -*-
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
