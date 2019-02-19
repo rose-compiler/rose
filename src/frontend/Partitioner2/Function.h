@@ -255,6 +255,9 @@ public:
     /** Number of basic blocks in the function. */
     size_t nBasicBlocks() const { return bblockVas_.size(); }
 
+    /** Number of data blocks in the function. */
+    size_t nDataBlocks() const { return dblocks_.size(); }
+
     /** Property: Stack delta.
      *
      *  The set or computed stack delta. If a stack delta override has been set (@ref stackDeltaOverride) then that value is
