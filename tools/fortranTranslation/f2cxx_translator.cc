@@ -1,6 +1,7 @@
 #include "rose.h"
 
 #include "sageBuilder.h"
+#include "sageInterface.h"
 #include "sageGeneric.h"
 
 #include "f2cxx_translator.hpp"
@@ -9,66 +10,59 @@
 #include "f2cxx_convenience.hpp"
 
 namespace sb = SageBuilder;
-
-#if 0
-static
-void mkDefiningFunction(SgFunctionDeclaration& dcl)
-{
-  ROSE_ASSERT(false);
-  SgFunctionDefinition& def = sg::deref(new SgFunctionDefinition(&dcl, NULL));
-
-  def.setCaseInsensitive(true);
-  def.set_parent(&dcl);
-  dcl.set_definition(&def);
-}
-
-static
-void mkFunctionParameterScope(SgFunctionDeclaration& dcl)
-{
-  SgFunctionParameterScope& scp = sg::deref(SgFunctionParameterScope::build_node_from_nonlist_children());
-}
-
-struct ScopeGuard
-{
-  ScopeGuard(SgScopeStatement& scope)
-  : safe(&scope)
-  {
-    sb::pushScopeStack(&scope);
-  }
-
-  ~ScopeGuard()
-  {
-    ROSE_ASSERT(sb::topScopeStack() == safe);
-
-    sb::popScopeStack();
-  }
-
-  SgScopeStatement* safe;
-};
-#endif
+namespace si = SageInterface;
 
 namespace f2cxx
 {
   namespace
   {
-    struct FileInfoSetter
+    Sg_File_Info* compilerGeneratedNode()
+    {
+      // return Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+      return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+    }
+
+    void markCompilerGenerated(SgLocatedNode& n)
+    {
+      n.set_endOfConstruct(compilerGeneratedNode());
+      n.set_startOfConstruct(compilerGeneratedNode());
+      n.set_file_info(compilerGeneratedNode());
+    }
+
+    void markCompilerGenerated(SgLocatedNode* n)
+    {
+      markCompilerGenerated(sg::deref(n));
+    }
+
+    struct FileInfoChecker
     {
       explicit
-      FileInfoSetter(std::string fn)
-      : filename(fn)
+      FileInfoChecker(bool finfoset)
+      : requiresFileInfo(finfoset)
       {}
 
       void handle(SgNode& n) {}
 
       void handle(SgLocatedNode& n)
       {
-        ROSE_ASSERT(filename != "");
+        if (requiresFileInfo)
+        {
+          // \todo rm existing file infos
+          markCompilerGenerated(n);
+          return;
+        }
 
         if (n.get_file_info() == NULL)
-          n.set_file_info(new Sg_File_Info(filename, 0, 0));
+          std::cerr << "info not set on: " << typeid(n).name() << std::endl;
+
+        if (n.get_startOfConstruct() == NULL)
+          std::cerr << "start of construct not set on: " << typeid(n).name() << std::endl;
+
+        if (n.get_endOfConstruct() == NULL)
+          std::cerr << "start of construct not set on: " << typeid(n).name() << std::endl;
       }
 
-      std::string filename;
+      bool requiresFileInfo;
     };
 
     /// sets the symbols defining decl
@@ -86,70 +80,163 @@ namespace f2cxx
     // make wrappers
 
     SgClassType&
-    getClassType(SgDeclarationStatement& cldcl)
+    tyClassType(SgDeclarationStatement& cldcl)
     {
       return sg::deref(SgClassType::createType(&cldcl));
     }
 
     SgClassType&
-    getClassType(SgClassSymbol& sym)
+    tyClassType(SgClassSymbol& sym)
     {
-      return getClassType(sg::deref(sym.get_declaration()));
+      SgClassDeclaration& dcl = sg::deref(sym.get_declaration());
+
+      return tyClassType(dcl);
     }
 
     SgClassType&
-    getClassType(SgScopeStatement& scope, std::string classname)
+    tyClassType(SgScopeStatement& scope, std::string classname)
     {
-      return getClassType(sg::deref(scope.lookup_class_symbol(classname)));
+      return tyClassType(sg::deref(scope.lookup_class_symbol(classname)));
     }
 
-    SgClassDeclaration& getClassDecl(SgNamedType& ty)
+    static inline
+    SgType&
+    tyAuto(SgGlobal& scope)
     {
-      return *sg::assert_sage_type<SgClassDeclaration>(ty.get_declaration());
+      return sg::deref(sb::buildOpaqueType("auto", &scope));
     }
 
-    SgClassDeclaration& getClassDecl(SgType& ty)
+    static inline
+    SgType&
+    tyVoid()
     {
-      return getClassDecl(*sg::assert_sage_type<SgNamedType>(&ty));
+      return sg::deref(sb::buildVoidType());
     }
 
-    SgClassType&
-    mkClassType(SgDeclarationStatement& cldcl)
+    static inline
+    SgType&
+    tyInt()
     {
-      return sg::deref(SgClassType::createType(&cldcl));
+      return sg::deref(sb::buildIntType());
     }
 
     SgType&
-    mkCst(SgType& base)
+    tyConst(SgType& base)
+    {
+      return sg::deref(sb::buildConstType(&base));
+    }
+
+    SgType&
+    tyRef(SgType& base)
     {
       return sg::deref(sb::buildReferenceType(&base));
     }
 
-    SgExpression&
+
+    //
+    // helper functions to get to the bottom of types
+    template <class SageNode>
+    struct TypeUnpealer : sg::DispatchHandler<SageNode*>
+    {
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SageNode& n) { this->res = &n; }
+
+      void handle(SgModifierType& ty)
+      {
+        *this = sg::dispatch(*this, ty.get_base_type());
+      }
+
+      void handle(SgReferenceType& ty)
+      {
+        *this = sg::dispatch(*this, ty.get_base_type());
+      }
+    };
+
+    template <class SageNode>
+    SageNode& unpeal(SgType& ty)
+    {
+      return *sg::dispatch(TypeUnpealer<SageNode>(), &ty);
+    }
+
+    SgClassDeclaration& getClassDecl(SgNamedType& ty)
+    {
+      return *SG_ASSERT_TYPE(SgClassDeclaration, ty.get_declaration());
+    }
+
+    SgClassDeclaration& getClassDecl(SgType& ty)
+    {
+      return getClassDecl(unpeal<SgNamedType>(ty));
+    }
+
+    SgVarRefExp&
+    mkVarRef(SgInitializedName& n)
+    {
+      SgScopeStatement& dclscope = sg::ancestor<SgScopeStatement>(n);
+      SgVarRefExp&      varref   = sg::deref(sb::buildVarRefExp(&n, &dclscope));
+
+      markCompilerGenerated(varref);
+      return varref;
+    }
+
+    SgVarRefExp&
+    mkVarRef(SgVariableSymbol& sy)
+    {
+      return mkVarRef(get_decl(sy));
+    }
+
+    SgFunctionCallExp&
     mkMemCall(SgExpression& receiver, std::string memfun, SgExprListExp& params)
     {
       SgClassDeclaration&     cldcl = getClassDecl(sg::deref(receiver.get_type()));
       SgClassDefinition&      cldef = get_defn(cldcl);
       SgSymbol*               symbl = cldef.lookup_function_symbol(memfun);
-      SgMemberFunctionSymbol* funsy = sg::assert_sage_type<SgMemberFunctionSymbol>(symbl);
+      SgMemberFunctionSymbol* funsy = SG_ASSERT_TYPE(SgMemberFunctionSymbol, symbl);
       SgMemberFunctionRefExp* fnref = sb::buildMemberFunctionRefExp(funsy, false, false);
       SgExpression*           dotex = sb::buildDotExp(&receiver, fnref);
+      SgFunctionCallExp&      cllex = sg::deref(sb::buildFunctionCallExp(dotex, &params));
 
-      return sg::deref(sb::buildFunctionCallExp(dotex, &params));
+      markCompilerGenerated(fnref);
+      markCompilerGenerated(dotex);
+      markCompilerGenerated(cllex);
+      return cllex;
+    }
+
+    SgFunctionCallExp&
+    mkMemCall(SgInitializedName& n, std::string memfun, SgExprListExp& params)
+    {
+      return mkMemCall(mkVarRef(n), memfun, params);
     }
 
     SgExpression&
-    mkMemCall(SgInitializedName& n, std::string memfun, SgExprListExp& params)
+    mkMemAccess(SgVarRefExp& rec, SgVarRefExp& fld)
     {
-      SgScopeStatement& dclscope = sg::ancestor<SgScopeStatement>(n);
+      SgDotExp& fldacc = *new SgDotExp(&rec, &fld, fld.get_type());
 
-      return mkMemCall(sg::deref(sb::buildVarRefExp(&n, &dclscope)), memfun, params);
+      markCompilerGenerated(fldacc);
+      return fldacc;
+    }
+
+    /** creates a fake member access expression.
+     *
+     *  fake, b/c @p memfld would normally be part of the @p receiver type,
+     *  but here we take it from @p cldef */
+    SgExpression&
+    mkFakeMemberAccess(SgVarRefExp& receiver, std::string memfld, SgClassDefinition& cldef)
+    {
+      SgSymbol*         symbl = cldef.lookup_variable_symbol(memfld);
+      SgVariableSymbol* fldsy = SG_ASSERT_TYPE(SgVariableSymbol, symbl);
+
+      return mkMemAccess(receiver, mkVarRef(*fldsy));
     }
 
     SgExpression&
     mkCall(SgExpression& ref, SgExprListExp& params)
     {
-      return sg::deref(sb::buildFunctionCallExp(&ref, &params));
+      SgExpression& n = sg::deref(sb::buildFunctionCallExp(&ref, &params));
+
+      markCompilerGenerated(n);
+      return n;
     }
 
     SgExpression&
@@ -158,22 +245,39 @@ namespace f2cxx
       SgFunctionSymbol&      sym = sg::deref(scope.lookup_function_symbol(callee));
       SgFunctionDeclaration& ref = sg::deref(sym.get_declaration());
       SgExpression&          tgt = sg::deref(sb::buildFunctionRefExp(&ref));
+      SgExpression&          cll = mkCall(tgt, params);
 
-      return mkCall(tgt, params);
+      markCompilerGenerated(tgt);
+      markCompilerGenerated(cll);
+      return cll;
+    }
+
+    SgAssignInitializer&
+    mkAssignInitializer(SgExpression& e)
+    {
+      SgAssignInitializer& res = sg::deref(sb::buildAssignInitializer(&e));
+
+      markCompilerGenerated(res);
+      return res;
     }
 
     SgExprListExp&
     mkArgs(SgExpression& arg)
     {
-      return sg::deref(sb::buildExprListExp(&arg));
+      SgExprListExp& res = sg::deref(sb::buildExprListExp(&arg));
+
+      markCompilerGenerated(res);
+      return res;
     }
 
     SgExprListExp&
     mkArg(SgInitializedName& var)
     {
       SgScopeStatement& dclscope = sg::ancestor<SgScopeStatement>(var);
+      SgVarRefExp&      varref = sg::deref(sb::buildVarRefExp(&var, &dclscope));
 
-      return mkArgs(sg::deref(sb::buildVarRefExp(&var, &dclscope)));
+      markCompilerGenerated(varref);
+      return mkArgs(varref);
     }
 
     SgFunctionDefinition&
@@ -183,47 +287,157 @@ namespace f2cxx
 
       dcl.set_definition(&def);
       def.set_parent(&dcl);
+      markCompilerGenerated(def);
       return def;
     }
 
     SgBasicBlock&
-    mkBasicBlock(SgFunctionDefinition& def)
+    mkBasicBlock()
     {
       SgBasicBlock& bdy = sg::deref(sb::buildBasicBlock());
 
-      def.set_body(&bdy);
-      bdy.set_parent(&def);
+      markCompilerGenerated(bdy);
       return bdy;
     }
 
-    SgType&
-    mkConst(SgType& base)
+    SgIntVal&
+    mkIntVal(int v)
     {
-      return sg::deref(sb::buildConstType(&base));
+      SgIntVal& res = sg::deref(sb::buildIntVal(v));
+
+      markCompilerGenerated(res);
+      return res;
     }
 
-    SgType&
-    mkRef(SgType& base)
+    template <class SageNode>
+    SageNode&
+    _mk(SageNode* (*mkr) (SgExpression*, SgExpression*), SgExpression& lhs, SgExpression& rhs)
     {
-      return sg::deref(sb::buildReferenceType(&base));
+      SageNode& res = sg::deref(mkr(&lhs, &rhs));
+
+      markCompilerGenerated(res);
+      return res;
+    }
+
+    template <class SageNode>
+    SageNode&
+    _mk( SageNode* (*mkr) (SgExpression*),
+         SgExpression& exp,
+         SgUnaryOp::Sgop_mode mode = SgUnaryOp::prefix
+       )
+    {
+      SageNode& res = sg::deref(mkr(&exp));
+
+      res.set_mode(mode);
+      markCompilerGenerated(res);
+      return res;
+    }
+
+    SgAssignOp&
+    mkAssign(SgExpression& lhs, SgExpression& rhs)
+    {
+      return _mk(sb::buildAssignOp, lhs, rhs);
+    }
+
+    SgAddOp&
+    mkAdd(SgExpression& lhs, SgExpression& rhs)
+    {
+      return _mk(sb::buildAddOp, lhs, rhs);
+    }
+
+    SgLessThanOp&
+    mkLessThan(SgExpression& lhs, SgExpression& rhs)
+    {
+      return _mk(sb::buildLessThanOp, lhs, rhs);
+    }
+
+    static inline
+    SgPlusPlusOp&
+    mkPostIncr(SgExpression& exp)
+    {
+      return _mk(sb::buildPlusPlusOp, exp, SgUnaryOp::postfix);
+    }
+
+    SgPlusPlusOp&
+    mkPreIncr(SgExpression& exp)
+    {
+      return _mk(sb::buildPlusPlusOp, exp, SgUnaryOp::prefix);
+    }
+
+    SgExprStatement&
+    mkStmt(SgExpression& exp)
+    {
+      SgExprStatement& res = sg::deref(sb::buildExprStatement(&exp));
+
+      markCompilerGenerated(res);
+      return res;
+    }
+
+    SgForStatement&
+    mkForLoop(SgStatement& ini, SgStatement& tst, SgExpression& inc, SgStatement& bdy)
+    {
+      SgForStatement& res = sg::deref(sb::buildForStatement(&ini, &tst, &inc, &bdy));
+
+      markCompilerGenerated(res);
+      return res;
+    }
+
+    SgForStatement&
+    mkForLoop(SgStatement& ini, SgExpression& tst, SgExpression& inc, SgStatement& bdy)
+    {
+      return mkForLoop(ini, mkStmt(tst), inc, bdy);
+    }
+
+    template <class SageNode>
+    SgForStatement&
+    mkForLoop(SgExpression& ini, SageNode& tst, SgExpression& inc, SgStatement& bdy)
+    {
+      return mkForLoop(mkStmt(ini), tst, inc, bdy);
     }
 
     SgInitializedName&
-    mkVar(SgName nm, SgType& ty)
+    dclParam(SgFunctionDeclaration& dcl, std::string nm, SgType& ty)
     {
-      return sg::deref(sb::buildInitializedName(nm, &ty));
+      SgInitializedName&        prm = sg::deref(sb::buildInitializedName(nm, &ty));
+      SgFunctionParameterList&  lst = sg::deref(dcl.get_parameterList());
+      SgFunctionParameterScope& psc = sg::deref(dcl.get_functionParameterScope());
+      SgSymbolTable&            tab = sg::deref(psc.get_symbol_table());
+
+      markCompilerGenerated(prm);
+      prm.set_scope(&psc);
+      tab.insert(nm, new SgVariableSymbol(&prm));
+      lst.append_arg(&prm);
+
+      ROSE_ASSERT(prm.get_scope());
+      ROSE_ASSERT(prm.search_for_symbol_from_symbol_table());
+      return prm;
     }
 
-    SgInitializedName&
-    mkParm(SgName nm, SgType& ty)
+    SgFunctionDeclaration&
+    dclFunDecl(std::string nm, SgType& ty, SgGlobal& glob)
     {
-      return mkVar(nm, ty);
+      SgFunctionParameterList&  lst = sg::deref(sb::buildFunctionParameterList());
+      SgFunctionDeclaration&    dcl =
+            sg::deref(sb::buildNondefiningFunctionDeclaration(nm, &ty, &lst, &glob, NULL));
+      SgFunctionParameterScope& psc =
+            sg::deref(new SgFunctionParameterScope(compilerGeneratedNode()));
+
+      markCompilerGenerated(lst);
+      markCompilerGenerated(dcl);
+      markCompilerGenerated(psc);
+      dcl.set_functionParameterScope(&psc);
+      glob.append_statement(&dcl);
+
+      return dcl;
     }
 
-    SgExpression&
-    mkDummyExpr()
+    /** Returns a new dummy expressions. */
+    SgExpression& mkDummyExpr()
     {
-      return sg::deref(sb::buildNullExpression());
+      SgExpression& exp = sg::deref(sb::buildNullExpression());
+
+      markCompilerGenerated(exp);
+      return exp;
     }
 
     //
@@ -232,13 +446,13 @@ namespace f2cxx
     void setInitializer(SgInitializedName& n, SgInitializer& i)
     {
       n.set_initializer(&i);
+      i.set_parent(&n);
     }
 
     void setInitializer(SgInitializedName& n, SgExpression& e)
     {
-      setInitializer(n, sg::deref(sb::buildAssignInitializer(&e)));
+      setInitializer(n, mkAssignInitializer(e));
     }
-
 
     //
     // auxiliary functions
@@ -246,15 +460,16 @@ namespace f2cxx
     void promoteToDefinition(SgFunctionDeclaration& func)
     {
       SgSymbol*             baseSy = func.search_for_symbol_from_symbol_table();
-      SgFunctionSymbol&     funcSy = *sg::assert_sage_type<SgFunctionSymbol>(baseSy);
+      SgFunctionSymbol&     funcSy = *SG_ASSERT_TYPE(SgFunctionSymbol, baseSy);
 
       link_decls(funcSy, func);
       func.set_definingDeclaration(&func);
 
       SgFunctionDefinition& fdef = mkFunctionDefinition(func);
-      SgBasicBlock&         body = mkBasicBlock(fdef);
+      SgBasicBlock&         body = mkBasicBlock();
 
-      sg::unused(body);
+      fdef.set_body(&body);
+      body.set_parent(&fdef);
     }
 
     bool isParam(SgInitializedName* var)
@@ -264,18 +479,17 @@ namespace f2cxx
 
     SgInitializedName& unique(std::set<SgInitializedName*>& assocs)
     {
+      ROSE_ASSERT(assocs.size() > 0);
+
       std::vector<SgInitializedName*> matching;
 
       std::copy_if(assocs.begin(), assocs.end(), std::back_inserter(matching), isParam);
 
-      if (matching.size() < 1)
-      {
-        throw std::logic_error("no bounds array found");
-      }
+      sg::report_error_if(matching.size() < 1, "no bounds array found");
 
       if (matching.size() > 1)
       {
-        std::cerr << "warning: multiple bounds";
+        std::cerr << "warning: multiple bounds" << std::endl;
       }
 
       // \todo do we need to check also for unique association of
@@ -283,14 +497,98 @@ namespace f2cxx
       return sg::deref(matching.front());
     }
 
-    void addParam(SgFunctionDeclaration& dcl, SgInitializedName& parm)
+    /** Declares a new variable in a scope @p scp and returns the uniquely
+     *  identifying node. */
+    SgInitializedName&
+    dclVar(SgScopeStatement& scp, std::string nm, SgType& ty)
     {
-      sg::deref(dcl.get_parameterList()).append_arg(&parm);
+      SgVariableDeclaration& dcl = sg::deref(sb::buildVariableDeclaration(nm, &ty, NULL, &scp));
+      SgInitializedName&     var = sg::deref(dcl.get_decl_item(nm));
+
+      markCompilerGenerated(dcl);
+      markCompilerGenerated(var);
+      scp.append_statement(&dcl);
+      var.set_scope(&scp);
+      return var;
     }
 
-    void addVar(SgFunctionDeclaration& dcl, SgInitializedName& var)
+    std::string dimName(size_t idx)
     {
-      // sg::deref(dcl.get_parameterList()).append_arg(&parm);
+      std::string res;
+
+      switch (idx)
+      {
+        case 0:
+          res = "x";
+          break;
+
+        case 1:
+          res = "y";
+          break;
+
+        case 2:
+          res = "z";
+          break;
+
+        default:
+          sg::report_error("missing case label");
+      }
+
+      return res;
+    }
+
+
+    void convertToCxxSignature( SgInitializedName&     data,       // fortran argument
+                                SgScopeStatement&      amrexscope, // cxx scope
+                                SgFunctionDeclaration& func        // cxx decl
+                              )
+    {
+      const std::string  fpname = data.get_name();
+      AnalyzerAttribute& attr = getAttribute(data);
+
+      // consistency check
+      //   each 3D array has exactly one bounds array (checked in analyzer)
+      SgInitializedName& datalb = unique(attr.associates(f2cxx::space_lower));
+      SgInitializedName& dataub = unique(attr.associates(f2cxx::space_upper));
+
+      // each 3D array has exactly one loop bound array
+      //~ std::cerr << "a: " << fparam->get_name() << std::endl;
+      //~ SgInitializedName& looplb = unique(attr.associates(f2cxx::loop_lower));
+      //~ std::cerr << "b" << std::endl;
+      //~ SgInitializedName& loopub = unique(attr.associates(f2cxx::loop_upper));
+
+      // create amrex box
+      std::string        nmbox  = fpname + "_bx";
+      SgType&            tybox  = tyRef(tyConst(tyClassType(amrexscope, "Box")));
+      SgInitializedName& cxxbox = dclParam(func, nmbox, tybox);
+
+      // create amrex view
+      std::string        nmfab  = fpname + "_fab";
+      SgType&            tyfab  = tyRef(tyClassType(amrexscope, "FArrayBox"));
+      SgInitializedName& cxxfab = dclParam(func, nmfab, tyfab);
+
+      // create substitute variables
+      SgGlobal&          glob   = sg::ancestor<SgGlobal>(func);
+      SgType&            tyauto = tyConst(tyAuto(glob));
+      // mkFakeType("auto"));
+      std::string        nmlen  = fpname + "_len";
+      std::string        nmlow  = fpname + "_lo";
+      std::string        nmdat  = fpname;
+      SgBasicBlock&      funbdy = get_body(func);
+      SgInitializedName& cxxlen = dclVar(funbdy, nmlen, tyauto);
+      SgInitializedName& cxxlow = dclVar(funbdy, nmlow, tyauto);
+      SgInitializedName& cxxdat = dclVar(funbdy, nmdat, tyauto);
+
+      setInitializer(cxxlen, mkCall("length", amrexscope, mkArg(cxxbox)));
+      setInitializer(cxxlow, mkCall("lbound", amrexscope, mkArg(cxxbox)));
+      setInitializer(cxxdat, mkMemCall(cxxfab, "view", mkArg(cxxlow)));
+
+      getAttribute(data)
+         .setTranslated(cxxdat)
+         .setBounds(cxxlen);
+
+      getAttribute(datalb).setTranslated(mkDummyExpr());
+      getAttribute(dataub).setTranslated(mkDummyExpr());
     }
 
     struct ParamTL
@@ -303,80 +601,264 @@ namespace f2cxx
       {
         AnalyzerAttribute& attr = getAttribute(sg::deref(fparam));
 
-        if (attr.hasRole(static_cast<ParamAttr>(f2cxx::data | f2cxx::param)))
-        {
-          const std::string  fpname = fparam->get_name();
-          // consistency check
-          //   each 3D array has exactly one bounds array (checked in analyzer)
-          SgInitializedName& datalb = unique(attr.associates(f2cxx::space_lower));
-          SgInitializedName& dataub = unique(attr.associates(f2cxx::space_upper));
-
-          //   each 3D array has exactly one loop bound array
-          SgInitializedName& looplb = unique(attr.associates(f2cxx::loop_lower));
-          SgInitializedName& loopub = unique(attr.associates(f2cxx::loop_upper));
-
-          // create amrex box
-          std::string        nmbox  = fpname + "_bx";
-          SgType&            tybox  = mkRef(mkConst(getClassType(*amrexscope, "Box")));
-          SgInitializedName& cxxbox = mkParm(nmbox, tybox);
-
-          addParam(*func, cxxbox);
-
-          // create amrex view
-          std::string        nmfab  = fpname + "_fab";
-          SgType&            tyfab  = mkRef(getClassType(*amrexscope, "FArrayBox"));
-          SgInitializedName& cxxfab = mkParm(nmfab, tyfab);
-
-          addParam(*func, cxxfab);
-
-          // create substitute variables
-          SgType&            tyauto = mkConst(getClassType(*amrexscope, "FArrayBox"));
-          // mkFakeType("auto"));
-          std::string        nmlen  = fpname + "_len";
-          std::string        nmlow  = fpname + "_lo";
-          std::string        nmdat  = fpname;
-          SgInitializedName& cxxlen = mkVar(nmlen, tyauto);
-          SgInitializedName& cxxlow = mkVar(nmlow, tyauto);
-          SgInitializedName& cxxdat = mkVar(nmdat, tyauto);
-
-          setInitializer(cxxlen, mkCall("length", *amrexscope, mkArg(cxxbox)));
-          setInitializer(cxxlow, mkCall("lbound", *amrexscope, mkArg(cxxbox)));
-          setInitializer(cxxdat, mkMemCall(cxxfab, "view", mkArg(cxxlow)));
-
-          addVar(*func, cxxlen);
-          addVar(*func, cxxlow);
-          addVar(*func, cxxdat);
-
-          getAttribute(*fparam).setTranslated(cxxdat);
-          getAttribute(datalb).setTranslated(mkDummyExpr());
-          getAttribute(dataub).setTranslated(mkDummyExpr());
-          getAttribute(looplb).setTranslated(sg::deref(sb::buildIntVal(0)));
-          getAttribute(loopub).setTranslated(cxxlen);
-
+        if (!attr.hasRole(static_cast<ParamAttr>(f2cxx::data | f2cxx::param)))
           return;
-        }
 
-        if (attr.hasRole(f2cxx::auxiliary))
-        {
-          // do not copy
-          return;
-        }
-
-        // copy argument normally
+        convertToCxxSignature(*fparam, *amrexscope, *func);
       }
 
       SgScopeStatement*      amrexscope;
       SgFunctionDeclaration* func;
     };
 
-    void translateArgumentList( SgProcedureHeaderStatement* proc,
-                                SgFunctionDeclaration* func,
+    void translateArgumentList( SgProcedureHeaderStatement& proc,
+                                SgFunctionDeclaration& func,
                                 SgScopeStatement& amrexscope
                               )
     {
-      SgFunctionParameterList& lst = sg::deref(proc->get_parameterList());
+      SgFunctionParameterList& lst = sg::deref(proc.get_parameterList());
 
-      std::for_each(begin(lst), end(lst), ParamTL(amrexscope, sg::deref(func)));
+      std::for_each(begin(lst), end(lst), ParamTL(amrexscope, func));
+    }
+
+    static
+    SgType& tlType(SgType& ty)
+    {
+      return ty;
+    }
+
+    static inline
+    bool isAmrexLoop(SgNode& n)
+    {
+      // extract info from analyzer
+      return getAttribute(n).hasRole(f2cxx::amrex_loop);
+    }
+
+    template <class SageExpr>
+    static
+    SageExpr& clone(SageExpr& exp, bool requiresFileInfo = false)
+    {
+      SageExpr& res = sg::deref(si::deepCopy(&exp));
+
+      sg::forAllNodes(FileInfoChecker(requiresFileInfo), &res);
+      return res;
+    }
+
+    struct ExprMaker : sg::DispatchHandler<SgExpression*>
+    {
+      void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgInitializedName& n) { res = &mkVarRef(n); }
+    };
+
+    bool hasRole(SgExpression& n, ParamAttr role)
+    {
+      SgVarRefExp&       varref = *SG_ASSERT_TYPE(SgVarRefExp, &n);
+      SgInitializedName& var    = get_decl(varref);
+
+      return getAttribute(var).hasRole(role);
+    }
+
+    struct ExprTranslator : sg::DispatchHandler<SgExpression*>
+    {
+      template <class SageExpr>
+      SgExpression&
+      binary_expr(SageExpr& (*mk) (SgExpression& lhs, SgExpression& rhs), SgBinaryOp& n)
+      {
+        SgExpression* lhs = sg::dispatch(*this, n.get_lhs_operand());
+        SgExpression* rhs = sg::dispatch(*this, n.get_rhs_operand());
+
+        return mk(*lhs, *rhs);
+      }
+
+      SgExpression&
+      clone_expr(SgExpression& n)
+      {
+        return clone(n, true);
+      }
+
+      void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
+
+      //
+      // standard value expressions
+      void handle(SgValueExp& n)   { res = &clone_expr(n); }
+
+      //
+      // standard binary expressions
+      void handle(SgAssignOp& n)   { res = &binary_expr(mkAssign, n); }
+      void handle(SgAddOp& n)      { res = &binary_expr(mkAdd, n);   }
+
+      //
+      // specialized translations
+      void handle(SgVarRefExp& n)
+      {
+        SgInitializedName& dcl = get_decl(n);
+
+        ROSE_ASSERT(getAttribute(dcl).translated() != NULL);
+        res = sg::dispatch(ExprMaker(), getAttribute(dcl).translated());
+      }
+
+      void handle(SgPntrArrRefExp& n)
+      {
+        SgExpression& lhs = sg::deref(n.get_lhs_operand());
+
+        // if the left hand side is an amrex type, we need to change this
+        //   to a function call
+        if (!hasRole(lhs, f2cxx::dataparam))
+          ROSE_ASSERT(0);
+
+        SgExpression&  obj  = *sg::dispatch(*this, &lhs);
+        SgExprListExp& lst  = *SG_ASSERT_TYPE(SgExprListExp, n.get_rhs_operand());
+
+        res = &mkCall(obj, clone(lst));
+      }
+    };
+
+    static
+    SgExpression& translate(SgExpression& n)
+    {
+      SgExpression* res = sg::dispatch(ExprTranslator(), &n);
+
+      return sg::deref(res);
+    }
+
+    static
+    SgVarRefExp& translate(SgVarRefExp& n)
+    {
+      SgExpression& exp = n;
+      SgExpression& cxx = translate(exp);
+
+      return *SG_ASSERT_TYPE(SgVarRefExp, &cxx);
+    }
+
+    SgExpression& genUpperBound(SgFortranDo& n, SgScopeStatement& amrexscope)
+    {
+      typedef std::pair<size_t, SgInitializedName*> AccessData;
+
+      AnalyzerAttribute& attr      = getAttribute(n);
+      AccessData         acc       = attr.array_access();
+      AnalyzerAttribute& dataattr  = getAttribute(sg::deref(acc.second));
+      SgInitializedName& upperbase = sg::deref(dataattr.bounds());
+      SgClassSymbol&     clssy     = sg::deref(amrexscope.lookup_class_symbol("Dim"));
+      SgClassDefinition& cldef     = get_defn(clssy);
+      SgVarRefExp&       upperref  = mkVarRef(upperbase);
+      size_t             idx       = acc.first;
+
+      return mkFakeMemberAccess(upperref, dimName(idx), cldef);
+    }
+
+    struct StmtTranslator
+    {
+      StmtTranslator(SgScopeStatement& top, SgScopeStatement& amrex)
+      : scopes()
+      {
+        scope_push(amrex);
+        scope_push(top);
+      }
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgVariableDeclaration& n)
+      {
+        sg::traverseChildren(*this, n);
+      }
+
+      void handle(SgInitializedName& n)
+      {
+        AnalyzerAttribute& attr = getAttribute(n);
+
+        if (attr.hasRole(f2cxx::param))
+        {
+          if (attr.translated() == NULL)
+            std::cerr << "skipped.. " << n.get_name() << std::endl;
+
+          return;
+        }
+
+        std::cerr << "var: " << n.get_name() << std::endl;
+        ROSE_ASSERT(!attr.translated());
+        SgType&            cxxty  = tlType(sg::deref(n.get_type()));
+        SgInitializedName& cxxvar = dclVar(scope_top(), n.get_name(), cxxty);
+
+        attr.setTranslated(cxxvar);
+      }
+
+      void handle(SgExprStatement& n)
+      {
+        SgExpression&    exp = translate(sg::deref(n.get_expression()));
+
+        scope_top().append_statement(&mkStmt(exp));
+      }
+
+      void handle(SgFortranDo& n)
+      {
+        ROSE_ASSERT(isAmrexLoop(n));
+
+        // extract the loop variable and make it start from 0
+        SgExpression*     init   = n.get_initialization();
+        SgAssignOp*       asgn   = SG_ASSERT_TYPE(SgAssignOp, init);
+        SgVarRefExp*      loop   = SG_ASSERT_TYPE(SgVarRefExp, asgn->get_lhs_operand());
+
+        SgVarRefExp&      cxxvar = translate(*loop);
+        SgExpression&     cxx0   = mkIntVal(0);
+        SgExpression&     cxxini = mkAssign(cxxvar, cxx0);
+
+        // create the new loop upper bound
+        SgExpression&     cxxub  = genUpperBound(n, scope_amrex());
+        SgExpression&     cxxtst = mkLessThan(clone(cxxvar), cxxub);
+
+        // add increment
+        SgExpression&     cxxinc = mkPreIncr(clone(cxxvar));
+
+        // clone the body
+        SgBasicBlock&     cxxblk = mkBasicBlock();
+        SgForStatement&   cxxfor = mkForLoop(cxxini, cxxtst, cxxinc, cxxblk);
+
+        scope_top().append_statement(&cxxfor);
+
+        scope_push(cxxblk);
+        ROSE_ASSERT(isSgBasicBlock(n.get_body()));
+        sg::traverseChildren(*this, n.get_body());
+        scope_pop(cxxblk);
+      }
+
+      void scope_push(SgScopeStatement& scope)
+      {
+        scopes.push_back(&scope);
+      }
+
+      void scope_pop(SgScopeStatement& scope)
+      {
+        ROSE_ASSERT(!scopes.empty());
+        ROSE_ASSERT(scopes.back() == &scope);
+
+        scopes.pop_back();
+      }
+
+      SgScopeStatement& scope_top()
+      {
+        ROSE_ASSERT(!scopes.empty());
+
+        return sg::deref(scopes.back());
+      }
+
+      SgScopeStatement& scope_amrex()
+      {
+        return sg::deref(scopes.front());
+      }
+
+      std::vector<SgScopeStatement*> scopes;
+    };
+
+    void translateFunctionBody( SgProcedureHeaderStatement& proc,
+                                SgFunctionDeclaration&      func,
+                                SgScopeStatement&           amrexscope
+                              )
+    {
+      SgBasicBlock& fxxbody = get_body(proc);
+      SgBasicBlock& cxxbody = get_body(func);
+
+      sg::traverseChildren(StmtTranslator(cxxbody, amrexscope), fxxbody);
     }
   }
 
@@ -387,21 +869,20 @@ namespace f2cxx
     SgFunctionDeclaration&      func = sg::deref(p.second);
 
     promoteToDefinition(func);
-    translateArgumentList(p.first, p.second, *amrexscope);
+    std::cerr << "translate args.." << std::endl;
+    translateArgumentList(proc, func, *amrexscope);
+    std::cerr << "translate bodies.." << std::endl;
+    translateFunctionBody(proc, func, *amrexscope);
 
-    sg::forAllNodes(f2cxx::FileInfoSetter(cxx->getFileName()), p.second);
+    sg::forAllNodes(f2cxx::FileInfoChecker(false), &func);
   }
 
   void ::f2cxx::DeclMaker::operator()(SgProcedureHeaderStatement* n)
   {
     SgName                   nm  = n->get_name();
-    SgType*                  ty  = sb::buildVoidType();
-    SgFunctionParameterList* lst = sb::buildFunctionParameterList();
-    SgFunctionDeclaration*   dcl =
-        sb::buildNondefiningFunctionDeclaration(nm, ty, lst, glob, NULL /* decoratorList */);
-        // sb::buildDefiningFunctionDeclaration(nm, ty, lst, glob, NULL /* decoratorList */);
+    SgType&                  ty  = tyVoid();
+    SgFunctionDeclaration&   dcl = dclFunDecl(nm, ty, *glob);
 
-    glob->append_statement(dcl);
-    declmap.push_back(std::make_pair(n, dcl));
+    declmap.push_back(std::make_pair(n, &dcl));
   }
 }
