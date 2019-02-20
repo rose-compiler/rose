@@ -16,7 +16,7 @@ namespace f2cxx
 {
   namespace
   {
-    Sg_File_Info* compilerGeneratedNode()
+    Sg_File_Info* dummyFileInfo()
     {
       // return Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
       return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
@@ -24,9 +24,9 @@ namespace f2cxx
 
     void markCompilerGenerated(SgLocatedNode& n)
     {
-      n.set_endOfConstruct(compilerGeneratedNode());
-      n.set_startOfConstruct(compilerGeneratedNode());
-      n.set_file_info(compilerGeneratedNode());
+      n.set_endOfConstruct(dummyFileInfo());
+      n.set_startOfConstruct(dummyFileInfo());
+      n.set_file_info(dummyFileInfo());
     }
 
     void markCompilerGenerated(SgLocatedNode* n)
@@ -420,7 +420,7 @@ namespace f2cxx
       SgFunctionDeclaration&    dcl =
             sg::deref(sb::buildNondefiningFunctionDeclaration(nm, &ty, &lst, &glob, NULL));
       SgFunctionParameterScope& psc =
-            sg::deref(new SgFunctionParameterScope(compilerGeneratedNode()));
+            sg::deref(new SgFunctionParameterScope(dummyFileInfo()));
 
       markCompilerGenerated(lst);
       markCompilerGenerated(dcl);
@@ -464,6 +464,7 @@ namespace f2cxx
 
       link_decls(funcSy, func);
       func.set_definingDeclaration(&func);
+      func.unsetForward();
 
       SgFunctionDefinition& fdef = mkFunctionDefinition(func);
       SgBasicBlock&         body = mkBasicBlock();
@@ -569,13 +570,14 @@ namespace f2cxx
 
       // create substitute variables
       SgGlobal&          glob   = sg::ancestor<SgGlobal>(func);
+      SgType&            tydim  = tyClassType(amrexscope, "Dim");
       SgType&            tyauto = tyConst(tyAuto(glob));
       // mkFakeType("auto"));
       std::string        nmlen  = fpname + "_len";
       std::string        nmlow  = fpname + "_lo";
       std::string        nmdat  = fpname;
       SgBasicBlock&      funbdy = get_body(func);
-      SgInitializedName& cxxlen = dclVar(funbdy, nmlen, tyauto);
+      SgInitializedName& cxxlen = dclVar(funbdy, nmlen, tydim);
       SgInitializedName& cxxlow = dclVar(funbdy, nmlow, tyauto);
       SgInitializedName& cxxdat = dclVar(funbdy, nmdat, tyauto);
 
