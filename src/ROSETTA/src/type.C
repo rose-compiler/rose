@@ -1045,7 +1045,8 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
-     DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+  // TV (02/21/2019): We need a specific version of this function for the decltype() operator.
+  // DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
   // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
      TypeOfType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
