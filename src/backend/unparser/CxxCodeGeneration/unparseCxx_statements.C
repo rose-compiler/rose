@@ -10424,8 +10424,75 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
 #if 0
      printf ("In unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
 #endif
+#if 0
+     curprint(" /* Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
+#endif
 
-     unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>(stmt,info);
+     if (templateTypedef_stmt->get_templateParameters().empty() == false)
+        {
+       // DQ (2/19/2019): The support for unparsing a SgTemplateTypedefDeclaration is different enough that this function is not useful.
+#if 0
+          curprint(" /* templateParameters FOUND: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
+#endif
+          unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>(stmt,info);
+        }
+       else
+        {
+#if 0
+          curprint(" /* templateParameters NOT found: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
+#endif
+
+       // Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info, bool is_template_header)
+       // bool is_template_header = false;
+       // unparseTemplateParameterList(templateTypedef_stmt->get_templateParameters(),info,is_template_header);
+          unparseTemplateHeader<SgTemplateTypedefDeclaration>(templateTypedef_stmt,info);
+
+       // DQ (2/19/2019): I think this is how we detect the template parameters.
+          if (templateTypedef_stmt->get_templateParameters().empty() == false)
+             {
+               curprint(" /* unparse template paremeters */ ");
+             }
+
+       // DQ (2/19/2019): Not clear that I want the extra "\n".
+          curprint("\nusing ");
+
+#if 0
+          printf ("In unparseTemplateTypeDefStmt(): templateTypedef_stmt->get_name() = %s \n",templateTypedef_stmt->get_name().str());
+#endif
+
+          curprint(templateTypedef_stmt->get_name().str());
+
+          curprint(" = ");
+
+          SgType* base_type = templateTypedef_stmt->get_base_type();
+          ROSE_ASSERT(base_type != NULL);
+
+#if 0
+          printf ("In unparseTemplateTypeDefStmt(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+
+          SgUnparse_Info ninfo(info);
+
+          ROSE_ASSERT(ninfo.SkipClassDefinition() == false);
+          ROSE_ASSERT(ninfo.SkipEnumDefinition()  == false);
+
+#if 0
+          printf ("templateTypedef_stmt->get_declaration() = %p \n",templateTypedef_stmt->get_declaration());
+#endif
+
+       // DQ (2/19/2019): Cxx_tests/test2019_153.C demonstrates that a class declaration can be define in the C++11 SgTemplateTypedefDeclaration.
+       // ROSE_ASSERT(templateTypedef_stmt->get_declaration() == NULL);
+
+          if (templateTypedef_stmt->get_declaration() == NULL)
+             {
+               ninfo.set_SkipClassDefinition();
+               ninfo.set_SkipEnumDefinition();
+             }
+
+          unp->u_type->unparseType(base_type, ninfo);
+
+          curprint(";");
+        }
 
 #if 0
      printf ("Leaving unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
@@ -10453,10 +10520,12 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgTypedefDeclaration* typedef_stmt = isSgTypedefDeclaration(stmt);
      ROSE_ASSERT(typedef_stmt != NULL);
 
-#if 0
+#define DEBUG_TYPEDEF_DECLARATIONS 0
+
+#if DEBUG_TYPEDEF_DECLARATIONS
      printf ("In unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
 #endif
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
      curprint("\n /* In unp->u_type->unparseTypeDefStmt() */ \n");
 #endif
 
@@ -10465,7 +10534,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // its definition.
      bool outputTypeDefinition = typedef_stmt->get_typedefBaseTypeContainsDefiningDeclaration();
 
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
      printf ("In unparseTypeDefStmt(): typedef_stmt = %p outputTypeDefinition = %s \n",typedef_stmt,(outputTypeDefinition == true) ? "true" : "false");
 #endif
 
@@ -10487,7 +10556,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint("\n/* Found an embeddedDeclaration */ \n");
 #endif
         }
-     
+
      SgUnparse_Info ninfo(info);
 
   // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
@@ -10545,8 +10614,89 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (2/14/2019): Adding name qualification support for C++11 enum declarations in typedef types.
      SgEnumType* enumType = isSgEnumType(typedef_stmt->get_base_type());
+     if (enumType != NULL)
+        {
+          SgDeclarationStatement* declarationReference = typedef_stmt->get_declaration();
+          ROSE_ASSERT(declarationReference != NULL);
+          SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declarationReference);
+          ROSE_ASSERT(enumDeclaration != NULL);
+          SgEnumDeclaration* definingEnumDeclaration = isSgEnumDeclaration(enumDeclaration->get_definingDeclaration());
 
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
+          printf ("enumDeclaration->get_name() = %s \n",enumDeclaration->get_name().str());
+#endif
+#if DEBUG_TYPEDEF_DECLARATIONS
+          curprint ( string("\n/* In unparseTypeDefStmt: enum name                                  = ") + enumDeclaration->get_name().str() + " */ \n ");
+          curprint ( string("\n/* In unparseTypeDefStmt: enumDeclaration != definingEnumDeclaration = ") + ((enumDeclaration != definingEnumDeclaration) ? "true" : "false") + " */ \n ");
+#endif
+       // DQ (2/20/2019): If this is not the defining declaration referenced through the declarationReference then use 
+       // the usual method for name qualification via the base type.
+          if (enumDeclaration != definingEnumDeclaration)
+             {
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("internal declarationReference != definingEnumDeclaration: so use the name qualification via the base type \n");
+#endif
+               enumType = NULL;
+             }
+            else
+             {
+            // If this is the defining declaration, then if it is an anonymous class then output as a type.
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("enumDeclaration->get_name() = %s \n",enumDeclaration->get_name().str());
+#endif
+               bool isAnonymousName = (string(enumDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
+               if (isAnonymousName == true)
+                  {
+#if DEBUG_TYPEDEF_DECLARATIONS
+                    printf ("internal declarationReference == definingEnumDeclaration: isAnonymousName == true: so output enum declaration via the base type \n");
+#endif
+                    enumType = NULL;
+                  }
+             }
+        }
+
+  // DQ (2/18/2019): Adding name qualification support for class declarations in typedef types (declared in other scopes).
+     SgClassType* classType = isSgClassType(typedef_stmt->get_base_type());
+     if (classType != NULL)
+        {
+          SgDeclarationStatement* declarationReference = typedef_stmt->get_declaration();
+          ROSE_ASSERT(declarationReference != NULL);
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationReference);
+          ROSE_ASSERT(classDeclaration != NULL);
+          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+
+#if DEBUG_TYPEDEF_DECLARATIONS
+          printf ("classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+#endif
+#if DEBUG_TYPEDEF_DECLARATIONS
+          curprint ( string("\n/* In unparseTypeDefStmt: class name                                   = ") + classDeclaration->get_name().str() + " */ \n ");
+          curprint ( string("\n/* In unparseTypeDefStmt: classDeclaration != definingClassDeclaration = ") + ((classDeclaration != definingClassDeclaration) ? "true" : "false") + " */ \n ");
+#endif
+       // DQ (2/20/2019): If this is not the defining declaration referenced through the declarationReference then use 
+       // the usual method for name qualification via the base type.
+          if (classDeclaration != definingClassDeclaration)
+             {
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("internal declarationReference != definingClassDeclaration: so use the name qualification via the base type \n");
+#endif
+               classType = NULL;
+             }
+            else
+             {
+            // If this is the defining declaration, then if it is an anonymous class then output as a type.
+               printf ("classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+               bool isAnonymousName = (string(classDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
+               if (isAnonymousName == true)
+                  {
+#if DEBUG_TYPEDEF_DECLARATIONS
+                    printf ("internal declarationReference == definingClassDeclaration: isAnonymousName == true: so output class declaration via the base type \n");
+#endif
+                    classType = NULL;
+                  }
+             }
+        }
+
+#if DEBUG_TYPEDEF_DECLARATIONS
      printf ("In unp->u_type->unparseTypedef: functionType                = %p \n",functionType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberType         = %p \n",pointerToMemberType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberFunctionType = %p \n",pointerToMemberFunctionType);
@@ -10566,10 +10716,18 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if ( (functionType != NULL) || (pointerToMemberType != NULL) )
   // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) )
   // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (pointerToMemberType != NULL) )
-     if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) )
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) )
+
+  // DQ (2/20/2019): Removing the use of classType allows the name qualification to be handled properly thorugh the type.
+  // But I need to check why this was added in the first place (what breaks).
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) || (classType != NULL))
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) )
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) || (classType != NULL))
+  // if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) )
+     if ( (functionType != NULL) || (pointerToMemberFunctionType != NULL) || (enumType != NULL) || (classType != NULL))
         {
        // Newly implemented case of typedefs for function and member function pointers
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           printf ("In unparseTypeDefStmt(): case of typedefs for function and member function pointers \n");
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || 0
@@ -10591,11 +10749,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgType *btype = typedef_stmt->get_base_type();
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output base type (first part) (for functionType or pointerToMemberFunctionType) */ \n");
 #endif
 
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           printf ("In unparseTypeDefStmt(): btype = %p = %s \n",btype,btype->class_name().c_str());
 #endif
 
@@ -10605,18 +10763,46 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgUnparse_Info ninfo_for_type(ninfo);
           ninfo_for_type.set_declstatement_ptr(typedef_stmt);
 
+#if 0
        // DQ (6/2/2011): Note that this might cause name qualification to be uniform for all subtypes.
        // We don't presently have a better way to handle this since types are shared and even types
        // that reference types are shared.  Need to think about this (similar problem to throw 
        // expression lists).
           ninfo_for_type.set_reference_node_for_qualification(typedef_stmt);
-
+#else
+       // DQ (2/18/2019): The name qualification support sets the name qualification for enums 
+       // declarations using the enum declaration, so the typedef declaration is not appropriate 
+       // to use with set_reference_node_for_qualification().
+          SgDeclarationStatement* declaration = typedef_stmt->get_declaration();
+          if (declaration != NULL)
+             {
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("Found declaration statment in typedef declaration (need to use it as reference node for qualification \n");
+#endif
+               ninfo_for_type.set_reference_node_for_qualification(declaration);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+            // DQ (6/2/2011): Note that this might cause name qualification to be uniform for all subtypes.
+            // We don't presently have a better way to handle this since types are shared and even types
+            // that reference types are shared.  Need to think about this (similar problem to throw 
+            // expression lists).
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("typedef_stmt->get_declaration() == NULL: using typedef_stmt as reference_node_for_qualification \n");
+#endif
+               ninfo_for_type.set_reference_node_for_qualification(typedef_stmt);
+             }
+#endif
        // Only pass the ninfo_for_type to support name qualification of the base type.
        // unp->u_type->unparseType(btype, ninfo);
           unp->u_type->unparseType(btype, ninfo_for_type);
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Done: Output base type (first part) */ \n");
 #endif
 
@@ -10624,7 +10810,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // Now unparse the second part of the typedef
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output base type (second part) */ \n");
 #endif
 
@@ -10632,7 +10818,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           unp->u_type->unparseType(btype, ninfo);
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Done: Output base type (second part) */ \n");
 #endif
 
@@ -10647,7 +10833,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
        // previously implemented case of unparsing the typedef does not handle 
        // function pointers properly (so they are handled explicitly above!)
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           printf ("Not a typedef for a function type or member function type \n");
 #endif
 
@@ -10681,7 +10867,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (typedef_stmt->get_requiresGlobalNameQualificationOnType() == true)
              {
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
                printf ("In Unparse_ExprStmt::unp->u_type->unparseTypedefStmt(): This base type requires a global qualifier \n");
                curprint("\n/* This base type requires a global qualifier, calling set_requiresGlobalNameQualification() */ \n");
 #endif
@@ -10733,7 +10919,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: Before first part of type */ \n";
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output base type (first part) (Not a typedef for a function type or member function type) */ \n");
 #endif
 
@@ -10750,7 +10936,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (7/28/2012): This is similar to code in the variable declaration unparser function and so might be refactored.
        // DQ (7/28/2012): If this is a declaration associated with a declaration list from a previous (the last statement) typedef
        // then output the name if that declaration had an un-named type (class or enum).
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           printf ("In unparseTypedefStmt(): typedef_stmt->get_isAssociatedWithDeclarationList() = %s \n",typedef_stmt->get_isAssociatedWithDeclarationList() ? "true" : "false");
 #endif
           if (typedef_stmt->get_isAssociatedWithDeclarationList() == true)
@@ -10769,11 +10955,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                ninfo_for_type.display("Output base type (first part)");
 #endif
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
                printf ("In unparseTypedefStmt(): (first part): btype = %p = %s \n",btype,btype->class_name().c_str());
 #endif
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
                curprint("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n");
 #endif
 
@@ -10790,7 +10976,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Done: Output base type (first part) */ \n");
 #endif
 
@@ -10812,7 +10998,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint(" ");
 #endif
 
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output typedef name */ \n");
 #endif
        // The name of the type (X, in the following example) has to appear after the 
@@ -10825,7 +11011,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printf ("Before 2nd part of type \n");
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: Before second part of type */ \n";
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output base type (second part) */ \n");
 #endif
 
@@ -10834,7 +11020,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // unp->u_type->unparseType(btype, ninfo_for_type);
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Done: Output base type (second part) */ \n");
 #endif
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: After second part of type */ \n";
@@ -10850,7 +11036,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.unset_inTypedefDecl();
         }
 
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
      printf ("In unparseTypedefStmt(): outputTypeDefinition = %s \n",outputTypeDefinition ? "true" : "false");
 #endif
      if (outputTypeDefinition == true)
@@ -10870,7 +11056,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
   // info.display ("At base of unp->u_type->unparseTypeDefStmt()");
-#if 0
+#if DEBUG_TYPEDEF_DECLARATIONS
      printf ("Leaving unparseTypedefStmt() \n");
      curprint ("/* Leaving unparseTypedefStmt */ \n");
 #endif
@@ -11239,9 +11425,20 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                     if (isSgTemplateClassDeclaration(stmt) == NULL)
                        {
                       // DQ (9/12/2016): We want to know if this is something other than a SgTemplateClassDeclaration or SgTemplateTypedefDeclaration (C++11 feature).
-                         if (isSgTemplateTypedefDeclaration(stmt) == NULL)
+                         if (templateTypedefDeclaration == NULL)
                             {
                               printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                            }
+                           else
+                            {
+                           // DQ (2/19/2019): Added comment and changed predicate to use templateTypedefDeclaration and avoid compiler warning.
+#if 0
+                              printf ("Is there some support required for templateTypedefDeclaration = %p  \n",templateTypedefDeclaration);
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                             }
                        }
                   }
@@ -11488,6 +11685,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
 #if 0
       printf ("Leaving unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+      curprint (" /* Leaving unparseTemplateDeclarationStatment_support() */ \n");
 #endif
    }
  

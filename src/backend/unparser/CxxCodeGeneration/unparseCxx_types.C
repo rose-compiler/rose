@@ -1543,7 +1543,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_MEMBER_POINTER_TYPE
                curprint("\n/* In unparseMemberPointerType(): pointer to member function data: first part of type */ \n");
 #endif
-            // DQ (1/20/2019): Supress the definition (for enum, function, and class types.
+            // DQ (1/20/2019): Suppress the definition (for enum, function, and class types).
             // unparseType(ftype->get_return_type(), info); // first part
                SgUnparse_Info ninfo(info);
                ninfo.set_SkipDefinition();
@@ -1938,6 +1938,10 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseClassType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
      printf ("In unparseClassType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
+#if DEBUG_UNPARSE_CLASS_TYPE
+     curprint ( string("\n/* In unparseClassType: info.isTypeFirstPart()  = ") + ((info.isTypeFirstPart()  == true) ? "true" : "false") + " */ \n ");
+     curprint ( string("\n/* In unparseClassType: info.isTypeSecondPart() = ") + ((info.isTypeSecondPart() == true) ? "true" : "false") + " */ \n ");
+#endif
 
   // DQ (10/7/2006): In C (and I think C99), we need the "struct" keyword
   // in places where it is not required for C++.  See test2006_147.C.
@@ -2028,6 +2032,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_UNPARSE_CLASS_TYPE
           printf ("In unparseClassType: nm = %s \n",nm.str());
 #endif
+#if DEBUG_UNPARSE_CLASS_TYPE
+          curprint ( string("\n/* In unparseClassType: nm = ") + nm.str() + " */ \n ");
+#endif
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
        // if (nm.str() != NULL)
@@ -2051,12 +2058,16 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
 
+#if DEBUG_UNPARSE_CLASS_TYPE
+                    curprint ( string("\n/* In unparseClassType: info.get_reference_node_for_qualification() = ") + ((info.get_reference_node_for_qualification() != NULL) ? Rose::StringUtility::numberToString(info.get_reference_node_for_qualification()) : "null") + " */ \n");
+                 // curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
+#endif
                  // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
                  // have an associated node to reference as a way to lookup the strored name qualification.  In this 
                  // case we return a fully qualified name.
                     if (info.get_reference_node_for_qualification() == NULL)
                        {
-#if 0
+#if DEBUG_UNPARSE_CLASS_TYPE
                          printf ("WARNING: In unparseClassType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
 #endif
                          SgName nameQualifierAndType = class_type->get_qualified_name();
@@ -2065,18 +2076,19 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                       else
                        {
                       // DQ (6/2/2011): Newest support for name qualification...
-#if 0
+#if DEBUG_UNPARSE_CLASS_TYPE
                          printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
                          SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-#if 0
+
+#if DEBUG_UNPARSE_CLASS_TYPE
                          printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 #endif
 
                       // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
-#if 0
+#if DEBUG_UNPARSE_CLASS_TYPE
                          printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
-                      // curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
+                         curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
 #endif
                          curprint(nameQualifier.str());
 
@@ -2121,13 +2133,15 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                             }
                            else
                             {
+#if DEBUG_UNPARSE_CLASS_TYPE
+                              curprint ( string("\n/* In unparseClassType: output tag name = ") + nm.str() + " */ \n ");
+#endif
                               curprint ( string(nm.str()) + " ");
 #if 0
-                              printf ("class type name: nm = %s \n",nm.str());
+                              printf ("test 1: class type name: nm = %s \n",nm.str());
 #endif
                             }
                        }
-
                   }
              }
             else
@@ -2321,19 +2335,23 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
      SgEnumType* enum_type = isSgEnumType(type);
      ROSE_ASSERT(enum_type);
 
-#if 0
+#define DEBUG_ENUM_TYPE 0
+
+#if DEBUG_ENUM_TYPE
      printf ("Inside of unparseEnumType(): info.isTypeFirstPart() = %s info.isTypeSecondPart() = %s \n",(info.isTypeFirstPart() == true) ? "true" : "false",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
-#if 0
+#if DEBUG_ENUM_TYPE
      printf ("Inside of unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("Inside of unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true)  ? "true" : "false");
 #endif
 #if 0
      info.display("Inside of unparseEnumType(): call to info.display()");
 #endif
+
      SgEnumDeclaration *edecl = isSgEnumDeclaration(enum_type->get_declaration());
      ROSE_ASSERT(edecl != NULL);
-#if 0
+
+#if DEBUG_ENUM_TYPE
      printf ("Inside of unparseEnumType(): edecl = %p = %s \n",edecl,edecl ? edecl->class_name().c_str() : "");
 #endif
 
@@ -2368,7 +2386,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
              {
             // DQ (5/22/2003) Added output of "enum" string
                 curprint ("enum ");
-#if 0
+#if DEBUG_ENUM_TYPE
                 printf ("Inside of unparseEnumType(): output enum keyword \n");
                 curprint ("/* enum from unparseEnumType() */ ");
 #endif
@@ -2380,7 +2398,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
-#if 0
+#if DEBUG_ENUM_TYPE
                printf ("Inside of unparseEnumType(): DO NOT output enum keyword \n");
 #endif
              }
@@ -2431,14 +2449,14 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                if (info.get_reference_node_for_qualification() == NULL)
                   {
                     SgName nameQualifierAndType = enum_type->get_qualified_name();
-#if 0
+#if DEBUG_ENUM_TYPE
                     printf ("NOTE: In unparseEnumType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() nameQualifierAndType = %s \n",nameQualifierAndType.str());
 #endif
                     curprint(nameQualifierAndType.str());
                   }
                  else
                   {
-#if 0
+#if DEBUG_ENUM_TYPE
                     printf ("In unparseEnumType(): info.get_reference_node_for_qualification() = %p \n",info.get_reference_node_for_qualification());
                     if (info.get_reference_node_for_qualification() != NULL)
                        {
@@ -2447,7 +2465,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #endif
                  // DQ (6/2/2011): Newest support for name qualification...
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-#if 0
+#if DEBUG_ENUM_TYPE
                     printf ("In unparseEnumType(): nameQualifier = %s \n",nameQualifier.str());
 #endif
                     curprint (nameQualifier.str());
@@ -2487,16 +2505,27 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 
                     if (nm.getString() != "")
                        {
-#if 0
+#if DEBUG_ENUM_TYPE
                          printf ("In unparseEnumType(): Output qualifier of current types to the name = %s \n",nm.str());
 #endif
                          curprint ( nm.getString() + " ");
                        }
                   }
              }
+
+       // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
+          if (edecl->get_field_type() != NULL)
+             {
+               curprint(" : ");
+
+            // Make a new SgUnparse_Info object.
+               SgUnparse_Info ninfo(info);
+               unp->u_type->unparseType(edecl->get_field_type(),ninfo);           
+             }
         }
 
-#if 0
+
+#if DEBUG_ENUM_TYPE
      printf ("In unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
 #endif
@@ -2506,68 +2535,70 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 
      if (info.isTypeFirstPart() == true)
         {
-      // info.display("info before constructing ninfo");
-         SgUnparse_Info ninfo(info);
+       // info.display("info before constructing ninfo");
+          SgUnparse_Info ninfo(info);
 
-      // don't skip the semicolon in the output of the statement in the class definition
-         ninfo.unset_SkipSemiColon();
+       // don't skip the semicolon in the output of the statement in the class definition
+          ninfo.unset_SkipSemiColon();
 
-         ninfo.set_isUnsetAccess();
-#if 0
-         printf ("info.SkipEnumDefinition() = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+          ninfo.set_isUnsetAccess();
+#if DEBUG_ENUM_TYPE
+          printf ("info.SkipEnumDefinition() = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
-         if ( info.SkipEnumDefinition() == false )
-            {
-              SgUnparse_Info ninfo(info);
-              ninfo.set_inEnumDecl();
-              SgInitializer *tmp_init = NULL;
-              SgName tmp_name;
+          if ( info.SkipEnumDefinition() == false )
+             {
+               SgUnparse_Info ninfo(info);
+               ninfo.set_inEnumDecl();
+               SgInitializer *tmp_init = NULL;
+               SgName tmp_name;
 
-           // DQ (5/8/2013): Make sure this is a valid pointer.
-              if (edecl->get_definingDeclaration() == NULL)
-                 {
-                   printf ("edecl = %p = %s \n",edecl,edecl->class_name().c_str());
-                 }
-              ROSE_ASSERT(edecl->get_definingDeclaration() != NULL);
-
-           // DQ (4/22/2013): We need the defining declaration.
-              edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
-
-           // This fails for test2007_140.C.
-              ROSE_ASSERT(edecl != NULL);
-
-           // DQ (6/26/2005): Output the opend and closing braces even if there are no enumerators!
-           // This permits support of the empty enum case! "enum x{};"
-              curprint ("{");
-#if 0
-              printf ("In unparseEnumType(): Output enumerators from edecl = %p \n",edecl);
-              printf ("     --- edecl->get_firstNondefiningDeclaration() = %p \n",edecl->get_firstNondefiningDeclaration());
-              printf ("     --- edecl->get_definingDeclaration() = %p \n",edecl->get_definingDeclaration());
-#endif
-              SgInitializedNamePtrList::iterator p = edecl->get_enumerators().begin();
-              if (p != edecl->get_enumerators().end())
-                 {
-                   while (1)
-                      {
-                        unp->u_exprStmt->unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-                        tmp_name=(*p)->get_name();
-                        tmp_init=(*p)->get_initializer();
-                        curprint ( tmp_name.str());
-                        if (tmp_init)
-                           {
-                             curprint ( "=");
-                             unp->u_exprStmt->unparseExpression(tmp_init, ninfo);
-                           }
-                        p++;
-                        if (p != edecl->get_enumerators().end())
-                           {
-                             curprint ( ",");
-                           }
-                          else
-                             break;
-                       }
-                 // curprint ( "}";
+            // DQ (5/8/2013): Make sure this is a valid pointer.
+               if (edecl->get_definingDeclaration() == NULL)
+                  {
+                    printf ("edecl = %p = %s \n",edecl,edecl->class_name().c_str());
                   }
+               ROSE_ASSERT(edecl->get_definingDeclaration() != NULL);
+
+            // DQ (4/22/2013): We need the defining declaration.
+               edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
+
+            // This fails for test2007_140.C.
+               ROSE_ASSERT(edecl != NULL);
+
+            // DQ (6/26/2005): Output the opend and closing braces even if there are no enumerators!
+            // This permits support of the empty enum case! "enum x{};"
+               curprint ("{");
+#if DEBUG_ENUM_TYPE
+               printf ("In unparseEnumType(): Output enumerators from edecl = %p \n",edecl);
+               printf ("     --- edecl->get_firstNondefiningDeclaration() = %p \n",edecl->get_firstNondefiningDeclaration());
+               printf ("     --- edecl->get_definingDeclaration() = %p \n",edecl->get_definingDeclaration());
+#endif
+               SgInitializedNamePtrList::iterator p = edecl->get_enumerators().begin();
+               if (p != edecl->get_enumerators().end())
+                  {
+                    while (1)
+                       {
+                         unp->u_exprStmt->unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+                         tmp_name=(*p)->get_name();
+                         tmp_init=(*p)->get_initializer();
+                         curprint ( tmp_name.str());
+                         if (tmp_init)
+                            {
+                              curprint ( "=");
+                              unp->u_exprStmt->unparseExpression(tmp_init, ninfo);
+                            }
+                         p++;
+                         if (p != edecl->get_enumerators().end())
+                            {
+                              curprint ( ",");
+                            }
+                           else
+                            {
+                              break;
+                            }
+                        }
+                  // curprint ( "}";
+                   }
 
             // GB (09/18/2007): If the enum definition is unparsed, also unparse its attached preprocessing info.
             // Putting the "inside" info right here is just a wild guess as to where it might really belong.
@@ -2580,6 +2611,10 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(edecl, info, PreprocessingInfo::after);
              }
         }
+
+#if DEBUG_ENUM_TYPE
+     printf ("Leaving unparseEnumType(): edecl = %p \n",edecl);
+#endif
    }
 
 

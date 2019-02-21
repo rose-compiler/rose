@@ -92,6 +92,45 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
                break;
              }
 
+       // DQ (2/18/2019): Adding support for name qualification of enum declaration in typedef declarations (and SgClassDeclaration, SgTemplateInstantiationDecl).
+          case V_SgTemplateInstantiationDecl:
+          case V_SgClassDeclaration:
+          case V_SgEnumDeclaration:
+             {
+            // SgEnumDeclaration* node = isSgEnumDeclaration(referencedNode);
+               SgDeclarationStatement* node = isSgDeclarationStatement(referencedNode);
+#if 0
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): node = %p = %s \n",node,node->class_name().c_str());
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case V_SgEnumDeclaration: calling SgEnumDeclaration::get_qualified_name_prefix_for_base_type() \n");
+#endif
+            // DQ (2/18/2019): If this works then we might want to generate an associated get_qualified_name_prefix_for_base_type() function for the SgEnumDeclaration.
+            // nameQualifier = node->get_qualified_name_prefix_for_base_type();
+
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(node);
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_qualifiedNameMapForNames().find(node);
+               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(node);
+
+               if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+                  {
+                    nameQualifier = i->second;
+#if 0
+                    printf ("FOUND a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("COULD NOT find a valid name qualification \n");
+#endif
+                  }
+
+#if 0
+               printf ("nameQualifier for SgEnumDeclaration = %p = %s = %s \n",node,node->class_name().c_str(),nameQualifier.str());
+#endif
+               break;
+             }
+
           case V_SgTemplateArgument:
              {
 #if 0
