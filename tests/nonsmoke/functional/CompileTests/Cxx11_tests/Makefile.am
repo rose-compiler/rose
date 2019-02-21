@@ -155,7 +155,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2016_30.C \
    test2016_37.C \
    test2016_39.C \
-   test2016_40.C \
    test2016_42.C \
    test2016_91.C \
    test2016_92.C \
@@ -407,7 +406,33 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_137.C \
    test2019_138.C \
    test2019_139.C \
-   test2019_140.C 
+   test2019_140.C \
+   test2019_141.C \
+   test2019_142.C \
+   test2019_143.C \
+   test2019_145.C \
+   test2019_146.C \
+   test2019_147.C \
+   test2019_150.C \
+   test2019_151.C \
+   test2019_152.C \
+   test2019_153.C \
+   test2019_154.C \
+   test2019_155.C \
+   test2019_156.C \
+   test2019_157.C \
+   test2019_158.C \
+   test2019_159.C \
+   test2019_160.C \
+   test2019_161.C \
+   test2019_162.C \
+   test2019_163.C \
+   test2019_164.C \
+   test2019_165.C \
+   test2019_166.C \
+   test2019_168.C \
+   test2019_169.C \
+   test2019_170.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -415,6 +440,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2012_24.C \
    test2014_46.C \
    test2015_11.C \
+   test2016_40.C \
    test2016_41.C \
    test2017_17.C \
    test2019_15.C \
@@ -438,7 +464,10 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_126.C \
    test2019_127.C \
    test2019_128.C \
-   test2019_132.C 
+   test2019_132.C \
+   test2019_167.C 
+
+# NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
 # NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
 

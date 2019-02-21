@@ -11,6 +11,7 @@ using namespace Rose::Diagnostics;
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
 #define DEBUG_NAME_QUALIFICATION_LEVEL 0
 
+
 #ifndef WARNING_FOR_NONREAL_DEVEL
 #  define WARNING_FOR_NONREAL_DEVEL 0
 #endif
@@ -4856,6 +4857,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
        // Could it be that we only want to do this for the defining declaration? No, since prototypes must also use name qualification!
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In name qualification: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+#endif
+
        // We need the structural location in scope (not the semantic one).
           SgScopeStatement* currentScope = isSgScopeStatement(classDeclaration->get_parent());
 
@@ -4880,6 +4885,42 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     ROSE_ASSERT(false);
 #endif
                   }
+                 else
+                  {
+                 // DQ (2/18/2019): Adding support for when the SgClassDeclaration is defined in another declaration (e.g. SgTypedefDeclaration).
+                    SgNode* parent = classDeclaration->get_parent();
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(parent);
+                 // currentScope = isSgScopeStatement(typedefDeclaration->get_parent());
+                    if (typedefDeclaration != NULL)
+                       {
+                         currentScope = isSgScopeStatement(typedefDeclaration->get_parent());
+
+                      // DQ (2/18/2019): We should have a valid currentScope at this point.
+                         if (currentScope == NULL)
+                            {
+                              printf ("NOTE: Could not identify scope for class declaration: parent = %p = %s \n",parent,parent->class_name().c_str());
+#if 1
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                           else
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("Found SgClassDeclaration in SgTypedefDeclaration: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
+                      // DQ (2/19/2019): This is frequently a SgLambdaExp or a SgVariableDeclaration
+                      // Computing the current scope does not always seem possible.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("In name qualification: Cannot compute a valid scope for the classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+                         printf (" --- parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+                       }
+                  }
              }
 
        // ROSE_ASSERT(currentScope != NULL);
@@ -4894,7 +4935,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
             // DQ (7/22/2017): I think we can assert this.
                ROSE_ASSERT(class_scope != NULL);
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("currentScope                  = %p = %s \n",currentScope,currentScope->class_name().c_str());
                printf ("classDeclaration->get_scope() = %p = %s \n",class_scope,class_scope->class_name().c_str());
 #endif
@@ -8099,6 +8141,42 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // We need the structural location in scope (not the semantic one).
           SgScopeStatement* currentScope = isSgScopeStatement(enumDeclaration->get_parent());
 
+          if (currentScope == NULL)
+             {
+            // DQ (2/18/2019): Adding support for when the SgEnumDeclaration is defined in another declaration (e.g. SgTypedefDeclaration).
+               SgNode* parent = enumDeclaration->get_parent();
+               SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(parent);
+               if (typedefDeclaration != NULL)
+                  {
+                    currentScope = isSgScopeStatement(typedefDeclaration->get_parent());
+
+                 // DQ (2/18/2019): We should have a valid currentScope at this point.
+                    if (currentScope == NULL)
+                       {
+                         printf ("NOTE: Could not identify scope for enum declaration: parent = %p = %s \n",parent,parent->class_name().c_str());
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("Found SgEnumDeclaration in SgTypedefDeclaration: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // DQ (2/19/2019): This is frequently a SgLambdaExp or a SgVariableDeclaration
+                 // Computing the current scope does not always seem possible.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("In name qualification: Cannot compute a valid scope for the enumDeclaration = %p = %s \n",enumDeclaration,enumDeclaration->class_name().c_str());
+                    printf (" --- parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+                  }
+             }
+
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
              {
@@ -8230,7 +8308,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgDeclarationStatement* declaration = isSgDeclarationStatement(n);
      if (declaration != NULL)
         {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Found a SgDeclarationStatement in the evaluation of name qualification declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
        // If this is a declaration of something that has a name then we need to mark it as having been seen.
@@ -8322,6 +8400,73 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             else
              {
             // This appears to fail for something in rose_edg_required_macros_and_functions.h.
+
+            // DQ (2/18/2019): This case happens when an enum declaration is contained as the base type in a typedef declaration.
+            // In which case the scope is just the scope of the enclosing typedef declaration.
+               SgNode* parent = declaration->get_parent();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+               printf ("scopeOfDeclaration == NULL: declaration               = %p = %s \n",declaration,declaration->class_name().c_str());
+               printf ("scopeOfDeclaration == NULL: declaration->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+
+            // DQ (2/18/2019): Chasing down all the things that can be the parent when the scope of a declaration computed via the parent is not clear.
+               SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(parent);
+               if (typedefDeclaration != NULL)
+                  {
+                    scopeOfDeclaration = isSgScopeStatement(typedefDeclaration->get_parent());
+                  }
+                 else
+                  {
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parent);
+                    if (functionDeclaration != NULL)
+                       {
+                         ROSE_ASSERT(functionDeclaration != NULL);
+                         scopeOfDeclaration = isSgScopeStatement(functionDeclaration->get_parent());
+                         if (scopeOfDeclaration == NULL)
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              printf ("test 1: SgFunctionDeclaration: scopeOfDeclaration == NULL: cannot support name qualification: functionDeclaration->get_parent() = %p = %s \n",
+                                   functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
+                         SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
+                         if (functionParameterList != NULL)
+                            {
+                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionParameterList->get_parent());
+                              ROSE_ASSERT(functionDeclaration != NULL);
+                              scopeOfDeclaration = isSgScopeStatement(functionDeclaration->get_parent());
+                              if (scopeOfDeclaration == NULL)
+                                 {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                                   printf ("test 2: SgFunctionParameterList: SgFunctionDeclaration: scopeOfDeclaration == NULL: cannot support name qualification: functionDeclaration->get_parent() = %p = %s \n",
+                                        functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());
+#endif
+                                 }
+                            }
+                       }
+                  }
+
+               if (scopeOfDeclaration == NULL)
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                    printf ("scopeOfDeclaration == NULL: Could not identify scope of declaration to support name qualification: parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("lost scope: scopeOfDeclaration = %p = %s \n",scopeOfDeclaration,scopeOfDeclaration->class_name().c_str());
+#endif
+                  }
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("I hope that we can make this an error (scopeOfDeclaration == NULL) declaration = %p = %s declaration->get_parent() = %p = %s \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
 #endif
