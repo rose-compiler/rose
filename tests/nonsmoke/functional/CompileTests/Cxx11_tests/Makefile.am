@@ -407,7 +407,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_137.C \
    test2019_138.C \
    test2019_139.C \
-   test2019_140.C 
+   test2019_140.C \
+   test2019_46.C \
+   rose-1763.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -424,7 +426,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_38.C \
    test2019_43.C \
    test2019_44.C \
-   test2019_46.C \
    test2019_48.C \
    test2019_49.C \
    test2019_59.C \
