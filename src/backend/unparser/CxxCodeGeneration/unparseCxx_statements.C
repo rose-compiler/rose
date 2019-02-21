@@ -10684,7 +10684,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
             else
              {
             // If this is the defining declaration, then if it is an anonymous class then output as a type.
+#if DEBUG_TYPEDEF_DECLARATIONS
                printf ("classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+#endif
                bool isAnonymousName = (string(classDeclaration->get_name()).substr(0,14) == "__anonymous_0x");
                if (isAnonymousName == true)
                   {

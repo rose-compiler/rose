@@ -14,6 +14,10 @@
 #include "unparser.h"
 #include <limits>
 
+// DQ (2/21/2019): Added to support remove_substring function.
+#include <string>
+#include <iostream>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -2319,6 +2323,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
      newinfo.set_operator_name(op);
 
 #if 0
+     printf ("In unparseBinaryOperator(): expr = %p op = %s \n",expr,op);
      curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
 
@@ -3077,6 +3082,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 #define MFuncRefSupport_DEBUG 0
+
      T* mfunc_ref = dynamic_cast<T*>(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
@@ -3412,8 +3418,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      printf ("mfd->get_specialFunctionModifier().isConversion() = %s \n",(mfd->get_specialFunctionModifier().isConversion() == true) ? "true" : "false");
 #endif
 
+  // DQ (2/21/2019): Need to avoid processing operator>>=().
   // DQ (4/7/2013): This code is translating "s >> len;" to "s > > len;" in test2013_97.C.
-     if (mfunc_ref->get_symbol()->get_name() != "operator>>")
+  // if (mfunc_ref->get_symbol()->get_name() != "operator>>")
+  // if ( !( (mfunc_ref->get_symbol()->get_name() == "operator>>") || (mfunc_ref->get_symbol()->get_name() == "operator>>=") ) )
+     if ( (mfunc_ref->get_symbol()->get_name() != "operator>>") && (mfunc_ref->get_symbol()->get_name() != "operator>>=") )
         {
        // DQ (11/18/2012): Process the function name to remove any cases of ">>" from template names.
           string targetString      = ">>";
@@ -3864,11 +3873,44 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
    }
 
 
+// DQ (2/21/2019): Adding support to remove "\000" substrings from output strings in SgStringVal unparsing.
+template<typename T>
+void remove_substrings(basic_string<T>& s, const basic_string<T>& p)
+   {
+     typename basic_string<T>::size_type n = p.length();
+
+#if 0
+     size_t string_size = s.length();
+     for (size_t j = 0; j < string_size; j++)
+        {
+          int character_value = s[j];
+          printf ("character_value = %d \n",character_value);
+        }
+#endif
+
+     for (typename basic_string<T>::size_type i = s.find(p); i != basic_string<T>::npos; i = s.find(p))
+        {
+#if 0
+          printf ("In remove_substrings: loop: i = %zu s = %s \n",i,s.c_str());
+#endif
+          s.erase(i, n);
+        }
+
+#if 0
+     printf ("Leaving remove_substrings() \n");
+#endif
+   }
+
+
 void
 Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgStringVal* str_val = isSgStringVal(expr);
      ROSE_ASSERT(str_val != NULL);
+
+#if 0
+     printf ("In unparseStringVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
 
   // Handle special case of macro specification (this is a temporary hack to permit us to
   // specify macros within transformations)
@@ -3974,8 +4016,18 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
              {
                curprint("R");
 
+            // DQ (2/21/2019): This is a problem for Cxx11_tets/test2019_180.C
             // Note added delimiters.
-               s = string("\"(") + str_val->get_raw_string_value() + string(")\"");
+            // s = string("\"(") + str_val->get_raw_string_value() + string(")\"");
+               s = string("\"(") + str_val->get_value() + string(")\"");
+#if 0
+               printf ("Before remove substrings: s = %s \n",s.c_str());
+#endif
+               string p = "\\000";
+               remove_substrings(s, p);
+#if 0
+               printf ("After remove substrings: s = %s \n",s.c_str());
+#endif
              }
             else
              {
@@ -3986,7 +4038,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
           string s = string("\"") + str_val->get_value() + string("\"");
 #endif
 #if 0
-          printf ("In unparseStringVal(): str_val = %p                    = %p \n",str_val);
+          printf ("In unparseStringVal(): str_val         = %p \n",str_val);
           printf ("   --- str_val->get_value()            = %s \n",str_val->get_value().c_str());
           printf ("   --- str_val->get_value().length()   = %" PRIuPTR " \n",str_val->get_value().length());
           printf ("   --- output string: s                = %s \n",s.c_str());
@@ -3997,8 +4049,8 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 #endif
-     unp->u_sage->cur_set_linewrap(wrap);
 
+     unp->u_sage->cur_set_linewrap(wrap);
    }
 
 
@@ -6368,7 +6420,13 @@ void Unparse_ExprStmt::unparseModAssnOp(SgExpression* expr, SgUnparse_Info& info
 void Unparse_ExprStmt::unparseXorAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "^=",  info); }
 
 void Unparse_ExprStmt::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<=",  info); }
-void Unparse_ExprStmt::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>=", info); }
+void Unparse_ExprStmt::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) 
+   {
+#if 0
+     printf ("In unparseRShiftAssnOp() \n");
+#endif
+     unparseBinaryOperator(expr, ">>=", info); 
+   }
 
 void Unparse_ExprStmt::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
 
@@ -7284,7 +7342,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         {
 #if DEBUG_AGGREGATE_INITIALIZER || 0
           printf ("In unparseAggrInit(): list index = %zu \n",index);
-          curprint ("/* output list element */ ");
+          curprint ("/* In unparseAggrInit(): output list element */ ");
 #endif
 
 #if 0
@@ -7342,11 +7400,33 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           curprint ("/* output class name between array elements */ ");
 #endif
 
+#if 0
+       // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer (see Cxx11_tests/test2019_171.C).
+          if (list[index]->isCompilerGenerated() == true)
+             {
+               break;
+             }
+#endif
        // If there was an include then unparse everything (because we removed the include (above)).
        // If there was not an include then still unparse everything!
           unparseExpression(list[index], newinfo);
+
           if (index != last_index)
+             {
+            // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer (see Cxx11_tests/test2019_171.C).
+
+            // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer
+            // (see Cxx11_tests/test2019_171.C).  I think this may be the wrong place for this.
+               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(list[index+1]);
+               if (constructorInitializer != NULL && constructorInitializer->isCompilerGenerated() == true)
+                  {
+#if 0
+                    printf ("Detected compiler generated expression so break out of loop index = %zu \n",index);
+#endif
+                    break;
+                  }
                curprint (", ");
+             }
 
 #if 0
           printf ("Bottom of loop: depth = %d need_cxx11_class_specifier = %s \n",depth,need_cxx11_class_specifier ? "true" : "false");
@@ -7555,6 +7635,7 @@ Unparse_ExprStmt::isAssociatedWithCxx11_initializationList( SgConstructorInitial
      return is_cxx11_initialization_list;
    }
 
+
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -7568,6 +7649,18 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
      SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
      ROSE_ASSERT(con_init != NULL);
+
+#if 0
+  // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer (see Cxx11_tests/test2019_171.C).
+     if (con_init->isCompilerGenerated() == true)
+        {
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+          return;
+        }
+#endif
 
      SgUnparse_Info newinfo(info);
      bool outputParenthisis = false;
@@ -8036,7 +8129,6 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                   }
              }
         }
-
 
   // DQ (1/18/2019): this indicates a silent mode and no output should be generated from where
   // the constructor initializer is associated with the C++11 initialization_list class.
