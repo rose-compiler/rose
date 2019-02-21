@@ -697,9 +697,9 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      cerr<<"Error: NOT an assign initializer: "<<exp->unparseToString();
-      cerr<<"  AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      ROSE_ASSERT(assignInit);
+      logger[ERROR]<<"expected assign initializer but found "<<exp->unparseToString();
+      logger[ERROR]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      exit(1);
     }
     // initialize element of array initializer in state
     SgExpression* assignInitExpr=assignInit->get_operand();
@@ -1816,7 +1816,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
     // test formal parameter (instead of argument type) to allow for expressions in arguments
     VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
     if(variableIdMapping.hasClassType(formalParameterVarId)) {
-      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of Class/Struct/Union types as function paramters per value not supported."<<endl;
+      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters not supported."<<endl;
       exit(1);
     }
     // VariableName varNameString=name->get_name();

@@ -6,6 +6,7 @@
 #include "SgNodeHelper.h"
 #include "CFAnalysis.h"
 #include <list>
+#include "AstTerm.h"
 #include "AstConsistencyTests.h"
 
 #include "AstFixup.h"
@@ -606,7 +607,7 @@ namespace CodeThorn {
           // declVarNr is the tmp var nr of the binary log op
           TmpVarNrType condTmpVarNr=(*j).declVarNr;
           logger[TRACE]<<"GENERATING IF ELSE STMT: condtmpvarNr "<<condTmpVarNr<<endl;
-          ROSE_ASSERT(isValidTmpVarNr(condTmpVarNr));
+          ROSE_ASSERT(isValidGeneratedTmpVarDeclNr(condTmpVarNr));
           SgExpression* cond=getVarRefExp(condTmpVarNr); 
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
@@ -663,6 +664,12 @@ namespace CodeThorn {
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
         }
+        case Normalization::GEN_TMP_VAR_ASSIGN_WITH_EXPR: {
+          logger[TRACE]<<"GENERATING TMP VAR ASSIGNMENT WITH EXPR:"<<endl;
+          SgExprStatement* tmpVarAssignment=generateTmpVarAssignmentWithExpr((*j).tmpVarNr,expr);
+          insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
+          break;
+        }
         default:
           cerr<<"Error: Normalization: unknown subexpression transformation: "<<(*j).transformation<<endl;
           exit(1);
@@ -702,7 +709,7 @@ namespace CodeThorn {
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
     Normalization::TmpVarNrType mostRecentTmpVarNr=0;
-    logger[TRACE]<<"registerSubExpressionTempVars@"<<expr->class_name()<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<endl;
+    logger[TRACE]<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       registerSubExpressionTempVars(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/ 
@@ -750,9 +757,9 @@ namespace CodeThorn {
         logger[TRACE]<<"TODO: void function call: "<<funCallExp->unparseToString()<<endl;
         // this ensures that the expression is generated even when no temporary is assigned to it
         registerVoidExpression(stmt,expr,subExprTransformationList);
+        mostRecentTmpVarNr=0;
       }
     } else if(isSgAndOp(expr)) {
-#if 1
       // special case: short circuit operator normalization
       //SgScopeStatement* scope=stmt->get_scope();
       //SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
@@ -764,13 +771,7 @@ namespace CodeThorn {
       registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // will be used for replacing Or operator
       registerBoolVarIfElseStmt(block,expr,declVarNr,rhsResultTmpVarNr,0,0,subExprTransformationList);
       mostRecentTmpVarNr=declVarNr;
-#else
-      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
-      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
-      registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr, rhsResultTmpVarNr, subExprTransformationList);
-#endif
     } else if(isSgOrOp(expr)) {
-#if 1
       // special case: short circuit operator normalization
       Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of and-op
       Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
@@ -780,21 +781,19 @@ namespace CodeThorn {
       registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // will be used for replacing Or operator
       registerBoolVarIfElseStmt(elseBlock,expr,declVarNr,rhsResultTmpVarNr,0,0,subExprTransformationList);
       mostRecentTmpVarNr=declVarNr;
-#else
-      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
-      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
-      registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr, rhsResultTmpVarNr, subExprTransformationList);
-#endif
     } else if(SgConditionalExp* conditionalExp=isSgConditionalExp(expr)) {
-#if 1
-      logger[TRACE]<<"detected conditional Exp."<<endl;
+      logger[TRACE]<<"detected conditional Exp @"<<SgNodeHelper::sourceLineColumnToString(conditionalExp)<<endl;
       // determine type of then-branche for tmp var
       SgType* thenExprType=conditionalExp->get_true_exp()->get_type();
       bool isVoidType=isSgTypeVoid(thenExprType);
+      logger[TRACE]<<"conditional Exp Type:@"<<SgNodeHelper::sourceLineColumnToString(conditionalExp)<<":"<<AstTerm::astTermWithNullValuesToString(thenExprType)<<endl;
       Normalization::TmpVarNrType declVarNr=0;
+      logger[TRACE]<<"isVoidType: "<<isVoidType<<endl;
       if(!isVoidType) {
         declVarNr=registerTmpVarDeclaration(stmt,thenExprType,subExprTransformationList); // tmpVarNr of conditional-op
       }
+      logger[TRACE]<<"declVarNr: "<<declVarNr<<endl;
+
       //Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of conditional-op
       // hoist condition
       SgExpression* cond=conditionalExp->get_conditional_exp();
@@ -803,30 +802,48 @@ namespace CodeThorn {
       SgBasicBlock* thenBlock=SageBuilder::buildBasicBlock();
       SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
       registerCondOpIfElseStmt(stmt,cond,condResultTempVarNr,thenBlock,elseBlock,subExprTransformationList);
-      Normalization::TmpVarNrType tbResultTempVarNr
-        =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList);
-      logger[TRACE]<<"tbResultTempVarNr: "<<tbResultTempVarNr<<endl;
-      if(!isVoidType&&(true||isValidTmpVarNr(tbResultTempVarNr))) {
-        registerTmpVarAssignment(thenBlock,expr,declVarNr,tbResultTempVarNr,subExprTransformationList);
+      // use two blocks to ensure variables don't get mixed up
+      {
+        Normalization::TmpVarNrType tbResultTempVarNr
+          =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList);
+        logger[TRACE]<<"declVarNr: "<<declVarNr<<", "<<"tbResultTempVarNr: "<<tbResultTempVarNr<<endl;
+        if(!isVoidType) {
+          if(tbResultTempVarNr==0) {
+            registerTmpVarAssignmentWithExpression(thenBlock,conditionalExp->get_true_exp(),declVarNr,subExprTransformationList);
+            tbResultTempVarNr=declVarNr;
+          } else {
+            (void)registerTmpVarAssignment(thenBlock,expr,declVarNr,tbResultTempVarNr,subExprTransformationList);
+          }
+        }
       }
-      Normalization::TmpVarNrType fbResultTempVarNr
-        =registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
-      // assignment: declVarNr=fbResultTempVarNr;
-      logger[TRACE]<<"fbResultTempVarNr: "<<fbResultTempVarNr<<endl;
-      if(!isVoidType&&(true||isValidTmpVarNr(fbResultTempVarNr))) {
-        registerTmpVarAssignment(elseBlock,expr,declVarNr,fbResultTempVarNr,subExprTransformationList);
-        registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // replacing cond operator
-      } else {
-        // special case: if void-expr then ?-op must be removed. In
-        // this case the operator must be the inside a ExprStmt (casts
-        // may exist as well, therefore the pattern can be more
-        // complicated, but the root is stmt.
-        registerStmtRemoval(stmt,subExprTransformationList);
+      {
+        Normalization::TmpVarNrType fbResultTempVarNr
+          =registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
+        // assignment: declVarNr=fbResultTempVarNr;
+        logger[TRACE]<<"declVarNr: "<<declVarNr<<", "<<"fbResultTempVarNr: "<<fbResultTempVarNr<<endl;
+        if(!isVoidType) {
+          if(fbResultTempVarNr==0) {
+            (void)registerTmpVarAssignmentWithExpression(elseBlock,conditionalExp->get_false_exp(),declVarNr,subExprTransformationList);
+            fbResultTempVarNr=declVarNr;
+          } else {
+            (void)registerTmpVarAssignment(elseBlock,expr,declVarNr,fbResultTempVarNr,subExprTransformationList);
+          }
+          registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // replacing conditional operator
+          mostRecentTmpVarNr=fbResultTempVarNr; // note both branches must be either void or non-void.
+        } else {
+          // special case: if void-expr then ?-op must be removed. In
+          // this case the operator must be the inside a ExprStmt (casts
+          // may exist as well, therefore the pattern can be more
+          // complicated, but the root is stmt.
+          registerStmtRemoval(stmt,subExprTransformationList);
+        }
       }
-#endif
+      //ROSE_ASSERT(isValidRegisteredTmpVarNr(tbResultTempVarNr)==isValidRegisteredTmpVarNr(fbResultTempVarNr));
+
     } else if(isSgCastExp(expr) && isSgTypeVoid(expr->get_type())) {
         // note: other non-void cast expressions are handled by unary operator case
         registerVoidExpression(stmt,expr,subExprTransformationList);
+        mostRecentTmpVarNr=0;
     } else if(isSgBinaryOp(expr)) {
       // general case: binary operator
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
@@ -836,7 +853,11 @@ namespace CodeThorn {
       // general case: unary operator
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
+    } else {
+      // leave node, nothing to do. Nr 0 is returned.
     }
+
+    logger[TRACE]<<logger[TRACE]<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<": mostRecentTmpVarNr on return: "<<mostRecentTmpVarNr<<endl;
     return mostRecentTmpVarNr;
   }
 
@@ -846,7 +867,7 @@ namespace CodeThorn {
   }
 
   SgVariableDeclaration* Normalization::getVarDecl(TmpVarNrType tmpVarNr) {
-    ROSE_ASSERT(isValidTmpVarNr(tmpVarNr));
+    ROSE_ASSERT(isValidGeneratedTmpVarDeclNr(tmpVarNr));
     return tmpVarMapping[tmpVarNr];
   }
 
@@ -893,8 +914,16 @@ namespace CodeThorn {
     (void)(tmpVarNrCounter++);
   }
 
-  bool Normalization::isValidTmpVarNr(Normalization::TmpVarNrType tmpVarNr) {
-    return tmpVarNr>0 && (tmpVarMapping.find(tmpVarNr)!=tmpVarMapping.end());
+  bool Normalization::tmpVarNrDeclExists(Normalization::TmpVarNrType tmpVarNr) {
+    return tmpVarMapping.find(tmpVarNr)!=tmpVarMapping.end();
+  }
+
+  bool Normalization::isValidGeneratedTmpVarDeclNr(Normalization::TmpVarNrType tmpVarNr) {
+    return tmpVarNr>0 && tmpVarNrDeclExists(tmpVarNr);
+  }
+
+  bool Normalization::isValidRegisteredTmpVarNr(Normalization::TmpVarNrType tmpVarNr) {
+    return tmpVarNr>0;
   }
 
   void Normalization::registerStmtRemoval(SgStatement* stmt, SubExprTransformationList& subExprTransformationList) {
@@ -902,11 +931,21 @@ namespace CodeThorn {
     subExprTransformationList.push_back(seTrans);
   }
 
+  void Normalization::registerTmpVarAssignmentWithExpression(SgStatement* stmt,SgExpression* expr, Normalization::TmpVarNrType tmpVarNr, SubExprTransformationList& subExprTransformationList) {
+    logger[TRACE]<<"registerTmpVarAssignmentWithExpression: temp"<<tmpVarNr<<" = "<<expr->unparseToString()<<endl;
+    ROSE_ASSERT(isValidRegisteredTmpVarNr(tmpVarNr));
+    RegisteredSubExprTransformation seTrans(Normalization::GEN_TMP_VAR_ASSIGN_WITH_EXPR,stmt,expr);
+    seTrans.tmpVarNr=tmpVarNr;
+    subExprTransformationList.push_back(seTrans);    
+  }
+
   void Normalization::registerTmpVarAssignment(SgStatement* stmt,SgExpression* expr, Normalization::TmpVarNrType lhsVarNr, Normalization::TmpVarNrType rhsVarNr, SubExprTransformationList& subExprTransformationList) {
+    logger[TRACE]<<"registerTmpVarAssignment: "<<lhsVarNr<<"("<<isValidRegisteredTmpVarNr(lhsVarNr)<<")"<<" = "<<rhsVarNr<<"("<<isValidRegisteredTmpVarNr(rhsVarNr)<<")"<<endl;
+    ROSE_ASSERT(isValidRegisteredTmpVarNr(lhsVarNr));
+    ROSE_ASSERT(isValidRegisteredTmpVarNr(rhsVarNr));
     RegisteredSubExprTransformation seTrans(Normalization::GEN_TMP_VAR_ASSIGN,stmt,expr);
     seTrans.lhsTmpVarNr=lhsVarNr;
     seTrans.rhsTmpVarNr=rhsVarNr;
-    logger[TRACE]<<"registerTmpVarAssignment: "<<lhsVarNr<<" = "<<rhsVarNr<<endl;
     subExprTransformationList.push_back(seTrans);
   }
 
@@ -1136,9 +1175,14 @@ namespace CodeThorn {
   }
   
   SgExprStatement* Normalization::generateTmpVarAssignment(Normalization::TmpVarNrType lhsVarNr, Normalization::TmpVarNrType rhsVarNr) {
-    auto lhsVarDecl=getVarRefExp(lhsVarNr);
-    auto rhsVarDecl=getVarRefExp(rhsVarNr);
-    return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(lhsVarDecl,rhsVarDecl));
+    auto lhsVarRefExp=getVarRefExp(lhsVarNr);
+    auto rhsVarRefExp=getVarRefExp(rhsVarNr);
+    return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(lhsVarRefExp,rhsVarRefExp));
+  }
+
+  SgExprStatement* Normalization::generateTmpVarAssignmentWithExpr(Normalization::TmpVarNrType lhsVarNr, SgExpression* expr) {
+    auto lhsVarRefExp=getVarRefExp(lhsVarNr);
+    return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(lhsVarRefExp,SageInterface::deepCopy(expr)));
   }
 
   SgVariableDeclaration*
@@ -1184,7 +1228,7 @@ namespace CodeThorn {
   }
 
   void Normalization::addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl) {
-    logger[TRACE]<<"addToTmpVarMapping: "<<tmpVarNr<<" : "<< decl<<endl;
+    logger[TRACE]<<"addToTmpVarMapping: "<<"("<<tmpVarNr<<","<< decl<<")"<<endl;
     tmpVarMapping.insert(TmpVarMappingPair(tmpVarNr,decl));
   }
 } // end of namespace CodeThorn
