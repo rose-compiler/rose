@@ -442,9 +442,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_177.C \
    test2019_178.C \
    test2019_179.C \
-   test2019_180.C 
-
-#   test2019_181.C 
+   test2019_180.C \
+   test2019_181.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
