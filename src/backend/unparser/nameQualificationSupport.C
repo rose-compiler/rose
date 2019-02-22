@@ -5399,6 +5399,34 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
+            // DQ (2/21/2019): The constructor initializers need to start their name qualification from the class declaration.
+            // bool debugging = false;
+               SgCtorInitializerList* ctorInitializerList = isSgCtorInitializerList(initializedName->get_parent());
+               if (ctorInitializerList != NULL)
+                  {
+                    SgClassDefinition* classDefinition = isSgClassDefinition(initializedName->get_scope());
+#if 0
+                 // DQ (2/21/2019): This is either a SgDeclarationScope or a SgClassDefinition.
+                    if (classDefinition == NULL)
+                       {
+                         printf ("case SgInitializedName: initializedName->get_scope(): classDefinition == NULL: initializedName->get_scope() = %p = %s \n",
+                              initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+                       }
+                 // ROSE_ASSERT(classDefinition != NULL);
+#endif
+                    if (classDefinition != NULL)
+                       {
+                         SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                         ROSE_ASSERT(classDeclaration != NULL);
+
+                         currentScope = classDeclaration->get_scope();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("Found case of SgInitializedName in constructor preinitialization list: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                       }
+                 // debugging = true;
+                  }
+
             // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
             // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentStatement);
                int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
@@ -5417,7 +5445,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
-
+#if 0
+            // DQ (2/21/2019): debugging support.
+               if (debugging == true)
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
             // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
             // (only non-template classes or maybe named types more generally?).  Handle template declarations similarly.
             // OR enum declarations (since they can have a forward declaration (except that this is a common languae extension...).
@@ -5552,9 +5587,20 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                                    if (initializedName->get_name() == functionName)
                                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
+#endif
                                         setNameQualificationOnName(initializedName,declaration,amountOfNameQualificationRequiredForType,skipGlobalNameQualification);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
                                       }
                                  }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                             }
                            else
                             {
@@ -5584,6 +5630,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #else
             // setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
                setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType,false);
+#endif
+
+#if 0
+            // DQ (2/21/2019): debugging support.
+               if (debugging == true)
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
 #endif
 
 #if 1
