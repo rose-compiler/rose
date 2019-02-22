@@ -78,8 +78,8 @@ namespace CodeThorn {
       // obsolete
       normalizeVariableDeclarationsWithFunctionCalls=false; 
 
-      eliminateShortCircuitOperators=true; // not implemented yet
-      //eliminateConditionalExpressionOp=true; // not implemented yet
+      eliminateShortCircuitOperators=true;
+      //eliminateConditionalExpressionOp=true;
 
       encapsulateNormalizedExpressionsInBlocks=false;
       normalizeExpressions=true;
@@ -96,8 +96,8 @@ namespace CodeThorn {
       eliminateWhileStatements=true;  // different to level 1,2
       hoistConditionExpressions=true;
       normalizeVariableDeclarations=false;
-      //eliminateShortCircuitOperators=true; // not implemented yet
-      //eliminateConditionalExpressionOp=true; // not implemented yet
+      //eliminateShortCircuitOperators=true;
+      //eliminateConditionalExpressionOp=true;
       encapsulateNormalizedExpressionsInBlocks=true; // different to level 1,2
       normalizeExpressions=true;
       transformBreakToGotoInSwitchStmt=true;  // different to level 1,2
@@ -578,6 +578,7 @@ namespace CodeThorn {
           // only copy expression, no tmpvar
           SgExpression* exprCopy=SageInterface::copyExpression((*j).expr);
           ROSE_ASSERT(exprCopy);
+          //logger[TRACE]<<"exprCopy: "<<exprCopy->unparseToString()<<endl; (causes ROSE warning)
           insertNormalizedSubExpressionFragment(SageBuilder::buildExprStatement(exprCopy),(*j).stmt);
           break;
         }
@@ -686,7 +687,7 @@ namespace CodeThorn {
     SubExprTransformationList subExprTransformationList;
     if(!options.encapsulateNormalizedExpressionsInBlocks) {
       // normalized subexpressions (and declared variables) are replacing the current expression
-      registerSubExpressionTempVars(stmt,expr,subExprTransformationList);
+      registerSubExpressionTempVars(stmt,expr,subExprTransformationList,false);
     } else {
       ROSE_ASSERT(options.normalizeVariableDeclarations==true);
       // normalized subexpressions (and declared variables) are generated inside an additional block
@@ -700,14 +701,14 @@ namespace CodeThorn {
       stmt->set_parent(0);
       block->append_statement(stmt);
       ROSE_ASSERT(stmt->get_parent()==block); 
-      registerSubExpressionTempVars(stmt,expr,subExprTransformationList);
+      registerSubExpressionTempVars(stmt,expr,subExprTransformationList,false);
     }
     // for each expression one SubExprTransformationList is inserted 
     exprTransformationList.push_back(subExprTransformationList);
   }
 
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
-  Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList) {
+  Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
     Normalization::TmpVarNrType mostRecentTmpVarNr=0;
     logger[TRACE]<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
@@ -715,12 +716,12 @@ namespace CodeThorn {
       } else*/ 
     if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
       // special case: normalize array index-expressions
-      registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)),subExprTransformationList);
+      registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
       // normalize rhs of assignment
-      mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       // normalize lhs of assignment
       SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
       ROSE_ASSERT(lhs);
@@ -730,17 +731,17 @@ namespace CodeThorn {
       // wrong. Note: not all operators can appear as top-most op on
       // lhs.
       if(isSgUnaryOp(lhs)) {
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList);
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList,insideExprToBeEliminated);
       } else if(isSgBinaryOp(lhs)) {
-        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)),subExprTransformationList);
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)),subExprTransformationList);
+        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
       }
     } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
       // special case: function call with normalization of arguments
       // and void return type (no temp var generation)
       SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
       for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,*i,subExprTransformationList);
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,*i,subExprTransformationList,insideExprToBeEliminated);
       }
       // check if function has a return value
       SgType* functionReturnType=funCallExp->get_type();
@@ -754,9 +755,13 @@ namespace CodeThorn {
         mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
       } else {
         // generate function call, but without assignment to temporary
-        logger[TRACE]<<"TODO: void function call: "<<funCallExp->unparseToString()<<endl;
+        if(insideExprToBeEliminated) {
+          logger[TRACE]<<"register void-expr for void-function call: "<<funCallExp->unparseToString()<<endl;
+          registerVoidExpression(stmt,expr,subExprTransformationList);
+        } else {
+          logger[TRACE]<<"DO NOT register void-expr for void-function call (inside cond-op): "<<funCallExp->unparseToString()<<endl;
+        }
         // this ensures that the expression is generated even when no temporary is assigned to it
-        registerVoidExpression(stmt,expr,subExprTransformationList);
         mostRecentTmpVarNr=0;
       }
     } else if(isSgAndOp(expr)) {
@@ -764,20 +769,20 @@ namespace CodeThorn {
       //SgScopeStatement* scope=stmt->get_scope();
       //SgVariableDeclaration* decl=generateFalseBoolVarDecl(scope);
       Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of and-op
-      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       SgBasicBlock* block=SageBuilder::buildBasicBlock();
       registerIfElseStmt(stmt,expr,lhsResultTmpVarNr,block,0,subExprTransformationList);
-      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(block,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(block,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // will be used for replacing Or operator
       registerBoolVarIfElseStmt(block,expr,declVarNr,rhsResultTmpVarNr,0,0,subExprTransformationList);
       mostRecentTmpVarNr=declVarNr;
     } else if(isSgOrOp(expr)) {
       // special case: short circuit operator normalization
       Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of and-op
-      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
       registerBoolVarIfElseStmt(stmt,expr,declVarNr,lhsResultTmpVarNr,0,elseBlock,subExprTransformationList);
-      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(elseBlock,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(elseBlock,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // will be used for replacing Or operator
       registerBoolVarIfElseStmt(elseBlock,expr,declVarNr,rhsResultTmpVarNr,0,0,subExprTransformationList);
       mostRecentTmpVarNr=declVarNr;
@@ -797,7 +802,7 @@ namespace CodeThorn {
       //Normalization::TmpVarNrType declVarNr=registerTmpFalseBoolVarDecl(stmt,expr,subExprTransformationList); // tmpVarNr of conditional-op
       // hoist condition
       SgExpression* cond=conditionalExp->get_conditional_exp();
-      Normalization::TmpVarNrType condResultTempVarNr=registerSubExpressionTempVars(stmt,cond,subExprTransformationList);
+      Normalization::TmpVarNrType condResultTempVarNr=registerSubExpressionTempVars(stmt,cond,subExprTransformationList,insideExprToBeEliminated);
       // handle both branches
       SgBasicBlock* thenBlock=SageBuilder::buildBasicBlock();
       SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
@@ -805,7 +810,7 @@ namespace CodeThorn {
       // use two blocks to ensure variables don't get mixed up
       {
         Normalization::TmpVarNrType tbResultTempVarNr
-          =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList);
+          =registerSubExpressionTempVars(thenBlock,isSgExpression(conditionalExp->get_true_exp()),subExprTransformationList,true);
         logger[TRACE]<<"declVarNr: "<<declVarNr<<", "<<"tbResultTempVarNr: "<<tbResultTempVarNr<<endl;
         if(!isVoidType) {
           if(tbResultTempVarNr==0) {
@@ -818,7 +823,7 @@ namespace CodeThorn {
       }
       {
         Normalization::TmpVarNrType fbResultTempVarNr
-          =registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList);
+          =registerSubExpressionTempVars(elseBlock,isSgExpression(conditionalExp->get_false_exp()),subExprTransformationList,true);
         // assignment: declVarNr=fbResultTempVarNr;
         logger[TRACE]<<"declVarNr: "<<declVarNr<<", "<<"fbResultTempVarNr: "<<fbResultTempVarNr<<endl;
         if(!isVoidType) {
@@ -842,16 +847,17 @@ namespace CodeThorn {
 
     } else if(isSgCastExp(expr) && isSgTypeVoid(expr->get_type())) {
         // note: other non-void cast expressions are handled by unary operator case
-        registerVoidExpression(stmt,expr,subExprTransformationList);
-        mostRecentTmpVarNr=0;
+      logger[TRACE]<<"register void-expr for void-cast: "<<expr->unparseToString()<<endl;
+      registerVoidExpression(stmt,expr,subExprTransformationList);
+      mostRecentTmpVarNr=0;
     } else if(isSgBinaryOp(expr)) {
       // general case: binary operator
-      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList);
-      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
+      Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr,rhsResultTmpVarNr,subExprTransformationList);
     } else if(isSgUnaryOp(expr)) {
       // general case: unary operator
-      Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList);
+      Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
     } else {
       // leave node, nothing to do. Nr 0 is returned.

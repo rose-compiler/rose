@@ -196,7 +196,7 @@ namespace CodeThorn {
     /* transform subexpression with root ExprStatement into a list of separate assignments
        this function is used by normalizeExpression to normalize all sub-expressions of an expression
     */
-    Normalization::TmpVarNrType registerSubExpressionTempVars(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList);
+    Normalization::TmpVarNrType registerSubExpressionTempVars(SgStatement* stmt, SgExpression* node, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated);
 
     Normalization::TmpVarNrType registerTmpVarDeclaration(SgStatement* stmt, SgType* type, SubExprTransformationList& subExprTransformationList);
     Normalization::TmpVarNrType registerTmpVarInitialization(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList);
