@@ -377,6 +377,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_98.C \
    test2019_99.C \
    test2019_100.C \
+   test2019_101.C \
+   test2019_102.C \
    test2019_105.C \
    test2019_106.C \
    test2019_107.C \
@@ -437,6 +439,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_171.C \
    test2019_172.C \
    test2019_173.C \
+   test2019_174.C \
    test2019_175.C \
    test2019_176.C \
    test2019_177.C \
@@ -466,8 +469,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_49.C \
    test2019_59.C \
    test2019_60.C \
-   test2019_101.C \
-   test2019_102.C \
    test2019_103.C \
    test2019_104.C \
    test2019_109.C \

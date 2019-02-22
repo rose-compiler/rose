@@ -6712,7 +6712,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        {
                          curprint ( nameQualifier.str());
                        }
-
+#if 0
+                    curprint("/* output the name of the ctor in the preinitialization list */ ");
+#endif
                     curprint((*p)->get_name().str());
 
                  // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
@@ -6732,6 +6734,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               outputParenthesis = (constructorInitializer->get_need_parenthesis_after_name() == false);
                             }
 #else
+#error "DEAD CODE!"
                       // DQ (8/6/2005): Remove "()" when SgConstructorInitializer is used in preinitialization list (since it will output a "()" already)
                       // printf ("Output parenthesis for all but constructor initializers \n");
                          bool outputParenthesis =  (isSgConstructorInitializer(initializer) == NULL);
