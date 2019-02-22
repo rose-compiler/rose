@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
   f2cxx::ProcGatherer procs    = sg::traverseChildren(f2cxx::ProcGatherer(), inp);
 
   // analyze procs and their parameters
-  f2cxx::Analyzer     analyzer = par_for_each(f2cxx::Analyzer(), procs.procs());
+  par_for_each(f2cxx::Analyzer(), procs.procs());
 
   // print out analysis for debugging purposes
   std::for_each(procs.procs().begin(), procs.procs().end(), f2cxx::print_param_tags);
@@ -161,25 +161,19 @@ int main(int argc, char* argv[])
 
   declmkr = std::for_each(procs.procs().begin(), procs.procs().end(), declmkr);
 
+  // Transform all procedures
+  par_for_each(f2cxx::Translator(out), declmkr.decls());
+
   if (generate_dot_file)
   {
     std::cerr << "dot begin" << std::endl;
-    f2cxx::save_dot("output.dot", out, f2cxx::balanced);
+    f2cxx::save_dot("fxx.dot", inp, f2cxx::simple);
+    f2cxx::save_dot("cxx.dot", out, f2cxx::balanced);
     std::cerr << "dot end." << std::endl;
-    exit(0);
+    //~ exit(0);
   }
 
-  // Transform all procedures
-  f2cxx::Translator   transl   = par_for_each(f2cxx::Translator(out), declmkr.decls());
-
-/*
-  f2cxx::StatementTranslator stmtTl(files.cpp_file);
-
-  traverseChildren(files.fxx_file, stmtTl);
-
-  sg::forAllNodes(files.cpp_file, f2cxx::FileInfoSetter(), preorder);
   backend(p);
-*/
   return 0;
 }
 

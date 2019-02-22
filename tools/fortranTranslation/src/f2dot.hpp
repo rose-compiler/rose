@@ -19,12 +19,12 @@ namespace f2cxx
     full      = (balanced | moretypes | symbols | builtins)
   };
 
-  /// writes graph to a dot file ( https://www.graphviz.org/doc/info/lang.html )
-  ///   for the AST rooted in n. The attribute set determine if types and
-  ///   decl-backlinks are included in the graph.
+  /** Writes graph as dot ( https://www.graphviz.org/doc/info/lang.html )
+   *  to a stream @p out for the AST rooted in @p n. The attribute set
+   *  determines what information is included in the output. */
   void print_dot(std::ostream& out, SgNode& n, attr_set options = balanced);
 
-  /// opens the file "outfile" and writes out the graph rooted in n.
+  /** opens the file @p outfile and writes out the graph rooted in n. */
   void save_dot(std::string outfile, SgNode& n, attr_set options = balanced);
 }
 
