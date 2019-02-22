@@ -352,10 +352,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # gfortran --version | sed -n '1s/.*) //;1p'
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
 
-# Testing the 4.0.x compiler
-# BACKEND_FORTRAN_COMPILER="/usr/apps/gcc/4.0.2/bin/gfortran"
-# echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
-
 # DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
 # the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
 # So for this case we detect it explicitly and fill in the values directly!
@@ -373,15 +369,17 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   AC_MSG_NOTICE([Fortran back-end compiler major version number = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"])
   AC_MSG_NOTICE([Fortran back-end compiler minor version number = "$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER"])
 
-# Test that we have correctly evaluated the major and minor versions numbers...
-  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
-    AC_MSG_ERROR([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
-  fi
-
-  if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
-    AC_MSG_ERROR([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
+## Test that we have correctly evaluated the major and minor versions numbers...
+#  If incorrect better to fail here rather than in build (sage_support.cpp),
+#  but only fail if Fortran support is requested [Rasmussen 2019.02.21]
+#
+  if test "x$support_fortran_frontend" = "xyes" ; then
+    if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+      AC_MSG_ERROR([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
+    fi
+    if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+      AC_MSG_ERROR([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
+    fi
   fi
 
 # DQ (9/16/2009): GNU gfortran 4.0 has special problems so we avoid some tests where it fails.
