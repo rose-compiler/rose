@@ -102,6 +102,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #if 0
                printf ("In Unparser_Nameq::lookup_generated_qualified_name(): node = %p = %s \n",node,node->class_name().c_str());
                printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case V_SgEnumDeclaration: calling SgEnumDeclaration::get_qualified_name_prefix_for_base_type() \n");
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
 #endif
             // DQ (2/18/2019): If this works then we might want to generate an associated get_qualified_name_prefix_for_base_type() function for the SgEnumDeclaration.
             // nameQualifier = node->get_qualified_name_prefix_for_base_type();
@@ -111,11 +112,39 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // std::map<SgNode*,std::string>::iterator i = SgNode::get_qualifiedNameMapForNames().find(node);
                std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(node);
 
-               if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+            // if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
                   {
+#if 0
+                    printf ("FOUND a valid name qualification: i->first = %p \n",i->first);
+                    printf ("FOUND a valid name qualification: i->second = %s \n",i->second.c_str());
+#endif
+                 // DQ (2/22/2019): Added assertion.
+                    ROSE_ASSERT(node == i->first);
+
+#if 1
                     nameQualifier = i->second;
+#else
+                 // DQ (2/22/2019): This only appears to be a problem for ROSE when compiled with GNU 4.9.3.
+                 // It might be a special case of the implementation of SgName and it's constructor that 
+                 // take a string as well.  But it only appears as an issue for GNU 4.9.3.
+#if 0
+                    printf ("before test for empty string \n");
+
+#endif
+                    if (i->second.empty() == false)
+                       {
+#if 0
+                         printf ("before assignment to nameQualifier \n");
+#endif
+                         nameQualifier = i->second;
+#if 0
+                         printf ("after assignment to nameQualifier \n");
+#endif
+                       }
 #if 0
                     printf ("FOUND a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
 #endif
                   }
                  else
