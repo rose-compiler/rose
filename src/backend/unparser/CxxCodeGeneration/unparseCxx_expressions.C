@@ -4231,14 +4231,18 @@ Unparse_ExprStmt::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
                  // typical case!
                  // curprint ( float_val->get_value();
                  // AS (11/08/2005) add support for values as string
-                    if (float_val->get_valueString() == "")
-                       {
-                         curprint ( tostring(float_val->get_value()) + "F");
-                       }
-                      else
-                       {
-                         curprint ( float_val->get_valueString());
-                       }
+                    if (float_val->get_valueString() == "") {
+                      curprint ( tostring(float_value) );
+                      if (!info.get_user_defined_literal()) {
+                        curprint ( "L" );
+                      }
+                    } else {
+                      std::string strVal = float_val->get_valueString();
+                      if (info.get_user_defined_literal() && ( strVal.at(strVal.length() - 1) == 'f' || strVal.at(strVal.length() - 1) == 'F' ) ) {
+                        strVal = strVal.substr(0, strVal.length() - 1);
+                      }
+                      curprint (strVal);
+                    }
                   }
              }
         }
@@ -4360,10 +4364,18 @@ Unparse_ExprStmt::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
                  // typical case!
                  // curprint ( longdbl_val->get_value();
                  // AS (11/08/2005) add support for values as string
-                    if (longdbl_val->get_valueString() == "")
-                         curprint ( tostring(longDouble_value));
-                      else
-                         curprint ( longdbl_val->get_valueString());
+                    if (longdbl_val->get_valueString() == "") {
+                      curprint ( tostring(longDouble_value) );
+                      if (!info.get_user_defined_literal()) {
+                        curprint ( "L" );
+                      }
+                    } else {
+                      std::string strVal = longdbl_val->get_valueString();
+                      if (info.get_user_defined_literal() && ( strVal.at(strVal.length() - 1) == 'l' || strVal.at(strVal.length() - 1) == 'L' ) ) {
+                        strVal = strVal.substr(0, strVal.length() - 1);
+                      }
+                      curprint (strVal);
+                    }
                   }
              }
         }
@@ -5168,6 +5180,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if ( (func_ref != NULL) && func_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isUldOperator() )
                        {
                          print_paren = false;
+                         newinfo.set_user_defined_literal(true);
                       // printFunctionArguments = false;
                        }
 
@@ -5175,6 +5188,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if ( (mfunc_ref != NULL) && mfunc_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isUldOperator() )
                        {
                          print_paren = false;
+                         newinfo.set_user_defined_literal(true);
                       // printFunctionArguments = false;
                        }
                   }
