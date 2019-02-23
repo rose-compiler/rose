@@ -8126,33 +8126,759 @@ SageInterface::getFunctionDeclaration ( SgFunctionCallExp* functionCallExp )
      return returnDeclaration;
    }
 
+#if 0
+// DQ (2/17/2019): Save older version of function before it was generalized.
+
+std::list<SgClassType*>
+SageInterface::getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp)
+   {
+  // DQ (2/16/2019): This version support for data member name qualification return type chains.
+
+#define DEBUG_DATA_MEMBER_TYPE_CHAIN 0
+
+     std::list<SgClassType*> returnTypeChain;
+
+#error "DEAD CODE!"
+
+     std::list<SgClassType*> classChain;
+
+     ROSE_ASSERT(varRefExp != NULL);
+
+  // Make sure this is at least a reference to a data member.
+     ROSE_ASSERT(isDataMemberReference(varRefExp) == true);
+
+#error "DEAD CODE!"
+
+     SgNode* parent = varRefExp->get_parent();
+     ROSE_ASSERT(parent != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+
+     SgArrowExp* arrowExp = isSgArrowExp(parent);
+     SgDotExp*   dotExp   = isSgDotExp(parent);
+
+     SgBinaryOp* binaryOperator = NULL;
+
+#error "DEAD CODE!"
+
+     if (arrowExp != NULL)
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): Found an arrow expression \n");
+#endif
+          binaryOperator = arrowExp;
+        }
+
+     if (dotExp != NULL)
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): Found an dot expression \n");
+#endif
+          binaryOperator = dotExp;
+        }
+
+#error "DEAD CODE!"
+
+  // ROSE_ASSERT(binaryOperator != NULL);
+     if (binaryOperator != NULL)
+        {
+     SgExpression* lhs = binaryOperator->get_lhs_operand();
+     ROSE_ASSERT(lhs != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+#endif
+
+  // Looking for a chain of SgCastExp expressions.
+     SgExpression* temp_lhs = lhs;
+     SgCastExp* cast = NULL;
+     while (isSgCastExp(temp_lhs) != NULL)
+        {
+          cast = isSgCastExp(temp_lhs);
+          temp_lhs = cast->get_operand();
+
+          ROSE_ASSERT(cast->get_type() != NULL);
+          SgClassType* classType = isSgClassType(cast->get_type());
+          if (classType == NULL)
+             {
+#if 0
+               printf (" --- looking for base type: In SageInterface::getClassTypeChainForDataMemberReference(): classType == NULL: cast->get_type() = %p = %s \n",
+                    cast->get_type(),cast->get_type()->class_name().c_str());
+#endif
+               SgType* baseType = cast->get_type()->stripType(SgType::STRIP_POINTER_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+               ROSE_ASSERT(baseType != NULL);
+#if 0
+               printf (" --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+               classType = isSgClassType(baseType);
+             }
+       // ROSE_ASSERT(classType != NULL);
+
+          ROSE_ASSERT(temp_lhs != NULL);
+#if 0
+          printf (" --- temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+       // returnTypeChain.push_front(classType);
+          if (classType != NULL)
+             {
+               classChain.push_front(classType);
+             }
+        }
+
+#error "DEAD CODE!"
+
+  // We also need to include the first class where we are referencing the variable or function because that is where the first ambiguity may happen.
+
+     ROSE_ASSERT(temp_lhs != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+
+     SgVarRefExp* derivedClassVarRefExp = isSgVarRefExp(temp_lhs);
+     if (derivedClassVarRefExp != NULL)
+        {
+          SgVariableSymbol* derivedClassVariableSymbol =  derivedClassVarRefExp->get_symbol();
+          ROSE_ASSERT(derivedClassVariableSymbol != NULL);
+
+          SgName derivedClassVariableName = derivedClassVariableSymbol->get_name();
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): derivedClassVariableName = %s \n",derivedClassVariableName.str());
+#endif
+       // SgType* type = cast->get_type();
+          SgType* type = temp_lhs->get_type();
+          ROSE_ASSERT(type != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+#endif
+          SgClassType* classType = isSgClassType(type);
+
+       // ROSE_ASSERT(classType != NULL);
+          if (classType != NULL)
+             {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs classType = %p = %s \n",classType,classType->class_name().c_str());
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+               ROSE_ASSERT(classDeclaration != NULL);
+               printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs classDeclaration = %p = %s name = %s \n",
+                    classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+            // This is where we want the SgVarRefExp data member qualification to start.
+            // returnType = classType;
+            // returnTypeChain.push_front(classType);
+
+#error "DEAD CODE!"
+
+               classChain.push_front(classType);
+             }
+        }
+       else
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Need to support alternative to SgVarRefExp: temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+          SgType* type = temp_lhs->get_type();
+          ROSE_ASSERT(type != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+#endif
+          SgClassType* classType = isSgClassType(type);
+       // returnTypeChain.push_front(classType);
+          if (classType != NULL)
+             {
+               classChain.push_front(classType);
+             }
+        }
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("classChain.size() = %zu \n",classChain.size());
+     std::list<SgClassType*>::iterator iter = classChain.begin();
+     while(iter != classChain.end())
+        {
+          printf (" --- *iter = %p = %s name = %s \n",*iter,(*iter)->class_name().c_str(),(*iter)->get_name().str());
+
+          iter++;
+        }
+#endif
+
+  // Test the first element in the list to see if there is an ambiguity in the associated classDefinition 
+  // for the input variable referenced SgVarRefExp).
+
+#error "DEAD CODE!"
+
+     SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+     ROSE_ASSERT(variableSymbol != NULL);
+     SgName variableName = variableSymbol->get_name();
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("variableName = %s \n",variableName.str());
+#endif
+
+  // SgClassType* firstDetectedAmbiguity = NULL;
+  // SgClassType* lastDetectedAmbiguity  = NULL;
+
+  // bool nameQualificationRequired = false;
+
+  // std::list<SgClassType*> deleteList;
+     std::list<SgClassType*> saveList;
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+     printf ("classChain.size() = %zu \n",classChain.size());
+#endif
+
+     std::list<SgClassType*>::iterator i = classChain.begin();
+     std::list<SgClassType*>::iterator save_iter = i;
+
+#error "DEAD CODE!"
+
+  // If we have an abiguity at i then we want to save i++, so define save_iter to be the next in the class type list.
+     save_iter++;
+
+     while(i != classChain.end())
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
+#endif
+          SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
+          ROSE_ASSERT(declarationStatement != NULL);
+          SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
+          ROSE_ASSERT(definingDeclarationStatement != NULL);
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+          ROSE_ASSERT(classDeclaration != NULL);
+          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
+
+       // This works for any SgName and SgSymbol, so it need not be specific to variables.
+          bool ambiguityDetected = classDefinition->hasAmbiguity(variableName,variableSymbol);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+
+#error "DEAD CODE!"
+
+          if (ambiguityDetected == true)
+             {
+            // nameQualificationRequired = true;
+
+               if (save_iter != classChain.end())
+                  {
+                    saveList.push_back(*save_iter);
+                  }
+#if 0
+               if (firstDetectedAmbiguity == NULL)
+                  {
+                    firstDetectedAmbiguity = *i;
+                  }
+               lastDetectedAmbiguity = *i;
+#endif
+             }
+#if 0
+            else
+             {
+               if (nameQualificationRequired == false)
+                  {
+                 // deleteList.push_back(*i);
+                  }
+             }
+#endif
+          i++;
+        }
+
+#if 0
+// DEBUG_DATA_MEMBER_TYPE_CHAIN
+     if (firstDetectedAmbiguity != NULL)
+        {
+       // Detected ambiguity that will require some name qualification.
+          printf ("Detected ambiguity that will require some name qualification \n");
+          ROSE_ASSERT(lastDetectedAmbiguity != NULL);
+        }
+       else
+        {
+       // No ambiguity that will require any name qualification.
+          printf ("No ambiguity that will require any name qualification \n");
+        }
+#endif
+
+  // Now build a list of class types to use in the name qualification from firstDetectedAmbiguity to lastDetectedAmbiguity (inclusive).
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("saveList.size() = %zu \n",saveList.size());
+     std::list<SgClassType*>::iterator saveList_iterator = saveList.begin();
+     while (saveList_iterator != saveList.end())
+        {
+          printf (" --- *saveList_iterator = %p = %s name = %s \n",*saveList_iterator,(*saveList_iterator)->class_name().c_str(),(*saveList_iterator)->get_name().str());
+
+          saveList_iterator++;
+        }
+#endif
+
+     returnTypeChain = saveList;
+
+       // End of branch for binaryOperator != NULL.
+        }
+
+#error "DEAD CODE!"
+
+     return returnTypeChain;
+   }
+
+#endif
+
+
+
+std::list<SgClassType*>
+SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
+   {
+  // DQ (2/16/2019): This version support for data member name qualification return type chains.
+
+#define DEBUG_DATA_MEMBER_TYPE_CHAIN 0
+
+  // The input must be one of these two, then this function is suficiently general to support name qualification requirements for both.
+     SgVarRefExp*            varRefExp            = isSgVarRefExp(refExp);
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(refExp);
+
+     ROSE_ASSERT(varRefExp != NULL || memberFunctionRefExp != NULL);
+
+     std::list<SgClassType*> returnTypeChain;
+
+  // Internal list used to filter the class chain generated from chained SgCastExp objects to identify the subset containing an ambiguity.
+     std::list<SgClassType*> classChain;
+
+  // Make sure this is at least a reference to a data or member function member.
+  // The requirements for these functions are different, however, if they were 
+  // virtual functions it might be a more attractive design.
+     if (varRefExp != NULL)
+        {
+          ROSE_ASSERT(isDataMemberReference(varRefExp) == true);
+        }
+       else
+        {
+          ROSE_ASSERT(memberFunctionRefExp != NULL);
+          ROSE_ASSERT(isMemberFunctionMemberReference(memberFunctionRefExp) == true);
+        }
+
+     SgNode* parent = refExp->get_parent();
+     ROSE_ASSERT(parent != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): parent = %p = %s \n",parent,parent->class_name().c_str());
+#endif
+
+     SgArrowExp* arrowExp = isSgArrowExp(parent);
+     SgDotExp*   dotExp   = isSgDotExp(parent);
+
+     SgBinaryOp* binaryOperator = NULL;
+
+     if (arrowExp != NULL)
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): Found an arrow expression \n");
+#endif
+          binaryOperator = arrowExp;
+        }
+
+     if (dotExp != NULL)
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): Found an dot expression \n");
+#endif
+          binaryOperator = dotExp;
+        }
+
+  // ROSE_ASSERT(binaryOperator != NULL);
+     if (binaryOperator != NULL)
+        {
+     SgExpression* lhs = binaryOperator->get_lhs_operand();
+     ROSE_ASSERT(lhs != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+#endif
+
+  // Looking for a chain of SgCastExp expressions.
+     SgExpression* temp_lhs = lhs;
+     SgCastExp* cast = NULL;
+     while (isSgCastExp(temp_lhs) != NULL)
+        {
+          cast = isSgCastExp(temp_lhs);
+          temp_lhs = cast->get_operand();
+
+          ROSE_ASSERT(cast->get_type() != NULL);
+          SgClassType* classType = isSgClassType(cast->get_type());
+          if (classType == NULL)
+             {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf (" --- looking for base type: In SageInterface::getClassTypeChainForDataMemberReference(): classType == NULL: cast->get_type() = %p = %s \n",
+                    cast->get_type(),cast->get_type()->class_name().c_str());
+#endif
+               SgType* baseType = cast->get_type()->stripType(SgType::STRIP_POINTER_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+               ROSE_ASSERT(baseType != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf (" --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+               classType = isSgClassType(baseType);
+             }
+       // ROSE_ASSERT(classType != NULL);
+
+          ROSE_ASSERT(temp_lhs != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf (" --- temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+       // returnTypeChain.push_front(classType);
+          if (classType != NULL)
+             {
+               classChain.push_front(classType);
+             }
+        }
+
+  // We also need to include the first class where we are referencing the variable or function because that is where the first ambiguity may happen.
+
+     ROSE_ASSERT(temp_lhs != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("In SageInterface::getClassTypeChainForDataMemberReference(): temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+
+     SgVarRefExp* derivedClassVarRefExp = isSgVarRefExp(temp_lhs);
+     if (derivedClassVarRefExp != NULL)
+        {
+          SgVariableSymbol* derivedClassVariableSymbol =  derivedClassVarRefExp->get_symbol();
+          ROSE_ASSERT(derivedClassVariableSymbol != NULL);
+
+          SgName derivedClassVariableName = derivedClassVariableSymbol->get_name();
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): derivedClassVariableName = %s \n",derivedClassVariableName.str());
+#endif
+       // SgType* type = cast->get_type();
+          SgType* type = temp_lhs->get_type();
+          ROSE_ASSERT(type != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+#endif
+          SgClassType* classType = isSgClassType(type);
+
+       // ROSE_ASSERT(classType != NULL);
+          if (classType != NULL)
+             {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs classType = %p = %s \n",classType,classType->class_name().c_str());
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+               ROSE_ASSERT(classDeclaration != NULL);
+               printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs classDeclaration = %p = %s name = %s \n",
+                    classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+            // This is where we want the SgVarRefExp data member qualification to start.
+            // returnType = classType;
+            // returnTypeChain.push_front(classType);
+               classChain.push_front(classType);
+             }
+        }
+       else
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Need to support alternative to SgVarRefExp: temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+#endif
+          SgType* type = temp_lhs->get_type();
+          ROSE_ASSERT(type != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+#endif
+          SgClassType* classType = isSgClassType(type);
+       // returnTypeChain.push_front(classType);
+          if (classType != NULL)
+             {
+               classChain.push_front(classType);
+             }
+        }
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("classChain.size() = %zu \n",classChain.size());
+     std::list<SgClassType*>::iterator iter = classChain.begin();
+     while(iter != classChain.end())
+        {
+          printf (" --- *iter = %p = %s name = %s \n",*iter,(*iter)->class_name().c_str(),(*iter)->get_name().str());
+
+          iter++;
+        }
+#endif
+
+  // Test the first element in the list to see if there is an ambiguity in the associated classDefinition 
+  // for the input variable referenced SgVarRefExp).
+
+  // SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+  // ROSE_ASSERT(variableSymbol != NULL);
+  // SgName variableName = variableSymbol->get_name();
+     SgSymbol* referenceSymbol = NULL;
+     if (varRefExp != NULL)
+        {
+          ROSE_ASSERT(varRefExp != NULL);
+          ROSE_ASSERT(memberFunctionRefExp == NULL);
+
+          referenceSymbol = varRefExp->get_symbol();
+        }
+       else
+        {
+          ROSE_ASSERT(varRefExp == NULL);
+          ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+          referenceSymbol = memberFunctionRefExp->get_symbol();
+        }
+     ROSE_ASSERT(referenceSymbol != NULL);
+     SgName symbolName = referenceSymbol->get_name();
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("symbolName = %s \n",symbolName.str());
+#endif
+
+  // SgClassType* firstDetectedAmbiguity = NULL;
+  // SgClassType* lastDetectedAmbiguity  = NULL;
+
+  // bool nameQualificationRequired = false;
+
+  // std::list<SgClassType*> deleteList;
+     std::list<SgClassType*> saveList;
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+     printf ("classChain.size() = %zu \n",classChain.size());
+#endif
+
+     std::list<SgClassType*>::iterator i = classChain.begin();
+     std::list<SgClassType*>::iterator save_iter = i;
+
+  // If we have an abiguity at i then we want to save i++, so define save_iter to be the next in the class type list.
+     save_iter++;
+
+     while(i != classChain.end())
+        {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
+#endif
+          SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
+          ROSE_ASSERT(declarationStatement != NULL);
+          SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
+          ROSE_ASSERT(definingDeclarationStatement != NULL);
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+          ROSE_ASSERT(classDeclaration != NULL);
+          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
+
+       // This works for any SgName and SgSymbol, so it need not be specific to variables.
+          bool ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+
+          if (ambiguityDetected == true)
+             {
+               if (save_iter != classChain.end())
+                  {
+                    saveList.push_back(*save_iter);
+                  }
+             }
+
+          i++;
+
+       // Also increment the save_iter.
+          save_iter++;
+        }
+
+  // Now build a list of class types to use in the name qualification from firstDetectedAmbiguity to lastDetectedAmbiguity (inclusive).
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+     printf ("saveList.size() = %zu \n",saveList.size());
+     std::list<SgClassType*>::iterator saveList_iterator = saveList.begin();
+     while (saveList_iterator != saveList.end())
+        {
+          printf (" --- *saveList_iterator = %p = %s name = %s \n",*saveList_iterator,(*saveList_iterator)->class_name().c_str(),(*saveList_iterator)->get_name().str());
+
+          saveList_iterator++;
+        }
+#endif
+
+     returnTypeChain = saveList;
+
+       // End of branch for binaryOperator != NULL.
+        }
+
+     return returnTypeChain;
+   }
+
+
 
 bool 
-SageInterface::isDataMemberReference(SgVarRefExp* varRefExp)
+SageInterface::isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFunctionRefExp)
    {
-  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
-     ROSE_ASSERT(varRefExp != NULL);
+  // DQ (2/17/2019): This may share a design in common with isDataMemberReference() below.
+
+#define DEBUG_IS_MEMBER_FUNCTION_MEMBER_REFERENCE 0
+
+     ROSE_ASSERT(memberFunctionRefExp != NULL);
 
      bool returnValue = false;
 
-     SgVariableSymbol* symbol = varRefExp->get_symbol();
-     ROSE_ASSERT(symbol != NULL);
+  // Check that this is a data member access (e.g. "X x; x.member;") and not just a reference to a data member (e.g. "X::member;")
+     SgNode* parent = memberFunctionRefExp->get_parent();
 
-     SgInitializedName* initializedName = symbol->get_declaration();
-     ROSE_ASSERT(initializedName != NULL);
+     SgArrowExp* arrowExp = isSgArrowExp(parent);
+     SgDotExp*   dotExp   = isSgDotExp(parent);
 
-     SgScopeStatement* scope = initializedName->get_scope();
-     ROSE_ASSERT(scope != NULL);
+  // I don't know that the SgAddressOfOp is as relevant for the case of SgMemberFunctionRefExp, but I think
+  // it is because we would have to support membr pointeds to functions the same a member pointers to data.
+  // I need some examples test codes to verify that name qualification is important in this case.
+     SgAddressOfOp* addressOfOp = isSgAddressOfOp(parent);
 
-     SgClassDefinition* classDefinition = isSgClassDefinition(scope);
-     if (classDefinition != NULL)
+  // if (arrowExp != NULL || dotExp != NULL)
+     if (arrowExp != NULL || dotExp != NULL || addressOfOp != NULL)
         {
-          returnValue = true;
+       // Use a SgFunctionSymbol instead of a SgMemberFunctionSymbol for generality (I hope this works).
+          SgFunctionSymbol* symbol = memberFunctionRefExp->get_symbol();
+          ROSE_ASSERT(symbol != NULL);
+
+          SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+       // Check if this is a statically declared variable.
+          if (functionDeclaration != NULL)
+             {
+               bool isStatic = functionDeclaration->get_declarationModifier().get_storageModifier().isStatic();
+#if DEBUG_IS_MEMBER_FUNCTION_MEMBER_REFERENCE
+               printf ("isStatic = %s \n",isStatic ? "true" : "false");
+#endif
+               if (isStatic == false)
+                  {
+                    SgScopeStatement* scope = functionDeclaration->get_scope();
+                    ROSE_ASSERT(scope != NULL);
+
+                    SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+                    if (classDefinition != NULL)
+                       {
+                         returnValue = true;
+                       }
+                  }
+             }
+            else
+             {
+#if DEBUG_IS_MEMBER_FUNCTION_MEMBER_REFERENCE
+               printf ("In SageInterface::isMemberFunctionMemberReference(): memberFunctionRefExp is not associated with variableDeclaration (could not compute if it is static data member) \n");
+#endif
+             }
         }
+       else
+        {
+#if DEBUG_IS_MEMBER_FUNCTION_MEMBER_REFERENCE
+          printf ("In SageInterface::isMemberFunctionMemberReference(): memberFunctionRefExp parent is not a is not SgArrowExp or SgDotExp expression \n");
+#endif
+        }
+
+#if DEBUG_IS_MEMBER_FUNCTION_MEMBER_REFERENCE
+     printf ("Leaving SageInterface::isMemberFunctionMemberReference(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
 
      return returnValue;
    }
 
+
+
+bool 
+SageInterface::isDataMemberReference(SgVarRefExp* varRefExp)
+   {
+  // This function is used to support the name qualification of data member references seperate from name qualification 
+  // of variables that might be members (e.g. "X x; x.A::y;" instead of "A::y" (which is just simple name qualification)).
+
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+
+  // DQ (2/17/2019): I think we need to make sure this is not a static data member reference (since those are qualified 
+  // differently (not member data name qualification).  Consider changing the name of this function to indicate non-static.
+
+#define DEBUG_IS_DATA_MEMBER_REFERENCE 0
+
+     ROSE_ASSERT(varRefExp != NULL);
+
+     bool returnValue = false;
+
+  // Check that this is a data member access (e.g. "X x; x.member;") and not just a reference to a data member (e.g. "X::member;")
+     SgNode* parent = varRefExp->get_parent();
+
+     SgArrowExp* arrowExp = isSgArrowExp(parent);
+     SgDotExp*   dotExp   = isSgDotExp(parent);
+
+     SgAddressOfOp* addressOfOp = isSgAddressOfOp(parent);
+
+  // if (arrowExp != NULL || dotExp != NULL)
+     if (arrowExp != NULL || dotExp != NULL || addressOfOp != NULL)
+        {
+          if (arrowExp != NULL)
+             {
+            // DQ (2/17/2019): Check if this is part of a sizeof operand for which is is_objectless_nonstatic_data_member_reference == true.
+               SgNode* parentOfArrowExp = arrowExp->get_parent();
+               ROSE_ASSERT(parentOfArrowExp != NULL);
+               SgSizeOfOp* sizeOfOp = isSgSizeOfOp(parentOfArrowExp);
+               if (sizeOfOp != NULL && sizeOfOp->get_is_objectless_nonstatic_data_member_reference() == true)
+                  {
+                 // This is not to be qualified using data member name qualification (it should use standard name qualification).
+#if DEBUG_IS_DATA_MEMBER_REFERENCE
+                    printf ("In SageInterface::isDataMemberReference(): Found case of expression used in sizeof with objectless_nonstatic_data_member_reference \n");
+#endif
+                    return false;
+                  }
+             }
+
+          SgVariableSymbol* symbol = varRefExp->get_symbol();
+          ROSE_ASSERT(symbol != NULL);
+
+          SgInitializedName* initializedName = symbol->get_declaration();
+          ROSE_ASSERT(initializedName != NULL);
+
+       // Check if this is a statically declared variable.
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+          if (variableDeclaration != NULL)
+             {
+               bool isStatic = variableDeclaration->get_declarationModifier().get_storageModifier().isStatic();
+               if (isStatic == false)
+                  {
+                    SgScopeStatement* scope = initializedName->get_scope();
+                    ROSE_ASSERT(scope != NULL);
+
+                    SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+                    if (classDefinition != NULL)
+                       {
+                         returnValue = true;
+                       }
+                  }
+             }
+            else
+             {
+#if DEBUG_IS_DATA_MEMBER_REFERENCE
+               printf ("In SageInterface::isDataMemberReference(): varRefExp is not associated with variableDeclaration (could not compute if it is static data member) \n");
+#endif
+             }
+        }
+       else
+        {
+#if DEBUG_IS_DATA_MEMBER_REFERENCE
+          printf ("In SageInterface::isDataMemberReference(): varRefExp parent is not a is not SgArrowExp or SgDotExp expression \n");
+#endif
+        }
+
+#if DEBUG_IS_DATA_MEMBER_REFERENCE
+     printf ("Leaving SageInterface::isDataMemberReference(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
+
+
+#if 0
 bool
 SageInterface::isAddressTaken(SgVarRefExp* varRefExp)
    {
@@ -8162,6 +8888,35 @@ SageInterface::isAddressTaken(SgVarRefExp* varRefExp)
      bool returnValue = false;
 
      SgAddressOfOp* addressOfOp = isSgAddressOfOp(varRefExp->get_parent());
+
+     if (addressOfOp != NULL)
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+#endif
+
+bool
+SageInterface::isAddressTaken(SgExpression* refExp)
+   {
+  // DQ (2/17/2019): Need to generalize this function to apply to member functions references as well.
+
+  // The input must be one of these two, then this function is suficiently general to support name qualification requirements for both.
+     SgVarRefExp*            varRefExp            = isSgVarRefExp(refExp);
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(refExp);
+
+     ROSE_ASSERT(varRefExp != NULL || memberFunctionRefExp != NULL);
+
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+  // ROSE_ASSERT(varRefExp != NULL);
+     ROSE_ASSERT(refExp != NULL);
+
+     bool returnValue = false;
+
+  // SgAddressOfOp* addressOfOp = isSgAddressOfOp(varRefExp->get_parent());
+     SgAddressOfOp* addressOfOp = isSgAddressOfOp(refExp->get_parent());
 
      if (addressOfOp != NULL)
         {

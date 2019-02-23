@@ -6541,8 +6541,11 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
    {
      SgExprListExp* expr_list = isSgExprListExp(expr);
      ROSE_ASSERT(expr_list != NULL);
-  /* code inserted from specification */
-  
+
+#if 0
+     curprint("/* output SgExprListExp */");
+#endif
+
      SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
      if (i != expr_list->get_expressions().end())
@@ -6551,6 +6554,22 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
              {
                SgUnparse_Info newinfo(info);
                newinfo.set_SkipBaseType();
+
+#if 0
+            // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer
+            // (see Cxx11_tests/test2019_171.C).  I think this may be the wrong place for this.
+               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(*i);
+               if (constructorInitializer != NULL)
+                  {
+                    if (constructorInitializer->isCompilerGenerated() == true)
+                       {
+                         printf ("In UnparseLanguageIndependentConstructs::unparseExprList(): Found compiler generated constructor initializer \n");
+                      // break out of this loop.
+                         break;
+                       }
+                  }
+#endif
+
                unparseExpression(*i, newinfo);
                i++;
                if (i != expr_list->get_expressions().end())
