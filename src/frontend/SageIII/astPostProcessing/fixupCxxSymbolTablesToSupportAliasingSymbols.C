@@ -384,6 +384,23 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      if (SgSymbolTable::get_aliasSymbolCausalNodeSet().find(causalNode) == SgSymbolTable::get_aliasSymbolCausalNodeSet().end())
         {
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(causalNode);
+
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("@@@@@@@@@@@@ Inserted causalNode = %p into SgSymbolTable::get_aliasSymbolCausalNodeSet().size() = %zu \n",causalNode,SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
+          SgBaseClass* baseClass = isSgBaseClass(causalNode);
+          if (baseClass != NULL)
+             {
+               SgClassDeclaration* baseClassDeclaration    = baseClass->get_base_class();
+               ROSE_ASSERT(baseClassDeclaration != NULL);
+
+               SgClassDefinition* derivedClassDefinition   = isSgClassDefinition(currentScope);
+               ROSE_ASSERT(derivedClassDefinition != NULL);
+               SgClassDeclaration* derivedClassDeclaration = derivedClassDefinition->get_declaration();
+               ROSE_ASSERT(derivedClassDeclaration != NULL);
+
+               printf (" --- Adding base class %s to derived class %s \n",baseClassDeclaration->get_name().str(),derivedClassDeclaration->get_name().str());
+             }
+#endif
         }
 #endif
 
@@ -748,9 +765,16 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                        {
                          case V_SgAliasSymbol:
                             {
+                              SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+                              ROSE_ASSERT(aliasSymbol != NULL);
+
                            // not clear what to do here...
                            // I think we need more symbol table support for detecting matching symbols.
                            // I think we also need more alias symbol specific query support.
+#if ALIAS_SYMBOL_DEBUGGING
+                              printf ("symbol is an SgAliasSymbol: aliasSymbol = %p = %s aliasSymbol->get_base() = %p = %s \n",
+                                   symbol,symbol->class_name().c_str(),aliasSymbol->get_base(),aliasSymbol->get_base()->class_name().c_str());
+#endif
                               break;
                             }
 
@@ -772,13 +796,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                          case V_SgTemplateSymbol:
                          case V_SgLabelSymbol:
                          case V_SgNonrealSymbol:
-                         {
+                            {
                            // Liao, 10/31/2012. 
                            // Using lookup_function_symbol () etc. is not good enough since it returns the first match only.
                            // There might be multiple hits. We have to go through them all instead of checking only the first hit
                               alreadyExists = false; // reset to be false
-                             // using less expensive equal_range(), which can be O(logN) instead of O(N)
-                              // This matters since this function is called inside another loop with complexity of O(N) already.
+                           // using less expensive equal_range(), which can be O(logN) instead of O(N)
+                           // This matters since this function is called inside another loop with complexity of O(N) already.
                               rose_hash_multimap * internal_table = currentScope->get_symbol_table()->get_table();
                               ROSE_ASSERT (internal_table != NULL);
                               std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
@@ -804,7 +828,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                                 }
                               } // end for
                               break;
-                           }
+                            }
 
 
 #if 0 // uniform handling by code above now
@@ -963,10 +987,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                        }
                   }
-               
+
+            // DQ (2/15/2019): Assume it does not already exist, becuase we want multiple base classes to represent it with multiple (different) SgAliasSymbols.
+            // alreadyExists = false;
+
                if ( alreadyExists == false)
                   {
-#if 0
+#if ALIAS_SYMBOL_DEBUGGING
                     printf ("Building a SgAliasSymbol \n");
 #endif
                  // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
@@ -986,6 +1013,48 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
 #if ALIAS_SYMBOL_DEBUGGING
                     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): DONE: Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("An alias symbol for the same kind of symbol already exists, so add to the existing SgAliasSymbol \n");
+                    printf ("  --- symbol          = %p = %s \n",symbol,symbol->class_name().c_str());
+                    printf ("  --- original_symbol = %p = %s \n",original_symbol,original_symbol->class_name().c_str());
+                    SgNode* symbolTableNode = original_symbol->get_parent();
+                    ROSE_ASSERT(symbolTableNode != NULL);
+                    SgScopeStatement* scope = isSgScopeStatement(symbolTableNode->get_parent());
+                    ROSE_ASSERT(scope != NULL);
+                    SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+                    ROSE_ASSERT(classDefinition != NULL);
+                    SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                    ROSE_ASSERT(classDeclaration != NULL);
+                    printf ("  --- original_symbol from class = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+#endif
+
+                 // DQ (2/15/2019): The original_symbol is in the base class (we want the alias symbol in the current class).
+                 // SgAliasSymbol* aliasSymbol = isSgAliasSymbol(original_symbol);
+                    SgSymbol* currentScopeSymbol = currentScope->lookup_alias_symbol(name,symbol);
+                    SgAliasSymbol* aliasSymbol = isSgAliasSymbol(currentScopeSymbol);
+
+                    ROSE_ASSERT(aliasSymbol != NULL);
+
+                 // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
+                    ROSE_ASSERT(causalNode != NULL);
+                    aliasSymbol->get_causal_nodes().push_back(causalNode);
+
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("aliasSymbol->get_causal_nodes().size() = %zu \n",aliasSymbol->get_causal_nodes().size());
+                    for (size_t i = 0; i < aliasSymbol->get_causal_nodes().size(); i++)
+                       {
+                         SgNode* causalNode = aliasSymbol->get_causal_nodes()[i];
+                         printf (" --- causal node #%zu = %p = %s \n",i,causalNode,causalNode->class_name().c_str());
+                       }
+
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                   }
              }

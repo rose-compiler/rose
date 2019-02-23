@@ -2423,6 +2423,20 @@ Grammar::setUpStatements ()
      EnumDeclaration.setDataPrototype("bool","isScopedEnum","= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/13/2019): C++11 allows enum prototypes, which means that the defining declarations (and even othr prototype 
+  // (nondefining declarations) can be located in a different scope from the local scope for the enum, so we need name 
+  // qualification support.
+     EnumDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     EnumDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     EnumDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
      ExprStatement.setFunctionPrototype ( "HEADER_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
 
 #if 0

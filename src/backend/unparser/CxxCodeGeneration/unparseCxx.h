@@ -203,6 +203,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 #else
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
 #endif
+       // DQ (2/14/2019): Adding support for C++14 void values.
+          virtual void unparseVoidValue               (SgExpression* expr, SgUnparse_Info& info);  
+
           // JJW -- these need C-specific suffixes
           virtual void unparseUIntVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongIntVal              (SgExpression* expr, SgUnparse_Info& info);  

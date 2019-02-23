@@ -1649,9 +1649,19 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // DQ (2/7/2019): Need a function to return the SgFunctionDeclaration from a SgFunctionCallExp.
   ROSE_DLL_API SgFunctionDeclaration* getFunctionDeclaration ( SgFunctionCallExp* functionCallExp );
 
+  // DQ (2/17/2019): Generalizing this support for SgVarRefExp and SgMemberFunctionRefExp nodes.
   // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
   ROSE_DLL_API bool isDataMemberReference(SgVarRefExp* varRefExp);
-  ROSE_DLL_API bool isAddressTaken(SgVarRefExp* varRefExp);
+  // ROSE_DLL_API bool isAddressTaken(SgVarRefExp* varRefExp);
+  ROSE_DLL_API bool isAddressTaken(SgExpression* refExp);
+
+  // DQ (2/17/2019): Adding support for detecting when to use added name qualification for membr function references.
+  ROSE_DLL_API bool isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFunctionRefExp);
+
+  // DQ (2/15/2019): Adding support for detecting which class a member reference is being made from.
+  // ROSE_DLL_API SgClassType* getClassTypeForDataMemberReference(SgVarRefExp* varRefExp);
+  // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
+  ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
 
 // TODO
 #if 0
