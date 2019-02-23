@@ -4010,7 +4010,7 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
         {
           if (typeNameMap.find(nodeReference) == typeNameMap.end())
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
                printf ("============== Inserting qualifier for name = %s into typeNameMap list at IR node = %p = %s \n",typeNameString.c_str(),nodeReference,nodeReference->class_name().c_str());
 #endif
                typeNameMap.insert(std::pair<SgNode*,std::string>(nodeReference,typeNameString));
@@ -10724,6 +10724,9 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
      printf ("In setNameQualification(SgEnumDeclaration*) \n");
 #endif
 
+  // DQ (2/22/2019): Adding assertion to debug GNU 4.9.3 issue.
+     ROSE_ASSERT(enumDeclaration != NULL);
+
   // setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
      string qualifier = setNameQualificationSupport(enumDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
@@ -10827,9 +10830,22 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
             // templateClassDeclaration->get_file_info()->display("SgTemplateInstantiationDecl trying to generate the qualified name: debug");
 
                string template_name = templateClassDeclaration->get_templateName();
-               template_name += "< ";
-            // printf ("START: template_name = %s \n",template_name.c_str());
+
+            // DQ (2/22/2019): Note: the same moderately more complex handling for template arguments in the unparser, 
+            // might need to be used here for the support of the name qualification.
                SgTemplateArgumentPtrList & templateArgumentList = templateClassDeclaration->get_templateArguments();
+#if 0
+               printf ("In name qualification: templateArgumentList.size() = %zu \n",templateArgumentList.size());
+#endif
+               bool isEmptyTemplateArgumentList = templateArgumentList.empty();
+
+            // template_name += "< ";
+               if (isEmptyTemplateArgumentList == false)
+                  {
+                    template_name += "< ";
+                  }
+
+            // printf ("START: template_name = %s \n",template_name.c_str());
                SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
 
                bool previousTemplateArgumentOutput = false;
@@ -10860,7 +10876,11 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                     i++;
                   }
 
-               template_name += "> ";
+            // template_name += "> ";
+               if (isEmptyTemplateArgumentList == false)
+                  {
+                    template_name += "> ";
+                  }
 
                scope_name = template_name;
 

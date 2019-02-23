@@ -338,8 +338,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_54.C \
    test2019_55.C \
    test2019_56.C \
-   test2019_57.C \
-   test2019_58.C \
    test2019_62.C \
    test2019_63.C \
    test2019_64.C \
@@ -424,11 +422,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_155.C \
    test2019_156.C \
    test2019_157.C \
-   test2019_158.C \
-   test2019_159.C \
    test2019_160.C \
-   test2019_161.C \
-   test2019_162.C \
    test2019_163.C \
    test2019_164.C \
    test2019_165.C \
@@ -527,7 +521,13 @@ else
    test2018_63.C \
    test2018_64.C \
    test2018_65.C \
-   test2018_71.C 
+   test2018_71.C \
+   test2019_57.C \
+   test2019_58.C \
+   test2019_158.C \
+   test2019_159.C \
+   test2019_161.C \
+   test2019_162.C 
 endif
 
 if ROSE_USE_EDG_VERSION_4_9

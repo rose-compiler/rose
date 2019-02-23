@@ -1111,9 +1111,20 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
         {
        // DQ (2/11/2019): Moved to outside of the loop over all template parameters.
           unp->u_exprStmt->curprint ( "< ");
+#if 0
+          unp->u_exprStmt->curprint ( " /* in template argument list */ ");
+#endif
+       // DQ (2/22/2019): Added assertion.  This fails for test2019_93.C and test2019_100.C
+       // E.g. template<class ... Types> struct Tuple {}; Tuple<> t0;
+       // ROSE_ASSERT(templateArgListPtr.empty() == false);
+        }
+       else
+        {
+       // DQ (2/22/2019): Added assertion.
+          ROSE_ASSERT(templateArgListPtr.empty() == true);
         }
 
-     if (!templateArgListPtr.empty())
+     if (templateArgListPtr.empty() == false)
         {
 #if DEBUG_TEMPLATE_ARGUMENT_LIST
           printf ("In unparseTemplateArgumentList(): templateArgListPtr.empty() NOT EMPTY: templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
@@ -1248,7 +1259,8 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
                        }
 
 #if DEBUG_TEMPLATE_ARGUMENT_LIST
-               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
+            // printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s hasLambdaFollowed = %s \n",*i,(*i)->class_name().c_str(), hasLambdaFollowed ? "true" : "false");
+               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %p = %s \n",*i,(*i)->class_name().c_str());
                printf ("In unparseTemplateArgumentList(): explicitlySpecified = %s \n",(*i)->get_explicitlySpecified() ? "true" : "false");
 #endif
 
@@ -1328,8 +1340,8 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 #endif
 
 #if DEBUG_TEMPLATE_ARGUMENT_LIST || 0
-               printf ("In unparseTemplateArgumentList(): hasLambdaFollowed = %s \n",hasLambdaFollowed ? "true" : "false");
-               printf ("(i+1)== templateArgListPtr.end() = %s \n",(i+1)== templateArgListPtr.end() ? "true" : "false");
+            // printf ("In unparseTemplateArgumentList(): hasLambdaFollowed = %s \n",hasLambdaFollowed ? "true" : "false");
+               printf ("(i+1) == templateArgListPtr.end() = %s \n",(i+1)== templateArgListPtr.end() ? "true" : "false");
 #endif
             // DQ (2/11/2019): With the simpler logic we don't have to have this be anything more than true.
             // if (!(hasLambdaFollowed  || ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument && ((i+1)== templateArgListPtr.end())  )) )
