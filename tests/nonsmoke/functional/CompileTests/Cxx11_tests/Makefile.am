@@ -293,6 +293,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1437-0.C \
    test2017_10.C \
    rose-1522-0.C \
+   rose-1763.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -330,6 +331,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_41.C \
    test2019_42.C \
    test2019_45.C \
+   test2019_46.C \
    test2019_47.C \
    test2019_50.C \
    test2019_51.C \
@@ -458,7 +460,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_38.C \
    test2019_43.C \
    test2019_44.C \
-   test2019_46.C \
    test2019_48.C \
    test2019_49.C \
    test2019_59.C \
