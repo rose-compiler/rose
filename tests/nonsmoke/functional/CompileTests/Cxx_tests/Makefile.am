@@ -594,7 +594,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_22.C \
    test2019_23.C \
    test2019_24.C \
-   rose-1701-0.C
+   rose-1701-0.C \
+   rose-1766.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
