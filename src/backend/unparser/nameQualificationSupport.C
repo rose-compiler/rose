@@ -6838,12 +6838,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           printf ("case of SgMemberFunctionRefExp: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
 #endif
 
-
        // DQ (2/7/2019): Adding support for name qualification induced from SgPointerMemberType function paramters.
           bool nameQualificationInducedFromPointerMemberType = false;
 
           bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
           bool isAddressTaken                  = SageInterface::isAddressTaken(memberFunctionRefExp);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("isMemberFunctionMemberReference = %s \n",isMemberFunctionMemberReference ? "true" : "false");
+#endif
+       // DQ (2/23/2019): I think that the test code test2019_191.C is not setting this correctly. The logic for 
+       // member function pointers (references) is not yet worked out as well as for data membr references.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Explicitly setting isMemberFunctionMemberReference == false \n");
+#endif
+       // isMemberFunctionMemberReference = false;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           printf ("Case of SgMemberFunctionRefExp: isMemberFunctionMemberReference = %s isAddressTaken = %s \n",isMemberFunctionMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
@@ -6857,10 +6866,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
             else
              {
-               bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
-#if 0
-               printf ("isMemberFunctionMemberReference = %s \n",isMemberFunctionMemberReference ? "true" : "false");
-#endif
+            // bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
                if (isMemberFunctionMemberReference == true)
                   {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -6942,6 +6948,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  }
                             }
                        }
+                      else
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("This has an empty class chain: classChain.size() = %zu \n",classChain.size());
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
@@ -6960,7 +6976,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // if (isMemberFunctionMemberReference == false)
                if (isMemberFunctionMemberReference == false || isAddressTaken == true)
                   {
+
+                 // DQ (2/23/2019): Except that this code works in all cases that I can see at the moment, I think that the 
+                 // current scope should be taken from the type of the pointer being dereferenced instead of from the location 
+                 // of the statement containing the memberFunctionRefExp.  But I can't build a counter example that fails.
+
                     SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Compute the currentStatement: currentStatement = %p \n",currentStatement);
+#endif
                     if (currentStatement == NULL)
                        {
                       // DQ (8/19/2014): Because we know where this can happen we don't need to always output debugging info.
@@ -11511,6 +11536,13 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
      printf ("In SgScopeStatement::hasAmbiguity(): name = %s symbol = %p = %s \n",name.str(),symbol,symbol->class_name().c_str());
 #endif
 
+  // DQ (2/23/2019): This might be a possible alternative way (maybe a better way) to detect possible ambiguity.
+     size_t numberOfSymbols = this->count_symbol (name);
+
+#if DEBUG_HAS_AMBIGUITY
+     printf ("numberOfSymbols = %zu \n",numberOfSymbols);
+#endif
+
      size_t numberOfAliasSymbols = this->count_alias_symbol(name);
 
 #if DEBUG_HAS_AMBIGUITY
@@ -11546,7 +11578,7 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                     size_t causalNodeCount = aliasSymbol->get_causal_nodes().size();
                     if (causalNodeCount == 1)
                        {
-                      // We need to know if each of the alis symbols has a different causal node.
+                      // We need to know if each of the alias symbols has a different causal node.
                          SgNode* causalNode = aliasSymbol->get_causal_nodes()[0];
                          if (find(causalNodeList.begin(),causalNodeList.end(),causalNode) == causalNodeList.end())
                             {
@@ -11569,8 +11601,10 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                  // (else the base class is mixing alias symbols with the non-alias symbols and it is less 
                  // clear if there is an ambiguity (but there still could be and we would not detect it).
                  // I need a test code to demonstrate this before it can be properly addressed.
+#if DEBUG_HAS_AMBIGUITY
                     printf ("Note: In SgScopeStatement::hasAmbiguity(): Found a non SgAliasSymbol: orig_current_symbol = %p = %s \n",
                          orig_current_symbol,orig_current_symbol->class_name().c_str());
+#endif
                   }
              }
 
@@ -11612,11 +11646,25 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                   }
                  else
                   {
-                 // No ambiguity that will require any name qualification.
+                    if (numberOfSymbols > 1)
+                       {
+#if DEBUG_HAS_AMBIGUITY
+                         printf ("Detected multible SgSymbol are available: consider this an ambiguity: numberOfSymbols = %zu \n",numberOfSymbols);
+#endif
+                         ambiguityDetected = true;
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                      // No ambiguity that will require any name qualification.
 
 #if DEBUG_HAS_AMBIGUITY
-                    printf ("No ambiguity that will require any name qualification \n");
+                         printf ("No ambiguity that will require any name qualification \n");
 #endif
+                       }
                   }
              }
             else
@@ -11624,6 +11672,23 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
 #if DEBUG_HAS_AMBIGUITY
                printf ("No SgAliasSymbol is available \n");
 #endif
+               if (numberOfSymbols > 1)
+                  {
+#if DEBUG_HAS_AMBIGUITY
+                    printf ("Detected multible SgSymbol are available: consider this an ambiguity: numberOfSymbols = %zu \n",numberOfSymbols);
+#endif
+                    ambiguityDetected = true;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+#if DEBUG_HAS_AMBIGUITY
+                    printf ("No SgSymbol or only one SgSymbol is available \n");
+#endif
+                  }
              }
         }
 
