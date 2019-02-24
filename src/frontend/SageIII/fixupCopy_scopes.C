@@ -57,7 +57,7 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
 
             // DQ (1/20/204): Moved to supporting the more general expression (required), plus the expression from which it may have been generated.
             // SgUnsignedLongVal* bitfield = variableDefinition_original->get_bitfield();
-               SgValueExp* bitfield = variableDefinition_original->get_bitfield();
+               SgExpression* bitfield = variableDefinition_original->get_bitfield();
 
                SgVariableDefinition* variableDefinition_copy = new SgVariableDefinition(copyInitializedName,bitfield);
                ROSE_ASSERT(variableDefinition_copy != NULL);
