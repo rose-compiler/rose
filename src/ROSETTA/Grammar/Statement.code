@@ -1860,8 +1860,8 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
        // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
        // SgUnsignedLongVal *get_bitfield();
        // void set_bitfield (SgUnsignedLongVal*);
-          SgValueExp* get_bitfield();
-          void set_bitfield (SgValueExp*);
+          SgExpression* get_bitfield();
+          void set_bitfield (SgExpression*);
 
        // Only on the first variable declaration's
           int reset_initializer(SgInitializer *);
@@ -7712,6 +7712,12 @@ SgScopeStatement::isNamedScope()
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          case V_SgDeclarationScope:
              {
                result = true;
                break;
@@ -13723,7 +13729,7 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
 
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // SgUnsignedLongVal* SgVariableDeclaration::get_bitfield()
-SgValueExp*
+SgExpression*
 SgVariableDeclaration::get_bitfield()
    {
      assert(get_definition() != 0);
@@ -13733,7 +13739,7 @@ SgVariableDeclaration::get_bitfield()
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // void SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
 void
-SgVariableDeclaration::set_bitfield (SgValueExp* bfield)
+SgVariableDeclaration::set_bitfield (SgExpression* bfield)
    {
      assert(get_definition() != 0);
      get_definition()->set_bitfield(bfield);
