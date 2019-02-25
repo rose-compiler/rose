@@ -452,7 +452,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_189.C \
    test2019_190.C \
    test2019_191.C \
-   test2019_192.C 
+   test2019_192.C \
+   test2019_193.C \
+   test2019_194.C \
+   test2019_195.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
