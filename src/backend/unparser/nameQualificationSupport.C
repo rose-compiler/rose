@@ -6161,6 +6161,34 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgType* returnType = memberFunctionDeclaration->get_type()->get_return_type();
                ROSE_ASSERT(returnType != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+               printf ("case SgMemberFunctionDeclaration: returnType = %p = %s = %s \n",returnType,returnType->class_name().c_str(),returnType->unparseToString().c_str());
+               SgType* return_syntax_type = NULL;
+            // DQ (2/25/2019): Use the type syntax when it is available.
+               if (memberFunctionDeclaration->get_type_syntax_is_available() == true)
+                  {
+                    printf ("case SgMemberFunctionDeclaration: Using the type_syntax since it is available: memberFunctionDeclaration->get_type_syntax() = %p \n",
+                         memberFunctionDeclaration->get_type_syntax());
+                    SgFunctionType* functionType = isSgFunctionType(memberFunctionDeclaration->get_type_syntax());
+                    ROSE_ASSERT(functionType != NULL);
+                 // return_syntax_type = memberFunctionDeclaration->get_type_syntax();
+                    if (functionType->get_orig_return_type() != NULL)
+                       {
+                         return_syntax_type = functionType->get_orig_return_type();
+                       }
+                      else
+                       {
+                         return_syntax_type = functionType->get_return_type();
+                       }
+                    ROSE_ASSERT(return_syntax_type != NULL);
+                  }
+
+               if (return_syntax_type != NULL)
+                  {
+                    printf ("case SgMemberFunctionDeclaration: return_syntax_type = %p = %s = %s \n",return_syntax_type,return_syntax_type->class_name().c_str(),return_syntax_type->unparseToString().c_str());
+                  }
+#endif
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case SgMemberFunctionDeclaration: returnType = %p = %s \n",returnType,returnType->class_name().c_str());
                SgTemplateType* template_returnType = isSgTemplateType(returnType);
