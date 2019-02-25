@@ -5915,6 +5915,11 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
      curprint ("/* In unparseReturnType(): */ \n ");
 #endif
 
+#if 0
+     printf ("funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
+     printf ("funcdecl_stmt->get_type_syntax()              = %p \n",funcdecl_stmt->get_type_syntax());
+#endif
+
      SgClassDefinition *parent_class = isSgClassDefinition(funcdecl_stmt->get_parent());
 
        // This is a test for if the member function is structurally in the class where it is defined.
@@ -5953,12 +5958,39 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                printf ("In unparseReturnType(): NOT a constructor, destructor or conversion operator \n");
                curprint ("/* In unparseReturnType(): NOT a constructor, destructor or conversion operator */ \n ");
 #endif
-            // printf ("mfuncdecl_stmt->get_orig_return_type() = %p \n",mfuncdecl_stmt->get_orig_return_type());
-
+#if 0
+               printf ("funcdecl_stmt->get_orig_return_type() = %p \n",funcdecl_stmt->get_orig_return_type());
+#endif
                if (funcdecl_stmt->get_orig_return_type() != NULL)
                   {
-                 // printf ("mfuncdecl_stmt->get_orig_return_type() = %p = %s \n",mfuncdecl_stmt->get_orig_return_type(),mfuncdecl_stmt->get_orig_return_type()->sage_class_name());
+#if 0
+                    printf ("funcdecl_stmt->get_orig_return_type() = %p = %s \n",funcdecl_stmt->get_orig_return_type(),funcdecl_stmt->get_orig_return_type()->class_name().c_str());
+#endif
                     rtype = funcdecl_stmt->get_orig_return_type();
+
+#if 1
+                 // DQ (2/24/2019): Use the type syntax when it is available.
+                    if (funcdecl_stmt->get_type_syntax_is_available() == true)
+                       {
+#if 0
+                         printf ("Using the type_syntax since it is available: funcdecl_stmt->get_type_syntax() = %p \n",funcdecl_stmt->get_type_syntax());
+#endif
+                      // DQ (2/25/2019): Get the return type from the function type that is held in memberFunctionDeclaration->get_type_syntax().
+                      // rtype = funcdecl_stmt->get_type_syntax();
+                         SgFunctionType* functionType = isSgFunctionType(funcdecl_stmt->get_type_syntax());
+                         ROSE_ASSERT(functionType != NULL);
+                      // return_syntax_type = memberFunctionDeclaration->get_type_syntax();
+                         if (functionType->get_orig_return_type() != NULL)
+                            {
+                              rtype = functionType->get_orig_return_type();
+                            }
+                           else
+                            {
+                              rtype = functionType->get_return_type();
+                            }
+                         ROSE_ASSERT(rtype != NULL);
+                       }
+#endif
                   }
                  else
                   {
@@ -6143,8 +6175,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_definition_ref() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definition_ref()) + " */");
      curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_forwardDefinition() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_forwardDefinition()) + " */");
 #endif
-     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
-     curprint ("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_definingDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_definingDeclaration()) + " */");
+     curprint ( string("\n/* Unparser comment: mfuncdecl_stmt->get_firstNondefiningDeclaration() = " ) + StringUtility::numberToString(mfuncdecl_stmt->get_firstNondefiningDeclaration()) + " */");
      curprint ("\n/* */");
 #endif
 
@@ -6295,9 +6327,19 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // SgUnparse_Info ninfo(info);
           SgType *rtype = NULL;
 
+#if 0
+          curprint("/* Calling unparseReturnType() */\n ");
+#endif
+
 #if 1
        // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
           unparseReturnType (mfuncdecl_stmt,rtype,ninfo);
+
+#if 0
+          printf ("After unparseReturnType(): rtype = %p \n",rtype);
+          curprint("/* DONE: unparseReturnType() */\n ");
+#endif
+
 #else
        // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
        // ninfo.set_forceQualifiedNames();
@@ -6521,23 +6563,45 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // a defining declaration within a return type, function parameter, or sizeof expression. 
           ninfo2.set_SkipClassDefinition();
 
+#if 0
+          printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): calling unparseFunctionArgs() \n");
+          curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: calling unparseFunctionArgs() */ \n"); 
+#endif
           curprint ( string("("));
        // Unparse the function arguments
           unparseFunctionArgs(mfuncdecl_stmt,ninfo2);
           curprint ( string(")"));
 
+#if 0
+          printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): DONE: calling unparseFunctionArgs() \n");
+          curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: DONE: calling unparseFunctionArgs() */ \n"); 
+#endif
+
+#if 0
+          printf ("Before calling unparseType(rtype): rtype = %p \n",rtype);
+#endif
+
           if (rtype != NULL)
              {
                SgUnparse_Info ninfo3(ninfo);
                ninfo3.set_isTypeSecondPart();
-
+#if 0
+               printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): calling unparseType(rtype) \n");
+               curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: calling unparseType(rtype) */ \n"); 
+#endif
                unp->u_type->unparseType(rtype, ninfo3);
+
+#if 0
+               printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): DONE: calling unparseType(rtype) \n");
+               curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: DONE: calling unparseType(rtype) */ \n"); 
+#endif
              }
 
 #if 1
 
 #if 0
           printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): calling unparseTrailingFunctionModifiers() \n");
+          curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: calling unparseTrailingFunctionModifiers() */ \n"); 
 #endif
        // DQ (9/9/2014): Refactored support for function modifiers.
           unparseTrailingFunctionModifiers(mfuncdecl_stmt,info);
@@ -6659,6 +6723,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
+#if 0
+          curprint(" /* unparse semicolon */ ");
+#endif
           if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
              {
                curprint(";");
