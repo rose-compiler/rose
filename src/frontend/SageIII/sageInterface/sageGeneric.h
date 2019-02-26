@@ -16,6 +16,7 @@
 #if !defined(NDEBUG)
 #include <typeinfo>
 #include <iostream>
+#include <sstream>
 #endif /* NDEBUG */
 
 
@@ -62,17 +63,60 @@ namespace sg
   //
   // error reporting
 
+#define SG_UNEXPECTED_NODE(X) (sg::unexpected_node(X, __FILE__, __LINE__))
+
   static inline
-  void unexpected_node(const SgNode& n)
+  void report_error(std::string desc)
   {
-    sg::unused(n);
+    throw std::logic_error(desc);
+  }
+
+  static inline
+  void report_error_if(bool iserror, std::string desc)
+  {
+    if (!iserror) return;
+
+    report_error(desc);
+  }
 
 #if !defined(NDEBUG)
-    std::cerr << typeid(n).name() << std::endl;
+  /// converts object of type E to T via string conversion
+  template <class T, class E>
+  static inline
+  T conv(const E& el)
+  {
+    std::stringstream s;
+    T                 res;
+
+    s << el;
+    s >> res;
+    return res;
+  }
 #endif
 
-    ROSE_ASSERT(false);
-    throw std::logic_error("Encountered unexpected sage node. Please send a bug report to the maintainer.");
+  static inline
+  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  {
+    sg::unused(n), sg::unused(file), sg::unused(ln);
+
+    std::string msg = "unexpected node-type: ";
+
+#if !defined(NDEBUG)
+    msg = msg + typeid(n).name();
+
+    if (file)
+    {
+      const std::string at(" at ");
+      const std::string sep(" : ");
+      const std::string num(conv<std::string>(ln));
+
+      msg = msg + at + file + sep + num;
+    }
+
+    std::cerr << msg << std::endl;
+#endif
+
+    report_error(msg);
   }
 
   //
@@ -997,14 +1041,23 @@ namespace sg
     SageNode* res;
 
     TypeRecoveryHandler()
-    : res(NULL)
+    : res(NULL), loc(NULL), loc_ln(0)
     {}
 
-    void handle(SgBaseNode& n) { unexpected_node(n); }
+    TypeRecoveryHandler(const char* f, size_t ln)
+    : res(NULL), loc(f), loc_ln(ln)
+    {}
+
+    void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
     void handle(SageNode& n)   { res = &n; }
 
     operator SageNode* () { return res; }
+
+    const char* loc;
+    size_t      loc_ln;
   };
+
+#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 
 /// \brief   asserts that n has type SageNode
 /// \details the ROSE assert in the following example holds b/c assert_sage_type
@@ -1014,16 +1067,16 @@ namespace sg
 ///   ROSE_ASSERT(stmt);
 /// \endcode
   template <class SageNode>
-  SageNode* assert_sage_type(SgNode* n)
+  SageNode* assert_sage_type(SgNode* n, const char* f = 0, size_t ln = 0)
   {
-    return sg::dispatch(TypeRecoveryHandler<SageNode>(), n);
+    return sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), n);
   }
 
 /// \overload
   template <class SageNode>
-  const SageNode* assert_sage_type(const SgNode* n)
+  const SageNode* assert_sage_type(const SgNode* n, const char* f = 0, size_t ln = 0)
   {
-    return sg::dispatch(TypeRecoveryHandler<const SageNode>(), n);
+    return sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), n);
   }
 
 /// \brief swaps the parent pointer of two nodes
