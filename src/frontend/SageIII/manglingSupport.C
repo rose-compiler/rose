@@ -1180,8 +1180,17 @@ mangleValueExp (const SgValueExp* expr)
 
    // DQ (7/21/2012): Added support for IR node not seen previously except in new C++11 work.
       case V_SgTemplateParameterVal:
-        mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
-        break;
+         {
+           mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
+           break;
+         }
+
+   // DQ (2/14/2019): Adding support for C++14 void values (still unclear what this should look like).
+      case V_SgVoidVal:
+         {
+           mangled_name = "unsupported_SgVoidVal";
+           break;
+         }
 
       default:
         std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
@@ -1280,6 +1289,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgAddressOfOp: {
           const SgAddressOfOp* e = isSgAddressOfOp (expr);
           mangled_name << "_bAddressOfOp_" << mangleExpression (e->get_operand_i()) << "_eAddressOfOp_";
+          break;
+        }
+        case V_SgPointerDerefExp: {
+          const SgPointerDerefExp* e = isSgPointerDerefExp (expr);
+          mangled_name << "_bPointerDerefExp_" << mangleExpression (e->get_operand_i()) << "_ePointerDerefExp_";
           break;
         }
         case V_SgNoexceptOp: {
@@ -1413,6 +1427,21 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
           break;
         }
+        case V_SgCommaOpExp: {
+          const SgCommaOpExp* e = isSgCommaOpExp (expr);
+          mangled_name << "_bCommaOpExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eCommaOpExp_";
+          break;
+        }
+        case V_SgDotStarOp: {
+          const SgDotStarOp* e = isSgDotStarOp (expr);
+          mangled_name << "_bDotStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotStarOp_";
+          break;
+        }
+        case V_SgArrowStarOp: {
+          const SgArrowStarOp* e = isSgArrowStarOp (expr);
+          mangled_name << "_bArrowStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowStarOp_";
+          break;
+        }
         case V_SgConditionalExp: {
           const SgConditionalExp* e = isSgConditionalExp (expr);
           mangled_name << "_bConditionalExp_";
@@ -1486,6 +1515,17 @@ mangleExpression (const SgExpression* expr)
         case V_SgAggregateInitializer: {
           const SgAggregateInitializer* e = isSgAggregateInitializer (expr);
           mangled_name << "_bAggregateInitializer_" << mangleExpression (e->get_initializers()) << "_eAggregateInitializer_";
+          break;
+        }
+        case V_SgNewExp: {
+          // FIXME ROSE-1783
+          const SgNewExp* e = isSgNewExp (expr);
+          mangled_name << "_bNewExpr_" << std::hex << e << "_eNewExpr_";
+          break;
+        }
+        case V_SgFunctionParameterRefExp: {
+          const SgFunctionParameterRefExp* e = isSgFunctionParameterRefExp (expr);
+          mangled_name << "_bFunctionParameterRefExp_" << std::hex << e << "_eFunctionParameterRefExp_";
           break;
         }
         default: {

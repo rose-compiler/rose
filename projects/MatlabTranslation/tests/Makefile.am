@@ -6,20 +6,20 @@ if ROSE_WITH_GNU_OCTAVE_PARSER
 
 BASIC_TESTCODES = \
 		belief.m \
-                determ.m \
-		if_condition.m \ 
-                matrix_access.m \
-		mcmc_test.m \ 
+		determ.m \
+		if_condition.m \
+		matrix_access.m \
+		mcmc_test.m \
 		nargin_test.m \
-                numquad_test.m \
-                sam.m \
-                whileTest.m
+		numquad_test.m \
+		sam.m \
+		whileTest.m
 
 CXX_BACKEND_FAILING_TESTS = \
 		forward_decl.m \
-		linearreg.m 
+		linearreg.m
 
-MATLAB_PARSER_FAILING_TESTS =		
+MATLAB_PARSER_FAILING_TESTS =
 
 ALL_TESTCODES = \
                 $(BASIC_TESTCODES) \

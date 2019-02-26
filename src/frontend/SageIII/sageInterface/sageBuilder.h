@@ -393,6 +393,10 @@ ROSE_DLL_API SgCharVal* buildCharVal_nfi(char value, const std::string& str);
 ROSE_DLL_API SgNullptrValExp* buildNullptrValExp();
 ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 
+//! DQ (2/14/2019): Adding support for C++14 void value expressions.
+ROSE_DLL_API SgVoidVal* buildVoidVal();
+ROSE_DLL_API SgVoidVal* buildVoidVal_nfi();
+
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
 

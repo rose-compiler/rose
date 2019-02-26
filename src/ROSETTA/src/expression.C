@@ -192,6 +192,9 @@ Grammar::setUpExpressions ()
   // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
      NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
 
+  // DQ (2/14/2019): Added support for C++14 void values.
+     NEW_TERMINAL_MACRO (VoidVal,          "VoidVal",          "VOID_VAL" );
+
   // DQ (8/8/2014): Added support for C++11 decltype which references a function parameter.
      NEW_TERMINAL_MACRO (FunctionParameterRefExp, "FunctionParameterRefExp", "FUNCTION_PARAMETER_REF_EXP" );
 
@@ -402,7 +405,7 @@ Grammar::setUpExpressions ()
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
           DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
           TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      | 
-          Float128Val       /* | LabelAddressVal */,
+          Float128Val          | VoidVal       /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -815,6 +818,8 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Float80Val.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Float128Val.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     VoidVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
   // DQ (11/28/2011): Adding template declaration support to the AST.
      TemplateParameterVal.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1493,6 +1498,8 @@ Grammar::setUpExpressions ()
   // DQ (7/31/2014): I don't think this need a value.
   // NullptrValExp.setDataPrototype ( "SgNullptrType*", "value", "= 0",
   //                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     VoidVal.setFunctionPrototype ( "HEADER_VOID_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
@@ -2883,6 +2890,8 @@ Grammar::setUpExpressions ()
      Float80Val.setFunctionSource ( "SOURCE_FLOAT_80_VALUE_EXPRESSION","../Grammar/Expression.code" );
      Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
 
+     VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
 
@@ -3152,6 +3161,8 @@ Grammar::setUpExpressions ()
      Float128Val.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+     VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
   // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
   // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
   // LabelAddressVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3199,6 +3210,8 @@ Grammar::setUpExpressions ()
      Float80Val.editSubstitute             ( "GENERIC_TYPE", "SgTypeFloat80" );
      Float128Val.editSubstitute            ( "GENERIC_TYPE", "SgTypeFloat128" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
+
+     VoidVal.editSubstitute                ( "GENERIC_TYPE", "SgTypeVoid" );
 
   // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
   // DQ (11/21/2017): Unclear what the type of a label address value expression should be (though in the test2017_73.C it is "void*").

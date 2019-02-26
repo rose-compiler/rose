@@ -4835,7 +4835,7 @@ SgTemplateVariableDeclaration* SgTemplateVariableDeclaration::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgVariableDefinition* SgVariableDefinition::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgInitializedName* vardefn, SgValueExp* bitfield )
+SgVariableDefinition* SgVariableDefinition::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgInitializedName* vardefn, SgExpression* bitfield )
    {
 #if 0
   // debugging information!
@@ -15438,6 +15438,14 @@ SgFloat80Val* SgFloat80Val::build_node_from_nonlist_children(Sg_File_Info* start
 SgFloat128Val* SgFloat128Val::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, long double value, std::string valueString)
    {
      SgFloat128Val* returnNode = NULL;
+     return returnNode;
+   }
+
+
+SgVoidVal* SgVoidVal::build_node_from_nonlist_children (Sg_File_Info*)
+   {
+     SgVoidVal* returnNode = NULL;
+
      return returnNode;
    }
 
