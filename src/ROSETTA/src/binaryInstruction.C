@@ -1070,6 +1070,12 @@ void Grammar::setUpBinaryInstructions() {
          *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
         virtual std::string toString() const;
 
+        /** Explicit constants.
+         *
+         *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called
+         *  "immediates" for some architectures such as X86. */
+        virtual std::set<rose_addr_t> explicitConstants() const;
+
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION

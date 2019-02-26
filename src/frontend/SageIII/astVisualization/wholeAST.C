@@ -186,7 +186,9 @@ CustomAstDOTGenerationData::additionalEdgeInfo(SgNode* from, SgNode* to, std::st
      if (i != edgeList.end())
         {
           returnString = (*i).labelString;
-       // printf ("Adding edge label info (%p) to (%p) \n",from,to);
+#if 1
+          printf ("Adding edge label info (%p) to (%p): returnString = %s \n",from,to,returnString.c_str());
+#endif
         }
 
      return returnString;

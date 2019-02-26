@@ -17,6 +17,12 @@ rebuild-stringify:
 
 noinst_LTLIBRARIES = libroseSupport.la
 
+license.h: $(top_srcdir)/LicenseInformation/ROSE_BSD_License.txt
+	perl $(top_srcdir)/scripts/to-c-string.pl < $< > $@
+
+# All files mentiond in BUILT_SOURCES will be built before the normal compilation rules run.
+BUILT_SOURCES = license.h
+
 libroseSupport_la_SOURCES =			\
 	Combinatorics.C				\
 	CommandLine.C				\
