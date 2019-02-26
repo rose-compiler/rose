@@ -2,6 +2,7 @@
 #include <Partitioner2/Partitioner.h>
 
 #include <Partitioner2/AddressUsageMap.h>
+#include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Utility.h>
@@ -963,7 +964,7 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
     ASSERT_require(bb->popsStack().isCached());
     return bb->popsStack().get();
 }
-    
+
 bool
 Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Level precision) const {
     ASSERT_not_null(bb);
@@ -984,22 +985,39 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
     if (precision > Precision::LOW) {
         BasicBlockSemantics sem = bb->semantics();
         if (BaseSemantics::StatePtr state = sem.finalState()) {
-            // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
-            // Is the block fall-through address equal to the value on the top of the stack?
             ASSERT_not_null(sem.dispatcher);
             ASSERT_not_null(sem.operators);
-            const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-            const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-            const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
             rose_addr_t returnVa = bb->fallthroughVa();
-            BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.get_nbits(), returnVa);
-            BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-            BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.get_nbits());
-            topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
-            BaseSemantics::SValuePtr z = sem.operators->equalToZero(sem.operators->add(returnExpr,
-                                                                                       sem.operators->negate(topOfStack)));
-            bool isRetAddrOnTopOfStack = z->is_number() ? (z->get_number()!=0) : false;
-            if (!isRetAddrOnTopOfStack) {
+            const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
+
+            // Check whether the last instruction is a CALL (or similar) instruction.
+            bool isInsnCall = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
+
+            // Check whether the basic block has the semantics of a function call.
+            //
+            // For stack-based calling, after the call the top of the stack will contain the address of the instruction
+            // immediately following the call.  Depending on the memory state, if the stack pointer is not a concrete value
+            // then reading the top of the stack might not return the same thing we just wrote there (due to trying to resolve
+            // aliasing in the memory state).
+            //
+            // FIXME[Robb P Matzke 2016-11-15]: This only works for stack-based calling conventions.
+            // Is the block fall-through address equal to the value on the top of the stack?
+            bool isSemanticCall = false;
+            if (!isInsnCall) {
+                const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
+                const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
+                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.get_nbits(), returnVa);
+                BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
+                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.get_nbits());
+                topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
+                BaseSemantics::SValuePtr z =
+                    sem.operators->equalToZero(sem.operators->add(returnExpr,
+                                                                  sem.operators->negate(topOfStack)));
+                isSemanticCall = z->is_number() ? (z->get_number() != 0) : false;
+            }
+
+            // Defintely not a function call if it neither has semantics or a call or looks like a call.
+            if (!isInsnCall && !isSemanticCall) {
                 bb->isFunctionCall() = false;
                 return false;
             }
@@ -1094,11 +1112,17 @@ bool
 Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
     bool retval = false;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    if (bb->isEmpty() || bb->isFunctionReturn().getOptional().assignTo(retval))
-        return retval;                                  // already cached
+    SAWYER_MESG(debug) <<"basicBlockIsFunctionReturn " <<bb->printableName()
+                       <<" with " <<StringUtility::plural(bb->nInstructions(), "instructions") <<"\n";
+    if (bb->isEmpty() || bb->isFunctionReturn().getOptional().assignTo(retval)) {
+        SAWYER_MESG(debug) <<"  using cached is-function-return value: " <<(retval ? "true" : "false") <<"\n";
+        return retval;
+    }
 
     SgAsmInstruction *lastInsn = bb->instructions().back();
+    SAWYER_MESG(debug) <<"  last instruction of block: " <<lastInsn->toString() <<"\n";
 
     // Use our own semantics if we have them.
     BasicBlockSemantics sem = bb->semantics();
@@ -1107,6 +1131,7 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
         // value equal to a return address which is now past the top of the stack.
         ASSERT_not_null(sem.dispatcher);
         ASSERT_not_null(sem.operators);
+        SAWYER_MESG(debug) <<"  block has semantic information\n";
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
@@ -1130,23 +1155,38 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
             // downward.
             stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
         }
-        BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sem.operators->peekRegister(REG_SP), stackOffset);
+        BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
+        BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
 
         // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
         // pointer. If equal, then the basic block returns to the caller.
         BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.get_nbits());
         retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
+        BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
         BaseSemantics::SValuePtr isEqual =
-            sem.operators->equalToZero(sem.operators->add(retAddr,
-                                                          sem.operators->negate(sem.operators->peekRegister(REG_IP))));
+            sem.operators->equalToZero(sem.operators->add(retAddr, sem.operators->negate(ip)));
         retval = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+
+        if (debug) {
+            debug <<"    stackOffset  = " <<*stackOffset <<"\n";
+            debug <<"    sp           = " <<*sp <<"\n";
+            debug <<"    retAddrPtr   = " <<*retAddrPtr <<"\n";
+            debug <<"    retAddr      = " <<*retAddr <<"\n";
+            debug <<"    ip           = " <<*ip <<"\n";
+            debug <<"    retAddr==ip? = " <<*isEqual <<"\n";
+            debug <<"    returning " <<(retval ? "true" : "false") <<"\n";
+            //debug <<"    state:" <<*state; // produces lots of output!
+        }
+
         bb->isFunctionReturn() = retval;
         return retval;
     }
 
     // No semantics, so delegate to SgAsmInstruction subclasses
+    SAWYER_MESG(debug) <<"  block does not have semantic information\n";
     retval = lastInsn->isFunctionReturnFast(bb->instructions());
     bb->isFunctionReturn() = retval;
+    SAWYER_MESG(debug) <<"  returning " <<(retval ? "true" : "false") <<"\n";
     return retval;
 }
 
@@ -2602,6 +2642,83 @@ Partitioner::functionCallGraph(AllowParallelEdges::Type allowParallelEdges) cons
         }
     }
     return cg;
+}
+
+std::set<rose_addr_t>
+Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+
+    std::set<rose_addr_t> retval;
+    BaseSemantics::RiscOperatorsPtr ops = newOperators();
+    BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
+    if (!cpu)
+        return retval;
+
+    // Build the data flow engine. We're using parts from a variety of locations.
+    typedef DataFlow::DfCfg DfCfg;
+    typedef BaseSemantics::StatePtr StatePtr;
+    typedef DataFlow::TransferFunction TransferFunction;
+    typedef BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+    typedef BinaryAnalysis::DataFlow::Engine<DfCfg, StatePtr, TransferFunction, MergeFunction> Engine;
+
+    ControlFlowGraph::ConstVertexIterator startVertex = findPlaceholder(function->address());
+    ASSERT_require2(cfg_.isValidVertex(startVertex), "function does not exist in partitioner");
+    DfCfg dfCfg = DataFlow::buildDfCfg(*this, cfg_, startVertex); // not interprocedural
+    size_t dfCfgStartVertexId = 0; // dfCfg vertex corresponding to function's entry ponit.
+    TransferFunction xfer(cpu);
+    MergeFunction mergeFunction(cpu);
+    Engine dfEngine(dfCfg, xfer, mergeFunction);
+    dfEngine.maxIterations(2 * dfCfg.nVertices());        // arbitrary limit for non-convergent flow
+
+    StatePtr initialState = xfer.initialState();
+    const RegisterDescriptor SP = cpu->stackPointerRegister();
+    const RegisterDescriptor memSegReg;
+    BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
+    size_t wordSize = SP.get_nbits() >> 3;              // word size in bytes
+
+    // Run the data flow
+    try {
+        dfEngine.runToFixedPoint(dfCfgStartVertexId, initialState);
+    } catch (const BaseSemantics::Exception &e) {
+        mlog[ERROR] <<function->printableName() <<": " <<e <<"\n"; // probably missing semantics capability for an instruction
+        return retval;
+    } catch (const BinaryAnalysis::DataFlow::NotConverging &e) {
+        mlog[WARN] <<function->printableName() <<": " <<e.what() <<"\n";
+    } catch (const BinaryAnalysis::DataFlow::Exception &e) {
+        mlog[ERROR] <<function->printableName() <<": " <<e.what() <<"\n";
+        return retval;
+    }
+
+
+    // Scan all outgoing states and accumulate any concrete values we find.
+    BOOST_FOREACH (StatePtr state, dfEngine.getFinalStates()) {
+        if (state) {
+            ops->currentState(state);
+            BaseSemantics::RegisterStateGenericPtr regs =
+                BaseSemantics::RegisterStateGeneric::promote(state->registerState());
+            BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
+                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                    retval.insert(kv.value->get_number());
+            }
+
+            BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
+                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
+                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
+                if (value->is_number() && value->get_width() <= SP.get_nbits())
+                    retval.insert(value->get_number());
+            }
+
+            BOOST_FOREACH (const AbstractLocation &var, DataFlow::findGlobalVariables(ops, wordSize)) {
+                if (var.isAddress()) {
+                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
+                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
+                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                        retval.insert(value->get_number());
+                }
+            }
+        }
+    }
+    return retval;
 }
 
 void

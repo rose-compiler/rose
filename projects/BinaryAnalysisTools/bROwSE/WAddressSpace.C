@@ -131,7 +131,7 @@ WAddressSpace::insertSegmentsAndFunctions(const P2::Partitioner &partitioner) {
         // Add function extents and mark their start in the bottom gutter. Adjacent functions will merge into one colored area and
         // we don't try to separate them with
         insert(partitioner, partitioner.functions(), 1);
-        Color::HSV functionColor = darken(Color::cyan, 0.25);
+        Color::HSV functionColor = darken(Color::HSV_CYAN, 0.25);
         gradient(1).insert(0, functionColor);
         bottomGutterGradient().insert(0, functionColor);
         properties(1).pen = Wt::WPen(Wt::NoPen);
@@ -145,12 +145,12 @@ WAddressSpace::insert(const MemoryMap::Ptr &mm, size_t idx, bool showStarts) {
 
     // Colors
     gradient(idx).clear();
-    gradient(idx).insert(0.00, darken(Color::red, 0.25));               // no permissions               red
-    gradient(idx).insert(0.05, fade(darken(Color::red, 0.25), 0.75));   // write-only                   faded red
-    gradient(idx).insert(0.10, darken(Color::green, 0.15));             // executable                   green
-    gradient(idx).insert(0.15, fade(darken(Color::green, 0.15), 0.75)); // executable + writable        faded green
-    gradient(idx).insert(0.20, Color::RGB(0.9, 0.8, 0));                // read-only                    yellow
-    gradient(idx).insert(0.25, fade(Color::RGB(0.9, 0.8, 0), 0.75));    // read + writable              faded yellow
+    gradient(idx).insert(0.00, darken(Color::HSV_RED, 0.25));               // no permissions               red
+    gradient(idx).insert(0.05, fade(darken(Color::HSV_RED, 0.25), 0.75));   // write-only                   faded red
+    gradient(idx).insert(0.10, darken(Color::HSV_GREEN, 0.15));             // executable                   green
+    gradient(idx).insert(0.15, fade(darken(Color::HSV_GREEN, 0.15), 0.75)); // executable + writable        faded green
+    gradient(idx).insert(0.20, Color::RGB(0.9, 0.8, 0));                    // read-only                    yellow
+    gradient(idx).insert(0.25, fade(Color::RGB(0.9, 0.8, 0), 0.75));        // read + writable              faded yellow
 
     HeatMap &gutter = 0==idx ? topGutterMap() : bottomGutterMap();
     Color::Gradient &gutterGradient = 0==idx ? topGutterGradient() : bottomGutterGradient();

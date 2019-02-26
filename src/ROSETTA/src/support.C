@@ -144,7 +144,8 @@ Grammar::setUpSupport ()
 
   // DQ (4/25/2004): Must be placed before the modifiers (since it includes one as a data member)
      NEW_TERMINAL_MACRO (ExpBaseClass, "ExpBaseClass", "ExpBaseClassTag" );
-     NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass, "BaseClass", "BaseClassTag", false );
+     NEW_TERMINAL_MACRO (NonrealBaseClass, "NonrealBaseClass", "NonrealBaseClassTag" );
+     NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass | NonrealBaseClass, "BaseClass", "BaseClassTag", false );
 
 // #define OLD_GRAPH_NODES 0
 // #if OLD_GRAPH_NODES
@@ -565,8 +566,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","use_generated_name_for_template_arguments","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Unparse_Info.setDataPrototype("bool","user_defined_literal","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
-     ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
+     NonrealBaseClass.setFunctionPrototype    ( "HEADER_NONREAL_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (4/29/2004): Removed in place of new modifier interface
   // BaseClass.setDataPrototype               ( "int"                , "base_specifier", "= 0",
@@ -615,6 +620,9 @@ Grammar::setUpSupport ()
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ExpBaseClass.setDataPrototype ( "SgExpression*", "base_class_exp", "= NULL",
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     NonrealBaseClass.setDataPrototype ( "SgNonrealDecl*", "base_class_nonreal", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      FuncDecl_attr.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
@@ -2831,8 +2839,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Project.setFunctionSource         ( "SOURCE_APPLICATION_PROJECT", "../Grammar/Support.code");
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");
      Unparse_Info.setFunctionSource    ( "SOURCE_UNPARSE_INFO", "../Grammar/Support.code");
-     BaseClass.setFunctionSource       ( "SOURCE_BASECLASS", "../Grammar/Support.code");
-     ExpBaseClass.setFunctionSource    ( "SOURCE_EXP_BASE_CLASS", "../Grammar/Support.code");
+
+     BaseClass.setFunctionSource        ( "SOURCE_BASECLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionSource     ( "SOURCE_EXP_BASE_CLASS", "../Grammar/Support.code");
+     NonrealBaseClass.setFunctionSource ( "SOURCE_NONREAL_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (12/19/2005): Support for explicitly specified qualified names
      QualifiedName.setFunctionSource   ( "SOURCE_QUALIFIED_NAME", "../Grammar/Support.code");

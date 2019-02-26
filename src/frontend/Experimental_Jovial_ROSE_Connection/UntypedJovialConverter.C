@@ -86,7 +86,7 @@ UntypedJovialConverter::convertUntypedCaseStatement (SgUntypedCaseStatement* ut_
   // If a Jovial CaseAlternative rule doesn't have a FALLTHRU, then create a
   // compiler-generated break statement so that program analysis will be the same as for C.
   //
-     if (ut_stmt->get_has_fall_through() == false && isSgSwitchStatement(sg_stmt) == NULL)
+     if (ut_stmt->get_has_fall_through() == false  &&  isSgSwitchStatement(sg_stmt) == NULL)
        {
           SgBreakStmt* sg_break_stmt = SageBuilder::buildBreakStmt();
           ROSE_ASSERT(sg_break_stmt);

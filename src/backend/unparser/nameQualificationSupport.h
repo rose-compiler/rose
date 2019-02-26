@@ -217,6 +217,8 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // void setNameQualification ( SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
 
+          void setNameQualification ( SgNonrealRefExp* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
+
           void setNameQualification ( SgEnumVal* enumVal, SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired);
 
        // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
@@ -229,6 +231,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (7/8/2014): Adding support for name qualification of SgNamespaceDeclarations within a SgNamespaceAliasDeclarationStatement.
           void setNameQualification ( SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
+       // DQ (2/14/2019): Adding support for C++11 enum prototypes (and defining declaratins in different scopes requiring name qualification).
+          void setNameQualification ( SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired );
 
        // This is a separate function just for setting the information specific to the name qualification of return types.
        // This information cannot be stored in the SgFunctionType since that might be shared and referenced from different locations.

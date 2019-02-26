@@ -1,4 +1,5 @@
 #ifndef UNTYPED_CONVERTER_H
+
 #define UNTYPED_CONVERTER_H
 
 //-----------------------------------------------------------------------------------
@@ -56,6 +57,9 @@ class UntypedConverter
 
       virtual SgGlobal* convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
 
+      virtual SgC_PreprocessorDirectiveStatement*
+                                          convertUntypedDirectiveDeclaration     (SgUntypedDirectiveDeclaration*     ut_decl, SgScopeStatement* scope);
+
       virtual SgModuleStatement*          convertUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
       virtual SgProgramHeaderStatement*   convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
       virtual SgProcedureHeaderStatement* convertUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
@@ -96,7 +100,7 @@ class UntypedConverter
       virtual SgStatement*     convertSgUntypedGotoStatement       (SgUntypedGotoStatement*   ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedLabelStatement_decl (SgUntypedLabelStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedLabelStatement      (SgUntypedLabelStatement*  ut_stmt, SgStatement* stmt, SgScopeStatement* scope);
-      virtual SgStatement*     convertSgUntypedNamedStatement      (SgUntypedNamedStatement*  ut_stmt, SgScopeStatement* scope);
+      virtual SgStatement*     convertUntypedNamedStatement        (SgUntypedNamedStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgNullStatement* convertSgUntypedNullStatement       (SgUntypedNullStatement*   ut_stmt, SgScopeStatement* scope);
       virtual SgStatement*     convertSgUntypedOtherStatement      (SgUntypedOtherStatement*  ut_stmt, SgScopeStatement* scope);
       virtual SgWhileStmt*     convertUntypedWhileStatement        (SgUntypedWhileStatement*  ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);

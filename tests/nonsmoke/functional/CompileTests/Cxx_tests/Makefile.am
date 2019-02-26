@@ -383,7 +383,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2016_49.C \
    test2016_50.C \
    test2016_51.C \
-   test2016_52.C \
    test2016_53.C \
    test2016_54.C \
    test2016_55.C \
@@ -594,7 +593,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C 
+   test2019_24.C \
+   rose-1701-0.C \
+   rose-1766.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
@@ -1104,12 +1105,15 @@ if ROSE_USE_EDG_VERSION_4_9
      test2014_66.C \
      test2014_69.C
   TESTCODE_CURRENTLY_FAILING += \
+     test2016_52.C \
      test2017_12.C
 else
   TESTCODE_CURRENTLY_FAILING += \
      test2014_65.C \
      test2014_66.C \
      test2014_69.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     test2016_52.C 
 
 # DQ (2/2/2019): EDG 5.0 fails for this use of __Float128, but Tristan is fixing it.
 if ROSE_USE_EDG_VERSION_5_0
@@ -1173,9 +1177,13 @@ endif
 if ROSE_USING_GCC_VERSION_LATER_6_0
   TESTCODE_CURRENTLY_FAILING += \
      test2018_01.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     rose-1701-1.C
 else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2018_01.C
+  TESTCODE_CURRENTLY_FAILING += \
+     rose-1701-1.C
 endif
 
 if ROSE_USING_BOOST_VERSION_1_57
@@ -1346,7 +1354,7 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 	cd ../..; $(MAKE) testBackend
 
 ../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+	cd ../..; $(MAKE) testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
