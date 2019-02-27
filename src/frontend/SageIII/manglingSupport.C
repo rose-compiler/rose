@@ -1281,6 +1281,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bNotOp_" << mangleExpression (e->get_operand_i()) << "_eNotOp_";
           break;
         }
+        case V_SgBitComplementOp: {
+          const SgBitComplementOp* e = isSgBitComplementOp (expr);
+          mangled_name << "_bBitComplementOp_" << mangleExpression (e->get_operand_i()) << "_eBitComplementOp_";
+          break;
+        }
         case V_SgMinusOp: {
           const SgMinusOp* e = isSgMinusOp (expr);
           mangled_name << "_bMinusOp_" << mangleExpression (e->get_operand_i()) << "_eMinusOp_";
@@ -1345,6 +1350,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgBitXorOp: {
           const SgBitXorOp* e = isSgBitXorOp (expr);
           mangled_name << "_bBitXorOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitXorOp_";
+          break;
+        }
+        case V_SgBitOrOp: {
+          const SgBitOrOp* e = isSgBitOrOp (expr);
+          mangled_name << "_bBitOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitOrOp_";
           break;
         }
         case V_SgOrOp: {
