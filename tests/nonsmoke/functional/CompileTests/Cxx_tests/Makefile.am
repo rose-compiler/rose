@@ -570,6 +570,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_157.C \
    rose-1540-0.C \
    rose-1541-0.C \
+   rose-1789-001.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
