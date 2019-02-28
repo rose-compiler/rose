@@ -756,6 +756,13 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+    private:
+        struct SemanticFailure {
+            size_t n;
+            SemanticFailure(): n(0) {}
+        };
+        SemanticFailure semanticFailure_;
+
     public:
         /** Represents an invalid stack delta.
          *
@@ -1075,6 +1082,20 @@ void Grammar::setUpBinaryInstructions() {
          *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called
          *  "immediates" for some architectures such as X86. */
         virtual std::set<rose_addr_t> explicitConstants() const;
+
+        /** Property: Whether instruction semantics failed at this location.
+         *
+         *  This property is incremented by various analyses that evaluate instructions semantically when semantics fails
+         *  in a way that is not recoverable.  Some analyses can work around failed semantics by operating in a degraded
+         *  mode, and it is up to the analysis whether to increment this property.
+         *
+         *  Thread safety: This method is thread safe.
+         *
+         * @{ */
+        size_t semanticFailure() const;
+        void semanticFailure(size_t);
+        void incrementSemanticFailure();
+        /** @} */
 
 #endif // SgAsmInstruction_OTHERS
 
