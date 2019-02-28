@@ -31,7 +31,9 @@ void AstPostProcessing (SgNode* node)
 
      ROSE_ASSERT(node != NULL);
 
-  // printf ("Inside of AstPostProcessing(node = %p) \n",node);
+#if 0
+     printf ("Inside of AstPostProcessing(node = %p = %s) \n",node,node->class_name().c_str());
+#endif
 
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
   // Later I want to change the function's API to onoy take a SgProject.  Note that this is 
@@ -176,6 +178,10 @@ void postProcessingSupport (SgNode* node)
   // SgFile, as far as I can tell; also, calling the AstPostProcessing just
   // once on an entire project is more efficient than calling it once per
   // file.
+
+#if 0
+     printf ("Inside of postProcessingSupport(node = %p = %s) \n",node,node->class_name().c_str());
+#endif
 
 #if 0
   // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
@@ -523,6 +529,15 @@ void postProcessingSupport (SgNode* node)
        // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info obejcts in SgLocatedNode and SgExpression IR nodes.
           fixupFileInfoInconsistanties(node);
 
+#if 1
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling markSharedDeclarationsForOutputInCodeGeneration() \n");
+             }
+
+       // DQ (2/25/2019): Adding support to mark shared defining declarations across multiple files.
+          markSharedDeclarationsForOutputInCodeGeneration(node);
+#endif
           if (SgProject::get_verbose() > 1)
              {
                printf ("Calling checkIsModifiedFlag() \n");

@@ -8851,6 +8851,38 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
         }
    }
 
+
+void
+SageInterface::outputSharedNodes( SgNode* node )
+   {
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+
+     class OutputSharedNodesTraversal : public SgSimpleProcessing
+        {
+       // This traversal collects the includes at the top of a file.
+          public:
+               void visit(SgNode *astNode)
+                  {
+                    ROSE_ASSERT(astNode != NULL);
+                    Sg_File_Info* file_info = astNode->get_file_info();
+                    if (file_info != NULL)
+                       {
+                         if (file_info->isShared() == true)
+                            {
+                              printf ("Found shared node: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+     OutputSharedNodesTraversal tt;
+     tt.traverse(node,preorder);
+   }
+
+
+
+
+
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
   return isSgStatement(n);

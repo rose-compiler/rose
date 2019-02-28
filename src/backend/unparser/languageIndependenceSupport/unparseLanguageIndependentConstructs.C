@@ -195,7 +195,23 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      printf ("\n");
      printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
      printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
+     printf ("   --- stmt->get_file_info()->get_fileIDsToUnparse().size() = %zu \n",stmt->get_file_info()->get_fileIDsToUnparse().size());
 #endif
+
+  // DQ (2/26/2019): Adding support for multiple file to reference defining declaration and still unparse them.
+     if (stmt->get_file_info()->get_fileIDsToUnparse().empty() == false)
+        {
+       // Found case of multiple file handling causing a definng declaration to be used within more than one file.
+       // This design permits both files to reference the single definig declaration, while having only one 
+       // defining declaration across the multi-file support (this permits global analysis, especially effective 
+       // when used with the AST merge mechanism).
+
+       // For the moment we can attemt to test this support by retuning true when we detect the use of this feature.
+#if 0
+          printf ("In statementFromFile(): stmt->get_file_info()->get_fileIDsToUnparse().empty() == false: return true \n");
+#endif
+          return true;
+        }
 
   // FMZ (comment by DQ (11/14/2008)):
   // This is part of the support for module files in Fortran.  Modules seen in the compilation 
@@ -3961,6 +3977,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
             // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
                (*i)->getString().c_str());
+
+       // DQ (2/27/2019): Adding support for multi-file handling.
+          printf (" --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+          printf (" --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
 #endif
 
        // Check and see if the info object would indicate that the statement would 
@@ -3988,6 +4008,26 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
        // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
+       // DQ (2/27/2019): Added assertions for debugging.
+          ROSE_ASSERT(*i != NULL);
+
+       // DQ (2/27/2019): Added assertions for debugging, for Cxx_tests/test2005_15.C (and many other files) this can be NULL.
+       // ROSE_ASSERT(info.get_current_source_file() != NULL);
+          bool isCommentFromCurrentFile = true;
+          if (info.get_current_source_file() != NULL)
+             {
+               ROSE_ASSERT(info.get_current_source_file()->get_file_info() != NULL);
+
+            // DQ (2/27/2019): If this is a comment from a different file (not current file) then we can't unparse it here.
+               isCommentFromCurrentFile = (info.get_current_source_file()->get_file_info()->get_file_id() == (*i)->getFileId());
+               if (isCommentFromCurrentFile == false)
+                  {
+#if 0
+                    printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file \n");
+#endif
+                    infoSaysGoAhead = false;
+                  }
+             }
 #if 0
           printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
