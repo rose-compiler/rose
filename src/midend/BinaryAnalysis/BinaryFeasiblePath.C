@@ -426,7 +426,7 @@ public:
             ASSERT_not_null(path_);
             pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::READ, addr, currentInstruction());
         }
-        
+
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
@@ -493,7 +493,7 @@ public:
             ASSERT_not_null(path_);
             pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::WRITE, addr, currentInstruction());
         }
-        
+
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
@@ -528,6 +528,19 @@ hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
 Sawyer::Message::Facility FeasiblePath::mlog;
 Sawyer::Attribute::Id FeasiblePath::POST_STATE(-1);
 Sawyer::Attribute::Id FeasiblePath::POST_INSN_LENGTH(-1);
+
+void
+FeasiblePath::Expression::print(std::ostream &out) const {
+    if (!where.isEmpty()) {
+        out <<StringUtility::addrToString(where);
+    } else if (!parsable.empty()) {
+        out <<parsable;
+    } else if (expr) {
+        out <<*expr;
+    } else {
+        out <<"empty-expression";
+    }
+}
 
 FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex,
                                                uint64_t stackDelta)
@@ -614,10 +627,12 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
 
     sg.insert(Switch("post-condition")
-              .argument("sexpr", anyParser(settings.postConditionStrings))
+              .argument("sexpr", anyParser(settings.postConditions))
               .doc("Additional constraint to be satisfied at the ending vertex. This switch may appear more than once "
                    "in order to specify multiple conditions that must all be satisfied. " +
-                   SymbolicExprParser::SymbolicExprCmdlineParser::docString()));
+                   (settings.exprParserDoc.empty() ?
+                    SymbolicExprParser::SymbolicExprCmdlineParser::docString() :
+                    settings.exprParserDoc)));
 
     sg.insert(Switch("summarize-function")
               .argument("addr_or_name", anyParser())
@@ -1197,6 +1212,40 @@ FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solv
     ASSERT_require(solver->nLevels() == 1 + path.nEdges());
 }
 
+FeasiblePath::Expression
+FeasiblePath::parseCondition(const Expression &expr, SymbolicExprParser &exprParser) {
+    if (!expr.parsable.empty()) {
+        return exprParser.parse(expr.parsable);
+    } else {
+        return expr;
+    }
+}
+
+SymbolicExpr::Ptr
+FeasiblePath::expandCondition(const Expression &expr, const SymbolicExprParser::RegisterSubstituter::Ptr &subber,
+                              BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor IP) {
+    ASSERT_not_null(subber);
+    ASSERT_not_null(cpu);
+    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    if (!expr.where.isEmpty()) {
+        BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.nBits()));
+        if (ip->is_number() && ip->get_width() <= 64) {
+            return SymbolicExpr::makeBoolean(expr.where.isContaining(ip->get_number()));
+        } else {
+            SymbolicExpr::Ptr ipExpr = SymbolicSemantics::SValue::promote(ip)->get_expression();
+            using namespace SymbolicExpr;
+            return makeAnd(makeGe(ipExpr, makeInteger(IP.nBits(), expr.where.least())),
+                           makeLe(ipExpr, makeInteger(IP.nBits(), expr.where.greatest())));
+        }
+    } else if (expr.expr) {
+        return subber->substitute(expr.expr, ops);
+    } else if (!expr.parsable.empty()) {
+        ASSERT_not_reachable("string should have been parsed by now");
+    } else {
+        return SymbolicExpr::makeBoolean(false);
+    }
+}
+
 void
 FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
@@ -1229,13 +1278,12 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     // Gather all post conditions. When parsing post condition strings to create symbolic expressions, replace register names
     // with new placeholder variables that will be expanded to register values at the time the expression is used as a post
     // condition.
-    std::vector<SymbolicExpr::Ptr> postConditionsIn; // expressions with placholders
-    postConditionsIn = settings_.postConditions;
+    std::vector<Expression> postConditionsIn; // expressions with placholders
     SymbolicExprParser exprParser;
     SymbolicExprParser::RegisterSubstituter::Ptr subber =
         exprParser.defineRegisters(partitioner().instructionProvider().registerDictionary());
-    BOOST_FOREACH (const std::string &s, settings_.postConditionStrings)
-        postConditionsIn.push_back(exprParser.parse(s));
+    BOOST_FOREACH (const Expression &expr, settings_.postConditions)
+        postConditionsIn.push_back(parseCondition(expr, exprParser));
 
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
@@ -1355,12 +1403,14 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     debug <<" = satisified (no post conditions)\n";
                     postConditionsSatisified = true;
                 } else {
-                    ASSERT_not_null(subber);
                     SmtSolver::Transaction transaction(solver);
+                    debug <<":\n";
                     for (size_t i=0; i<postConditionsIn.size(); ++i) {
-                        SymbolicExpr::Ptr postCondition = subber->substitute(postConditionsIn[i], cpu->get_operators());
+                        SymbolicExpr::Ptr postCondition = expandCondition(postConditionsIn[i], subber, cpu, IP);
+                        SAWYER_MESG(debug) <<"      " <<*postCondition <<"\n";
                         solver->insert(postCondition);
                     }
+                    debug <<"    checking path post conditions";
                     switch (solver->check()) {
                         case SmtSolver::SAT_YES:
                             debug <<" = satisfied\n";
@@ -1559,3 +1609,9 @@ FeasiblePath::VarDetail::toString() const {
 
 } // namespace
 } // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::FeasiblePath::Expression &expr) {
+    expr.print(out);
+    return out;
+}
