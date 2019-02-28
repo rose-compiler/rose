@@ -818,6 +818,26 @@ public:
     }
 };
 
+class BooleanConstant: public SymbolicExprParser::AtomExpansion {
+public:
+    static Ptr instance() {
+        Ptr functor = Ptr(new BooleanConstant);
+        functor->title("Boolean constants");
+        functor->docString("Boolean constants named \"true\" and \"false\" are equivalent to the more cumbersome numeric "
+                           "constants \"1[1]\" and \"0[1]\".");
+        return functor;
+    }
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
+        if (symbol.lexeme() == "true") {
+            return SymbolicExpr::makeBoolean(true);
+        } else if (symbol.lexeme() == "false") {
+            return SymbolicExpr::makeBoolean(false);
+        } else {
+            return SymbolicExpr::Ptr();
+        }
+    }
+};
+
 SymbolicExprParser::SymbolicExprParser() {
     init();
 }
@@ -837,6 +857,7 @@ SymbolicExprParser::init() {
 
     appendAtomExpansion(AbbreviatedAtom::instance());
     appendAtomExpansion(CanonicalVariable::instance());
+    appendAtomExpansion(BooleanConstant::instance());
 }
 
 std::string
