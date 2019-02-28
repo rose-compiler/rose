@@ -664,6 +664,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
     CommandLine::insertBooleanSwitch(sg, "null-const", settings.nullDeref.constOnly,
                                      "Check for null dereferences only when a pointer is a constant or set of constants.");
 
+    CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failure", settings.ignoreSemanticFailure,
+                                     "If set, then any instruction for which semantics are not implemented or for which the "
+                                     "semantic evaluation fails will be ignored as if the instruction was not present in the "
+                                     "path (although it will still be shown). If disabled, then a semantic failure will cause "
+                                     "all paths on which that instruction occurs to be infeasible. In either case, the "
+                                     "instruction's semanticsFailed property is incremented.");
+
     return sg;
 }
 
@@ -767,8 +774,8 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
     }
 
     // Process each instruction in the basic block
-    try {
-        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+        try {
             if (pathInsnIndex != size_t(-1)) {
                 SAWYER_MESG(debug) <<"        processing path insn #" <<pathInsnIndex <<" at " <<insn->toString() <<"\n";
                 ops->pathInsnIndex(pathInsnIndex++);
@@ -776,9 +783,15 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 SAWYER_MESG(debug) <<"        processing path insn at " <<insn->toString() <<"\n";
             }
             cpu->processInstruction(insn);
+        } catch (const BaseSemantics::Exception &e) {
+            insn->incrementSemanticFailure();
+            if (settings_.ignoreSemanticFailure) {
+                SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";
+            } else {
+                SAWYER_MESG(mlog[WARN]) <<"semantics failed: " <<e <<"\n";
+                throw;
+            }
         }
-    } catch (const BaseSemantics::Exception &e) {
-        mlog[ERROR] <<"semantics failed: " <<e <<"\n";
     }
 
     if (debug) {
@@ -1196,6 +1209,11 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
     return false;
 }
 
+BaseSemantics::StatePtr
+FeasiblePath::pathPostState(const P2::CfgPath &path, size_t vertexIdx) {
+    return path.vertexAttributes(vertexIdx).getAttribute<BaseSemantics::StatePtr>(POST_STATE);
+}
+
 void
 FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(solver);
@@ -1336,10 +1354,11 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // the RiscOperators current state.
             BaseSemantics::StatePtr penultimateState;
             size_t pathInsnIndex = 0;
+            bool pathProcessed = false;                 // true if path semantic processing is successful, false if failed.
             if (path.nEdges() > 0) {
                 BaseSemantics::StatePtr state;
                 if (path.nVertices() >= 3) {
-                    state = path.vertexAttributes(path.nVertices()-3).getAttribute<BaseSemantics::StatePtr>(POST_STATE);
+                    state = pathPostState(path, path.nVertices()-3);
                     pathInsnIndex = path.vertexAttributes(path.nVertices()-3).getAttribute<size_t>(POST_INSN_LENGTH);
                 } else {
                     state = originalState;
@@ -1347,11 +1366,17 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 }
                 penultimateState = state->clone();
                 ops->currentState(penultimateState);
-                processVertex(cpu, path.edges().back()->source(), pathInsnIndex /*in,out*/);
+                try {
+                    processVertex(cpu, path.edges().back()->source(), pathInsnIndex /*in,out*/);
+                    pathProcessed = true;
+                } catch (...) {
+                    debug <<"    path semantics failed\n";
+                }
                 path.vertexAttributes(path.nVertices()-2).setAttribute(POST_STATE, penultimateState);
                 path.vertexAttributes(path.nVertices()-2).setAttribute(POST_INSN_LENGTH, pathInsnIndex);
             } else {
                 ops->currentState(originalState);
+                pathProcessed = true;
             }
 
             // Check whether this path is feasible. We've already validated the path up to but not including its final edge,
@@ -1360,7 +1385,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // the final edge. Therefore, we just need to push this final edge's condition into the SMT solver and check.
             SAWYER_MESG(debug) <<"    checking path feasibility";
             boost::logic::tribool pathIsFeasible = false;
-            if (path.nEdges() == 0) {
+            if (!pathProcessed) {
+                pathIsFeasible = false;                 // encountered unhandled error during semantic processing
+                debug <<" = not feasible (semantic failure)\n";
+            } else if (path.nEdges() == 0) {
                 ASSERT_require(path.nVertices() == 1);
                 ASSERT_require(solver->nLevels() == 1);
                 debug <<" = is feasible (first vertex reachable by definition)\n";

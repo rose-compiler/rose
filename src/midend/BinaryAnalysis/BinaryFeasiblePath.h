@@ -76,6 +76,7 @@ public:
         std::string solverName;                         /**< Type of SMT solver. */
         SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
         bool processFinalVertex;                        /**< Whether to process the last vertex of the path. */
+        bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
 
         // Null dereferences
         struct NullDeref {
@@ -93,7 +94,7 @@ public:
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
-              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false) {}
+              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false) {}
     };
 
     /** Diagnostic output. */
@@ -472,6 +473,9 @@ public:
 
     /** Details about all variables by name. */
     const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr &state) const;
+
+    /** Get the state at the end of the specified vertex. */
+    static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath &path, size_t vertexIdx);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
