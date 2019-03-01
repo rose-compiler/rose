@@ -2086,12 +2086,17 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
       AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
       newPState.writeToMemoryLocation(lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
+      logger[TRACE]<<"transferFunctionCallReturn(initialization): LHSVAR:"<<getVariableIdMapping()->variableName(lhsVarId)<<" value: "<<evalResult.toString()<<endl;
       return elistify(createEState(edge.target(),cs,newPState,cset));
     } else {
       // no $return variable found in state. This can be the case for an extern function.
       // alternatively a $return variable could be added in the external function call to
       // make this handling here uniform
       // for external functions no constraints are generated in the call-return node
+      logger[TRACE]<<"-------------------------------------------------"<<endl;
+      logger[TRACE]<<"transferFunctionCallReturn: Variable declaration with function call: no function-return variable $return found! @ "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze1)<<":"<<nextNodeToAnalyze1->unparseToString()<<endl;
+      logger[TRACE]<<estate->toString(getVariableIdMapping())<<endl;
+      logger[TRACE]<<"-------------------------------------------------"<<endl;
       return elistify(createEState(edge.target(),cs,newPState,cset));
     }
   } else  if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -2326,9 +2331,21 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       list<SingleEvalResultConstInt> res2=exprAnalyzer.evaluateExpression(funCall,currentEState);
       ROSE_ASSERT(res2.size()==1);
       SingleEvalResultConstInt evalResult2=*res2.begin();
-      EState estate2=evalResult2.estate;
-      estate2.setLabel(edge.target());
-      return elistify(estate2);
+      logger[TRACE]<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
+
+      //EState estate2=evalResult2.estate;
+      // create new estate with added return variable (for inter-procedural analysis)
+      CallString cs=evalResult2.estate.callString;
+      PState newPState=*evalResult2.estate.pstate();
+      ConstraintSet cset=*evalResult2.estate.constraints();
+      VariableId returnVarId;
+#pragma omp critical(VAR_ID_MAPPING)
+      {
+        returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      }
+      newPState.writeToMemoryLocation(returnVarId,evalResult2.result);
+      //estate2.setLabel(edge.target());
+      return elistify(createEState(edge.target(),cs,newPState,cset,evalResult2.estate.io));
     }
   }
   //cout<<"DEBUG: identity: "<<funCall->unparseToString()<<endl; // fflush is an example in the test cases
@@ -2644,6 +2661,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
               cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
+              // no state can follow, return estateList (may be empty)
+              return estateList;
             }
           }
           arrayElementId=arrayPtrPlusIndexValue;

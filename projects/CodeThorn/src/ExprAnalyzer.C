@@ -1429,6 +1429,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctio
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate) {
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Top()));
+  logger[TRACE]<<"Evaluating function call: "<<funCall->unparseToString()<<endl;
   if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
@@ -1667,8 +1668,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
       AbstractValue cmpResult=((estate.pstate()->readFromMemoryLocation(currentPos))==AbstractValue(0));
       if(cmpResult.isTrue()) {
         // found 0
-        res.init(estate,AbstractValue(pos));
-        logger[TRACE]<<"evaluating semantic function for strlen finished: "<<funCall->unparseToString()<<endl;
+        AbstractValue finalResult=AbstractValue(pos);
+        res.init(estate,finalResult);
+        logger[TRACE]<<"evaluating semantic function for strlen finished: "<<funCall->unparseToString()<<" result: "<<finalResult.toString()<<endl;
         return listify(res);
       } else if(cmpResult.isFalse()) {
         pos++;
@@ -1723,3 +1725,10 @@ bool ExprAnalyzer::isStructMember(SPRAY::VariableId varId) {
   return structureAccessLookup.isStructMember(varId);
 }
 
+bool ExprAnalyzer::definitiveErrorDetected() {
+  return _outOfBoundsAccessLocations.numDefinitiveLocations()>0 || _nullPointerDereferenceLocations.numDefinitiveLocations()>0;
+}
+
+bool ExprAnalyzer::potentialErrorDetected() {
+  return _outOfBoundsAccessLocations.numPotentialLocations()>0 || _nullPointerDereferenceLocations.numPotentialLocations()>0;
+}
