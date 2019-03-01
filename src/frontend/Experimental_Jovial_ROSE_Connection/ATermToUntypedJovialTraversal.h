@@ -49,7 +49,7 @@ ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType** type, SgUntypedE
 
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 ATbool traverse_IntegerItemDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
-ATbool traverse_OptItemSize(ATerm term, bool* has_size, SgUntypedExpression** size);
+ATbool traverse_OptItemSize(ATerm term, bool & has_size, SgUntypedExpression** size);
 
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 ATbool traverse_FloatingItemDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
@@ -68,12 +68,12 @@ ATbool traverse_CharacterItemDescription  (ATerm term, SgUntypedType** type);
 ATbool traverse_CharacterLiteral          (ATerm term, SgUntypedExpression** expr);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
-ATbool traverse_StatusItemDescription (ATerm term, SgUntypedType** type);
+ATbool traverse_StatusItemDescription (ATerm term, SgUntypedInitializedNameList* & status_list, bool & has_size, SgUntypedExpression* & size);
 ATbool traverse_StatusConstant        (ATerm term, SgUntypedInitializedName** init_name);
-ATbool traverse_DefaultSublist        (ATerm term, SgUntypedInitializedNameList** status_list);
-ATbool traverse_OptDefaultSublist     (ATerm term, SgUntypedInitializedNameList** status_list);
-ATbool traverse_StatusList            (ATerm term, SgUntypedInitializedNameList** status_list);
-ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList** status_list);
+ATbool traverse_DefaultSublist        (ATerm term, SgUntypedInitializedNameList* status_list);
+ATbool traverse_OptDefaultSublist     (ATerm term, SgUntypedInitializedNameList* status_list);
+ATbool traverse_StatusList            (ATerm term, SgUntypedInitializedNameList* status_list);
+ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList* status_list);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType** type);
@@ -113,7 +113,6 @@ ATbool traverse_DefaultPresetSublist(ATerm term, SgUntypedExprListExpression** e
 ATbool traverse_PresetValuesOption  (ATerm term, SgUntypedExpression** expr);
 
 // 2.2 TYPE DECLARATIONS
-ATbool traverse_ItemTypeName          (ATerm term, std::string & name);
 ATbool traverse_TypeDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ItemTypeDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_TableTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);

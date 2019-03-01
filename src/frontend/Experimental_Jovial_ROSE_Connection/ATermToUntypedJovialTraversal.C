@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -659,6 +659,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    }
    else return ATfalse;
 
+// TODO: FIXME:
+// Ignore during implementation of StatusTypeDeclaration for now
+   if (declared_type == NULL) return ATtrue;
+
    std::string label = "";
 
    SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
@@ -688,6 +692,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
 #endif
 
    std::string name;
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list;
 
    if (traverse_IntegerItemDescription(term, type, attr_list)) {
       // MATCHED IntegerItemDescription
@@ -704,13 +711,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    else if (traverse_CharacterItemDescription(term, type)) {
       // MATCHED CharacterItemDescription
    }
-   else if (traverse_StatusItemDescription(term, type)) {
+   else if (traverse_StatusItemDescription(term, status_list, has_size, status_size)) {
       // MATCHED StatusItemDescription
+
+      cout << ".x. status list size is " << status_list->get_name_list().size() << endl;
+      cout << ".x. Need to finish up to this point -------------------------\n\n\n";
+
+      // TODO implement type stuff ...
+
+      *type = NULL;
+
    }
    else if (traverse_PointerItemDescription(term, type)) {
       // MATCHED PointerItemDescription
    }
-   else if (traverse_ItemTypeName(term, name)) {
+   else if (traverse_Name(term, name)) {
       // MATCHED ItemTypeName
    }
    else return ATfalse;
@@ -758,7 +773,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
       }
    } else return ATfalse;
 
-   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+   if (traverse_OptItemSize(t_size, has_size, &size)) {
       (*type)->set_has_kind(has_size);
       (*type)->set_type_kind(size);
    } else return ATfalse;
@@ -766,7 +781,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool* has_size, SgUntypedExpression** size)
+ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool & has_size, SgUntypedExpression** size)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptItemSize: %s\n", ATwriteToString(term));
@@ -774,8 +789,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool* has
 
    ATerm t_size;
 
+   has_size = false;
    *size = NULL;
-   *has_size = false;
 
    if (ATmatch(term, "no-item-size()")) {
      // MATCHED no-item-size
@@ -784,7 +799,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptItemSize(ATerm term, bool* has
       if (traverse_NumericFormula(t_size, size)) {
         // MATCHED NumericFormula
       } else return ATfalse;
-      *has_size = true;
+      has_size = true;
    }
    else return ATfalse;
 
@@ -958,7 +973,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitItemDescription(ATerm term, Sg
        ROSE_ASSERT(*type);
    } else return ATfalse;
 
-   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+   if (traverse_OptItemSize(t_size, has_size, &size)) {
       (*type)->set_has_kind(has_size);
       (*type)->set_type_kind(size);
    } else return ATfalse;
@@ -1003,7 +1018,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm te
       // MATCHED CharacterItemDescription
    } else return ATfalse;
 
-   if (traverse_OptItemSize(t_size, &has_size, &size)) {
+   if (traverse_OptItemSize(t_size, has_size, &size)) {
       if (has_size) {
          *type = UntypedBuilder::buildType(SgUntypedType::e_string);
          (*type)->set_char_length_expression(size);
@@ -1033,7 +1048,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterItemDescription(ATerm te
    *type = NULL;
 
    if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
-      if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      if (traverse_OptItemSize(t_size, has_size, &size)) {
          // In grammar (2.1.1.5), uses OptCharacterSize and CharacterSize but cons is ItemSize, so used that traversal
          // MATCHED OptItemSize
       } else return ATfalse;
@@ -1065,44 +1080,49 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusConstant(ATerm term, SgUnty
       setSourcePosition(*init_name, term);
    } else return ATfalse;
 
-   std::cout << "StatusConstant is " << name << endl;
+   std::cout << ".x. StatusConstant is " << name << endl;
 
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_StatusItemDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_StatusItemDescription(ATerm term, SgUntypedInitializedNameList* & status_list, bool & has_size, SgUntypedExpression* & size)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusItemDescription: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_size, t_sublist;
-   bool has_size;
-   SgUntypedExpression* size;
-   SgUntypedInitializedNameList* status_list;
+
+   size = NULL;
+   status_list = NULL;
+   SgUntypedExpression* junk_size;
 
    if (ATmatch(term, "StatusItemDescription(<term>,<term>)", &t_size, &t_sublist)) {
-      if (traverse_OptItemSize(t_size, &has_size, &size)) {
+      if (traverse_OptItemSize(t_size, has_size, &junk_size)) {
          // In grammar (2.1.1.6), uses OptStatusSize and StatusSize but cons is ItemSize, so used that traversal
          // MATCHED OptItemSize
       } else return ATfalse;
 
-      if (traverse_DefaultSublist(t_sublist, &status_list)) {
+      status_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(status_list);
+      setSourcePosition(status_list, t_sublist);
+
+      if (traverse_DefaultSublist(t_sublist, status_list)) {
          // MATCHED DefaultSublist
       }
-      else if (traverse_StatusList(t_sublist, &status_list)) {
+      else if (traverse_StatusList(t_sublist, status_list)) {
          // MATCHED StatusList
       }
       else return ATfalse;
    }
    else return ATfalse;
 
-   cout << ".x. Need to finish up to this point -------------------------\n\n\n";
+   ROSE_ASSERT(status_list);
 
-   return ATfalse;
+   return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_DefaultSublist(ATerm term, SgUntypedInitializedNameList** status_list)
+ATbool ATermToUntypedJovialTraversal::traverse_DefaultSublist(ATerm term, SgUntypedInitializedNameList* status_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DefaultSublist: %s\n", ATwriteToString(term));
@@ -1117,15 +1137,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_DefaultSublist(ATerm term, SgUnty
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_StatusConstant(head, &initialized_name)) {
-            // MATCHED StatusConstant
+            status_list->get_name_list().push_back(initialized_name);
          } else return ATfalse;
       }
    } else return ATfalse;
 
-   return ATfalse;
+   return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptDefaultSublist(ATerm term, SgUntypedInitializedNameList** status_list)
+ATbool ATermToUntypedJovialTraversal::traverse_OptDefaultSublist(ATerm term, SgUntypedInitializedNameList* status_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptDefaultSublist: %s\n", ATwriteToString(term));
@@ -1133,18 +1153,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptDefaultSublist(ATerm term, SgU
 
    ATerm t_sublist;
 
-   if (ATmatch(term, "OptDefaultSublist(<term>)", &t_sublist)) {
-      if (ATmatch(term, "no-default-sublist()")) {
-         std::cout << "Matched no-default-sublist" << endl;
-      } else if (traverse_DefaultSublist(t_sublist, status_list)) {
+   if (ATmatch(term, "no-default-sublist()")) {
+      // MATCHED no default sublist
+   }
+   else if (ATmatch(term, "OptDefaultSublist(<term>)", &t_sublist)) {
+      if (traverse_DefaultSublist(t_sublist, status_list)) {
          // MATCHED DefaultSublist
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term, SgUntypedInitializedNameList** status_list)
+ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term, SgUntypedInitializedNameList* status_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusList: %s\n", ATwriteToString(term));
@@ -1152,17 +1174,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term, SgUntypedI
 
    ATerm t_sublist, t_specified;
 
-   // I think the status list should be created here as:
-   //
    // 1. default initializer used for first portion of list
    // 2. specified initializer is used for rest of sublist
-
-   // WARNING: do not create multiple lists (I think) !!!
+   //
+   // WARNING: do not create multiple lists !!!
 
    if (ATmatch(term, "StatusList(<term>,<term>)", &t_sublist, &t_specified)) {
       if (traverse_OptDefaultSublist(t_sublist, status_list)) {
          // MATCHED OptDefaultSublist
       } else return ATfalse;
+
+      cout << ".x. MATCHED OptDefaultSublist \n";
 
       ATermList tail = (ATermList) ATmake("<term>", t_specified);
       while (! ATisEmpty(tail)) {
@@ -1174,12 +1196,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusList(ATerm term, SgUntypedI
       }
    } else return ATfalse;
 
-   cout << ".x. FIXME here ------------------- \n\n\n";
+// What happend to initializer (do we need comments above here?
+   cout << ".x. FIXME here (maybe) ------------------- \n\n\n";
 
-   return ATfalse;
+   return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgUntypedInitializedNameList** status_list)
+ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgUntypedInitializedNameList* status_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedSublist: %s\n", ATwriteToString(term));
@@ -1188,35 +1211,33 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgUn
    ATerm t_formula, t_constant;
    SgUntypedInitializedName* initialized_name;
    SgUntypedExpression* initializer;
-
-   *status_list = NULL;
+   bool has_initializer = true;
 
    if (ATmatch(term, "SpecifiedSublist(<term>,<term>)", &t_formula, &t_constant)) {
 
-   // TODO - figure out how to use the initializer
       if (traverse_NumericFormula(t_formula, &initializer)) {
          // MATCHED NumericFormula
       } else return ATfalse;
-
-      SgUntypedInitializedNameList* initialized_name_list = NULL;
-      ROSE_ASSERT(initialized_name_list);
-      setSourcePosition(initialized_name_list, term);
 
       ATermList tail = (ATermList) ATmake("<term>", t_constant);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_StatusConstant(head, &initialized_name)) {
-            // MATCHED StatusConstant
-            initialized_name_list->get_name_list().push_back(initialized_name);
-         } else return ATfalse;
+            if (has_initializer) {
+               initialized_name->set_has_initializer(true);
+               initialized_name->set_initializer(initializer);
+               // the one initializer has been used
+               has_initializer = false;
+            }
+            status_list->get_name_list().push_back(initialized_name);
+         }
+         else return ATfalse;
       }
+   }
+   else return ATfalse;
 
-      *status_list = initialized_name_list;
-
-   } else return ATfalse;
-
-   return ATfalse;
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1807,24 +1828,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_TypeDeclaration(ATerm term, SgUnt
 
 ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
+   printf("..\n\n");
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemTypeDeclaration: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_name, t_type_desc;
-   char* name;
+   std::string name;
 
    SgUntypedType* declared_type;
    SgUntypedExprListExpression* attr_list = NULL;
 
    if (ATmatch(term, "ItemTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
-      cout << ".x. matched item-type-decl \n";
 
-      if (ATmatch(t_name, "<str>", &name)) {
+      if (traverse_Name(t_name, name)) {
          // MATCHED ItemTypeName
       } else return ATfalse;
-
-      cout << ".x. matched item-type-decl name \n";
 
       if (traverse_ItemTypeDescription(t_type_desc, &declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
@@ -1836,20 +1855,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, S
    else return ATfalse;
 
    cout << ".x. FIXME here ------------------- \n\n\n";
-
-   return ATfalse;
-}
-
-ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeName(ATerm term, std::string & name)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ItemTypeName: %s\n", ATwriteToString(term));
-#endif
-
-   char* str;
-   if (ATmatch(term, "ItemTypeName(<str>)", &str)) {
-      name = str;
-   } else return ATfalse;
 
    return ATtrue;
 }
@@ -4921,17 +4926,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusConversion(ATerm term, SgUn
 #endif
 
    ATerm t_next;
-   SgUntypedType* type; // TODO - QUICK DO SOMETHING!
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list;
 
    *expr = NULL;
 
    if (ATmatch(term, "StatusConversion(<term>)", &t_next)) {
-      if (traverse_StatusItemDescription(t_next, &type)) {
+      if (traverse_StatusItemDescription(t_next, status_list, has_size, status_size)) {
          // MATCHED StatusItemDescription
       } else return ATfalse;
    } else return ATfalse;
 
-   return ATtrue;
+   cerr << ".x. traverse_StatusConversion: TODO - implementation \n";
+
+   return ATfalse;
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_PointerConversion(ATerm term, SgUntypedExpression** expr)
