@@ -8,6 +8,10 @@
 
 namespace f2cxx
 {
+
+  //
+  // obtain iterators
+
   static inline
   SgInitializedNamePtrList::iterator
   begin(SgFunctionParameterList& n)
@@ -21,6 +25,9 @@ namespace f2cxx
   {
     return n.get_args().end();
   }
+
+  //
+  // params family
 
   static inline
   SgInitializedNamePtrList& params(SgFunctionParameterList& n)
@@ -43,22 +50,10 @@ namespace f2cxx
   static inline
   SgExpressionPtrList& params(SgCallExpression& call)
   {
-    SgExprListExp& args = sg::deref(call.get_args());
-
-    return args.get_expressions();
+    return params(sg::deref(call.get_args()));
   }
 
-  static inline
-  SgBasicBlock* get_body(SgFunctionDeclaration& n)
-  {
-    SgFunctionDefinition* def = n.get_definition();
-
-    if (def == NULL) return NULL;
-
-    ROSE_ASSERT(def->get_body());
-    return def->get_body();
-  }
-
+  //
   // arg_at family
 
   static inline
@@ -79,6 +74,7 @@ namespace f2cxx
     return arg_at(sg::deref(call).get_args(), n);
   }
 
+  //
   // arg_count family
 
   static inline
@@ -99,12 +95,19 @@ namespace f2cxx
     return arg_count(sg::deref(call).get_args());
   }
 
-  // get_decl family
+  //
+  // get_decl/get_defn families
 
   static inline
   SgInitializedName& get_decl(SgVariableSymbol& n)
   {
     return sg::deref(n.get_declaration());
+  }
+
+  static inline
+  SgClassDeclaration& get_decl(SgClassSymbol& clsy)
+  {
+    return sg::deref(clsy.get_declaration());
   }
 
   static inline
@@ -116,7 +119,37 @@ namespace f2cxx
   static inline
   SgClassDefinition& get_defn(SgClassDeclaration& cdcl)
   {
-    return sg::deref(cdcl.get_definition());
+    SgClassDeclaration* ddcl =
+      sg::assert_sage_type<SgClassDeclaration>(cdcl.get_definingDeclaration());
+
+    return sg::deref(ddcl->get_definition());
+  }
+
+  static inline
+  SgClassDefinition& get_defn(SgClassSymbol& clsy)
+  {
+    return get_defn(get_decl(clsy));
+  }
+
+  static inline
+  SgFunctionDefinition& get_defn(SgFunctionDeclaration& dcl)
+  {
+    return sg::deref(dcl.get_definition());
+  }
+
+  //
+  // get_body family
+
+  static inline
+  SgBasicBlock& get_body(SgFunctionDefinition& def)
+  {
+    return sg::deref(def.get_body());
+  }
+
+  static inline
+  SgBasicBlock& get_body(SgFunctionDeclaration& dcl)
+  {
+    return get_body(get_defn(dcl));
   }
 }
 
