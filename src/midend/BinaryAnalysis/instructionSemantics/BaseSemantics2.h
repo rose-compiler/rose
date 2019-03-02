@@ -316,8 +316,8 @@ public:
 
     /** The register dictionary which is used for printing register names.
      * @{ */
-    RegisterDictionary *get_register_dictionary() const { return regdict; }
-    void set_register_dictionary(RegisterDictionary *rd) { regdict = rd; }
+    const RegisterDictionary *get_register_dictionary() const { return regdict; }
+    void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
     /** @} */
 
     /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
@@ -355,7 +355,7 @@ public:
     /** @} */
 
 protected:
-    RegisterDictionary *regdict;
+    const RegisterDictionary *regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;

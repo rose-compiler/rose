@@ -41,20 +41,15 @@ public:
 
     /** Expression to be evaluated.
      *
-     *  If the expression is an address interval, then it evaluates to true if the supplied instruction pointer is a
-     *  member of the interval.
-     *
      *  If the expression is a string, then the string is parsed to create a symbolic expression, substituting registers
      *  and memory from a supplied semantic state.
      *
      *  If the expression is an expression tree, then the expression is used directly. */
     struct Expression {
-        AddressInterval where;                          /**< Address interval or instruction pointer. */
         std::string parsable;                           /**< String to be parsed as an expression. */
         SymbolicExpr::Ptr expr;                         /**< Symbolic expression. */
 
         Expression() {}
-        /*implicit*/ Expression(const AddressInterval &where): where(where) {}
         /*implicit*/ Expression(const std::string &parsable): parsable(parsable) {}
         /*implicit*/ Expression(const SymbolicExpr::Ptr &expr): expr(expr) {}
 
@@ -70,6 +65,8 @@ public:
         size_t maxPathLength;                           /**< Limit path length in terms of number of instructions. */
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
+        std::vector<Expression> innerConditions;        /**< Constraints to be satisfied in the middle of a path. */
+        std::vector<AddressInterval> innerConditionLocs;/**< Instruction pointers at which inner constraints are checked. */
         std::vector<Expression> postConditions;         /**< Additional constraints to be satisfied at the end of a path. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
@@ -297,6 +294,9 @@ public:
      *  applied, the settings are adjusted. */
     static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
 
+    /** Documentation for the symbolic expression parser. */
+    static std::string expressionDocumentation();
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Overridable processing functions
@@ -507,8 +507,11 @@ private:
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
     static Expression parseCondition(const Expression&, SymbolicExprParser&);
 
-    SymbolicExpr::Ptr expandCondition(const Expression&, const SymbolicExprParser::RegisterSubstituter::Ptr&,
-                                      InstructionSemantics2::BaseSemantics::DispatcherPtr&, const RegisterDescriptor IP);
+    SymbolicExpr::Ptr expandCondition(const Expression&, SymbolicExprParser&);
+
+    // Based on the last vertex of the path, insert user-specified inner conditions into the SMT solver.
+    void insertInnerConditions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
+                               const std::vector<Expression> &innerConditions, SymbolicExprParser&);
 };
 
 } // namespace
