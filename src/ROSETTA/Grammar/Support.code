@@ -12785,6 +12785,18 @@ SgName::SgName(const char * str): p_char(str ? str : "")
 // I always wanted this and it was a pain that it didn't exist previously!
 SgName::SgName(const std::string & str): p_char(str) {}
 
+#if 0
+SgName::SgName(const std::string & str)
+   {
+  // DQ (2/22/2019): Old version of code ": p_char(str) {}"
+     p_char = "";
+     if (str.empty() == false)
+        {
+          p_char = str;
+        }
+   }
+#endif
+
 SgName::SgName(const SgName& n): p_char(n.p_char)
    {
 #if 0
