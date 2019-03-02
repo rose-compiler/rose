@@ -4020,12 +4020,27 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
             // DQ (2/27/2019): If this is a comment from a different file (not current file) then we can't unparse it here.
                isCommentFromCurrentFile = (info.get_current_source_file()->get_file_info()->get_file_id() == (*i)->getFileId());
+
                if (isCommentFromCurrentFile == false)
                   {
 #if 0
                     printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file \n");
 #endif
-                    infoSaysGoAhead = false;
+
+                 // DQ (3/2/2019): so when this fails for generated comments, what does the file info look like?
+                 // (*i)->get_file_info()->display("so when this fails for generated comments, what does the file info look like");
+
+                 // DQ (3/2/2019): I will alow this for now, but it is an inappropriate use of the Sg_File_Info object to define a file that does not exist.
+                    if ( ((*i)->get_file_info()->get_filenameString() == "Compiler-Generated in PRE") ||
+                         ((*i)->get_file_info()->get_filenameString() =="Compiler-Generated in Finite Differencing") ||
+                         ((*i)->get_file_info()->isTransformation() == true) )
+                       {
+                      // Don't suppress the output of ROSE generated comments in this case.
+                       }
+                      else
+                       {
+                         infoSaysGoAhead = false;
+                       }
                   }
              }
 #if 0
