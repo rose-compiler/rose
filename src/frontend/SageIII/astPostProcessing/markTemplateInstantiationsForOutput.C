@@ -1564,12 +1564,17 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                                    SgMemberFunctionDeclaration* destructor = SageInterface::getDefaultDestructor(classDeclaration);
                                    if (destructor != NULL)
                                       {
+#if 0
                                         if (isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL)
                                            {
                                              printf ("ERROR: destructor = %p = %s \n",destructor,destructor->class_name().c_str());
                                              destructor->get_file_info()->display("Error: isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL: debug");
                                            }
-                                        ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(destructor) != NULL);
+#endif
+                                     // DQ (3/2/2019): We are trying to refine what is a template instantiation and what is a normal function.
+                                     // I think the example that is an issue here is in facat a normal function (see Cxx11_tests/test2014_04.C).
+                                     // ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(destructor) != NULL);
+
                                         saveDeclaration(destructor);
                                       }
                                  }
