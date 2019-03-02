@@ -23,7 +23,7 @@ if(enable-projects-directory)
   add_subdirectory(graphColoring)
   #add_subdirectory(HeaderFilesInclusion)
 
-  add_subdirectory(highLevelGrammars)
+  #add_subdirectory(highLevelGrammars)
   #add_subdirectory(javaport)
   #add_subdirectory(MacroRewrapper)
   add_subdirectory(ManyCoreRuntime)
