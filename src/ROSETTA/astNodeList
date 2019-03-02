@@ -864,6 +864,7 @@ SgVariableDefinition
 SgVariableSymbol
 SgVariantExpression
 SgVariantStatement
+SgVoidVal
 SgWaitStatement
 SgWarningDirectiveStatement
 SgWithStatement

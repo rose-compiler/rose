@@ -402,6 +402,9 @@ HEADER_SCOPE_STATEMENT_START
        // class derivation is used.
           SgAliasSymbol* lookup_alias_symbol(const SgName& n, SgSymbol* sp) const;
 
+       // DQ (2/16/2019): Added to support detection of ambiguity that drives the generation of name qualification.
+          bool hasAmbiguity(SgName & name, SgSymbol* symbol);
+
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
        // SgVariableSymbol*  first_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
@@ -1857,8 +1860,8 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
        // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
        // SgUnsignedLongVal *get_bitfield();
        // void set_bitfield (SgUnsignedLongVal*);
-          SgValueExp* get_bitfield();
-          void set_bitfield (SgValueExp*);
+          SgExpression* get_bitfield();
+          void set_bitfield (SgExpression*);
 
        // Only on the first variable declaration's
           int reset_initializer(SgInitializer *);
@@ -2244,6 +2247,18 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/18/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (2/14/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
 HEADER_ENUM_DECLARATION_STATEMENT_END
 
@@ -6234,9 +6249,135 @@ SgScopeStatement::print_symboltable( const std::string& str )
 
    }
 
+#if 0
+// DQ (2/17/2019): Move this to the name qualification file so we can work on it more easily.
+bool
+SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
+   {
+  // DQ (2/16/2019): Added to support detection of ambiguity that drives the generation of name qualification.
 
+  // NOTE: in the case where the declaration associated with the symbol is declared in the current scope, we can't have any ambiguity.
 
+#define DEBUG_HAS_AMBIGUITY 1
 
+#if DEBUG_HAS_AMBIGUITY
+     printf ("In SgScopeStatement::hasAmbiguity(): name = %s symbol = %p = %s \n",name.str(),symbol,symbol->class_name().c_str());
+#endif
+
+     size_t numberOfAliasSymbols = this->count_alias_symbol(name);
+
+#if DEBUG_HAS_AMBIGUITY
+     printf ("numberOfAliasSymbols = %zu \n",numberOfAliasSymbols);
+#endif
+
+     bool ambiguityDetected = false;
+     if (numberOfAliasSymbols > 1)
+        {
+       // Detected ambiguity that will require some name qualification.
+
+       // If there are multiple SgAliasSymbols then we need to know if they are associated with the same 
+       // base class or different base classes. If all from the same base class then there is no ambiguity.
+       // else if they are from multiple base classes then it is the derivation that is providing the 
+       // possible ambiguity, which should be resolved via additional name qualification.
+
+          std::vector<SgNode*> causalNodeList;
+
+          rose_hash_multimap * internal_table = currentScope->get_symbol_table()->get_table();
+          ROSE_ASSERT (internal_table != NULL);
+          std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table ->equal_range (name);
+          for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
+             {
+               SgSymbol * orig_current_symbol = i->second; 
+               ROSE_ASSERT (orig_current_symbol != NULL);
+
+               SgAliasSymbol* aliasSymbol = isSgAliasSymbol(orig_current_symbol);
+               if (aliasSymbol != NULL)
+                  {
+                    size_t causalNodeCount = aliasSymbol->get_causalNodes().size();
+                    if (causalNodeCount == 1)
+                       {
+                      // We need to know if each of the alis symbols has a different causal node.
+
+                       }
+                      else
+                       {
+                      // We have identified an ambiguity.
+                         ambiguityDetected = true;
+                       }
+                  }
+                 else
+                  {
+                  }
+
+            // strip off alias symbols
+               SgSymbol * non_alias_symbol = orig_current_symbol; 
+               while (isSgAliasSymbol(non_alias_symbol))
+                  {
+                    non_alias_symbol = isSgAliasSymbol(non_alias_symbol) ->get_alias();
+                    ROSE_ASSERT (non_alias_symbol != NULL);
+                  }
+               SgNode* associatedDeclaration = i->second->get_symbol_basis();
+               assert(associatedDeclaration != NULL);
+            // same basis and same symbol type
+            // The assumption is that no two symbols can share the same basis declaration TODO double check this!
+               if (associatedDeclaration == symbolBasis && (non_alias_symbol->variantT() == symbol->variantT()))
+                  {
+                    alreadyExists = true;
+                    break;
+                  }
+             } // end for
+
+#if DEBUG_HAS_AMBIGUITY
+          printf ("Using count_alias_symbol(): Detected ambiguity that will require some name qualification \n");
+#endif
+          ambiguityDetected = true;
+        }
+       else
+        {
+       // No ambiguity that will require any name qualification.
+
+#if DEBUG_HAS_AMBIGUITY
+          printf ("Using count_alias_symbol(): No ambiguity that will require any name qualification \n");
+#endif
+       // Lookup the SgAliasSymbol in the class scope.
+          SgAliasSymbol* aliasSymbol = this->lookup_alias_symbol(name,symbol);
+       // ROSE_ASSERT(aliasSymbol != NULL);
+          if (aliasSymbol != NULL)
+             {
+               ROSE_ASSERT(aliasSymbol->get_causal_nodes().empty() == false);
+               if (aliasSymbol->get_causal_nodes().size() > 1)
+                  {
+                 // Detected ambiguity that will require some name qualification.
+
+#if DEBUG_HAS_AMBIGUITY
+                    printf ("Detected ambiguity that will require some name qualification \n");
+#endif
+                    ambiguityDetected = true;
+                  }
+                 else
+                  {
+                 // No ambiguity that will require any name qualification.
+
+#if DEBUG_HAS_AMBIGUITY
+                    printf ("No ambiguity that will require any name qualification \n");
+#endif
+                  }
+             }
+            else
+             {
+#if DEBUG_HAS_AMBIGUITY
+               printf ("No SgAliasSymbol is available \n");
+#endif
+             }
+        }
+
+#if DEBUG_HAS_AMBIGUITY
+     printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+
+     return ambiguityDetected;
+   }
+#endif
 
 
 
@@ -7571,6 +7712,12 @@ SgScopeStatement::isNamedScope()
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          case V_SgDeclarationScope:
              {
                result = true;
                break;
@@ -13582,7 +13729,7 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
 
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // SgUnsignedLongVal* SgVariableDeclaration::get_bitfield()
-SgValueExp*
+SgExpression*
 SgVariableDeclaration::get_bitfield()
    {
      assert(get_definition() != 0);
@@ -13592,7 +13739,7 @@ SgVariableDeclaration::get_bitfield()
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // void SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
 void
-SgVariableDeclaration::set_bitfield (SgValueExp* bfield)
+SgVariableDeclaration::set_bitfield (SgExpression* bfield)
    {
      assert(get_definition() != 0);
      get_definition()->set_bitfield(bfield);
@@ -15950,6 +16097,62 @@ SgEnumDeclaration::get_symbol_from_symbol_table() const
    }
 
 
+// DQ (2/14/2019): Added C++11 support for enum prototypes, which mens that name 
+// qualification can be required for the defining declarations.
+int 
+SgEnumDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgEnumDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgEnumDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgEnumDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgEnumDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgEnumDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+
+
 SOURCE_ENUM_DECLARATION_STATEMENT_END
 
 
@@ -17019,6 +17222,9 @@ SgTypedefDeclaration::get_qualified_name() const
 SgName
 SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
    {
+  // DQ (2/14/2019): this feature to support name qualification on typedef base type
+  // declarations appears to not be used, though the design for it is in place.
+
   // DQ (5/29/2011): Added to support for new qualified name generation.
   // this function has a different name from the base class since it requires 
   // a different definition to support using the SgNode::get_globalQualifiedNameMapForTypes() 
@@ -17033,13 +17239,27 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
+#if 0
+     printf ("In SgTypedefDeclaration::get_qualified_name_prefix_for_base_type(): SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",SgNode::get_globalQualifiedNameMapForTypes().size());
+#endif
+
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+          printf ("FOUND a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("COULD NOT find a valid name qualification \n");
+#endif
         }
 
-  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#if 0
+     printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+#endif
 
      return nameQualifier;
    }
