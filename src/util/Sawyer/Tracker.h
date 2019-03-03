@@ -14,7 +14,10 @@
 namespace Sawyer {
 namespace Container {
 
-// Internal
+/** Set-based index referenced by @ref TrackerTraits.
+ *
+ *  This is the default index and supports O(log N) lookups and insertions. The @p Key type must be copyable and have a less-than
+ *  comparison. */
 template<class Key>
 class TrackerSetIndex {
     Set<Key> set;
@@ -30,7 +33,10 @@ public:
     }
 };
 
-// Internal
+/** Vector-based index referenced by TrackerTraits.
+ *
+ *  This index type is suitable for trackers whose @p Key values are a dense set of low-valued, non-negative integers that can be used
+ *  as indexes into a vector. This index supports O(1) lookups and amortized O(1) insertions. */
 template<class Key>
 class TrackerVectorIndex {
     std::vector<bool> bvec;
@@ -50,7 +56,10 @@ public:
     }
 };
 
-// Internal
+/** Hash-based index referenced by TrackerTraits.
+ *
+ *  This index type supports O(1) lookups and amortized O(1) insertions. The @p Key type must be suitable for use by
+ *  @c boost::unordered_set. */
 template<class Key>
 class TrackerUnorderedIndex {
     boost::unordered_set<Key> set;
@@ -73,7 +82,8 @@ struct TrackerTraits {
      *
      *  This type should define three member functions: @c clear that takes no arguments and removes all keys from the index;
      *  @c exists that takes a key and returns true if and only if it is present in the index; and @c insert that takes a key
-     *  and inserts it into the index returning true if and only if the key did not previously exist in the index. */
+     *  and inserts it into the index returning true if and only if the key did not previously exist in the index. None of these
+     *  functions need to be thread safe since they will be synchronized from the @ref Tracker class. */
     typedef TrackerSetIndex<Key> Index;
 };
 
@@ -105,7 +115,7 @@ struct TrackerTraits {
  *
  *  @li If @c Thing is large, then storing it in an @c std::set is expensive. In fact, @c Thing might not even be copyable in
  *      which case storing it in the set is impossible. Authors work around this by storing a proxy for the @c Thing, such as
- *      an identifation number.
+ *      an identification number.
  *  @li The @c for loop serializes the processing of the objects, but it might be more efficient to process all the @c things
  *      at once. Authors do this by filtering out from the vector those things that have already been processed in a previous
  *      pass.
@@ -190,7 +200,7 @@ public:
     bool operator()(const Value &value) {
         return testAndSet(value);
     }
-    
+
     /** Test whether a value has been encountered previously.
      *
      *  Returns true if the value has been seen before, false if not. Does not cause the value to be added to the tracker.
@@ -201,7 +211,7 @@ public:
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         return index_.exists(key);
     }
-    
+
     /** Cause this tracker to see a value.
      *
      *  Insert the value into the tracker and return true only if it was not already present.  This function is identical to

@@ -246,14 +246,3 @@ SgAsmIntegerValueExpression::set_relativeValue(int64_t v, size_t nbits)
 
     p_bitVector.resize(nbits).fromInteger(v);
 }
-
-
-// FIXME[Robb P. Matzke 2014-07-22]: These are deprecated; use CamelCase versions instead
-size_t SgAsmIntegerValueExpression::get_significant_bits() const { return get_significantBits(); }
-void SgAsmIntegerValueExpression::make_relative_to(SgNode *b) { makeRelativeTo(b); }
-uint64_t SgAsmIntegerValueExpression::get_base_address() const { return get_baseAddress(); }
-uint64_t SgAsmIntegerValueExpression::get_absolute_value(size_t nbits) const { return get_absoluteValue(nbits); }
-void SgAsmIntegerValueExpression::set_absolute_value(uint64_t v) { set_absoluteValue(v); }
-int64_t SgAsmIntegerValueExpression::get_signed_value() const { return get_signedValue(); }
-int64_t SgAsmIntegerValueExpression::get_relative_value() const { return get_relativeValue(); }
-void SgAsmIntegerValueExpression::set_relative_value(int64_t v, size_t nbits) { set_relativeValue(v, nbits); }
