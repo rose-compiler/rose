@@ -172,7 +172,8 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     return dbname;
 }
 
-#ifdef ROSE_HAVE_LIBPQXX
+ // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -310,6 +311,7 @@ ConnectionImpl::conn_for_transaction()
         retval = driver_connections.size();
         driver_connections.resize(retval+10);
     }
+
 #if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     DriverConnection &dconn = driver_connections[retval];
 #endif

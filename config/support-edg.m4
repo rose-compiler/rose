@@ -5,8 +5,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG],
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
 [  --enable-edg_version     major.minor version number for EDG (e.g. \[4.9\], 4.12, 4.14, 5.0).],
-[ echo "Setting up EDG version"
-])
+[])
 
 AC_MSG_NOTICE([enable_edg_version = "$enable_edg_version"])
 if test "x$enable_edg_version" = "x"; then
