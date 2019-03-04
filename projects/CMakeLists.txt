@@ -1,7 +1,13 @@
 if(enable-projects-directory)
   include_directories(${ROSE_INCLUDES})
 
-  add_subdirectory(arrayOptimization)
+  ###################################################################################################################
+  # Some projects are disabled by commenting them out even when projects in general are enabled. This is done when a
+  # project is not portable, does not pass testing, or is no longer maintained.  If you are the project owner, please
+  # test your project and re-enable it.
+  ###################################################################################################################
+
+  #add_subdirectory(arrayOptimization)
   add_subdirectory(AstEquivalence)
   #add_subdirectory(autoParallelization)
   add_subdirectory(BabelPreprocessor)
@@ -39,8 +45,8 @@ if(enable-projects-directory)
   add_subdirectory(programModeling)
   add_subdirectory(QtDesignerPlugins)
   add_subdirectory(RoseQt)
-  add_subdirectory(roseToLLVM)
-  add_subdirectory(RTC)
+  #add_subdirectory(roseToLLVM)
+  #add_subdirectory(RTC)
   add_subdirectory(taintcheck)
   add_subdirectory(UpcTranslation)
 endif()
