@@ -1354,15 +1354,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	cd ../..; $(MAKE) testCompiler
+testCompiler:
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS =
+LANG_FLAGS =
+
+ROSE_FLAGS = -std=c++
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -1374,11 +1376,11 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
 $(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
 endif
 
 #
@@ -1390,13 +1392,13 @@ TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
 method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
-	    CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-0 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-0" \
+	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-0 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-0" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
 
 method-defn-in-tpldecl-1.C.passed: $(srcdir)/method-defn-in-tpldecl-1.C $(srcdir)/method-defn-in-tpldecl-1.h $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
-	    CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-1 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-1" \
+	    CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(srcdir)/$(@:.C.passed=.C) -o method-defn-in-tpldecl-1 -rose:unparse_edg_normalized_method_ROSE_1392; test -e method-defn-in-tpldecl-1" \
 	    TITLE="testTranslator $(notdir $<) [$@]" \
 	    $(top_srcdir)/scripts/test_exit_status $@
 
@@ -1418,27 +1420,27 @@ testParser:../../testParser
 
 # This requires a special makefile rule
 test2005_56.o: $(TEST_TRANSLATOR)
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
 
 test2014_54.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_01.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
 
 test2010_02.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
 
 test2010_07.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
 
 test2010_08.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
@@ -1447,27 +1449,27 @@ cpp_test2010_07: $(TEST_TRANSLATOR)
 # DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
 # and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
 test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
 test_unparse_includes_option_with_link.passed: $(TEST_TRANSLATOR)
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/17/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
 	@cp $(srcdir)/conftest.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_1" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_1" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_2.passed: $(TEST_TRANSLATOR)
 	@cp $(srcdir)/conftest_2.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_2" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/22/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 	@cp $(srcdir)/conftest_3.C conftest.C
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (12/28/2015): Added test for new option to not normalize variable declarations.
 test_suppress_variable_declaration_normalization.passed: $(TEST_TRANSLATOR)
