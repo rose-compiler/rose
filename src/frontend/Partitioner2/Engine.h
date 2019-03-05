@@ -11,6 +11,7 @@
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
 #include <Sawyer/DistinctList.h>
+#include <stdexcept>
 
 #ifdef ROSE_ENABLE_PYTHON_API
 #undef slots                                            // stupid Qt pollution
@@ -123,6 +124,14 @@ public:
         void serialize(S &s, unsigned version) {
             s & loader & disassembler & partitioner & engine & astConstruction;
         }
+    };
+
+    /** Errors from the engine. */
+    class Exception: public std::runtime_error {
+    public:
+        Exception(const std::string &mesg)
+            : std::runtime_error(mesg) {}
+        ~Exception() throw () {}
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -466,6 +475,12 @@ public:
     // top-level: parseContainers
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Determine whether a specimen is an RBA file.
+     *
+     *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
+     *  @c frontend function. */
+    virtual bool isRbaFile(const std::string&);
+
     /** Determine whether a specimen name is a non-container.
      *
      *  Certain strings are recognized as special instructions for how to adjust a memory map and are not intended to be passed
