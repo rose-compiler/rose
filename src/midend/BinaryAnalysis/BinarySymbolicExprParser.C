@@ -7,7 +7,10 @@
 #include <SymbolicSemantics2.h>
 #include <integerOps.h>
 #include <rose_strtoull.h>
+#include <sstream>
 
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
@@ -47,6 +50,20 @@ operator<<(std::ostream &out, const SymbolicExprParser::SyntaxError &error) {
     return out;
 }
 
+void
+SymbolicExprParser::SubstitutionError::print(std::ostream &out) const {
+    if (what() && *what()) {
+        out <<what();
+    } else {
+        out <<"substitution error";
+    }
+}
+
+std::ostream&
+operator<<(std::ostream &out, const SymbolicExprParser::SubstitutionError &error) {
+    error.print(out);
+    return out;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Tokens
@@ -883,7 +900,9 @@ SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary *regd
     Ptr functor = Ptr(new RegisterSubstituter(regdict));
     functor->title("Registers");
     std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
-                      "are usually lower case, such as \"eax\", \"rip\", etc.";
+                      "are usually lower case, such as \"eax\", \"rip\", etc. If the register name is suffixed with "
+                      "\"_0\", then the value is read from the lazy initial state if it exists, or is an error if the "
+                      "initial state doesn't exist.";
     functor->docString(doc);
     return functor;
 }
@@ -892,7 +911,13 @@ SymbolicExpr::Ptr
 SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(regdict_);
-    const RegisterDescriptor *regp = regdict_->lookup(token.lexeme());
+
+    // Look up either the full name, or without the "_0" suffix
+    std::string registerName = token.lexeme();
+    const RegisterDescriptor *regp = regdict_->lookup(registerName);
+    if (!regp && boost::ends_with(registerName, "_0"))
+        regp = regdict_->lookup(boost::erase_tail_copy(registerName, 2));
+
     if (NULL == regp)
         return SymbolicExpr::Ptr();
     if (token.width() != 0 && token.width() != regp->get_nbits()) {
@@ -921,16 +946,35 @@ SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Pt
     namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
     Sawyer::Message::Stream debug(SymbolicExprParser::mlog[DEBUG]);
 
-    BS::RegisterStatePtr regState = ops_->currentState()->registerState();
-    RegisterNames regname(ops_->currentState()->registerState()->get_register_dictionary());
     RegisterDescriptor reg;
     if (reg2var_.reverse().getOptional(src).assignTo(reg)) {
+        // Earlier (in immediateExpansion), we set the temporary variable's comment to be the original variable (register)
+        // name including any "_0" suffix. Now, if we're expanding an "_0" register we should read from the original state
+        // rather than the current state.
+        BS::RegisterStatePtr regState;
+        if (boost::ends_with(src->comment(), "_0")) {
+            if (!ops_->initialState()) {
+                std::ostringstream ss;
+                ss <<"no initial state from which to read register"
+                   <<" \"" <<StringUtility::cEscape(src->comment()) <<"\"";
+                throw SubstitutionError(ss.str());
+            }
+            regState = ops_->initialState()->registerState();
+        } else {
+            regState = ops_->currentState()->registerState();
+        }
+
+        // Read the register
         SS::SValuePtr regval = SS::SValue::promote(regState->peekRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
-        SAWYER_MESG(debug) <<"register substitution: " <<regname(reg) <<" = " <<*regval <<"\n";
+        SAWYER_MESG(debug) <<"register substitution: " <<src->comment() <<" = " <<*regval <<"\n";
         return regval->get_expression();
     }
     return src;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Delayed memory substitutions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SymbolicExprParser::MemorySubstituter::Ptr
 SymbolicExprParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=NULL*/) {
@@ -943,10 +987,6 @@ SymbolicExprParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=
                        "will result in zero at parse time without ever reading the memory location).");
     return functor;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Delayed memory substitutions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SymbolicExpr::Ptr
 SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, const SymbolicExpr::Nodes &operands) {

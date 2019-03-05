@@ -732,6 +732,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // Create the RiscOperators and Dispatcher.
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
@@ -784,8 +785,8 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
 
     // Update the path constraint "register"
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    RegisterDescriptor IP = cpu->instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
+    const RegisterDescriptor IP = cpu->instructionPointerRegister();
+    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
@@ -805,6 +806,12 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 SAWYER_MESG(debug) <<"        processing path insn at " <<insn->toString() <<"\n";
             }
             cpu->processInstruction(insn);
+            if (debug) {
+                // Show stack pointer
+                const RegisterDescriptor SP = cpu->stackPointerRegister();
+                BaseSemantics::SValuePtr sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+                debug <<"          sp = " <<*sp <<"\n";
+            }
         } catch (const BaseSemantics::Exception &e) {
             insn->incrementSemanticFailure();
             if (settings_.ignoreSemanticFailure) {
@@ -1291,10 +1298,12 @@ FeasiblePath::insertInnerConditions(const SmtSolver::Ptr &solver, const P2::CfgP
                     solver->insert(cond);
                     if (debug) {
                         debug <<"      #" <<i <<": " <<*cond <<"\n";
-                        if (cond != innerConditionsParsed[i].expr && !settings().innerConditions[i].parsable.empty()) {
-                            debug <<"        parsed from:   " <<settings().innerConditions[i].parsable <<"\n";
-                        } else {
-                            debug <<"        expanded from: " <<*settings().innerConditions[i].expr <<"\n";
+                        if (cond != innerConditionsParsed[i].expr) {
+                            if (!settings().innerConditions[i].parsable.empty()) {
+                                debug <<"        parsed from:   " <<settings().innerConditions[i].parsable <<"\n";
+                            } else {
+                                debug <<"        expanded from: " <<*settings().innerConditions[i].expr <<"\n";
+                            }
                         }
                     }
                 }
