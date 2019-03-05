@@ -116,6 +116,7 @@ ATbool traverse_PresetValuesOption  (ATerm term, SgUntypedExpression** expr);
 ATbool traverse_TypeDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ItemTypeDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_TableTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_TableTypeSpecifier    (ATerm term);
 ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.3 STATEMENT NAME DECLARATIONS

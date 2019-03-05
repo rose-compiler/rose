@@ -1861,17 +1861,74 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, S
 
 ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
+   printf("\n.....................\n");
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableTypeDeclaration: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_name, t_type_desc;
+   std::string name;
 
    if (ATmatch(term, "TableTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
+      if (traverse_Name(t_name, name)) {
+         // MATCHED TableTypeName
+      } else return ATfalse;
+
       cout << ".x. matched table-type-decl \n";
-      // MATCHED TableTypeDeclaration
+      cout << ".x. table name is " << name << endl;
+
+      if (traverse_TableTypeSpecifier(t_type_desc)) {
+         // MATCHED TableTypeSpecifier
+      } else return ATfalse;
+
    }
    else return ATfalse;
+
+   cout << ".x. Need to finish up to this point -------------------------\n\n\n";
+
+   return ATfalse;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term)
+{
+   printf("\n.....................\n");
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_TableTypeSpecifier: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_dim_list, t_struct_spec, t_like_option, t_entry_spec;
+
+   SgUntypedExprListExpression* dim_info = NULL;
+
+   if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
+               &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
+
+      cout << ".x. matched table-type-spec \n";
+
+      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      setSourcePosition(dim_info, t_dim_list);
+
+      if (traverse_OptDimensionList(t_dim_list, dim_info)) {
+         cout << ".x. matched table-type-spec \n";
+      } else return ATfalse;
+
+   // Like option
+      if (ATmatch(term, "no-like-option()")) {
+      }
+      else if (ATmatch(term, "no-like-option()")) {
+      }
+      else return ATfalse;
+
+   }
+   else return ATfalse;
+
+#if 1
+   std::cout << "TABLE TYPE SPEC rank is " << dim_info->get_expressions().size() << endl;
+   std::cout << "TABLE TYPE SPEC dim_info: " << dim_info << endl;
+#endif
+
+
+   cout << ".x. Need to finish up to this point -------------------------\n\n\n";
 
    return ATfalse;
 }
