@@ -1,5 +1,5 @@
-#!/opt/local/bin/perl5.26
-$Interpreter ||= "/opt/local/bin/perl5.26";
+#!/usr/bin/env perl
+$Interpreter ||= "/usr/bin/perl";
 #-------------------------------------------------------------------------------
 #
 #   Copyright 1985-99,2000-19 James Frederick Reus
