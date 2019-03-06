@@ -1575,7 +1575,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     }
     // determine sizes of memory regions (refered to by pointer)
     for(int i=0;i<3;i++) {
-      //cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
+      logger[TRACE]<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
     int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
     int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
@@ -1616,18 +1616,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       // no error occured. Copy region.
       logger[TRACE]<<"DEBUG: copy region now. "<<endl;
       PState newPState=*estate.pstate();
+      AbstractValue targetPtr=memcpyArgs[0];
+      AbstractValue sourcePtr=memcpyArgs[1];
+      AbstractValue one=CodeThorn::AbstractValue(1);
+      logger[TRACE]<<"TODO: copying "<<copyRegionSize<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
       for(int i=0;i<copyRegionSize;i++) {
-        AbstractValue index(i);
-        AbstractValue targetPtr=memcpyArgs[0]+index;
-        AbstractValue sourcePtr=memcpyArgs[1]+index;
-        logger[TRACE]<<"TODO: copying "<<copyRegionSize<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
-        //TODO: cpymem
-        AbstractValue one=CodeThorn::AbstractValue(1);
-        for(int i=0;i<copyRegionSize;i++) {
-          newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
-          targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
-          sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
-        }
+        newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
+        targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
+        sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
     }
     return listify(res);
