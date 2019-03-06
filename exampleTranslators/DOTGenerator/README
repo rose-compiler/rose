@@ -1,18 +1,15 @@
 
 This directory contains the code fror translators that read
-the input probram and output DOT graphs for the AST.
+the input program and output DOT graphs for the AST.
 
 DOTGenerator: 
    Generates a graph as a tree which shows the AST.
 
 dotGeneratorWholeASTGraph: 
    Generates a graph which shows all available connections 
-   (thus more than a tree).  The AST is imbedded in this more 
+   (thus more than a tree).  The AST is embedded in this more 
    complex graph which includes types, symbols, etc. This 
    implementation does only minor filtering of things like
-   source poisition data structures.  More complex graphs are 
+   source position data structures.  More complex graphs are 
    possible to build, but would require modifiying the code in 
    the directory: ROSE/src/frontend/SageIII/astVisualization.
-
-
- 

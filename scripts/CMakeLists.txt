@@ -1,38 +1,4 @@
-set(distributedScripts
-	autoconf-filter.pl
-  quiet-mode
-	Error.pm
-	Git.pm
-	buildExampleRoseWorkspaceScript.sh
-	check-dist-file dotgenLetter
-	configure_with_SQL
-	check_boost_linkage.sh
-	dotgen
-	dotgen2
-	dotgenLetterPDF
-	dotgenLetterPNG
-	edg-generate-sig
-	edg-unused-versions
-	generateDirectoryGraph
-	libtoolcp
-	lsdot
-	policies-checker.sh
-	policies/CaseInsensitiveFileNames.pl
-	policies/EightColumnTabstops.pl.disabled
-	policies/FileLister.pm
-	policies/NoExceedinglyLongLines.pl
-	policies/NoRoseIncludes.pl
-	policies/NoTabCharacters.pl
-	policies/NoUsingInHeaders.pl
-	policies/Policies.pm
-	policies/UniqueFortranModules.pl
-	policies/UniqueHeaderNames.pl
-	policies/UnixLineTermination.pl
-	policies/UnusedHeaders.pl
-	policies/UnusedSources.pl
-	publicConfiguration.pl
-	rth_run.pl
-	rth_stats.pl
-	runscript
-	shtool)
-install(FILES ${distributedScripts} DESTINATION bin)
+# List in "distributedScripts" only those scripts that are useful after ROSE is installed
+
+#set(distributedScripts)
+#install(FILES ${distributedScripts} DESTINATION bin)
