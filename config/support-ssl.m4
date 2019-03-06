@@ -17,13 +17,13 @@ fi
 #  AC_DEFINE([USE_ROSE_SSL_SUPPORT],[],[Support for ssl])
 #fi
 
-echo "In ROSE SSL SUPPORT MACRO: enable_ssl = $enable_ssl"
+AC_MSG_NOTICE([enable_ssl = $enable_ssl])
 
 if test "$enable_ssl" = no; then
    # If SSL is not specified, then don't use it.
-   echo "Skipping use of SSL (libssl) support!"
+   AC_MSG_NOTICE([SSL support (libssl) disabled])
 else
-   echo "Setup SSL support in ROSE! path = $enable_ssl"
+   AC_MSG_NOTICE([SSL supported in ROSE: SSL path is "$enable_ssl"])
    AC_DEFINE([USE_ROSE_SSL_SUPPORT],1,[Controls use of ROSE support for SSL (libssl -- MD5) library (incompatable with Java, so disables Fortran support).])
 fi
 

@@ -66,16 +66,16 @@ if test ! "$with_GLUT_libs" ; then
    with_GLUT_libs=no
 fi
 
-echo "In ROSE SUPPORT MACRO: with_FLTK_include     $with_FLTK_include"
-echo "In ROSE SUPPORT MACRO: with_FLTK_libs        $with_FLTK_libs"
-echo "In ROSE SUPPORT MACRO: with_GraphViz_include $with_GraphViz_include"
-echo "In ROSE SUPPORT MACRO: with_GraphViz_libs    $with_GraphViz_libs"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_FLTK_include     = "$with_FLTK_include"])
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_FLTK_libs        = "$with_FLTK_libs"])
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_GraphViz_include = "$with_GraphViz_include"])
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_GraphViz_libs    = "$with_GraphViz_libs"])
 
 if (test "$with_FLTK_include" = no) || (test "$with_FLTK_libs" = no) || 
    (test "$with_GraphViz_include" = no) || (test "$with_GraphViz_libs" = no) ||
    (test "$with_GLUT_include" = no) || (test "$with_GLUT_libs" = no); then
    # If none of these are specified, then don't use visualization (don't build dotGL).
-   echo "Skipping use of dotgl Visualization!"
+   AC_MSG_NOTICE([skipping use of dotgl visualization])
 else
  # optional_Visualization_subdirs="visualization"
    FLTK_include_path=$with_FLTK_include
@@ -85,12 +85,12 @@ else
    GLUT_include_path=$with_GLUT_include
    GLUT_libs_path=$with_GLUT_libs
 
-   echo "Setup VIZUALIZATION! FLTK include path     = $FLTK_include_path"
-   echo "Setup VIZUALIZATION! FLTK libs path        = $FLTK_libs_path"
-   echo "Setup VIZUALIZATION! GraphViz include path = $GraphViz_include_path"
-   echo "Setup VIZUALIZATION! GraphViz libs path    = $GraphViz_libs_path"
-   echo "Setup VIZUALIZATION! GLUT include path     = $GLUT_include_path"
-   echo "Setup VIZUALIZATION! GLUT libs path        = $GLUT_libs_path"
+   AC_MSG_NOTICE([setup VIZUALIZATION. FLTK include path     = "$FLTK_include_path"])
+   AC_MSG_NOTICE([setup VIZUALIZATION. FLTK libs path        = "$FLTK_libs_path"])
+   AC_MSG_NOTICE([setup VIZUALIZATION. GraphViz include path = "$GraphViz_include_path"])
+   AC_MSG_NOTICE([setup VIZUALIZATION. GraphViz libs path    = "$GraphViz_libs_path"])
+   AC_MSG_NOTICE([setup VIZUALIZATION. GLUT include path     = "$GLUT_include_path"])
+   AC_MSG_NOTICE([setup VIZUALIZATION. GLUT libs path        = "$GLUT_libs_path"])
 
  # echo "Setup VIZUALIZATION! optional_Visualization_subdirs = $optional_Visualization_subdirs"
 

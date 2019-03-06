@@ -4,7 +4,10 @@
 namespace General_Language_Translation
    {
 
-  // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
+  // TODO - split out the StatementEnums?
+
+  // Enum for different types of expressions (used with untyped IR nodes).
+  //
      enum ExpressionKind
         {
           e_unknown = 0,
@@ -22,6 +25,7 @@ namespace General_Language_Translation
 
        // Type modifiers
        // --------------
+          e_type_modifier_list,
           e_type_modifier_allocatable,
           e_type_modifier_asynchronous,
           e_type_modifier_const,
@@ -37,16 +41,21 @@ namespace General_Language_Translation
           e_type_modifier_target,
           e_type_modifier_truncate,
           e_type_modifier_value,
+          e_type_modifier_reference,
+          e_type_modifier_result,
           e_type_modifier_volatile,
           e_type_modifier_z,
 
        // Function modifiers
        // ------------------
+          e_function_modifier_list,
+          e_function_modifier_none,
           e_function_modifier_elemental,
           e_function_modifier_impure,
           e_function_modifier_module,
           e_function_modifier_pure,
           e_function_modifier_recursive,
+          e_function_modifier_reentrant,
 
        // Operators
        // ---------
@@ -95,6 +104,9 @@ namespace General_Language_Translation
           e_argument_list,
           e_argument_keyword,
 
+          e_variable_reference,
+          e_array_reference,
+
           e_case_range,
           e_case_selector,
 
@@ -104,6 +116,11 @@ namespace General_Language_Translation
           e_assumed_or_implied_shape,
           e_assumed_shape,
           e_assumed_size,
+
+       // Expressions for array indexing
+          e_array_subscripts,
+          e_array_index_triplet,
+          e_section_subscripts,
 
        // Explicitly for Jovial but try to reuse for Fortran
           e_explicit_dimension,
@@ -120,6 +137,9 @@ namespace General_Language_Translation
           e_case_option_stmt,
           e_case_default_option_stmt,
 
+          e_end_proc_ref_stmt,
+          e_end_proc_def_stmt,
+
        // Fortran specific
           e_fortran_dimension_stmt,
           e_fortran_import_stmt,
@@ -129,6 +149,14 @@ namespace General_Language_Translation
           e_fortran_else_if_stmt,
           e_fortran_else_stmt,
           e_fortran_end_do_stmt,
+
+          e_fortran_do_concurrent_stmt,
+          e_fortran_concurrent_header,
+          e_fortran_concurrent_control,
+          e_fortran_concurrent_locality,
+
+          e_fortran_forall_stmt,
+          e_fortran_end_forall_stmt,
 
           e_fortran_sync_all_stmt,
           e_fortran_sync_images_stmt,
@@ -141,6 +169,9 @@ namespace General_Language_Translation
           e_fortran_sync_stat_stat,
           e_fortran_sync_stat_errmsg,
           e_fortran_stat_acquired_lock,
+
+       // Jovial specific
+          e_jovial_compool_stmt,
 
        // CUDA Attributes
        // ---------------

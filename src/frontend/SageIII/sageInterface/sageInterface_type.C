@@ -1526,9 +1526,13 @@ if (!sgClassType) { \
     // Checks if the given member function accepts the given argument.
     // If the argument passed is null, then the argument is assumed to be of the same type as the class that the memberfunction belongs to.
     // The check ignores const and reference modifiers.
-    static bool CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(SgMemberFunctionDeclaration* decl, SgType * args = NULL){
+    static bool CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(SgMemberFunctionDeclaration* decl, SgType * args = NULL) {
+        SgDeclarationStatement * declstmt = decl->get_associatedClassDeclaration();
+        SgClassDeclaration * xdecl = isSgClassDeclaration(declstmt);
+        ROSE_ASSERT(xdecl != NULL);
+
         // if no args was passed, we will take the class type as the arg
-        args = decl->get_class_scope()->get_declaration()->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+        args = xdecl->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
         
         // Must not be const or typedef or ref type
         ROSE_ASSERT( isConstType(args) == 0 );
@@ -1950,17 +1954,22 @@ if (!sgClassType) { \
         
         // No virtual base classes
         SgBaseClassPtrList  & baseClasses = classDefinition->get_inheritances();
-        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
-            // Base class can't be virtual
-            if((*it)->get_baseClassModifier().isVirtual())
-                return false;
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it)
+           {
+          // Base class can't be virtual
+
+          // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+          // if((*it)->get_baseClassModifier().isVirtual())
+             ROSE_ASSERT((*it)->get_baseClassModifier() != NULL);
+             if ((*it)->get_baseClassModifier()->isVirtual())
+                  return false;
             
-            // Base classes must be empty as well
-            SgClassDeclaration * baseClass = (*it)->get_base_class();
-            ROSE_ASSERT(baseClass != NULL);
-            if (!IsEmpty(baseClass->get_type()))
-                return false;
-        }
+          // Base classes must be empty as well
+             SgClassDeclaration * baseClass = (*it)->get_base_class();
+             ROSE_ASSERT(baseClass != NULL);
+             if (!IsEmpty(baseClass->get_type()))
+                  return false;
+           }
         
         return true;
     }
@@ -2101,12 +2110,15 @@ if (!sgClassType) { \
         
         // No virtual base classes
         SgBaseClassPtrList  & baseClasses = classDef->get_inheritances();
-        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
-            // Base class can't be virtual
-            if((*it)->get_baseClassModifier().isVirtual())
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it)
+           {
+          // Base class can't be virtual
+          // DQ (1/21/2019): get_baseClassModifier() uses ROSETTA generated access functions which return a pointer.
+          // if((*it)->get_baseClassModifier().isVirtual())
+             ROSE_ASSERT((*it)->get_baseClassModifier() != NULL);
+             if((*it)->get_baseClassModifier()->isVirtual())
                 return false;
-        }
-        
+           }
         
         bool haveNonStaticData = false;
         SgType * firstNonStaticDataMember = NULL;

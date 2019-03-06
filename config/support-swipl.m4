@@ -29,7 +29,7 @@ if test "x$swiplsetting" != xno; then
                         SWIPLBIN="$swiplsetting"
                         ROSE_HAVE_SWI_PROLOG=1
                 else
-                        AC_MSG_ERROR([Argument to --with-swi-prolog must be path to bin directory, but argument is not a directory])
+                        AC_MSG_ERROR([argument to --with-swi-prolog must be path to bin directory, but argument is not a directory])
                 fi
         fi
 fi
