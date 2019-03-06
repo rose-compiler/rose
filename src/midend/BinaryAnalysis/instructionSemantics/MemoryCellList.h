@@ -223,32 +223,17 @@ public:
         return retval;
     }
 
-    // [Robb P. Matzke 2015-08-18]: deprecated
-    virtual CellList scan(const SValuePtr &address, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
-                          bool &short_circuited/*out*/) const ROSE_DEPRECATED("use the cursor-based scan instead");
-
     /** Returns the list of all memory cells.
      * @{ */
     virtual const CellList& get_cells() const { return cells; }
     virtual       CellList& get_cells()       { return cells; }
     /** @} */
 
-    // [Robb Matzke 2015-12-26]: deprecated
-    virtual MemoryCellPtr get_latest_written_cell() const ROSE_DEPRECATED("use latestWrittenCell instead") {
-        return latestWrittenCell();
-    }
-
     virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
                                                    RiscOperators *valOps) ROSE_OVERRIDE;
 
     virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
                                                           RiscOperators *valOps) ROSE_OVERRIDE;
-
-    // [Robb P. Matzke 2015-08-17]: deprecated
-    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,
-                                                     RiscOperators *addrOps, RiscOperators *valOps)
-        ROSE_DEPRECATED("use getWritersUnion instead");
-
 
 protected:
     // Compute a new value by merging the specified cells.  If the cell list is empty return the specified default.

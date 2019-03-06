@@ -9,7 +9,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2018_03.C \
    test2018_04.C \
    test2018_12.C \
-   test2018_13.C \
    test2018_19.C
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -21,6 +20,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2018_09.C \
    test2018_10.C \
    test2018_11.C \
+   test2018_13.C \
    test2018_14.C \
    test2018_15.C \
    test2018_16.C \
@@ -138,16 +138,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-# ROSE_FLAGS = -rose:Cxx17
-ROSE_FLAGS = -std=c++17
+LANG_FLAGS = -std=c++17
+
+ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -159,11 +160,11 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
 $(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
 endif
 
 #

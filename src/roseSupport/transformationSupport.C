@@ -2690,7 +2690,9 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
 
+#if 0
      printf ("In TransformationSupport::getTemplateDeclaration(): astNode = %p = %s \n",astNode,astNode != NULL ? astNode->class_name().c_str() : "NULL");
+#endif
 
   // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
   // while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
@@ -2699,8 +2701,8 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
              (isSgTemplateVariableDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
           parentNode = parentNode->get_parent();
-#if 1
-          printf ("parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
+#if 0
+          printf ("In TransformationSupport::getTemplateDeclaration(): parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
 #endif
         }
 

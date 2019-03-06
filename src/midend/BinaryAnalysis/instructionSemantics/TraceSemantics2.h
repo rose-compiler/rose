@@ -185,17 +185,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
 public:
-    /** Obtain a pointer to the subdomain's RISC operators.  The subdomain is the one that is being traced. */
-    virtual BaseSemantics::RiscOperatorsPtr get_subdomain() const ROSE_DEPRECATED("use subdomain instead") {
-        return subdomain();
-    }
-
-
-    /** Set the subdomain that is to be traced. All our RISC operators will simply chain to the subdomain operators. */
-    void set_subdomain(const BaseSemantics::RiscOperatorsPtr &sd) ROSE_DEPRECATED("use subdomain instead") {
-        subdomain(sd);
-    }
-
     /** Property: Subdomain to which operations are forwarded.
      *
      * @{ */
@@ -206,9 +195,6 @@ public:
     /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception.
      *
      *  @{ */
-    void check_subdomain() const ROSE_DEPRECATED("use checkSubodmain instead") {
-        checkSubdomain();
-    }
     void checkSubdomain() const {
         if (subdomain_==NULL)
             throw BaseSemantics::Exception("subdomain is not set; nothing to trace", NULL);

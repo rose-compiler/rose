@@ -256,15 +256,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -pedantic-errors -std=c++98
+LANG_FLAGS = -std=c++98
+
+ROSE_FLAGS = -pedantic-errors
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -275,7 +277,7 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipfinal
 
 $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 
@@ -313,9 +315,9 @@ testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
 test_msvc_1:
-#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
-#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2.cxx
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2_noline.cxx
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2.cxx
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2_noline.cxx
 
 
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.

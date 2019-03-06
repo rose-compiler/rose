@@ -142,7 +142,7 @@ private:
         void fixFunctionCallEdges(const Args&);
         void addPossibleIndeterminateEdge(const Args&);
     };
-    
+
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
@@ -220,7 +220,7 @@ private:
 private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoader *binaryLoader_;                        // how to remap, link, and fixup
+    BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
@@ -234,7 +234,7 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
@@ -242,12 +242,12 @@ public:
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : settings_(settings), interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
     }
-    
+
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -505,7 +505,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref binaryLoader property is set to this method's return value. */
-    virtual BinaryLoader *obtainLoader(BinaryLoader *hint=NULL);
+    virtual BinaryLoader::Ptr obtainLoader(const BinaryLoader::Ptr &hint = BinaryLoader::Ptr());
 
     /** Loads memory from binary containers.
      *
@@ -619,7 +619,7 @@ public:
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
     virtual void runPartitionerFinal(Partitioner&);
-    
+
     /** Partitions instructions into basic blocks and functions.
      *
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
@@ -846,7 +846,7 @@ public:
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
-    
+
     /** Attach intra-function basic blocks to functions.
      *
      *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
@@ -992,8 +992,8 @@ public:
      *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
      *
      * @{ */
-    BinaryLoader* binaryLoader() const /*final*/ { return binaryLoader_; }
-    virtual void binaryLoader(BinaryLoader *loader) { binaryLoader_ = loader; }
+    BinaryLoader::Ptr binaryLoader() const /*final*/ { return binaryLoader_; }
+    virtual void binaryLoader(const BinaryLoader::Ptr &loader) { binaryLoader_ = loader; }
     /** @} */
 
     /** Property: when to remove execute permission from zero bytes.
@@ -1327,6 +1327,65 @@ public:
     virtual void findingInterFunctionCalls(bool b) { settings_.partitioner.findingInterFunctionCalls = b; }
     /** @} */
 
+    /** Property: Whether to turn function call targets into functions.
+     *
+     *  If set, then sequences of instructions that behave like a function call (including plain old function call
+     *  instructions) will cause a function to be created at the call's target address under most circumstances.
+     *
+     * @{ */
+    bool findingFunctionCallFunctions() const /*final*/ { return settings_.partitioner.findingFunctionCallFunctions; }
+    virtual void findingFunctionCallFunctions(bool b) { settings_.partitioner.findingFunctionCallFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at program entry points.
+     *
+     *  If set, then all program entry points are assumed to be the start of a function.
+     *
+     * @{ */
+    bool findingEntryFunctions() const /*final*/ { return settings_.partitioner.findingEntryFunctions; }
+    virtual void findingEntryFunctions(bool b) { settings_.partitioner.findingEntryFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make error handling functions.
+     *
+     *  If set and information is available about error handling and exceptions, then that information is used to create entry
+     *  points for functions.
+     *
+     * @{ */
+    bool findingErrorFunctions() const /*final*/ { return settings_.partitioner.findingErrorFunctions; }
+    virtual void findingErrorFunctions(bool b) { settings_.partitioner.findingErrorFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at import addresses.
+     *
+     *  If set and the file contains a table describing the addresses of imported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingImportFunctions() const /*final*/ { return settings_.partitioner.findingImportFunctions; }
+    virtual void findingImportFunctions(bool b) { settings_.partitioner.findingImportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at export addresses.
+     *
+     *  If set and the file contains a table describing the addresses of exported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingExportFunctions() const /*final*/ { return settings_.partitioner.findingExportFunctions; }
+    virtual void findingExportFunctions(bool b) { settings_.partitioner.findingExportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions according to symbol tables.
+     *
+     *  If set and the file contains symbol tables, then symbols that define function addresses cause functions to be created
+     *  at those addresses.
+     *
+     * @{ */
+    bool findingSymbolFunctions() const /*final*/ { return settings_.partitioner.findingSymbolFunctions; }
+    virtual void findingSymbolFunctions(bool b) { settings_.partitioner.findingSymbolFunctions = b; }
+    /** @} */
+
     /** Property: Whether to search static data for function pointers.
      *
      *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to
@@ -1484,7 +1543,7 @@ public:
     // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
     Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
     Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
-        
+
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1492,6 +1551,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
+
+    // Similar to ::frontend but a lot less complicated.
+    SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames);
 };
 
 } // namespace

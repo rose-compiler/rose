@@ -354,7 +354,7 @@ public:
 #else
         // A different thread saves the object while this thread updates the progress
         std::string errorMessage;
-        boost::thread worker(startWorker<T>, this, objectTypeId, object, &errorMessage);
+        boost::thread worker(startWorker<T>, this, objectTypeId, &object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
         progressBar_.prefix("writing");
         while (!worker.try_join_for(timeout)) {
@@ -374,8 +374,9 @@ public:
 
 private:
     template<class T>
-    static void startWorker(SerialOutput *saver, Savable objectTypeId, const T &object, std::string *errorMessage) {
-        saver->asyncSave(objectTypeId, object, errorMessage);
+    static void startWorker(SerialOutput *saver, Savable objectTypeId, const T *object, std::string *errorMessage) {
+        ASSERT_not_null(object);
+        saver->asyncSave(objectTypeId, *object, errorMessage);
     }
 
     // This might run in its own thread.

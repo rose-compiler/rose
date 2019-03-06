@@ -58,7 +58,7 @@ public:
           barWidth_(980), horizontalMargin_(10),
           topMargin_(2), topGutterHeight_(8), barHeight_(30), bottomGutterHeight_(8), bottomMargin_(2),
           topGutterArrowWidth_(3), bottomGutterArrowWidth_(3),
-          borderColor_(Rose::Color::black), bgColor_(Rose::Color::black) {
+          borderColor_(Rose::Color::HSV_BLACK), bgColor_(Rose::Color::HSV_BLACK) {
         init();
     }
 

@@ -692,7 +692,7 @@ int main(int argc, char *argv[]) {
             while (nRemain > 0) {
                 size_t bufsz = std::min((rose_addr_t)sizeof(buf), nRemain);
                 if (va % 16)                            // partial first line in order to align the rest
-                    bufsz = std::min(bufsz, 16 - va%16);
+                    bufsz = std::min((rose_addr_t)bufsz, 16 - va%16);
                 size_t nRead = engine.memoryMap()->at(va).limit(bufsz).read(buf).size();
                 std::cout <<fmt.prefix;
                 SgAsmExecutableFileFormat::hexdump(std::cout, va, buf, nRead, fmt);

@@ -351,9 +351,9 @@ MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
     functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
 
     // Do we know the successors?  They would be the function(s) to which the thunk branches.
-    BasicBlock::Ptr bb = BasicBlock::instance(anchor, &partitioner);
+    BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
     for (size_t i=0; i<thunkSize; ++i)
-        bb->append(insns[i]);
+        bb->append(partitioner, insns[i]);
     BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
         if (successor.expr()->is_number()) {
             rose_addr_t targetVa = successor.expr()->get_number();

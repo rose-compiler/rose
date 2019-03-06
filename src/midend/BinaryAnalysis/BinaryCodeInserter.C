@@ -294,7 +294,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 // Virtual address of one of the input bytes.
                 SAWYER_MESG(debug) <<"index_abs_le32(" <<StringUtility::addrToString(reloc.value) <<")";
 
-                value = va + reloc.value;
+                value = va + relocStart + reloc.value;
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
@@ -308,7 +308,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 // Virtual address of one of the input bytes.
                 SAWYER_MESG(debug) <<"index_abs_be32(" <<StringUtility::addrToString(reloc.value) <<")";
 
-                value = va + reloc.value;
+                value = va + relocStart + reloc.value;
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >> 24) & 0xff;
@@ -322,7 +322,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 // Virtual address of one of the input bytes (but only the high 32 bits)
                 SAWYER_MESG(debug) <<"index_abs_le32hi(" <<StringUtility::addrToString(reloc.value) <<")";
 
-                value = (va + reloc.value) >> 32;
+                value = (va + relocStart + reloc.value) >> 32;
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >> 0) & 0xff;

@@ -259,11 +259,11 @@ public:
                        BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &addr,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      BaseSemantics::RiscOperators *addrOps,
-                                                      BaseSemantics::RiscOperators *valOps,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &addr,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              BaseSemantics::RiscOperators *addrOps,
+                                              BaseSemantics::RiscOperators *valOps,
+                                              bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -491,8 +491,8 @@ public:
 
 protected:
     // handles readMemory and peekMemory
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                                                      const BaseSemantics::SValuePtr &dflt, bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                                              const BaseSemantics::SValuePtr &dflt, bool allowSideEffects);
 
     // Convert expression to double
     double exprToDouble(const BaseSemantics::SValuePtr &expr, SgAsmFloatType*);

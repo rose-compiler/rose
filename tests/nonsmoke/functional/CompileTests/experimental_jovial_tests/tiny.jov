@@ -2,7 +2,7 @@ START
 PROGRAM main ;
 BEGIN
   ITEM ia S ;
-  ITEM ib S ;
+  ITEM ib U ;
   ITEM bf B 1 ;
   ia = 1 ;
   ia = ib - 2 ;

@@ -1,0 +1,9 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    run $(tool_compile_linkexe) matchPattern.C
+    run $(tool_compile_linkexe) nopSourceTransform.C
+    run $(tool_compile_linkexe) detectNopSequences.C detectNopSequencesTraversal.C
+    run $(tool_compile_linkexe) nopBinaryTransform.C detectNopSequencesTraversal.C
+    run $(tool_compile_linkexe) binaryCFGTraversalTutorial.C
+endif

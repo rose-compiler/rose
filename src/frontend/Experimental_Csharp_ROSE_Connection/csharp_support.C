@@ -104,8 +104,10 @@ int csharp_main(int argc, char** argv, std::string sourceFileNameWithPath)
    {
   // std::string lib("./Kazelib.so");
   // std::string lib("./csharp_support_lib.so");
-     std::string libdir = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_support_lib.so";
-     std::string lib(libdir);
+     //~ std::string libdir = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_support_lib.so";
+     //~ std::string lib(libdir);
+
+     std::string lib("libcsharpBuilder.so");
 
      printf ("In csharp_main(): lib = %s \n",lib.c_str());
 

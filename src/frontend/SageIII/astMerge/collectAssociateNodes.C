@@ -340,6 +340,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
        // DQ (9/6/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
           case V_SgTypeSigned128bitInteger:
+          case V_SgTypeUnsigned128bitInteger:
 
        // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
           case V_SgTypeLabel:
@@ -397,6 +398,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:
 #endif
+       // TV (04/16/2018): Ignore non-real type for now
+          case V_SgNonrealType:
+          case V_SgAutoType:
              {
             // Ignore these cases (they contain no base types)...
                nodeList.insert(type);
@@ -1877,8 +1881,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(baseClass->get_base_class() != NULL);
                nodeList.insert(baseClass->get_base_class());
 
+            // DQ (1/21/2019): I think we don't want the reference to the pointer.
             // The modifer access function returns by reference but this is non-uniform handling of IR nodes within ROSE.
-               nodeList.insert( &(baseClass->get_baseClassModifier()) );
+            // nodeList.insert( &(baseClass->get_baseClassModifier()) );
+               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
+               nodeList.insert(baseClass->get_baseClassModifier());
                break;
              }
 
@@ -2160,6 +2167,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+       // Rasmussen (11/12/2018): Added support for Jovial COMPOOL module
+          case V_SgJovialCompoolStatement:
+
+       // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
+          case V_SgJovialForThenStatement:
+
           case V_SgMatlabForStatement:
 
        // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
@@ -2336,10 +2349,65 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            }
 #endif
 
+           case V_SgTemplateParameter:
+             {
+               SgTemplateParameter * tpl_param = isSgTemplateParameter(node);
+               ROSE_ASSERT(tpl_param != NULL);
+               if (tpl_param->get_type() != NULL) {
+                 addAssociatedNodes(tpl_param->get_type(), nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+               if (tpl_param->get_defaultTypeParameter() != NULL) {
+                 addAssociatedNodes(tpl_param->get_defaultTypeParameter(), nodeList, markMemberNodesDefinedToBeDeleted);
+               }
+               break;
+             }
+           case V_SgNonrealDecl:
+             {
+               SgNonrealDecl * nrdecl = isSgNonrealDecl(node);
+               ROSE_ASSERT(nrdecl != NULL);
+               nodeList.insert(nrdecl);
+
+//             SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+//             if (nrscope != NULL)
+//               addAssociatedNodes(nrscope,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgNonrealType * nrtype = nrdecl->get_type();
+               if (nrtype != NULL)
+                 addAssociatedNodes(nrtype,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
+               for (SgTemplateArgumentPtrList::iterator it = tpl_args.begin(); it != tpl_args.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               SgTemplateParameterPtrList & tpl_params = nrdecl->get_tpl_params();
+               for (SgTemplateParameterPtrList::iterator it = tpl_params.begin(); it != tpl_params.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               break;
+             }
+           case V_SgNonrealType:
+             {
+               SgType* type = isSgType(node);
+               ROSE_ASSERT(type != NULL);
+               addAssociatedNodes(type,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               break;
+             }
+           case V_SgNonrealSymbol:
+             {
+               SgNonrealSymbol * symbol = isSgNonrealSymbol(node);
+               ROSE_ASSERT(symbol != NULL);
+
+               break;
+             }
+
        // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
        // parsing Fortran as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
+          case V_SgUntypedExprListExpression:
              {
                break;
              }

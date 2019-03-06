@@ -1,7 +1,7 @@
 int main()
 {
-#pragma array1
   const int vecsize = 10;
+#pragma privatization
   double array1[vecsize];
   for(int i=0; i < vecsize; i++)
     array1[i] = 1.;

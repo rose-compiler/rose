@@ -23,10 +23,6 @@
 #      AC_DEFINE_UNQUOTED([ROSE_BUILD_X10_LANGUAGE_SUPPORT])
 #
 #
-# LAST MODIFICATION
-#
-#   2013-02-27
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>

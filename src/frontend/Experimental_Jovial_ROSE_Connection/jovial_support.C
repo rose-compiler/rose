@@ -136,5 +136,9 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      if (aterm_traversal)  delete aterm_traversal;
 
+#if DEBUG_EXPERIMENTAL_JOVIAL
+     std::cout << "\nSUCCESSFULLY completed untyped node conversions (returning to caller)" << "\n\n";
+#endif
+
      return 0;
    }
