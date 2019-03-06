@@ -3137,6 +3137,17 @@ SgUntypedDirectiveDeclaration* SgUntypedDirectiveDeclaration::build_node_from_no
      return returnNode;
    }
 
+SgUntypedEnumDeclaration* SgUntypedEnumDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string enum_name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedEnumDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string enum_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedEnumDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
 
 SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
@@ -3150,7 +3161,6 @@ SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_childr
      return returnNode;
    }
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
@@ -3163,7 +3173,6 @@ SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonl
      return returnNode;
    }
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedInitializedNameListDeclaration* SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0

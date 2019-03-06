@@ -48,7 +48,10 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    Sg_File_Info* start = fromNode->get_startOfConstruct();
    Sg_File_Info*   end = fromNode->get_endOfConstruct();
 
-   ROSE_ASSERT(start != NULL && end != NULL);
+   if (start == NULL || end == NULL) {
+      cerr << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << " from: " << fromNode << endl;
+      ROSE_ASSERT(start != NULL && end != NULL);
+   }
 
 // SageBuilder may have been used and it builds FileInfo
    if (toNode->get_startOfConstruct() != NULL) {
@@ -61,10 +64,9 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    }
 
 #if DEBUG_SOURCE_POSITION
-   std::cout << "UntypedConverter::setSourcePositionFrom: ";
-   printf("   --- toNode: %p from: %p", toNode, fromNode);
-   std::cout << " strt: " << start->get_line() << " " << start->get_col();
-   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+   cout << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << " from: " << fromNode;
+   cout << " strt: " << start->get_line() << " " << start->get_col();
+   cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
 #endif
 
    std::string filename = start->get_filenameString();
@@ -524,7 +526,8 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
       {
          SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_name->get_type());
 #if 0
-         cout << "--- convertSgUntypedInitializedName:    dim_info is " << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
+         cout << "--- convertSgUntypedInitializedName:    dim_info is "
+              << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
 #endif
          SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
 
@@ -606,6 +609,75 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
         }
 
       return sg_stmt;
+   }
+
+SgEnumDeclaration*
+UntypedConverter::convertUntypedEnumDeclaration (SgUntypedEnumDeclaration* ut_decl, SgScopeStatement* scope)
+   {
+      int enum_val = 0;
+      SgName enum_name = ut_decl->get_enum_name();
+
+      SgEnumDeclaration* enum_decl = SageBuilder::buildEnumDeclaration(enum_name, scope);
+      ROSE_ASSERT(enum_decl);
+      setSourcePositionFrom(enum_decl, ut_decl);
+
+   // First assume easy case where enum hasn't been declared yet
+      SgEnumSymbol* enum_symbol = SageInterface::lookupEnumSymbolInParentScopes(enum_name, scope);
+      ROSE_ASSERT(enum_symbol);
+
+   // Build the integer type for tne enumerators
+      SgType * enum_int_type = SageBuilder::buildIntType();
+      ROSE_ASSERT(enum_int_type != NULL);
+
+      SgUntypedInitializedNamePtrList ut_init_names = ut_decl->get_enumerators()->get_name_list();
+
+      BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_init_names)
+         {
+         // BIG ASSUMPTION: assume that the initializer is an integer value expression
+            SgIntVal* val_expr = NULL;
+
+            SgName name = ut_init_name->get_name();
+
+         // enumerator value
+            if (ut_init_name->get_has_initializer())
+               {
+                  SgUntypedExpression* ut_init_expr = ut_init_name->get_initializer();
+                  SgUntypedValueExpression* ut_val_expr = isSgUntypedValueExpression(ut_init_expr);
+                  ROSE_ASSERT(ut_val_expr);
+                  SgValueExp* sg_val_expr = convertSgUntypedValueExpression(ut_val_expr, true);
+                  val_expr = isSgIntVal(sg_val_expr);
+                  ROSE_ASSERT(val_expr);
+                  enum_val = val_expr->get_value();
+               }
+            else
+               {
+                  val_expr = SageBuilder::buildIntVal(enum_val);
+                  ROSE_ASSERT(val_expr);
+                  SageInterface::setSourcePosition(val_expr);
+               }
+
+            enum_val += 1;
+
+         // enumerator initializer
+            SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer(val_expr, enum_int_type);
+            ROSE_ASSERT(initializer);
+            SageInterface::setSourcePosition(initializer);
+
+         // initialized name
+            SgInitializedName* init_name = SageBuilder::buildInitializedName(name, enum_int_type, initializer);
+            ROSE_ASSERT(init_name);
+            SageInterface::setSourcePosition(init_name);
+
+         // set the scope (especially) otherwise will fail in initializeExplicitScopeData.C
+            init_name->set_parent(enum_decl);
+            init_name->set_scope(scope);
+
+            enum_decl->append_enumerator(init_name);
+         }
+
+      SageInterface::appendStatement(enum_decl, scope);
+
+      return enum_decl;
    }
 
 void
@@ -1107,8 +1179,10 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          param_list->get_args().push_back(param_name);
       }
 
+#if 0
    SgInitializedNamePtrList & new_names = param_list->get_args();
-   //cout << "---                   # args is : " << new_names.size() << endl;
+   cout << "---                   # args is : " << new_names.size() << endl;
+#endif
 
 // return type
    SgType* return_type = prev_nondef_func_decl->get_type()->get_return_type();
@@ -1373,6 +1447,7 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration_nfi(name(), sg_type, /*sg_init*/NULL, scope);
 #else
    SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
+   ROSE_ASSERT(sg_decl);
    setSourcePositionFrom(sg_decl, ut_decl);
 
    sg_decl->set_parent(scope);
@@ -1738,13 +1813,13 @@ UntypedConverter::convertUntypedForStatement (SgUntypedForStatement* ut_stmt, Sg
 SgStatement*
 UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgUntypedType* type = ut_stmt->get_type();
       SgUntypedExprListExpression* iterates = ut_stmt->get_iterates();
-      SgUntypedExprListExpression* locality = ut_stmt->get_local();
-      SgUntypedExpression* mask = ut_stmt->get_mask();
       std::string name = ut_stmt->get_do_construct_name();
 
 #if 0
+      SgUntypedType* type = ut_stmt->get_type();
+      SgUntypedExpression* mask = ut_stmt->get_mask();
+      SgUntypedExprListExpression* locality = ut_stmt->get_local();
       cout << "-x- convert forall: enum is "       << ut_stmt->get_statement_enum() << endl;
       cout << "-x- convert forall: type is "       << type << endl;
       cout << "-x- convert forall: iterates are "  << iterates << endl;
@@ -2396,7 +2471,6 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
               {
                  SgUntypedValueExpression* ut_value_expr = isSgUntypedValueExpression(ut_expr);
                  sg_expr = convertSgUntypedValueExpression(ut_value_expr, delete_ut_expr);
-                 setSourcePositionFrom(sg_expr, ut_expr);
                  if (delete_ut_expr && ut_value_expr->get_type())
                     {
                        delete ut_value_expr->get_type();
@@ -2614,6 +2688,14 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
             }
        }
 
+    if (delete_ut_expr)
+       {
+#if 0
+          cout << "--- deleting node " << ut_expr << " " << ut_expr->class_name() << endl;
+#endif
+          delete ut_expr;
+       }
+
     return sg_expr;
  }
 
@@ -2764,7 +2846,6 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
    if (isSgUntypedNullExpression(ut_expr->get_lower_bound()))
       {
          sg_expr = sg_upper_bound;
-         setSourcePositionFrom(sg_expr, ut_expr);
       }
    else
       {
