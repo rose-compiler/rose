@@ -207,43 +207,6 @@ public:
     InputOutputPropertySet& ioProperties() { return ioProperties_; }
     /** @} */
 
-
-    //----------------------------------------------------------------------
-    // The following writers API is deprecated. [Robb P. Matzke 2015-08-10]
-    //----------------------------------------------------------------------
-
-    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use getWriters instead") {
-        AddressSet vas = getWriters();
-        if (vas.isEmpty())
-            return boost::optional<rose_addr_t>();
-        return *vas.values().begin();                   // return an arbitrary writer
-    }
-    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use setWriter instead") {
-        setWriter(writer_va);
-    }
-    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearWriters instead") {
-        eraseWriters();
-    }
-    virtual Sawyer::Optional<rose_addr_t> latestWriter() const ROSE_DEPRECATED("use getWriters instead") {
-        AddressSet vas = getWriters();
-        if (vas.isEmpty())
-            return Sawyer::Nothing();
-        return *vas.values().begin();                   // return an arbitrary writer
-    }
-    virtual void latestWriter(rose_addr_t writerVa) ROSE_DEPRECATED("use setWriter instead") {
-        setWriter(writerVa);
-    }
-    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) ROSE_DEPRECATED("use setWriter instead") {
-        if (w) {
-            setWriter(*w);
-        } else {
-            eraseWriters();
-        }
-    }
-    virtual void clearLatestWriter() ROSE_DEPRECATED("use eraseWrites instead") {
-        eraseWriters();
-    }
-
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
      *  may be equal; multi-byte cells will need to check ranges of addresses. */

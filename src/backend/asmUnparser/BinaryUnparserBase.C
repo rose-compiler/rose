@@ -1406,7 +1406,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             std::ostringstream prefix;
             state.frontUnparser().emitLinePrefix(prefix, state);
             HexdumpFormat fmt;
-            fmt.prefix = prefix.str().c_str();
+            fmt.prefix = prefix.str();
             fmt.multiline = true;
 
             // Read the data in chunks and produce a hexdump
