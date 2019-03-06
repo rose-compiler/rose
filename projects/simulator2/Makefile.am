@@ -76,25 +76,25 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 EXTRA_DIST += RSIM_Private.h
 
 # The simulator, which uses ROSE interfaces where possible.
-bin_PROGRAMS += x86sim
-x86sim_SOURCES = x86sim.C
-x86sim_CPPFLAGS = $(ROSE_INCLUDES)
-x86sim_LDFLAGS = $(ROSE_RPATHS)
-x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+bin_PROGRAMS += rsim-x86sim
+rsim_x86sim_SOURCES = x86sim.C
+rsim_x86sim_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_x86sim_LDFLAGS = $(ROSE_RPATHS)
+rsim_x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
 
 # help debug the initial stack
-noinst_PROGRAMS += show-initial-stack
-show_initial_stack_SOURCES = show-initial-stack.C
-show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
-show_initial_stack_LDFLAGS = $(ROSE_RPATHS)
-show_initial_stack_LDADD = $(ROSE_LIBS)
+noinst_PROGRAMS += rsim-show-initial-stack
+rsim_show_initial_stack_SOURCES = show-initial-stack.C
+rsim_show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_show_initial_stack_LDFLAGS = $(ROSE_RPATHS)
+rsim_show_initial_stack_LDADD = $(ROSE_LIBS)
 
 # demo to show how to monitor some file-related system calls
-noinst_PROGRAMS += ports_opened
-ports_opened_SOURCES = demos/ports_opened.C
-ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
-ports_opened_LDFLAGS = $(ROSE_RPATHS)
-ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+noinst_PROGRAMS += rsim-ports-opened
+rsim_ports_opened_SOURCES = demos/ports_opened.C
+rsim_ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_ports_opened_LDFLAGS = $(ROSE_RPATHS)
+rsim_ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  INTERNAL SIMULATOR TESTS

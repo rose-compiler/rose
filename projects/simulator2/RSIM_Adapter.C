@@ -5,6 +5,7 @@
 
 #include "RSIM_Adapter.h"
 #include "Diagnostics.h"
+#include <boost/thread.hpp>
 
 using namespace Rose::Diagnostics;
 
