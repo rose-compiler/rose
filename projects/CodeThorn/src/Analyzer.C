@@ -655,7 +655,9 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
-  variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
+  int typeSize=getTypeSizeMapping()->determineTypeSize(elementType);
+  //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
+  variableIdMapping.setElementSize(variableId,typeSize);
 }
 
 // for arrays: number of elements (nested arrays not implemented yet)
@@ -672,9 +674,11 @@ int CodeThorn::Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
       SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
       SgExpressionPtrList& initList=initListObjPtr->get_expressions();
       // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+      logger[TRACE]<<"computeNumberOfElements returns "<<initList.size()<<": case : SgAggregateInitializer"<<aggregateInitializer->unparseToString()<<endl;
       return initList.size(); 
     } else if(isSgAssignInitializer(initializer)) {
-      return 1;
+      logger[TRACE]<<"computeNumberOfElements returns 0: case SgAssignInitializer: "<<initializer->unparseToString()<<endl;
+      return 0; // MS 3/5/2019: changed from 1 to 0 
     }
   }
   return 0;

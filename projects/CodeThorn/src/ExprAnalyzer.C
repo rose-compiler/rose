@@ -1448,6 +1448,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // arguments must already be analyzed (normalized code) : TODO check that it is a single variable
       // result is top (time returns any value)
       return listify(res); // return top (initialized at beginning of function)
+    } else if(funName=="__assert_fail") {
+      // TODO: create state
+      evalFunctionCallArguments(funCall,estate);
+      estate.io.recordVerificationError();
+      return listify(res);
     } else {
       logger[ERROR]<<"Function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<endl;
       exit(1);
@@ -1543,8 +1548,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
 int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
   ROSE_ASSERT(ptrToRegion.isPtr());
   VariableId ptrVariableId=ptrToRegion.getVariableId();
-  //cout<<"DEBUG: ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<endl;
   int size=_variableIdMapping->getNumberOfElements(ptrVariableId);
+  logger[TRACE]<<"getMemoryRegionSize(ptrToRegion): ptrToRegion with ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<" numberOfElements: "<<size<<endl;
   return size;
 }
 
@@ -1575,8 +1580,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
     int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
     
-    //cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
-    //cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
+    cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
+    cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
     if(memcpyArgs[2].isTop()) {
       cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
       recordPotentialOutOfBoundsAccessLocation(estate.label());
@@ -1615,9 +1620,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
         AbstractValue index(i);
         AbstractValue targetPtr=memcpyArgs[0]+index;
         AbstractValue sourcePtr=memcpyArgs[1]+index;
-        logger[TRACE]<<"TODO: copying from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
+        logger[TRACE]<<"TODO: copying "<<copyRegionSize<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
         //TODO: cpymem
-        //newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
+        AbstractValue one=CodeThorn::AbstractValue(1);
+        for(int i=0;i<copyRegionSize;i++) {
+          newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
+          targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
+          sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
+        }
       }
     }
     return listify(res);
