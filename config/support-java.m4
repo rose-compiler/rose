@@ -99,7 +99,7 @@ fi
 # echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
 if test "x$USE_JAVA" = x1; then
 
-  #echo "Now verifying aspects of the found java software (java, javac, javah, jar)..."
+  AC_MSG_NOTICE([Now verifying aspects of the found java software (java, javac, javah, jar)])
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
@@ -108,7 +108,7 @@ if test "x$USE_JAVA" = x1; then
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
 
-#echo "JAVA=${JAVA}"
+  AC_MSG_NOTICE([JAVA = "$JAVA"])
 
     # Determine java version, e.g. java version "1.7.0_51"
     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "java version" | sed 's/java version//' | sed 's/"//g'`

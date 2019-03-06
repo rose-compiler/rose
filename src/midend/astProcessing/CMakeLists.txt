@@ -13,12 +13,12 @@ set(astProcessing_SRC
   AstTraversal.C
   AstCombinedSimpleProcessing.C)
 
-if (NOT WIN32)
+if(NOT WIN32)
   list(APPEND astProcessing_SRC
     AstSharedMemoryParallelSimpleProcessing.C
     plugin.C
     AstRestructure.C)
-endif ()
+endif()
 
 add_library(astProcessing OBJECT ${astProcessing_SRC})
 add_dependencies(astProcessing rosetta_generated)
@@ -35,11 +35,13 @@ set(files_to_install
   AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h
   AstCombinedSimpleProcessing.h StackFrameVector.h AstDOTGenerationImpl.C
   graphProcessing.h graphProcessingSgIncGraph.h graphTemplate.h
+  AstSharedMemoryParallelProcessing.h AstSharedMemoryParallelProcessingImpl.h
+  AstSharedMemoryParallelSimpleProcessing.h
   SgGraphTemplate.h)
 
-if (NOT WIN32)
+if(NOT WIN32)
   #tps commented out AstSharedMemoryParallelProcessing.h for Windows
   list(APPEND files_to_install AstSharedMemoryParallelProcessing.h plugin.h)
 endif()
 
-install(FILES ${files_to_install} DESTINATION include)
+install(FILES ${files_to_install} DESTINATION ${INCLUDE_INSTALL_DIR})

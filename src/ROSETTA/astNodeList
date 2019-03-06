@@ -775,6 +775,7 @@ SgUntypedOtherStatement
 SgUntypedUseStatement
 SgUntypedDeclarationStatement
 SgUntypedDirectiveDeclaration
+SgUntypedEnumDeclaration
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration
