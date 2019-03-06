@@ -309,6 +309,7 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
   ROSE_ASSERT(variableId.isValid());
+  //cout<<"DEBUG: VariableIdMapping::setNumberOfElements: "<<variableName(variableId)<<" size: "<<size<<endl;
   mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
@@ -597,7 +598,7 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setNumberOfElements(varId,1); // default
+  setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
   return varId;
 }
 
