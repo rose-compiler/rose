@@ -12,6 +12,7 @@
 #include <SymbolicMemory2.h>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/logic/tribool.hpp>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -528,6 +529,7 @@ hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
 Sawyer::Message::Facility FeasiblePath::mlog;
 Sawyer::Attribute::Id FeasiblePath::POST_STATE(-1);
 Sawyer::Attribute::Id FeasiblePath::POST_INSN_LENGTH(-1);
+Sawyer::Attribute::Id FeasiblePath::EFFECTIVE_K(-1);
 
 void
 FeasiblePath::Expression::print(std::ostream &out) const {
@@ -561,7 +563,8 @@ FeasiblePath::initDiagnostics() {
         Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FeasiblePath");
         mlog.comment("model checking and path feasibility");
         POST_STATE = Sawyer::Attribute::declare("post-execution semantic state");
-        POST_INSN_LENGTH = Sawyer::Attribute::declare("post-execution path length");
+        POST_INSN_LENGTH = Sawyer::Attribute::declare("post-execution path length (size_t)");
+        EFFECTIVE_K = Sawyer::Attribute::declare("effective maximum path length (double)");
     }
 }
 
@@ -615,17 +618,26 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    (settings.initialStackPtr ? StringUtility::addrToString(*settings.initialStackPtr) :
                     std::string("to use a variable with an unknown value")) + "."));
 
-    sg.insert(Switch("vertex-visit-limit")
-              .argument("n", nonNegativeIntegerParser(settings.vertexVisitLimit))
+    sg.insert(Switch("max-vertex-visit")
+              .argument("n", nonNegativeIntegerParser(settings.maxVertexVisit))
               .doc("Maximum number of times that a single CFG vertex can be visited during the analysis of some function. "
                    "A function that's called from two (or more) places is considered to have two (or more) distinct sets "
-                   "of vertices. The default limit is " + StringUtility::numberToString(settings.vertexVisitLimit) + "."));
+                   "of vertices. The default limit is " + StringUtility::numberToString(settings.maxVertexVisit) + "."));
 
-    sg.insert(Switch("max-path-length")
+    sg.insert(Switch("max-path-length", 'k')
               .argument("n", nonNegativeIntegerParser(settings.maxPathLength))
-              .doc("Maximum length of a path measured in machine instructions. When exploring feasible paths to find null "
-                   "pointer dereferences, any paths longer than @v{n} instructions are ignored.  The default maximum path "
-                   "length is " + StringUtility::plural(settings.maxPathLength, "instructions") + "."));
+              .doc("Maximum length of a path measured in machine instructions. This is the \"k\" in \"k-bounded model "
+                   "checking\". The other limiting factors might reduce the effective maximum path length, and the "
+                   "effective maximum path length may vary along the path if dynamic-k is enabled.  The default maximum "
+                   "path length is " + StringUtility::plural(settings.maxPathLength, "instructions") + "."));
+
+    sg.insert(Switch("cycle-k")
+              .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
+              .doc("The coefficient used to adjust the maximum path length, k, specified with @s{max-path-length} when "
+                   "cycles are encountered to compute a new effective maximum path length.  When a CFG vertex is revisited "
+                   "along a path (such as in a C \"for\" loop), then the effective @v{k} value is incremented by the "
+                   "vertex size (number of instructions) times the coefficient specified here. The default is " +
+                   boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
 
     sg.insert(Switch("max-call-depth")
               .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
@@ -1243,6 +1255,16 @@ FeasiblePath::pathPostState(const P2::CfgPath &path, size_t vertexIdx) {
     return path.vertexAttributes(vertexIdx).attributeOrDefault<BaseSemantics::StatePtr>(POST_STATE);
 }
 
+double
+FeasiblePath::pathEffectiveK(const P2::CfgPath &path) const {
+    for (size_t i = path.nVertices(); i > 0; --i) {
+        double d = path.vertexAttributes(i-1).attributeOrElse(EFFECTIVE_K, 0.0);
+        if (d != 0.0)
+            return d;
+    }
+    return settings_.maxPathLength;
+}
+
 void
 FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(solver);
@@ -1312,6 +1334,37 @@ FeasiblePath::insertInnerConditions(const SmtSolver::Ptr &solver, const P2::CfgP
     }
 }
 
+SmtSolver::Satisfiable
+FeasiblePath::solvePathConstraints(SmtSolver::Ptr &solver, const P2::CfgPath &path, const SymbolicExpr::Ptr &edgeConstraint,
+                                   const std::vector<Expression> &innerConditions, SymbolicExprParser &parser) {
+    ASSERT_not_null(solver);
+    ASSERT_not_null(edgeConstraint);
+    solver->insert(edgeConstraint);
+    insertInnerConditions(solver, path, innerConditions, parser);
+    return solver->check();
+}
+
+size_t
+FeasiblePath::vertexSize(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
+    switch (vertex->value().type()) {
+        case P2::V_BASIC_BLOCK:
+            return vertex->value().bblock()->nInstructions();
+        case P2::V_INDETERMINATE:
+        case P2::V_USER_DEFINED:
+            return 1;
+        default:
+            ASSERT_not_reachable("invalid path vertex type");
+    }
+}
+
+size_t
+FeasiblePath::pathLength(const Partitioner2::CfgPath &path) {
+    size_t retval = 0;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices())
+        retval += vertexSize(vertex);
+    return retval;
+}
+
 void
 FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
@@ -1376,17 +1429,24 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         ASSERT_not_null(ops);
         BaseSemantics::StatePtr originalState = ops->currentState();
         ASSERT_not_null(originalState);
+        double effectiveMaxPathLength = settings_.maxPathLength;
 
         // Make sure symbolic expression parsers use the latest state when expanding register and memory references.
         regSubber->riscOperators(ops);
         memSubber->riscOperators(ops);
 
         while (!path.isEmpty()) {
+            size_t pathNInsns = pathLength(path);
+
             if (debug) {
                 debug <<"  path vertices (" <<path.nVertices() <<"):";
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, path.vertices())
                     debug <<" " <<partitioner().vertexName(v);
-                debug <<" (solver levels = " <<solver->nLevels() <<")\n";
+                debug <<"\n";
+                debug <<"    SMT solver has " <<StringUtility::plural(solver->nLevels(), "transactions") <<"\n";
+                debug <<"    path has " <<StringUtility::plural(path.nVertices(), "vertices") <<"\n";
+                debug <<"    path length is " <<StringUtility::plural(pathNInsns, "instructions") <<"\n";
+                debug <<"    effective k is " <<effectiveMaxPathLength <<" instructions\n";
             }
             ASSERT_require(solver->nLevels() == 1 + path.nEdges());
 
@@ -1427,7 +1487,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     processVertex(cpu, path.edges().back()->source(), pathInsnIndex /*in,out*/);
                     pathProcessed = true;
                 } catch (...) {
-                    debug <<"    path semantics failed\n";
+                    SAWYER_MESG(debug) <<"    path semantics failed\n";
                 }
                 path.vertexAttributes(path.nVertices()-2).setAttribute(POST_STATE, penultimateState);
                 path.vertexAttributes(path.nVertices()-2).setAttribute(POST_INSN_LENGTH, pathInsnIndex);
@@ -1439,75 +1499,88 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // Check whether this path is feasible. We've already validated the path up to but not including its final edge,
             // and we've processed instructions semantically up to the beginning of the final edge's target vertex (the
             // CPU points to this state).  Furthermore, the SMT solver knows all the path conditions up to but not including
-            // the final edge. Therefore, we just need to push this final edge's condition into the SMT solver and check.
+            // the final edge. Therefore, we just need to push this final edge's condition into the SMT solver and check. We
+            // also add any user-defined conditions that apply at the beginning of the last path vertex.
             SAWYER_MESG(debug) <<"    checking path feasibility";
             boost::logic::tribool pathIsFeasible = false;
             if (!pathProcessed) {
                 pathIsFeasible = false;                 // encountered unhandled error during semantic processing
-                debug <<" = not feasible (semantic failure)\n";
+                SAWYER_MESG(debug) <<" = not feasible (semantic failure)\n";
             } else if (path.nEdges() == 0) {
                 ASSERT_require(path.nVertices() == 1);
                 ASSERT_require(solver->nLevels() == 1);
-                debug <<" = is feasible (first vertex reachable by definition)\n";
-                pathIsFeasible = true;
+                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), innerConditionsParsed, exprParser)) {
+                    case SmtSolver::SAT_YES:
+                        SAWYER_MESG(debug) <<" = is feasible\n";
+                        pathIsFeasible = true;
+                        break;
+                    case SmtSolver::SAT_NO:
+                        SAWYER_MESG(debug) <<" = not feasible\n";
+                        pathIsFeasible = false;
+                        doBacktrack = true;
+                        break;
+                    case SmtSolver::SAT_UNKNOWN:
+                        SAWYER_MESG(debug) <<" = unknown\n";
+                        pathIsFeasible = boost::logic::indeterminate;
+                        doBacktrack = true;
+                        break;
+                }
             } else {
                 ASSERT_require(solver->nLevels() == 1 + path.nEdges());
                 if (solver->nAssertions(solver->nLevels()-1) > 0) {
-                    debug <<" = is feasible (previously computed)\n";
+                    SAWYER_MESG(debug) <<" = is feasible (previously computed)\n";
                     pathIsFeasible = true;
                 } else if (SymbolicExpr::Ptr edgeConstraint = pathEdgeConstraint(path.edges().back(), cpu)) {
-                    solver->insert(edgeConstraint);
-                    insertInnerConditions(solver, path, innerConditionsParsed, exprParser);
-                    switch (solver->check()) {
+                    switch (solvePathConstraints(solver, path, edgeConstraint, innerConditionsParsed, exprParser)) {
                         case SmtSolver::SAT_YES:
-                            debug <<" = is feasible\n";
+                            SAWYER_MESG(debug) <<" = is feasible\n";
                             pathIsFeasible = true;
                             break;
                         case SmtSolver::SAT_NO:
-                            debug <<" = not feasible\n";
+                            SAWYER_MESG(debug) <<" = not feasible\n";
                             pathIsFeasible = false;
                             doBacktrack = true;
                             break;
                         case SmtSolver::SAT_UNKNOWN:
-                            debug <<" = unknown\n";
+                            SAWYER_MESG(debug) <<" = unknown\n";
                             pathIsFeasible = boost::logic::indeterminate;
                             doBacktrack = true;
                             break;
                     }
                 } else {
-                    debug <<" = not feasible (trivial)\n";
+                    SAWYER_MESG(debug) <<" = not feasible (trivial)\n";
                     pathIsFeasible = false;
                     doBacktrack = true;
                 }
             }
-                    
+
             // If at end of path, check any additional post-conditions specified by the user.
             boost::logic::tribool postConditionsSatisified = false;
             if (atEndOfPath && pathIsFeasible) {
-                debug <<"    checking path post conditions";
+                SAWYER_MESG(debug) <<"    checking path post conditions";
                 if (postConditionsParsed.empty()) {
-                    debug <<" = satisified (no post conditions)\n";
+                    SAWYER_MESG(debug) <<" = satisified (no post conditions)\n";
                     postConditionsSatisified = true;
                 } else {
-                    SmtSolver::Transaction transaction(solver);
-                    debug <<":\n";
+                    //SmtSolver::Transaction transaction(solver);
+                    SAWYER_MESG(debug) <<":\n";
                     for (size_t i=0; i<postConditionsParsed.size(); ++i) {
                         SymbolicExpr::Ptr postCondition = expandCondition(postConditionsParsed[i], exprParser);
                         SAWYER_MESG(debug) <<"      " <<*postCondition <<"\n";
                         solver->insert(postCondition);
                     }
-                    debug <<"    checking path post conditions";
+                    SAWYER_MESG(debug) <<"    checking path post conditions";
                     switch (solver->check()) {
                         case SmtSolver::SAT_YES:
-                            debug <<" = satisfied\n";
+                            SAWYER_MESG(debug) <<" = satisfied\n";
                             postConditionsSatisified = true;
                             break;
                         case SmtSolver::SAT_NO:
-                            debug <<" = not satisfied\n";
+                            SAWYER_MESG(debug) <<" = not satisfied\n";
                             postConditionsSatisified = false;
                             break;
                         case SmtSolver::SAT_UNKNOWN:
-                            debug <<" = unknown\n";
+                            SAWYER_MESG(debug) <<" = unknown\n";
                             postConditionsSatisified = boost::logic::indeterminate;
                             break;
                     }
@@ -1536,31 +1609,28 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             }
 
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
-            if (path.nVisits(backVertex) > settings_.vertexVisitLimit) {
-                SAWYER_MESG(mlog[WARN]) <<indent <<"max visits (" <<settings_.vertexVisitLimit <<") reached"
+            size_t nVertexVisits = path.nVisits(backVertex);
+            if (nVertexVisits > settings_.maxVertexVisit) {
+                SAWYER_MESG(mlog[WARN]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                         <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
                 doBacktrack = true;
+            } else if (nVertexVisits > 1 && !rose_isnan(settings_.kCycleCoefficient)) {
+                size_t n = vertexSize(backVertex);
+                double increment = n * settings_.kCycleCoefficient;
+                if (increment != 0.0) {
+                    effectiveMaxPathLength += increment;
+                    SAWYER_MESG(debug) <<"    revisting prior vertex; k += " <<increment
+                                       <<", effective k = " <<effectiveMaxPathLength <<"\n";
+                    path.vertexAttributes(path.nVertices()-1).setAttribute(EFFECTIVE_K, effectiveMaxPathLength);
+                }
             }
 
             // Limit path length (in terms of number of instructions)
-            if (settings_.maxPathLength < (size_t)(-1) && !doBacktrack) {
-                size_t pathNInsns = 0;
-                BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices()) {
-                    switch (vertex->value().type()) {
-                        case P2::V_BASIC_BLOCK:
-                            pathNInsns += vertex->value().bblock()->instructions().size();
-                            break;
-                        case P2::V_INDETERMINATE:
-                        case P2::V_USER_DEFINED:
-                            ++pathNInsns;
-                            break;
-                        default:
-                            ASSERT_not_reachable("invalid path vertex type");
-                    }
-                }
-                if (pathNInsns > settings_.maxPathLength) {
-                    SAWYER_MESG(mlog[WARN]) <<indent <<"maximum path length exceeded"
-                                            <<" (" <<settings_.maxPathLength <<" instructions)"
+            if (!doBacktrack) {
+                if ((double)pathNInsns > effectiveMaxPathLength) {
+                    SAWYER_MESG(mlog[WARN]) <<indent <<"maximum path length exceeded:"
+                                            <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
+                                            <<", effective limit is " <<effectiveMaxPathLength
                                             <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
                     doBacktrack = true;
                 }
@@ -1622,7 +1692,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 // doing so was unsafe--it might remove a vertex that is pointed to by some iterator in some variable, perhaps
                 // the current path. Instead, we call isAnyEndpointReachable here and above.
                 if (!isAnyEndpointReachable(paths_, pathsBeginVertex, pathsEndVertices_)) {
-                    debug <<"    none of the end vertices are reachable after inlining\n";
+                    SAWYER_MESG(debug) <<"    none of the end vertices are reachable after inlining\n";
                     break;
                 }
 
@@ -1641,6 +1711,13 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 // the next edge.  We must adjust visit counts for the vertices we backtracked.
                 SAWYER_MESG(debug) <<"    backtrack\n";
                 backtrack(path, solver);
+                if (!path.isEmpty()) {
+                    double d = pathEffectiveK(path);
+                    if (d != effectiveMaxPathLength) {
+                        SAWYER_MESG(debug) <<"      reset effective k = " <<d <<"\n";
+                        effectiveMaxPathLength = d;
+                    }
+                }
             } else {
                 // Push next edge onto path.
                 SAWYER_MESG(debug) <<"    advance along cfg edge " <<partitioner().edgeName(backVertex->outEdges().begin()) <<"\n";

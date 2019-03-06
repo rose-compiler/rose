@@ -965,7 +965,7 @@ SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Pt
         }
 
         // Read the register
-        SS::SValuePtr regval = SS::SValue::promote(regState->peekRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
+        SS::SValuePtr regval = SS::SValue::promote(regState->readRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
         SAWYER_MESG(debug) <<"register substitution: " <<src->comment() <<" = " <<*regval <<"\n";
         return regval->get_expression();
     }
@@ -1018,7 +1018,7 @@ SymbolicExprParser::MemorySubstituter::delayedExpansion(const SymbolicExpr::Ptr 
         SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(addrExpr->nBits()));
         addr->set_expression(addrExpr);
         BaseSemantics::SValuePtr dflt = ops_->undefined_(src->nBits());
-        BaseSemantics::SValuePtr mem = ops_->peekMemory(RegisterDescriptor(), addr, dflt);
+         BaseSemantics::SValuePtr mem = ops_->readMemory(RegisterDescriptor(), addr, dflt, ops_->boolean_(true));
         SAWYER_MESG(debug) <<"memory substitution: (memory[" <<src->nBits() <<"] " <<*addr <<") -> " <<*mem <<"\n";
         return SymbolicSemantics::SValue::promote(mem)->get_expression();
     } else {

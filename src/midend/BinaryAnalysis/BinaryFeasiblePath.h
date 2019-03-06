@@ -61,7 +61,7 @@ public:
         // Path feasibility
         SearchMode searchMode;                          /**< Method to use when searching for feasible paths. */
         Sawyer::Optional<rose_addr_t> initialStackPtr;  /**< Concrete value to use for stack pointer register initial value. */
-        size_t vertexVisitLimit;                        /**< Max times to visit a particular vertex in one path. */
+        size_t maxVertexVisit;                          /**< Max times to visit a particular vertex in one path. */
         size_t maxPathLength;                           /**< Limit path length in terms of number of instructions. */
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
@@ -74,6 +74,7 @@ public:
         SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
         bool processFinalVertex;                        /**< Whether to process the last vertex of the path. */
         bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
+        double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
 
         // Null dereferences
         struct NullDeref {
@@ -89,9 +90,10 @@ public:
 
         /** Default settings. */
         Settings()
-            : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
+            : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
-              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false) {}
+              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
+              kCycleCoefficient(0.0) {}
     };
 
     /** Diagnostic output. */
@@ -246,6 +248,7 @@ private:
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
+    static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -469,14 +472,28 @@ public:
     const FunctionSummary& functionSummary(rose_addr_t entryVa) const;
 
     /** Details about a variable. */
-    const VarDetail& varDetail(const InstructionSemantics2::BaseSemantics::StatePtr &state, const std::string &varName) const;
+    const VarDetail& varDetail(const InstructionSemantics2::BaseSemantics::StatePtr&, const std::string &varName) const;
 
     /** Details about all variables by name. */
-    const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr &state) const;
+    const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 
     /** Get the state at the end of the specified vertex. */
-    static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath &path, size_t vertexIdx);
+    static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
 
+    /** Effective maximum path length.
+     *
+     *  Returns the effective maximum path length, k, for the specified path. The maximum is based on the @ref
+     *  Settings::maxPathLength "maxPathLength" property, but adjusted up or down as vertices are added to the path. The
+     *  adjusted values are stored as attributes of the path, and this function returns the current value. */
+    double pathEffectiveK(const Partitioner2::CfgPath&) const;
+
+    /** Total length of path.
+     *
+     *  The path length is different than the number of vertices (@ref Partitioner2::CfgPath::nVertices). Path length is
+     *  measured by summing the sizes of all the vertices. The size of a vertex that represents a basic block is the number
+     *  of instructions in that basic block. The path length is what's used to limit the depth of the search in k-bounded
+     *  model checking. */
+    static size_t pathLength(const Partitioner2::CfgPath&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private supporting functions
@@ -512,6 +529,15 @@ private:
     // Based on the last vertex of the path, insert user-specified inner conditions into the SMT solver.
     void insertInnerConditions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
                                const std::vector<Expression> &innerConditions, SymbolicExprParser&);
+
+    // Size of vertex. How much of "k" does this vertex consume?
+    static size_t vertexSize(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
+
+    // Insert the edge constraint and any applicable inner conditions (after delayed expansion of the inner conditions register
+    // and memory references), and run the solver, returning its result.
+    SmtSolver::Satisfiable
+    solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeConstraint,
+                         const std::vector<Expression> &innerConditions, SymbolicExprParser&);
 };
 
 } // namespace
