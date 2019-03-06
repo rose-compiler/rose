@@ -20,7 +20,12 @@ class FeasiblePath {
     //                                  Types and public data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    enum SearchMode { SEARCH_SINGLE_DFS, SEARCH_SINGLE_BFS, SEARCH_MULTI };
+    /** How to search for paths. */
+    enum SearchMode {
+        SEARCH_SINGLE_DFS,                              /**< Perform a depth first search. */
+        SEARCH_SINGLE_BFS,                              /**< Perform a breadth first search. */
+        SEARCH_MULTI                                    /**< Blast everything at once to the SMT solver. */
+    };
 
     /** Organization of semantic memory. */
     enum SemanticMemoryParadigm {
@@ -34,6 +39,23 @@ public:
     /** Types of comparisons. */
     enum MayOrMust { MAY, MUST };
 
+    /** Expression to be evaluated.
+     *
+     *  If the expression is a string, then the string is parsed to create a symbolic expression, substituting registers
+     *  and memory from a supplied semantic state.
+     *
+     *  If the expression is an expression tree, then the expression is used directly. */
+    struct Expression {
+        std::string parsable;                           /**< String to be parsed as an expression. */
+        SymbolicExpr::Ptr expr;                         /**< Symbolic expression. */
+
+        Expression() {}
+        /*implicit*/ Expression(const std::string &parsable): parsable(parsable) {}
+        /*implicit*/ Expression(const SymbolicExpr::Ptr &expr): expr(expr) {}
+
+        void print(std::ostream&) const;
+    };
+
     /** Settings that control this analysis. */
     struct Settings {
         // Path feasibility
@@ -43,13 +65,15 @@ public:
         size_t maxPathLength;                           /**< Limit path length in terms of number of instructions. */
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
-        std::vector<SymbolicExpr::Ptr> postConditions;  /**< Additional constraints to be satisifed at the end of a path. */
-        std::vector<std::string> postConditionStrings;  /**< Additional post conditions as strings to be parsed. */
+        std::vector<Expression> innerConditions;        /**< Constraints to be satisfied in the middle of a path. */
+        std::vector<AddressInterval> innerConditionLocs;/**< Instruction pointers at which inner constraints are checked. */
+        std::vector<Expression> postConditions;         /**< Additional constraints to be satisfied at the end of a path. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
         std::string solverName;                         /**< Type of SMT solver. */
         SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
         bool processFinalVertex;                        /**< Whether to process the last vertex of the path. */
+        bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
 
         // Null dereferences
         struct NullDeref {
@@ -61,11 +85,13 @@ public:
                 : check(false), mode(MUST), constOnly(false) {}
         } nullDeref;                                    /**< Settings for null-dereference analysis. */
 
+        std::string exprParserDoc;                      /**< String documenting how expressions are parsed, empty for default. */
+
         /** Default settings. */
         Settings()
             : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
-              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false) {}
+              memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false) {}
     };
 
     /** Diagnostic output. */
@@ -201,7 +227,7 @@ public:
         returnValue(const FeasiblePath &analysis, const FunctionSummary &summary,
                     const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
     };
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,7 +257,7 @@ public:
         : registers_(NULL) {}
 
     virtual ~FeasiblePath() {}
-        
+
     /** Reset to initial state without changing settings. */
     void reset() {
         partitioner_ = NULL;
@@ -267,6 +293,9 @@ public:
      *  The @p settings provide default values. A reference to @p settings is saved and when the command-line is parsed and
      *  applied, the settings are adjusted. */
     static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
+
+    /** Documentation for the symbolic expression parser. */
+    static std::string expressionDocumentation();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +407,7 @@ public:
     static bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
                                        const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
                                        const Partitioner2::CfgConstVertexSet &endVertices);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -425,7 +454,7 @@ public:
      *  Returns a reference to the partitioner that is currently in use, set by @ref setSearchBoundary.  It is a fatal error to
      *  call this function if there is no partitioner. */
     const Partitioner2::Partitioner& partitioner() const;
-    
+
     /** Function summary information.
      *
      *  This is a map of functions that have been summarized, indexed by function entry address. */
@@ -445,6 +474,9 @@ public:
     /** Details about all variables by name. */
     const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr &state) const;
 
+    /** Get the state at the end of the specified vertex. */
+    static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath &path, size_t vertexIdx);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private supporting functions
@@ -463,7 +495,7 @@ private:
     void backtrack(Partitioner2::CfgPath &path /*in,out*/, const SmtSolver::Ptr&);
 
     // Process one edge of a path to find any path constraints. When called, the cpu's current state should be the virtual
-    // machine state at it exists just prior to executing the target vertex of the specified edge. 
+    // machine state at it exists just prior to executing the target vertex of the specified edge.
     //
     // Returns a null pointer if the edge's condition is trivially unsatisfiable, such as when the edge points to a basic block
     // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
@@ -471,9 +503,32 @@ private:
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
     SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
                                          InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
+
+    // Parse the expression if it's a parsable string, otherwise return the expression as is. */
+    static Expression parseCondition(const Expression&, SymbolicExprParser&);
+
+    SymbolicExpr::Ptr expandCondition(const Expression&, SymbolicExprParser&);
+
+    // Based on the last vertex of the path, insert user-specified inner conditions into the SMT solver.
+    void insertInnerConditions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
+                               const std::vector<Expression> &innerConditions, SymbolicExprParser&);
 };
 
 } // namespace
 } // namespace
+
+std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::FeasiblePath::Expression&);
+
+// Convert string to feasible path expression during command-line parsing
+namespace Sawyer {
+    namespace CommandLine {
+        template<>
+        struct LexicalCast<Rose::BinaryAnalysis::FeasiblePath::Expression> {
+            static Rose::BinaryAnalysis::FeasiblePath::Expression convert(const std::string &src) {
+                return Rose::BinaryAnalysis::FeasiblePath::Expression(src);
+            }
+        };
+    }
+}
 
 #endif

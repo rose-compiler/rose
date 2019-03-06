@@ -595,13 +595,6 @@ RegisterStateGeneric::setWriters(RegisterDescriptor desc, const AddressSet &writ
     }
 }
 
-// [Robb P. Matzke 2015-08-07]: deprecated
-void
-RegisterStateGeneric::set_latest_writer(RegisterDescriptor desc, rose_addr_t writer_va)
-{
-    setWriters(desc, writer_va);
-}
-
 void
 RegisterStateGeneric::eraseWriters(RegisterDescriptor desc) {
     if (!writers_.exists(desc))
@@ -613,23 +606,9 @@ RegisterStateGeneric::eraseWriters(RegisterDescriptor desc) {
         writers_.erase(desc);
 }
 
-// [Robb P. Matzke 2015-08-07]: deprecated
-void
-RegisterStateGeneric::clear_latest_writer(RegisterDescriptor desc)
-{
-    eraseWriters(desc);
-}
-
 void
 RegisterStateGeneric::eraseWriters() {
     writers_.clear();
-}
-
-// [Robb P. Matzke 2015-08-07]: deprecated
-void
-RegisterStateGeneric::clear_latest_writers()
-{
-    eraseWriters();
 }
 
 bool
@@ -666,15 +645,6 @@ RegisterStateGeneric::getWritersIntersection(RegisterDescriptor desc) const {
     const BitAddressSet &parts = writers_[desc];
     BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
     return parts.getIntersection(where);
-}
-
-// [Robb P. Matzke 2015-08-07]: deprecated, use getWritersUnion instead
-std::set<rose_addr_t>
-RegisterStateGeneric::get_latest_writers(RegisterDescriptor desc) const
-{
-    AddressSet writerVas = getWritersUnion(desc);
-    std::set<rose_addr_t> retval(writerVas.values().begin(), writerVas.values().end());
-    return retval;
 }
 
 bool

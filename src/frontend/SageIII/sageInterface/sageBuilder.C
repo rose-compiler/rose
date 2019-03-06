@@ -2876,7 +2876,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false);
 
      ROSE_ASSERT(struct_name != NULL);
-  // ROSE_ASSERT(isSgTemplateClassDefinition(struct_name) == NULL);
+
+#if 0
+     printf("In buildMemberFunctionType():\n");
+     printf("  - struct_name = %p (%s)\n", struct_name, struct_name->class_name().c_str());
+#endif
 
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
