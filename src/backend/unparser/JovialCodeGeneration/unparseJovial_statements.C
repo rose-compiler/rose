@@ -58,8 +58,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
      ROSE_ASSERT(stmt != NULL);
 
-  // curprint_indented("", info);
-
      switch (stmt->variantT())
         {
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
@@ -72,6 +70,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // declarations
 
+          case V_SgEnumDeclaration:            unparseEnumDeclStmt(stmt, info);     break;
           case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
 
        // executable statements, control flow
@@ -99,8 +98,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // executable statements, control flow
 
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
-
-          case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
 
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
@@ -573,6 +570,47 @@ Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
       curprint("RETURN ;");
       unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
+     ROSE_ASSERT(enum_decl != NULL);
+
+     SgName enum_name = enum_decl->get_name();
+
+     curprint("TYPE ");
+     curprint(enum_name.str());
+     curprint(" STATUS");
+     unp->cur.insert_newline(1);
+
+     curprint("(");
+     unp->cur.insert_newline(1);
+
+     int n = enum_decl->get_enumerators().size();
+     BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
+         {
+            SgName name = init_name->get_name();
+
+            SgInitializer* init_expr = init_name->get_initializer();
+            ROSE_ASSERT(init_expr);
+            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
+            ROSE_ASSERT(assign_expr);
+            SgExpression* expr = assign_expr->get_operand();
+            ROSE_ASSERT(expr);
+
+            curprint("  ");
+            unparseExpression(expr, info);
+            curprint(" V(");
+            curprint(name.str());
+            curprint(")");
+            if (--n > 0) curprint(",");
+            unp->cur.insert_newline(1);
+         }
+
+     curprint(");");
+     unp->cur.insert_newline(1);
    }
 
 void
