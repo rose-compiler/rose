@@ -2848,7 +2848,7 @@ HEADER_NONREAL_DECL_START
           SgNonrealType* get_type (void) const;
           void set_type (SgNonrealType* t);
 
-          SgName get_mangled_name (void) const;
+          SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
           SgName get_qualified_name() const;
