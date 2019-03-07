@@ -4,6 +4,8 @@
 #include <rosePublicConfig.h>
 #include <LinearCongruentialGenerator.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <istream>
@@ -208,6 +210,9 @@ public:
      *  This is a wrapper that calls the @ref digest function to finalize the hash, converts the digest to a hexadecimal
      *  string, and sends it to the stream. */
     void print(std::ostream&);
+
+    static boost::shared_ptr<Hasher> createHasher(const std::string& inType);    
+
 };
 
 /** Hasher for any libgcrypt hash algorithm.
@@ -306,6 +311,8 @@ typedef HasherGcrypt<0> HasherSha384;                   /**< SHA-384 hasher. Thr
 typedef HasherGcrypt<0> HasherSha512;                   /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<0> HasherCrc32;                    /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
 #endif
+
+
 
 /** Fowler-Noll-Vo hashing using the Hasher interface. */
 class ROSE_DLL_API HasherFnv: public Hasher {
