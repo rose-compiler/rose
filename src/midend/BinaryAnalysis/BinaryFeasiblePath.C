@@ -650,9 +650,10 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
 
     sg.insert(Switch("post-condition")
-              .argument("sexpr", anyParser(settings.postConditions))
-              .doc("Additional constraint to be satisfied at the ending vertex. This switch may appear more than once "
-                   "in order to specify multiple conditions that must all be satisfied. " +
+              .argument("assertion", anyParser(settings.postConditions))
+              .doc("Additional constraint to be satisfied at the ending vertex. This is simply a special case of "
+                   "@s{inner-condition} that causes the assertion to be evaluated at all of the end-of-path locations."
+                   "This switch may appear more than once in order to specify multiple conditions that must all be satisfied. " +
                    (settings.exprParserDoc.empty() ? exprParserDoc : settings.exprParserDoc)));
 
     sg.insert(Switch("inner-condition")
@@ -1336,11 +1337,34 @@ FeasiblePath::insertInnerConditions(const SmtSolver::Ptr &solver, const P2::CfgP
 
 SmtSolver::Satisfiable
 FeasiblePath::solvePathConstraints(SmtSolver::Ptr &solver, const P2::CfgPath &path, const SymbolicExpr::Ptr &edgeConstraint,
-                                   const std::vector<Expression> &innerConditions, SymbolicExprParser &parser) {
+                                   const std::vector<Expression> &innerConditions, bool atEndOfPath,
+                                   const std::vector<Expression> &postConditions, SymbolicExprParser &parser) {
     ASSERT_not_null(solver);
     ASSERT_not_null(edgeConstraint);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     solver->insert(edgeConstraint);
+
     insertInnerConditions(solver, path, innerConditions, parser);
+
+    if (atEndOfPath) {
+        SAWYER_MESG(debug) <<"    post conditions for end-of-path:\n";
+        for (size_t i = 0; i < postConditions.size(); ++i) {
+            SymbolicExpr::Ptr cond = expandCondition(postConditions[i], parser);
+            solver->insert(cond);
+            if (debug) {
+                debug <<"      #" <<i <<": " <<*cond <<"\n";
+                if (cond != postConditions[i].expr) {
+                    if (!settings().postConditions[i].parsable.empty()) {
+                        debug <<"        parsed from:   " <<settings().postConditions[i].parsable <<"\n";
+                    } else {
+                        debug <<"        expanded from: " <<*settings().postConditions[i].expr <<"\n";
+                    }
+                }
+            }
+        }
+    }
+    
     return solver->check();
 }
 
@@ -1509,7 +1533,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             } else if (path.nEdges() == 0) {
                 ASSERT_require(path.nVertices() == 1);
                 ASSERT_require(solver->nLevels() == 1);
-                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), innerConditionsParsed, exprParser)) {
+                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), innerConditionsParsed,
+                                             atEndOfPath, postConditionsParsed, exprParser)) {
                     case SmtSolver::SAT_YES:
                         SAWYER_MESG(debug) <<" = is feasible\n";
                         pathIsFeasible = true;
@@ -1531,7 +1556,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     SAWYER_MESG(debug) <<" = is feasible (previously computed)\n";
                     pathIsFeasible = true;
                 } else if (SymbolicExpr::Ptr edgeConstraint = pathEdgeConstraint(path.edges().back(), cpu)) {
-                    switch (solvePathConstraints(solver, path, edgeConstraint, innerConditionsParsed, exprParser)) {
+                    switch (solvePathConstraints(solver, path, edgeConstraint, innerConditionsParsed,
+                                                 atEndOfPath, postConditionsParsed, exprParser)) {
                         case SmtSolver::SAT_YES:
                             SAWYER_MESG(debug) <<" = is feasible\n";
                             pathIsFeasible = true;
@@ -1554,41 +1580,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 }
             }
 
-            // If at end of path, check any additional post-conditions specified by the user.
-            boost::logic::tribool postConditionsSatisified = false;
-            if (atEndOfPath && pathIsFeasible) {
-                SAWYER_MESG(debug) <<"    checking path post conditions";
-                if (postConditionsParsed.empty()) {
-                    SAWYER_MESG(debug) <<" = satisified (no post conditions)\n";
-                    postConditionsSatisified = true;
-                } else {
-                    //SmtSolver::Transaction transaction(solver);
-                    SAWYER_MESG(debug) <<":\n";
-                    for (size_t i=0; i<postConditionsParsed.size(); ++i) {
-                        SymbolicExpr::Ptr postCondition = expandCondition(postConditionsParsed[i], exprParser);
-                        SAWYER_MESG(debug) <<"      " <<*postCondition <<"\n";
-                        solver->insert(postCondition);
-                    }
-                    SAWYER_MESG(debug) <<"    checking path post conditions";
-                    switch (solver->check()) {
-                        case SmtSolver::SAT_YES:
-                            SAWYER_MESG(debug) <<" = satisfied\n";
-                            postConditionsSatisified = true;
-                            break;
-                        case SmtSolver::SAT_NO:
-                            SAWYER_MESG(debug) <<" = not satisfied\n";
-                            postConditionsSatisified = false;
-                            break;
-                        case SmtSolver::SAT_UNKNOWN:
-                            SAWYER_MESG(debug) <<" = unknown\n";
-                            postConditionsSatisified = boost::logic::indeterminate;
-                            break;
-                    }
-                }
-            }
-
             // Call user-supplied path processor when appropriate
-            if (atEndOfPath && pathIsFeasible && postConditionsSatisified) {
+            if (atEndOfPath && pathIsFeasible) {
                 // Process final vertex semantics before invoking user callback?
                 if (settings().processFinalVertex) {
                     SAWYER_MESG(debug) <<"    reached end of path; processing final path vertex\n";

@@ -537,7 +537,8 @@ private:
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
     solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeConstraint,
-                         const std::vector<Expression> &innerConditions, SymbolicExprParser&);
+                         const std::vector<Expression> &innerConditions, bool atEndOfPath,
+                         const std::vector<Expression> &postConditions, SymbolicExprParser&);
 };
 
 } // namespace
