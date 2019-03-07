@@ -611,10 +611,10 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
 
     sg.insert(Switch("initial-stack")
               .argument("value", nonNegativeIntegerParser(settings.initialStackPtr))
-              .doc("Specifies an initial value for the stack pointer register for each analyzed function. The default "
-                   "is that the stack pointer register has an undefined (variable) value at the start of the analysis. "
-                   "Setting the initial stack pointer to a concrete value causes most stack reads and writes to have "
-                   "concrete addresses that are non-zero. The default is " +
+              .doc("Specifies an initial value for the stack pointer register for each path. The default is that the stack "
+                   "pointer register has an undefined (variable) value at the start of the analysis. Setting the initial stack "
+                   "pointer to a concrete value causes most stack reads and writes to have concrete addresses that are non-zero. "
+                   "The default is " +
                    (settings.initialStackPtr ? StringUtility::addrToString(*settings.initialStackPtr) :
                     std::string("to use a variable with an unknown value")) + "."));
 
@@ -627,17 +627,18 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
     sg.insert(Switch("max-path-length", 'k')
               .argument("n", nonNegativeIntegerParser(settings.maxPathLength))
               .doc("Maximum length of a path measured in machine instructions. This is the \"k\" in \"k-bounded model "
-                   "checking\". The other limiting factors might reduce the effective maximum path length, and the "
-                   "effective maximum path length may vary along the path if dynamic-k is enabled.  The default maximum "
-                   "path length is " + StringUtility::plural(settings.maxPathLength, "instructions") + "."));
+                   "checking\". The value specified here is only a starting point--the algorithm itself uses an effective-k "
+                   "that's adjusted as the search progresses. Furthermore, other settings such as @s{max-call-depth}, "
+                   "@s{max-recursion-depth}, and @s{max-vertex-visit} may place more stringent limits on the path length. "
+                   "Exploration along a path stops when any of these limits is met. The default maximum path length is " +
+                   StringUtility::plural(settings.maxPathLength, "instructions") + "."));
 
     sg.insert(Switch("cycle-k")
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
-              .doc("The coefficient used to adjust the maximum path length, k, specified with @s{max-path-length} when "
-                   "cycles are encountered to compute a new effective maximum path length.  When a CFG vertex is revisited "
-                   "along a path (such as in a C \"for\" loop), then the effective @v{k} value is incremented by the "
-                   "vertex size (number of instructions) times the coefficient specified here. The default is " +
-                   boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
+              .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
+                   "effective k value is adjusted. The amount of adjustment is the size of the vertex (e.g., number of "
+                   "instructions) multiplied by the @v{coefficient} specified here. Both positive and negative coefficients "
+                   "are permitted. The default is " + boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
 
     sg.insert(Switch("max-call-depth")
               .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
@@ -649,24 +650,21 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
               .doc("Maximum call depth when analyzing recursive functions. The default is " +
                    StringUtility::plural(settings.maxRecursionDepth, "calls") + "."));
 
-    sg.insert(Switch("post-condition")
-              .argument("assertion", anyParser(settings.postConditions))
-              .doc("Additional constraint to be satisfied at the ending vertex. This is simply a special case of "
-                   "@s{inner-condition} that causes the assertion to be evaluated at all of the end-of-path locations."
-                   "This switch may appear more than once in order to specify multiple conditions that must all be satisfied. " +
-                   (settings.exprParserDoc.empty() ? exprParserDoc : settings.exprParserDoc)));
-
-    sg.insert(Switch("inner-condition")
-              .argument("block-address", P2::addressIntervalParser(settings.innerConditionLocs))
-              .argument("condition", anyParser(settings.innerConditions))
+    sg.insert(Switch("assert")
+              .argument("where", anyParser(settings.assertionLocations))
+              .argument("expression", anyParser(settings.assertions))
               .whichValue(SAVE_ALL)
-              .doc("Constraints that must be satisfied at certain locations in the path. The first argument is an "
-                   "interval of basic block addresses (usually just a single address), and the second argument is the constraint "
-                   "expression. The constraint is evaluated when the path reaches a basic block whose starting address falls "
-                   "within the specified interval. In other words, registers and memory referenced by the constraint refer to "
-                   "the virtual machine state immediately before the basic block is executed. " +
-                   P2::AddressIntervalParser::docString() +
-                   " This switch may appear multiple times in order to define multiple constraints. " +
+              .doc("Assertions that must be satisified at certain locations along the path. This switch may appear multiple "
+                   "times in order to specify multiple assertions.\n\n"
+
+                   "The first argument, @v{where}, indicates where the assertion applies and can be a basic block address, "
+                   "an address interval, the name of a function, or the word \"end\".  An \"end\" assertion applies at any of "
+                   "the specified analysis end points. " + P2::AddressIntervalParser::docString() + " Empty locations are "
+                   "not allowed in this context.\n\n"
+
+                   "The expression is a symbolic expression that evaluates to a Boolean value and must be true in order for the "
+                   "path to be considered feasible.  The assertion is added to the SMT solver's state each time the analysis "
+                   "encounters a basic block whose address satisfies the @v{where} argument. " +
                    (settings.exprParserDoc.empty() ? exprParserDoc : settings.exprParserDoc)));
 
     sg.insert(Switch("summarize-function")
@@ -1283,16 +1281,51 @@ FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solv
 }
 
 FeasiblePath::Expression
-FeasiblePath::parseCondition(const Expression &expr, SymbolicExprParser &exprParser) {
-    if (!expr.parsable.empty()) {
-        return exprParser.parse(expr.parsable);
-    } else {
-        return expr;
+FeasiblePath::parseExpression(Expression expr, const std::string &where, SymbolicExprParser &exprParser) const {
+    if (!expr.parsable.empty() && !expr.expr) {
+        expr.expr = exprParser.parse(expr.parsable);
     }
+
+    if (where == "end") {
+        expr.location = AddressIntervalSet();
+    } else if (!where.empty()) {
+        expr.location.clear();
+        const char *s = where.c_str();
+        const char *rest = s;
+        try {
+            while (*s) {
+                AddressInterval interval = P2::AddressIntervalParser::parse(s, &rest);
+                expr.location.insert(interval);
+                ASSERT_not_null(rest);
+                if (','==*rest)
+                    ++rest;
+                s = rest;
+            }
+        } catch (const std::runtime_error &e) {
+            // If we get here, then the "where" string isn't a valid address or address interval. Try
+            // looking for a function with this name.
+            ASSERT_not_null(partitioner_);
+            BOOST_FOREACH (const P2::Function::Ptr &function, partitioner_->functions()) {
+                if (function->name() == where)
+                    expr.location.insert(function->address());
+            }
+            if (expr.location.isEmpty()) {
+                mlog[ERROR] <<"problem parsing assertion \"where\" specification: \"" <<StringUtility::cEscape(where) <<"\"\n"
+                            <<"  no function with specified name\n"
+                            <<"  invalid address of address interval\n"
+                            <<"         " <<s <<"\n"
+                            <<"  here---" <<std::string(rest-s, '-') <<"^\n";
+            }
+        }
+    } else {
+        mlog[ERROR] <<"problem parsing assertion \"where\" specification: specification is empty\n";
+    }
+
+    return expr;
 }
 
 SymbolicExpr::Ptr
-FeasiblePath::expandCondition(const Expression &expr, SymbolicExprParser &parser) {
+FeasiblePath::expandExpression(const Expression &expr, SymbolicExprParser &parser) {
     if (expr.expr) {
         return parser.delayedExpansion(expr.expr);
     } else if (!expr.parsable.empty()) {
@@ -1303,30 +1336,30 @@ FeasiblePath::expandCondition(const Expression &expr, SymbolicExprParser &parser
 }
 
 void
-FeasiblePath::insertInnerConditions(const SmtSolver::Ptr &solver, const P2::CfgPath &path,
-                                    const std::vector<Expression> &innerConditionsParsed,
-                                    SymbolicExprParser &parser) {
+FeasiblePath::insertAssertions(const SmtSolver::Ptr &solver, const P2::CfgPath &path,
+                               const std::vector<Expression> &assertions, bool atEndOfPath,
+                               SymbolicExprParser &parser) {
     ASSERT_not_null(solver);
     ASSERT_forbid(path.isEmpty());
-    ASSERT_require(innerConditionsParsed.size() == settings().innerConditionLocs.size());
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    if (!innerConditionsParsed.empty()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = path.backVertex();
-        if (Sawyer::Optional<rose_addr_t> blockVa = vertex->value().optionalAddress()) {
-            SAWYER_MESG(debug) <<"    inner conditions for " <<StringUtility::addrToString(*blockVa) <<":\n";
-            for (size_t i = 0; i < innerConditionsParsed.size(); ++i) {
-                if (settings().innerConditionLocs[i].isContaining(*blockVa)) {
-                    SymbolicExpr::Ptr cond = expandCondition(innerConditionsParsed[i], parser);
-                    solver->insert(cond);
-                    if (debug) {
-                        debug <<"      #" <<i <<": " <<*cond <<"\n";
-                        if (cond != innerConditionsParsed[i].expr) {
-                            if (!settings().innerConditions[i].parsable.empty()) {
-                                debug <<"        parsed from:   " <<settings().innerConditions[i].parsable <<"\n";
-                            } else {
-                                debug <<"        expanded from: " <<*settings().innerConditions[i].expr <<"\n";
-                            }
+    if (assertions.empty())
+        return;
+
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    P2::ControlFlowGraph::ConstVertexIterator vertex = path.backVertex();
+    if (Sawyer::Optional<rose_addr_t> blockVa = vertex->value().optionalAddress()) {
+        SAWYER_MESG(debug) <<"    assertions for " <<StringUtility::addrToString(*blockVa) <<":\n";
+        for (size_t i = 0; i < assertions.size(); ++i) {
+            if (assertions[i].location.contains(*blockVa) || (atEndOfPath && assertions[i].location.isEmpty())) {
+                SymbolicExpr::Ptr assertion = expandExpression(assertions[i], parser);
+                solver->insert(assertion);
+                if (debug) {
+                    debug <<"      #" <<i <<": " <<*assertion <<"\n";
+                    if (assertion != assertions[i].expr) {
+                        if (!assertions[i].parsable.empty()) {
+                            debug <<"        parsed from:   " <<assertions[i].parsable <<"\n";
+                        } else {
+                            debug <<"        expanded from: " <<*assertions[i].expr <<"\n";
                         }
                     }
                 }
@@ -1336,35 +1369,14 @@ FeasiblePath::insertInnerConditions(const SmtSolver::Ptr &solver, const P2::CfgP
 }
 
 SmtSolver::Satisfiable
-FeasiblePath::solvePathConstraints(SmtSolver::Ptr &solver, const P2::CfgPath &path, const SymbolicExpr::Ptr &edgeConstraint,
-                                   const std::vector<Expression> &innerConditions, bool atEndOfPath,
-                                   const std::vector<Expression> &postConditions, SymbolicExprParser &parser) {
+FeasiblePath::solvePathConstraints(SmtSolver::Ptr &solver, const P2::CfgPath &path, const SymbolicExpr::Ptr &edgeAssertion,
+                                   const std::vector<Expression> &assertions, bool atEndOfPath, SymbolicExprParser &parser) {
     ASSERT_not_null(solver);
-    ASSERT_not_null(edgeConstraint);
+    ASSERT_not_null(edgeAssertion);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    solver->insert(edgeConstraint);
-
-    insertInnerConditions(solver, path, innerConditions, parser);
-
-    if (atEndOfPath) {
-        SAWYER_MESG(debug) <<"    post conditions for end-of-path:\n";
-        for (size_t i = 0; i < postConditions.size(); ++i) {
-            SymbolicExpr::Ptr cond = expandCondition(postConditions[i], parser);
-            solver->insert(cond);
-            if (debug) {
-                debug <<"      #" <<i <<": " <<*cond <<"\n";
-                if (cond != postConditions[i].expr) {
-                    if (!settings().postConditions[i].parsable.empty()) {
-                        debug <<"        parsed from:   " <<settings().postConditions[i].parsable <<"\n";
-                    } else {
-                        debug <<"        expanded from: " <<*settings().postConditions[i].expr <<"\n";
-                    }
-                }
-            }
-        }
-    }
-    
+    solver->insert(edgeAssertion);
+    insertAssertions(solver, path, assertions, atEndOfPath, parser);
     return solver->check();
 }
 
@@ -1392,7 +1404,6 @@ FeasiblePath::pathLength(const Partitioner2::CfgPath &path) {
 void
 FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
-    ASSERT_require(settings().innerConditions.size() == settings().innerConditionLocs.size());
     static size_t callId = 0;                           // number of calls to this function
     size_t graphId = 0;                                 // incremented each time the graph is modified
     {
@@ -1419,19 +1430,18 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
 
-    // Gather all post conditions. When parsing post condition strings to create symbolic expressions, replace register names
-    // with new placeholder variables that will be expanded to register values at the time the expression is used as a post
-    // condition.
-    std::vector<Expression> postConditionsParsed, innerConditionsParsed; // expressions with placholders
+    // Parse user-supplied assertions and their locations. Register and memory references are replaced by temporary variables
+    // that will be expanded at a later time in order to obtain the then-current values of registers and memory.
+    std::vector<Expression> assertions;
     SymbolicExprParser exprParser;
     SymbolicExprParser::RegisterSubstituter::Ptr regSubber =
         exprParser.defineRegisters(partitioner().instructionProvider().registerDictionary());
-    SymbolicExprParser::MemorySubstituter::Ptr memSubber = SymbolicExprParser::MemorySubstituter::instance(SmtSolver::Ptr());
+    SymbolicExprParser::MemorySubstituter::Ptr memSubber =
+        SymbolicExprParser::MemorySubstituter::instance(SmtSolver::Ptr());
     exprParser.appendOperatorExpansion(memSubber);
-    BOOST_FOREACH (const Expression &expr, settings_.postConditions)
-        postConditionsParsed.push_back(parseCondition(expr, exprParser));
-    BOOST_FOREACH (const Expression &expr, settings_.innerConditions)
-        innerConditionsParsed.push_back(parseCondition(expr, exprParser));
+    ASSERT_require(settings_.assertions.size() == settings_.assertionLocations.size());
+    for (size_t i = 0; i < settings_.assertions.size(); ++i)
+        assertions.push_back(parseExpression(settings_.assertions[i], settings_.assertionLocations[i], exprParser));
 
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
@@ -1533,8 +1543,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             } else if (path.nEdges() == 0) {
                 ASSERT_require(path.nVertices() == 1);
                 ASSERT_require(solver->nLevels() == 1);
-                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), innerConditionsParsed,
-                                             atEndOfPath, postConditionsParsed, exprParser)) {
+                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), assertions, atEndOfPath, exprParser)) {
                     case SmtSolver::SAT_YES:
                         SAWYER_MESG(debug) <<" = is feasible\n";
                         pathIsFeasible = true;
@@ -1556,8 +1565,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     SAWYER_MESG(debug) <<" = is feasible (previously computed)\n";
                     pathIsFeasible = true;
                 } else if (SymbolicExpr::Ptr edgeConstraint = pathEdgeConstraint(path.edges().back(), cpu)) {
-                    switch (solvePathConstraints(solver, path, edgeConstraint, innerConditionsParsed,
-                                                 atEndOfPath, postConditionsParsed, exprParser)) {
+                    switch (solvePathConstraints(solver, path, edgeConstraint, assertions, atEndOfPath, exprParser)) {
                         case SmtSolver::SAT_YES:
                             SAWYER_MESG(debug) <<" = is feasible\n";
                             pathIsFeasible = true;

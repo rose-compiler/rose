@@ -46,6 +46,7 @@ public:
      *
      *  If the expression is an expression tree, then the expression is used directly. */
     struct Expression {
+        AddressIntervalSet location;                    /**< Location where constraint applies. Empty implies end-of-path. */
         std::string parsable;                           /**< String to be parsed as an expression. */
         SymbolicExpr::Ptr expr;                         /**< Symbolic expression. */
 
@@ -65,9 +66,8 @@ public:
         size_t maxPathLength;                           /**< Limit path length in terms of number of instructions. */
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
-        std::vector<Expression> innerConditions;        /**< Constraints to be satisfied in the middle of a path. */
-        std::vector<AddressInterval> innerConditionLocs;/**< Instruction pointers at which inner constraints are checked. */
-        std::vector<Expression> postConditions;         /**< Additional constraints to be satisfied at the end of a path. */
+        std::vector<Expression> assertions;             /**< Constraints to be satisfied at some point along the path. */
+        std::vector<std::string> assertionLocations;    /**< Locations at which "constraints" are checked. */
         std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
         std::string solverName;                         /**< Type of SMT solver. */
@@ -149,8 +149,7 @@ public:
          *
          *  The @p solver contains the assertions that are satisfied to prove that this path is feasible. The solver contains
          *  multiple levels: an initial level that's probably empty (trivially satisfiable), followed by an additional level
-         *  pushed for each edge of the path. The path's user-defined post conditions are known to be satisfiable but have
-         *  already been popped from the solver state.
+         *  pushed for each edge of the path.
          *
          *  The return value from this callback determines whether the analysis will search for additional paths. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
@@ -514,7 +513,7 @@ private:
     // Process one edge of a path to find any path constraints. When called, the cpu's current state should be the virtual
     // machine state at it exists just prior to executing the target vertex of the specified edge.
     //
-    // Returns a null pointer if the edge's condition is trivially unsatisfiable, such as when the edge points to a basic block
+    // Returns a null pointer if the edge's assertion is trivially unsatisfiable, such as when the edge points to a basic block
     // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
@@ -522,23 +521,22 @@ private:
                                          InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
-    static Expression parseCondition(const Expression&, SymbolicExprParser&);
+    Expression parseExpression(Expression, const std::string &where, SymbolicExprParser&) const;
 
-    SymbolicExpr::Ptr expandCondition(const Expression&, SymbolicExprParser&);
+    SymbolicExpr::Ptr expandExpression(const Expression&, SymbolicExprParser&);
 
-    // Based on the last vertex of the path, insert user-specified inner conditions into the SMT solver.
-    void insertInnerConditions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
-                               const std::vector<Expression> &innerConditions, SymbolicExprParser&);
+    // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
+    void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
+                          const std::vector<Expression> &assertions, bool atEndOfPath, SymbolicExprParser&);
 
     // Size of vertex. How much of "k" does this vertex consume?
     static size_t vertexSize(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 
-    // Insert the edge constraint and any applicable inner conditions (after delayed expansion of the inner conditions register
+    // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
-    solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeConstraint,
-                         const std::vector<Expression> &innerConditions, bool atEndOfPath,
-                         const std::vector<Expression> &postConditions, SymbolicExprParser&);
+    solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
+                         const std::vector<Expression> &userAssertions, bool atEndOfPath, SymbolicExprParser&);
 };
 
 } // namespace

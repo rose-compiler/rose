@@ -167,6 +167,20 @@ public:
 
     static std::string docString();
 
+    /** Parse an interval from a C string.
+     *
+     *  Tries to parse an interval from the @p input string, and if successful adjusts @p rest to point to the
+     *  first character beyond what was parsed. If a syntax error occurs, then an @c std::runtime_error is thrown. */
+    static AddressInterval parse(const char *input, const char **rest);
+
+    /** Parse an interval from a C++ string.
+     *
+     *  Tries to parse an interval from the @p input string. The string may contain leading and trailing white space,
+     *  but any extra characters will cause a syntax error. Syntax errors are reported by throwing @c std::runtime_error.
+     *  Since the underlying parsing is done on C strings, this function is ill-defined when the @p input contains NUL
+     *  bytes. */
+    static AddressInterval parse(const std::string &input);
+
 private:
     virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
                                                         const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
