@@ -4,6 +4,7 @@
 #include <BinaryFeasiblePath.h>
 #include <BinarySymbolicExprParser.h>
 #include <BinaryYicesSolver.h>
+#include <Combinatorics.h>
 #include <CommandLine.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesElf.h>
@@ -608,6 +609,26 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                (SEARCH_SINGLE_BFS == settings.searchMode ? "single-bfs" :
                                 (SEARCH_MULTI == settings.searchMode ? "multi" :
                                  "unknown"))) + "."));
+
+    sg.insert(Switch("edge-order")
+              .argument("order", enumParser<EdgeVisitOrder>(settings.edgeVisitOrder)
+                        ->with("natural", VISIT_NATURAL)
+                        ->with("reverse", VISIT_REVERSE)
+                        ->with("random", VISIT_RANDOM))
+              .doc("Specifies the order in which edges of the control flow graph are visited. The choices are:"
+
+                   "@named{natural}{Edges are visited in the order they occur within the control flow graph.}"
+
+                   "@named{reverse}{Edges are visited in reverse order from which they occur in the control flow graph.}"
+
+                   "@named{random}{Edges are visited in random order. Random order visits attempt to avoid the worst case "
+                   "scenario where always following the same edge first out of a vertex leads to a very deep traversal when "
+                   "a solution could have been found earlier on a shorter path.}"
+
+                   "The default is " + std::string(VISIT_NATURAL==settings.edgeVisitOrder?"natural":
+                                                   VISIT_REVERSE==settings.edgeVisitOrder?"reverse":
+                                                   VISIT_RANDOM==settings.edgeVisitOrder?"random":
+                                                   "unknown") + "."));
 
     sg.insert(Switch("initial-stack")
               .argument("value", nonNegativeIntegerParser(settings.initialStackPtr))
@@ -1723,7 +1744,21 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 // Push next edge onto path.
                 SAWYER_MESG(debug) <<"    advance along cfg edge " <<partitioner().edgeName(backVertex->outEdges().begin()) <<"\n";
                 ASSERT_require(paths_.isValidEdge(backVertex->outEdges().begin()));
-                path.pushBack(backVertex->outEdges().begin());
+                typedef P2::ControlFlowGraph::ConstEdgeIterator CEI;
+                std::vector<CEI> outEdges;
+                for (CEI edge = backVertex->outEdges().begin(); edge != backVertex->outEdges().end(); ++edge)
+                    outEdges.push_back(edge);
+                switch (settings_.edgeVisitOrder) {
+                    case VISIT_NATURAL:
+                        break;
+                    case VISIT_REVERSE:
+                        std::reverse(outEdges.begin(), outEdges.end());
+                        break;
+                    case VISIT_RANDOM:
+                        Combinatorics::shuffle(outEdges);
+                        break;
+                }
+                path.pushBack(outEdges);
                 solver->push();
             }
         }

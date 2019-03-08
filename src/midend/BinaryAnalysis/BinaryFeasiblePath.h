@@ -33,6 +33,13 @@ public:
         MAP_BASED_MEMORY                                /**< Fast but not precise. */
     };
 
+    /** Edge visitation order. */
+    enum EdgeVisitOrder {
+        VISIT_NATURAL,                                  /**< Visit edges in their natural, forward order. */
+        VISIT_REVERSE,                                  /**< Visit edges in reverse of the natural order. */
+        VISIT_RANDOM,                                   /**< Visit edges in random order. */
+    };
+
     /** Read or write operation. */
     enum IoMode { READ, WRITE };
 
@@ -75,6 +82,7 @@ public:
         bool processFinalVertex;                        /**< Whether to process the last vertex of the path. */
         bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
+        EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
 
         // Null dereferences
         struct NullDeref {
@@ -93,7 +101,7 @@ public:
             : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
-              kCycleCoefficient(0.0) {}
+              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL) {}
     };
 
     /** Diagnostic output. */
