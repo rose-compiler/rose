@@ -491,10 +491,11 @@ HEADER_CV_TYPE_MODIFIER_START
        */
           enum cv_modifier_enum
              {
-               e_unknown,      /*!< Unknown value (error value) */
-               e_default,      /*!< Default value (default) */
-               e_const,        /*!< Const qualifier */
-               e_volatile,     /*!< Volatile qualifier */
+               e_unknown,        /*!< Unknown value (error value) */
+               e_default,        /*!< Default value (default) */
+               e_const,          /*!< Const qualifier */
+               e_volatile,       /*!< Volatile qualifier */
+               e_const_volatile, /*!< Both const and volatile qualifier */
 
             // DQ (8/11/2011): Added support for Java "transient" modifier.
                e_java_transient,    /*!< Java transient qualifier (specifies no serialization of declaration) */
@@ -529,6 +530,11 @@ HEADER_CV_TYPE_MODIFIER_START
           void setVolatile();
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
+
+       // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+          bool isConstVolatile() const;
+          void setConstVolatile();
+          void unsetConstVolatile();
 
        // DQ (8/11/2011): Java support.
           bool isJavaTransient() const;
@@ -2268,13 +2274,22 @@ void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
 bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
 void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 
-bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isConst() const { return p_modifier == e_const; }
+bool $CLASSNAME::isConst() const { return ((p_modifier == e_const) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setConst()      { p_modifier = e_const; }
 void $CLASSNAME::unsetConst()    { setDefault(); }
 
-bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+// DQ (1/19/2019): Added support for combined const volatile type modifier.
+// bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
+bool $CLASSNAME::isVolatile() const { return ((p_modifier == e_volatile) || (p_modifier == e_const_volatile)); }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
+
+// DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+bool $CLASSNAME::isConstVolatile() const { return p_modifier == e_const_volatile; }
+void $CLASSNAME::setConstVolatile()      { p_modifier = e_const_volatile; }
+void $CLASSNAME::unsetConstVolatile()    { setDefault(); }
 
 // DQ (8/11/2011): Added support for Java "transient" keyword to disable serialization.
 bool $CLASSNAME::isJavaTransient() const { return p_modifier == e_java_transient; }
@@ -2289,6 +2304,10 @@ $CLASSNAME::displayString() const
      s += std::string("isDefault() = ")       + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
      s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true " : "false ");
+
+  // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+     s += std::string("isConstVolatile() = ") + std::string(isConstVolatile() ? "true " : "false ");
+
      s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true " : "false ");
      s += ")";
      return s;
@@ -2310,19 +2329,23 @@ $CLASSNAME::display ( std::string label ) const
 
 std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m) 
    {
-      os << m.get_modifier(); 
+     os << m.get_modifier(); 
      return os;
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
+   {
 	return
 	       (lhs.isUnknown()  == rhs.isUnknown() ) &&
 	       (lhs.isDefault()  == rhs.isDefault() ) &&
 	       (lhs.isConst()    == rhs.isConst()   ) &&
 	       (lhs.isVolatile() == rhs.isVolatile()) &&
+
+            // DQ (1/19/2019): Added another value to support where both const and volatile are used together.
+	       (lhs.isConstVolatile() == rhs.isConstVolatile()) &&
+
 		   true;
-}
+   }
 
 
 // DQ (2/4/2006): Added mechamism to clear all bits
@@ -3700,53 +3723,53 @@ bool SgTypeModifier::isIdentity() const
 
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
-		   (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
-		   (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
-		   (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
-	       (lhs.isUnknown() == rhs.isUnknown()) &&
-	       (lhs.isDefault() == rhs.isDefault()) &&
-           // C specific
-	       (lhs.isRestrict() == rhs.isRestrict()) &&
-           // Fortran specific
-	       (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
-	       (lhs.isBind()         == rhs.isBind()        ) &&
-	       (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
-	       (lhs.isData()         == rhs.isData()        ) &&
-	       (lhs.isDimension()    == rhs.isDimension()   ) &&
-	       (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
-	       (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
-	       (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
-	       (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
-	       (lhs.isOptional()     == rhs.isOptional()    ) &&
-	       (lhs.isSave()         == rhs.isSave()        ) &&
-	       (lhs.isTarget()       == rhs.isTarget()      ) &&
-	       (lhs.isValue()        == rhs.isValue()       ) &&
-           // GNU specific
-	       (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
-	       (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
-	       (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
-	       (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
-	       (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
-	       (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
-	       (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
-	       (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
-	       (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
-	       (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
-	       (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
-           // Address Space
-               (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
-               (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
-           // OpenCL specific
-               (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
-               (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
-               (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
-           // Vector Type
-               (lhs.isVectorType()    == rhs.isVectorType()    ) &&
-               (lhs.get_vector_size() == rhs.get_vector_size() ) &&
-		   true;
-}
+   {
+     return
+          (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+          (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
+          (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
+          (lhs.isUnknown() == rhs.isUnknown()) &&
+          (lhs.isDefault() == rhs.isDefault()) &&
+       // C specific
+          (lhs.isRestrict() == rhs.isRestrict()) &&
+       // Fortran specific
+          (lhs.isAllocatable()  == rhs.isAllocatable() ) &&
+          (lhs.isBind()         == rhs.isBind()        ) &&
+          (lhs.isAsynchronous() == rhs.isAsynchronous()) &&
+          (lhs.isData()         == rhs.isData()        ) &&
+          (lhs.isDimension()    == rhs.isDimension()   ) &&
+          (lhs.isIntent_in()    == rhs.isIntent_in()   ) &&
+          (lhs.isIntent_out()   == rhs.isIntent_out()  ) &&
+          (lhs.isIntent_inout() == rhs.isIntent_inout()) &&
+          (lhs.isIntrinsic()    == rhs.isIntrinsic()   ) &&
+          (lhs.isOptional()     == rhs.isOptional()    ) &&
+          (lhs.isSave()         == rhs.isSave()        ) &&
+          (lhs.isTarget()       == rhs.isTarget()      ) &&
+          (lhs.isValue()        == rhs.isValue()       ) &&
+       // GNU specific
+          (lhs.isGnuAttributeUnused()           == rhs.isGnuAttributeUnused()          ) &&
+          (lhs.isGnuAttributePacked()           == rhs.isGnuAttributePacked()          ) &&
+          (lhs.isGnuAttributeDeprecated()       == rhs.isGnuAttributeDeprecated()      ) &&
+          (lhs.isGnuAttributeTransparentUnion() == rhs.isGnuAttributeTransparentUnion()) &&
+          (lhs.isGnuAttributeNoReturn()         == rhs.isGnuAttributeNoReturn()        ) &&
+          (lhs.isGnuAttributeConst()            == rhs.isGnuAttributeConst()           ) &&
+          (lhs.isGnuAttributeCdecl()            == rhs.isGnuAttributeCdecl()           ) &&
+          (lhs.isGnuAttributeStdcall()          == rhs.isGnuAttributeStdcall()         ) &&
+          (lhs.isGnuAttributeWarnUnusedResult() == rhs.isGnuAttributeWarnUnusedResult()) &&
+          (lhs.isGnuAttributeNonnull()          == rhs.isGnuAttributeNonnull()         ) &&
+          (lhs.isGnuAttributeSentinel()         == rhs.isGnuAttributeSentinel()        ) &&
+       // Address Space
+          (lhs.haveAddressSpace()        == rhs.haveAddressSpace()        ) &&
+          (lhs.get_address_space_value() == rhs.get_address_space_value() ) &&
+       // OpenCL specific
+          (lhs.isOpenclGlobal()   == rhs.isOpenclGlobal()    ) &&
+          (lhs.isOpenclLocal()    == rhs.isOpenclLocal()    ) &&
+          (lhs.isOpenclConstant() == rhs.isOpenclConstant() ) &&
+       // Vector Type
+          (lhs.isVectorType()    == rhs.isVectorType()    ) &&
+          (lhs.get_vector_size() == rhs.get_vector_size() ) &&
+          true;
+   }
 
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
@@ -5298,8 +5321,8 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization() $ROSE_OVERRIDE;
 
-       // ROSE-1499
-          void check_file_id(char * label, bool assertion=true) const;
+       // ROSE-1499, ROSE-1639 (added const to char*)
+          void check_file_id(const char * label, bool assertion=true) const;
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
@@ -5616,7 +5639,7 @@ public:
                e_c99_standard,
                e_c11_standard,
                e_c14_standard,
-               e_c17_standard,
+               e_c18_standard,
                e_upc_standard,
                e_cxx98_standard,
                e_cxx03_standard,
@@ -5641,6 +5664,9 @@ public:
           enum standard_enum get_standard(void) const;
           void set_standard(enum standard_enum e_std);
           void set_default_standard(void);
+
+       // DQ (1/10/2019): Add way to output a string to report standard in debug messages.
+          std::string display_standard(enum standard_enum e_std);
 
           bool is_gnu_standard(void) const;
           void set_gnu_standard();
@@ -5676,11 +5702,11 @@ public:
           bool get_C14_gnu_only (void) const;
           void set_C14_gnu_only (void);
 
-          bool get_C17_only (void) const;
-          void set_C17_only (void);
+          bool get_C18_only (void) const;
+          void set_C18_only (void);
 
-          bool get_C17_gnu_only (void) const;
-          void set_C17_gnu_only (void);
+          bool get_C18_gnu_only (void) const;
+          void set_C18_gnu_only (void);
 
           bool get_UPC_only (void) const;
           void set_UPC_only (void);
@@ -13793,8 +13819,8 @@ Sg_File_Info::post_construction_initialization()
      check_file_id("Sg_File_Info::post_construction_initialization");
    }
 
-// ROSE-1499
-void Sg_File_Info::check_file_id(char * label, bool assertion) const {
+// ROSE-1499, ROSE-1639 (added const to char*)
+void Sg_File_Info::check_file_id(const char * label, bool assertion) const {
   if ( ( (p_file_id >= 0) && (p_fileidtoname_map.count(p_file_id) == 0) ) || ( (p_file_id < -6) || ( p_file_id > (int)p_fileidtoname_map.size() ) ) ) {
     printf("ERROR from %s:\n", label);
     printf("  Sg_File_Info::this = %p\n", this);
@@ -15640,6 +15666,45 @@ enum SgFile::standard_enum SgFile::get_standard(void) const { return p_standard;
 void SgFile::set_standard(enum standard_enum e_std) { p_standard = e_std; }
 void SgFile::set_default_standard(void) { p_standard = e_default_standard; }
 
+// DQ (1/10/2019): Add way to output a string to report standard in debug messages.
+std::string SgFile::display_standard(enum standard_enum e_std)
+   {
+     string s;
+
+     switch (e_std)
+        {
+          case e_default_standard: s = "e_default_standard"; break;
+          case e_c89_standard: s = "e_c89_standard"; break;
+          case e_c90_standard: s = "e_c90_standard"; break;
+          case e_c99_standard: s = "e_c99_standard"; break;
+          case e_c11_standard: s = "e_c11_standard"; break;
+          case e_c14_standard: s = "e_c14_standard"; break;
+          case e_c18_standard: s = "e_c18_standard"; break;
+          case e_upc_standard: s = "e_upc_standard"; break;
+          case e_cxx98_standard: s = "e_cxx98_standard"; break;
+          case e_cxx03_standard: s = "e_cxx03_standard"; break;
+          case e_cxx11_standard: s = "e_cxx11_standard"; break;
+          case e_cxx14_standard: s = "e_cxx14_standard"; break;
+          case e_cxx17_standard: s = "e_cxx17_standard"; break;
+          case e_cxx20_standard: s = "e_cxx20_standard"; break;
+          case e_upcxx_standard: s = "e_upcxx_standard"; break;
+          case e_f77_standard: s = "e_f77_standard"; break;
+          case e_f90_standard: s = "e_f90_standard"; break;
+          case e_f95_standard: s = "e_f95_standard"; break;
+          case e_f03_standard: s = "e_f03_standard"; break;
+          case e_f08_standard: s = "e_f08_standard"; break;
+          case e_f18_standard: s = "e_f18_standard"; break;
+
+          default:
+             {
+               printf ("Error default reached in switch: SgFile::display_standard(): e_std = %d \n",e_std);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 bool SgFile::is_gnu_standard(void) const { return p_is_gnu_standard; }
 void SgFile::set_gnu_standard(void) { p_is_gnu_standard = true; }
 void SgFile::unset_gnu_standard(void) { p_is_gnu_standard = false; }
@@ -15674,11 +15739,11 @@ void SgFile::set_C14_only (void) { set_C_only(true); set_Cxx_only(false); p_stan
 bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_is_gnu_standard; }
 void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_is_gnu_standard = true; }
 
-bool SgFile::get_C17_only (void) const { return p_standard == e_c17_standard; }
-void SgFile::set_C17_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; }
+bool SgFile::get_C18_only (void) const { return p_standard == e_c18_standard; }
+void SgFile::set_C18_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; }
 
-bool SgFile::get_C17_gnu_only (void) const { return p_standard == e_c17_standard && p_is_gnu_standard; }
-void SgFile::set_C17_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C18_gnu_only (void) const { return p_standard == e_c18_standard && p_is_gnu_standard; }
+void SgFile::set_C18_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; p_is_gnu_standard = true; }
 
 bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
 void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }

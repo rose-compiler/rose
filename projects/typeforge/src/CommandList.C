@@ -1,6 +1,6 @@
 #include "sage3basic.h"
-#include "TFCommandList.h"
-#include "TFSpecFrontEnd.h"
+#include "CommandList.h"
+#include "SpecFrontEnd.h"
 #include "TFTransformation.h"
 #include "CppStdUtilities.h"
 #include "TFHandles.h"
@@ -49,9 +49,9 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
 //Returns the SgType* that mathces the type defined by the string in the given scope. If no type matches will exit.
 SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
   SgType* newType=nullptr;
-  regex e("[_A-Za-z]+|\\*|&|const|<|>");
+  regex e1("[_A-Za-z:]+|\\*|&|const|<|>");
   regex_token_iterator<string::iterator> rend;
-  regex_token_iterator<string::iterator> a ( type.begin(), type.end(), e );
+  regex_token_iterator<string::iterator> a ( type.begin(), type.end(), e1 );
   bool buildConstType=false;
   bool isLongType=false;
   bool isShortType=false;
@@ -86,17 +86,21 @@ SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
       newType=SageBuilder::buildReferenceType(newType);
     } else if(typePart=="const") {
       buildConstType=true;
-    } else if(regex_match(typePart, regex("^[_A-Za-z]+$"))) {
+    } else if(regex_match(typePart, regex("^[_A-Za-z:]+$"))) {
+      if(newType!=nullptr) goto parseerror;
+      // TV: I kept this logic even if I don't know why it exists...
       if(SgFunctionDefinition* funDef=isSgFunctionDefinition(providedScope)) {
-        SgScopeStatement* funScope=funDef->get_scope();
         SgType* userDefinedType=findUserDefinedTypeByName(funDef,typePart);
         if(userDefinedType) {
           newType=userDefinedType;
-        } else {
-          newType=SageBuilder::buildOpaqueType(typePart, funScope);
         }
-      } else {
-        newType=SageBuilder::buildOpaqueType(typePart, providedScope);
+      }
+      // TV: new logic handling qualified named and building opaque types in the global scope
+      if (newType == nullptr) {
+        SgScopeStatement * globalScope = SageInterface::getGlobalScope(providedScope);
+        ROSE_ASSERT(globalScope != NULL);
+        // TODO handle scoping: split `typePart` using `::` then lookup/create namespaces
+        newType=SageBuilder::buildOpaqueType(typePart, globalScope);
       }
     } else {
     parseerror:
@@ -128,10 +132,11 @@ TypeCommand::TypeCommand(string loc, string fun, string toType, string fromType,
 }
  
 int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-  SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
-  SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
+  if(tt.getTraceFlag()) { cout<<"TRACE: TypeCommand::run started."<<endl;}
   if(funName == "$global") {
+    SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
+    SgType* oldBuiltType=buildTypeFromStringSpec(oldType,globalScope);
+    SgType* newBuiltType=buildTypeFromStringSpec(newType,globalScope);
     tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,listing);
     return false;
   } else {
@@ -148,8 +153,9 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
       }
     }
     for (auto funDef : listOfFunctionDefinitions) {
-      //SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
-      //SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+      if(tt.getTraceFlag()) { cout<<"TRACE: TypeCommand::run : adding type transformation to list: "<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;}
       tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+location,base,oldBuiltType,listing);
     }
     return false;
@@ -335,7 +341,7 @@ int SetTypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer&
     } else {
       tt.addNameTransformationToList(_list,builtType,funDef,varName,base,listing);
     }
-  }else{
+  } else {
     vector<SgNode*> nodeVector = TFHandles::getNodeVectorFromString(root, handle);
     for(auto i = nodeVector.begin(); i != nodeVector.end(); ++i){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)){

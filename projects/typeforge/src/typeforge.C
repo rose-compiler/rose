@@ -14,8 +14,8 @@
 #include "AstMatching.h"
 #include "Sawyer/Graph.h"
 #include "TFTypeTransformer.h"
-#include "TFSpecFrontEnd.h"
-#include "TFAnalysis.h"
+#include "SpecFrontEnd.h"
+#include "Analysis.h"
 #include "TFToolConfig.h"
 
 //preparation for using the Sawyer command line parser
@@ -73,12 +73,13 @@ int main (int argc, char* argv[])
     ("compile", "Run back end compiler.")
     //("annotate", "annotate implicit casts as comments.")
     ("explicit", "Make all implicit casts explicit.")
-    ("stats", "Print statistics on casts of built-in floating point types.")
+    ("cast-stats", "Print statistics on casts of built-in floating point types.")
     ("trace", "Print program transformation operations as they are performed.")
     ("plugin", po::value<vector<string> >(),"Name of Typeforge plugin files.")
     //    ("dot-type-graph", "generate typegraph in dot file 'typegraph.dot'.")
     ("csv-stats-file", po::value< string >(),"Generate file [args] with transformation statistics.")
     ("typeforge-out", po::value< string >(),"File to store output inside of JSON.")
+    ("stats", "Print statistics on performed changes to the program.")
     ;
 
   hidden_desc.add_options()
@@ -109,7 +110,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.5.1"<<endl;
+    cout<<toolName<<" version 0.7.1"<<endl;
     return 0;
   }
 
@@ -148,7 +149,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("set-analysis")){
-    TFAnalysis analysis;
+    Analysis analysis;
     analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
     analysis.writeAnalysis(SageBuilder::buildDoubleType(), "float");    
     analysis.writeGraph("dotGraph.gv");
@@ -162,7 +163,7 @@ int main (int argc, char* argv[])
     return 0;
   }
 
-  if(args.isUserProvided("stats")) {
+  if(args.isUserProvided("cast-stats")) {
     CastStats castStats;
     castStats.computeStats(sageProject);
     cout<<castStats.toString();
@@ -207,7 +208,7 @@ int main (int argc, char* argv[])
     //Setup phase
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
-    TFSpecFrontEnd typeforgeSpecFrontEnd;
+    SpecFrontEnd typeforgeSpecFrontEnd;
     for(auto commandFileName : plugins){
       bool error=typeforgeSpecFrontEnd.parse(commandFileName);
       if(error) {
@@ -222,7 +223,7 @@ int main (int argc, char* argv[])
     //Execution Phase
     tt.executeTransformations(sageProject);
     tfTransformation.transformationExecution();
-    //Output Phase`
+    //Output Phase
     if(args.isUserProvided("csv-stats-file")) {
       string csvFileName=args.getString("csv-stats-file");
       tt.generateCsvTransformationStats(csvFileName,
@@ -230,9 +231,11 @@ int main (int argc, char* argv[])
 					tt,
 					tfTransformation);
     }
-    tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
-				tt,
-				tfTransformation);
+    if(args.isUserProvided("stats")) {
+      tt.printTransformationStats(typeforgeSpecFrontEnd.getNumTypeReplace(),
+                                  tt,
+                                  tfTransformation);
+    }
   
     TFToolConfig::write();    
     backend(sageProject);

@@ -655,7 +655,9 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
-  variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
+  int typeSize=getTypeSizeMapping()->determineTypeSize(elementType);
+  //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
+  variableIdMapping.setElementSize(variableId,typeSize);
 }
 
 // for arrays: number of elements (nested arrays not implemented yet)
@@ -672,9 +674,11 @@ int CodeThorn::Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
       SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
       SgExpressionPtrList& initList=initListObjPtr->get_expressions();
       // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+      logger[TRACE]<<"computeNumberOfElements returns "<<initList.size()<<": case : SgAggregateInitializer"<<aggregateInitializer->unparseToString()<<endl;
       return initList.size(); 
     } else if(isSgAssignInitializer(initializer)) {
-      return 1;
+      logger[TRACE]<<"computeNumberOfElements returns 0: case SgAssignInitializer: "<<initializer->unparseToString()<<endl;
+      return 0; // MS 3/5/2019: changed from 1 to 0 
     }
   }
   return 0;
@@ -697,9 +701,9 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      cerr<<"Error: NOT an assign initializer: "<<exp->unparseToString();
-      cerr<<"  AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      ROSE_ASSERT(assignInit);
+      logger[ERROR]<<"expected assign initializer but found "<<exp->unparseToString();
+      logger[ERROR]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      exit(1);
     }
     // initialize element of array initializer in state
     SgExpression* assignInitExpr=assignInit->get_operand();
@@ -1113,8 +1117,10 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
     // this case cannot happen for normalized code
-    bool useConstraints=false;
-    return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
+    logger[ERROR]<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
+    //bool useConstraints=false;
+    exit(1);
+    //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
   } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
@@ -1313,6 +1319,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   initializeCommandLineArgumentsInState(initialPState);
   if(optionStringLiteralsInState) {
     initializeStringLiteralsInState(initialPState);
+    cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
   }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
@@ -1813,7 +1820,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
     // test formal parameter (instead of argument type) to allow for expressions in arguments
     VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
     if(variableIdMapping.hasClassType(formalParameterVarId)) {
-      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of Class/Struct/Union types as function paramters per value not supported."<<endl;
+      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters not supported."<<endl;
       exit(1);
     }
     // VariableName varNameString=name->get_name();
@@ -2083,12 +2090,17 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
       AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
       newPState.writeToMemoryLocation(lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
+      logger[TRACE]<<"transferFunctionCallReturn(initialization): LHSVAR:"<<getVariableIdMapping()->variableName(lhsVarId)<<" value: "<<evalResult.toString()<<endl;
       return elistify(createEState(edge.target(),cs,newPState,cset));
     } else {
       // no $return variable found in state. This can be the case for an extern function.
       // alternatively a $return variable could be added in the external function call to
       // make this handling here uniform
       // for external functions no constraints are generated in the call-return node
+      logger[TRACE]<<"-------------------------------------------------"<<endl;
+      logger[TRACE]<<"transferFunctionCallReturn: Variable declaration with function call: no function-return variable $return found! @ "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze1)<<":"<<nextNodeToAnalyze1->unparseToString()<<endl;
+      logger[TRACE]<<estate->toString(getVariableIdMapping())<<endl;
+      logger[TRACE]<<"-------------------------------------------------"<<endl;
       return elistify(createEState(edge.target(),cs,newPState,cset));
     }
   } else  if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -2323,9 +2335,21 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       list<SingleEvalResultConstInt> res2=exprAnalyzer.evaluateExpression(funCall,currentEState);
       ROSE_ASSERT(res2.size()==1);
       SingleEvalResultConstInt evalResult2=*res2.begin();
-      EState estate2=evalResult2.estate;
-      estate2.setLabel(edge.target());
-      return elistify(estate2);
+      logger[TRACE]<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
+
+      //EState estate2=evalResult2.estate;
+      // create new estate with added return variable (for inter-procedural analysis)
+      CallString cs=evalResult2.estate.callString;
+      PState newPState=*evalResult2.estate.pstate();
+      ConstraintSet cset=*evalResult2.estate.constraints();
+      VariableId returnVarId;
+#pragma omp critical(VAR_ID_MAPPING)
+      {
+        returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      }
+      newPState.writeToMemoryLocation(returnVarId,evalResult2.result);
+      //estate2.setLabel(edge.target());
+      return elistify(createEState(edge.target(),cs,newPState,cset,evalResult2.estate.io));
     }
   }
   //cout<<"DEBUG: identity: "<<funCall->unparseToString()<<endl; // fflush is an example in the test cases
@@ -2641,6 +2665,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
               cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
+              // no state can follow, return estateList (may be empty)
+              return estateList;
             }
           }
           arrayElementId=arrayPtrPlusIndexValue;

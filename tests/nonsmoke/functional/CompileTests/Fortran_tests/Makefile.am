@@ -315,11 +315,16 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type-3.f90 \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
+     test2019_derived_type.f90 \
      canonicalExample.f90 
 
-# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this seperately).
-#    test2010_154.f90 
+# Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
+# naming conflict policy.  Need to figure out how to get around this and have the module build first.
+#    rose_iso_c_binding.f90
+#    rose-1612.f90
 
+# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this separately).
+#    test2010_154.f90
 
 # SKW 8/21/2011: these test fails with gfortran 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2'
 # yet so I am just commenting them out for now. They pass with gfortran 4.4.1
