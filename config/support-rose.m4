@@ -276,6 +276,22 @@ else
 fi
 AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 
+# TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
+#   Only valid if compiling ROSE using GNU compiler (depends on -lquadmath)
+AC_LANG(C++)
+AX_COMPILER_VENDOR
+
+rose_use_edg_quad_float=no
+if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
+if test $edg_major_version_number -ge 5; then
+  rose_use_edg_quad_float=yes
+  AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
+fi
+AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
+AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
+unset ax_cv_cxx_compiler_vendor
+
 # DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
@@ -2652,6 +2668,7 @@ tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
+tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile
