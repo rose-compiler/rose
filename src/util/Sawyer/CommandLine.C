@@ -1429,6 +1429,17 @@ Parser::switchGroup(const std::string &name) {
     throw Exception::NotFound("switch group \"" + name + "\" not found");
 }
 
+SAWYER_EXPORT bool
+Parser::eraseSwitchGroup(const std::string &name) {
+    for (size_t i = 0; i < switchGroups_.size(); ++i) {
+        if (switchGroups_[i].name() == name) {
+            switchGroups_.erase(switchGroups_.begin()+i);
+            return true;
+        }
+    }
+    return false;
+}
+
 SAWYER_EXPORT Parser&
 Parser::resetLongPrefixes(const std::string &s1, const std::string &s2, const std::string &s3, const std::string &s4) {
     properties_.inheritLongPrefixes = false;
