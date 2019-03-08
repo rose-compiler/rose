@@ -725,6 +725,26 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                      "all paths on which that instruction occurs to be infeasible. In either case, the "
                                      "instruction's semanticsFailed property is incremented.");
 
+    sg.insert(Switch("semantic-memory")
+              .argument("type", enumParser<SemanticMemoryParadigm>(settings.memoryParadigm)
+                        ->with("list", LIST_BASED_MEMORY)
+                        ->with("map", MAP_BASED_MEMORY))
+              .doc("The analysis can switch between storing semantic memory states in a list versus a map.  The @v{type} "
+                   "should be one of these words:"
+
+                   "@named{list}{List-based memory stores memory cells (essentially address+value pairs) in a reverse "
+                   "chronological list and uses an SMT solver to solve aliasing equations.  The number of symbolic expression "
+                   "comparisons (either within ROSE or using an SMT solver) is linear with the size of the memory cell list.}"
+
+                   "@named{map}{Map-based memory stores memory cells in a container hashed by address expression. Aliasing "
+                   "equations are not solved even when an SMT solver is available. One cell aliases another only if their "
+                   "address expressions are identical. This approach is faster but less precise.}"
+
+                   "The default is to use the " +
+                   std::string(LIST_BASED_MEMORY==settings.memoryParadigm?"list-based":
+                               MAP_BASED_MEMORY==settings.memoryParadigm?"map-based":
+                               "UNKNOWN") + " paradigm."));
+
     return sg;
 }
 
