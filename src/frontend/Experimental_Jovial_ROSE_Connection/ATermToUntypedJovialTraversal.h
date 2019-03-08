@@ -81,15 +81,15 @@ ATbool traverse_OptTypeName            (ATerm term);
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_TableDescription (ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
-ATbool traverse_EntrySpecifier   (ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
+ATbool traverse_TableDescription (ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
+ATbool traverse_EntrySpecifier   (ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 
 // 2.1.2.3 ORDINARY TABLE ENTRIES
-ATbool traverse_OrdinaryEntrySpecifier (ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
+ATbool traverse_OrdinaryEntrySpecifier (ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 ATbool traverse_OptPackingSpecifier    (ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.2.4 SPECIFIED TABLE ENTRIES
-ATbool traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list);
+ATbool traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 
 // 2.1.2.1 TABLE DIMENSION LISTS
 ATbool traverse_OptDimensionList(ATerm term, SgUntypedExprListExpression* dim_info);
@@ -116,7 +116,7 @@ ATbool traverse_PresetValuesOption  (ATerm term, SgUntypedExpression** expr);
 ATbool traverse_TypeDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_ItemTypeDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_TableTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_TableTypeSpecifier    (ATerm term);
+ATbool traverse_TableTypeSpecifier    (ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.3 STATEMENT NAME DECLARATIONS

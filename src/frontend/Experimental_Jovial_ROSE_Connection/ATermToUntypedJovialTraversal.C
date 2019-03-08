@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -1308,7 +1308,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
          // MATCHED OptDimensionList
       } else return ATfalse;
 
-      if (traverse_TableDescription(t_table_desc, &declared_type, attr_list)) {
+      if (traverse_TableDescription(t_table_desc, declared_type, attr_list)) {
          // MATCHED TableDescription
       } else return ATfalse;
 
@@ -1343,7 +1343,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
+ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescription: %s\n", ATwriteToString(term));
@@ -1353,7 +1353,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
    std::string name;
    SgUntypedExpression* preset;
 
-   if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struc_spec,&t_entry_spec)) {
+   if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struc_spec, &t_entry_spec)) {
 
       if (traverse_OptStructureSpecifier(t_struc_spec, attr_list)) {
          // MATCHED OptStructureSpecifier
@@ -1377,7 +1377,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_EntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
+ATbool ATermToUntypedJovialTraversal::traverse_EntrySpecifier(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_EntrySpecifier: %s\n", ATwriteToString(term));
@@ -1499,7 +1499,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptStructureSpecifier(ATerm term,
 //========================================================================================
 // 2.1.2.3 ORDINARY TABLE ENTRIES
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
+ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OrdinaryEntrySpecifier: %s\n", ATwriteToString(term));
@@ -1552,7 +1552,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptPackingSpecifier(ATerm term, S
 //========================================================================================
 // 2.1.2.4 SPECIFIED TABLE ENTRIES
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType** type, SgUntypedExprListExpression* attr_list)
+ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedEntrySpecifier: %s\n", ATwriteToString(term));
@@ -1874,6 +1874,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
    ATerm t_name, t_type_desc;
    std::string name;
 
+   SgUntypedType* declared_type = NULL;
+
    if (ATmatch(term, "TableTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
       if (traverse_Name(t_name, name)) {
          // MATCHED TableTypeName
@@ -1882,7 +1884,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
       cout << ".x. matched table-type-decl \n";
       cout << ".x. table name is " << name << endl;
 
-      if (traverse_TableTypeSpecifier(t_type_desc)) {
+      if (traverse_TableTypeSpecifier(t_type_desc, type)) {
          // MATCHED TableTypeSpecifier
       } else return ATfalse;
 
@@ -1894,44 +1896,83 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
    return ATfalse;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term)
+ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list)
 {
    printf("\n.....................\n");
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableTypeSpecifier: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_dim_list, t_struct_spec, t_like_option, t_entry_spec;
+   ATerm t_dim_list, t_struct_spec, t_like_option, t_entry_spec, t_type_name;
+   std::string table_type_name, like_name;
+
+   bool has_table_type_name = false;
+   bool has_like_option = false;
 
    SgUntypedExprListExpression* dim_info = NULL;
 
-   if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
-               &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
+// TableTypeSpecifier with two arguments
+   if (ATmatch(term, "TableTypeSpecifier(<term>,<term>)", &t_dim_list, &t_type_name)) {
 
-      cout << ".x. matched table-type-spec \n";
+      cout << ".x. matched table-type-spec with two arguments \n";
 
       dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
       setSourcePosition(dim_info, t_dim_list);
 
       if (traverse_OptDimensionList(t_dim_list, dim_info)) {
-         cout << ".x. matched table-type-spec \n";
+         // MATCHED OptDimensionList
+      } else return ATfalse;
+
+      if (traverse_Name(t_type_name, table_type_name)) {
+         // MATCHED TableTypeName
+         has_table_type_name = true;
+      } else return ATfalse;
+   }
+
+// TableTypeSpecifier with four arguments
+   else if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
+                          &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
+
+      cout << ".x. matched table-type-spec with four args \n";
+
+      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      setSourcePosition(dim_info, t_dim_list);
+
+      if (traverse_OptDimensionList(t_dim_list, dim_info)) {
+         // MATCHED OptDimensionList
+      } else return ATfalse;
+
+   // Structure specifier
+      if (traverse_OptStructureSpecifier(t_dim_list, dim_info)) {
+         // MATCHED OptDimensionList
       } else return ATfalse;
 
    // Like option
-      if (ATmatch(term, "no-like-option()")) {
+      if (ATmatch(t_like_option, "no-like-option()")) {
+         cout << ".x. no-like-option \n";
       }
-      else if (ATmatch(term, "no-like-option()")) {
+      else if (ATmatch(t_like_option, "LikeOption(<term>)", &t_type_name)) {
+         if (traverse_Name(t_type_name, table_type_name)) {
+            // MATCHED Like option TableTypeName
+            has_like_option = true;
+            has_table_type_name = true;
+         } else return ATfalse;
       }
       else return ATfalse;
 
+   // Entry specifier
+      if (traverse_EntrySpecifier(t_entry_spec, type, attr_list)) {
+         // MATCHED EntrySpecifier
+      } else return ATfalse;
    }
    else return ATfalse;
+
+   ROSE_ASSERT(dim_info);
 
 #if 1
    std::cout << "TABLE TYPE SPEC rank is " << dim_info->get_expressions().size() << endl;
    std::cout << "TABLE TYPE SPEC dim_info: " << dim_info << endl;
 #endif
-
 
    cout << ".x. Need to finish up to this point -------------------------\n\n\n";
 
