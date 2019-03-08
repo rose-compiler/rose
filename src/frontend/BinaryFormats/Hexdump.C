@@ -41,7 +41,10 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                     if (special == fmt.numeric_fmt_special.end()) {
                         f <<boost::format(numeric_fmt) % (unsigned)data[i+j];
                     } else {
-                        f <<boost::format(special->second) % (unsigned)(special->first);
+                        try {
+                            f <<boost::format(special->second) % (unsigned)(special->first);
+                        } catch (...) {
+                        }
                     }
                 } else if (fmt.pad_numeric) {
                     if (j>0)
