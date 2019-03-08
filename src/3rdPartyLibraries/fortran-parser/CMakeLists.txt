@@ -1,5 +1,5 @@
 if(enable-fortran)
-  set(enable-ofp-version "0.8.5" CACHE STRING "version number for OFP")
+  set(enable-ofp-version "0.8.3" CACHE STRING "version number for OFP")
 
   ########### install files ###############
   set(jar_file
@@ -12,11 +12,11 @@ if(enable-fortran)
     )
   endif()
 
-  install(
-    FILES OpenFortranParser-0.8.5.jar
-          OpenFortranParser-20190206.jar
-	  ${jar_file}
-    DESTINATION ${ROSE_LIB_DIR_NAME})
+install(
+  FILES OpenFortranParser-0.8.5.jar
+        OpenFortranParser-20190206.jar
+        ${jar_file}
+  DESTINATION ${ROSE_LIB_DIR_NAME})
 
   # this file also needs to be in the binary directory for
   # related tests to pass

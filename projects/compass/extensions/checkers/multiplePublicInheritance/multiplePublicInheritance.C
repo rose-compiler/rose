@@ -92,7 +92,7 @@ visit(SgNode* node)
        size_t publics = 0;
        for (itr = bases.begin(); itr != bases.end(); ++itr)
        {
-         SgAccessModifier &am = (*itr)->get_baseClassModifier().get_accessModifier();
+         SgAccessModifier &am = (*itr)->get_baseClassModifier()->get_accessModifier();
          if (am.isPublic())
            publics++;
        }
