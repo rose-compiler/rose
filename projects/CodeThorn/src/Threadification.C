@@ -23,6 +23,10 @@ VariableIdSet Threadification::determineVariablesOfInterest(SgNode* root) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      if(varDecl->get_bitfield ()) {
+        // skip bitfield
+        continue;
+      }
       VariableId varId=_variableIdMapping->variableId(varDecl);
       // specifically exclude array variable declarations
       if( (_variableIdMapping->hasPointerType(varId)||_variableIdMapping->hasIntegerType(varId)) 
