@@ -27,6 +27,6 @@ pkginclude_HEADERS =													\
 	Disassembler.h DisassemblerArm.h DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h	\
 	Assembler.h AssemblerX86.h AssemblerX86Init.h									\
 	InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h			\
-	armInstructionEnum.h powerpcInstructionEnum.h RegisterParts.h
+	InstructionEnumsArm.h InstructionEnumsPowerpc.h RegisterParts.h
 
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C
