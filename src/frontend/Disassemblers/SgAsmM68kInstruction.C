@@ -11,6 +11,7 @@
 #include "SymbolicSemantics2.h"
 
 using namespace Rose;                                   // temporary until this lives in "rose"
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 unsigned

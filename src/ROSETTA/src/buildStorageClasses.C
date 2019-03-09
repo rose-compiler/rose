@@ -958,7 +958,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
-                 ( varTypeString == "RegisterDescriptor") ||
+                 ( varTypeString == "RegisterDescriptor") || ( varTypeString == "Rose::BinaryAnalysis::RegisterDescriptor" ) ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
