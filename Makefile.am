@@ -86,6 +86,13 @@ core:
 	$(MAKE) -C $(top_builddir)/src
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
+	$(MAKE) -C $(top_builddir)/projects/xgenTranslator
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -95,9 +102,13 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) install -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
