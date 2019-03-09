@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+namespace Rose {
+
 /** Describes a pattern of bits in a finite number of words.
  *
  *  A BitPattern is a set of one or more alternative values for certain significant bits in a finite sequence of words. The
@@ -454,8 +456,10 @@ public:
     }
 };
 
+} // namespace
+
 template<typename T>
-std::ostream& operator<<(std::ostream &o, const BitPattern<T> &bp) 
+std::ostream& operator<<(std::ostream &o, const Rose::BitPattern<T> &bp) 
 {
     bp.print(o);
     return o;
