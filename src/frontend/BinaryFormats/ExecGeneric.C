@@ -123,8 +123,12 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             exit(1);
         } else if (pid>0) {
             char buf[4096];
-            memset(buf, 0, sizeof buf);
-            (void) read(child_stdout[0], buf, sizeof buf); // buffer has already been zeroed for short reads
+            ssize_t nread = read(child_stdout[0], buf, sizeof buf);
+            if (nread >= 0) {
+                memset(buf+nread, 0, sizeof(buf)-nread);
+            } else {
+                memset(buf, 0, sizeof(buf));
+            }
             buf[sizeof(buf)-1] = '\0';
             if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
             waitpid(pid, NULL, 0);
