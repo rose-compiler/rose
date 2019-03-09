@@ -91,7 +91,8 @@ protected:
         : Super(state, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
 public:
-    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread, const RegisterDictionary *regdict,
+    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
+                                     const Rose::BinaryAnalysis::RegisterDictionary *regdict,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         BaseSemantics::SValuePtr protoval = SValue::instance();
@@ -181,18 +182,18 @@ public:
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     // Special handling for segment registers.
-    virtual void writeRegister(RegisterDescriptor reg,
+    virtual void writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg,
                                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
 
     // Read and write memory from the memory map directly.
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(RegisterDescriptor segreg,
+    readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
     virtual void
-    writeMemory(RegisterDescriptor segreg,
+    writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

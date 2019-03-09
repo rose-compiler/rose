@@ -254,7 +254,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
     #include <InstructionEnumsX86.h>
-    class RegisterDictionary;
+    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmX86Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -403,13 +403,13 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Given an instruction size enum constant return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForWidth. */
-        static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForInstructionSize(X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
          *  Given an instruction size of 16, 32, or 64 return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForInstructionSize. */
-        static const RegisterDictionary* registersForWidth(size_t);
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
 
         // Overrides are documented in the base class
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
@@ -1823,11 +1823,11 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
          *
          * @{ */
-        RegisterDescriptor get_stride() const;
-        void set_stride(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_stride() const;
+        void set_stride(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
+        AsmIndirectRegisterExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "stride", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -1837,11 +1837,11 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "offset" referred to in the documentation for this class.
          *
          * @{ */
-        RegisterDescriptor get_offset() const;
-        void set_offset(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_offset() const;
+        void set_offset(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
+        AsmIndirectRegisterExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "offset", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -1916,11 +1916,11 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        RegisterDescriptor get_descriptor() const;
-        void set_descriptor(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_descriptor() const;
+        void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
+        AsmRegisterReferenceExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
                                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -4245,7 +4245,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
     #include <MemoryMap.h>
-    class RegisterDictionary;
+    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmInterpretation_HEADERS
 
 #ifdef DOCUMENTATION
@@ -4300,7 +4300,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
     private:
         Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
-        const RegisterDictionary *p_registers;
+        const Rose::BinaryAnalysis::RegisterDictionary *p_registers;
         bool coverageComputed;                          // true iff percentageCoverage has been computed
         mutable InstructionMap instruction_map;         // cached instruction map
 
@@ -4353,8 +4353,8 @@ void Grammar::setUpBinaryInstructions() {
          *  effect of descriptors is to describe how registers overlap with each other.
          *
          * @{ */
-        const RegisterDictionary *get_registers() const;
-        void set_registers(const RegisterDictionary*);
+        const Rose::BinaryAnalysis::RegisterDictionary *get_registers() const;
+        void set_registers(const Rose::BinaryAnalysis::RegisterDictionary*);
         /** @} */
 
         /** Property: Map of instructions by address.

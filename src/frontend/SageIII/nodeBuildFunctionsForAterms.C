@@ -11653,7 +11653,7 @@ SgAsmMemoryReferenceExpression* SgAsmMemoryReferenceExpression::build_node_from_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11671,7 +11671,7 @@ SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_f
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11689,7 +11689,7 @@ SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor, RegisterDescriptor stride, RegisterDescriptor offset, size_t index, size_t modulus )
+SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor, Rose::BinaryAnalysis::RegisterDescriptor stride, Rose::BinaryAnalysis::RegisterDescriptor offset, size_t index, size_t modulus )
    {
 #if 0
   // debugging information!
