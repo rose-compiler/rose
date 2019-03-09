@@ -919,15 +919,27 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
                                                               EState estate, EvalMode mode) {
-  
   SgType* operandType=node->get_operand_type();
-  ROSE_ASSERT(operandType);
-  SPRAY::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
-  AbstractValue sizeValue=AbstractValue(typeSize); 
-  //AbstractValue sizeValue=AbstractValue(4); 
-  SingleEvalResultConstInt res;
-  res.init(estate,sizeValue);
-  return listify(res);
+  if(operandType) {
+    SPRAY::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
+    if(typeSize==0) {
+      logger[ERROR]<<"Error: sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      exit(1);
+    }
+    logger[TRACE]<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
+    AbstractValue sizeValue=AbstractValue(typeSize); 
+    SingleEvalResultConstInt res;
+    res.init(estate,sizeValue);
+    return listify(res);
+  } else {
+    if(SgExpression* exp=node->get_operand_expr()) {
+      logger[ERROR] <<"Error: sizeof: could determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
+      exit(1);
+    } else {
+      logger[ERROR] <<"Error: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
+      exit(1);
+    }
+  }
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
