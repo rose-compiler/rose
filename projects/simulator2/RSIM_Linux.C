@@ -93,7 +93,7 @@ public:
     /* Returns ELF PT_LOAD Segments in order by virtual address. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
         SgAsmGenericSectionPtrList retval;
-        SgAsmGenericSectionPtrList sections = BinaryLoaderElf::get_remap_sections(header);
+        SgAsmGenericSectionPtrList sections = BinaryLoaderElf::getRemapSections(header);
         for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); si++) {
             SgAsmElfSection *section = isSgAsmElfSection(*si);
             SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;

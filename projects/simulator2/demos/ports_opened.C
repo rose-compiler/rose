@@ -222,7 +222,7 @@ public:
                 SgAsmExecutableFileFormat::hexdump(mlog[INFO], bufVa, buf, nread, fmt);
                 mlog[INFO] <<"\n";
             }
-            delete buf;
+            delete[] buf;
         }
     }
 
