@@ -96,7 +96,7 @@ visit(SgNode* node)
    { 
      if (SgMemberFunctionDeclaration *mfd = isSgMemberFunctionDeclaration(node))
      {
-       SgClassDefinition *classdef = mfd->get_class_scope();
+       SgClassDefinition *classdef = isSgClassDefinition(mfd->get_class_scope());
        ROSE_ASSERT(classdef != NULL);
        checkBaseClasses(mfd, classdef);
      }
