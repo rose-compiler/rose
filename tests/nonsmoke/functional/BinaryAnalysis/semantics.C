@@ -219,7 +219,8 @@ analyze_interp(SgAsmInterpretation *interp)
             }
 
             /* Never follow CALL instructions */
-            if (insn->get_kind()==x86_call || insn->get_kind()==x86_farcall)
+            if (insn->get_kind()==Rose::BinaryAnalysis::x86_call ||
+                insn->get_kind()==Rose::BinaryAnalysis::x86_farcall)
                 break;
 
             /* Get next instruction of this block */

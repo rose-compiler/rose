@@ -348,13 +348,16 @@ public:
                     }
                     if (isTopValid) {
                         if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-5))) &&
-                            (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                            (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                             Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-2))) &&
-                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                                   (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                                    Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-6))) &&
-                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                                   (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                                    Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         }
                     }

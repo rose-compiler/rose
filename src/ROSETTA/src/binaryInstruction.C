@@ -171,7 +171,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmArmInstruction);
 #if defined(SgAsmArmInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <armInstructionEnum.h>
+    #include <InstructionEnumsArm.h>
 #endif // SgAsmArmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -187,11 +187,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        ArmInstructionKind get_kind() const;
-        void set_kind(ArmInstructionKind);
+        Rose::BinaryAnalysis::ArmInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::ArmInstructionKind);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("ArmInstructionKind", "kind", "= arm_unknown_instruction",
+        AsmArmInstruction.setDataPrototype("Rose::BinaryAnalysis::ArmInstructionKind", "kind",
+                                           "= Rose::BinaryAnalysis::arm_unknown_instruction",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -199,11 +200,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Arm instruction condition.
          *
          *  @{ */
-        ArmInstructionCondition get_condition() const;
-        void set_condition(ArmInstructionCondition);
+        Rose::BinaryAnalysis::ArmInstructionCondition get_condition() const;
+        void set_condition(Rose::BinaryAnalysis::ArmInstructionCondition);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("ArmInstructionCondition", "condition", "= arm_cond_unknown",
+        AsmArmInstruction.setDataPrototype("Rose::BinaryAnalysis::ArmInstructionCondition", "condition",
+                                           "= Rose::BinaryAnalysis::arm_cond_unknown",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -270,11 +272,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        X86InstructionKind get_kind() const;
-        void set_kind(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionKind", "kind",
+                                           "= Rose::BinaryAnalysis::x86_unknown_instruction",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -282,11 +285,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing the base size of an x86 instruction.
          *
          * @{ */
-        X86InstructionSize get_baseSize() const;
-        void set_baseSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_baseSize() const;
+        void set_baseSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "baseSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -294,11 +298,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum describing the x86 instruction operand size.
          *
          * @{ */
-        X86InstructionSize get_operandSize() const;
-        void set_operandSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_operandSize() const;
+        void set_operandSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "operandSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -306,11 +311,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum describing the x86 address size.
          *
          *  @{ */
-        X86InstructionSize get_addressSize() const;
-        void set_addressSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_addressSize() const;
+        void set_addressSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "addressSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -332,11 +338,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing whether the instruction is repeated.
          *
          * @{ */
-        X86RepeatPrefix get_repeatPrefix() const;
-        void set_repeatPrefix(X86RepeatPrefix);
+        Rose::BinaryAnalysis::X86RepeatPrefix get_repeatPrefix() const;
+        void set_repeatPrefix(Rose::BinaryAnalysis::X86RepeatPrefix);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86RepeatPrefix", "repeatPrefix",
+                                           "= Rose::BinaryAnalysis::x86_repeat_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -344,11 +351,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing branch prediction.
          *
          * @{ */
-        X86BranchPrediction get_branchPrediction() const;
-        void set_branchPrediction(X86BranchPrediction);
+        Rose::BinaryAnalysis::X86BranchPrediction get_branchPrediction() const;
+        void set_branchPrediction(Rose::BinaryAnalysis::X86BranchPrediction);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86BranchPrediction", "branchPrediction",
+                                           "= Rose::BinaryAnalysis::x86_branch_prediction_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -359,11 +367,12 @@ void Grammar::setUpBinaryInstructions() {
          *  constant.
          *
          *  @{ */
-        X86SegmentRegister get_segmentOverride() const;
-        void set_segmentOverride(X86SegmentRegister);
+        Rose::BinaryAnalysis::X86SegmentRegister get_segmentOverride() const;
+        void set_segmentOverride(Rose::BinaryAnalysis::X86SegmentRegister);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86SegmentRegister", "segmentOverride",
+                                           "= Rose::BinaryAnalysis::x86_segreg_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -392,18 +401,18 @@ void Grammar::setUpBinaryInstructions() {
         /** Converts a size to an instruction size enum.
          *
          *  Given a size in bits, which must be 16, 32, or 64, return the corresponding enum constant. */
-        static X86InstructionSize instructionSizeForWidth(size_t);
+        static Rose::BinaryAnalysis::X86InstructionSize instructionSizeForWidth(size_t);
 
         /** Converts a size enum constant to a size.
          *
          *  Given a size enum constant, return the number of bits that enum represents. */
-        static size_t widthForInstructionSize(X86InstructionSize);
+        static size_t widthForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
          *  Given an instruction size enum constant return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForWidth. */
-        static const Rose::BinaryAnalysis::RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
@@ -438,7 +447,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmPowerpcInstruction);
     DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <powerpcInstructionEnum.h>
+    #include <InstructionEnumsPowerpc.h>
 #endif // SgAsmPowerpcInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -455,11 +464,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        PowerpcInstructionKind get_kind() const;
-        void set_kind(PowerpcInstructionKind);
+        Rose::BinaryAnalysis::PowerpcInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::PowerpcInstructionKind);
         /** @} */
 #else
-        AsmPowerpcInstruction.setDataPrototype("PowerpcInstructionKind", "kind", "= powerpc_unknown_instruction",
+        AsmPowerpcInstruction.setDataPrototype("Rose::BinaryAnalysis::PowerpcInstructionKind", "kind",
+                                               "= Rose::BinaryAnalysis::powerpc_unknown_instruction",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                                COPY_DATA);
 #endif
@@ -518,11 +528,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        MipsInstructionKind get_kind() const;
-        void set_kind(MipsInstructionKind);
+        Rose::BinaryAnalysis::MipsInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::MipsInstructionKind);
         /** @} */
 #else
-        AsmMipsInstruction.setDataPrototype("MipsInstructionKind", "kind", "= mips_unknown_instruction",
+        AsmMipsInstruction.setDataPrototype("Rose::BinaryAnalysis::MipsInstructionKind", "kind",
+                                            "= Rose::BinaryAnalysis::mips_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
 #endif
@@ -580,11 +591,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        M68kInstructionKind get_kind() const;
-        void set_kind(M68kInstructionKind);
+        Rose::BinaryAnalysis::M68kInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::M68kInstructionKind);
         /** @} */
 #else
-        AsmM68kInstruction.setDataPrototype("M68kInstructionKind", "kind", " = m68k_unknown_instruction",
+        AsmM68kInstruction.setDataPrototype("Rose::BinaryAnalysis::M68kInstructionKind", "kind",
+                                            " = Rose::BinaryAnalysis::m68k_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
 #endif

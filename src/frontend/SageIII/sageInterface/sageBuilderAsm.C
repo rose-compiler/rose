@@ -7,6 +7,8 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
 
+using namespace Rose::BinaryAnalysis;
+
 namespace Rose {
 namespace SageBuilderAsm {
 
@@ -27,7 +29,7 @@ buildBinaryComposite(const std::string &fileName) {
     if (SgProject *project = SageInterface::getProject()) {
         // We already have a project, so we cannot call frontend() again.
         retval = new SgBinaryComposite(args, project);
-        BinaryAnalysis::BinaryLoader::load(retval, DONT_DISASSEMBLE);
+        BinaryLoader::load(retval, DONT_DISASSEMBLE);
     } else {
         // No project yet, so just call frontend()
         project = frontend(args);

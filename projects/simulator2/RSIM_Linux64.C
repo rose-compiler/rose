@@ -422,7 +422,7 @@ RSIM_Linux64::syscall_arch_prctl_body(RSIM_Thread *t, int callno) {
             if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
                 retval = -EFAULT;
             } else {
-                t->operators()->segmentInfo(x86_segreg_fs).base = val;
+                t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_fs).base = val;
             }
             break;
         }
@@ -431,18 +431,18 @@ RSIM_Linux64::syscall_arch_prctl_body(RSIM_Thread *t, int callno) {
             if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
                 retval = -EFAULT;
             } else {
-                t->operators()->segmentInfo(x86_segreg_gs).base = val;
+                t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_gs).base = val;
             }
             break;
         }
         case ARCH_GET_FS: {
-            uint64_t val = t->operators()->segmentInfo(x86_segreg_fs).base;
+            uint64_t val = t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_fs).base;
             if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
                 retval = -EFAULT;
             break;
         }
         case ARCH_GET_GS: {
-            uint64_t val = t->operators()->segmentInfo(x86_segreg_gs).base;
+            uint64_t val = t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_gs).base;
             if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
                 retval = -EFAULT;
             break;

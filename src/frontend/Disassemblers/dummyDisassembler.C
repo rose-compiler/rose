@@ -210,9 +210,13 @@ SgAsmBlock::has_instructions() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RegisterDescriptor
+namespace Rose {
+namespace BinaryAnalysis {
 void RegisterDescriptor::majorNumber(unsigned) { abort(); }
 void RegisterDescriptor::minorNumber(unsigned) { abort(); }
 void RegisterDescriptor::offset(size_t) { abort(); }
 void RegisterDescriptor::nBits(size_t) { abort(); }
 void RegisterDescriptor::setOffsetWidth(size_t, size_t) { abort(); }
 std::iostream& operator<<(std::ostream, RegisterDescriptor) { abort(); }
+} // namespace
+} // namespace

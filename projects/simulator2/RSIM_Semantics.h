@@ -73,7 +73,7 @@ private:
     Architecture architecture_;
     bool allocateOnDemand_;                             // allocate rather than returning an error?
     RSIM_Thread *thread_;
-    typedef Sawyer::Container::Map<X86SegmentRegister, SegmentInfo> SegmentInfoMap;
+    typedef Sawyer::Container::Map<Rose::BinaryAnalysis::X86SegmentRegister, SegmentInfo> SegmentInfoMap;
 
     // In x86-64 the CS, SS, DS, and ES segment selector registers are forced to zero, have a base of zero and a limit of
     // 2^64. The FS and GS registers can still be used, but only their descriptors' base address is used, not the limit.
@@ -157,10 +157,10 @@ public:
     RSIM_Thread* thread() const { return thread_; }
 
     // Load shadow register with an entry from the GDT
-    void loadShadowRegister(X86SegmentRegister, unsigned gdtIdx);
+    void loadShadowRegister(Rose::BinaryAnalysis::X86SegmentRegister, unsigned gdtIdx);
 
     // Return segment info for register
-    SegmentInfo& segmentInfo(X86SegmentRegister sr);
+    SegmentInfo& segmentInfo(Rose::BinaryAnalysis::X86SegmentRegister sr);
 
     // Semantics of an x86 POP instruction so the simulator can easily pop a word from the top of the stack.
     Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();

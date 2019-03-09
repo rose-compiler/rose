@@ -131,9 +131,9 @@ inline Insn* appendOperand(Insn* insn, SgAsmExpression* op) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build instruction
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind);
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind, SgAsmExpression *operand);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
 SgAsmX86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
