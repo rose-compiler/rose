@@ -411,7 +411,8 @@ public:
     ~JsonOutput() {
         if (fd_ != -1) {
             file_.close();
-            ftruncate(fd_, highwater_);
+            if (-1 == ftruncate(fd_, highwater_))
+                mlog[ERROR] <<"ftruncate failed\n";
             close(fd_);
         }
     }
