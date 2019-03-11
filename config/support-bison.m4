@@ -1,6 +1,6 @@
 AC_DEFUN([ROSE_SUPPORT_BISON],
 [
-    ROSE_CONFIGURE_SECTION([Checking Bison version])
+    ROSE_CONFIGURE_SECTION([Checking Bison])
 
   # Find the Bison program
     AX_WITH_PROG(BISON,bison)

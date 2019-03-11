@@ -28,10 +28,6 @@
 #       AC_MSG_ERROR([No OFP-STRATEGO/bin])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2017-02-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2017 Craig Rasmussen <rasmussen17@llnl.gov>
@@ -44,7 +40,7 @@ AC_DEFUN([ROSE_SUPPORT_OFP_STRATEGO],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_OFP_STRATEGO_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([OFP-STRATEGO Binaries])
+  ROSE_CONFIGURE_SECTION([Checking OFP-STRATEGO binaries])
 
   #============================================================================
   # --with-ofp-bin=/path/to/ofp-trunk/ofp.dist/bin/

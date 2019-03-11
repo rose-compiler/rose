@@ -15,12 +15,12 @@ else
    with_pocc=yes
 fi
 
-echo "In ROSE SUPPORT MACRO: with_pocc $with_pocc"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_pocc = "$with_pocc"])
 
 if test "$with_pocc" = no; then
-   echo "Skipping installation for POCC!"
+   AC_MSG_NOTICE([skipping installation for POCC])
 fi
-   echo "Setup installation for POCC in ROSE! with_pocc = $with_pocc"
+   AC_MSG_NOTICE([setup installation for POCC in ROSE. with_pocc = "$with_pocc"])
    AM_CONDITIONAL(ROSE_WITH_POCC, [test "x$with_pocc" = xyes])
 
 # End macro ROSE_SUPPORT_POCC.

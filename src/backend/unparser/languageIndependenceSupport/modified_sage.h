@@ -50,6 +50,9 @@ class Unparse_MOD_SAGE
           bool isUnaryDereferenceOperator(SgExpression* expr);
           bool isUnaryComplementOperator(SgExpression* expr);
 
+       // DQ (2/12/2019): Adding support for C++11 literal operators.
+          bool isUnaryLiteralOperator(SgExpression* expr);
+
        // DQ (2/1/2018): I don't think this operator can exist.
        // bool isUnaryOrOperator(SgExpression* expr);
 
