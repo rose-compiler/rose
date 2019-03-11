@@ -132,6 +132,7 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
 
 #if 1
        // DQ (8/16/2011): Debugging support added to output file info as part of the source position support for Java.
+       // if (SgProject::get_verbose() > 3)
           if (SgProject::get_verbose() > 3)
              {
             // DQ (8/16/2011): Debugging output to make sure that we get all of the IR nodes set properly for Java.

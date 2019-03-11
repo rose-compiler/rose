@@ -187,6 +187,8 @@ ROSE_DLL_API SgTypeLong*    buildLongType();
 ROSE_DLL_API SgTypeLongDouble* buildLongDoubleType();
 ROSE_DLL_API SgTypeLongLong * buildLongLongType();
 ROSE_DLL_API SgTypeShort*    buildShortType();
+ROSE_DLL_API SgTypeFloat80*  buildFloat80Type();
+ROSE_DLL_API SgTypeFloat128* buildFloat128Type();
 
 //! DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 ROSE_DLL_API SgTypeString* buildStringType();
@@ -250,6 +252,9 @@ ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = NULL);
 
 //! Build a volatile type.
 ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = NULL);
+
+//! Build a const volatile type.
+ROSE_DLL_API SgModifierType* buildConstVolatileType(SgType* base_type = NULL);
 
 //! Build a restrict type.
 ROSE_DLL_API SgModifierType* buildRestrictType(SgType* base_type);

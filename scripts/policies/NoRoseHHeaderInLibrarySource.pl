@@ -11,8 +11,8 @@ my $desc = <<EOF;
 The "rose.h" header is intended to be for users that don't want to figure out
 the correct minimal set of header files, but just want all declarations with
 no hassles. Since rose.h includes all declarations, using it within the
-ROSE library source code increases header coupling unecessarily and slows down
-compile times. For a small prototype project this may be acceptible, but
+ROSE library source code increases header coupling unnecessarily and slows down
+compile times. For a small prototype project this may be acceptable, but
 if we allowed ROSE developers to do this.... well, let's just say there's
 over a thousand translation units that need to be copiled to create librose.
 

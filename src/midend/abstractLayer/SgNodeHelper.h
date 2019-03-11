@@ -142,13 +142,16 @@ namespace SgNodeHelper {
   //! is true if 'node' is the root node of the AST representing the condition of a Loop construct (While, DoWhile, For).
   bool isLoopCond(SgNode* node);
 
-  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, CondExp, switch.
+  //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, switch, CondExp.
   bool isCondStmtOrExpr(SgNode* node);
 
   //! is true if 'node' is the root node of the AST representing If, While, DoWhile, For, switch.
   bool isCondStmt(SgNode* node);
 
-  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp, switch.
+  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, switch.
+  bool isCondInBranchStmt(SgNode* node);
+
+  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, switch, CondExp.
   bool isCond(SgNode* node);
 
   //! sets 'cond' as the root node of the AST representing the condition in statements if, while, dowhile, for, switch.
@@ -411,11 +414,25 @@ namespace SgNodeHelper {
     SgFunctionCallExp* matchFunctionCall(SgNode*);
     //! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
     SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode*);
+
     //! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
     SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode*);
+
     //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp otherwise 0.
     SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode*);
-    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode*);
+
+    //! tests pattern for function call in variable declaration and returns pointer to FunctionCallExp otherwise 0.
+    SgFunctionCallExp* matchFunctionCallExpInVariableDeclaration(SgNode* node);
+
+    //! checks variable declaration with function call, returns variable declaration. Otherwise 0. e.g. int x=f();
+    SgVariableDeclaration* matchVariableDeclarationWithFunctionCall(SgNode* node);
+    //! checks variable declaration with function call, returns both in a pair, or a with (0,0).
+    std::pair<SgVariableDeclaration*,SgFunctionCallExp*> matchVariableDeclarationWithFunctionCall2(SgNode* node);
+
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> matchExprStmtAssignOpVarRefExpFunctionCallExp2(SgNode* node);
+
+    //! tests pattern for an assert
+    bool matchAssertExpr(SgNode* node);
 
     //! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
     SgVarRefExp* matchSingleVarScanf(SgNode* node);
@@ -423,8 +440,6 @@ namespace SgNodeHelper {
     SgVarRefExp* matchSingleVarPrintf(SgNode* node);
     //! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
     SgVarRefExp* matchSingleVarFPrintf(SgNode* node,bool showWarnings=false);
-
-    SgVariableDeclaration* matchVariableDeclarationWithFunctionCall(SgNode* node);
 
     struct OutputTarget {
       bool isKnown();
@@ -436,9 +451,7 @@ namespace SgNodeHelper {
     };
     OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
 
-    //! tests pattern for an assert
-    bool matchAssertExpr(SgNode* node);
-    
+ 
   } // end of namespace Pattern
   
 } // end of namespace SgNodeHelper

@@ -63,7 +63,9 @@ bool emptyFortranStateStack()
 
 void AttributeRec::setDeclAttrSpecs()
 {
+ // this sets public/private because parser grammar rules bundles public/private into access
     if (hasAccessSpec) setDeclarationAttributeSpec(declaration, accessType);
+
     if (isPublic) setDeclarationAttributeSpec(declaration, publicAttr);
     if (isPrivate) setDeclarationAttributeSpec(declaration, privateAttr);
     if (isAllocatable) setDeclarationAttributeSpec(declaration, allocatableAttr);

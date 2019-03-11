@@ -34,6 +34,8 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeSignedLongLong  , "TypeSignedLongLong",   "T_SIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeUnsignedLongLong, "TypeUnsignedLongLong", "T_UNSIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeLongDouble      , "TypeLongDouble",       "T_LONG_DOUBLE" );
+     NEW_TERMINAL_MACRO ( TypeFloat80         , "TypeFloat80",          "T_FLOAT80" );
+     NEW_TERMINAL_MACRO ( TypeFloat128        , "TypeFloat128",         "T_FLOAT128" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
@@ -186,14 +188,15 @@ Grammar::setUpTypes ()
           TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       | 
           TypeUnsignedLong     | TypeVoid                | TypeGlobalVoid            | TypeWchar            |
           TypeFloat            | TypeDouble              | TypeLongLong              | TypeSignedLongLong   |
-          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger |
+          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger | TypeFloat80          |
           TypeLongDouble       | TypeString              | TypeBool                  | PointerType          |
           ReferenceType        | NamedType               | ModifierType              | FunctionType         |
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
-          TypeTuple            | TypeChar16              | TypeChar32, "Type","TypeTag", false);
+          TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128
+       , "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
@@ -460,6 +463,8 @@ Grammar::setUpTypes ()
      TypeCrayPointer.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat80.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat128.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
   // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -1077,6 +1082,10 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+  // TV (12/29/2018): using literal suffixes
+     TypeFloat80.editSubstitute( "MANGLED_ID_STRING", "w" );
+     TypeFloat128.editSubstitute( "MANGLED_ID_STRING", "q" );
 
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );
