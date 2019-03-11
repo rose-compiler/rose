@@ -7,6 +7,7 @@
 #include <EditDistance/DamerauLevenshtein.h>
 
 #include <iostream>
+#include <Sawyer/Synchronization.h>
 
 #define check(X) ASSERT_always_require(X)
 #define check2(X, MESG) ASSERT_always_require2((X), (MESG))
@@ -679,14 +680,13 @@ test_edit_distance()
     static const size_t sz_max = 20;                    // maximum length of vectors
     static const unsigned int elmt_modulo = 8;          // modulo for choosing elements for the two vectors
     static const bool show_every_run = true;            // set if you want to see every test
-    LinearCongruentialGenerator random;                 // source of pseudo-random numbers
     size_t nfailures = 0;
 
     // The first of two vectors
     for (size_t sz1=sz_delta; sz1<sz_max; ++sz1) {
         std::vector<unsigned int> v1(sz1, 0);
         for (size_t i=0; i<sz1; ++i)
-            v1[i] = random() % elmt_modulo;
+            v1[i] = Sawyer::fastRandomIndex(elmt_modulo);
 
         // The second of two vectors.
         for (size_t sz2=sz1-sz_delta; sz2<sz1; ++sz2) {

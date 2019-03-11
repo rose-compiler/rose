@@ -2784,6 +2784,12 @@ public:
     SwitchGroup& switchGroup(const std::string &name);
     /** @} */
 
+    /** Remove switch group from parser.
+     *
+     *  Removes the first switch group having the specified name from this parser. Returns true if a switch group
+     *  was removed, false if nothing was removed. */
+    bool eraseSwitchGroup(const std::string &name);
+
     /** Property: Whether to report ambiguities.
      *
      *  If true, report ambiguous switches. Switches that can not be disambiguated are reported regardless of whether the

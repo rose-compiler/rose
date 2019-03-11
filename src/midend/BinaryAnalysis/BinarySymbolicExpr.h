@@ -1205,7 +1205,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
     Nodes newChildren;
     newChildren.reserve(inode->nChildren());
     BOOST_FOREACH (const Ptr &child, inode->children()) {
-        Ptr newChild = subber(child, solver);
+        Ptr newChild = substitute(child, subber, solver);
         if (newChild != child)
             anyChildChanged = true;
         newChildren.push_back(newChild);

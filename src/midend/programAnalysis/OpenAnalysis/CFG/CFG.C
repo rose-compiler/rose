@@ -211,7 +211,9 @@ CFG::build_block (CFG::Node* prev_node, IRStmtIterator *si_ptr_, CFG::NodeLabelL
 IRStmtType
 CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit_nodes, CFG::NodeLabelList* break_nodes,
                 CFG::NodeLabelList* return_nodes, CFG::NodeLabelList* continue_nodes)
+#if __cplusplus < 201103L
   throw (CFG::Unexpected_Break, CFG::Unexpected_Return, CFG::Unexpected_Continue)
+#endif
 {
     // handle different types of nodes. 
     switch (ir.GetStmtType(stmt)) {

@@ -413,7 +413,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
-    sg.name("out");
+    sg.name("unparse");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
            "blocks, data blocks, and functions to a textual representation.");
 

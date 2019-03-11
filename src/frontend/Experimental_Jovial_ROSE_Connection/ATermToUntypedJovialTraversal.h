@@ -69,11 +69,11 @@ ATbool traverse_CharacterLiteral          (ATerm term, SgUntypedExpression** exp
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool traverse_StatusItemDescription (ATerm term, SgUntypedType** type);
-ATbool traverse_StatusConstant        (ATerm term, SgUntypedExpression** expr);
-ATbool traverse_DefaultSublist        (ATerm term);
-ATbool traverse_OptDefaultSublist     (ATerm term);
-ATbool traverse_StatusList            (ATerm term);
-ATbool traverse_SpecifiedSublist      (ATerm term);
+ATbool traverse_StatusConstant        (ATerm term, SgUntypedInitializedName** init_name);
+ATbool traverse_DefaultSublist        (ATerm term, SgUntypedInitializedNameList** status_list);
+ATbool traverse_OptDefaultSublist     (ATerm term, SgUntypedInitializedNameList** status_list);
+ATbool traverse_StatusList            (ATerm term, SgUntypedInitializedNameList** status_list);
+ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList** status_list);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType** type);
@@ -113,7 +113,19 @@ ATbool traverse_DefaultPresetSublist(ATerm term, SgUntypedExprListExpression** e
 ATbool traverse_PresetValuesOption  (ATerm term, SgUntypedExpression** expr);
 
 // 2.2 TYPE DECLARATIONS
-ATbool traverse_ItemTypeName(ATerm term, std::string & name);
+ATbool traverse_ItemTypeName          (ATerm term, std::string & name);
+ATbool traverse_TypeDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ItemTypeDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_TableTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// 2.3 STATEMENT NAME DECLARATIONS
+
+// 2.4 DEFINE DECLARATIONS
+ATbool traverse_DefineDeclaration        (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_DefinitionPart           (ATerm term, std::string & params, std::string & def_string);
+ATbool traverse_FormalDefineParameterList(ATerm term, std::string & params);
+ATbool traverse_DefineString             (ATerm term, std::string & def_string);
 
 // 2.5 EXTERNAL DECLARATIONS
 ATbool traverse_ExternalDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);

@@ -110,7 +110,9 @@ static bool is_copy(SgMemberFunctionDeclaration *decl)
 
   bool isconstr = false;
 
-  if (decl->get_name() == decl->get_class_scope()->get_declaration()->get_name()) {
+  SgClassDefinition * class_defn = isSgClassDefinition(decl->get_class_scope());
+  ROSE_ASSERT(class_defn != NULL);
+  if (decl->get_name() == class_defn->get_declaration()->get_name()) {
     isconstr = true;
   }
   else {
@@ -148,7 +150,7 @@ static bool is_copy(SgMemberFunctionDeclaration *decl)
 
   //FIXME: ctype and myself sometimes does not share the same
   //       address.
-  if (ctype->get_qualified_name() != decl->get_class_scope()
+  if (ctype->get_qualified_name() != class_defn
       ->get_declaration()->get_qualified_name()) {
     return false;
   }
@@ -174,13 +176,15 @@ visit(SgNode* n) {
     isSgMemberFunctionDeclaration(n);
   if (decl != NULL) {
     if (is_copy(decl)) {
+      SgClassDefinition * class_defn = isSgClassDefinition(decl->get_class_scope());
+      ROSE_ASSERT(class_defn != NULL);
       SgInitializedNamePtrList args = decl->get_args();
       SgInitializedName *name = *(args.begin());
       if ((name->get_name().str() != std::string(""))
           && (name->get_name().str() != std::string("other"))
           && (name->get_name().str() != std::string("that"))
           && (name->get_name().str() !=
-              lower_camel_case(decl->get_class_scope()
+              lower_camel_case(class_defn
                                ->get_declaration()
                                ->get_name().str()))) {
         output->addOutput(new CheckerOutput(decl));

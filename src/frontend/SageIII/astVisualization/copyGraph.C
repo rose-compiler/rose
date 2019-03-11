@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "wholeAST_API.h"
 #include "AstDOTGeneration.h"
+#include "Diagnostics.h"
+#include "StringUtility.h"
 // #include "copyGraph.h"
 // #include "astGraph.h"
 // #include <fstream>
@@ -17,6 +19,7 @@
 
 
 using namespace std;
+using namespace Rose::Diagnostics;
 
 class GetAllNodesVisitor: public ROSE_VisitTraversal 
    {
@@ -85,7 +88,11 @@ void graphNodesAfterCopy(const set<SgNode*>& oldNodes, string filename)
           fs << endl;
         }
 
-     system(("tclsh " + std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/tests/nonsmoke/functional/CompileTests/copyAST_tests/make_copy_graph.tcl " + old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot").c_str());
+        std::string cmd = "tclsh " + std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) +
+                          "/tests/nonsmoke/functional/CompileTests/copyAST_tests/make_copy_graph.tcl " +
+                          old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot";
+        if (system(cmd.c_str()))
+            mlog[ERROR] <<"command failed: \"" + Rose::StringUtility::cEscape(cmd) <<"\"\n";
   // system("rm temp.dot");
   // system("rm old_nodes");
    }
