@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
@@ -423,6 +424,19 @@ public:
     SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
     SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
     /** @} */
+
+    /** Save a partitioner and AST to a file.
+     *
+     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
+    virtual void savePartitioner(const Partitioner&, const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
+    /** Load a partitioner and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    virtual Partitioner loadPartitioner(const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing

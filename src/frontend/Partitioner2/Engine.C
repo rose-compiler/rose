@@ -1683,15 +1683,7 @@ Engine::partition(const std::vector<std::string> &fileNames) {
                 throw Exception("specifying an RBA file excludes all other inputs");
         }
         if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
-            SerialInput::Ptr archive = SerialInput::instance();
-            archive->open(fileNames[0]);
-            Partitioner partitioner = archive->loadPartitioner();
-            SgNode *ast = archive->loadAst();
-            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
-            if (!interps.empty())
-                interp_ = interps[0];
-            map_ = partitioner.memoryMap();
-            return partitioner;
+            return loadPartitioner(fileNames[0]);
         } else {
             if (!areSpecimensLoaded())
                 loadSpecimens(fileNames);
@@ -1715,6 +1707,51 @@ Engine::partition(const std::string &fileName) {
     return partition(std::vector<std::string>(1, fileName));
 }
 
+void
+Engine::savePartitioner(const Partitioner &partitioner, const boost::filesystem::path &name,
+                        SerialIo::Format fmt) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"writing RBA state file";
+    Sawyer::Stopwatch timer;
+    SerialOutput::Ptr archive = SerialOutput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    archive->savePartitioner(partitioner);
+
+    if (SgProject *project = SageInterface::getProject()) {
+        BOOST_FOREACH (SgBinaryComposite *file, SageInterface::querySubTree<SgBinaryComposite>(project))
+            archive->saveAst(file);
+    }
+
+    info <<"; took " <<timer <<" seconds\n";
+}
+
+Partitioner
+Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fmt) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"reading RBA state file";
+    Sawyer::Stopwatch timer;
+    SerialInput::Ptr archive = SerialInput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    Partitioner partitioner = archive->loadPartitioner();
+
+    interp_ = NULL;
+    while (archive->objectType() == SerialIo::AST) {
+        SgNode *ast = archive->loadAst();
+        if (NULL == interp_) {
+            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
+            if (!interps.empty())
+                interp_ = interps[0];
+        }
+    }
+
+    info <<"; took " <<timer << " seconds\n";
+    map_ = partitioner.memoryMap();
+    return partitioner;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
