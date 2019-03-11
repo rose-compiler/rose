@@ -369,7 +369,8 @@ HEADER_START
           is also implemented, but it only works with tools obaying the ATerm API (note that
           unfortunately SDF tools and Stratego both fail to obay the ATerm API).
        */
-          virtual ATerm generate_ATerm();
+       // Rasmussen (1/7/2019): Added ROSE_OVERRIDE to kill warning messages of overridden virtual function
+          virtual ATerm generate_ATerm() $ROSE_OVERRIDE;
 
       /*! \brief Support for generation of ATerms. */
           virtual void generate_ATerm_Annotation(ATerm & term) $ROSE_OVERRIDE;

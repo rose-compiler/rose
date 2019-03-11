@@ -12,7 +12,7 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.0.6)
+               mkinstaller (rev. 2.4.3)
             </nobr>
          </center>
       </h3>
@@ -34,7 +34,7 @@
          <b>mkinstaller</b> <b>--help</b>
       </blockquote>
       <blockquote>
-         <b>mkinstaller</b> <b>--html</b>&nbsp;&nbsp;<i>pathname</i>
+         <b>mkinstaller</b> <b>--html</b>&nbsp;&nbsp;<span style="font-family:'Times New Roman'; font-size: 125%;"><i>pathname</i></span>
       </blockquote>
       <blockquote>
          <b>mkinstaller</b> <b>--vernum</b>
@@ -45,8 +45,8 @@
       <br>
       <blockquote>
          <b>mkinstaller</b>
-         <big>[</big><i>options</i> ...<big>]</big>
-         <i>pathname</i> ...
+         <big>[</big><span style="font-family:'Times New Roman'; font-size: 125%;"><i>options</i></span> ...<big>]</big>
+         <span style="font-family:'Times New Roman'; font-size: 125%;"><i>pathname</i></span> ...
       </blockquote>
       <br>
 
@@ -55,25 +55,70 @@
       </h3>
       <blockquote>
          This script is used to generate an "installer" script implemented as
-         a Bourne-shell script on UNIX-like systems (such as Linux or OSX) or
+         a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
          as a binary executable on Windows-like systems. This generated installer
          supports a number of options for specifying the where the various
          directories are to be installed (prefix directory pathnames).
       </blockquote>
+
+      <blockquote>
+         There are 2 separate computer systems involved in this process:
+         <blockquote>
+            <ol>
+               <li>The <b>source</b> system. This is where the software of interest
+                   is built and where the <i>mkinstaller</i> script (the generator) is
+                   used.
+               </li>
+               <li>The <b>target</b> system. This is where the generated installer
+                   script is run, where the software is to be installed.
+               </li>
+            </ol>
+         </blockquote>
+         There are 4 distinct phases or times involved in this process:
+         <blockquote>
+            <ol>
+               <li><b>Build-time</b>. This is the time when the software (binaries
+                   and/or text files) is built and installed on the "source" system.
+                   How this software is built and installed is not discussed here.
+               </li>
+               <li><b>Generation-time</b>. This is the time when <i>mkinstaller</i> is used
+                   to collect the software that was produced in phase 1 and generate
+                   the installer (script). Like phase 1, this is also done on the
+                   <i>source</i> system.
+               </li>
+               <li><b>Transport</b>. This is the process of taking a copy of the
+                   generated installer script that was produced in phase 2 from
+                   the <i>source</i> system to the <i>target</i> system. The details of this
+                   are not discussed here howerver such transport generally
+                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
+                   a web site.
+               </li>
+               <li><b>Installation-time</b>. This is the time when the installer
+                   script that was generated in phase 2 is executed on the <i>target</i>
+                   system. Note that mechanism of transport from the <i>source</i> system
+                   to the <i>target</i> system is not discussed here.
+               </li>
+            </ol>
+         </blockquote>
+      </blockquote>
+
       <blockquote>
          <b>UNIX-like Host</b>
          <blockquote>
-            On a UNIX-like host (such as Linux or OSX) the generated installer
+            On a UNIX-like host (such as Linux or MacOS) the generated installer
             script is implemented as a self-extracting Bourne-shell script
-            carrying a tarball as a payload. <i>mkinstaller</i> requires <i>tar</i> on UNIX-like
-            hosts.
+            carrying a tarball as a payload. Note that <i>mkinstaller</i> requires
+            <i>tar</i> on UNIX-like hosts. This is normally not a problem as almost
+            every UNIX-like system provides <i>tar</i>. On some UNIX-like hosts (most
+            noteably Solaris) tar doesn't support compression. On such systems
+            <i>gzcat</i> and <i>gzip</i> are required to support compression.
          </blockquote>
          <blockquote>
             The installer script construction process:
             <blockquote>
                <ol>
                   <li>Determination of a suitable temp directory. Much of the work
-                      done by the mkinstaller script is done in a temp directory.
+                      done by the <i>mkinstaller</i> script is done in a temp directory.
                   </li>
                   <li>Creation of a top level temporary directory under which all
                       other temporaries will be created. Creation of an "accumulator",
@@ -84,7 +129,7 @@
                       will be used to carry the individual directory tarballs.
                   </li>
                   <li>From each of the specified directories to be installed such
-                      as .../bin, .../lib, specified on the mkinstaller command line
+                      as .../bin, .../lib, specified on the <i>mkinstaller</i> command line
                       tarup the individual directory forming tarballs in the wrapper
                       directory in the temp directory.
                   </li>
@@ -94,7 +139,7 @@
                   <li>Generate the text of the "installer" script in the temporary
                       directory customizing it with with options for specifying an
                       overall prefix directory and individual prefixes for each of
-                      the directories specified on the mkinstaller command line.
+                      the directories specified on the <i>mkinstaller</i> command line.
                   </li>
                   <li>Add the tarball built in (4) to the end of the script generated
                       in (5) forming the distribution self-extracting installation
@@ -169,7 +214,7 @@
                       <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a pre-install script was
                       supplied to <i>mkinstaller</i> when the generated installer script
                       was produced then it will be revealed at this time. Similarly
-                      if a post-install script was supplied to mkinstaller when the
+                      if a post-install script was supplied to <i>mkinstaller</i> when the
                       generated installer script was produced then it will also be
                       revealed at this time. Note that neither of these scripts if
                       supplied and revealed are actually executed in this step. See
@@ -195,11 +240,14 @@
                   </li>
                </ol>
             </blockquote>
+            Note that generated installer script requires both <i>tar</i> and <i>perl</i>
+            on UNIX-like hosts. This is normally not a problem as almost every
+            UNIX-like system provides both <i>tar</i> and <i>perl</i>.
          </blockquote>
          <b>Windows-like Host</b>
          <blockquote>
             On a Windows-like host (such as Windows 7) the generated installer
-            is implemented as a binary execurable which is actually generated
+            is implemented as a binary executable which is actually generated
             under the covers by <i>NSIS</i> (Nullsoft Scripted Install System).
             <i>mkinstaller</i> requires <i>makensis</i> on Windows-like hosts.
          </blockquote>
@@ -323,29 +371,25 @@
                By default the script will be named "installer".
             </blockquote>
 
-            <b>--cc=</b><i>string</i>
+            <b>--cc=</b><i>name</i>
             <blockquote>
-               The C compiler name and version number that had been used in
-               building the software being installed. Note that the string
-               is expected to a blank separated pair: the name and version
-               number. The default is the string "- -" (meaning "unknown"
-               or "don't care"). For example:
+               The C compiler name that had been used in building the software
+               being installed. Do not use a pathname, use a simple name only.
+               For example:
                <blockquote>
-                  --cc="gcc 4.5.1"
+                  --cc="gcc"
                </blockquote>
-               Note that at this time only the C compiler name is used.
-               This option has been replaced by the <b><big><code>--CC=</code></big></b><i>name</i> and <b><big><code>--CC-options=</code></big></b><i>string</i> options.
+               Note that this option has been replaced by the <b><big><code>--CC=</code></big></b><i>name</i> and
+               <b><big><code>--CC-options=</code></big></b><i>string</i> options.
             </blockquote>
 
-            <b>--cxx=</b><i>string</i>
+            <b>--cxx=</b><i>name</i>
             <blockquote>
-               The C++ compiler name and version number that had been used
-               in building the software being installed. Note that the string
-               is expected to a blank separated pair: the name and version
-               number. The default is the string "- -" (meaning "unknown"
-               or "don't care"). For example:
+               The C++ compiler name that had been used in building the software
+               being installed. Do not use a pathname, se a simple name only.
+               For example:
                <blockquote>
-                  --cxx="g++ 4.5.1"
+                  --cxx="g++"
                </blockquote>
                Note that at this time only the C++ compiler name is used.
                This option has been replaced by the <b><big><code>--CXX=</code></big></b><i>name</i> and <b><big><code>--CXX-options=</code></big></b><i>string</i> options.
@@ -395,11 +439,25 @@
                A contact email address. There is no default contact address.
             </blockquote>
 
-            <b>-d</b> <br>
-            <b>--debug</b>
+            <b>--debug</b> <br>
+            <b>--debug</b>=<i>pathname</i>
             <blockquote>
                Produce extra output useful when debugging the <i>mkinstaller</i>
-               script itself.
+               script itself. Output will be sent to <i>stderr</i> if no pathname
+               is provided.
+            </blockquote>
+
+            <b>--fill</b>
+            <blockquote>
+               On Windows-like platforms the underlying <i>NSIS</i> tool will fail
+               if it encounters an empty directory to be installed. This
+               option works around this limitation by adding a dummy file to
+               such directories (named <b><big><code>dummy.txt</code></big></b>). Note that subdirectories
+               and symbolic-links don't count when checking if a directory is
+               empty.
+            </blockquote>
+            <blockquote>
+               <b>Note:</b> Use of this option isn't necessary on UNIX-like systems.
             </blockquote>
 
             <b>--follow</b>
@@ -422,6 +480,18 @@
                default is no such intermediate directory, the installations
                will be done in the PREFIX directory as given at installation
                time.
+            </blockquote>
+
+            <b>--is-gnu-tar</b>
+            <blockquote>
+               Assume the <i>tar</i> utility is GNU <i>tar</i> and so supports the <b><big><code>z</code></big></b> option
+               (compress). By default the <i>tar</i> utility is located and tested.
+            </blockquote>
+
+            <b>--nofill</b>
+            <blockquote>
+               Don't add a dummy file (named <b><big><code>dummy.txt</code></big></b>) to empty directories.
+               See the <b><big><code>--fill</code></big></b> option.
             </blockquote>
 
             <b>--nofollow</b>
@@ -451,6 +521,13 @@
                include those with standard base names as <b><big><code>bin</code></big></b>, <b><big><code>lib</code></big></b>, or <b><big><code>include</code></big></b>.
             </blockquote>
 
+            <b>--not-gnu-tar</b>
+            <blockquote>
+               Assume the <i>tar</i> utility is not GNU <i>tar</i> and doesn't support the
+               <b><big><code>z</code></big></b> option (can't compress). By default the <i>tar</i> utility is located
+               and tested.
+            </blockquote>
+
             <b>--os=</b><i>string</i>
             <blockquote>
                The OS on the system on which the installer is being generated.
@@ -460,7 +537,7 @@
                <b><big><code>uname -r</code></big></b> to determine this string.
             </blockquote>
 
-            <b>--preinstall-binary=</b><i>pathname</i>
+            <b>--preinstall-bin=</b><i>pathname</i>
             <blockquote>
                The pathname of a binary executable which is to be included
                with the installer's payload. It will be run by the generated
@@ -507,7 +584,7 @@
                generally found on Windows systems.
             </blockquote>
 
-            <b>--postinstall-binary=</b><i>pathname</i>
+            <b>--postinstall-bin=</b><i>pathname</i>
             <blockquote>
                The pathname of a binary executable which is to be included
                with the installer's payload. It will be run by the generated
@@ -582,6 +659,8 @@
                will have the same name as the generated script but with an
                added <b><big><code>.sha-</code></big></b><i>nnn</i>" suffix (where <i>nnn</i> is one of 1, 256,
                384, or 512). Note that <b><big><code>--sha-1</code></big></b> and <b><big><code>--sha-160</code></big></b> are synonymous.
+               It is almost always a good idea to generate such a hash and
+               the SHA 256 hash is generally preferred.
             </blockquote>
 
             <b>--std</b>
@@ -657,15 +736,138 @@
 
             <i>pathname</i>
             <blockquote>
-               The pathnames of one or more directories to be installed which
-               will be embedded as tarballs within the generated installer
-               script. Typical directory basenames are: <b><big><code>bin</code></big></b>, <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ...
-               Note that at least one such directory pathname is required.
+               The pathnames of one or more directories and/or files which will
+               be installed in the installation prefix directory at installation
+               time (when the generated installer is run). Note that such
+               directories may share basenames with other directories (they'll
+               be merged) but the basenames of files must be unique (otherwise
+               they'd collide in the installation prefix directory). Typical
+               directory basenames are: <b><big><code>bin</code></big></b>, <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... Typical file
+               basenames are: <b><big><code>README</code></big></b>, <b><big><code>LICENSE</code></big></b>, ... Note that at least one such
+               directory pathname is required.
             </blockquote>
-
             <blockquote>
                The basename of this pathname may not contain any spaces, tabs,
                or dashes however the directory component (if any) may.
+            </blockquote>
+            <blockquote>
+               Note that a file pathname is much like a file pathname given
+               with a <b><big><code>--with-</code></big></b><i>name</i><b><big><code>-file=</code></big></b><i>pathname</i> option but is to be placed
+               in the the top-level installation prefix directory.
+            </blockquote>
+
+         </blockquote>
+      </blockquote>
+
+      <h3>
+         EXAMPLE
+      </h3>
+      <blockquote>
+         The following is an annotated example of the use of <i>mkinstaller</i> by the
+         <i>ROSE</i> project to form a binary installer. Note that it is assumed that
+         both the <i>boost</i> and <i>ROSE</i> libraries have been built and "installed" on
+         this (host) system.
+      </blockquote>
+      <blockquote>
+         Assuming:
+         <blockquote>
+           Unix-like environment
+         </blockquote>
+         <blockquote>
+            <i>mkinstaller</i> installed under  <b><big><code>/opt/totebag/bin</code></big></b>
+            and <b><big><code>/opt/totebag/lib</code></big></b>
+         </blockquote>
+         <blockquote>
+            <i>Boost</i> installed in <b><big><code>/opt/boost/include</code></big></b>
+            and <b><big><code>/opt/boost/lib</code></big></b>
+         </blockquote>
+         <blockquote>
+            <i>ROSE</i> installed in <b><big><code>/opt/ROSE/bin</code></big></b>
+            and <b><big><code>/opt/ROSE/include</code></big></b>
+            and <b><big><code>/opt/ROSE/lib</code></big></b>
+            and <b><big><code>/opt/ROSE/share</code></big></b>
+         </blockquote>
+         Example command:
+         <blockquote>
+<pre>
+/opt/totebag/bin/mkinstaller -v2 \
+                             -c ROSE-rh6-4.8.5-installer \
+                             CC=gcc \
+                             CXX=g++ \
+                             /opt/boost/{include,lib} \
+                             /opt/ROSE/{bin,include,lib,share} \
+                             --postinstall-perl=/opt/totebag/lib/mkinstaller/rose-post-install
+</pre>
+         </blockquote>
+         Annotated command:
+         <blockquote>
+            From the above example command:
+            <blockquote>
+<pre>
+-v2 \
+</pre>
+            </blockquote>
+            The <b><big><code>-v2</code></big></b> option indicates (enhanced) verbose output is desired.
+            Note that verbose output is generally benificial. Also note that
+            the trailing backslash was the continuation mark from the above
+            very long command above (an honest cut/paste), it is not part
+            of this option or any of the following options and parameters.
+            <blockquote>
+<pre>
+-c ROSE-rh6-4.8.5-installer \
+</pre>
+            </blockquote>
+            The <b><big><code>-c</code></big></b> <i>name</i> option is used to give a meaningful name to the
+            generated installer. Note that the generated installer (a
+            Bourne-shell script) will end-up in the current directory. It is
+            suggested (but not required) that the <i>mkinstaller</i> command be run
+            from an empty directory.
+            <blockquote>
+<pre>
+CC=gcc \
+</pre>
+            </blockquote>
+            Used to specify the name of the C compiler. Note that this is just
+            the compiler name, not a pathname. This will encode information
+            in the generated installer that indicates how the binaries to be
+            installed were built. Not really an option, it is required.
+            <blockquote>
+<pre>
+CXX=g++ \
+</pre>
+            </blockquote>
+            Used to specify the name of the C++ compiler. Note that this is
+            just the compiler name, not a pathname. This will be encoded
+            in the generated installer that indicates how the binaries to be
+            installed were built. Not really an option, it is required.
+            <blockquote>
+<pre>
+/opt/boost/{include,lib} \
+</pre>
+            </blockquote>
+            The pathnames where the <i>boost</i> headers and libraries were installed
+            when they were built. Note that the example uses a curious form
+            of wildcard notation. It actually expands to 2 separate directory
+            pathnames: <b><big><code>/opt/boost/include</code></big></b> and <b><big><code>/opt/boost/lib</code></big></b>
+            <blockquote>
+<pre>
+/opt/ROSE/{bin,include,lib,share} \
+</pre>
+            </blockquote>
+            The pathnames where the various <i>ROSE</i> executables, headers, and
+            libraries were installed when they were built. This actually expands
+            to 4 separate directory pathnames: <b><big><code>/opt/ROSE/bin</code></big></b> <b><big><code>/opt/ROSE/include</code></big></b>
+            <b><big><code>/opt/ROSE/lib</code></big></b> and <b><big><code>/opt/ROSE/share</code></big></b>
+            <blockquote>
+<pre>
+--postinstall-perl=/opt/totebag/lib/mkinstaller/rose-post-install
+</pre>
+            </blockquote>
+            The <b><big><code>--postinstall-perl=</code></big></b><i>pathname</i> option indicates the pathname of
+            a Perl script (a file) which is to be carried in the generated
+            installer. Once all of the directories have been put in place during
+            the installation this script will be executed. Note that a <i>ROSE</i>
+            specific post-install Perl script is included with <i>mkinstaller</i>.
             </blockquote>
          </blockquote>
       </blockquote>
@@ -674,7 +876,7 @@
          RETURNS
       </h3>
       <blockquote>
-         "mkinstaller" returns the standard exit codes:
+         <i>mkinstaller</i> returns the standard exit codes:
          <blockquote>
             <table border=0><smaller>
                <tr>
@@ -698,13 +900,19 @@
          <i>mkinstaller</i> refers to the following environment variables:
          <blockquote>
 
-            DEBUG_mkinstaller
+            <b>DEBUG</b> <br>
+            <b>DEBUG_mkinstaller</b>
             <blockquote>
-               Generate extra output which is only usefull when debugging the
-               <i>mkinstaller</i> script itself.
+               This environment variable controls the production of additional
+               output intended as an aid in debugging the script itself. When
+               set to a non-zero integer value additional output will be
+               generated and sent to <i>stderr</i>. If set to a pathname additional
+               output will sent to a file with the given pathname. If set to
+               a value of 0 (zero) or left unset then no additional debugging
+               output will be produced.
             </blockquote>
 
-            INEFFECTIVE_mkinstaller
+            <b>INEFFECTIVE_mkinstaller</b>
             <blockquote>
                If this environment variable has been set then the generated
                script will lack a payload and may not even be runable. Note
@@ -712,7 +920,7 @@
                the script generation process.
             </blockquote>
 
-            MKINSTALLER_TMPDIR
+            <b>MKINSTALLER_TMPDIR</b>
             <blockquote>
                Consider this pathname before considering TMPDIR (see
                step (0) in the <b>NOTES</b> section below).
@@ -732,15 +940,27 @@
          SEE&nbsp;ALSO
       </h3>
       <blockquote>
-         <a href="http://nsis.sourceforge.net/Docs/Chapter3.html#">makensis</a>(1), <br>
-         <a href="http://nsis.sourceforge.net/Main_Page">NSIS</a>, <br>
-         <a href="../html1/pshaw.html">pshaw</a>(<a href="../html1/index.html">1x</a>), <br>
-         sh(1), <br>
-         sha1sum(1), <br>
-         sha256sum(1), <br>
-         sha384sum(1), <br>
-         sha512sum(1), <br>
-         tar(1)
+         Note that the following tools may be used by <i>mkinstaller</i>:
+         <blockquote>
+            cp(1), <br>
+            fgrep(1), <br>
+            gzcat(1), <br>
+            gzip(1), <br>
+            ldd(1), <br>
+            <a href="http://nsis.sourceforge.net/Docs/Chapter3.html#">makensis</a>(1), <br>
+            <a href="http://nsis.sourceforge.net/Main_Page">NSIS</a>, <br>
+            <a href="../html1/pshaw.html">pshaw</a>(<a href="../html1/index.html">1x</a>), <br>
+            sh(1), <br>
+            sha1sum(1), <br>
+            sha256sum(1), <br>
+            sha384sum(1), <br>
+            sha512sum(1), <br>
+            strings(1), <br>
+            tar(1), <br>
+            uname(1)
+         </blockquote>
+         Some of these may be required and if not found <i>mkinstaller</i> may
+         fail with an error message.
       </blockquote>
 
       <h3>
@@ -828,11 +1048,11 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.0.6)
+               mkinstaller (rev. 2.4.3)
             </nobr>
          </center>
       </h3>
 
-      <i>This man page was generated by mkinstaller 2.0.6 using the <code>--html</code> option. Revised  6Mar2018 19:15:31z</i>
+      <i>This man page was generated by mkinstaller 2.4.3 using the <code>--html</code> option. Revised 12Feb2019 15:39:19z</i>
    </body>
 </html>

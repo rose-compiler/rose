@@ -28,7 +28,7 @@ namespace Sawyer {
  *  for a detailed description of how to prepare objects to be referenced by @ref SharedPointer.
  *
  *  Usage is similar to @c std::shared_ptr to the extent that the number of pointers pointing to an object is recorded
- *  somewhere, and when that reference count reaches zero the object is destructed and freed by calling @c delete. The main
+ *  somewhere, and when that reference count reaches zero the object is destroyed and freed by calling @c delete. The main
  *  difference is that @ref SharedPointer stores the reference count in the object itself (i.e., "intrusive"). The effects
  *  are:
  *
