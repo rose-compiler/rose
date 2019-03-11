@@ -19,7 +19,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_06.C \
    test2012_07.C \
    test2012_09.C \
-   test2012_10.C \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
@@ -156,7 +155,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2016_30.C \
    test2016_37.C \
    test2016_39.C \
-   test2016_40.C \
    test2016_42.C \
    test2016_91.C \
    test2016_92.C \
@@ -295,6 +293,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1437-0.C \
    test2017_10.C \
    rose-1522-0.C \
+   rose-1774.C \
+   rose-1763.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -309,18 +309,194 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_13.C \
    test2019_14.C \
    test2019_17.C \
-   test2019_18.C 
+   test2019_18.C \
+   test2019_19.C \
+   test2019_20.C \
+   test2019_21.C \
+   test2019_22.C \
+   test2019_23.C \
+   test2019_24.C \
+   test2019_25.C \
+   test2019_26.C \
+   test2019_27.C \
+   test2019_28.C \
+   test2019_29.C \
+   test2019_30.C \
+   test2019_31.C \
+   test2019_32.C \
+   test2019_33.C \
+   test2019_35.C \
+   test2019_36.C \
+   test2019_39.C \
+   test2019_40.C \
+   test2019_41.C \
+   test2019_42.C \
+   test2019_45.C \
+   test2019_46.C \
+   test2019_47.C \
+   test2019_50.C \
+   test2019_51.C \
+   test2019_52.C \
+   test2019_53.C \
+   test2019_54.C \
+   test2019_55.C \
+   test2019_56.C \
+   test2019_62.C \
+   test2019_63.C \
+   test2019_64.C \
+   test2019_65.C \
+   test2019_66.C \
+   test2019_67.C \
+   test2019_68.C \
+   test2019_69.C \
+   test2019_70.C \
+   test2019_71.C \
+   test2019_72.C \
+   test2019_73.C \
+   test2019_74.C \
+   test2019_75.C \
+   test2019_76.C \
+   test2019_77.C \
+   test2019_78.C \
+   test2019_79.C \
+   test2019_80.C \
+   test2019_81.C \
+   test2019_82.C \
+   test2019_83.C \
+   test2019_86.C \
+   test2019_87.C \
+   test2019_88.C \
+   test2019_89.C \
+   test2019_90.C \
+   test2019_91.C \
+   test2019_92.C \
+   test2019_93.C \
+   test2019_94.C \
+   test2019_95.C \
+   test2019_96.C \
+   test2019_97.C \
+   test2019_98.C \
+   test2019_99.C \
+   test2019_100.C \
+   test2019_101.C \
+   test2019_102.C \
+   test2019_105.C \
+   test2019_106.C \
+   test2019_107.C \
+   test2019_108.C \
+   test2019_110.C \
+   test2019_111.C \
+   test2019_112.C \
+   test2019_113.C \
+   test2019_114.C \
+   test2019_115.C \
+   test2019_116.C \
+   test2019_117.C \
+   test2019_118.C \
+   test2019_119.C \
+   test2019_120.C \
+   test2019_121.C \
+   test2019_123.C \
+   test2019_124.C \
+   test2019_125.C \
+   test2019_129.C \
+   test2019_130.C \
+   test2019_131.C \
+   test2019_133.C \
+   test2019_134.C \
+   test2019_135.C \
+   test2019_136.C \
+   test2019_137.C \
+   test2019_138.C \
+   test2019_139.C \
+   test2019_140.C \
+   test2019_141.C \
+   test2019_142.C \
+   test2019_143.C \
+   test2019_144.C \
+   test2019_145.C \
+   test2019_146.C \
+   test2019_147.C \
+   test2019_150.C \
+   test2019_151.C \
+   test2019_152.C \
+   test2019_153.C \
+   test2019_154.C \
+   test2019_155.C \
+   test2019_156.C \
+   test2019_157.C \
+   test2019_160.C \
+   test2019_163.C \
+   test2019_164.C \
+   test2019_165.C \
+   test2019_166.C \
+   test2019_168.C \
+   test2019_169.C \
+   test2019_170.C \
+   test2019_171.C \
+   test2019_172.C \
+   test2019_173.C \
+   test2019_174.C \
+   test2019_175.C \
+   test2019_176.C \
+   test2019_177.C \
+   test2019_178.C \
+   test2019_179.C \
+   test2019_180.C \
+   test2019_181.C \
+   test2019_184.C \
+   test2019_185.C \
+   test2019_186.C \
+   test2019_187.C \
+   test2019_188.C \
+   test2019_189.C \
+   test2019_190.C \
+   test2019_191.C \
+   test2019_192.C \
+   test2019_193.C \
+   test2019_194.C \
+   test2019_195.C 
 
 TESTCODE_CURRENTLY_FAILING = \
+   test2012_10.C \
    test2012_23.C \
    test2012_24.C \
    test2014_46.C \
    test2015_11.C \
+   test2016_40.C \
    test2016_41.C \
    test2017_17.C \
    test2019_15.C \
-   test2019_16.C 
+   test2019_16.C \
+   test2019_34.C \
+   test2019_37.C \
+   test2019_38.C \
+   test2019_43.C \
+   test2019_44.C \
+   test2019_48.C \
+   test2019_49.C \
+   test2019_59.C \
+   test2019_60.C \
+   test2019_103.C \
+   test2019_104.C \
+   test2019_109.C \
+   test2019_122.C \
+   test2019_126.C \
+   test2019_127.C \
+   test2019_128.C \
+   test2019_132.C \
+   test2019_148.C \
+   test2019_149.C \
+   test2019_167.C \
+   test2019_182.C \
+   test2019_183.C 
 
+# NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
+
+# NOTE: Best examples of current issue are: test2019_50.C and test2019_52.C
+
+# NOTE: test2019_34.C, test2019_37.C, and test2019_38.C don't compile with at least some versions of GNU g++ (e.g. version 5.1) but will 
+# compile with EDG and ROSE now.  And the generated code is correct,
 # NOTE: test2019_15.C fails for the GNU 4.8.5, but passes for everything else (or at least later versions of gnu, versions 5.1 and later).
 
 # NOTE: test2012_10.C works on with GNU 5.1, but not GNU 6.1 (something different in the header files, not handled by EDG 4.12).
@@ -361,7 +537,13 @@ else
    test2018_63.C \
    test2018_64.C \
    test2018_65.C \
-   test2018_71.C 
+   test2018_71.C \
+   test2019_57.C \
+   test2019_58.C \
+   test2019_158.C \
+   test2019_159.C \
+   test2019_161.C \
+   test2019_162.C 
 endif
 
 if ROSE_USE_EDG_VERSION_4_9
@@ -453,16 +635,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-# ROSE_FLAGS = -rose:Cxx11 
-ROSE_FLAGS = -std=c++11
+LANG_FLAGS = -std=c++11
+
+ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -474,11 +657,11 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
 $(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
 endif
 
 #

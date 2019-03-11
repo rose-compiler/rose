@@ -34,10 +34,6 @@
 #   Note: This macro can work with the autoconf M4 macros for Java programs.
 #   This particular macro is not part of the original set of macros.
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Don Anderson <dda@sleepycat.com>

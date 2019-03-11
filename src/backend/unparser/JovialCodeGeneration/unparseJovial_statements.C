@@ -64,20 +64,22 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
         {
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
-       // program units
-       // case V_SgModuleStatement:            unparseModuleStmt(stmt, info);       break;
+       // module support
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt(stmt, info);      break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt(stmt, info);      break;
-       // case V_SgProcedureHeaderStatement:   unparseProcHdrStmt(stmt, info);      break;
+          case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
+          case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
        // declarations
-       // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
-          case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
           case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
+          case V_SgForStatement:               unparseForStatement   (stmt, info);  break;
+          case V_SgJovialForThenStatement:     unparseJovialForThenStatement (stmt, info);  break;
+          case V_SgWhileStmt:                  unparseWhileStmt      (stmt, info);  break;
           case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
           case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
           case V_SgSwitchStatement:            unparseSwitchStmt     (stmt, info);  break;
@@ -96,20 +98,15 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // executable statements, control flow
 
-          case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
-          case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
-
           case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
-
-          case V_SgDoWhileStmt:            unparseDoWhileStmt(stmt, info);      break;
 
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
           case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
 
-          case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
+          case V_SgForInitStatement:       unparseForInitStmt(stmt, info);      break;
 
           case V_SgFunctionParameterList:  unparseFunctionParameterList(stmt, info); break;
 
@@ -133,6 +130,19 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 //----------------------------------------------------------------------------
 
 void 
+Unparse_Jovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialCompoolStatement* compool = isSgJovialCompoolStatement(stmt);
+     ROSE_ASSERT(compool);
+
+     curprint("COMPOOL ");
+     curprint(compool->get_name());
+     curprint(";\n");
+   }
+
+void
 Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
@@ -141,8 +151,8 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(prog);
 
      curprint("PROGRAM ");
-     curprint(prog->get_name().str());
-     curprint(" ;\n");
+     curprint(prog->get_name());
+     curprint(";\n");
 
      unparseStatement(prog->get_definition(), ninfo);
 
@@ -152,20 +162,74 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt);
+     ROSE_ASSERT(func);
+
+     bool isDefiningDeclaration = (func->get_definition() != NULL);
+
+     if (isDefiningDeclaration)  curprint("DEF PROC ");
+     else                        curprint("REF PROC ");
+
+     curprint(func->get_name());
+
+  // unparse function arguments
+     SgFunctionParameterList* params = func->get_parameterList();
+     SgInitializedNamePtrList & args = params->get_args();
+
+     if (args.size() > 0)
+        {
+           bool firstOutParam = false;
+           bool foundOutParam = false;
+
+           curprint("(");
+
+           int i = 0;
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+              // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+                 if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+                    {
+                       firstOutParam = true;
+                       foundOutParam = true;
+                       curprint(" : ");
+                    }
+
+              // Don't output comma if this is the first out parameter
+                 if (i++ > 0 && firstOutParam == false) curprint(",");
+                 firstOutParam = false;
+
+                 curprint(arg->get_name());
+              }
+           curprint(")");
+        }
+
+  // unparse function type
+     SgType* type = func->get_type();
+     unparseType(type, ninfo);
+
+     curprint(";\n");
+
+     if (isDefiningDeclaration)
+        {
+           unparseStatement(func->get_definition(), ninfo);
+        }
+   }
+
+void
 Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgFunctionDefinition* funcdef = isSgFunctionDefinition(stmt);
      ROSE_ASSERT(funcdef != NULL);
-
-     curprint("BEGIN\n");
 
   // unparse the body of the function
      if (funcdef->get_body())
         {
           unparseStatement(funcdef->get_body(), info);
         }
-
-     curprint("END\n");
    }
 
 
@@ -184,11 +248,15 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
 #endif
 
+     curprint("BEGIN\n");
+
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      for ( ; p != basic_stmt->get_statements().end(); ++p)
      {
           unparseStatement((*p), info);
      }
+
+     curprint("END\n");
 
 #if 0
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
@@ -212,6 +280,133 @@ void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // The SgForStatement is used for the Jovial for statements like:
+  //
+  //     FOR ivar:0 by 1 while ivar<25;
+  //
+  // This choice was made so that it could be treated like a C for statement.
+  // Other forms of the Jovial ForStatement will require different Sage nodes.
+  //
+     SgForStatement* for_stmt = isSgForStatement(stmt);
+     ROSE_ASSERT(for_stmt);
+     ROSE_ASSERT(for_stmt->get_for_init_stmt());
+     ROSE_ASSERT(for_stmt->get_test());
+     ROSE_ASSERT(for_stmt->get_increment());
+     ROSE_ASSERT(for_stmt->get_loop_body());
+
+     curprint("FOR ");
+
+     SgForInitStatement* for_init_stmt = isSgForInitStatement(for_stmt->get_for_init_stmt());
+     ROSE_ASSERT(for_init_stmt);
+
+     SgStatementPtrList init_list = for_init_stmt->get_init_stmt();
+     SgExprStatement* init_stmt = isSgExprStatement(init_list[0]);
+     ROSE_ASSERT(init_stmt);
+
+     SgAssignOp* init_expr = isSgAssignOp(init_stmt->get_expression());
+     ROSE_ASSERT(init_expr);
+
+  // variable
+     unparseExpression(init_expr->get_lhs_operand_i(), info);
+
+  // initial value
+     curprint(":");
+     unparseExpression(init_expr->get_rhs_operand_i(), info);
+
+  // increment
+     curprint(" BY ");
+     unparseExpression(for_stmt->get_increment(), info);
+
+  // while condition
+     SgExprStatement* test_stmt = isSgExprStatement(for_stmt->get_test());
+     ROSE_ASSERT(test_stmt);
+
+     if ( ! isSgNullExpression(test_stmt->get_expression()) )
+        {
+           curprint(" WHILE ");
+           unparseExpression(test_stmt->get_expression(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+  // for body
+     unparseStatement(for_stmt->get_loop_body(), info);
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseJovialForThenStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // The SgJovialForThenStatement is used for Jovial for statements like:
+  //
+  //    FOR ivar:0 THEN 3 WHILE ivar<25;
+  //
+     SgJovialForThenStatement* for_stmt = isSgJovialForThenStatement(stmt);
+     ROSE_ASSERT(for_stmt);
+     ROSE_ASSERT(for_stmt->get_initialization());
+     ROSE_ASSERT(for_stmt->get_then_expression());
+     ROSE_ASSERT(for_stmt->get_while_expression());
+     ROSE_ASSERT(for_stmt->get_loop_body());
+
+     curprint("FOR ");
+
+     SgAssignOp* init_expr = isSgAssignOp(for_stmt->get_initialization());
+     ROSE_ASSERT(init_expr);
+
+  // variable
+     unparseExpression(init_expr->get_lhs_operand_i(), info);
+
+  // initial value
+     curprint(":");
+     unparseExpression(init_expr->get_rhs_operand_i(), info);
+
+  // then increment
+     curprint(" THEN ");
+     unparseExpression(for_stmt->get_then_expression(), info);
+
+  // while condition
+     if ( ! isSgNullExpression(for_stmt->get_while_expression()) )
+        {
+           curprint(" WHILE ");
+           unparseExpression(for_stmt->get_while_expression(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+  // for body
+     unparseStatement(for_stmt->get_loop_body(), info);
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
+     ROSE_ASSERT(while_stmt);
+     ROSE_ASSERT(while_stmt->get_body());
+     ROSE_ASSERT(while_stmt->get_condition());
+
+  // condition
+     curprint("WHILE ");
+     info.set_inConditional(); // prevent printing line and file info
+
+     SgExprStatement* condition_stmt = isSgExprStatement(while_stmt->get_condition());
+     ROSE_ASSERT(condition_stmt);
+
+     unparseExpression(condition_stmt->get_expression(), info);
+     info.unset_inConditional();
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+     unparseStatement(while_stmt->get_body(), info);
+     unp->cur.insert_newline(1);
+   }
+
+void
 Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
@@ -219,7 +414,7 @@ Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(goto_stmt->get_label() != NULL);
 
      curprint (string("GOTO " ) + goto_stmt->get_label()->get_label().str());
-     curprint (string(" ;"));
+     curprint (string(";"));
      unp->cur.insert_newline(1);
    }
 
@@ -403,8 +598,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(variableDeclaration != NULL);
 
+     if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+        {
+           curprint("CONSTANT ");
+        }
 #if 0
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic() == true)
+     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
         {
            curprint("STATIC ");
         }
@@ -429,11 +628,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint(" = ");
            SgInitializer* initializer = isSgInitializer(init);
            ROSE_ASSERT(initializer != NULL);
-           // TODO
-           // unparseExpression(initializer, info);
+           unparseExpression(initializer, info);
         }
 
-     curprint(" ;\n");
+     curprint(";\n");
    }
 
 void

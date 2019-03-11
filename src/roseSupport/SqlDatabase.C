@@ -172,6 +172,8 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     return dbname;
 }
 
+ // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -184,6 +186,7 @@ postgres_url_documentation() {
             "parameter that is understood at this time is \"debug\", which takes no value and causes each SQL statement "
             "to be emitted to standard error as it's executed.}");
 }
+#endif
 
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
@@ -308,7 +311,10 @@ ConnectionImpl::conn_for_transaction()
         retval = driver_connections.size();
         driver_connections.resize(retval+10);
     }
+
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     DriverConnection &dconn = driver_connections[retval];
+#endif
 
     // Fill in the necessary info for the driver connection and establish the connection
     switch (driver) {
@@ -544,8 +550,10 @@ TransactionImpl::init()
     postgres_tranx = NULL;
 #endif
     assert(drv_conn_idx < conn->impl->driver_connections.size());
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     ConnectionImpl::DriverConnection &dconn = conn->impl->driver_connections[drv_conn_idx];
     assert(dconn.nrefs>0);
+#endif
 
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3

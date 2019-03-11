@@ -2,10 +2,10 @@
 AC_DEFUN([GENERATE_CUDA_SPECIFIC_HEADERS],
 [
    mkdir -p "./include-staging/cuda_HEADERS"
-   pushd ./include-staging/cuda_HEADERS
+   pushd ./include-staging/cuda_HEADERS >/dev/null
    cp ${srcdir}/config/preinclude-cuda.h .
    tar xzf ${srcdir}/cuda-headers.tgz
-   popd
+   popd >/dev/null
 ])
 
 AC_DEFUN([ROSE_CHECK_CUDA],

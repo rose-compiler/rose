@@ -547,10 +547,11 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
      ROSE_ASSERT(node);
   // cerr << "reset parent for node " << node->unparseToString();
 
+#if 0
   // DQ (6/30/2018): Added to support debuggin test2018_118.C (infinit loop).
+  // Moved declaration here to avoid unused variable warning [Rasmussen 2019.01.29]
      static int counter = 0;
 
-#if 0
   // printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s) \n",node,node->sage_class_name());
      printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s): counter = %d \n",node,node->sage_class_name(),counter++);
 #endif

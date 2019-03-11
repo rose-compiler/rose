@@ -518,4 +518,11 @@ ifneq (@(WITH_Z3),no)
     run $(test) testSmtWideConstant -o z3lib ./testSmtWideConstant z3-lib
 endif
 
+########################################################################################################################
+# Test RegisterStateGeneric's peekRegister method
+########################################################################################################################
+
+run $(tool_compile_linkexe) testPeekRegister.C
+run $(test) testPeekRegister
+
 endif

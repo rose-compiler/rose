@@ -20,10 +20,6 @@
 #     CPP #defines:
 #     AC_DEFINE_UNQUOTED([BACKEND_X10_COMPILER_NAME_WITH_PATH])
 #
-# LAST MODIFICATION
-#
-#   2013-02-27
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -52,10 +48,7 @@ AC_DEFUN([ROSE_SUPPORT_X10_BACKEND],
               ROSE_MSG_ERROR([The backend X10 compiler does not seem to work])
           fi
       else
-          AC_MSG_WARN(
-              [The backend X10 compiler is set to '${BACKEND_X10_COMPILER}', ]
-              [but the X10 frontend has not been enabled. ]
-              [See --help for --enable-frontend-x10.])
+          AC_MSG_WARN([the backend X10 compiler is set to "$BACKEND_X10_COMPILER" but the X10 frontend has not been enabled; see --help for --enable-frontend-x10])
       fi
 
       AC_SUBST(BACKEND_X10_COMPILER)

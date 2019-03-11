@@ -1112,7 +1112,7 @@ StreamBuf::bake() {
         destination_->bakeDestinations(message_->properties(), *baked_/*out*/);
         anyUnbuffered_ = false;
         for (BakedDestinations::const_iterator bi=baked_->begin(); bi!=baked_->end() && !anyUnbuffered_; ++bi)
-            anyUnbuffered_ = !bi->second.isBuffered;
+            anyUnbuffered_ = !bi->second.isBuffered ? true : false;
         isBaked_ = true;
     }
 }
@@ -1441,6 +1441,24 @@ Facility::operator=(const Facility &other) {
     return *this;
 }
 
+SAWYER_EXPORT Facility&
+Facility::initialize(const std::string &name) {
+    assert(isConstructed());
+    constructed_ = CONSTRUCTED_MAGIC;
+    name_ = name;
+    initStreams(FdSink::instance(2));
+    return *this;
+}
+
+SAWYER_EXPORT Facility&
+Facility::initialize(const std::string &name, const DestinationPtr &destination) {
+    assert(isConstructed());
+    constructed_ = CONSTRUCTED_MAGIC;
+    name_ = name;
+    initStreams(destination);
+    return *this;
+}
+
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::initStreams(const DestinationPtr &destination) {
@@ -1469,7 +1487,12 @@ Facility::renameStreams(const std::string &name) {
 // thread-safe
 SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
-    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
+    if (!isConstructed()) {
+        // If you're looking at this line in a debugger it's probably because you declarated a Message::Facility global
+        // variable and tried to use it before the C++ runtime has had a chance to initialize it.  You can initialize
+        // Facility objects from "main" (for instance) by calling Facility::initialize.
+        throw std::runtime_error("message facility has not been constructed yet");
+    }
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
@@ -2177,7 +2200,7 @@ class Initializer {
 public:
     void operator()() {
         merr = FdSink::instance(2);
-        mlog = Facility("", merr);
+        mlog.initialize("", merr);
         mlog.comment("Sawyer C++ support library");
         mlog[DEBUG].disable();
         mlog[TRACE].disable();

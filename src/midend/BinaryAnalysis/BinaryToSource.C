@@ -220,7 +220,7 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     raisingOps_->reset();
     BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.get_nbits());
     BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
-                                                                    raisingOps_->readRegister(SP, spDflt),
+                                                                    raisingOps_->peekRegister(SP, spDflt),
                                                                     raisingOps_->undefined_(IP.get_nbits()),
                                                                     raisingOps_->boolean_(true));
     emitEffects(out);

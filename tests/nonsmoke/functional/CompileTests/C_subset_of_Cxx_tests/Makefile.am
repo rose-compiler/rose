@@ -225,15 +225,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:C
+LANG_FLAGS = -std=c
+
+ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -245,7 +247,7 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
 $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.c)
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.C.passed=.c)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.C.passed=.c)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 	@rm -f $(@:.C.passed=.c)
@@ -253,7 +255,7 @@ $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_e
 test2005_56.C.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.c)
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -DTEST_STRING_MACRO=\"\\\"Thu Apr 14 08:18:33 PDT 2005\"\\\" -c $(@:.C.passed=.c)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -DTEST_STRING_MACRO=\"\\\"Thu Apr 14 08:18:33 PDT 2005\"\\\" -c $(@:.C.passed=.c)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 	@rm -f $(@:.C.passed=.c)

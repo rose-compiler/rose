@@ -906,7 +906,7 @@ public:                                                 // public only for the s
         bool isEmpty() const {
             return base_.base() == NULL;
         }
-        
+
     private:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }

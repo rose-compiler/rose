@@ -854,7 +854,7 @@ public:
         functor->docString(doc);
         return functor;
     }
-    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
         BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
@@ -885,7 +885,7 @@ public:
                            "stored at a memory address is eight bits wide.");
         return functor;
     }
-    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token, const SymbolicExpr::Nodes &operands) {
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token, const SymbolicExpr::Nodes &operands) {
         if (token.lexeme() != "mem")
             return SymbolicExpr::Ptr();
         if (operands.size() != 1)

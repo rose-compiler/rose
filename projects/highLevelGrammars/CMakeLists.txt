@@ -1,4 +1,3 @@
-
 add_executable(overloadedOperatorRepresentation
   overloadedOperatorRepresentation.C AbstractionAttribute.C)
 target_link_libraries(overloadedOperatorRepresentation

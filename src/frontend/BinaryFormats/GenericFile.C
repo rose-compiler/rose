@@ -7,8 +7,8 @@
 #include "MemoryMap.h"
 
 #include <boost/version.hpp>
-#if BOOST_VERSION < 106900
-#include <boost/math/common_factor.hpp>                 // deprecated in 1.69.0
+#if BOOST_VERSION < 106700
+#include <boost/math/common_factor.hpp>                 // deprecated in 1.67.0
 #else
 #include <boost/integer/common_factor.hpp>
 #endif
@@ -547,82 +547,6 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
     return best;
 }
 
-SgAsmGenericSection *
-SgAsmGenericFile::get_best_possible_section_by_va(rose_addr_t va)
-{
-  // This function is implemented for use in:
-  //      "DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr)"
-  // It supports a more restrictive selection of valid sections to associate with
-  // a given address so that we can avoid disassembly of sections that are not code.
-
-     const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va);
-
-     if (0 == possible.size())
-        {
-          return NULL;
-        }
-       else
-        {
-          if (1 == possible.size())
-             {
-            // printf ("Only one alternative: va = %p possible[0] id = %d name = %s (return %s) \n",
-            //      (void*)va,possible[0]->get_id(),possible[0]->get_name().c_str(),(possible[0]->get_id() < 0) ? "NULL" : "it");
-            // return possible[0];
-               if (possible[0]->get_id() < 0)
-                    return NULL;
-                 else
-                    return possible[0];
-             }
-        }
-
-#if 0
-     printf ("Select from %" PRIuPTR " alternatives \n",possible.size());
-     for (size_t i = 0; i < possible.size(); i++)
-        {
-          printf ("   va = %p possible[%" PRIuPTR "] id = %d name = %s \n",(void*)va,i,possible[i]->get_id(),possible[i]->get_name().c_str());
-        }
-#endif
-
-  /* Choose the "best" section to return. */
-     SgAsmGenericSection *best = possible[0];
-     rose_addr_t fo0 = possible[0]->get_va_offset(va);
-     for (size_t i = 1; i < possible.size(); i++)
-        {
-          if (fo0 != possible[i]->get_va_offset(va))
-            return NULL; /* all possible sections must map the VA to the same file offset */
-
-          if (best->get_id() < 0 && possible[i]->get_id() > 0)
-             {
-               best = possible[i]; /*prefer sections defined in a section or object table*/
-             }
-            else
-               if (best->get_mapped_size() > possible[i]->get_mapped_size())
-                  {
-                    best = possible[i]; /*prefer sections with a smaller mapped size*/
-                  }
-                 else
-                     if (best->get_name()->get_string().size()==0 && possible[i]->get_name()->get_string().size()>0)
-                       {
-                         best = possible[i]; /*prefer sections having a name*/
-                       }
-                      else
-                       {
-                      /* prefer section defined earlier*/
-
-                       }
-        }
-
-     ROSE_ASSERT(best != NULL);
-
-  // Add a few things that we just don't want to disassemble
-     if (best->get_name()->get_string() == "ELF Segment Table")
-          return NULL;
-
-  // printf ("   best: va = %p id = %d name = %s \n",(void*)va,best->get_id(),best->get_name().c_str());
-
-     return best;
-}
-
 rose_addr_t
 SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
 {
@@ -843,7 +767,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             Extent ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             if (strchr("RICE", ExtentMap::category(ap, sp))) {
                 rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-#if BOOST_VERSION < 106900
+#if BOOST_VERSION < 106700
                 align = boost::math::lcm(align, x?x:1); // deprecated in boost-1.69.0
 #else
                 align = boost::integer::lcm(align, x?x:1); // not present before boost-1.60.0

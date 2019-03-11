@@ -1,8 +1,0 @@
-START
-PROGRAM testloop ;
-BEGIN
-  ivar = 0;
-  WHILE (ivar<10);
-    ivar=ivar+1;
-END
-TERM

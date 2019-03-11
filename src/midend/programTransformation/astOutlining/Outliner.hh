@@ -65,11 +65,13 @@ namespace Outliner
   ROSE_DLL_API extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   ROSE_DLL_API extern bool useNewFile; // Generate the outlined function into a separated new source file
                           // -rose:outline:new_file
+  ROSE_DLL_API extern bool copy_origFile; // when generating the new file to store outlined function, copy entire original file to it.
   ROSE_DLL_API extern std::vector<std::string> handles;   // abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
   ROSE_DLL_API extern bool enable_debug; // output debug information for outliner
   ROSE_DLL_API extern bool exclude_headers; // exclude headers from the new file containing outlined functions
   ROSE_DLL_API extern bool enable_liveness; // enable liveness analysis to reduce restoring statements when temp variables are used
   ROSE_DLL_API extern bool use_dlopen; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  
   ROSE_DLL_API extern std::string output_path; // where to save the new file containing the outlined function
 
   //! Constants used during translation
@@ -219,6 +221,20 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
      * generated according to the file suffix of s
      */
     ROSE_DLL_API SgSourceFile* generateNewSourceFile(SgBasicBlock* target, const std::string& file_name);
+
+    /*!\brief Obtain the file handle to the separated source file storing outlined functions.  
+     * This file will be compiled to .so dynamically loadable library.
+     * target is the input code block for outlining. It provides SgProject and input file name info. 
+     * the lib source file's name convention is rose_input_lib.[c|cxx].
+     */
+    ROSE_DLL_API SgSourceFile* getLibSourceFile(SgBasicBlock* target);
+    
+    /*!\brief the lib source file's name convention is rose_input_lib.[c|cxx].
+     * 
+     * target is the input code block for outlining. It provides SgProject and input file name info. 
+     * 
+     */
+    ROSE_DLL_API std::string generateLibSourceFileName (SgBasicBlock* target);
 
     /*!\brief Generate a struct declaration to wrap all variables to be passed to the outlined function
      * There are two ways to wrap a variable: Using its value vs. Using its address (pointer type)

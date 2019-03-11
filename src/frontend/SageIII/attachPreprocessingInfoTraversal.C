@@ -94,7 +94,7 @@ AttachPreprocessingInfoTreeTrav::~AttachPreprocessingInfoTreeTrav() {
 namespace EDG_ROSE_Translation
    {
   // DQ (9/18/2018): Declare this map so that we can use it for the unparse header files option.
-#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
   // DQ (12/11/2018): Use the definition in the EDG edgRose.C file if C/C++ support IS defined.
      extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
 #else
@@ -1896,7 +1896,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              {
             // DQ (10/21/2013): I am not clear if this shuld be a warning, but I disabled the assertion above (required for 
             // Fortran or perhaps masking another issue).  After more investigation, I think this is OK to comment out.
-#if 1
+#if 0
                printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
 #endif
             // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
@@ -2149,13 +2149,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
      SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
 
+#if 0
+  // DQ (1/25/2019): A case option without a body is allowed, and comments should be allowed here..
   // DQ (11/25/2017): Added debugging info to support new switch implementation.
      if (caseOptionStm != NULL && caseOptionStm->get_body() == NULL)
         {
           printf ("Error: In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm = %p \n",caseOptionStm);
           caseOptionStm->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): caseOptionStm: debug");
         }
-     ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
+  // DQ (1/25/2019): A case option without a body is allowed.
+  // ROSE_ASSERT (caseOptionStm == NULL || caseOptionStm->get_body() != NULL);
+#endif
 
   // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".
   // ROSE_ASSERT (isSgClassDeclaration(n) == NULL || isSgClassDeclaration(n)->get_endOfConstruct() != NULL);
