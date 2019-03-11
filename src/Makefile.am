@@ -467,7 +467,9 @@ rose_config_installed_ldflags =			\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
 	-lm
-
+if ROSE_USE_EDG_QUAD_FLOAT
+  rose_config_installed_ldflags += -lquadmath
+endif
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg
 

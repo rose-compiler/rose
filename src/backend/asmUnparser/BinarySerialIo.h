@@ -163,6 +163,7 @@ protected:
         : format_(BINARY), progress_(Progress::instance()), isOpen_(false), objectType_(NO_OBJECT),
           progressBar_(mlog[Sawyer::Message::MARCH]), fd_(-1) {
         init();
+        progressBar_.suffix(" bytes");
     }
 
 public:
@@ -177,6 +178,11 @@ public:
      *  The destructor closes any attached file but does not throw exceptions. Therefore, it is better to always
      *  explicitly @ref close an I/O object before destroying it. */
     virtual ~SerialIo();
+
+    /** Create a new Savable enum constant.
+     *
+     *  This is a convenience function to create a new Savable constant which is an @p offset from USER_DEFINED. */
+    static Savable userSavable(unsigned offset);
 
     /** Property: File format.
      *
@@ -350,6 +356,7 @@ public:
         std::string errorMessage;
         boost::thread worker(startWorker<T>, this, objectTypeId, object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+        progressBar_.prefix("writing");
         while (!worker.try_join_for(timeout)) {
             off_t cur = ::lseek(fd_, 0, SEEK_CUR);
             if (-1 == cur) {
@@ -499,6 +506,7 @@ public:
 #else
         boost::thread worker(startWorker<T>, this, &object, &errorMessage);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+        progressBar_.prefix("reading");
         while (!worker.try_join_for(timeout)) {
             if (fileSize_ > 0) {
                 off_t cur = ::lseek(fd_, 0, SEEK_CUR);

@@ -617,9 +617,9 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-deadcode check-normalization check-equivalence check-svcomp-witness
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness
 
-CHECK_DEFAULT_FAILING=check-data-races
+CHECK_DEFAULT_FAILING=check-data-races check-deadcode 
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
 CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
@@ -649,14 +649,18 @@ check-codethorn-internal:
 	@./codethorn --internal-checks	
 
 check-domain:
+	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+check-domain-old:
 	@echo ================================================================
 	@echo DOMAIN TESTS
 	@echo ================================================================
+	@xxx
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
-	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C --log-level=trace
+	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
 	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:

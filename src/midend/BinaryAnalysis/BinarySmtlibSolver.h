@@ -46,7 +46,7 @@ public:
     /** Virtual constructor.
      *
      *  Creates a new solver like this one. */
-    virtual Ptr create() const {
+    virtual Ptr create() const ROSE_OVERRIDE {
         return instance(name(), executable_, shellArgs_, linkage());
     }
     
@@ -55,7 +55,7 @@ public:
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
     virtual std::string getCommand(const std::string &configName) ROSE_OVERRIDE;
     virtual std::string getErrorMessage(int exitStatus) ROSE_OVERRIDE;
-    virtual VariableSet findVariables(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
+    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;

@@ -52,6 +52,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstSymbolTablesToSupportAliasedSymbols");
+          mlog.comment("normalizing symbol tables for aliased symbols");
         }
    }
 

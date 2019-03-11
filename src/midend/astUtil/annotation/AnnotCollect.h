@@ -12,11 +12,12 @@ typedef ReadAnnotCollection<OperatorDeclaration, '{', ';','}'> ReadOperatorColle
 class ReadAnnotation {
   ReadTypeCollection typeInfo;
   ReadOperatorCollection opInfo;
+  ReadTypeCollection varInfo;
   static ReadAnnotation* inst;
   ReadAnnotation() {}
  public:
   void add_TypeCollection (TypeCollectionBase* c) 
-    { typeInfo.push_back(c); }
+    { typeInfo.push_back(c); varInfo.push_back(c); }
   void add_OperatorCollection (OperatorCollectionBase *c)
     { opInfo.push_back(c); }
 

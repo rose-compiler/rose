@@ -117,7 +117,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 #endif
 
 //! For preprocessing information including source comments, #include , #if, #define, etc
-class  PreprocessingInfo
+class PreprocessingInfo
    {
      public:
       //  DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).

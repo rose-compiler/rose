@@ -20,6 +20,7 @@ CodeInserter::initDiagnostics() {
     if (!initialized) {
         initialized = true;
         mlog = Sawyer::Message::Facility("Rose::BinaryAnalysis::CodeInserter", Diagnostics::destination);
+        mlog.comment("inserting code into an existing specimen");
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }

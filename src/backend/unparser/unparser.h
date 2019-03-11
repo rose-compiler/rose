@@ -33,6 +33,10 @@
 // This is intended to suppport non standard backend compiler annotations.
 #include "astUnparseAttribute.h"
 
+
+#include "includeFileSupport.h"
+
+
 class Unparser_Nameq;
 
 // Macro used for debugging.  If true it fixes the anonymous typedef and anonymous declaration
@@ -283,6 +287,10 @@ class Unparser
        // int getColumnNumberOfEndOfString( std::string s ) const;
           static int getNumberOfLines( std::string s );
           static int getColumnNumberOfEndOfString( std::string s );
+
+       // DQ (8/7/2018): Refactored code for name qualification (so that we can call it once before all files 
+       // are unparsed (where we unparse multiple files because fo the use of header file unparsing)).
+          static void computeNameQualification ( SgSourceFile* file );
    };
 
 

@@ -1,0 +1,3 @@
+In this test, a single source file includes a single header file,
+which is located in a different folder. The header file is unparsed
+because it contains a renamed variable.

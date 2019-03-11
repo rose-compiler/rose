@@ -6,6 +6,9 @@
 #ifdef ROSE_HAVE_Z3
 #include <z3++.h>
 #endif
+#ifdef ROSE_HAVE_Z3_VERSION_H
+#include <z3_version.h>
+#endif
 
 #ifndef ROSE_Z3
 #define ROSE_Z3 ""
@@ -82,7 +85,7 @@ public:
     /** Virtual constructor.
      *
      *  Create a new solver just like this one. */
-    virtual Ptr create() const {
+    virtual Ptr create() const ROSE_OVERRIDE {
         return Ptr(instance(linkage()));
     }
 

@@ -623,6 +623,16 @@ typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressio
 typedef Rose_STL_Container<SgLambdaCapture*>     SgLambdaCapturePtrList;
 typedef SgLambdaCapturePtrList*                  SgLambdaCapturePtrListPtr;
 
+// DQ (9/15/2018) Add SgSourceFile list support for header file reporting (for unparse headers option).
+class SgSourceFile;
+typedef Rose_STL_Container<SgSourceFile*>        SgSourceFilePtrList;
+typedef SgSourceFilePtrList*                     SgSourceFilePtrListPtr;
+
+// DQ (9/18/2018) Add SgIncludeFile list support for header file reporting (for unparse headers option).
+class SgIncludeFile;
+typedef Rose_STL_Container<SgIncludeFile*>        SgIncludeFilePtrList;
+typedef SgIncludeFilePtrList*                     SgIncludeFilePtrListPtr;
+
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;

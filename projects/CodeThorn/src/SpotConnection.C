@@ -426,8 +426,19 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
       ltlResults->addProperty(nextFormula->ltlString, nextFormula->propertyNumber);
       explicitPropertyNumber = false;
       nextFormula = new LtlProperty();
+    } else if (line.size()==0) {
+      // empty line found (no spaces, only '\n')
+    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='i') {
+      // found inputs line (must match inputs array content)
+      cout<<"LTL PARSER: detected inputs line: "<<line<<endl;
+    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='o') {
+      // found inputs line
+      cout<<"LTL PARSER: detected outputs line: "<<line<<endl;
+    } else {
+      // other lines that neither contain a property number nor a formula nor inputs nor outputs
+      cerr<<"Error: LTL Property parsing failed. Unknown input: "<<line<<endl;
+      exit(1);
     }
-    //ignore any other lines that neither contain a property number nor a formula
   }
   delete nextFormula;
   nextFormula = NULL;

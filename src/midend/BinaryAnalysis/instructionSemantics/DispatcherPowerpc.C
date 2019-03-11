@@ -250,8 +250,7 @@ struct IP_b: P {
         assert_args(insn, args, 1);
         if (save_link)
             ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
-        BaseSemantics::SValuePtr target = ops->add(d->read(args[0], 32), v1);
+        BaseSemantics::SValuePtr target = d->read(args[0], 32); // operand already is sum of insn addr and LI value
         ops->writeRegister(d->REG_IAR, target);
     }
 };
@@ -300,8 +299,7 @@ struct IP_bc: P {
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr v1 = ops->number_(32, insn->get_address());
-        BaseSemantics::SValuePtr target = (ops->add(d->read(args[2], 32), v1));
+        BaseSemantics::SValuePtr target = d->read(args[2], 32);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
         ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
@@ -703,6 +701,15 @@ struct IP_lwzu: P {
         BaseSemantics::SValuePtr yes = ops->boolean_(true);
         d->write(args[0], ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes));
         d->write(ra, addr);
+    }
+};
+
+// Move condition register field
+struct IP_mcrf: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr value = d->read(args[1], 4);
+        d->write(args[0], value);
     }
 };
 
@@ -1193,6 +1200,7 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_lwz,              new Powerpc::IP_move);
     iproc_set(powerpc_lwzu,             new Powerpc::IP_lwzu);
     iproc_set(powerpc_lwzx,             new Powerpc::IP_move);
+    iproc_set(powerpc_mcrf,             new Powerpc::IP_mcrf);
     iproc_set(powerpc_mfcr,             new Powerpc::IP_mfcr);
     iproc_set(powerpc_mfspr,            new Powerpc::IP_move);
     iproc_set(powerpc_mtcrf,            new Powerpc::IP_mtcrf);

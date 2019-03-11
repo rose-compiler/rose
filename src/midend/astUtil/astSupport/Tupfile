@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) ProcessAstTree.C StmtInfoCollect.C
+
+run $(public_header) AnalysisInterface.h ProcessAstTree.h StmtInfoCollect.h LoopInfoInterface.h

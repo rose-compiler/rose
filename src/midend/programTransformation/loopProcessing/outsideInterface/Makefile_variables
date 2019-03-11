@@ -3,13 +3,9 @@
 # (11/14/2008) Liao - Moved from project/arrayOptimization
 
 mptlpOutsideInterface_la_sources=\
-	$(mptlpOutsideInterfacePath)/ArrayAnnot.C \
-	$(mptlpOutsideInterfacePath)/ArrayInterface.C \
 	$(mptlpOutsideInterfacePath)/ArrayRewrite.C
 
 mptlpOutsideInterface_includeHeaders=\
-	$(mptlpOutsideInterfacePath)/ArrayAnnot.h \
-	$(mptlpOutsideInterfacePath)/ArrayInterface.h \
 	$(mptlpOutsideInterfacePath)/ArrayRewrite.h
 
 mptlpOutsideInterface_extraDist=\

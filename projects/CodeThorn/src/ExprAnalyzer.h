@@ -100,6 +100,8 @@ namespace CodeThorn {
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
     ProgramLocationsReport getOutOfBoundsAccessLocations();
+    bool definitiveErrorDetected();
+    bool potentialErrorDetected();
 
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);

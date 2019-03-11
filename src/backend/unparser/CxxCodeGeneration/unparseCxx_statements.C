@@ -81,31 +81,46 @@ string UnparseLanguageIndependentConstructs::token_sequence_position_name( Unpar
      return s;
    }
 
+
+// void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
+// SgStatement* stmt, 
+// UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
+// UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
 void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
-   SgStatement* stmt, 
-   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
-   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
+   SgStatement* stmt,
+   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start,
+   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end, 
+   SgUnparse_Info & info)
    {
 #if 0
       printf ("unparseStatementFromTokenStream(stmt = %p = %s): \n",stmt,stmt->class_name().c_str());
+      printf ("   --- stmt: filename = %s \n",stmt->getFilenameString().c_str());
 #endif
 
      if ( SgProject::get_verbose() > 0 )
         {
-          string s = "/* Unparse a partial token sequence: stmt = " + stmt->class_name() + " */ ";
+          string s = "/* Unparse a partial token sequence: 1 stmt: stmt = " + stmt->class_name() + " */ ";
           curprint (s);
         }
 
-     unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end);
+  // unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end);
+     unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end,info);
    }
 
 
+// void
+// UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
+// // SgStatement* stmt_1, SgStatement* stmt_2, 
+//    SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, 
+//    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
+//    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end,
+//    bool unparseOnlyWhitespace )
 void
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
-// SgStatement* stmt_1, SgStatement* stmt_2, 
-   SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, 
+   SgLocatedNode* stmt_1, SgLocatedNode* stmt_2,
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end,
+   SgUnparse_Info & info,
    bool unparseOnlyWhitespace )
    {
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
@@ -118,6 +133,23 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
      printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
      printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
      printf ("   --- unparseOnlyWhitespace = %s \n",unparseOnlyWhitespace ? "true" : "false");
+
+     SgDeclarationStatement* declarationStatement_1 = isSgDeclarationStatement(stmt_1);
+     if (declarationStatement_1 != NULL)
+        {
+          printf ("   --- declarationStatement_1->get_firstNondefiningDeclaration() = %p \n",declarationStatement_1->get_firstNondefiningDeclaration());
+          printf ("   --- declarationStatement_1->get_definingDeclaration()         = %p \n",declarationStatement_1->get_definingDeclaration());
+        }
+
+     SgDeclarationStatement* declarationStatement_2 = isSgDeclarationStatement(stmt_2);
+     if (declarationStatement_2 != NULL)
+        {
+          printf ("   --- declarationStatement_2->get_firstNondefiningDeclaration() = %p \n",declarationStatement_2->get_firstNondefiningDeclaration());
+          printf ("   --- declarationStatement_2->get_definingDeclaration()         = %p \n",declarationStatement_2->get_definingDeclaration());
+        }
+
+     printf ("   --- stmt_1->get_file_info()->get_filenameString() = %s \n",stmt_1->get_file_info()->get_filenameString().c_str());
+     printf ("   --- stmt_2->get_file_info()->get_filenameString() = %s \n",stmt_2->get_file_info()->get_filenameString().c_str());
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -125,23 +157,157 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
        // Avoid redundant output from unparseStatementFromTokenStream() taking a single SgStatement.
           if (stmt_1 != stmt_2)
              {
-               string s = "/* Unparse a partial token sequence: stmt_1 = " + stmt_1->class_name() + " stmt_2 = " + stmt_2->class_name() +  " */ ";
+               string s = "/* Unparse a partial token sequence: 2 stmt: stmt_1 = " + stmt_1->class_name() + " stmt_2 = " + stmt_2->class_name() +  " */ ";
                curprint (s);
              }
         }
 
-     SgSourceFile* sourceFile = isSgSourceFile(SageInterface::getEnclosingFileNode(stmt_1));
+  // DQ (10/27/2018): This is the wrong source file when we are unparsing header files (which share the global scope 
+  // but for which this function will traverse paranter pointest to find the translation units SgSourceFile (which is 
+  // that of the input source code and not the associated header file).
+  // SgSourceFile* sourceFile = isSgSourceFile(SageInterface::getEnclosingFileNode(stmt_1));
+     SgSourceFile* sourceFile = info.get_current_source_file();
      ROSE_ASSERT(sourceFile != NULL);
 
+#if 0
+     printf ("In unparseStatementFromTokenStream(): sourceFile filename = %s \n",sourceFile->getFileName().c_str());
+     printf ("In unparseStatementFromTokenStream(): sourceFile->get_tokenSubsequenceMap().size()         = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
+
+  // DQ (12/26/2018): Moved this to the outer function scopw so that we can assert that any element index is less then the tokenVectorSize.
+     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+     int tokenVectorSize = tokenVector.size();
+
+  // Note: that there is a single global map that is accessed from the get_tokenSubsequenceMap() function, not one per SgSourceFile.
+  // I am not clear if this is an issue for the header file unparsing using the token steam, I think that since the map is based on 
+  // keys that are IR node pointers, they are all unique.
+  // DQ (9/28/2018): There is not one map per file to simplify debugging (and maybe fix some subtle problems).
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
-     TokenStreamSequenceToNodeMapping* tokenSubsequence_1 = tokenStreamSequenceMap[stmt_1];
-  // ROSE_ASSERT(tokenSubsequence_1 != NULL);
+#if 0
+     printf ("In unparseStatementFromTokenStream(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+#endif
 
-     TokenStreamSequenceToNodeMapping* tokenSubsequence_2 = tokenStreamSequenceMap[stmt_2];
+  // TokenStreamSequenceToNodeMapping* tokenSubsequence_1 = tokenStreamSequenceMap[stmt_1];
+  // ROSE_ASSERT(tokenSubsequence_1 != NULL);
+     TokenStreamSequenceToNodeMapping* tokenSubsequence_1 = NULL;
+
+  // DQ (10/4/2018): This is a essential test to avoid pointers to default constructed objects from appearing accedentally in the STL map.
+     if (tokenStreamSequenceMap.find(stmt_1) == tokenStreamSequenceMap.end())
+        {
+#if 0
+       // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
+          printf ("WARNING: This IR node is not in the tokenStreamSequenceMap! \n");
+#endif
+        }
+       else
+        {
+          tokenSubsequence_1 = tokenStreamSequenceMap[stmt_1];
+        }
+
+  // DQ (9/25/2018): I think this is an issue for new IR nodes added to the AST (such a SgIncludeDirective IR nodes within the header file unparsing support).
+  // However there is a current bug where the global scope for include files are missing.
+     if (tokenSubsequence_1 == NULL)
+        {
+       // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
+#if 0
+          printf ("Warning: In unparseStatementFromTokenStream(): tokenSubsequence_1 == NULL: stmt_1 = %p = %s \n",stmt_1,stmt_1->class_name().c_str());
+          printf ("   --- stmt_1 = %p = %s \n",stmt_1,stmt_1->class_name().c_str());
+          printf ("   --- stmt_2 = %p = %s \n",stmt_2,stmt_2->class_name().c_str());
+       // printf ("   --- tokenSubsequence_2 = %p \n",tokenSubsequence_2);
+
+          SgGlobal* global_stmt_1 = isSgGlobal(stmt_1);
+          if (global_stmt_1 != NULL)
+             {
+               printf ("Found a SgGlobal that is not in the tokenStreamSequenceMap: could be associated with the header file unparsing \n");
+               SgSourceFile* tmp_sourceFile = isSgSourceFile(global_stmt_1->get_parent());
+               ROSE_ASSERT(tmp_sourceFile != NULL);
+               printf ("global scope is associated with source file: filename = %s \n",tmp_sourceFile->getFileName().c_str());
+             }
+
+       // Output the tokenStreamSequenceMap:
+#if 0
+          printf ("In unparseStatementFromTokenStream(): Output TokenStreamSequenceToNodeMapping \n");
+#endif
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator i = tokenStreamSequenceMap.begin();
+          while (i != tokenStreamSequenceMap.end())
+             {
+#if 0
+               printf ("i->first = %p = %s: \n",i->first,i->first->class_name().c_str());
+#endif
+            // DQ (9/28/2018): Adding assertion.
+               ROSE_ASSERT(i->second->node != NULL);
+#if 0
+               i->second->display("unparseStatementFromTokenStream(stmt,stmt): token sequence");
+#endif
+
+#if 0
+            // DQ (12/26/2018): Declaration moved to location above, but in this function.
+            // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+            // int tokenVectorSize = tokenVector.size();
+
+               int start = i->second->token_subsequence_start;
+               int end   = i->second->token_subsequence_end;
+
+               printf ("tokenVectorSize = %d \n",tokenVectorSize);
+               printf ("start = %d \n",start);
+               printf ("end   = %d \n",end);
+
+               for (int j = start; j < end; j++)
+                  {
+                    printf ("tokenVector[%d] = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                  }
+#endif
+               i++;
+             }
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (10/4/2018): Move this to be initialized later so that we can understnad how a bug is happening
+  // between where the tokenStreamSequenceMap is accessed and where it is tested below.
+  // TokenStreamSequenceToNodeMapping* tokenSubsequence_2 = tokenStreamSequenceMap[stmt_2];
+     TokenStreamSequenceToNodeMapping* tokenSubsequence_2 = NULL;
+
+  // tokenSubsequence_2 = tokenStreamSequenceMap[stmt_2];
+  // DQ (10/4/2018): This is a essential test to avoid pointers to default constructed objects from appearing accedentally in the STL map.
+     if (tokenStreamSequenceMap.find(stmt_2) == tokenStreamSequenceMap.end())
+        {
+#if 0
+       // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
+          printf ("WARNING: This IR node is not in the tokenStreamSequenceMap! \n");
+#endif
+        }
+       else
+        {
+       // DQ (10/26/2018): Bug fix: I think this was a cut and paste error.
+       // tokenSubsequence_2 = tokenStreamSequenceMap[stmt_1];
+          tokenSubsequence_2 = tokenStreamSequenceMap[stmt_2];
+        }
+
+  // DQ (9/25/2018): I think this is an issue for new IR nodes added to the AST (such a SgIncludeDirective IR nodes within the header file unparsing support.
+     if (tokenSubsequence_2 == NULL)
+        {
+#if 0
+       // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
+          printf ("WARNING: In unparseStatementFromTokenStream(): tokenSubsequence_2 == NULL: stmt_2 = %p = %s \n",stmt_2,stmt_2->class_name().c_str());
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 0
+  // DQ (11/12/2018): Debugging test9 in UnparseHeaders test.
+     printf ("tokenSubsequence_1 = %p tokenSubsequence_2 = %p \n",tokenSubsequence_1,tokenSubsequence_2);
+#endif
 
   // DQ (12/10/2014): The mapping for stmt_2 might not exist, e.g. if it was added as part of a transformation.
-  // in this case then there is not token stream to output.
+  // in this case then there is no associated token stream to output.
   // ROSE_ASSERT(tokenSubsequence_2 != NULL);
      if (tokenSubsequence_1 != NULL && tokenSubsequence_2 != NULL)
         {
@@ -169,38 +335,73 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          start_reset_because_requestion_position_was_not_defined = true;
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_leading_whitespace_end:
                     start = tokenSubsequence_1->leading_whitespace_end;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_token_subsequence_start:
                     start = tokenSubsequence_1->token_subsequence_start;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_token_subsequence_end:
                     start = tokenSubsequence_1->token_subsequence_end;
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_trailing_whitespace_start:
                     start = tokenSubsequence_1->trailing_whitespace_start;
-
+#if 0
+                    printf ("Case e_trailing_whitespace_start: tokenVectorSize = %d start = %d \n",tokenVectorSize,start);
+#endif
                  // DQ (12/10/2014): Note that white space is not always available.
                     if (start == -1)
                        {
                          start = tokenSubsequence_1->token_subsequence_end + 1;
                          start_reset_because_requestion_position_was_not_defined = true;
+#if 0
+                         printf ("Case e_trailing_whitespace_start: start = -1: adjusting: set start_reset_because_requestion_position_was_not_defined = true: start = %d \n",start);
+#endif
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): If this is out of bounds then we have to set it to not available.
+                    if (start >= tokenVectorSize)
+                       {
+#if 0
+                         printf ("Case e_trailing_whitespace_start: start >= tokenVectorSize: resetting to mark as unavailable: start = %d \n",start);
+#endif
+                      // start = -1;
+                         start = tokenVectorSize - 1;
+
+                      // Unclear if this should also be set.
+                         start_reset_because_requestion_position_was_not_defined = true;
+                       }
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                case e_trailing_whitespace_end:
                     start = tokenSubsequence_1->trailing_whitespace_end;
-
+#if 0
+                    printf ("Case e_trailing_whitespace_end: start = %d \n",start);
+#endif
                  // DQ (1/2/2015): Note that white space is not always available.
                     if (start == -1)
                        {
@@ -208,8 +409,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          ROSE_ASSERT(tokenSubsequence_1->token_subsequence_end != -1);
                          start = tokenSubsequence_1->token_subsequence_end + 1;
                          start_reset_because_requestion_position_was_not_defined = true;
+#if 0
+                         printf ("Case e_trailing_whitespace_end: start == -1: adjusting: set start_reset_because_requestion_position_was_not_defined = true: start = %d \n",start);
+#endif
                        }
                     ROSE_ASSERT(start >= 0);
+
+                 // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                    ROSE_ASSERT(start < tokenVectorSize);
                     break;
 
                default:
@@ -225,18 +432,50 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
             // This fixes cases where we have multiple blocks closed using "}}" (see test2015_96.C).
             // This should trigger a single token to be output.
             // end = start + 1;
+#if 0
+               printf ("(stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == true \n");
+               printf ("   --- start_reset_because_requestion_position_was_not_defined = %s \n",start_reset_because_requestion_position_was_not_defined ? "true" : "false");
+#endif
                if (start_reset_because_requestion_position_was_not_defined == false)
                   {
                     end = start + 1;
+
+                 // DQ (12/27/2018): avoid out of range access.
+                    if (end == tokenVectorSize)
+                       {
+                      // DQ (12/27/2018): This case is special to the last token in the file that is unparsed with its own call to unparseStatementFromTokenStream().
+#if 0
+                         printf ("NOTE: ALLOW out of range value: make sure there is no access: start = %d end = %d tokenVectorSize = %d (reset end to start) \n",start,end,tokenVectorSize);
+#endif
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(end < tokenVectorSize);
+                       }
                   }
                  else
                   {
                  // This is a value that will prevent any output of tokens.
                     end = start;
+
+                    ROSE_ASSERT(end < tokenVectorSize);
                   }
+
+            // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+               if (end >= tokenVectorSize)
+                  {
+                 // DQ (12/27/2018): This is allowed for the last token of the file (which is a special case).
+                 // printf ("Error: start = %d end = %d tokenVectorSize = %d \n",start,end,tokenVectorSize);
+                  }
+
+            // DQ (12/27/2018): Modified assertion to test all but the case of end == tokenVectorSize (above).
+            // ROSE_ASSERT(end < tokenVectorSize);
              }
             else
              {
+#if 0
+               printf ("(stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == false \n");
+#endif
                switch (e_token_sequence_position_end)
                   {
 #if 0
@@ -257,6 +496,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_start;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_leading_whitespace_end:
@@ -268,16 +510,25 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_start;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_token_subsequence_start:
                          end = tokenSubsequence_2->token_subsequence_start;
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_token_subsequence_end:
                          end = tokenSubsequence_2->token_subsequence_end;
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_trailing_whitespace_start:
@@ -289,6 +540,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_end + 1;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 
                     case e_trailing_whitespace_end:
@@ -302,6 +556,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                               end = tokenSubsequence_2->token_subsequence_end + 1;
                             }
                          ROSE_ASSERT(end >= 0);
+
+                      // DQ (12/26/2018): We have to make sure that we stay in bounds of the number of tokens in the loken list.
+                         ROSE_ASSERT(end < tokenVectorSize);
                          break;
 #endif
                     default:
@@ -317,17 +574,30 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
           ROSE_ASSERT(start >= 0);
 
-          SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+       // DQ (12/26/2018): This is now declared in the function body scope.
+       // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+       // int tokenVectorSize = tokenVector.size();
+#if 0
+          printf ("tokenVectorSize = %d start = %d end = %d \n",tokenVectorSize,start,end);
+#endif
 
-          int tokenVectorSize = tokenVector.size();
-
+       // DQ (11/13/2018): This assertion will fail where a class declaration and the end of the file has no white-space 
+       // (see test9 of UnparseHeaders_tests demo_error_Simple.h for an example).  This will have to be fixed later.
+       // DQ (11/12/2018): Try to comment out this assertion (leave the output message while we evaluate this).
        // DQ (1/10/2015): I think we can assert this now that we no longer call this function to output the trailing whitespace of the SgGlobalScope.
+          if ( !(start < tokenVectorSize && end <= tokenVectorSize) )
+             {
+               printf ("Error: tokenVectorSize = %d start = %d end = %d \n",tokenVectorSize,start,end);
+             }
           ROSE_ASSERT(start < tokenVectorSize && end <= tokenVectorSize);
 
+       // DQ (12/27/2018): It appears that we allow the "end" to be equal to "tokenVectorSize".  Could this be an error?
           if (start < tokenVectorSize && end <= tokenVectorSize)
              {
             // We don't want to unparse the token at the end.
-
+#if 0
+               printf ("unparseOnlyWhitespace = %s \n",unparseOnlyWhitespace ? "true" : "false");
+#endif
             // DQ (11/4/2015): Adding support to optionally only unparse the associated whitespace with any region of a statement.
             // This is used when we want to unparse the leading whitespace of a statement as part of a transformation, yet we need 
             // to ONLY unparse the spaces and CR's.
@@ -337,9 +607,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                  // then we only want to use the non-whitespace that is at the end of the leading whitespace for the statement.
 
                     SgTokenPtrList whitespaceTokens;
-
+#if 0
+                    printf ("(unparseOnlyWhitespace == true): end = %d \n",end);
+#endif
                  // We don't want to unparse the token at the end.
                     int j = end-1;
+
                     bool firstCarriageReturn = false;
                     bool still_is_whitespace = true;
                     while ( (j >= start) && (still_is_whitespace == true) )
@@ -351,7 +624,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          printf ("possible whitespace: start = %d j = %d \n",start,j);
 #endif
 #if DEBUG_TOKEN_STREAM_UNPARSING
-                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                         printf ("iterate j=end-1 to j >= start: unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
                          if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
                             {
@@ -398,14 +671,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                   }
                  else
                   {
+                 // DQ (12/27/2018): Now that we enforce uniformally that the end is in bounds of the token vector, we DO want to unparse the end.
+                 // It seems that we can't handle this issue this way.
                  // We don't want to unparse the token at the end.
+                 // for (int j = start; j < end; j++)
                     for (int j = start; j < end; j++)
                        {
                       // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
                           ROSE_ASSERT(j < (int)tokenVector.size());
 
 #if DEBUG_TOKEN_STREAM_UNPARSING
-                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                         printf ("iterate j=start to j < end: unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                          *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
@@ -434,8 +710,11 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
           printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
           printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
 #endif
+#if 0
+       // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
           printf ("ERROR: Token subsequence position unavailable: tokenSubsequence_1 = %p tokenSubsequence_2 = %p \n",tokenSubsequence_1,tokenSubsequence_2);
        // ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -1358,6 +1637,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
   // curprint("In unparseLanguageSpecificStatement()");
 
 #if 0
+     printf ("Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if 0
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
 #endif
 #if 0
@@ -1424,7 +1706,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
 #if 0
-          curprint("/* InunparseLanguageSpecificStatement(): CR: START */");
+          curprint("/* In unparseLanguageSpecificStatement(): CR: START */");
 #endif
 #if 1
        // DQ (11/14/2015): If we are unparsing statements in a SgBasicBlock, then we want to
@@ -1646,8 +1928,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 
 #if 0
-     printf ("In unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-     curprint (string("/* Inside of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
+     printf ("Leaving unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if 0
+     curprint (string("/* Leaving of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
 #endif
 
 #if 0
@@ -1714,7 +1998,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
 #if 0
                curprint ("/* unparse start of SgNamespaceDeclarationStatement using tokens */");
 #endif
-               unparseStatementFromTokenStream (stmt, namespaceDefinition, e_token_subsequence_start, e_token_subsequence_start);
+               unparseStatementFromTokenStream (stmt, namespaceDefinition, e_token_subsequence_start, e_token_subsequence_start, info);
              }
         }
 
@@ -1805,7 +2089,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
         }
        else
         {
-          unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
+          unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start, info);
         }
 
      SgStatement* last_stmt = NULL;
@@ -1859,19 +2143,19 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
                curprint("/* last_stmt != NULL: trailing whitespace from the last statement */ ");
 #endif
             // Unparse the trailing white space of the last statement.
-               unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
+               unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end, info);
 #if 0
                curprint("/* last_stmt != NULL: unparse the } */ ");
 #endif
             // Unparse the final "}" for the SgNamespaceDefinitionStatement.
-               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end, info);
              }
             else
              {
 #if 0
                curprint("/* last_stmt == NULL */ ");
 #endif
-               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end, info);
              }
         }
 
@@ -2102,7 +2386,18 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
                     ROSE_ASSERT(classDeclaration != NULL);
                     SgName className = classDeclaration->get_name();
-                    curprint ( className.str());
+
+                 // DQ (1/11/2019): Adding support for C++11 inheriting constructor.
+                    if (usingDeclaration->get_is_inheriting_constructor() == true)
+                       {
+#if 0
+                         printf ("Adding support for C++11 inheriting constructor: className = %s \n",className.str());
+#endif
+                         curprint(className.str());
+                         curprint("::");
+                       }
+
+                    curprint (className.str());
                     break;
                   }
 
@@ -2300,7 +2595,15 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
           case V_SgVariableDeclaration:
              {
                printf ("Unparsing of SgVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
+
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
+               ROSE_ASSERT(variableDeclaration != NULL);
+
+               unparseVarDeclStmt (variableDeclaration,info);
+#if 0
+               printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -3126,11 +3429,48 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 #else
-  // SgStatementPtrList::iterator representativeStatementForWhitespace = sourceFile->get_representativeWhitespaceStatementMap()[basic_stmt];
-     SgStatement* representativeStatementForWhitespace = NULL;
-     if (SgSourceFile::get_representativeWhitespaceStatementMap().find(basic_stmt) != SgSourceFile::get_representativeWhitespaceStatementMap().end())
+
+  // DQ (10/31/2018): We need to get the current source file from the SgUnparseInfo object instead of 
+  // computing it through the chain of parent pointers in the translation unit.  This is essential for
+  // header file processing since the header file will have a copy of the trnslation unit's global scope.
+  // DQ (9/28/2018): We need to get the SgSourceFile so that we can use the correct map from the map 
+  // of maps in the modified implementation that supports multiple files for token based unparsing.
+  // SgSourceFile* sourceFile = TransformationSupport::getSourceFile(basic_stmt);
+     SgSourceFile* sourceFile = info.get_current_source_file();
+
+  // DQ (10/31/2018): This is not always non-null (e.g. when used with the unparseToString() function).
+  // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+  // DQ (9/28/2018): This should also be true, or is at least what we really want, I think.
+  // This is not always true, statemetns can come from any header file which will make it false.
+     if (sourceFile->get_startOfConstruct()->get_file_id() != basic_stmt->get_startOfConstruct()->get_file_id())
         {
-          representativeStatementForWhitespace = SgSourceFile::get_representativeWhitespaceStatementMap()[basic_stmt];
+          printf ("In unparseBasicBlock(): sourceFile->getFileName()                                = %s \n",sourceFile->getFileName().c_str());
+          printf ("In unparseBasicBlock(): info.get_current_source_file()->getFileName()            = %s \n",info.get_current_source_file()->getFileName().c_str());
+          printf ("In unparseBasicBlock(): basic_stmt->get_startOfConstruct()->get_filenameString() = %s \n",basic_stmt->get_startOfConstruct()->get_filenameString().c_str());
+          printf ("In unparseBasicBlock(): sourceFile->get_startOfConstruct()->get_file_id() = %d \n",sourceFile->get_startOfConstruct()->get_file_id());
+          printf ("In unparseBasicBlock(): basic_stmt->get_startOfConstruct()->get_file_id() = %d \n",basic_stmt->get_startOfConstruct()->get_file_id());
+#if 0
+          printf ("Output the internal information in the file_id - filename map: \n");
+          Sg_File_Info::display_static_data("In unparseBasicBlock()");
+#endif
+        }
+  // ROSE_ASSERT(sourceFile->get_startOfConstruct()->get_file_id() == basic_stmt->get_startOfConstruct()->get_file_id());
+#endif
+
+  // DQ (9/28/2018): Older code.
+  // SgStatementPtrList::iterator representativeStatementForWhitespace = sourceFile->get_representativeWhitespaceStatementMap()[basic_stmt];
+
+  // DQ (9/28/2018): We need to get the SgSourceFile so that we can use the correct map from the map 
+  // of maps in the modified implementation that supports multiple files for token based unparsing.
+     SgStatement* representativeStatementForWhitespace = NULL;
+  // if (SgSourceFile::get_representativeWhitespaceStatementMap().find(basic_stmt) != SgSourceFile::get_representativeWhitespaceStatementMap().end())
+  // if (sourceFile->get_representativeWhitespaceStatementMap().find(basic_stmt) != sourceFile->get_representativeWhitespaceStatementMap().end())
+     if (sourceFile != NULL && sourceFile->get_representativeWhitespaceStatementMap().find(basic_stmt) != sourceFile->get_representativeWhitespaceStatementMap().end())
+        {
+       // representativeStatementForWhitespace = SgSourceFile::get_representativeWhitespaceStatementMap()[basic_stmt];
+          representativeStatementForWhitespace = sourceFile->get_representativeWhitespaceStatementMap()[basic_stmt];
           ROSE_ASSERT(representativeStatementForWhitespace != NULL);
         }
 #endif
@@ -3207,7 +3547,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                            // Found a statement in the basic block that we can use to represent representative whitespace.
                               bool unparseOnlyWhitespace = true;
 #if 1
-                              unparseStatementFromTokenStream (*q, *q, e_leading_whitespace_start, e_token_subsequence_start, unparseOnlyWhitespace);
+                              unparseStatementFromTokenStream (*q, *q, e_leading_whitespace_start, e_token_subsequence_start, info, unparseOnlyWhitespace);
 #endif
                             }
                            else
@@ -3233,7 +3573,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                            // Found a statement in the basic block that we can use to represent representative whitespace.
                               bool unparseOnlyWhitespace = true;
 #if 1
-                              unparseStatementFromTokenStream (q, q, e_leading_whitespace_start, e_token_subsequence_start, unparseOnlyWhitespace);
+                              unparseStatementFromTokenStream (q, q, e_leading_whitespace_start, e_token_subsequence_start, info, unparseOnlyWhitespace);
 #endif
                             }
                            else
@@ -3370,7 +3710,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ("/* unparse white space at end of SgBasicBlock */");
 #endif
             // unparseStatementFromTokenStream (last_stmt, stmt, e_token_subsequence_end, e_token_subsequence_start);
-               unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
+               unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end, info);
              }
 #endif
 #if DEBUG_BASIC_BLOCK
@@ -3492,7 +3832,7 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // unparseStatementFromTokenStream (stmt, true_body, e_leading_whitespace_start, e_token_subsequence_start);
                  // unparseStatementFromTokenStream (stmt, true_body, e_token_subsequence_start, e_token_subsequence_start);
                  // unparseStatementFromTokenStream (stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start);
-                    unparseStatementFromTokenStream (if_stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start);
+                    unparseStatementFromTokenStream (if_stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start, info);
                   }
              }
 
@@ -3603,7 +3943,7 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                                 // unparseStatementFromTokenStream (false_body, false_body, e_leading_whitespace_start, e_leading_whitespace_end);
                                 // unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_leading_whitespace_start);
                                 // unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_leading_whitespace_start);
-                                   unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_leading_whitespace_start);
+                                   unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_leading_whitespace_start, info);
                                  }
                             }
                        }
@@ -3668,7 +4008,7 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                  // New code where we unparse the whitespace between the else and the nested if statement.
                  // unparseStatementFromTokenStream (false_body, false_body, e_leading_whitespace_start, e_token_subsequence_start);
-                    unparseStatementFromTokenStream (if_stmt, e_leading_whitespace_start, e_token_subsequence_start);
+                    unparseStatementFromTokenStream (if_stmt, e_leading_whitespace_start, e_token_subsequence_start, info);
                   }
                  else
                   {
@@ -3891,7 +4231,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("In unparseForStmt(): unparse from token stream from start of SgForStatement to for loop initializer \n");
 #endif
        // unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_token_subsequence_start);
-          unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_leading_whitespace_start);
+          unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_leading_whitespace_start, info);
 #if DEBUG_FOR_STMT
           curprint ("/* DONE: unparse start of SgForStatement */");
 #endif
@@ -4097,7 +4437,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (12/16/2014): When a SgBasicBlock has been substituted for the loop_body then there is not associated token stream (see test2014_14.C).
        // In this case it is better to use the start and end of the trailing whitespace subsequence.
        // unparseStatementFromTokenStream (test_stmt, body, e_trailing_whitespace_start, e_token_subsequence_start);
-          unparseStatementFromTokenStream (test_stmt, e_trailing_whitespace_start, e_trailing_whitespace_end);
+          unparseStatementFromTokenStream (test_stmt, e_trailing_whitespace_start, e_trailing_whitespace_end, info);
        // curprint("/* syntax from partial token unparse */ )");
        // SgStatement* loopBody = for_stmt->get_loop_body();
        // unparseStatementFromTokenStream (test_stmt, loopBody, e_trailing_whitespace_end, e_leading_whitespace_start);
@@ -4107,7 +4447,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgExpression *increment_expr = for_stmt->get_increment();
           if (isSgNullExpression(increment_expr) == NULL)
              {
-               unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
+               unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end, info);
              }
 #if 0
           curprint("/* syntax from partial token unparse */");
@@ -4165,11 +4505,11 @@ Unparse_ExprStmt::unparseRangeBasedForStmt(SgStatement* stmt, SgUnparse_Info& in
      SgRangeBasedForStatement* for_stmt = isSgRangeBasedForStatement(stmt);
      ROSE_ASSERT(for_stmt != NULL);
 
-     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
-
 #define DEBUG_RANGE_BASED_FOR_STMT 0
 
 #if DEBUG_RANGE_BASED_FOR_STMT
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+
      printf ("In unparseRangeBasedForStmt(): saved_unparsedPartiallyUsingTokenStream = %s \n",saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
      curprint ("/* Top of unparseForStmt */");
 #endif
@@ -4395,6 +4735,37 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // if (stmt->get_startOfConstruct()->isOutputInCodeGeneration()==false)
   //      return;
+
+#if 0
+  // DQ (10/26/2018): We might not need this code now that I have fixed a cut and paste error 
+  // in the latest debugging of the unparseStatementFromTokenStream() function.
+  // DQ (10/25/2018): Test for if we have unparsed partially using the token stream.
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+          printf ("I think there is nothing to do here! \n");
+
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+       // unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
+       // unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_end);
+          SgFunctionDefinition* function_definition = funcdecl_stmt->get_definition();
+          ROSE_ASSERT(function_definition != NULL);
+          SgStatement* function_body = function_definition->get_body();
+          ROSE_ASSERT(function_body != NULL);
+          unparseStatementFromTokenStream (stmt, function_body, e_token_subsequence_start, e_token_subsequence_start, info);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
   // DQ (1/19/2014): Adding support for attributes that must be prefixed to the function declarations (e.g. "__attribute__((regnum(3)))").
   // It is output here for non-defining declarations, but in unparseFuncDefnStmt() function for the attribute to be associated with the defining declaration.
@@ -5041,7 +5412,7 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
          // unparseStatementFromTokenStream (declstmt, e_leading_whitespace_start, e_token_subsequence_start);
          // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
          // unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_leading_whitespace_end);
-         unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_token_subsequence_start);
+         unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_token_subsequence_start, info);
 #if 0
          curprint ("/* Inside of Unparse_ExprStmt::unparseTemplateFunctionDefnStmt: unparse partially from tokens END */");
 #endif
@@ -5209,7 +5580,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
         // unparseStatementFromTokenStream (declstmt, e_leading_whitespace_start, e_token_subsequence_start);
         // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
         // unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_leading_whitespace_end);
-           unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_token_subsequence_start);
+           unparseStatementFromTokenStream (declstmt, stmt, e_token_subsequence_start, e_token_subsequence_start, info);
 #if 0
            curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: unparse partially from tokens END */");
 #endif
@@ -5265,6 +5636,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseAttachedPreprocessingInfo(funcdefn_stmt, info, PreprocessingInfo::after);
 
 #if 0
+     printf("Leaving Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseAttachedPreprocessingInfo() \n");
      curprint("/* Leaving Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseAttachedPreprocessingInfo() */ ");
 #endif
    }
@@ -5320,7 +5692,7 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
   // case we return a fully qualified name.
      if (info.get_reference_node_for_qualification() == NULL)
         {
-#if 1
+#if 0
           printf ("WARNING: In unparseClassType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
 #endif
        // SgName nameQualifierAndType = class_type->get_qualified_name();
@@ -5330,11 +5702,11 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
        else
         {
        // DQ (6/2/2011): Newest support for name qualification...
-#if 1
+#if 0
           printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
           SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-#if 1
+#if 0
           printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 #endif
 
@@ -5366,7 +5738,7 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
           if (isTemplateWithTemplateArgumentList == true)
              {
             // Handle case of class template instantiation (code located in unparse_stmt.C)
-#if 1
+#if 0
                curprint ("/* Calling unparseTemplateName */ \n ");
 #endif
 #if 0
@@ -5402,14 +5774,14 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
             // unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
             // unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,ninfo);
             // unp->u_exprStmt->unparseTemplateName(locatedNode,ninfo);
-#if 1
+#if 0
                curprint ("/* DONE: Calling unparseTemplateName (commented out) */ \n ");
 #endif
              }
             else
              {
                curprint ( string(nm.str()) + " ");
-#if 1
+#if 0
                printf ("class type name: nm = %s \n",nm.str());
 #endif
              }
@@ -6129,9 +6501,9 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                int first = 1;
                SgInitializedNamePtrList::iterator p = mfuncdecl_stmt->get_ctors().begin();
-
-            // printf ("Unparsing the preinitialization list \n");
-
+#if 0
+               printf ("Unparsing the preinitialization list \n");
+#endif
             // DQ (10/17/2004): Skip output of enum and class definitions for return type! C++ standard does not permit 
             // a defining declaration within a return type, function parameter, or sizeof expression. 
             // SgUnparse_Info ninfo3(info);
@@ -6354,6 +6726,9 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+#if 0
+     printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
+#endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
   // ROSE_ASSERT(info.get_current_scope() != NULL);
@@ -6719,6 +7094,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
 #if 0
                printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
+#endif
+#if 0
                curprint ("\n /* In unparseVarDeclStmt(): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
                tmp_name = decl_item->get_name();
@@ -7478,7 +7855,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                if (tmp_init != NULL)
                   {
-                    printf ("Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+                    printf ("In unparseVarDeclStmt(): Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
 #if 0
                     tmp_init->get_file_info()->display("Initializer tmp_init: debug");
 #endif
@@ -7505,6 +7882,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
 #endif
                     SgConstructorInitializer* constructor = isSgConstructorInitializer(tmp_init);
+#if 0
+                 // DQ (1/16/2019): Added debug information.
+                    printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor = %p \n",constructor);
+                    if (constructor != NULL)
+                      {
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_need_name()                = %s \n",constructor->get_need_name() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_associated_class_unknown() = %s \n",constructor->get_associated_class_unknown() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo.inConditional()                       = %s \n",ninfo.inConditional() ? "true" : "false");
+                      }
+#endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
                          (tmp_init->variant() == AGGREGATE_INIT) ||
                       // ( (constructor != NULL) && constructor->get_need_name() && constructor->get_is_explicit_cast() ) )
@@ -7516,6 +7903,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // I think that this was always cosmetic anyway.
                       // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                       // ( false ) )
+                      // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                          ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                        {
                       // DQ (11/9/2009): Skip the case of when we are in a isSgForInitStmt, since this is a bug in GNU g++ (at least version 4.2)
@@ -7552,7 +7940,35 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                               printf ("This is the MORE general case of a constructor call \n");
 #endif
-                              curprint (" = ");
+                           // DQ (1/16/2019): only use the "=" syntax if we are going to output the name.
+                           // curprint (" = ");
+                              if ( (constructor != NULL) && (constructor->get_need_name() == true) && (constructor->get_is_explicit_cast() == true) )
+                                 {
+                                // This is the syntax: class X = X(arg)
+#if 0
+                                   printf ("Output the = syntax \n");
+#endif
+                                   curprint (" = ");
+                                 }
+                                else
+                                 {
+                                // DQ (1/16/2019): Output the equals operator in the case of a assignment or aggregate initializer.
+                                   if ( (tmp_init->variant() == ASSIGN_INIT) || (tmp_init->variant() == AGGREGATE_INIT) )
+                                      {
+#if 0
+                                        printf ("Output the = syntax in the case of a assignment or aggregate initializer \n");
+#endif
+                                        curprint (" = ");
+                                      }
+                                     else
+                                      {
+                                     // This is the alternative syntax: class X(arg)
+                                     // So don't output a "="
+#if 0
+                                        printf ("Skip output of the = syntax \n");
+#endif
+                                      }
+                                 }
                             }
                        }
                       else
@@ -8271,7 +8687,15 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                classdefn_stmt->get_startOfConstruct()->get_line(),
                classdefn_stmt->get_endOfConstruct()->get_line());
 #endif
+
+#if 0
+          curprint("/* test 5 */ \n");
+#endif
           unparseAttachedPreprocessingInfo(classdefn_stmt, info, PreprocessingInfo::inside);
+
+#if 0
+          curprint("/* test 6 */ \n");
+#endif
 
           unp->cur.format(classdefn_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
           curprint ( string("}"));
@@ -8864,7 +9288,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
        // SgStatement* body = while_stmt->get_body();
        // curprint("/* partial token sequence SgWhileStmt */ ");
           SgStatement* condition = while_stmt->get_condition();
-          unparseStatementFromTokenStream (stmt, condition, e_token_subsequence_start, e_token_subsequence_start);
+          unparseStatementFromTokenStream (stmt, condition, e_token_subsequence_start, e_token_subsequence_start, info);
         }
 
 #if 0
@@ -8916,7 +9340,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_token_subsequence_start);
        // unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_leading_whitespace_start);
-          unparseStatementFromTokenStream (condition, e_trailing_whitespace_start, e_trailing_whitespace_end);
+          unparseStatementFromTokenStream (condition, e_trailing_whitespace_start, e_trailing_whitespace_end, info);
 
        // Output syntax explicitly.
           curprint(")");
@@ -9015,7 +9439,7 @@ Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgStatement* item_selector = switch_stmt->get_item_selector();
        // unparseStatementFromTokenStream (stmt, item_selector, e_token_subsequence_start, e_leading_whitespace_start);
        // unparseStatementFromTokenStream (stmt, item_selector, e_token_subsequence_start, e_token_subsequence_start);
-          unparseStatementFromTokenStream (stmt, item_selector, e_token_subsequence_start, e_leading_whitespace_start);
+          unparseStatementFromTokenStream (stmt, item_selector, e_token_subsequence_start, e_leading_whitespace_start, info);
         }
 
      SgUnparse_Info ninfo(info);
@@ -9032,7 +9456,7 @@ Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgStatement* item_selector = switch_stmt->get_item_selector();
           SgStatement* switch_body = switch_stmt->get_body();
 
-          unparseStatementFromTokenStream (item_selector, switch_body, e_trailing_whitespace_start, e_leading_whitespace_start);
+          unparseStatementFromTokenStream (item_selector, switch_body, e_trailing_whitespace_start, e_leading_whitespace_start, info);
         }
 
 #if 0
@@ -9122,7 +9546,7 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                     printf ("firstStatementOfCompilerGeneratedBlock = %p = %s \n",firstStatementOfCompilerGeneratedBlock,firstStatementOfCompilerGeneratedBlock->class_name().c_str());
 #endif
-                    unparseStatementFromTokenStream (case_stmt, firstStatementOfCompilerGeneratedBlock, e_token_subsequence_start, e_leading_whitespace_start);
+                    unparseStatementFromTokenStream (case_stmt, firstStatementOfCompilerGeneratedBlock, e_token_subsequence_start, e_leading_whitespace_start, info);
                   }
                  else
                   {
@@ -9138,12 +9562,12 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
             // DQ (1/22/2015): Since there is not token information inside of a compiler-generated SgBasicBlock, we have to output the whole SgCaseOptionStmt as it's associated tokens.
             // unparseStatementFromTokenStream (case_stmt, e_token_subsequence_start, e_token_subsequence_end);
-               unparseStatementFromTokenStream (case_stmt, e_token_subsequence_start, e_trailing_whitespace_start);
+               unparseStatementFromTokenStream (case_stmt, e_token_subsequence_start, e_trailing_whitespace_start, info);
 #endif
              }
             else
              {
-               unparseStatementFromTokenStream (case_stmt, case_body, e_token_subsequence_start, e_leading_whitespace_start);
+               unparseStatementFromTokenStream (case_stmt, case_body, e_token_subsequence_start, e_leading_whitespace_start, info);
              }
         }
 
@@ -9167,6 +9591,7 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+
 void
 Unparse_ExprStmt::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -9186,6 +9611,7 @@ Unparse_ExprStmt::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
           i++;
         }
    }
+
 
 void
 Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -9245,7 +9671,7 @@ Unparse_ExprStmt::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
        else
         {
           SgStatement* default_body = default_stmt->get_body();
-          unparseStatementFromTokenStream (default_stmt, default_body, e_token_subsequence_start, e_leading_whitespace_start);
+          unparseStatementFromTokenStream (default_stmt, default_body, e_token_subsequence_start, e_leading_whitespace_start, info);
         }
 
   // DQ (1/3/2018): Put back this original behavior, because the case option statment must be a compound statement 

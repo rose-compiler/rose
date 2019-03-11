@@ -1,0 +1,6 @@
+# Control file for ROSE policies
+
+# This file tests the use of ROSE token based unparsing using inputs containing
+# windows style line ending (thus it will fail the UnixLineTermination policy 
+# that we generally enforce within ROSE.
+test2018_69.c: disable UnixLineTermination

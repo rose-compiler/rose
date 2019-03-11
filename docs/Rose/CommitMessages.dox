@@ -49,7 +49,8 @@
  *      first using ROSE_DEPRECATED for a suitable period of time.)
  *  @li The body should <b>reference a JIRA issue</b> if the commit is related to an issue, especially if that issue has
  *      relevant details, discussion, test cases, etc. Place the issue name as the last line of the commit message, one
- *      issue per line for the sake of automated tools. Most commits should correspond to at least one JIRA issue.
+ *      issue per line for the sake of automated tools. Most commits should correspond to at least one JIRA issue. Git
+ *      has tools for searching for commits that affect a JIRA issue (e.g., "git log --grep '^ROSE-1234'").
  *
  *  The body must be separated from the title by a blank line because some Git tools concatenate the first lines together into
  *  a single title line, which creates formatting problems since the title then becomes very long. Also, although ROSE uses a
@@ -110,4 +111,18 @@
     ROSE-123
     JENKINS-456
  @endverbatim
+ *
+ * @section commit_messages_jira JIRA Issues
+ *
+ * To search for which commits implement a certain JIRA issue, use this command:
+ *
+ * @code
+ *   git log --grep '^ROSE-1234'
+ * @endcode
+ *
+ * In a shell script, to get the list of all the JIRA issues for a particular commit, use this command:
+ *
+ * @code
+ *   git log -n1 --format='%B' $commit_sha1 |grep '^[A-Z]\+-[1-9][0-9]*$'
+ * @endcode
  */

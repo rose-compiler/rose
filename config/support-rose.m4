@@ -276,6 +276,22 @@ else
 fi
 AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 
+# TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
+#   Only valid if compiling ROSE using GNU compiler (depends on -lquadmath)
+AC_LANG(C++)
+AX_COMPILER_VENDOR
+
+rose_use_edg_quad_float=no
+if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
+if test $edg_major_version_number -ge 5; then
+  rose_use_edg_quad_float=yes
+  AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
+fi
+AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
+AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
+unset ax_cv_cxx_compiler_vendor
+
 # DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
@@ -2046,7 +2062,6 @@ projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
 projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
-projects/BinFuncDetect/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
@@ -2158,7 +2173,6 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
-projects/StencilManyCore/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy
@@ -2200,6 +2214,11 @@ projects/Viz/tools/Makefile
 projects/amrShiftDSLcompiler/AMRShift/Makefile
 projects/amrShiftDSLcompiler/Makefile
 projects/arrayDSLcompiler/Makefile
+projects/POET_ROSE/Makefile
+projects/POET_ROSE/test/Makefile
+projects/POET_ROSE/manycore-stencil/Makefile
+projects/POET_ROSE/manycore-stencil/include/Makefile
+projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
 projects/autoParallelization/Makefile
@@ -2480,6 +2499,7 @@ tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/ctests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/gnu/Makefile
@@ -2517,6 +2537,7 @@ tests/nonsmoke/functional/CompileTests/RoseExample_tests/Makefile
 tests/nonsmoke/functional/CompileTests/STL_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UPC_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/Makefile
+tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/Makefile
 tests/nonsmoke/functional/CompileTests/boost_tests/Makefile
 tests/nonsmoke/functional/CompileTests/colorAST_tests/Makefile
 tests/nonsmoke/functional/CompileTests/copyAST_tests/Makefile
@@ -2646,6 +2667,8 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
+tools/classMemberVariablesInLambdas/Makefile
+tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

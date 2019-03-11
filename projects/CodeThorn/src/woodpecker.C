@@ -186,21 +186,21 @@ int main(int argc, char* argv[]) {
 
   if(args.getBool("normalize-fcalls")) {
     logger[TRACE] <<"STATUS: Normalization level 1 started."<<endl;
-    SPRAY::Normalization lowering;
+    CodeThorn::Normalization lowering;
     lowering.normalizeAst(root,1);
     logger[TRACE] <<"STATUS: Normalization level 1 finished."<<endl;
   }
 
   if(args.getBool("normalize-all")) {
     logger[TRACE] <<"STATUS: Normalization level 2 started."<<endl;
-    SPRAY::Normalization lowering;
+    CodeThorn::Normalization lowering;
     lowering.normalizeAst(root,2);
     logger[TRACE] <<"STATUS: Normalization level 2 finished."<<endl;
   } 
 
   if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
-    SPRAY::Normalization lowering;
+    CodeThorn::Normalization lowering;
     lowering.normalizeAst(root,3);
     logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
@@ -209,6 +209,8 @@ int main(int argc, char* argv[]) {
   variableIdMapping.computeVariableSymbolMapping(root);
   SgTypeSizeMapping _typeSizeMapping;
   AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  
+  logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
   
   if(args.count("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);

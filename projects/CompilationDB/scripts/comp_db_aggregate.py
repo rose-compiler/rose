@@ -27,8 +27,10 @@ def aggregate_json_list(report, filename, mode, output, nprocs):
 					data = json.load(F)
 				except:
 					print "File {} is not valid JSON.".format(tu_file)
+					data = list()
 		else:
 			print "File {} does not exist.".format(tu_file)
+			data = list()
 
 		if not isinstance(data, list):
 			print "Aggregation mode json:list expect the root of {} to be a list.".format(tu_file)

@@ -75,7 +75,6 @@ Rose_STL_Container<SgType*> getArgumentTypeList(SgFunctionCallExp* functionCall)
   // \todo regularize code to give every function call an argument list
   if (!argList)
   {
-    std::cerr << functionCall->unparseToString() << std::endl;
     return inputArguments;
   }
 
@@ -452,7 +451,7 @@ namespace MatlabAnalysis
 
 
   TypeAttribute*
-  BottomUpTypeAnalysis::evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList childAttributes)
+  BottomUpTypeAnalysis::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList childAttributes)
   {
     if (isSgValueExp(node))
     {

@@ -4037,6 +4037,7 @@ SgStatement::remove_statement(SgStatement *target)
      bool r = replace_child(target, 0);
      assert(r);
    }
+
 //! Insert newstmt before or after the target statement, which should be a child statement of this statement
 void 
 SgStatement::insert_statement(SgStatement* target, SgStatement* newstmt, bool inFront)
@@ -16880,7 +16881,6 @@ SgTypedefDeclaration::get_mangled_name (void) const
        // mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
        // SgName baseTypeMangleName = baseType->get_mangled();
 
-          static int base_type_counter = 0;
           static std::set<SgType*> baseTypeSet;
 
           SgName baseTypeMangleName;
@@ -16896,6 +16896,7 @@ SgTypedefDeclaration::get_mangled_name (void) const
              }
 
 #if 0
+          static int base_type_counter = 0;
           printf ("In SgTypedefDeclaration::get_mangled_name(): calling baseType->get_mangled(): base_type_counter = %d baseType = %p = %s \n",base_type_counter++,baseType,baseType->class_name().c_str());
 #endif
 

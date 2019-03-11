@@ -133,11 +133,11 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  cout<<"STATUS: establishing inter-flow ..."<<endl;
+  logger[INFO]<<"establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
   int callLabsNum=callLabs.size();
-  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  logger[INFO]<<"number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
   int externalFunCalls=0;
   int externalFunCallsWithoutDecl=0;
@@ -180,11 +180,11 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  cout<<"STATUS: inter-flow established."<<endl;
-  cout<<"INFO: Call labels: "<<callLabNr<<endl;
-  cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-  cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-  cout<<"INFO: functions found: "<<functionsFound<<endl;
+  //cout<<"STATUS: inter-flow established."<<endl;
+  //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+  //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+  //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+  //cout<<"INFO: functions found: "<<functionsFound<<endl;
 
   return interFlow;
 }

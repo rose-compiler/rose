@@ -4455,6 +4455,10 @@ SgModifierType::get_mangled (void) const
 
      if (cv_mod.isConst())       mangled_name << "C";
      if (cv_mod.isVolatile())    mangled_name << "V";
+
+  // DQ (1/19/2019): Adding const volatile modifier.
+     if (cv_mod.isConstVolatile())    mangled_name << "CV";
+
   // DQ (4/22/2004): Removed support for CC++
   // if (isSync())        mangled_name << "SYN";
   // if (isGlobal())      mangled_name << "GLB";
@@ -6855,10 +6859,12 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
    {
      ROSE_ASSERT(cd != NULL);
 
+#define DEBUG_CREATE_TYPE_FOR_CLASS_TYPE 0
+
   // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
      printf ("In SgClassType::createType() \n");
 #endif
 
@@ -6868,7 +6874,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
      ROSE_ASSERT(classDeclaration != NULL || templateClassDeclaration != NULL);
      ROSE_ASSERT(classDeclaration != NULL);
 
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
   // These debugging statements don't deal with the modifications to handle SgTemplateClassDeclaration.
      printf ("In SgClassType::createType(): cd = %p = %s cd->get_definition() = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str(),
           classDeclaration->get_definition(),(classDeclaration->get_definition() != NULL) ? classDeclaration->get_definition()->class_name().c_str() : "NULL");
@@ -6893,7 +6899,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
         }
 
   // ROSE_ASSERT(type_from_declaration != NULL);
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
      printf ("Inside of SgClassType::createType(): cd = %p = %s type_from_declaration = %p \n",cd,cd->class_name().c_str(),type_from_declaration);
 #endif
 
@@ -6912,33 +6918,33 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 
        // DQ (3/14/2012): Note that the new template support allows that classDeclaration is non-null (since template classes are derived from non-template classes).
           ROSE_ASSERT(classDeclaration != NULL);
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
           printf ("Inside of SgClassType::createType(): cd = %p = %s = %s newType = %p = %s \n",cd,cd->class_name().c_str(),classDeclaration->get_name().str(),newType,newType->class_name().c_str());
 #endif
           SgScopeStatement* currentScope = getCurrentScope();
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
           printf ("Inside of SgClassType::createType(): currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
        // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
        // ROSE_ASSERT(cd->get_scope() != NULL);
           if (cd->get_scope() == NULL && currentScope != NULL)
              {
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                printf ("Inside of SgClassType::createType(): Setting scope for cd = %p = %s to currentScope = %p = %s \n",cd,cd->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
                cd->set_scope(currentScope);
              }
           ROSE_ASSERT(cd->get_scope() != NULL);
 
-       // We have to build the type before we can generate a mangle name for it.
+       // We have to build the type before we can generate a mangled name for it.
           SgName name = newType->get_mangled();
 
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
           printf ("Inside of SgClassType::createType(): type name (newType->get_mangled()) = %s \n",name.str());
 #endif
           if (name.is_null() == true)
              {
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                printf ("Need to handle special case of SgClassDeclaration of un-named class cd = %p = %s \n",cd,cd->class_name().c_str());
 #endif
 #if 0
@@ -6964,18 +6970,18 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
             // DQ (7/30/2010): If valid pointer then we are in the process of building the C/C++/Fortran AST.
             // SgType* t = currentScope->get_type_table()->lookup_type(name);
                SgType* t = currentScope->get_type_table()->lookup_type(name);
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                printf ("Inside of SgClassType::createType(): after calling lookup_type(): t = %p = %s \n",t,(t != NULL) ? t->class_name().c_str() : "null");
 #endif
                if (t == NULL)
                   {
                  // If the type is not in the type table then insert it so that we can reuse it.
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                     printf ("Mangled type name for SgClassType = %s (not available in type table) \n",name.str());
 #endif
                  // get_globalTypeTable()->insert_type(name,newType);
                     currentScope->get_type_table()->insert_type(name,newType);
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
 
@@ -6992,7 +6998,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                     SgClassType* classType = isSgClassType(t);
                     ROSE_ASSERT(classType != NULL);
                     ROSE_ASSERT(classType->get_declaration() != NULL);
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                     printf ("Mangled type classType = %p (classType->get_declaration() = %p = %s) name for SgClassType name = %s (already exists in type table) \n",t,classType->get_declaration(),classType->get_declaration()->class_name().c_str(),name.str());
 #endif
                  // DQ (3/21/2012): New test.
@@ -7003,7 +7009,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                  // DQ (3/21/2012): New conditional test for t != newType (and delete new type only then).
                     if (t != newType)
                        {
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                          printf ("Deleting the just built exploritory type = %p (case of t != newType) t = %p = %s \n",newType,t,t->class_name().c_str());
 #endif
 #if ALLOW_DELETE_OF_EXPLORATORY_NODE
@@ -7018,7 +7024,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
                        {
                          printf ("WARNING: In SgClassType::createType(): Found a case of t == newType \n");
                        }
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
                     printf ("This SgClassType::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
                     $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
@@ -7063,7 +7069,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // ROSE_ASSERT(type_from_declaration != NULL);
   // return ($CLASSNAME*) type_from_declaration;
 
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
      printf ("SgClassType::createType(): classDeclaration         = %p \n",classDeclaration);
      printf ("SgClassType::createType(): templateClassDeclaration = %p \n",templateClassDeclaration);
 #endif
@@ -7133,7 +7139,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 #endif
 #endif
 
-#if 0
+#if DEBUG_CREATE_TYPE_FOR_CLASS_TYPE
      printf ("Leaving SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
 #endif
 

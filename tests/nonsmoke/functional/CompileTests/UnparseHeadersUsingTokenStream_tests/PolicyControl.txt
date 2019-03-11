@@ -1,0 +1,8 @@
+# Control file for ROSE policies
+
+# This file tests the use of ROSE token based unparsing using inputs containing
+# windows style line ending (thus it will fail the UnixLineTermination policy 
+# that we generally enforce within ROSE).  However, it is not clear to me why
+# if passes, so I need to look into this with Robb.
+badInput.c: disable UnixLineTermination
+badInput2.c: disable UnixLineTermination

@@ -707,8 +707,9 @@ Grammar::setUpExpressions ()
      AddressOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
-     BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
-                                  "../Grammar/Expression.code" );
+  // DQ (1/20/2019): This should be a prefix operator and so it can't use the default  
+  // automatically generated version of the post_construction_initialization function.
+  // BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      RealPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -1886,6 +1887,10 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","sizeOfContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/12/2019): Adding support for objectless nonstatic data member references (C++11 feature).
+     SizeOfOp.setDataPrototype("bool","is_objectless_nonstatic_data_member_reference","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (6/20/2013): Added alignOf operator.
      AlignOfOp.setFunctionPrototype ( "HEADER_ALIGNOF_OPERATOR", "../Grammar/Expression.code" );
      AlignOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
@@ -2447,22 +2452,25 @@ Grammar::setUpExpressions ()
   // ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/15/2019): Adding support for initializers in for loop tests (conditionals), see Cxx_tests/test2019_02.C).
+     ConstructorInitializer.setDataPrototype     ( "bool", "is_used_in_conditional", "= false",
+                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AssignInitializer.setFunctionPrototype ( "HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      AssignInitializer.setDataPrototype     ( "SgExpression*", "operand_i"      , "= NULL",

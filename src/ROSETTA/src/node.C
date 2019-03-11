@@ -1116,7 +1116,17 @@ Grammar::setUpNodes ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
   // negara1 (08/10/2011): Added to SgLocatedNodeSupport, no need for additional functions.
-     HeaderFileBody.setFunctionPrototype ( "HEADER_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
+     HeaderFileBody.setFunctionPrototype ( "HEADER_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");
+
+  // DQ (8/23/2018): Adding support for pointer to the SgSourceFile that will record a SgSourceFile 
+  // IR node for the include file (so that we can save information about comments, CPP directives, 
+  // and the token stream).  This allows us to build the associated file information in the frontend
+  // instead of building it in the backend (when it is too late to generate the token stream and it's 
+  // mapping to what might be an already modified AST).  It might be that this IR node (SgSourceFile) 
+  // could replace the SgHeaderFileBody IR node (but let's hold of on that idea for now).
+     HeaderFileBody.setDataPrototype ("SgSourceFile*", "include_file" , "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
      CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",

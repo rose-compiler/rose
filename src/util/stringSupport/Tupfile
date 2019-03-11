@@ -1,0 +1,11 @@
+include_rules
+
+# The string support functions don't require ROSE and therefore can be compiled
+# during phase-1, then linked into the rose library. We create a librose_string.so
+# so it can be used by CxxGrammarMetaProgram during phase-1.
+run $(support_compile_linklib) -o rose_string --objects=OBJECTS \
+    StringUtility.C FileNameClassifier.C FileUtility.C escape.C
+
+: {OBJECTS} |> !for_librose |>
+
+run $(public_header) StringUtility.h string_functions.h FileUtility.h escape.h

@@ -568,7 +568,25 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_99.C \
    test2014_118.C \
    test2014_120.C \
-   test2014_157.C 
+   test2014_157.C \
+   rose-1540-0.C \
+   rose-1541-0.C \
+   test2019_01.C \
+   test2019_02.C \
+   test2019_03.C \
+   test2019_04.C \
+   test2019_05.C \
+   test2019_06.C \
+   test2019_07.C \
+   test2019_08.C \
+   test2019_09.C \
+   test2019_10.C \
+   test2019_11.C \
+   test2019_12.C \
+   test2019_13.C \
+   test2019_14.C \
+   test2019_15.C \
+   test2019_16.C 
 
 FAILING_PLUM_HALL_TESTS = \
    test2018_22.C \

@@ -3,7 +3,6 @@ include_directories(${ROSE_INCLUDES})
 add_subdirectory(arrayOptimization)
 add_subdirectory(autoParallelization)
 add_subdirectory(BabelPreprocessor)
-add_subdirectory(BinFuncDetect)
 add_subdirectory(bugSeeding)
 add_subdirectory(C_to_Promela)
 #add_subdirectory(CertSecureCodeProject)
@@ -90,6 +89,18 @@ if (with-roseQt)
   add_subdirectory(QtDesignerPlugins)
   add_subdirectory(RoseQt)
 endif()
+
+# This project is not intended to be built as part of ROSE. Instead, it serves as an example
+# for how to compile an external project that depends on an installed version of ROSE. Therefore,
+# instead of building this project, we should install its source code.  Matrix testing depends
+# on this project.
+install(TARGETS
+         MatrixTestingProject/Makefile
+	 MatrixTestingProject/README
+	 MatrixTestingProject/binary_specimen
+	 MatrixTestingProject/disassemble.C
+	 DESTINATION share/test-project)
+  
 
 
 # target was commented out of Makefile

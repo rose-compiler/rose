@@ -5,7 +5,7 @@
 #include "CastTransformer.h"
 #include "TFTransformation.h"
 #include "ToolConfig.hpp"
-#include "TFAnalysis.h"
+#include "Analysis.h"
 class TFTypeTransformer;
 
 class Transformer{
@@ -113,7 +113,7 @@ class TFTypeTransformer {
  private:
   CastTransformer _castTransformer;
   Transformer _transformer;
-  std::map<SgType*, TFAnalysis*> typeSets;
+  std::map<SgType*, Analysis*> typeSets;
   static bool _traceFlag;
   bool _setFlag = false;
   int _totalNumChanges=0;

@@ -1,0 +1,2 @@
+# This test doesn't use HDR_ROOT_SWITCHES, but rather the default root folder.
+cmd = cd ${TARGET} && ../TestUnparseHeadersUsingTokens ${ROSE_SWITCHES} ${srcdir}/${TARGET}/Simple0.C

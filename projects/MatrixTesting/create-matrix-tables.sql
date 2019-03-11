@@ -205,11 +205,20 @@ create table test_names (
     position integer                                    -- display position relative to other tests
 );
 
-insert into test_names values ( 'configure',        10  );
-insert into test_names values ( 'library-build',    20  );
-insert into test_names values ( 'libtest-build',    30  );
-insert into test_names values ( 'libtest-check',    40  );
-insert into test_names values ( 'project-bintools', 50  );
+insert into test_names values ( 'configure',         10 );
+insert into test_names values ( 'library-build',     20 );
+insert into test_names values ( 'libtest-build',     30 );
+insert into test_names values ( 'libtest-check',     40 );
+insert into test_names values ( 'projects-robb',     50 );
+insert into test_names values ( 'projects-justin',   60 );
+insert into test_names values ( 'projects-dan',      70 );
+insert into test_names values ( 'projects-markus',   80 );
+insert into test_names values ( 'projects-peihung',  90 );
+insert into test_names values ( 'projects-leo',     100 );
+insert into test_names values ( 'tutorial-build',   110 );
+insert into test_names values ( 'install',          120 );
+insert into test_names values ( 'bindist',          130 );
+insert into test_names values ( 'project',          140 );
 insert into test_names values ( 'end',              999 );
 
 --

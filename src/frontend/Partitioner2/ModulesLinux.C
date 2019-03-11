@@ -132,7 +132,8 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             // Map-based memory seems to work best for this. Maybe we should use that also when the partitioners semantics are
             // enabled in general?
             if (BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators(MAP_BASED_MEMORY)) {
-                if (cpu = args.partitioner.newDispatcher(ops)) {
+                cpu = args.partitioner.newDispatcher(ops);
+                if (cpu) {
                     BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
                         cpu->processInstruction(insn);
                     state = cpu->currentState();
@@ -174,16 +175,28 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         }
     }
 
-
     if (mainVa) {
         ASSERT_require(args.bblock->successors().isCached());
         SAWYER_MESG(debug) <<"LibcStartMain analysis: address of \"main\" is " <<*mainVa <<"\n";
         BasicBlock::Successors succs = args.bblock->successors().get();
         succs.push_back(BasicBlock::Successor(mainVa, E_FUNCTION_CALL));
         args.bblock->successors() = succs;
+
+        if (mainVa->is_number() && mainVa->get_width() <= 64)
+            mainVa_ = mainVa->get_number();
     }
     
     return true;
+}
+
+void
+LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
+    if (mainVa_) {
+        if (Function::Ptr main = partitioner.functionExists(*mainVa_)) {
+            if (main->name().empty())
+                main->name("main");
+        }
+    }
 }
 
 } // namespace

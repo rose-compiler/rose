@@ -83,7 +83,7 @@ private:
     }
 
 public:
-    /** Type for stored nodes.
+    /** %Type for stored nodes.
      *
      *  A storage node contains the immutable key and its associated value. */
     class Node: private std::pair<const Key, Value> {
@@ -119,12 +119,30 @@ private:
         BidirectionalIterator(const BaseIterator &base): base_(base) {}
     public:
         Derived& operator=(const Derived &other) { base_ = other.base_; return *derived(); }
+
+        /** Pre-increment to next iterator position. */
         Derived& operator++() { ++base_; return *derived(); }
+
+        /** Post-increment to next iterator position. */
         Derived operator++(int) { Derived old=*derived(); ++*this; return old; }
+
+        /** Pre-decrement to previous iterator position. */
         Derived& operator--() { --base_; return *derived(); }
+
+        /** Post-decrement to previous iterator position. */
         Derived operator--(int) { Derived old=*derived(); --*this; return old; }
+
+        /** True if two iterators are equal.
+         *
+         *  Two iterators are equal if they point to the same item in the same container, or if they both point to the end
+         *  iterator in the same container. */
         template<class OtherIter> bool operator==(const OtherIter &other) const { return base_ == other.base(); }
+
+        /** True if two iterators are unequal.
+         *
+         *  Inequality is the inverse of equality. See @ref operator== for the definition of equality. */
         template<class OtherIter> bool operator!=(const OtherIter &other) const { return base_ != other.base(); }
+
         const BaseIterator& base() const { return base_; }
     protected:
         Derived* derived() { return static_cast<Derived*>(this); }
@@ -140,9 +158,15 @@ public:
         typedef                BidirectionalIterator<NodeIterator, Node, typename StlMap::iterator> Super;
     public:
         NodeIterator() {}
+
+        /** Copy constructor. */
         NodeIterator(const NodeIterator &other): Super(other) {}
+
         // std::map stores std::pair nodes, but we want to return Node, which must have the same layout.
+        /** Dereference iterator to return a storage node. */
         Node& operator*() const { return *(Node*)&*this->base_; }
+
+        /** Returns a pointer to a storage node. */
         Node* operator->() const { return (Node*)&*this->base_; }
     private:
         friend class Map;
@@ -157,10 +181,18 @@ public:
         typedef                     BidirectionalIterator<ConstNodeIterator, const Node, typename StlMap::const_iterator> Super;
     public:
         ConstNodeIterator() {}
+
+        /** Copy constructor. */
         ConstNodeIterator(const ConstNodeIterator &other): Super(other) {}
+
+        /** Copy constructor. */
         ConstNodeIterator(const NodeIterator &other): Super(typename StlMap::const_iterator(other.base())) {}
+
         // std::map stores std::pair nodes, but we want to return Node, which must have the same layout.
+        /** Dereference iterator to return a storage node. */
         const Node& operator*() const { return *(const Node*)&*this->base_; }
+
+        /** Returns a pointer to a storage node. */
         const Node* operator->() const { return (const Node*)&*this->base_; }
     private:
         friend class Map;
@@ -176,10 +208,20 @@ public:
         typedef                    BidirectionalIterator<ConstKeyIterator, const Key, typename StlMap::const_iterator> Super;
     public:
         ConstKeyIterator() {}
+
+        /** Copy constructor. */
         ConstKeyIterator(const ConstKeyIterator &other): Super(other) {}
+
+        /** Copy constructor. */
         ConstKeyIterator(const NodeIterator &other): Super(typename StlMap::const_iterator(other.base())) {}
+
+        /** Copy constructor. */
         ConstKeyIterator(const ConstNodeIterator &other): Super(other.base()) {}
+
+        /** Dereference iterator to return the interval of the storage node. */
         const Key& operator*() const { return this->base()->first; }
+
+        /** Returns a pointer to the interval of the storage node. */
         const Key* operator->() const { return &this->base()->first; }
     };
 
@@ -191,9 +233,17 @@ public:
         typedef                 BidirectionalIterator<ValueIterator, Value, typename StlMap::iterator> Super;
     public:
         ValueIterator() {}
+
+        /** Copy constructor. */
         ValueIterator(const ValueIterator &other): Super(other) {}
+
+        /** Copy constructor. */
         ValueIterator(const NodeIterator &other): Super(other.base()) {}
+
+        /** Dereference iterator to return the value of the storage node. */
         Value& operator*() const { return this->base()->second; }
+
+        /** Returns a pointer to the value of the storage node. */
         Value* operator->() const { return &this->base()->second; }
     };
 
@@ -205,11 +255,23 @@ public:
         typedef BidirectionalIterator<ConstValueIterator, const Value, typename StlMap::const_iterator> Super;
     public:
         ConstValueIterator() {}
+
+        /** Copy constructor. */
         ConstValueIterator(const ConstValueIterator &other): Super(other) {}
+
+        /** Copy constructor. */
         ConstValueIterator(const ValueIterator &other): Super(typename StlMap::const_iterator(other.base())) {}
+
+        /** Copy constructor. */
         ConstValueIterator(const ConstNodeIterator &other): Super(other.base()) {}
+
+        /** Copy constructor. */
         ConstValueIterator(const NodeIterator &other): Super(typename StlMap::const_iterator(other.base())) {}
+
+        /** Dereference iterator to return the value of the storage node. */
         const Value& operator*() const { return this->base()->second; }
+
+        /** Returns a pointer to the value of the storage node. */
         const Value* operator->() const { return &this->base()->second; }
     };
 
