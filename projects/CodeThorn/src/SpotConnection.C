@@ -700,6 +700,7 @@ void SpotConnection::init(std::list<std::string> ltl_formulae) {
 
 PropertyValueTable* SpotConnection::getLtlResults() {
   reportUndefinedFunction();
+  return nullptr;
 }
 
 void SpotConnection::resetLtlResults() { 
@@ -720,6 +721,8 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
 
 PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
   reportUndefinedFunction();
+  PropertyValue v=PROPERTY_VALUE_UNKNOWN;
+  return v;
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
@@ -729,6 +732,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
 
 ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
   reportUndefinedFunction();
+  return nullptr;
 }
 
 void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
@@ -753,10 +757,14 @@ std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
 
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   reportUndefinedFunction();
+  string s;
+  return s;
 }
 
 set<string> SpotConnection::atomicPropositions(string ltlFormula) {
   reportUndefinedFunction();
+  set<string> s;
+  return s;
 }
 
 void SpotConnection::reportUndefinedFunction() {
