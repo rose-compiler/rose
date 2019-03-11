@@ -6,7 +6,7 @@
 int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
 #else
 
-#include "Combinatorics.h"
+#include "LinearCongruentialGenerator.h"
 #include "integerOps.h"
 
 static uint64_t

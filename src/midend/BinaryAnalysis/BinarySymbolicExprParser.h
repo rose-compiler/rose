@@ -33,9 +33,18 @@ public:
         std::string inputName;                          /**< Name of input, usually a file name. */
         unsigned lineNumber;                            /**< Line number (1-origin). Zero if position info is not available. */
         unsigned columnNumber;                          /**< Column number (0-origin). Unused when @c lineNumber is zero. */
-        void print(std::ostream&) const;                /**< Print error message to stream. */
         SyntaxError(const std::string &mesg, const std::string &inputName, unsigned lineNumber, unsigned columnNumber);
         ~SyntaxError() throw () {}
+        void print(std::ostream&) const;                /**< Print error message to stream. */
+    };
+
+    /** Substitution error during expansion. */
+    class SubstitutionError: public std::runtime_error {
+    public:
+        SubstitutionError(const std::string &mesg)
+            : std::runtime_error(mesg) {}
+        ~SubstitutionError() throw () {}
+        void print(std::ostream&) const;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,6 +562,7 @@ private:
 };
 
 std::ostream& operator<<(std::ostream&, const SymbolicExprParser::SyntaxError&);
+std::ostream& operator<<(std::ostream&, const SymbolicExprParser::SubstitutionError&);
 
 } // namespace
 } // namespace

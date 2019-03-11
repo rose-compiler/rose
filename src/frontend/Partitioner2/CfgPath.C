@@ -35,36 +35,75 @@ CfgPath::vertices() const {
 }
 
 void
-CfgPath::pushBack(const ControlFlowGraph::ConstEdgeIterator &edge) {
-    ASSERT_require2(!edge.isEmpty(), "cannot be an end iterator");
-    ASSERT_require(isEmpty() || edge->source()==backVertex());
+CfgPath::pushBack(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges) {
+#ifndef NDEBUG
+    ASSERT_forbid(edges.empty());
+    ControlFlowGraph::ConstVertexIterator srcVertex = edges[0]->source();
+    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edges) {
+        ASSERT_require(edge->source() == srcVertex);
+    }
+    ASSERT_require(isEmpty() || srcVertex == backVertex());
+#endif
 
     if (isEmpty()) {
-        frontVertex_ = edge->source();
+        frontVertex_ = edges[0]->source();
         vertexAttributes_.push_back(Attributes());
     }
 
-    edges_.push_back(edge);
+    edgeOrders_.push_back(edges);
+    std::reverse(edgeOrders_.back().begin(), edgeOrders_.back().end());
+    edges_.push_back(edgeOrders_.back().back());
+    edgeOrders_.back().pop_back();
     edgeAttributes_.push_back(Attributes());
     vertexAttributes_.push_back(Attributes());
 
     ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(edgeOrders_.size() == edges_.size());
     ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
 }
 
 void
-CfgPath::pushFront(const ControlFlowGraph::ConstEdgeIterator &edge) {
+CfgPath::pushBack(ControlFlowGraph::ConstEdgeIterator edge) {
     ASSERT_require2(!edge.isEmpty(), "cannot be an end iterator");
-    ASSERT_require(isEmpty() || edge->target()==frontVertex());
-    frontVertex_ = edge->source();
+    std::vector<ControlFlowGraph::ConstEdgeIterator> edges;
+    for (/*void*/; !edge.isEmpty(); ++edge)
+        edges.push_back(edge);
+    pushBack(edges);
+}
 
-    // Warning: linear time
-    edges_.insert(edges_.begin(), edge);
-    vertexAttributes_.insert(vertexAttributes_.begin(), Attributes());
+void
+CfgPath::pushFront(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges) {
+#ifndef NDEBUG
+    ASSERT_forbid(edges.empty());
+    ControlFlowGraph::ConstVertexIterator tgtVertex = edges[0]->target();
+    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edges) {
+        ASSERT_require(edge->target() == tgtVertex);
+    }
+    ASSERT_require(isEmpty() || tgtVertex == frontVertex());
+#endif
+
+    if (isEmpty())
+        vertexAttributes_.push_back(Attributes());
+    frontVertex_ = edges[0]->source();
+    edgeOrders_.insert(edgeOrders_.begin(), edges);
+    std::reverse(edgeOrders_[0].begin(), edgeOrders_[0].end());
+    edges_.insert(edges_.begin(), edgeOrders_[0].back());
+    edgeOrders_[0].pop_back();
     edgeAttributes_.insert(edgeAttributes_.begin(), Attributes());
-    
+    vertexAttributes_.insert(vertexAttributes_.begin(), Attributes());
+
     ASSERT_require(edgeAttributes_.size() == edges_.size());
+    ASSERT_require(edgeOrders_.size() == edges_.size());
     ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
+}
+
+void
+CfgPath::pushFront(ControlFlowGraph::ConstEdgeIterator edge) {
+    ASSERT_require2(!edge.isEmpty(), "cannot be an end iterator");
+    std::vector<ControlFlowGraph::ConstEdgeIterator> edges;
+    for (/*void*/; !edge.isEmpty(); ++edge)
+        edges.push_back(edge);
+    pushFront(edges);
 }
 
 void
@@ -77,6 +116,7 @@ CfgPath::popBack() {
         vertexAttributes_.clear();
     } else {
         edges_.pop_back();
+        edgeOrders_.pop_back();
         vertexAttributes_.pop_back();
         edgeAttributes_.pop_back();
     }
@@ -87,31 +127,33 @@ CfgPath::popBack() {
 
 std::vector<ControlFlowGraph::ConstEdgeIterator>
 CfgPath::backtrack() {
+    ASSERT_require(edgeOrders_.size() == edges_.size());
     ASSERT_require(edgeAttributes_.size() == edges_.size());
     ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
 
     std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges;
     while (!edges_.empty()) {
         ControlFlowGraph::ConstEdgeIterator edgeToRemove = edges_.back();
-        ControlFlowGraph::ConstVertexIterator vertex = edgeToRemove->source();
         removedEdges.push_back(edgeToRemove);
 
-        // Advance to next edge
-        ++edges_.back();
-        edgeAttributes_.back() = Attributes();
-        vertexAttributes_.back() = Attributes();
+        if (!edgeOrders_.back().empty()) {
+            // Another edge available at this position in the path
+            edges_.back() = edgeOrders_.back().back();
+            edgeOrders_.back().pop_back();
+            edgeAttributes_.back() = Attributes();
+            vertexAttributes_.back() = Attributes();
 
-        // Looks good - we found another edge out of the last vertex
-        if (edges_.back() != vertex->outEdges().end()) {
+            ASSERT_require(edgeOrders_.size() == edges_.size());
             ASSERT_require(edgeAttributes_.size() == edges_.size());
             ASSERT_require(vertexAttributes_.size() == 1 + edges_.size());
             return removedEdges;
+        } else {
+            // No more sibling edges available, so backtrack
+            edges_.pop_back();
+            edgeOrders_.pop_back();
+            vertexAttributes_.pop_back();
+            edgeAttributes_.pop_back();
         }
-        
-        // Remove last edge
-        edges_.pop_back();
-        vertexAttributes_.pop_back();
-        edgeAttributes_.pop_back();
     }
 
     clear();
@@ -259,6 +301,7 @@ CfgPath::truncate(const CfgConstEdgeSet &toRemove) {
             std::reverse(removedEdges.begin(), removedEdges.end());
             edges_.erase(ei, edges_.end());
 
+            edgeOrders_.resize(edges_.size());
             edgeAttributes_.resize(edges_.size());
             vertexAttributes_.resize(1 + edges_.size());
 
@@ -375,7 +418,7 @@ findPathReachableEdges(const ControlFlowGraph &graph,
     }
     return retval;
 }
-    
+
 CfgConstEdgeSet
 findPathUnreachableEdges(const ControlFlowGraph &graph,
                          const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
@@ -485,7 +528,7 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
                        const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
     return findPaths(srcCfg, paths, vmap, beginVertices, endVertices, avoidVertices, avoidEdges, false);
 }
-    
+
 bool
 inlineMultipleCallees(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                       const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,

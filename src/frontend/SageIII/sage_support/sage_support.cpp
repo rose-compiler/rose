@@ -398,7 +398,8 @@ whatTypeOfFileIsThis( const string & name )
 
   // Use "-b" for brief mode!
      string commandLine = "file " + name;
-     system(commandLine.c_str());
+     if (system(commandLine.c_str()))
+         mlog[ERROR] <<"command failed: \"" <<StringUtility::cEscape(commandLine) <<"\"\n";
    }
 
 

@@ -4,6 +4,7 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
+#include "BinarySerialIo.h"
 #include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
@@ -140,7 +141,8 @@ Engine::loaderSwitches() {
     sg.name("loader");
     sg.doc("The loader is responsible for mapping a specimen into the address space used for disassembling and analysis. "
            "ROSE uses a virtualized address space (the MemoryMap class) to isolate the address space of a specimen from "
-           "the address space of ROSE itself.");
+           "the address space of ROSE itself. These switches have no effect if the input is a ROSE Binary Analysis (RBA) "
+           "file, since the loader steps in such an input have already been completed.");
 
     sg.insert(Switch("remove-zeros")
               .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
@@ -244,7 +246,9 @@ Engine::disassemblerSwitches() {
     sg.name("disassemble");
     sg.doc("These switches affect the disassembler proper, which is the software responsible for decoding machine "
            "instruction bytes into ROSE internal representations.  The disassembler only decodes instructions at "
-           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded.");
+           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded. "
+           "These switches have no effect if the input is a ROSE Binary Analysis (RBA) file, since the disassembler steps "
+           "in such an input have already been completed.");
 
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
@@ -261,7 +265,9 @@ Engine::partitionerSwitches() {
     SwitchGroup sg("Partitioner switches");
     sg.name("partition");
     sg.doc("The partitioner is the part of ROSE that drives a disassembler. While the disassembler knows how to decode "
-           "a machine instruction to an internal representation, the partitioner knows where to decode.");
+           "a machine instruction to an internal representation, the partitioner knows where to decode. These switches have "
+           "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
+           "have already been completed.");
 
     sg.insert(Switch("start")
               .argument("addresses", listParser(nonNegativeIntegerParser(settings_.partitioner.startingVas)))
@@ -813,9 +819,16 @@ Engine::specimenNameDocumentation() {
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
 
+            "@bullet{If the name ends with \".rba\" and doesn't match the previous list of prefixes then it is assumed "
+            "to be a ROSE Binary Analysis file that contains a serialized partitioner and an optional AST. Use of an "
+            "RBA file to describe a specimen precludes the use of any other inputs for that specimen. Furthermore, since "
+            "an RBA file represents a fully parsed and disassembled specimen, the command-line switches that control "
+            "the parsing and disassembly are ignored.}"
+
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "
-            "are then processed in the order they appear, possibly overwriting parts of the map.");
+            "are then processed in the order they appear, possibly overwriting parts of the map. RBA files have special "
+            "handling described above.");
 }
 
 Sawyer::CommandLine::Parser
@@ -868,13 +881,19 @@ Engine::checkSettings() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
+Engine::isRbaFile(const std::string &name) {
+    return boost::ends_with(name, ".rba");
+}
+
+bool
 Engine::isNonContainer(const std::string &name) {
-    return (boost::starts_with(name, "map:") ||         // map file directly into MemoryMap
+    return (boost::starts_with(name, "map:")  ||        // map file directly into MemoryMap
             boost::starts_with(name, "data:") ||        // map data directly into MemoryMap
             boost::starts_with(name, "proc:") ||        // map process memory into MemoryMap
-            boost::starts_with(name, "run:") ||         // run a process in a debugger, then map into MemoryMap
+            boost::starts_with(name, "run:")  ||        // run a process in a debugger, then map into MemoryMap
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
-            boost::ends_with(name, ".srec"));           // Motorola S-Record format
+            boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
+            isRbaFile(name));                           // ROSE Binary Analysis file
 }
 
 bool
@@ -1659,12 +1678,28 @@ Engine::runPartitioner(Partitioner &partitioner) {
 Partitioner
 Engine::partition(const std::vector<std::string> &fileNames) {
     try {
-        if (!areSpecimensLoaded())
-            loadSpecimens(fileNames);
-        obtainDisassembler();
-        Partitioner partitioner = createPartitioner();
-        runPartitioner(partitioner);
-        return partitioner;
+        BOOST_FOREACH (const std::string &fileName, fileNames) {
+            if (isRbaFile(fileName) && fileNames.size() != 1)
+                throw Exception("specifying an RBA file excludes all other inputs");
+        }
+        if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
+            SerialInput::Ptr archive = SerialInput::instance();
+            archive->open(fileNames[0]);
+            Partitioner partitioner = archive->loadPartitioner();
+            SgNode *ast = archive->loadAst();
+            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
+            if (!interps.empty())
+                interp_ = interps[0];
+            map_ = partitioner.memoryMap();
+            return partitioner;
+        } else {
+            if (!areSpecimensLoaded())
+                loadSpecimens(fileNames);
+            obtainDisassembler();
+            Partitioner partitioner = createPartitioner();
+            runPartitioner(partitioner);
+            return partitioner;
+        }
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
             mlog[FATAL] <<e.what() <<"\n";
