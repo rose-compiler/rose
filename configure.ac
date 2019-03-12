@@ -143,6 +143,8 @@ ${T_BM}
 | Configure Terminated Normally! |
 +--------------------------------+
 ${T_NM}
-Now type 'make' and then 'make install'.
+Now type 'make core -jN' and then 'make install-core -jN' to only build essential libraries and tools (Recommended).
+Type 'make -jN' and 'make install -jN' to build and install everything (takes a very long time).
+N is the number of concurrent processes you wan to use for your build. 
 Thank you for using ROSE.
 X
