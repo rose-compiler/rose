@@ -3990,7 +3990,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           bool infoSaysGoAhead = !info.SkipEnumDefinition()  &&
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
-
 #if 0
           printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
           printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
@@ -4014,7 +4013,13 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
        // DQ (2/27/2019): Added assertions for debugging, for Cxx_tests/test2005_15.C (and many other files) this can be NULL.
        // ROSE_ASSERT(info.get_current_source_file() != NULL);
           bool isCommentFromCurrentFile = true;
-          if (info.get_current_source_file() != NULL)
+
+          bool isSharedLocatedNode = (stmt->get_file_info()->isShared() == true);
+
+       // DQ (3/12/2019): Only review the decission to reset infoSaysGoAhead if it is true.
+       // if (info.get_current_source_file() != NULL)
+       // if (infoSaysGoAhead == true && info.get_current_source_file() != NULL)
+          if (isSharedLocatedNode == true && infoSaysGoAhead == true && info.get_current_source_file() != NULL)
              {
                ROSE_ASSERT(info.get_current_source_file()->get_file_info() != NULL);
 
@@ -4024,9 +4029,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                if (isCommentFromCurrentFile == false)
                   {
 #if 0
-                    printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file \n");
+                    printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
 #endif
-
                  // DQ (3/2/2019): so when this fails for generated comments, what does the file info look like?
                  // (*i)->get_file_info()->display("so when this fails for generated comments, what does the file info look like");
 
@@ -4040,9 +4044,25 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                       else
                        {
                          infoSaysGoAhead = false;
+#if 0
+                         printf (" --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                         printf (" --- stmt->get_file_info()->isShared() = %s \n",stmt->get_file_info()->isShared() ? "true" : "false");
+                         printf (" --- Test 1.5: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+#if 0
+                      // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
+                         printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+                              PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
+                              (*i)->getString().c_str());
+
+                      // DQ (2/27/2019): Adding support for multi-file handling.
+                         printf (" --- --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+                         printf (" --- --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
+#endif
                        }
                   }
              }
+
 #if 0
           printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
@@ -4057,7 +4077,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                ROSE_ABORT();
              }
 #endif
-
        // DQ (2/5/2003):
        // The old directive handling allows all the test codes to parse properly, but
        // is not sufficent for handling the A++ transformations which are more complex.

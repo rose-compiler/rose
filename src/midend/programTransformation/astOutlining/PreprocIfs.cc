@@ -195,6 +195,12 @@ genCloseDirectives (const CPreproc::If::Case* c,
                                1 /* no. of lines */,
                                pos);
       ROSE_ASSERT (d);
+
+   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+   // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+   // when multiple files are used on the command line.
+      d->get_file_info()->setTransformation();
+
       D.push_back (d);
 
       // Close all parents.
@@ -238,6 +244,12 @@ genOpenDirectives (const CPreproc::If::Case* c,
                                pos);
 
       ROSE_ASSERT (d);
+
+   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+   // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+   // when multiple files are used on the command line.
+      d->get_file_info()->setTransformation();
+
       d->setRelativePosition (pos);
       D.push_back (d);
     }
