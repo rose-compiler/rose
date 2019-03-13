@@ -5347,6 +5347,10 @@ HEADER_FILE_INFORMATION_START
           int   get_line() const;
           int   get_col() const;
 
+       // DQ (2/28/2019): Support for multi-file handling.
+      //! Where this is a shared IR node across multiple files, return the line number location of the IR node for a specific file.
+          int   get_line(int file_id) const;
+
           void set_file_id ( int file_id );
           int  get_file_id () const;
 
@@ -5362,6 +5366,13 @@ HEADER_FILE_INFORMATION_START
           void set_physical_line (int line);
           int  get_physical_line() const;
           void set_physical_source_position_to_match_logical_source_position();
+
+       // DQ (2/28/2019): Support for multi-file handling.
+      //! Where this is a shared IR node across multiple files, return the line number location of the IR node for a specific file.
+          int  get_physical_line(int file_id) const;
+
+       // DQ (2/28/2019): This is required because the physical id returned can be dependent on the file id when this is a shared IR node.
+          int  get_physical_file_id (int file_id) const;
 
        // DQ (1/23/2013): Added source position sequence information. This work supports the handling of default arguments and addresses
        // new future capabilities to ROSE.
@@ -5554,6 +5565,14 @@ HEADER_FILE_INFORMATION_START
             //               BAD_FILE_ID to indicate this.
                BAD_FILE_ID = -6   /*!< value returned if there is no file id mapped to given filename */
              };
+
+
+
+       // DQ (2/27/2019): Adding support for access function to list of fileIds and line numbers associated with 
+       // support for multi-file sharing of IR nodes and the support to know there source position information 
+       // from each file.
+       // const SgFileIdList & get_fileIDsToUnparse () const;
+       // SgFileIdList & get_fileIDsToUnparse ();
 
 #if 0
        // DQ (12/20/2005): These have been placed into ROSETTA
@@ -13305,11 +13324,12 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
      printf ("In Sg_File_Info::operator=(): this = %p &X = %p \n",this,&X);
 #endif
 
-     p_file_id                = X.p_file_id;
-     p_line                   = X.p_line;
-     p_col                    = X.p_col;
-     p_classificationBitField = X.p_classificationBitField;
-     p_fileIDsToUnparse       = X.p_fileIDsToUnparse;
+     p_file_id                  = X.p_file_id;
+     p_line                     = X.p_line;
+     p_col                      = X.p_col;
+     p_classificationBitField   = X.p_classificationBitField;
+     p_fileIDsToUnparse         = X.p_fileIDsToUnparse;
+     p_fileLineNumbersToUnparse = X.p_fileLineNumbersToUnparse;
 
   // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
      p_physical_file_id = X.p_physical_file_id;
@@ -13711,7 +13731,8 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_physical_file_id(X.p_physical_file_id),
      p_physical_line(X.p_physical_line),
      p_source_sequence_number(X.p_source_sequence_number),
-     p_fileIDsToUnparse(X.p_fileIDsToUnparse)
+     p_fileIDsToUnparse(X.p_fileIDsToUnparse),
+     p_fileLineNumbersToUnparse(X.p_fileLineNumbersToUnparse)
    {
   // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
   // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
@@ -13959,6 +13980,87 @@ Sg_File_Info::get_physical_file_id() const
                return_physical_file_id = p_physical_file_id;
              }
 #endif
+        }
+
+     return return_physical_file_id;
+   }
+
+
+int 
+Sg_File_Info::get_physical_file_id(int input_file_id) const
+   {
+  // DQ (12/18/2012): Added support for physical file position information.
+     assert (this != NULL);
+
+  // Initialize to error value.
+     int return_physical_file_id = NULL_FILE_ID;
+
+  // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
+  // This is (I think) required support for the unparsing of header files.
+     bool physicalFileOK = (p_physical_file_id >= 0);
+     int local_file_id = get_file_id();
+
+  // DQ (8/20/2018): Not clear why this language specific rule is a good idea.
+  // PHL (01/06/2014) use get_line for Fortran frontend
+     if (SageInterface::is_Fortran_language() )
+        {
+          return local_file_id;
+        }
+
+  // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
+  // This is (I think) required support for the unparsing of header files.
+     if (physicalFileOK == false && local_file_id < 0)
+        {
+          return_physical_file_id = local_file_id;
+        }
+       else
+        {
+       // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
+#if 0
+          printf ("In Sg_File_Info::get_physical_file_id(): isCompilerGenerated() = %s file_id = %d p_physical_file_id = %d \n",isCompilerGenerated() ? "true" : "false",file_id,p_physical_file_id);
+#endif
+          if (isCompilerGenerated() == true)
+             {
+               return_physical_file_id = local_file_id;
+             }
+            else
+             {
+            // return_physical_file_id = p_physical_file_id;
+
+               if (input_file_id == this->get_physical_file_id())
+                  {
+                    return_physical_file_id = p_physical_file_id;
+                  }
+                 else
+                  {
+                    SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),input_file_id);
+                    if (pos != p_fileIDsToUnparse.end())
+                       {
+#if 0
+                         printf ("Sg_File_Info::get_physical_file_id(int): input file is sharing this IR node: input_file_id = %d physical_file_id = %d \n",input_file_id,this->get_physical_file_id());
+#endif
+                         ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
+                         ROSE_ASSERT(index >= 0);
+                         ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
+                         ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
+#if 0
+                         printf (" --- index = %d shared input file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
+#endif
+                         ROSE_ASSERT(input_file_id == p_fileIDsToUnparse[index]);
+                         return_physical_file_id = p_fileIDsToUnparse[index];
+#if 0
+                         printf (" --- returning return_physical_file_id = %d \n",return_physical_file_id);
+#endif
+                       }
+                      else
+                       {
+                      // This case means that the file_id provided was incorrect, the IR node is not shared with that file.
+                      // This is a reasonable default, if we don't want to make this an error.
+
+                         return_physical_file_id = p_physical_file_id;
+                       }
+                  }
+             }
         }
 
      return return_physical_file_id;
@@ -14313,6 +14415,86 @@ Sg_File_Info::get_line() const
      return returnValue;
    }
 
+
+// DQ (2/28/2019): Support for multi-file handling.
+int
+Sg_File_Info::get_line(int file_id) const
+   {
+  // Where this is a shared IR node across multiple files, return the line number location of the IR node for a specific file.
+
+     assert (this != NULL);
+
+     const int undefinedValue = 0;
+     int returnValue = 0;
+
+     if (isTransformation() == true)
+        {
+       // printf ("Sg_File_Info::get_line called for transformation IR node (p_line = %d) \n",p_line);
+          returnValue = undefinedValue;
+        }
+       else
+        {
+       // DQ (8/17/2005): only undefinedValue when compiler generate (not when marked for output)
+          if ( isCompilerGenerated() == true )
+             {
+            // DQ (6/14/2005): Temp code to permit identification of line number of template declaration!
+               returnValue = undefinedValue;
+             }
+            else
+             {
+            // DQ (3/18/2017): Add to the cases where we want to output an undefined value.
+            // I think it is helpful to know the position in the rose_edg_required_macros_and_functions.h 
+            // file (so don't output undefined value for case of isFrontendSpecific() == true).
+            // if (isFrontendSpecific() == true || isSourcePositionUnavailableInFrontend() == true )
+               if ( isSourcePositionUnavailableInFrontend() == true )
+                  {
+                    returnValue = undefinedValue;
+                  }
+                 else
+                  {
+                    if (file_id == this->get_physical_file_id())
+                       {
+                         returnValue = p_line;
+                       }
+                      else
+                       {
+                      // SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),this->get_physical_file_id());
+                         SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),file_id);
+                         if (pos != p_fileIDsToUnparse.end())
+                            {
+#if 0
+                              printf ("Sg_File_Info::get_line(int): input file is sharing this IR node: input file_id = %d physical_file_id = %d \n",file_id,this->get_physical_file_id());
+#endif
+                              ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
+                              ROSE_ASSERT(index >= 0);
+                              ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
+                              ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
+#if 0
+                              printf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
+#endif
+                              ROSE_ASSERT(file_id == p_fileIDsToUnparse[index]);
+                              returnValue = p_fileLineNumbersToUnparse[index];
+#if 0
+                              printf (" --- returning returnValue = %d \n",returnValue);
+#endif
+                            }
+                           else
+                            {
+                           // This case means that the file_id provided was incorrect, the IR node is not shared with that file.
+                           // This is a reasonable default, if we don't want to make this an error.
+
+                              returnValue = p_line;
+                            }
+                       }
+                  }
+             }
+        }
+
+     assert (returnValue >= 0);
+     return returnValue;
+   }
+
+
 int
 Sg_File_Info::get_raw_line() const
    {
@@ -14325,6 +14507,59 @@ Sg_File_Info::set_physical_line(int line)
    {
      assert (this != NULL);
      p_physical_line = line;
+   }
+
+int
+Sg_File_Info::get_physical_line(int file_id) const
+   {
+     assert (this != NULL);
+
+     int returnValue = 0;
+
+  // DQ (2/28/2019): Physical source position information is not supported for Fortran yet (not debugged at least).
+     if (SageInterface::is_Fortran_language() )
+        {
+          returnValue = Sg_File_Info::get_line();
+        }
+       else
+        {
+       // returnValue = p_physical_line;
+          if (file_id == this->get_physical_file_id())
+             {
+               returnValue = p_physical_line;
+             }
+            else
+             {
+               SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),file_id);
+               if (pos != p_fileIDsToUnparse.end())
+                  {
+#if 0
+                    printf ("Sg_File_Info::get_physical_line(int): input file is sharing this IR node: input file_id = %d physical_file_id = %d \n",file_id,this->get_physical_file_id());
+#endif
+                    ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
+                    ROSE_ASSERT(index >= 0);
+                    ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
+                    ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
+#if 0
+                    printf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
+#endif
+                    ROSE_ASSERT(file_id == p_fileIDsToUnparse[index]);
+                    returnValue = p_fileLineNumbersToUnparse[index];
+#if 0
+                    printf (" --- returning returnValue = %d \n",returnValue);
+#endif
+                  }
+                 else
+                  {
+                 // This case means that the file_id provided was incorrect, the IR node is not shared with that file.
+                 // This is a reasonable default, if we don't want to make this an error.
+
+                    returnValue = p_physical_line;
+                  }
+             }
+        }
+
+     return returnValue;
    }
 
 int
@@ -14535,6 +14770,38 @@ Sg_File_Info::isSameFile(SgFile* file) const
      printf ("   --- fileInfo->get_physical_file_id() = %d physical_filename = %s \n",fileInfo->get_physical_file_id(),fileInfo->get_physical_filename().c_str());
 #endif
 
+  // DQ (2/27/2019): Adding support for shared IR nodes, so that they can be traversed from AST for each of multiple files.
+     if (result == false)
+        {
+       // Check is this could be a shared file info.
+       // if (this->get_fileIDsToUnparse().empty() == false)
+          if (p_fileIDsToUnparse.empty() == false)
+             {
+#if 0
+               printf ("Sg_File_Info::isSameFile(SgFile*): p_fileIDsToUnparse.size() = %zu \n",p_fileIDsToUnparse.size());
+#endif
+            // if (find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),fileInfo->get_physical_file_id()) != p_fileIDsToUnparse.end())
+               SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),fileInfo->get_physical_file_id());
+               if (pos != p_fileIDsToUnparse.end())
+                  {
+#if 0
+                    printf ("Sg_File_Info::isSameFile(SgFile*): input file is sharing this IR node: input file_id = %d \n",fileInfo->get_physical_file_id());
+#endif
+                    ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
+                    ROSE_ASSERT(index >= 0);
+                    ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
+#if 0
+                    printf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
+#endif
+                 // result = true;
+                    result = (fileInfo->get_physical_file_id() == p_fileIDsToUnparse[index]);
+#if 0
+                    printf (" --- returning result = %s \n",result ? "true" : "false");
+#endif
+                  }
+             }
+        }
+
      return result;
    }
 
@@ -14716,10 +14983,13 @@ Sg_File_Info::setShared()
                printf ("Warning: trying to share file id = %d < 0 \n",temp_file_id);
         }
 
+#if 0
+  // DQ (2/27/2019): Disable this since it conflicts with using this as a mechanism to support additional files to support.
      if (isShared() == false)
         {
           p_fileIDsToUnparse.push_back(p_file_id);
         }
+#endif
 
      p_classificationBitField |= e_shared;
    }
@@ -14730,8 +15000,11 @@ Sg_File_Info::unsetShared()
      assert(this != NULL);
      p_classificationBitField &= ~e_shared;
 
+#if 0
+  // DQ (2/27/2019): Disable this since it conflicts with using this as a mechanism to support additional files to support.
   // MK (8/2/05) : Initialize the fileid set
      p_fileIDsToUnparse.clear();
+#endif
    }
 
 bool
@@ -14882,6 +15155,13 @@ void
 Sg_File_Info::addFileToUnparse(int file_id)
    { 
      assert(this != NULL);
+
+#if 1
+  // DQ (2/27/2019): Debugging how this is getting out of sync with the list of line numbers for multi-file handling.
+     printf ("Error: In Sg_File_Info::addFileToUnparse(): I think this function should not be called \n");
+     ROSE_ASSERT(false);
+#endif
+
      p_fileIDsToUnparse.push_back(file_id);
    }
 
@@ -15032,6 +15312,34 @@ Sg_File_Info::set_nametofileid_map(std::map<std::string,int> & X)
    {
      p_nametofileid_map = X;
    }
+
+#if 0
+// DQ (2/27/2019): Adding support for access function to list of fileIds and line numbers associated with 
+// support for multi-file sharing of IR nodes and the support to know there source position information 
+// from each file.
+const SgFileIdList &
+Sg_File_Info::get_fileIDsToUnparse () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_fileIDsToUnparse;
+   }
+
+// DQ (2/27/2019): Adding support for access function to list of fileIds and line numbers associated with 
+// support for multi-file sharing of IR nodes and the support to know there source position information 
+// from each file.
+// Note that we don't build a "set" function since the return by reference allows the operator= to be called
+SgFileIdList &
+Sg_File_Info::get_fileIDsToUnparse () 
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // DQ (4/14/2015): After discussion with Markus we agree that even non-const functions should not
+  // have to set the isModified flag. As a rule only set_ access functions can set the isModified flag.
+  // set_isModified(true);
+
+     return p_fileIDsToUnparse;
+   }
+#endif
 
 SOURCE_FILE_INFORMATION_END
 
