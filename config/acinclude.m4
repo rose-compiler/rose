@@ -57,7 +57,7 @@ AC_DEFUN([ROSE_MSG_ERROR],[
 "$rose_shtool" echo "--------------------------------------------------------------------------------"
 AC_MSG_ERROR([$1
 
-For assistance, please contact the rose-public@nersc.gov mailing list.
+For assistance, please visit http://rosecompiler.org or contact the rose-public@nersc.gov mailing list.
 ])
 ])
 
