@@ -14785,33 +14785,50 @@ void SgNonrealDecl::set_type (SgNonrealType* t) {
   p_type = t;
 }
 
+#define DEBUG_NONREAL_DECL_MANGLED 0
+
 SgName
 SgNonrealDecl::get_mangled_name (void) const {
-#if 0
+#if DEBUG_NONREAL_DECL_MANGLED
   printf("In SgNonrealDecl::get_mangled_name():\n");
   printf("  - this = %p\n", this);
 #endif
   ostringstream mangled_name;
 
   if (get_is_class_member()) {
-    SgNode * type_parent = get_parent();
-    ROSE_ASSERT(type_parent != NULL);
-#if 0
-    printf("  - type_parent = %p (%s)\n", type_parent, type_parent ? type_parent->class_name().c_str() : "");
+    SgNode * parent = get_parent();
+    ROSE_ASSERT(parent != NULL);
+#if DEBUG_NONREAL_DECL_MANGLED
+    printf("  - parent[1] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
 #endif
-    SgNode * decl_parent = type_parent->get_parent();
-#if 0
-    printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
+    SgDeclarationScope * p_nrscope = isSgDeclarationScope(parent);
+    ROSE_ASSERT(p_nrscope != NULL);
+
+    parent = p_nrscope->get_parent();
+#if DEBUG_NONREAL_DECL_MANGLED
+    printf("  - parent[2] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
 #endif
-    SgClassDeclaration * xdecl = isSgClassDeclaration(decl_parent);
-    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(decl_parent);
-    SgNonrealDecl * nrdecl = isSgNonrealDecl(decl_parent);
-    if (xdecl != NULL) {
+    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent);
+    SgClassDeclaration * xdecl = isSgClassDeclaration(parent);
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(parent);
+    if (tplcdecl != NULL) {
+       SgDeclarationScope * nrscope = tplcdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
+       if (nrscope != p_nrscope) {
+         mangled_name << tplcdecl->get_mangled_name().getString() << "___";
+       }
+    } else if (xdecl != NULL) {
        mangled_name << xdecl->get_mangled_name().getString() << "___";
-    } else if (tplcdecl != NULL) {
-       mangled_name << tplcdecl->get_mangled_name().getString() << "___";
     } else if (nrdecl != NULL) {
-       mangled_name << nrdecl->get_mangled_name().getString() << "___";
+       SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
+       if (nrscope != p_nrscope) {
+         mangled_name << nrdecl->get_mangled_name().getString() << "___";
+       }
     }
   }
 
