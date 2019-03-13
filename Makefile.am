@@ -103,7 +103,6 @@ core:
 	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
 #	$(MAKE) -C $(top_builddir)/projects/vulnerabilitySeeding
 if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
-	$(MAKE) -C $(top_builddir)/projects/CodeThorn
 	$(MAKE) -C $(top_builddir)/projects/typeforge
 endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -132,7 +131,6 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 #	$(MAKE) install -C $(top_builddir)/projects/vulnerabilitySeeding
 if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
-	$(MAKE) install -C $(top_builddir)/projects/CodeThorn
 	$(MAKE) install -C $(top_builddir)/projects/typeforge
 endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
