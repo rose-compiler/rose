@@ -1458,8 +1458,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallArguments(funCall,estate);
     } else if(funName=="time"||funName=="srand"||funName=="rand") {
       // arguments must already be analyzed (normalized code) : TODO check that it is a single variable
-      // result is top (time returns any value)
-      return listify(res); // return top (initialized at beginning of function)
+      // result is top (time/srand/rand return any value)
+      return listify(res); // return top (initialized above (res.init))
     } else if(funName=="__assert_fail") {
       // TODO: create state
       evalFunctionCallArguments(funCall,estate);
@@ -1544,7 +1544,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
     SingleEvalResultConstInt sres=*resList.begin();
     AbstractValue arg1val=sres.result;
     if(arg1val.isPtr()) {
-      int memoryRegionSize=getMemoryRegionSize(arg1val);
+      int memoryRegionSize=getMemoryRegionNumElements(arg1val);
       // can be marked as deallocated (currently this does not impact the analysis)
       //variableIdMapping->setSize(arg1Val.getVariableId(),-1);
       ROSE_ASSERT(memoryRegionSize>=0);
@@ -1557,11 +1557,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
   return listify(res);
 }
 
-int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
+int ExprAnalyzer::getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion) {
   ROSE_ASSERT(ptrToRegion.isPtr());
   VariableId ptrVariableId=ptrToRegion.getVariableId();
   int size=_variableIdMapping->getNumberOfElements(ptrVariableId);
-  logger[TRACE]<<"getMemoryRegionSize(ptrToRegion): ptrToRegion with ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<" numberOfElements: "<<size<<endl;
+  logger[TRACE]<<"getMemoryRegionNumElements(ptrToRegion): ptrToRegion with ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<" numberOfElements: "<<size<<endl;
+  return size;
+}
+
+int ExprAnalyzer::getMemoryRegionElementSize(CodeThorn::AbstractValue ptrToRegion) {
+  ROSE_ASSERT(ptrToRegion.isPtr());
+  VariableId ptrVariableId=ptrToRegion.getVariableId();
+  int size=_variableIdMapping->getElementSize(ptrVariableId);
+  logger[TRACE]<<"getMemoryRegionNumElements(ptrToRegion): ptrToRegion with ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<" numberOfElements: "<<size<<endl;
   return size;
 }
 
@@ -1589,37 +1597,57 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     for(int i=0;i<3;i++) {
       logger[TRACE]<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
-    int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
-    int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
+    int memRegionSizeTarget=getMemoryRegionNumElements(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
+    int copyRegionElementSizeTarget=getMemoryRegionElementSize(memcpyArgs[0]);
+    int copyRegionElementSizeSource=getMemoryRegionElementSize(memcpyArgs[1]);
     
-    cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
-    cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
+    cout<<"DEBUG: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
+    cout<<"DEBUG: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
+
+    int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
+    // check if size to copy is either top
     if(memcpyArgs[2].isTop()) {
       cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
+    } else if(memRegionSizeTarget!=memRegionSizeSource) {
+      // check if the element size of the to regions is different (=> conservative analysis result; will be modelled in future)
+      cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (CodeThorn conservative case: source and target element size are different)."<<endl;
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
+      return listify(res);
+    } else {
+      ROSE_ASSERT(copyRegionElementSizeTarget==copyRegionElementSizeSource);
+      copyRegionElementSize=copyRegionElementSizeTarget; 
     }
+
     bool errorDetected=false;
-    int copyRegionSize=memcpyArgs[2].getIntValue();
-    //cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
-    if(memRegionSizeSource<copyRegionSize) {
+    int copyRegionLengthValue=memcpyArgs[2].getIntValue();
+
+    // the copy function length argument is converted here into number of elements. This needs to be adapted if the repsentation of size is changed.
+    int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
+
+    cout<<"DEBUG: copyRegionNumElements: "<<copyRegionNumElements<<endl;
+    cout<<"DEBUG: copyRegionElementSize: "<<copyRegionElementSize<<endl;
+
+    if(memRegionSizeSource<copyRegionNumElements) {
       if(memRegionSizeSource==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
         errorDetected=true;
         recordPotentialOutOfBoundsAccessLocation(estate.label());
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionNumElements<<")"<<endl;
         errorDetected=true;
         recordDefinitiveOutOfBoundsAccessLocation(estate.label());
       }
     }
-    if(memRegionSizeTarget<copyRegionSize) {
+    if(memRegionSizeTarget<copyRegionNumElements) {
       if(memRegionSizeTarget==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
         errorDetected=true;
         recordPotentialOutOfBoundsAccessLocation(estate.label());
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionNumElements<<")"<<endl;
         errorDetected=true;
         recordDefinitiveOutOfBoundsAccessLocation(estate.label());
       }
@@ -1631,8 +1659,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       AbstractValue targetPtr=memcpyArgs[0];
       AbstractValue sourcePtr=memcpyArgs[1];
       AbstractValue one=CodeThorn::AbstractValue(1);
-      logger[TRACE]<<"TODO: copying "<<copyRegionSize<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
-      for(int i=0;i<copyRegionSize;i++) {
+      logger[TRACE]<<"TODO: copying "<<copyRegionNumElements<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
+      for(int i=0;i<copyRegionNumElements;i++) {
         newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
         targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;

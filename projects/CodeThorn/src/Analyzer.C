@@ -817,9 +817,14 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               logger[TRACE]<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
               PState newPState=*currentEState.pstate();
               initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
-              size_t stringLen=stringValNode->get_value().size();
+              //size_t stringLen=stringValNode->get_value().size();
               if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
-                variableIdMapping.setNumberOfElements(initDeclVarId,(int)stringLen);
+                VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
+                size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
+                variableIdMapping.setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
+                logger[TRACE]<<"Determined size of array from literal string memory region size: "<<stringLiteralMemoryRegionSize<<endl;
+              } else {
+                logger[TRACE]<<"Determined size of array from array variable (containing string memory region) size: "<<variableIdMapping.getNumberOfElements(initDeclVarId)<<endl;
               }
               SgType* variableType=initializer->get_type(); // for char and wchar
               setElementSize(initDeclVarId,variableType);

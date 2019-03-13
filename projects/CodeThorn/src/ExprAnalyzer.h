@@ -281,7 +281,8 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
 
     // utilify functions
-    int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
