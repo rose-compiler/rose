@@ -815,9 +815,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         if(arrayPtrValue.isTop()) {
           logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction not supported yet."<<endl;
         } else {
-          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<endl;
+          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": ";
           logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state. array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
-          logger[ERROR]<<"evalArrayReferenceOp: access out of allocated memory bounds."<<endl;
+          logger[ERROR]<<" access out of allocated memory bounds."<<endl;
         }
         exit(1);
       }
@@ -923,7 +923,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
   if(operandType) {
     SPRAY::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
     if(typeSize==0) {
-      logger[ERROR]<<"Error: sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      logger[ERROR]<<"sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
       exit(1);
     }
     logger[TRACE]<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
@@ -933,10 +933,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     return listify(res);
   } else {
     if(SgExpression* exp=node->get_operand_expr()) {
-      logger[ERROR] <<"Error: sizeof: could determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
+      logger[ERROR] <<"sizeof: could determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
       exit(1);
     } else {
-      logger[ERROR] <<"Error: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
+      logger[ERROR] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
       exit(1);
     }
   }
@@ -1279,7 +1279,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
           logger[DEBUG]<<"arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           // convert integer to VariableId
           if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-            logger[ERROR] <<"Error: unsupported feature:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
+            logger[ERROR] <<"unsupported language construct:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
             exit(1);
           }
           // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
@@ -1466,7 +1466,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       estate.io.recordVerificationError();
       return listify(res);
     } else {
-      logger[ERROR]<<"Function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<endl;
+      logger[ERROR]<<"function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<endl;
       exit(1);
     }
   }
@@ -1474,7 +1474,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     return evalFunctionCallArguments(funCall,estate);
   } else {
     string s=funCall->unparseToString();
-    throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
+    throw CodeThorn::Exception("unknown semantics of function call inside expression: "+s);
   }
 }
 
