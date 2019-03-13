@@ -408,7 +408,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
             }
             if(arraySize > 0) {
-              cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<(*i)->unparseToString()<<endl;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<(*i)->unparseToString()<<endl;
               // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
               // Remember that this symbol is already registered:
