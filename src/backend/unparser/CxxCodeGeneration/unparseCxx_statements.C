@@ -4238,12 +4238,14 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
           printf ("--- *i = %p = %s \n",*i,(*i)->class_name().c_str());
           curprint("/* unparseForInitStmt: " + (*i)->class_name() + " */ ");
 #endif
+
+#if 0
        // DQ (8/30/2014): For all but the first entry we should have get_isAssociatedWithDeclarationList() == true.
        // if (i != forInitStmt->get_init_stmt().begin())
           if (forInitStmt->get_init_stmt().size() > 1)
              {
                SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*i);
-
+            // DQ (3/2/2019): Commented out output spew (see roseTests/programTransformationTests/pass1.C for an example).
             // Note that not all entries will be a SgVariableDeclaration (e.g. detected case of SgNullStatement).
             // ROSE_ASSERT(variableDeclaration != NULL);
                if (variableDeclaration != NULL)
@@ -4257,6 +4259,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
                  // ROSE_ASSERT(variableDeclaration->get_isAssociatedWithDeclarationList() == true);
                   }
              }
+#endif
 
           unparseStatement(*i, newinfo);
           i++;

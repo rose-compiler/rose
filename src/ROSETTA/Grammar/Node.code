@@ -350,11 +350,17 @@ class SgFile;
 typedef std::vector<SgFile*>                SgFilePtrList;
 typedef SgFilePtrList*                      SgFilePtrListPtr;
 
+// DQ (2/27/2019): Modified to add the line number so that we could support adding comments 
+// and CPP directives to shared IR nodes to support multi-file compilation.
 // DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
 // containers so that we could simplify that code used to generated code for the destructors.
 // JJW (6/21/2008): Changed to a unordered vector for performance
-typedef int                                 SgFileId;
-typedef std::vector<SgFileId>               SgFileIdList;
+typedef int                                   SgFileId;
+typedef std::vector<SgFileId>                 SgFileIdList;
+// typedef struct { int file_id; int line_number; } SgFileIdLineNumber;
+// typedef std::vector<SgFileIdLineNumber>          SgFileIdList;
+typedef int                                   SgFileLineNumber;
+typedef std::vector<SgFileLineNumber>         SgFileLineNumberList;
 
 // DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
 // containers so that we could simplify that code used to generated code for the destructors.

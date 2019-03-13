@@ -455,7 +455,15 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_192.C \
    test2019_193.C \
    test2019_194.C \
-   test2019_195.C 
+   test2019_195.C \
+   test2019_197.C \
+   test2019_202.C \
+   test2019_205.C \
+   test2019_206.C \
+   test2019_207.C \
+   test2019_208.C \
+   test2019_209.C \
+   test2019_210.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -619,6 +627,20 @@ RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
 
 rajaTest:../../testTranslator
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
+
+# DQ (2/25/2019): Combined compilation of two files has particular errors.
+test2019_196_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_196_a.C $(srcdir)/test2019_196_b.C
+
+# DQ (2/26/2019): Combined compilation of two files has particular errors.
+test2019_198_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_198_a.C $(srcdir)/test2019_198_b.C
+
+# DQ (2/27/2019): Combined compilation of two files has particular errors.
+test2019_200_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_200_a.C $(srcdir)/test2019_200_b.C
+
+
 
 #########
 # Targets lists
