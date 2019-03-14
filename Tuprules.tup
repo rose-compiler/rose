@@ -65,6 +65,9 @@ ifeq (@(COMPILATION_DATABASE),yes)
     compilation_database_record = $(ROSE)/scripts/tup/compdb-emit-llvm-record
 endif
 
+# Export LD_LIBRARY_PATH since RMC sets this for non-native compilers.
+export LD_LIBRARY_PATH
+
 ########################################################################################################################
 # Supported languages.
 ########################################################################################################################
