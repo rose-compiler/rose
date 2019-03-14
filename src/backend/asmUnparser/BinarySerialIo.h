@@ -485,8 +485,20 @@ public:
      * input is not an AST, or if any other errors occur while reading the AST. */
     SgNode* loadAst();
 
+    /** Load an object from the input stream.
+     *
+     *  An object with the specified tag must exist as the next item in the stream. Such an object is created, initialized from
+     *  the stream, and returned.  If an object is provided as the second argument, then it's initialized from the stream.
+     *
+     * @{ */
     template<class T>
     T loadObject(Savable objectTypeId) {
+        T object;
+        loadObject<T>(objectTypeId, object);
+        return object;
+    }
+    template<class T>
+    void loadObject(Savable objectTypeId, T &object) {
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
 
@@ -500,7 +512,6 @@ public:
                             " but read " + boost::lexical_cast<std::string>(objectType()) + ")");
         }
         objectType(ERROR); // in case of exception
-        T object;
         std::string errorMessage;
 #ifdef ROSE_DEBUG_SERIAL_IO
         asyncLoad(object, &errorMessage);
@@ -524,10 +535,10 @@ public:
             throw Exception(errorMessage);
 #endif
         advanceObjectType();
-        return object;
 #endif
     }
-
+    /** @} */
+        
 private:
     template<class T>
     static void startWorker(SerialInput *loader, T *object, std::string *errorMessage) {
