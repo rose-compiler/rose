@@ -100,6 +100,8 @@ namespace CodeThorn {
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
     ProgramLocationsReport getOutOfBoundsAccessLocations();
+    bool definitiveErrorDetected();
+    bool potentialErrorDetected();
 
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
@@ -279,7 +281,8 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
 
     // utilify functions
-    int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
