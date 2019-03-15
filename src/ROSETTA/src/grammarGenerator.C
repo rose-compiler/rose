@@ -218,7 +218,8 @@ bool Grammar::isFilteredMemberVariable(string varName) {
                                     "attachedPreprocessingInfoPtr","containsTransformationToSurroundingWhitespace","attributeMechanism",
                                     "source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree","uses_operator_syntax",
                                     "globalQualifiedNameMapForNames","globalQualifiedNameMapForTypes","globalQualifiedNameMapForTemplateHeaders",
-                                    "globalTypeNameMap","globalMangledNameMap","globalTypeTable","shortMangledNameCache","globalFunctionTypeTable"
+                                    "globalTypeNameMap","globalMangledNameMap","globalTypeTable","shortMangledNameCache","globalFunctionTypeTable",
+                                    "globalQualifiedNameMapForMapsOfTypes"
   };
   set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
   return filteredMemberVariablesSet.find(varName)!=filteredMemberVariablesSet.end();
