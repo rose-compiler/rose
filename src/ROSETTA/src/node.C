@@ -513,6 +513,12 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps 
+  // to the generated name qualification substrings for each type, all associted with a single reference 
+  // node to the statement refering to the type.
+     Node.setDataPrototype("static std::map<SgNode*,std::map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 #if 0
   // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
   // implement this in a way that does not require such support.

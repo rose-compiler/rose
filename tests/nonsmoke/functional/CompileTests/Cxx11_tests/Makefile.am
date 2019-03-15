@@ -460,7 +460,31 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_207.C \
    test2019_208.C \
    test2019_209.C \
-   test2019_210.C 
+   test2019_210.C \
+   test2019_211.C \
+   test2019_212.C \
+   test2019_213.C \
+   test2019_214.C \
+   test2019_215.C \
+   test2019_216.C \
+   test2019_217.C \
+   test2019_218.C \
+   test2019_219.C \
+   test2019_220.C \
+   test2019_221.C \
+   test2019_222.C \
+   test2019_223.C \
+   test2019_224.C \
+   test2019_225.C \
+   test2019_226.C \
+   test2019_227.C \
+   test2019_228.C \
+   test2019_229.C \
+   test2019_230.C \
+   test2019_231.C \
+   test2019_232.C \
+   test2019_233.C \
+   test2019_234.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
