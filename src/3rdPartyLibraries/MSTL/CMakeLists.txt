@@ -8,7 +8,7 @@ add_dependencies(mstl rosetta_generated)
 
 install(
   FILES
-    AttributeMechanism.h DOTGeneration.h DOTGenerationImpl.h DOTGraphInterface.h
+    DOTGeneration.h DOTGenerationImpl.h DOTGraphInterface.h
     DOTRepresentation.h DOTRepresentationImpl.h DOTSubgraphRepresentation.h
     DOTSubgraphRepresentationImpl.h PDFGeneration.h Translator.h TreeTraversal.h
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

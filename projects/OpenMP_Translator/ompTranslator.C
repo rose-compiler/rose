@@ -3757,7 +3757,7 @@ void OmpMidend::insertOutlinedFunction(SgPragmaDeclaration* decl, \
     insertStatement(targetDecl,outlinedFunc);
   } else    //class member function here, add to class scope
   { //TODO also consider the preprocessing info. here, though very rare
-    SgClassDefinition * classdef = memdecl->get_class_scope();
+    SgClassDefinition * classdef = isSgClassDefinition(memdecl->get_class_scope());
     ROSE_ASSERT(classdef != NULL);
     classdef->append_member(outlinedFunc);
   }

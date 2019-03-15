@@ -1281,6 +1281,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bNotOp_" << mangleExpression (e->get_operand_i()) << "_eNotOp_";
           break;
         }
+        case V_SgBitComplementOp: {
+          const SgBitComplementOp* e = isSgBitComplementOp (expr);
+          mangled_name << "_bBitComplementOp_" << mangleExpression (e->get_operand_i()) << "_eBitComplementOp_";
+          break;
+        }
         case V_SgMinusOp: {
           const SgMinusOp* e = isSgMinusOp (expr);
           mangled_name << "_bMinusOp_" << mangleExpression (e->get_operand_i()) << "_eMinusOp_";
@@ -1289,6 +1294,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgAddressOfOp: {
           const SgAddressOfOp* e = isSgAddressOfOp (expr);
           mangled_name << "_bAddressOfOp_" << mangleExpression (e->get_operand_i()) << "_eAddressOfOp_";
+          break;
+        }
+        case V_SgPointerDerefExp: {
+          const SgPointerDerefExp* e = isSgPointerDerefExp (expr);
+          mangled_name << "_bPointerDerefExp_" << mangleExpression (e->get_operand_i()) << "_ePointerDerefExp_";
           break;
         }
         case V_SgNoexceptOp: {
@@ -1340,6 +1350,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgBitXorOp: {
           const SgBitXorOp* e = isSgBitXorOp (expr);
           mangled_name << "_bBitXorOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitXorOp_";
+          break;
+        }
+        case V_SgBitOrOp: {
+          const SgBitOrOp* e = isSgBitOrOp (expr);
+          mangled_name << "_bBitOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitOrOp_";
           break;
         }
         case V_SgOrOp: {
@@ -1422,6 +1437,21 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
           break;
         }
+        case V_SgCommaOpExp: {
+          const SgCommaOpExp* e = isSgCommaOpExp (expr);
+          mangled_name << "_bCommaOpExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eCommaOpExp_";
+          break;
+        }
+        case V_SgDotStarOp: {
+          const SgDotStarOp* e = isSgDotStarOp (expr);
+          mangled_name << "_bDotStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotStarOp_";
+          break;
+        }
+        case V_SgArrowStarOp: {
+          const SgArrowStarOp* e = isSgArrowStarOp (expr);
+          mangled_name << "_bArrowStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowStarOp_";
+          break;
+        }
         case V_SgConditionalExp: {
           const SgConditionalExp* e = isSgConditionalExp (expr);
           mangled_name << "_bConditionalExp_";
@@ -1495,6 +1525,22 @@ mangleExpression (const SgExpression* expr)
         case V_SgAggregateInitializer: {
           const SgAggregateInitializer* e = isSgAggregateInitializer (expr);
           mangled_name << "_bAggregateInitializer_" << mangleExpression (e->get_initializers()) << "_eAggregateInitializer_";
+          break;
+        }
+        case V_SgBracedInitializer: {
+          const SgBracedInitializer* e = isSgBracedInitializer (expr);
+          mangled_name << "_bBracedInitializer_" << mangleExpression (e->get_initializers()) << "_eBracedInitializer_";
+          break;
+        }
+        case V_SgNewExp: {
+          // FIXME ROSE-1783
+          const SgNewExp* e = isSgNewExp (expr);
+          mangled_name << "_bNewExpr_" << std::hex << e << "_eNewExpr_";
+          break;
+        }
+        case V_SgFunctionParameterRefExp: {
+          const SgFunctionParameterRefExp* e = isSgFunctionParameterRefExp (expr);
+          mangled_name << "_bFunctionParameterRefExp_" << std::hex << e << "_eFunctionParameterRefExp_";
           break;
         }
         default: {

@@ -368,8 +368,8 @@ Pointer detection analysis for function 0x08048506 "flow02"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
     32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
 
 Pointer detection analysis for function 0x0804851d "flow03"
   Instructions:
@@ -444,8 +444,8 @@ Pointer detection analysis for function 0x0804856a "flow05"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
     32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
 
 Pointer detection analysis for function 0x080485aa "flow06"
   Instructions:
@@ -477,5 +477,5 @@ Pointer detection analysis for function 0x080485aa "flow06"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
     32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])

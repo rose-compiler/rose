@@ -14,6 +14,7 @@
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
 #include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
 #include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
+#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParsser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
@@ -130,6 +131,7 @@ void initialize() {
         BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
+        BinaryAnalysis::SymbolicExprParser::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();

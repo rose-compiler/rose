@@ -59,7 +59,9 @@ FunctionCallGraph::insertFunction(const Function::Ptr &function) {
 
 FunctionCallGraph::Graph::EdgeIterator
 FunctionCallGraph::insertCall(const Function::Ptr &source, const Function::Ptr &target, EdgeType type, size_t edgeCount) {
-    return insertCall(insertFunction(source), insertFunction(target), type, edgeCount);
+    Graph::VertexIterator srcVertex = insertFunction(source);
+    Graph::VertexIterator dstVertex = insertFunction(target);
+    return insertCall(srcVertex, dstVertex, type, edgeCount);
 }
 
 FunctionCallGraph::Graph::EdgeIterator

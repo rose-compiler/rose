@@ -566,6 +566,9 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","use_generated_name_for_template_arguments","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Unparse_Info.setDataPrototype("bool","user_defined_literal","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
      NonrealBaseClass.setFunctionPrototype    ( "HEADER_NONREAL_BASE_CLASS", "../Grammar/Support.code");

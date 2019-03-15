@@ -4440,11 +4440,11 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
 
         size_t size_timeval_sample = sizeof(timeval_32)*2;
 
-        timeval_32 ubuf[1];
+        timeval_32 ubuf[2];
 
         size_t nread = t->get_process()->mem_read(&ubuf, t->syscall_arg(1), size_timeval_sample);
 
-        timeval timeval64[1];
+        timeval timeval64[2];
         timeval64[0].tv_sec  = ubuf[0].tv_sec;
         timeval64[0].tv_usec = ubuf[0].tv_usec;
         timeval64[1].tv_sec  = ubuf[1].tv_sec;

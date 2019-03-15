@@ -310,7 +310,7 @@ ROSE_DLL_API bool isInitialized();
  *  streams. Then register the facility with ROSE's global list of facilities so it can be controlled from the command-line.
  *  Registering a facility does not copy it--it only saves a reference to it. Therefore, either facilties should be statically
  *  declared or they should be de-registered before they go out of scope. */
-void initAndRegister(Facility *mlog, const std::string &name);
+ROSE_DLL_API void initAndRegister(Facility *mlog, const std::string &name);
 
 // [Robb P Matzke 2017-02-16]: deprecated: The version that takes a pointer first argument is a better design because it gives
 // the user a better clue that we're saving a reference rather than a copy. Note: ROSE_DEPRECATED not defined here.

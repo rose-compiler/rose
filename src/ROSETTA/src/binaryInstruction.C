@@ -756,6 +756,13 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+    private:
+        struct SemanticFailure {
+            size_t n;
+            SemanticFailure(): n(0) {}
+        };
+        SemanticFailure semanticFailure_;
+
     public:
         /** Represents an invalid stack delta.
          *
@@ -1075,6 +1082,20 @@ void Grammar::setUpBinaryInstructions() {
          *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called
          *  "immediates" for some architectures such as X86. */
         virtual std::set<rose_addr_t> explicitConstants() const;
+
+        /** Property: Whether instruction semantics failed at this location.
+         *
+         *  This property is incremented by various analyses that evaluate instructions semantically when semantics fails
+         *  in a way that is not recoverable.  Some analyses can work around failed semantics by operating in a degraded
+         *  mode, and it is up to the analysis whether to increment this property.
+         *
+         *  Thread safety: This method is thread safe.
+         *
+         * @{ */
+        size_t semanticFailure() const;
+        void semanticFailure(size_t);
+        void incrementSemanticFailure();
+        /** @} */
 
 #endif // SgAsmInstruction_OTHERS
 
@@ -2141,15 +2162,6 @@ void Grammar::setUpBinaryInstructions() {
 
         uint64_t get_value() const { return get_absoluteValue(); }
 
-        // These are deprecated; use CamelCase versions instead [Robb P. Matzke 2014-07-21]
-        size_t get_significant_bits() const ROSE_DEPRECATED("use get_significantBits");
-        void make_relative_to(SgNode*) ROSE_DEPRECATED("use makeRelativeTo");
-        uint64_t get_base_address() const ROSE_DEPRECATED("use get_baseAddress");
-        uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED("use get_absoluteValue");
-        void set_absolute_value(uint64_t) ROSE_DEPRECATED("use set_absoluteValue");
-        int64_t get_signed_value() const ROSE_DEPRECATED("use set_signedValue");
-        int64_t get_relative_value() const ROSE_DEPRECATED("use get_relativeValue");
-        void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED("use set_relativeValue");
 #endif // SgAsmIntegerValueExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3391,9 +3403,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        // [Robb P Matzke 2017-02-13]: Deprecated because it uses a very old CFG implementation
-        int nrOfValidInstructions(std::vector<SgNode*>& succs) ROSE_DEPRECATED("use modern CFG classes instead");
-
         /** Adds statement to end of statement list. */
         void append_statement(SgAsmStatement*);
 
@@ -3401,15 +3410,6 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  If the specified statement is found in the list of statements then it is erased without being deleted. */
         void remove_statement(SgAsmStatement* statement);
-
-        // [Robb P Matzke 2017-02-13]: I don't think this is used anywhere. It appends to the poorly named "dest" property.
-        void append_dest(SgAsmStatement* instruction) ROSE_DEPRECATED("apparently not used anywhere");
-
-        // FIXME[Robb P Matzke 2017-02-13]: This is a bad name--it removes only statements, not all AST children.
-        /** Removes all statements.
-         *
-         *  Clears the statement list without deleting any of them. */
-        void remove_children();
 
         /** Function entry basic block.
          *
@@ -3591,11 +3591,6 @@ void Grammar::setUpBinaryInstructions() {
             e_thunk     = 4,
             e_last
         };
-
-        // Computes the offset of the stack at the end of the call relative the the start of the call (in a perfect function
-        // this would be zero, this is used to score properly formed functions).
-        // [Robb P Matzke 2017-02-13]: deprecated
-        int get_stackNutralityMetric() const ROSE_DEPRECATED("use get_stackDelta instead");
 #endif // SgAsmFunction_OTHERS
 
 
@@ -15687,12 +15682,6 @@ void Grammar::setUpBinaryInstructions() {
             printf("set_sb() not implemented!\n");
             ROSE_ASSERT(false);
         }
-
-        // DQ (8/26/2008): Added support for alternative section selection for use in disassembler.
-        //
-        // Appears to be the same as SgAsmGenericFile::get_best_section_by_va() except it excludes sections named "ELF Segment
-        // Table".Perhaps it should be rewritten in terms of the other. (RPM 2008-09-02) */
-        SgAsmGenericSection* get_best_possible_section_by_va(rose_addr_t va) ROSE_DEPRECATED("use get_best_section_by_va");
 
     private:
         void ctor();

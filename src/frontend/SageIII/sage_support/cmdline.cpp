@@ -1846,14 +1846,15 @@ GetRoseClasspath ()
   string classpath = "-Djava.class.path=";
 
   // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.
+  // CER (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
-  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 3)
+  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 5)
   {
       classpath +=
           findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar",
-              "lib/antlr-3.3-complete.jar");
+              "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
+              "lib/antlr-3.5.2-complete.jar");
       classpath += ":";
   }
   else
