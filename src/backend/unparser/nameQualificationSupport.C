@@ -47,7 +47,11 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
 
   // DQ (9/7/2014): Modified to handle template header map (for template declarations).
   // NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
-     NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalQualifiedNameMapForTemplateHeaders(),SgNode::get_globalTypeNameMap(),referencedNameSet);
+  // NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),
+  //                              SgNode::get_globalQualifiedNameMapForTemplateHeaders(),SgNode::get_globalTypeNameMap(),referencedNameSet);
+     NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),
+                                  SgNode::get_globalQualifiedNameMapForTemplateHeaders(),SgNode::get_globalTypeNameMap(),
+                                  SgNode::get_globalQualifiedNameMapForMapsOfTypes(),referencedNameSet);
 
      NameQualificationInheritedAttribute ih;
 
@@ -87,7 +91,9 @@ NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* no
 
   // DQ (9/7/2014): Modified to handle template header map (for template declarations).
   // NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->typeNameMap,this->referencedNameSet);
-     NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->qualifiedNameMapForTemplateHeaders,this->typeNameMap,this->referencedNameSet);
+  // NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->qualifiedNameMapForTemplateHeaders,this->typeNameMap,this->referencedNameSet);
+     NameQualificationTraversal t(this->qualifiedNameMapForNames,this->qualifiedNameMapForTypes,this->qualifiedNameMapForTemplateHeaders,
+                                  this->typeNameMap,this->qualifiedNameMapForMapsOfTypes,this->referencedNameSet);
 
      t.explictlySpecifiedCurrentScope = input_currentScope;
 
@@ -107,8 +113,24 @@ NameQualificationTraversal::generateNestedTraversalWithExplicitScope( SgNode* no
   // DQ (5/24/2013): Added scope to inherited attribute.
      ih.set_currentScope(input_currentScope);
 
+#if 0
+     printf ("**************************************************************** \n");
+     printf ("**************************************************************** \n");
+     printf ("********************* RECURSIVE TRAVERSAL ********************** \n");
+     printf ("**************************************************************** \n");
+     printf ("**************************************************************** \n");
+#endif
+
   // Call the traversal.
      t.traverse(node,ih);
+
+#if 0
+     printf ("**************************************************************** \n");
+     printf ("**************************************************************** \n");
+     printf ("****************** DONE: RECURSIVE TRAVERSAL ******************* \n");
+     printf ("**************************************************************** \n");
+     printf ("**************************************************************** \n");
+#endif
    }
 
 
@@ -218,12 +240,14 @@ NameQualificationTraversal::NameQualificationTraversal(
      std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
      std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
      std::map<SgNode*,std::string> & input_typeNameMap, 
+     std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes, 
      std::set<SgNode*> & input_referencedNameSet)
    : referencedNameSet(input_referencedNameSet),
      qualifiedNameMapForNames(input_qualifiedNameMapForNames),
      qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
      qualifiedNameMapForTemplateHeaders(input_qualifiedNameMapForTemplateHeaders),
-     typeNameMap(input_typeNameMap)
+     typeNameMap(input_typeNameMap),
+     qualifiedNameMapForMapsOfTypes(input_qualifiedNameMapForMapsOfTypes)
    {
   // Nothing to do here.
 
@@ -245,6 +269,13 @@ const std::map<SgNode*,std::string> &
 NameQualificationTraversal::get_qualifiedNameMapForTypes() const
    {
      return qualifiedNameMapForTypes;
+   }
+
+// DQ (3/13/2019): Added support to set the static global qualified name map in SgNode.
+const std::map<SgNode*,std::map<SgNode*,std::string> > &
+NameQualificationTraversal::get_qualifiedNameMapForMapsOfTypes() const
+   {
+     return qualifiedNameMapForMapsOfTypes;
    }
 
 // DQ (9/7/2014): Added support to set the template headers in template declarations.
@@ -3670,6 +3701,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                              }
                            }
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
+                           printf ("templateArgumentTypeDeclaration = %p = %s \n",templateArgumentTypeDeclaration,templateArgumentTypeDeclaration->class_name().c_str());
+#endif
                            setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
                          }
                        }
@@ -3678,6 +3712,10 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
             // If this was not a SgNamedType (and even if it is, see test2011_117.C), it still might be a type 
             // where name qualification is required (might be a SgArrayType with an index requiring qualification).
                processNameQualificationForPossibleArrayType(type,currentScope);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
+               printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: processing type = %p = %s \n",type,type->class_name().c_str());
+#endif
              }
             else if (expression != NULL)
              {
@@ -3691,19 +3729,25 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
-                    printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): Calling generateNestedTraversalWithExplicitScope(): with expression = %p = %s and currentScope = %p = %s \n",
-                         expression,expression->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+               printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): Calling generateNestedTraversalWithExplicitScope(): with expression = %p = %s and currentScope = %p = %s \n",
+                    expression,expression->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
-                    generateNestedTraversalWithExplicitScope(expression,currentScope);
+            // DQ (3/15/2019): Added Comment: This is required because the expression can be a subtree that would have to be seperately traversed.
+               generateNestedTraversalWithExplicitScope(expression,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
                     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
 #endif
              }
             else if (iname != NULL)
              {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
-               printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): template argument is an initialized name = %p \n",iname);
+               printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): Empty case: template argument is an initialized name = %p \n",iname);
 #endif
              }
             else if (tpldecl != NULL)
@@ -3714,6 +3758,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
               int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth( tpldecl, currentScope, positionStatement );
               setNameQualification(templateArgument,tpldecl,amountOfNameQualificationRequiredForTemplateArgument);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
+               printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): DONE: template argument is a template = %p (%s)\n", tpldecl, tpldecl->class_name().c_str());
+#endif
              }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
@@ -4000,11 +4047,33 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
    }
 
 
+// DQ (3/14/2019): Adding debugging support to output the map of names.
+void
+NameQualificationTraversal::outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap )
+   {
+     printf ("In NameQualificationTraversal::outputNameQualificationMap(): qualifiedNameMap.size() = %zu \n",qualifiedNameMap.size());
+     std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
+     while (i != qualifiedNameMap.end())
+       {
+         ROSE_ASSERT(i->first != NULL);
+
+         printf (" --- *i = i->first = %p = %s i->second = %s \n",i->first,i->first->class_name().c_str(),i->second.c_str());
+
+         i++;
+       }
+   }
+
+
+
 void
 NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNameString )
    {
   // DQ (6/21/2011): This is refactored code used in traverseType() and traverseTemplatedFunction().
      bool isTemplateName = (typeNameString.find('<') != string::npos) && (typeNameString.find("::") != string::npos);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     printf ("In addToNameMap(): nodeReference = %p = %s typeNameString = %s \n",nodeReference,nodeReference->class_name().c_str(),typeNameString.c_str());
+#endif
 
      if (isTemplateName == true)
         {
@@ -4042,13 +4111,19 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
           printf ("In NameQualificationTraversal::addToNameMap(): isTemplateName == false, typeNameString = %s NOT added to typeNameMap for key = %p = %s \n",typeNameString.c_str(),nodeReference,nodeReference->class_name().c_str());
 #endif
         }
+
+  // DQ (3/14/2019): Adding debugging support.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     printf ("Leaving addToNameMap(): calling outputNameQualificationMap(): using typeNameMap \n");
+     outputNameQualificationMap(typeNameMap);
+#endif
    }
 
 
 void
 NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
-  // The type can contain subtypes (e.g. template arguments) and when the subtypes need to be name qualificed the name of the encompassing type 
+  // The type can contain subtypes (e.g. template arguments) and when the subtypes need to be name qualified the name of the encompassing type 
   // has a name that depends upon its location in the source code (and could vary depending on the positon in a single basic block, I think).
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -4582,12 +4657,27 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        }
 #endif
 
+#if 0
+     printf ("In evaluateInheritedAttribute(): inheritedAttribute.get_currentScope() = %p \n",inheritedAttribute.get_currentScope());
+     if (inheritedAttribute.get_currentScope() != NULL)
+        {
+          printf ("In evaluateInheritedAttribute(): inheritedAttribute.get_currentScope() = %p = %s \n",inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
+        }
+       else
+        {
+          printf ("inheritedAttribute.get_currentScope() NOT set \n");
+        }
+#endif
+
   // DQ (5/24/2013): Allow the current scope to be tracked from the traversal of the AST
   // instead of being computed at each IR node which is a problem for template arguments.
   // See test2013_187.C for an example of this.
      SgScopeStatement* evaluateInheritedAttribute_currentScope = isSgScopeStatement(n);
      if (evaluateInheritedAttribute_currentScope != NULL)
         {
+#if 0
+          printf ("In evaluateInheritedAttribute(): resetting inheritedAttribute.get_currentScope() = %p = %s \n",n,n->class_name().c_str());
+#endif
           inheritedAttribute.set_currentScope(evaluateInheritedAttribute_currentScope);
         }
 
@@ -6755,6 +6845,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(n);
      if (functionRefExp != NULL)
         {
+#if 0
+          printf ("In evaluateInheritedAttribute(): case functionRefExp: inheritedAttribute.get_currentScope() = %p \n",inheritedAttribute.get_currentScope());
+          if (inheritedAttribute.get_currentScope() != NULL)
+             {
+               printf ("In evaluateInheritedAttribute(): case functionRefExp: inheritedAttribute.get_currentScope() = %p = %s \n",
+                    inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
+             }
+            else
+             {
+               printf ("In evaluateInheritedAttribute(): case functionRefExp: inheritedAttribute.get_currentScope() NOT set \n");
+             }
+#endif
+
           SgFunctionDeclaration* functionDeclaration = functionRefExp->getAssociatedFunctionDeclaration();
        // ROSE_ASSERT(functionDeclaration != NULL);
           if (functionDeclaration != NULL)
@@ -6768,8 +6871,25 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // ROSE_ASSERT(currentStatement != NULL);
                if (currentStatement != NULL)
                   {
+                 // DQ (3/15/2019): If this is part of an recursive call then the inheritedAttribute.get_currentScope() 
+                 // is set and we should use it as the currentScope.
                  // DQ (9/17/2011): this is the original case we want to restore later...
-                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                 // SgScopeStatement* currentScope = currentStatement->get_scope();
+                    SgScopeStatement* currentScope = NULL;
+                    if (inheritedAttribute.get_currentScope() != NULL)
+                       {
+#if 0
+                         printf ("Using scope set from a recursive call to name qualification \n");
+#endif
+                         currentScope = inheritedAttribute.get_currentScope();
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Using scope set from the scope of the currentStatement \n");
+#endif
+                         currentScope = currentStatement->get_scope();
+                       }
                  // ROSE_ASSERT(currentScope != NULL);
 
                  // DQ (1/31/2019): If this is a member function or template member function instantiation, AND it is definted 
@@ -9152,8 +9272,9 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 #endif
           if (i->second != qualifier)
              {
+            // DQ (3/15/2019): We need to disable the assertion below because it can happen (see Cxx11_tests/test2019_214.C).
                i->second = qualifier;
-#if 1
+#if 0
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
                ROSE_ASSERT(false);
 #endif
@@ -10273,7 +10394,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
      bool outputGlobalQualification     = false;
      bool outputTypeEvaluation          = false;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#define DEBUG_TEMPLATE_ARGUMENT_NAME_QUALIFICATION 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPLATE_ARGUMENT_NAME_QUALIFICATION
      printf ("In setNameQualification(SgTemplateArgument*) \n");
 #endif
 
@@ -10289,7 +10412,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TEMPLATE_ARGUMENT_NAME_QUALIFICATION
      printf ("In NameQualificationTraversal::setNameQualification(): templateArgument                                      = %p \n",templateArgument);
      printf ("In NameQualificationTraversal::setNameQualification(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
      printf ("In NameQualificationTraversal::setNameQualification(): templateArgument->get_type_elaboration_required()     = %s \n",templateArgument->get_type_elaboration_required() ? "true" : "false");
@@ -10305,12 +10428,15 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
   //       I think I would like to share the SgTemplateArgument (this this problem would take care of itself).
 
   // TV (04/04/2018): Look for matching defining template argument.
-  //                  For non-real template instantiation, i.e. member of a template parameter: "T0::template T1<A>", the template argument ("A") parent is the global scope (FIXME or is it the scope of the template parameter ("T0")??? FIXME)
+  // For non-real template instantiation, i.e. member of a template parameter: "T0::template T1<A>", the template argument
+  // ("A") parent is the global scope (FIXME or is it the scope of the template parameter ("T0")??? FIXME)
      SgTemplateArgument* defining_templateArgument = NULL;
      SgNode * tpl_arg_parent = templateArgument->get_parent();
-#if 0
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAME_QUALIFICATION
      printf ("tpl_arg_parent = %p = %s \n", tpl_arg_parent, tpl_arg_parent ? tpl_arg_parent->class_name().c_str() : "");
 #endif
+
      ROSE_ASSERT(tpl_arg_parent != NULL);
 
      SgDeclarationStatement* associatedDeclaration = isSgDeclarationStatement(tpl_arg_parent);
@@ -10416,9 +10542,12 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Inserting qualifier for name or type = %s into list at IR node = %p = %s \n",qualifier.c_str(),templateArgument,templateArgument->class_name().c_str());
 #endif
+#if 0
+          qualifier = string("/* initialized */ ") + qualifier;
+#endif
           qualifiedNameMapForTypes.insert(std::pair<SgNode*,std::string>(templateArgument,qualifier));
 
-       // Handle the definig declaration's template argument.
+       // Handle the defining declaration's template argument.
        // if (defining_templateArgument != NULL)
           if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
              {
@@ -10448,6 +10577,9 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
           if (i->second != qualifier)
              {
+#if 0
+               qualifier = string("/* replaced */ ") + qualifier;
+#endif
                i->second = qualifier;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

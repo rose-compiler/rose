@@ -36,6 +36,10 @@ class Unparser_Nameq
 
        // DQ (6/2/2011): New name qualification support.
          SgName lookup_generated_qualified_name ( SgNode* n );
+
+      // DQ (3/14/2019): Adding debugging support to output the map of names.
+         void outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap );
+
    };
 
 #endif

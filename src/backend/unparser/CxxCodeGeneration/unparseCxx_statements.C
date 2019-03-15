@@ -5131,6 +5131,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // output the return type
 #define OUTPUT_FUNCTION_DECLARATION_DATA 0
 #if OUTPUT_FUNCTION_DECLARATION_DATA
+          printf ("rtype = %p = %s \n",rtype,rtype->class_name().c_str());
           curprint ("\n/* output the return type */ \n");
 #endif
 #if 0
@@ -5316,12 +5317,14 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_isTypeSecondPart();
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("output the second part of the type \n");
           curprint ("/* output the second part of the type */");
 #endif
 
           unp->u_type->unparseType(rtype, ninfo);
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("DONE: output the second part of the type \n");
           curprint("/* DONE: output the second part of the type */");
 #endif
 
@@ -10494,24 +10497,26 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
      SgTemplateTypedefDeclaration* templateTypedef_stmt = isSgTemplateTypedefDeclaration(stmt);
      ROSE_ASSERT(templateTypedef_stmt != NULL);
 
-#if 0
+#define DEBUG_TEMPLATE_TYPEDEF 0
+
+#if DEBUG_TEMPLATE_TYPEDEF
      printf ("In unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
 #endif
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
      curprint(" /* Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
 
      if (templateTypedef_stmt->get_templateParameters().empty() == false)
         {
        // DQ (2/19/2019): The support for unparsing a SgTemplateTypedefDeclaration is different enough that this function is not useful.
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           curprint(" /* templateParameters FOUND: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
           unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>(stmt,info);
         }
        else
         {
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           curprint(" /* templateParameters NOT found: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
 
@@ -10529,7 +10534,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
        // DQ (2/19/2019): Not clear that I want the extra "\n".
           curprint("\nusing ");
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           printf ("In unparseTemplateTypeDefStmt(): templateTypedef_stmt->get_name() = %s \n",templateTypedef_stmt->get_name().str());
 #endif
 
@@ -10540,7 +10545,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           SgType* base_type = templateTypedef_stmt->get_base_type();
           ROSE_ASSERT(base_type != NULL);
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           printf ("In unparseTemplateTypeDefStmt(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
 #endif
 
@@ -10549,9 +10554,13 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           ROSE_ASSERT(ninfo.SkipClassDefinition() == false);
           ROSE_ASSERT(ninfo.SkipEnumDefinition()  == false);
 
-#if 0
-          printf ("templateTypedef_stmt->get_declaration() = %p \n",templateTypedef_stmt->get_declaration());
+#if DEBUG_TEMPLATE_TYPEDEF
+          printf ("In unparseTemplateTypeDefStmt(): templateTypedef_stmt->get_declaration() = %p \n",templateTypedef_stmt->get_declaration());
 #endif
+#if DEBUG_TEMPLATE_TYPEDEF
+          printf ("In unparseTemplateTypeDefStmt(): set reference_node_for_qualification: templateTypedef_stmt = %p = %s \n",templateTypedef_stmt,templateTypedef_stmt->class_name().c_str());
+#endif
+          ninfo.set_reference_node_for_qualification(templateTypedef_stmt);
 
        // DQ (2/19/2019): Cxx_tests/test2019_153.C demonstrates that a class declaration can be define in the C++11 SgTemplateTypedefDeclaration.
        // ROSE_ASSERT(templateTypedef_stmt->get_declaration() == NULL);
@@ -10567,7 +10576,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           curprint(";");
         }
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
      printf ("Leaving unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
 #endif
 #if 0
