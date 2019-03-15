@@ -22,6 +22,7 @@ namespace General_Language_Translation
           e_storage_modifier_contiguous,
           e_storage_modifier_external,
           e_storage_modifier_static,
+          e_storage_modifier_location,
 
        // Type modifiers
        // --------------
@@ -56,6 +57,9 @@ namespace General_Language_Translation
           e_function_modifier_pure,
           e_function_modifier_recursive,
           e_function_modifier_reentrant,
+
+       // Table item modifiers
+          e_table_item_modifier_list,
 
        // Operators
        // ---------

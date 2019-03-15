@@ -65,6 +65,11 @@ namespace Jovial_ROSE_Translation
           e_then_phrase_expr,
           e_while_phrase_expr,
 
+       // Expressions for table entry words-per-entry type
+       // ------------------------------------------------
+          e_words_per_entry_w,
+          e_words_per_entry_v,
+
        // Statements
        // ----------
 

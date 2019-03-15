@@ -661,6 +661,23 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      unparseType(type, info);
 
+  // Unparse the LocationSpecifier if present
+     if (variableDeclaration->get_bitfield() != NULL)
+        {
+           SgExpression* bitfield = variableDeclaration->get_bitfield();
+           SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
+           ROSE_ASSERT(sg_location_specifier);
+
+           SgExpressionPtrList & location_exprs = sg_location_specifier->get_expressions();
+           ROSE_ASSERT(location_exprs.size() == 2);
+
+           curprint(" POS(");
+           unparseExpression(location_exprs[0], info);
+           curprint(",");
+           unparseExpression(location_exprs[1], info);
+           curprint(")");
+        }
+
      if (init != NULL)
         {
            curprint(" = ");
