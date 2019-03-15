@@ -59,6 +59,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          currentScope = SageBuilder::topScopeStack();
          break;
       }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SgUntypedStructureDeclaration* ut_struct = dynamic_cast<SgUntypedStructureDeclaration*>(node);
+         pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
     case V_SgUntypedModuleDeclaration:
       {
          SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(node);

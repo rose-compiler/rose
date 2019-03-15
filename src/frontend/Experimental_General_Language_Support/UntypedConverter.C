@@ -200,6 +200,27 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
 
    BOOST_FOREACH(SgUntypedExpression* ut_expr, modifier_list->get_expressions())
     {
+    // Check for Jovial LocationSpecifier
+       SgUntypedExprListExpression* expr_list = isSgUntypedExprListExpression(ut_expr);
+       if (expr_list)
+          {
+             SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
+             ROSE_ASSERT(var_decl);
+             ROSE_ASSERT(expr_list->get_expressions().size() == 2);
+
+          // If deleted illegal object is found in tree traversal
+             SgExprListExp* sg_location_specifier = convertSgUntypedExprListExpression(expr_list, /*delete*/false);
+             ROSE_ASSERT(sg_location_specifier);
+
+          // The bitfield will contain both the start_bit and start_word as an expression list
+             var_decl->set_bitfield(sg_location_specifier);
+             sg_location_specifier->set_parent(var_decl);
+
+          // NOTE: this saves indenting the rather large switch statement; not clear the an else clause is more readable
+             continue;
+          }
+
+    // Otherwise not a Jovial LocationSpecifier, must be a simple modifier based on the expression enum
        ROSE_ASSERT( isSgUntypedOtherExpression(ut_expr) );
 
        switch(ut_expr->get_expression_enum())
@@ -685,6 +706,21 @@ UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclar
    {
    // Only a Fortran specific implementation needed for now
    }
+
+SgClassDeclaration*
+UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
+   {
+      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
+      cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
+
+      cout << "..........\n\n";
+
+      //const SgUntypedDeclarationStatementPtrList &
+      //      SgUntypedDeclarationStatementList *
+
+      return NULL;
+   }
+
 
 SgModuleStatement*
 UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
@@ -1453,7 +1489,6 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    sg_decl->set_parent(scope);
    //   sg_decl->set_definingDeclaration(sg_decl);
    sg_decl->set_firstNondefiningDeclaration(sg_decl);
-   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
 #endif
 
 // add variables
@@ -1538,6 +1573,9 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
       ROSE_ASSERT(variableSymbol != NULL);
       ROSE_ASSERT(sg_init_name->get_scope() != NULL);
    }
+
+// Modifiers must be set after the variable declaration setup is finished
+   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
 
    scope->append_statement(sg_decl);
    convertLabel(ut_decl, sg_decl, scope);
@@ -2760,6 +2798,10 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_fortran_sync_stat_stat:       break;
        case e_fortran_sync_stat_errmsg:     break;
        case e_fortran_stat_acquired_lock:   break;
+
+    // Jovial specific (for location-specifier)
+       case e_table_item_modifier_list:     break;
+       case e_storage_modifier_location:    break;
 
        case e_unknown:
          {
