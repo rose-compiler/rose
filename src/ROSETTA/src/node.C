@@ -234,12 +234,14 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedBlockDataDeclaration,     "UntypedBlockDataDeclaration",     "TEMP_UntypedBlockDataDeclaration" );
 
   // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
+  // Rasmussen (02/22/2019): Added SgUntypedDirectiveDeclaration node for compiler directives
      NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
      NEW_TERMINAL_MACRO (UntypedTaskDeclaration,             "UntypedTaskDeclaration",             "TEMP_UntypedTaskDeclaration" );
      NEW_TERMINAL_MACRO (UntypedStructureDeclaration,        "UntypedStructureDeclaration",        "TEMP_UntypedStructureDeclaration" );
      NEW_TERMINAL_MACRO (UntypedExceptionDeclaration,        "UntypedExceptionDeclaration",        "TEMP_UntypedExceptionDeclaration" );
      NEW_TERMINAL_MACRO (UntypedExceptionHandlerDeclaration, "UntypedExceptionHandlerDeclaration", "TEMP_UntypedExceptionHandlerDeclaration" );
      NEW_TERMINAL_MACRO (UntypedUnitDeclaration,             "UntypedUnitDeclaration",             "TEMP_UntypedUnitDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedDirectiveDeclaration,        "UntypedDirectiveDeclaration",        "TEMP_UntypedDirectiveDeclaration");
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
@@ -248,13 +250,15 @@ Grammar::setUpNodes ()
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
   // Rasmussen (1/16/2018): Added UntypedNullDeclaration
   // Rasmussen (8/06/2018): Added SgUntypedInitializedNameListDeclaration
+  // Rasmussen (02/22/2019): Added SgUntypedDirectiveDeclaration node for compiler directives
      NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement,
          UntypedNullDeclaration      | UntypedNameListDeclaration  | UntypedUseStatement                |
          UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration         |
          UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration        |
          UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
          UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration             |
-         UntypedInitializedNameListDeclaration, "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
+         UntypedDirectiveDeclaration | UntypedInitializedNameListDeclaration,
+         "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
      NEW_TERMINAL_MACRO (UntypedBlockStatement,        "UntypedBlockStatement",        "TEMP_UntypedBlockStatement" );
@@ -721,6 +725,13 @@ Grammar::setUpNodes ()
      UntypedNamedStatement.setDataPrototype          ( "std::string", "statement_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (02/22/2019): Added SgUntypedDirectiveDeclaration node for compiler directives
+     UntypedDirectiveDeclaration.setFunctionPrototype( "HEADER_UNTYPED_DIRECTIVE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedDirectiveDeclaration.setDataPrototype    ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedDirectiveDeclaration.setDataPrototype    ( "std::string", "directive_string", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedExpressionStatement.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedExpressionStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
@@ -923,15 +934,9 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#if 0
-     UntypedFunctionDeclaration.setDataPrototype     ( "UntypedNamedStatement*", "end_statement", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // These are derived from UntypedFunctionDeclaration
      UntypedProgramHeaderDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_PROGRAM_HEADER_DECLARATION", "../Grammar/LocatedNode.code");
-  // UntypedProgramHeaderDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedSubroutineDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
 
   // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).

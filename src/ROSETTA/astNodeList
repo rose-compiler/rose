@@ -774,6 +774,7 @@ SgUntypedImageControlStatement
 SgUntypedOtherStatement
 SgUntypedUseStatement
 SgUntypedDeclarationStatement
+SgUntypedDirectiveDeclaration
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration

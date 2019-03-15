@@ -1860,8 +1860,8 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
        // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
        // SgUnsignedLongVal *get_bitfield();
        // void set_bitfield (SgUnsignedLongVal*);
-          SgValueExp* get_bitfield();
-          void set_bitfield (SgValueExp*);
+          SgExpression* get_bitfield();
+          void set_bitfield (SgExpression*);
 
        // Only on the first variable declaration's
           int reset_initializer(SgInitializer *);
@@ -2848,7 +2848,7 @@ HEADER_NONREAL_DECL_START
           SgNonrealType* get_type (void) const;
           void set_type (SgNonrealType* t);
 
-          SgName get_mangled_name (void) const;
+          SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
           SgName get_qualified_name() const;
@@ -7712,6 +7712,12 @@ SgScopeStatement::isNamedScope()
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          case V_SgDeclarationScope:
              {
                result = true;
                break;
@@ -13723,7 +13729,7 @@ SgVariableDeclaration::get_definition(SgInitializedName *ditem)
 
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // SgUnsignedLongVal* SgVariableDeclaration::get_bitfield()
-SgValueExp*
+SgExpression*
 SgVariableDeclaration::get_bitfield()
    {
      assert(get_definition() != 0);
@@ -13733,7 +13739,7 @@ SgVariableDeclaration::get_bitfield()
 // DQ (1/20/2014): This must be a SgValueExp, it is a constant expression ROSE uses a SgValueExp for this).
 // void SgVariableDeclaration::set_bitfield (SgUnsignedLongVal *bfield)
 void
-SgVariableDeclaration::set_bitfield (SgValueExp* bfield)
+SgVariableDeclaration::set_bitfield (SgExpression* bfield)
    {
      assert(get_definition() != 0);
      get_definition()->set_bitfield(bfield);
@@ -14779,33 +14785,50 @@ void SgNonrealDecl::set_type (SgNonrealType* t) {
   p_type = t;
 }
 
+#define DEBUG_NONREAL_DECL_MANGLED 0
+
 SgName
 SgNonrealDecl::get_mangled_name (void) const {
-#if 0
+#if DEBUG_NONREAL_DECL_MANGLED
   printf("In SgNonrealDecl::get_mangled_name():\n");
   printf("  - this = %p\n", this);
 #endif
   ostringstream mangled_name;
 
   if (get_is_class_member()) {
-    SgNode * type_parent = get_parent();
-    ROSE_ASSERT(type_parent != NULL);
-#if 0
-    printf("  - type_parent = %p (%s)\n", type_parent, type_parent ? type_parent->class_name().c_str() : "");
+    SgNode * parent = get_parent();
+    ROSE_ASSERT(parent != NULL);
+#if DEBUG_NONREAL_DECL_MANGLED
+    printf("  - parent[1] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
 #endif
-    SgNode * decl_parent = type_parent->get_parent();
-#if 0
-    printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
+    SgDeclarationScope * p_nrscope = isSgDeclarationScope(parent);
+    ROSE_ASSERT(p_nrscope != NULL);
+
+    parent = p_nrscope->get_parent();
+#if DEBUG_NONREAL_DECL_MANGLED
+    printf("  - parent[2] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
 #endif
-    SgClassDeclaration * xdecl = isSgClassDeclaration(decl_parent);
-    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(decl_parent);
-    SgNonrealDecl * nrdecl = isSgNonrealDecl(decl_parent);
-    if (xdecl != NULL) {
+    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent);
+    SgClassDeclaration * xdecl = isSgClassDeclaration(parent);
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(parent);
+    if (tplcdecl != NULL) {
+       SgDeclarationScope * nrscope = tplcdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
+       if (nrscope != p_nrscope) {
+         mangled_name << tplcdecl->get_mangled_name().getString() << "___";
+       }
+    } else if (xdecl != NULL) {
        mangled_name << xdecl->get_mangled_name().getString() << "___";
-    } else if (tplcdecl != NULL) {
-       mangled_name << tplcdecl->get_mangled_name().getString() << "___";
     } else if (nrdecl != NULL) {
-       mangled_name << nrdecl->get_mangled_name().getString() << "___";
+       SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
+       if (nrscope != p_nrscope) {
+         mangled_name << nrdecl->get_mangled_name().getString() << "___";
+       }
     }
   }
 

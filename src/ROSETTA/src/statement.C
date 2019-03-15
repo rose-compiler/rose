@@ -1554,7 +1554,7 @@ Grammar::setUpStatements ()
   // It is hard to believe that the "SgUnsignedLongVal" should not be an "int" instead!
   // VariableDefinition.setDataPrototype ( "SgUnsignedLongVal*", "bitfield", "= NULL",
   //                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     VariableDefinition.setDataPrototype ( "SgValueExp*", "bitfield", "= NULL",
+     VariableDefinition.setDataPrototype ( "SgExpression*", "bitfield", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",

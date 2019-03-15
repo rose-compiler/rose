@@ -309,6 +309,7 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
   ROSE_ASSERT(variableId.isValid());
+  //cout<<"DEBUG: VariableIdMapping::setNumberOfElements: "<<variableName(variableId)<<" size: "<<size<<endl;
   mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
@@ -407,7 +408,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
             }
             if(arraySize > 0) {
-              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<(*i)->unparseToString()<<endl;
               // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
               // Remember that this symbol is already registered:
@@ -597,7 +598,7 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setNumberOfElements(varId,1); // default
+  setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
   return varId;
 }
 
@@ -652,7 +653,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
-    setNumberOfElements(newVarId,1);
+    setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
@@ -873,6 +874,9 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         SPRAY::VariableId newVariableId=createAndRegisterNewVariableId(ss.str());
         sgStringValueToVariableIdMapping[stringVal]=newVariableId;
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
+        // the size of the memory region of a string is its length + 1 (for terminating 0).
+        setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
+        // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
         //cout<<"registered."<<endl;
       } else {

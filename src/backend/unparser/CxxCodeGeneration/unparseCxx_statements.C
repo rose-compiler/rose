@@ -8371,7 +8371,7 @@ Unparse_ExprStmt::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // generated.  This is important where this is a constant expression generated from
   // sizes of machine dependent types.
   // SgUnsignedLongVal *bitfield = vardefn_stmt->get_bitfield();
-     SgValueExp* bitfield = vardefn_stmt->get_bitfield();
+     SgExpression* bitfield = vardefn_stmt->get_bitfield();
      if (bitfield != NULL)
         {
           curprint ( string(":"));
