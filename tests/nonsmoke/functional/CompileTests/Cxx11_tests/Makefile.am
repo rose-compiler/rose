@@ -331,6 +331,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_42.C \
    test2019_45.C \
    test2019_47.C \
+   test2019_48.C \
+   test2019_49.C \
    test2019_50.C \
    test2019_51.C \
    test2019_52.C \
@@ -338,6 +340,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_54.C \
    test2019_55.C \
    test2019_56.C \
+   test2019_59.C \
+   test2019_60.C \
+   test2019_61.C \
    test2019_62.C \
    test2019_63.C \
    test2019_64.C \
@@ -435,7 +440,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_173.C \
    test2019_174.C \
    test2019_175.C \
-   test2019_176.C \
    test2019_177.C \
    test2019_178.C \
    test2019_179.C \
@@ -503,10 +507,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_43.C \
    test2019_44.C \
    test2019_46.C \
-   test2019_48.C \
-   test2019_49.C \
-   test2019_59.C \
-   test2019_60.C \
    test2019_103.C \
    test2019_104.C \
    test2019_109.C \
@@ -518,6 +518,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_148.C \
    test2019_149.C \
    test2019_167.C \
+   test2019_176.C \
    test2019_182.C \
    test2019_183.C 
 
