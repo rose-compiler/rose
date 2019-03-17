@@ -1650,7 +1650,7 @@ void CodeThorn::Analyzer::swapStgWithBackup() {
 /*! 
  * \author Marc Jasper
  * \date 2017.
- */
+ */                    
 void CodeThorn::Analyzer::reduceStgToInOutStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO();
@@ -1664,8 +1664,7 @@ void CodeThorn::Analyzer::reduceStgToInOutStates() {
  */
 void CodeThorn::Analyzer::reduceStgToInOutAssertStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
-    return s->io.isStdInIO() || s->io.isStdOutIO() 
-    || s->io.isFailedAssertIO();
+    return s->io.isStdInIO() || s->io.isStdOutIO() || s->io.isFailedAssertIO();
   };
   _stgReducer.reduceStgToStatesSatisfying(predicate);
 }
@@ -1676,8 +1675,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertStates() {
  */
 void CodeThorn::Analyzer::reduceStgToInOutAssertErrStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
-    return s->io.isStdInIO() || s->io.isStdOutIO() 
-    || s->io.isFailedAssertIO() || s->io.isStdErrIO();
+    return s->io.isStdInIO() || s->io.isStdOutIO()  || s->io.isFailedAssertIO() || s->io.isStdErrIO();
   };
   _stgReducer.reduceStgToStatesSatisfying(predicate);
 }
