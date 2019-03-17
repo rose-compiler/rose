@@ -462,7 +462,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_193.C \
    test2019_194.C \
    test2019_195.C \
+   test2019_196_a.C \
+   test2019_196_b.C \
    test2019_197.C \
+   test2019_198_a.C \
+   test2019_198_b.C \
+   test2019_200_a.C \
+   test2019_200_b.C \
    test2019_202.C \
    test2019_205.C \
    test2019_206.C \
@@ -507,7 +513,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_128.C \
    test2019_182.C \
    test2019_183.C \
-   test2019_234.C 
+   test2019_234.C \
+   test2019_235.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -523,7 +530,89 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_122.C \
    test2019_132.C \
    test2019_148.C \
-   test2019_149.C 
+   test2019_149.C \
+   test2019_199.C \
+   test2019_201.C \
+   test2019_203.C \
+   test2019_204.C \
+   test2019_236.C \
+   test2019_237.C \
+   test2019_238.C \
+   test2019_239.C \
+   test2019_240.C \
+   test2019_241.C \
+   test2019_242.C \
+   test2019_243.C \
+   test2019_244.C \
+   test2019_245.C \
+   test2019_246.C \
+   test2019_247.C \
+   test2019_248.C \
+   test2019_249.C \
+   test2019_250.C \
+   test2019_251.C \
+   test2019_252.C \
+   test2019_253.C \
+   test2019_254.C \
+   test2019_255.C \
+   test2019_256.C \
+   test2019_257.C \
+   test2019_258.C \
+   test2019_259.C \
+   test2019_260.C \
+   test2019_261.C \
+   test2019_262.C \
+   test2019_263.C \
+   test2019_264.C \
+   test2019_265.C \
+   test2019_266.C \
+   test2019_267.C \
+   test2019_268.C \
+   test2019_269.C \
+   test2019_270.C \
+   test2019_271.C \
+   test2019_272.C \
+   test2019_273.C \
+   test2019_274.C \
+   test2019_275.C \
+   test2019_276.C \
+   test2019_277.C \
+   test2019_278.C \
+   test2019_279.C \
+   test2019_280.C \
+   test2019_281.C \
+   test2019_282.C \
+   test2019_283.C \
+   test2019_284.C \
+   test2019_285.C \
+   test2019_286.C \
+   test2019_287.C \
+   test2019_288.C \
+   test2019_289.C \
+   test2019_290.C \
+   test2019_291.C \
+   test2019_292.C \
+   test2019_293.C \
+   test2019_294.C \
+   test2019_295.C \
+   test2019_296.C \
+   test2019_297.C \
+   test2019_298.C \
+   test2019_299.C \
+   test2019_300.C \
+   test2019_301.C \
+   test2019_302.C \
+   test2019_303.C \
+   test2019_304.C \
+   test2019_305.C \
+   test2019_306.C \
+   test2019_307.C \
+   test2019_308.C \
+   test2019_309.C \
+   test2019_310.C \
+   test2019_311.C \
+   test2019_312.C \
+   test2019_313.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
