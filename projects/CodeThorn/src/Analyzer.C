@@ -1655,7 +1655,12 @@ void CodeThorn::Analyzer::reduceStgToInOutStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO();
   };
+#if 1
+  // MS 3/17/2019: new much faster implementation (linear complexity)
+  transitionGraph.reduceEStates3(predicate);
+#else
   _stgReducer.reduceStgToStatesSatisfying(predicate);
+#endif
 }
 
 /*! 

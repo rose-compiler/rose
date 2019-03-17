@@ -87,3 +87,4 @@ list<const EState*> TransitionGraphReducer::successorsOfStateSatisfying(const ES
   }
   return result;
 }
+
