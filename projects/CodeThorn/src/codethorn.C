@@ -1635,9 +1635,9 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
       if (args.getBool("keep-error-states")) {
-	analyzer->reduceStgToInOutAssertStates();
+        analyzer->reduceStgToInOutAssertStates();
       } else {
-	analyzer->reduceStgToInOutStates();
+        analyzer->reduceStgToInOutStates();
       }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
@@ -1654,7 +1654,7 @@ int main( int argc, char * argv[] ) {
       string ltl_filename = args["check-ltl"].as<string>();
       if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
         if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer->getModeLTLDriven()) {
-          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
+          cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
           infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1665,14 +1665,15 @@ int main( int argc, char * argv[] ) {
           eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
         }
         if (!args.getBool("std-io-only") &&!analyzer->getModeLTLDriven()) {
-          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
+          cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
-	  if (args.getBool("keep-error-states")) {
-	    analyzer->reduceStgToInOutAssertStates();
-	  } else {
-	    analyzer->reduceStgToInOutStates();
-	  }
-	  stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+          printStgSize(analyzer->getTransitionGraph(), "before reducing non-I/O states");
+          if (args.getBool("keep-error-states")) {
+            analyzer->reduceStgToInOutAssertStates();
+          } else {
+            analyzer->reduceStgToInOutStates();
+          }
+          stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
           printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
@@ -2126,11 +2127,11 @@ void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment, str
   long inStates = model->numberOfObservableStates(true, false, false);
   long outStates = model->numberOfObservableStates(false, true, false);
   long errStates = model->numberOfObservableStates(false, false, true);
-  cout << "STATUS: STG size";
+  cout << "STATUS: STG size ";
   if (optionalComment != "") {
-    cout << " (" << optionalComment << ")";
+    cout << "(" << optionalComment << "): ";
   }
-  cout << ". #transitions: " << model->size();
+  cout << "#transitions: " << model->size();
   cout << ", #states: " << model->estateSet().size()
     << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)" << endl;
   if (csvOutput) {
