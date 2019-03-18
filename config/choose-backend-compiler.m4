@@ -547,6 +547,17 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_9, [test "x$gcc_version_later_4_9" = "xyes"])
 
+# ROSE-1858: A compass example causes a g++ internal error for gcc 4.9.1
+  gcc_version_equal_4_9_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == x9; then
+       if test x$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER == x1; then
+         gcc_version_equal_4_9_1=yes
+       fi
+     fi
+   fi
+   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_EQUAL_4_9_1, [test "x$gcc_version_equal_4_9_1" = "xyes"])
+
 # DQ (11/9/2016): GNU GCC 5.2 adds more C14 support (we need this to control what tests are run).
   gcc_version_later_5_1=no
   if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x5; then
