@@ -4,6 +4,7 @@
 #include "csharpBuilder.h"
 %}
 
+%ignore popBuiltAST;
 
 %include csharpBuilder.h
 
