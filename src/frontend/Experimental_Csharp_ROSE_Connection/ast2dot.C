@@ -6,7 +6,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "rose.h"
+#include "sage3basic.h"
 #include "sageInterface.h"
 #include "sageGeneric.h"
 
