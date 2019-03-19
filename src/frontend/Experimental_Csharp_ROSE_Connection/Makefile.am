@@ -20,9 +20,10 @@ if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
   libcsharpBuilder_la_SOURCES = \
     csharpBuilder.C \
     csharpBuilder_wrap.C \
-    csharp_support_lib.C
+    csharp_support_lib.C \
+    ast2dot.C
 
-  libcsharpBuilder_la_LDFLAGS = -module -avoid-version -shared $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB) -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt `pkg-config --cflags --libs mono-2`   
+  libcsharpBuilder_la_LDFLAGS = -module -avoid-version -shared $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB) -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt `pkg-config --cflags --libs mono-2`
 #~   libroseCsharpBuilder_la_DEPENDENCIES = csharpBuilder.so
 else
 # Compile using a function that represents the API of the Csharp support.
@@ -80,21 +81,21 @@ build_csharp_entry_point: $(srcdir)/csharp_main.cs
 #	mcs /target:library $(srcdir)/csharp_main.cs /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/RGiesecke.DllExport.Metadata.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.dll
 #	/reference:$(srcdir)/RGiesecke.DllExport.Metadata.dll
 #	mcs /target:library $(srcdir)/csharp_main.cs /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/RGiesecke.DllExport.Metadata.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.dll
-	mcs /target:library /nowarn:CS1685 /reference:Threading=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Threading.Tasks.dll  /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/RGiesecke.DllExport.Metadata.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Reflection.dll /reference:Runtime=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Runtime.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Reflection.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Text.Encoding.dll $(srcdir)/csharp_main.cs $(srcdir)/UsingCollector.cs $(srcdir)/SeqKind.cs $(srcdir)/csharpBuilderPINVOKE.cs $(srcdir)/csharpBuilder.cs $(srcdir)/astBuilder.cs
+	mcs /target:library /nowarn:CS1685 /reference:Threading=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Threading.Tasks.dll  /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Analyzers.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.CSharp.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.VisualBasic.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.Workspaces.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/Microsoft.CodeAnalysis.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/RGiesecke.DllExport.Metadata.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Reflection.dll /reference:Runtime=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Runtime.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Reflection.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Collections.Immutable.dll /reference:/nfs/casc/overture/ROSE/opt/rhel7/x86_64/csharp/libs/System.Text.Encoding.dll $(srcdir)/csharp_main.cs $(srcdir)/SeqKind.cs $(srcdir)/csharpBuilderPINVOKE.cs $(srcdir)/csharpBuilder.cs $(srcdir)/astBuilder.cs $(srcdir)/SWIGTYPE_p_namespace.cs
 	echo "Copy $(srcdir)/csharp_main.dll to $(builddir)"
 	cp $(srcdir)/csharp_main.dll $(builddir)
 
 ## $(srcdir)/parseTreeTraversal.cs $(srcdir)/abstractSyntaxTreeTraversal.cs $(srcdir)/buildDotGraph.cs 
 
 # build_executable: build_dynamic_library build_csharp_entry_point
-build_executable: build_csharp_entry_point
+build_executable: build_csharp_entry_point $(srcdir)/csharp_support.C $(srcdir)/ast2dot.C
 #	$(CXX) -std=c++11 -DBUILD_EXECUTABLE -I$(MONO_INCLUDE) $(srcdir)/csharp_support.C -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt
 #	$(CXX) -std=c++11 -DBUILD_EXECUTABLE -I$(MONO_INCLUDE) -I$(top_srcdir)/src/util -I$(top_srcdir)/src/frontend/SageIII $(srcdir)/csharp_support.C -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt
-	$(CXX) -std=c++11 -DBUILD_EXECUTABLE -I$(MONO_INCLUDE) -I$(top_srcdir)/src/util -I$(top_srcdir)/src/frontend/SageIII $(srcdir)/csharp_support.C -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt
+	$(CXX) -std=c++11 -g -DBUILD_EXECUTABLE -I$(MONO_INCLUDE) -I$(top_srcdir)/src/util -I$(top_srcdir)/src/frontend/SageIII $(srcdir)/csharp_support.C -L$(MONO_LIBS) -lmono-2.0 -lpthread -ldl -lrt
 
 # DQ (9/22/2017): This is the compilation command that works for the example using roslyn from sandbox/roslyn/llnl
 roslyn:
-	/nfs/casc/overture/ROSE/opt/rhel7/x86_64/mono/62458f4/installation/bin/csc /noconfig /unsafe- /checked- /nowarn:1701,1702,1705 /nostdlib+ /errorreport:prompt /warn:4 "/define:TRACE;DEBUG;NETCOREAPP1_1" `roslyn-config libs` /debug+ /debug:portable /filealign:512 /nologo /optimize- /out:bin/main.exe /target:exe /warnaserror- /utf8output /deterministic+ `roslyn-config analyzers` src/Program.cs src/UsingCollector.cs
+	/nfs/casc/overture/ROSE/opt/rhel7/x86_64/mono/62458f4/installation/bin/csc /noconfig /unsafe- /checked- /nowarn:1701,1702,1705 /nostdlib+ /errorreport:prompt /warn:4 "/define:TRACE;DEBUG;NETCOREAPP1_1" `roslyn-config libs` /debug+ /debug:portable /filealign:512 /nologo /optimize- /out:bin/main.exe /target:exe /warnaserror- /utf8output /deterministic+ `roslyn-config analyzers` src/Program.cs
 
 OLD_all:
 	g++ -std=c++11 -Wall -fPIC -O2 -I$(MONO_HOME) -c Kazelib.cpp Kazelib.h `pkg-config -cflags -libs mono-2`
@@ -108,5 +109,3 @@ test:
 
 clean-local:
 	rm -f *.so a.out *.dll
-
-
