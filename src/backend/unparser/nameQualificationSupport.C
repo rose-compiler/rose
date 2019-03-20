@@ -10678,13 +10678,21 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
              {
                i->second = qualifier;
 
-#if 1
+
+#if 0
                printf ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
+               printf ("  - exp = %p (%s) = %s\n", exp, exp->class_name().c_str(), exp->unparseToString().c_str());
+               SgNode * parent = exp->get_parent();
+               while (parent) {
+                 printf ("  - parent = %p (%s)\n", parent, parent->class_name().c_str());
+                 parent = parent->get_parent();
+               }
+               printf ("  - typeDeclaration = %p (%s)\n", typeDeclaration, typeDeclaration->class_name().c_str());
+               SgTemplateInstantiationDecl * tpl_inst_decl = isSgTemplateInstantiationDecl(typeDeclaration);
+               ROSE_ASSERT(tpl_inst_decl != NULL);
+               printf ("  - tpl_inst_decl = %s\n", tpl_inst_decl->get_name().str());
                ROSE_ASSERT(false);
 #endif
-
-               SgName testNameInMap = exp->get_qualified_name_prefix();
-               printf ("testNameInMap = %s \n",testNameInMap.str());
              }
         }
    }
