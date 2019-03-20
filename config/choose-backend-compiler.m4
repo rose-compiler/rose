@@ -324,14 +324,14 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 
       else
         AC_MSG_NOTICE([Detected using MacPorts GCC backend compiler])
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -s -d\. -f2`
       fi
 
     else
         AC_MSG_NOTICE([else case not using Clang (choose backend compiler)])
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -s -d\. -f2`
 
         AC_MSG_NOTICE([(non-clang) C++ back-end compiler major version number = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
         AC_MSG_NOTICE([(non-clang) C++ back-end compiler minor version number = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
@@ -755,10 +755,9 @@ AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CRO
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_CXX_COMPILER, [test "x$with_alternate_backend_Cxx_compiler" != "x"])
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, [test "x$with_alternate_backend_C_compiler" != "x"])
 
-
 # TOO (2/14/2011): Enforce backend C/C++ compilers to be the same version
-BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpversion`"
-BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpversion`"
+BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion`"
+BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpfullversion -dumpversion`"
 BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
 if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
   AC_MSG_FAILURE([the backend C++ and C compilers must be the same])
