@@ -599,11 +599,18 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
 
+     SgInitializedName * init_name_reference_node = isSgInitializedName(nodeReferenceToType);
+     if (init_name_reference_node != NULL) {
+       if (init_name_reference_node->get_auto_decltype() != NULL) {
+         nodeReferenceToType = NULL;
+       }
+     }
+
 #if 0
      printf ("In unparseType(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,(nodeReferenceToType != NULL) ? nodeReferenceToType->class_name().c_str() : "null");
 #endif
 
-     if (nodeReferenceToType != NULL && !isSgAutoType(type))
+     if (nodeReferenceToType != NULL)
         {
 #if 0
           printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
