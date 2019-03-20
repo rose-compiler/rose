@@ -81,13 +81,13 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
                 // included in 2 different files, both provided on the
                 // command line
                 if(varIdTypeSizeMap[varId]!=offset) {
-                  cerr<<"Detected same member variable varId, but computed different offset"<<endl;
-                  variableIdMapping->toStream(cerr);
-                  cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
-                  cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
-                  cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
-                  cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
-                  cerr<<"Declaration: "<<node->unparseToString()<<endl;
+                  cerr<<"ERROR: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<" : violation of C/C++ one-time definition rule. Invalid input program."<<endl;
+                  //variableIdMapping->toStream(cerr);
+                  //cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
+                  //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
+                  //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
+                  //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
+                  //cerr<<"Declaration: "<<node->unparseToString()<<endl;
                   exit(1);
                 }                  
               } else {
