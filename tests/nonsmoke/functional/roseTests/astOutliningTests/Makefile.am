@@ -273,6 +273,7 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 # Liao, 2019/1/31
 # test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
 dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTCODES_REQUIRED_TO_PASS)))
+dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTCODES_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(dlopen2_test_targets)
 dlopen2_test_flags =				\
 	-rose:outline:use_dlopen		\
