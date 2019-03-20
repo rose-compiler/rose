@@ -377,10 +377,10 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           //cout<<"DEBUG VIM: symbol: "<<sym<<endl;
           // determine the declaration to check for bitfields
            if(isAnonymousBitfield(initName)) {
-            // MS (2018-12-4): skip anonymous bitfields because in the
-            // same struct/class/union they are mapped to the same
-            // SgSymbol.
-            continue;
+             // MS (2018-12-4/2019-03-20): workaround: ROSE BUG: if a struct contains more than one anonymous bitfield
+             // they are assigned the same symbol.
+             // ROSE AST BUG WORKAROUND (ROSE-1867)
+             continue;
           }
           type = initName->get_type();
           initializer = initName->get_initializer();
@@ -571,7 +571,7 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   * \date 2012.
  */
 // deprecated (use createAndRegisterVariableId instead)
-VariableId
+VariableId  
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
       i!=temporaryVariableIdMapping.end();
