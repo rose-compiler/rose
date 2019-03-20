@@ -179,12 +179,6 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
             # Trying out various way of getting GCC version number: after version 7 "-dumpversion" was replaced by "-dumpfullversion"
             #     CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND --dumpversion | grep "^gcc" | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
             CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpfullversion -dumpversion 2> /dev/null)
-#            if [ $? != 0 ]; then
-#              CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpversion 2> /dev/null)
-#              if [ $? != 0 ]; then
-#                AC_MSG_ERROR([Could detect the compiler version for $CXX_COMPILER_COMMAND])
-#              fi
-#            fi
             CXX_VERSION_MAJOR=$(echo $CXX_VERSION_TRIPLET |cut -d. -f1)
             CXX_VERSION_MINOR=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f2)
             CXX_VERSION_PATCH=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f3)
