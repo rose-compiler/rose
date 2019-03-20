@@ -3,6 +3,7 @@
 #include "RoseAst.h"
 #include "SgTypeSizeMapping.h"
 #include "AbstractValue.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -47,7 +48,12 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
-        if(isSgVariableDeclaration(dataMember)) {
+        if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
+          SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+          if(VariableIdMapping::isAnonymousBitfield(initName)) {
+            // ROSE AST BUG WORKAROUND (ROSE-1867)
+            continue;
+          }
           //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
@@ -94,7 +100,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
           } else {
             // non valid var id
             // throw ...
-            cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<
+            cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<endl;
             numNonValidVarId++;
             exit(1);
           }
