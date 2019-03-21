@@ -7490,6 +7490,7 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgDerivedTypeStatement:
           case V_SgModuleStatement:
           case V_SgJavaPackageDeclaration:
+          case V_SgJovialTableStatement:
              {
                const SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                name = classDeclaration->get_name();

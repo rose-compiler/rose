@@ -4668,6 +4668,17 @@ SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_chil
      return returnNode;
    }
 
+SgJovialTableStatement* SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialTableStatement* returnNode = NULL;
+
+     return returnNode;
+   }
 
 /* #line 3798 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

@@ -710,13 +710,43 @@ UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclar
 SgClassDeclaration*
 UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
    {
+      SgName name = ut_struct->get_name();
+
+#if 0
       cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
       cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
-
       cout << "..........\n\n";
+      cout << "-x- creating SgClassDeclaration for name " << name << endl;
+      cout << "    size of modifier list is " << ut_struct->get_modifiers()->get_expressions().size()
+           << endl;
+#endif
 
-      //const SgUntypedDeclarationStatementPtrList &
-      //      SgUntypedDeclarationStatementList *
+      SgJovialTableStatement* class_decl = SageBuilder::buildJovialTableStatement(name, scope);
+      ROSE_ASSERT(class_decl);
+      setSourcePositionFrom(class_decl, ut_struct);
+
+      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
+         {
+         // TODO: move to Jovial
+         // ROSE_ASSERT(ut_struct->get_modifiers()->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_w);
+            ROSE_ASSERT(ut_struct->get_modifiers()->get_expressions().size() == 1);
+            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
+            ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+            // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
+
+            class_decl->set_has_table_entry_size(true);
+            class_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+         }
+
+      SgClassDefinition* class_def = class_decl->get_definition();
+      ROSE_ASSERT(class_def);
+
+      SgScopeStatement* class_scope = class_def->get_scope();
+      ROSE_ASSERT(class_scope);
+
+      SageInterface::appendStatement(class_decl, scope);
+
+      SageBuilder::pushScopeStack(class_def);
 
       return NULL;
    }
@@ -772,7 +802,7 @@ UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* u
   // Set the parent explicitly
      nondefiningClassDeclaration->set_parent(scope);
 
-  // Set the defining and no-defining declarations in the non-defining class declaration!
+  // Set the defining and non-defining declarations in the non-defining class declaration!
      nondefiningClassDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
      nondefiningClassDeclaration->set_definingDeclaration(classDeclaration);
 
@@ -2528,6 +2558,13 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                        break;
                     }
               }
+           case V_SgUntypedExprListExpression:
+              {
+                 SgUntypedExprListExpression* ut_list = isSgUntypedExprListExpression(ut_expr);
+                 SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_list,delete_ut_expr);
+                 sg_expr = sg_expr_list;
+                 break;
+              }
            default:
               {
                  cerr << "UntypedConverter::convertSgUntypedExpression: unimplemented for class " << ut_expr->class_name()
@@ -2800,7 +2837,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_fortran_stat_acquired_lock:   break;
 
     // Jovial specific (for location-specifier)
-       case e_table_item_modifier_list:     break;
+       case e_struct_item_modifier_list:    break;
        case e_storage_modifier_location:    break;
 
        case e_unknown:

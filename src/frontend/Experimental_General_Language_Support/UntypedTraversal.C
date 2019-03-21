@@ -404,6 +404,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          currentScope = SageBuilder::topScopeStack();
          break;
       }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SageBuilder::popScopeStack();  // structure scope
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
     case V_SgUntypedProgramHeaderDeclaration:
       {
          SageBuilder::popScopeStack();  // program body

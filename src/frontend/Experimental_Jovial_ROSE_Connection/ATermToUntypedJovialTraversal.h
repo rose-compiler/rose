@@ -82,10 +82,10 @@ ATbool traverse_OptTypeName            (ATerm term);
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_TableDescription       (ATerm term, SgUntypedStructureDeclaration* table_decl);
-ATbool traverse_EntrySpecifier         (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_EntrySpecifier         (ATerm term, SgUntypedExprListExpression* attr_list, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.1.2.3 ORDINARY TABLE ENTRIES
-ATbool traverse_OrdinaryEntrySpecifier (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_OrdinaryEntrySpecifier (ATerm term, SgUntypedExprListExpression* attr_list, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_OptPackingSpecifier    (ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.2.1 TABLE DIMENSION LISTS
@@ -96,11 +96,12 @@ ATbool traverse_Dimension(ATerm term, SgUntypedExprListExpression* dim_info);
 ATbool traverse_OptStructureSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.2.4 SPECIFIED TABLE ENTRIES
-ATbool traverse_SpecifiedEntrySpecifier       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_SpecifiedEntrySpecifier       (ATerm term, SgUntypedExprListExpression* attr_list,
+                                                           SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_SpecifiedTableBody            (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_SpecifiedTableItemDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_SpecifiedItemDescription      (ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
-ATbool traverse_WordsPerEntry                 (ATerm term, int & entry_type, SgUntypedExpression* & entry_size);
+ATbool traverse_WordsPerEntry                 (ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.3 CONSTANT DECLARATIONS
 ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);

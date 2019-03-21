@@ -58,8 +58,9 @@ namespace General_Language_Translation
           e_function_modifier_recursive,
           e_function_modifier_reentrant,
 
-       // Table item modifiers
-          e_table_item_modifier_list,
+       // Structure modifiers
+          e_struct_modifier_list,
+          e_struct_item_modifier_list,
 
        // Operators
        // ---------
