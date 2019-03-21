@@ -66,7 +66,9 @@ ifeq (@(COMPILATION_DATABASE),yes)
 endif
 
 # Export LD_LIBRARY_PATH since RMC sets this for non-native compilers.
-export LD_LIBRARY_PATH
+# Actually, this doesn't work because tup refuses to export this variable, and who knows what others. Instead we work
+# around it by exporting ALL_LIBDIRS and using patchelf to fix the executable.
+export ALL_LIBDIRS
 
 ########################################################################################################################
 # Supported languages.
@@ -617,7 +619,7 @@ support_GENHDR = \
 #    an executable or a library.
 #      run $(support_compile) foo.C bar.C
 #
-support_compile_linkexe = $(COMPILER_RULES) --phase=support --link=exe --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
+support_compile_linkexe = $(COMPILER_RULES) --phase=support --link=exe --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps --rpath="${ALL_LIBDIRS}"
 support_compile_linklib = $(COMPILER_RULES) --phase=support --link=lib --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
 support_compile         = $(COMPILER_RULES) --phase=support --link=none --begin-deps $(support_GENHDR) --end-deps
 
@@ -895,7 +897,7 @@ tool_GENLIB = $(ROSE)/src/librose
 #    an executable or a library.
 #      run $(tool_compile) foo.C bar.C
 #
-tool_compile_linkexe = $(COMPILER_RULES) --phase=tool --link=exe --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps $(ROSE)/src/librose
+tool_compile_linkexe = $(COMPILER_RULES) --phase=tool --link=exe --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps --rpath="${ALL_LIBDIRS}" $(ROSE)/src/librose
 tool_compile_linklib = $(COMPILER_RULES) --phase=tool --link=lib --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps
 tool_compile         = $(COMPILER_RULES) --phase=tool --link=none --begin-deps $(tool_GENHDR) --end-deps
 

@@ -271,6 +271,7 @@ my $ncompiled = 0;	    # number of sources compiled
 my @mapped_dirs;	    # empty, or the arguments of --map switch (absolute source dir and relative build dir)
 my $command_flags = "";     # content of the ^-flags in tup commands
 my $emit_compilation_db;    # emit rules to generate LLVM compilation database files; value is Tup group name
+my $rpath;
 
 ########################################################################################################################
 sub parse_command_line {
@@ -443,6 +444,17 @@ sub parse_command_line {
             $phase = $1;
             next;
         }
+
+	# --rpath=DIRS
+	if ($arg eq "--rpath") {
+	    die "$arg0: \"$arg\" expects an argument\n" unless @_;
+	    $rpath = shift @_;
+	    next;
+	}
+	if ($arg =~ /^--rpath=(.*)/) {
+	    $rpath = $1;
+	    next;
+	}
 
         # Switches passed to the compiler
         if ($arg =~ /^-[DIU]$/) {
@@ -821,6 +833,9 @@ sub generate_link_rules {
 	print " ", join(" ", @compiler_args) if @compiler_args;
 	print " ", join(" ", @linker_args) if @linker_args;
 	print ' $(' . $phase . "LDFLAGS_" . uc($linkage) . ")";
+	if ($rpath ne "" && $linkage eq 'shared') {
+	    print "; \$(TUP_SCRIPTS)/append-rpath '$rpath' \%o";
+	}
     }
 
     # Output
