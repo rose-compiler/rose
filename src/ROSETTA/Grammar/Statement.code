@@ -14826,9 +14826,7 @@ SgNonrealDecl::get_mangled_name (void) const {
 #if DEBUG_NONREAL_DECL_MANGLED
        printf("  - nrscope = %p\n", nrscope);
 #endif
-       if (nrscope != p_nrscope) {
-         mangled_name << nrdecl->get_mangled_name().getString() << "___";
-       }
+       mangled_name << nrdecl->get_mangled_name().getString() << "___";
     }
   }
 
