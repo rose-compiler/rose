@@ -70,8 +70,9 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // declarations
 
-          case V_SgEnumDeclaration:            unparseEnumDeclStmt(stmt, info);     break;
-          case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
+          case V_SgEnumDeclaration:            unparseEnumDeclStmt (stmt, info);    break;
+          case V_SgJovialTableStatement:       unparseTableDeclStmt(stmt, info);    break;
+          case V_SgVariableDeclaration:        unparseVarDeclStmt  (stmt, info);    break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
@@ -610,6 +611,44 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          }
 
      curprint(");");
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
+     ROSE_ASSERT(table_decl != NULL);
+
+     SgClassDefinition* table_def = table_decl->get_definition();
+     ROSE_ASSERT(table_def);
+
+     SgName table_name = table_decl->get_name();
+
+     curprint("TYPE ");
+     curprint(table_name.str());
+     curprint(" TABLE");
+
+  // WordsPerEntry
+     if (table_decl->get_has_table_entry_size())
+        {
+           curprint(" W ");
+           unparseExpression(table_decl->get_table_entry_size(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+     curprint("BEGIN");
+     unp->cur.insert_newline(1);
+
+     BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+        {
+           unparseVarDeclStmt(item_decl, info);
+        }
+
+     unp->cur.insert_newline(1);
+     curprint("END");
      unp->cur.insert_newline(1);
    }
 

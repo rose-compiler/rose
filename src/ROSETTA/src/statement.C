@@ -367,6 +367,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (EquivalenceStatement,      "EquivalenceStatement",       "TEMP_Equivalence_Statement" );
      NEW_TERMINAL_MACRO (DerivedTypeStatement,      "DerivedTypeStatement",       "TEMP_Derived_Type_Statement" );
 
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
+     NEW_TERMINAL_MACRO (JovialTableStatement,      "JovialTableStatement",       "TEMP_Jovia_Table_Statement" );
+
   // DQ (9/4/2007): Added DIMENSION statement (for array declaration support)
   // These are the type attributes: ALLOCATABLE, DIMENSION, EXTERNAL, INTENT, INTRINSIC, OPTIONAL, PARAMETER, POINTER, SAVE, TARGET
   // These are the ones that have associated statements: ALLOCATE, DIMENSION, EXTERNAL, INTRINSIC, OPTIONAL, PARAMETER, POINTER, SAVE, TARGET
@@ -432,9 +435,13 @@ Grammar::setUpStatements ()
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration,
+          TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration | JovialTableStatement,
+          "ClassDeclaration", "CLASS_DECL_STMT", true );
 #else
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration,
+          TemplateInstantiationDecl                            | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration | JovialTableStatement,
+          "ClassDeclaration", "CLASS_DECL_STMT", true );
 #endif
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
@@ -3653,6 +3660,9 @@ Grammar::setUpStatements ()
      AssignedGotoStatement.setFunctionPrototype      ("HEADER_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
+     JovialTableStatement.setFunctionPrototype       ("HEADER_JOVIAL_TABLE_STATEMENT",  "../Grammar/Statement.code" );
+
   // DQ (7/21/2007): More IR nodes required for Fortran support
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3714,6 +3724,12 @@ Grammar::setUpStatements ()
   // DerivedTypeStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DerivedTypeStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
+     JovialTableStatement.setDataPrototype ( "SgExpression*", "table_entry_size", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JovialTableStatement.setDataPrototype ( "bool", "has_table_entry_size", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/11/2007): Added support for new IR nodes, but have not added the correct data members yet!
@@ -4272,6 +4288,9 @@ Grammar::setUpStatements ()
      ComputedGotoStatement.setFunctionSource      ("SOURCE_COMPUTED_GOTO_STATEMENT", "../Grammar/Statement.code" );
      AssignedGotoStatement.setFunctionSource      ("SOURCE_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
+
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
+     JovialTableStatement.setFunctionSource       ("SOURCE_JOVIAL_TABLE_STATEMENT", "../Grammar/Statement.code" );
 
      NamelistStatement.setFunctionSource          ("SOURCE_NAMELIST_STATEMENT", "../Grammar/Statement.code" );
      ImportStatement.setFunctionSource            ("SOURCE_IMPORT_STATEMENT", "../Grammar/Statement.code" );

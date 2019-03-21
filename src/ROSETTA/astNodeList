@@ -441,6 +441,7 @@ SgIsNotOp
 SgIorAssignOp
 SgJovialCompoolStatement
 SgJovialForThenStatement
+SgJovialTableStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp

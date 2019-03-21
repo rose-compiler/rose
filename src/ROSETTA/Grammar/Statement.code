@@ -1431,12 +1431,13 @@ HEADER_JOVIAL_FOR_THEN_STATEMENT_END
 
 HEADER_JOVIAL_COMPOOL_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-
       virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
-
 #endif
 HEADER_JOVIAL_COMPOOL_STATEMENT_END
 
+HEADER_JOVIAL_TABLE_STATEMENT_START
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+HEADER_JOVIAL_TABLE_STATEMENT_END
 
 HEADER_MATLAB_FOR_STATEMENT_START
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -2089,7 +2090,8 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_template_parameter, /*!< type parameter in a template declaration */
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
-               e_java_parameter      /*!< A Java parameter type declaration */
+               e_java_parameter,     /*!< A Java parameter type declaration */
+               e_jovial_table        /*!< A Jovial table type declaration */
              };
 
           virtual SgName get_qualified_name() const;
@@ -11068,6 +11070,21 @@ SgJovialForThenStatement::post_construction_initialization()
    }
 SOURCE_JOVIAL_FOR_THEN_STATEMENT_END
 
+SOURCE_JOVIAL_TABLE_STATEMENT_START
+void
+SgJovialTableStatement::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJovialTableStatement::get_mangled_name(void) const
+   {
+   // Don't believe name mangling required for Jovial
+      return get_name();
+   }
+SOURCE_JOVIAL_TABLE_STATEMENT_END
+
 
 SOURCE_MATLAB_FOR_STATEMENT_START
 void
@@ -19649,7 +19666,6 @@ SgDerivedTypeStatement::get_mangled_name() const
      return mangleName;
    }
 SOURCE_DERIVED_TYPE_STATEMENT_END
-
 
 SOURCE_ATTRIBUTE_SPECIFICATION_STATEMENT_START
 void
