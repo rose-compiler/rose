@@ -44,10 +44,12 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
     SgNode* node=*i;
     ROSE_ASSERT(node);
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
+      //cout<<"DEBUG: class def: "<<classDef->unparseToString()<<endl;
       //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
+        //cout<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
           SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(VariableIdMapping::isAnonymousBitfield(initName)) {
@@ -81,14 +83,17 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
                 // included in 2 different files, both provided on the
                 // command line
                 if(varIdTypeSizeMap[varId]!=offset) {
-                  cerr<<"ERROR: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<" : violation of C/C++ one-time definition rule. Invalid input program."<<endl;
+                  //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
+                  // TODO: ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
+                  // do nothing for now
+
                   //variableIdMapping->toStream(cerr);
                   //cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
                   //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
                   //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
                   //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
                   //cerr<<"Declaration: "<<node->unparseToString()<<endl;
-                  exit(1);
+                  //exit(1);
                 }                  
               } else {
                 //cout<<" DEBUG Offset: "<<offset<<endl;

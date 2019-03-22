@@ -10,6 +10,6 @@ codethorn -I. bug8a.c bug8b.c
 echo "========================="
 
 echo "========================="
-echo "BUG9: multiple files with typedef."
+echo "BUG9: ROSE-1879 workaround"
 codethorn -I. bug9a.c bug9b.c
 echo "========================="
