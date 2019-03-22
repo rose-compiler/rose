@@ -83,9 +83,9 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
                 // included in 2 different files, both provided on the
                 // command line
                 if(varIdTypeSizeMap[varId]!=offset) {
-                  //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
-                  // TODO: ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
+                  continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
                   // do nothing for now
+                  //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
 
                   //variableIdMapping->toStream(cerr);
                   //cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
