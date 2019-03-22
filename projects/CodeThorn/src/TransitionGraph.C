@@ -92,6 +92,32 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
 }
 
 /*! 
+ * \author Markus Schordan
+ * \date 2019 (linear algorithm for IO reduction)
+ */         
+void TransitionGraph::reduceEStates3(function<bool(const EState*)> predicate) {
+  const size_t reportingInterval=10000;
+  EStatePtrSet states=estateSet();
+  size_t todo=states.size();
+  size_t numReduced=0;
+  cout << "STATUS: remaining states to check for reduction: "<<todo<<endl;
+  if (todo==0) {
+    return;
+  }
+  for(auto i:states) { 
+    if(!(predicate(i) || i == getStartEState())) {
+      reduceEState2(i);
+      numReduced++;
+    }
+    todo--;
+    if(todo%reportingInterval==0) {
+      cout << "STATUS: remaining states to check for reduction: "<<todo<<endl;
+    }
+  }
+  cout<<"STATUS: reduced "<<numReduced<<" states."<<endl;
+}
+
+/*! 
   * \author Markus Schordan
   * \date 2012.
  */

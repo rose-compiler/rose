@@ -3,6 +3,7 @@
 #include "RoseAst.h"
 #include "SgTypeSizeMapping.h"
 #include "AbstractValue.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -47,7 +48,12 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
       std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
       int offset=0;
       for(auto dataMember : dataMembers) {
-        if(isSgVariableDeclaration(dataMember)) {
+        if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
+          SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+          if(VariableIdMapping::isAnonymousBitfield(initName)) {
+            // ROSE AST BUG WORKAROUND (ROSE-1867)
+            continue;
+          }
           //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
           VariableId varId=variableIdMapping->variableId(dataMember);
           if(varId.isValid()) {
@@ -70,17 +76,24 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               
               // every varid is inserted exactly once.
               if(varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end()) {
-                variableIdMapping->toStream(cerr);
-                cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
-                cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
-                cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
-                cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
-                cerr<<"Declaration: "<<node->unparseToString()<<endl;
-                exit(1);
+                // if the same varId is found, ensure that the offset
+                // is the same again (e.g. the same headerfile is
+                // included in 2 different files, both provided on the
+                // command line
+                if(varIdTypeSizeMap[varId]!=offset) {
+                  cerr<<"ERROR: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<" : violation of C/C++ one-time definition rule. Invalid input program."<<endl;
+                  //variableIdMapping->toStream(cerr);
+                  //cerr<<"Internal error: StructureAccessLookup::initializeOffsets: varid already exists."<<endl;
+                  //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
+                  //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
+                  //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
+                  //cerr<<"Declaration: "<<node->unparseToString()<<endl;
+                  exit(1);
+                }                  
+              } else {
+                //cout<<" DEBUG Offset: "<<offset<<endl;
+                varIdTypeSizeMap.emplace(varId,offset);
               }
-              //cout<<" DEBUG Offset: "<<offset<<endl;
-              
-              varIdTypeSizeMap.emplace(varId,offset);
               // for unions the offset is not increased (it is the same for all members)
               if(!isUnionDeclaration(node)) {
                 offset+=typeSize;
@@ -94,7 +107,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
           } else {
             // non valid var id
             // throw ...
-            cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<
+            cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<endl;
             numNonValidVarId++;
             exit(1);
           }
