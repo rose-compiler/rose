@@ -44,7 +44,7 @@ run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"
         echo "ROSE_LIBDIRS  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')"; \
         echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
 	echo "# Additional items useful to include in Makefiels"; \
-	echo "ROSE_RPATHS      ="; \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
 	echo "ROSE_LINK_RPATHS ="; \
     ) |$(ROSE)/scripts/absolute-paths >%o \
   |> rose-config.cfg
@@ -77,6 +77,7 @@ export SPOCK_EMPLOYED
         [ "@(LINKAGE)" != "static" ] && echo "ROSE_LDFLAGS = $(ROSE_INSTALLED_LDFLAGS_SHARED)"; \
         echo "ROSE_LDFLAGS_STATIC = $(ROSE_INSTALLED_LDFLAGS_STATIC)"; \
         echo "ROSE_LDFLAGS_SHARED = $(ROSE_INSTALLED_LDFLAGS_SHARED)"; \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
     ) |$(ROSE)/scripts/absolute-paths >%o \
   |> rose-installed-make.cfg
 
@@ -104,8 +105,8 @@ run $(public_header) --language=shell -o include rose-installed-make.cfg
         [ "@(LINKAGE)" != "static" ] && echo "ROSE_LDFLAGS = $(tool_LDFLAGS_SHARED)"; \
         echo "ROSE_LDFLAGS_STATIC  = $(tool_LDFLAGS_STATIC)"; \
         echo "ROSE_LDFLAGS_SHARED  = $(tool_LDFLAGS_SHARED)"; \
-    ) |$(ROSE)/scripts/absolute-paths \
-      |$(ROSE)/scripts/tup/prepend-comment --language=shell $(ROSE)/LicenseInformation/ROSE_BSD_License.txt >%o \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
+    ) |$(ROSE)/scripts/tup/prepend-comment --language=shell $(ROSE)/LicenseInformation/ROSE_BSD_License.txt >%o \
   |> rose-build-make.cfg
 
 # Like the rose-installed-make.cfg above, but as a shell script.

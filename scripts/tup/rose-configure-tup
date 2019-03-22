@@ -61,7 +61,7 @@ config_switch() {
 	echo "$val"
 	return 0
     fi
-    
+
     case "$switch" in
 	--with-*)
 	    local name="${switch#--with-}"
@@ -119,7 +119,7 @@ value_or_no() {
 }
 
 # Given ROSE configure arguments, echo the list of tup variables for enabling and disabling ROSE
-# language features in the tup.config file. 
+# language features in the tup.config file.
 language_vars() {
     # Get list of enabled languages
     local languages=()
