@@ -69,6 +69,7 @@ endif
 # Actually, this doesn't work because tup refuses to export this variable, and who knows what others. Instead we work
 # around it by exporting ALL_LIBDIRS and using patchelf to fix the executable.
 export ALL_LIBDIRS
+ALL_LIBDIRS = ${ALL_LIBDIRS}
 
 ########################################################################################################################
 # Supported languages.
