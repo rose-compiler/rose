@@ -41,7 +41,9 @@ SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tes
 # DQ (1/1/2019): Only EDG 5.0 is has sufficent support for C++17 (I think).
 if ROSE_USE_EDG_VERSION_5_0
 SUBDIRS += Cxx17_tests
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
 SUBDIRS += unparse_template_from_ast
+endif
 endif
 
 endif
