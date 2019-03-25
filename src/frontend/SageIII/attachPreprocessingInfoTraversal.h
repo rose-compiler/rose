@@ -109,6 +109,9 @@ class AttachPreprocessingInfoTreeTrav
        // int currentFileNameId;
          SgSourceFile* sourceFile;
 
+      // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+         int source_file_id;
+
       //! AS(011306) Map of ROSEAttributesLists mapped to filename from Wave
        // DQ (12./12/2008): this should be updated to use int instead of strings.
        // For now I will not touch the Wave specific implementation.

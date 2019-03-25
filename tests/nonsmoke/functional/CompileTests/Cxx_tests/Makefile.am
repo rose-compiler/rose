@@ -571,6 +571,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    rose-1540-0.C \
    rose-1541-0.C \
    rose-1789-001.C \
+   rose-1814.C \
+   rose-1834.C \
+   rose-1839.C \
+   rose-1846.C \
+   rose-1860.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \

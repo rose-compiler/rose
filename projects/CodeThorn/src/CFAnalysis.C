@@ -18,6 +18,8 @@ using namespace SPRAY;
 using namespace std;
 using namespace Sawyer::Message;
 
+CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;
+
 Sawyer::Message::Facility CFAnalysis::logger;
 void CFAnalysis::initDiagnostics() {
   static bool initialized = false;
@@ -150,7 +152,16 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
       throw SPRAY::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
-    SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
+    SgFunctionDefinition* funDef=nullptr;
+    switch(functionResolutionMode) {
+    case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
+    case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
+    case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
+    default:
+      logger[ERROR]<<"Unsupported function resolution mode."<<endl;
+      exit(1);
+    }
+    
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
       //cout<<" [no definition found]"<<endl;
@@ -1301,4 +1312,54 @@ Flow CFAnalysis::flow(SgNode* node) {
   default:
     throw SPRAY::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
   }
+}
+
+// slow lookup
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
+  if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
+    if(SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration()) {
+      if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(defFunDecl)) {
+        if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
+          return funDef;
+        } else {
+          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
+          //return 0;
+          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
+          // forward declaration (we have not found the function definition yet)
+          // 1) use parent pointers and search for Root node (likely to be SgProject node)
+          SgNode* root=defFunDecl;
+          SgNode* parent=0;
+          while(!SgNodeHelper::isAstRoot(root)) {
+            parent=SgNodeHelper::getParent(root);
+            root=parent;
+          }
+          ROSE_ASSERT(root);
+          // 2) search in AST for the function's definition now
+          RoseAst ast(root);
+          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
+              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
+                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
+                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
+                if(sym1!=0 && sym1==sym2) {
+                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
+                  ROSE_ASSERT(fundef2);
+                  return fundef2;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
+  SgFunctionDefinition* funDef=nullptr;
+  // TODO (use function id mapping)
+  logger[ERROR]<<"CFAnalysis::determineFunctionDefinition3 not implemented."<<endl;
+  exit(1);
+  return funDef;
 }

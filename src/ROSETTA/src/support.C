@@ -2427,14 +2427,27 @@ Specifiers that can have only one value (implemented with a protected enum varia
      File_Info.setDataPrototype("unsigned int","source_sequence_number","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/27/2019): I want to add line number support, and use this to test if we can support 
+  // CPP directives and comments added to alll shared IR nodes from all files.  If this works
+  // then we can consider a better design that would use a different data structure.
+  // DQ (2/26/2019): We need to use BUILD_LIST_ACCESS_FUNCTIONS else we return a copy of
+  // the list and only modify the copy instead of the list stored in the IR node.
   // MK (8/2/05) : This set contains a list of file ids. During unparsing, if we encounter
   //               a node with this Sg_File_Info object, we only want to unparse this file
   //               if the file we are currently unparsing is in this list.
   //               NOTE: this set should be empty unless the node is marked as shared
   //! This set contains a list of all file ids for which the accompanying node should be unparsed
   // File_Info.setDataPrototype("std::set<int>","fileIDsToUnparse","",
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File_Info.setDataPrototype("SgFileLineNumberList","fileLineNumbersToUnparse","",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // I can't see where this is being used or that it needs to be here (these are used in unparser!)
   // File_Info.setDataPrototype("int","referenceCount","= 0",

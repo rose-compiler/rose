@@ -2435,13 +2435,12 @@ RSIM_Linux::syscall_socket_helper(RSIM_Thread *t, int family, int type, int prot
     int guestFd = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
 #else /* amd64 */
     int hostFd = syscall(SYS_socket, family, type, protocol);
-#endif
     if (-1 == hostFd) {
         t->syscall_return(-errno);
         return;
     }
-
     int guestFd = t->get_process()->allocateGuestFileDescriptor(hostFd);
+#endif
     t->syscall_return(guestFd);
 }
 
