@@ -42,7 +42,6 @@ int main(int argc, char** argv)
   generateDOT(*project);
 
   // insert Fortran header
-  
    SgFilePtrList & ptr_list = project->get_fileList();
   for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end(); iter++)
   {
@@ -132,7 +131,7 @@ int main(int argc, char** argv)
             }
             cout << "processing and repalce " << funcName << " to " << newname << endl;
 
-            // Step 2: repalcing funciton call parameter
+//            // Step 2: repalcing funciton call parameter
             SgScopeStatement* scope = getScope(funcCallExp);
             SgExprListExp* newExprListExp = deepCopy(funcCallExp->get_args());
             SgExpressionPtrList expList = newExprListExp->get_expressions();
@@ -146,41 +145,9 @@ int main(int argc, char** argv)
               replaceFuncArgument(expList, 2);
             }
             // Step 3: perform function call repalcement
-            SgFunctionCallExp* newCallExp = buildFunctionCallExp(newname, deepCopy(funcCallExp->get_type()) , newExprListExp,scope);
+            SgFunctionCallExp* newCallExp = buildFunctionCallExp(newname, funcCallExp->get_type() , newExprListExp,scope);
             replaceExpression(funcCallExp, newCallExp,true);
         }
-/*
-        if(funcName.find("stream_") == 0)
-        {
-          if(funcName.compare("stream_open"))
-          {
-            string newname = functionSymbol->get_name().getString();
-            newname.replace(newname.begin(),newname.begin()+6,"zforp_bitstream_stream_");
-            cout << "processing and repalce " << functionSymbol->get_name().getString() << " to " << newname << endl;
-            SgScopeStatement* scope = getScope(funcCallExp);
-            SgExprListExp* newExprListExp = deepCopy(funcCallExp->get_args());
-            SgExpressionPtrList expList = newExprListExp->get_expressions();
-            SgExpression* firstExp = expList[0];
-            Rose_STL_Container<SgNode*> dotExprList = NodeQuery::querySubTree(firstExp, V_SgDotExp);
-            for (Rose_STL_Container<SgNode*>::iterator p = dotExprList.begin(); p != dotExprList.end(); ++p)
-            {
-              cout << "find address of expr" << endl;
-              SgDotExp* dotExp = isSgDotExp(*p);
-              SgAddressOfOp* addrOfExp = buildAddressOfOp(deepCopy(dotExp->get_lhs_operand()));
-              if(isSgCastExp(dotExp->get_parent()))
-              {
-                SgCastExp* castExp = isSgCastExp(dotExp->get_parent());
-                replaceExpression(castExp, addrOfExp, false);
-              }
-              else
-                replaceExpression(dotExp, addrOfExp, false);
-
-            }
-            SgFunctionCallExp* newCallExp = buildFunctionCallExp(newname, deepCopy(funcCallExp->get_type()) , newExprListExp,scope);
-            replaceExpression(funcCallExp, newCallExp,false);
-          }
-        }
- */ 
      }
 
   }
