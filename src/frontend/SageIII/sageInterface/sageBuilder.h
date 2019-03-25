@@ -1220,6 +1220,9 @@ SgPragmaDeclaration * buildPragmaDeclaration_nfi(const std::string & name, SgSco
 //!Build SgPragma
 ROSE_DLL_API SgPragma* buildPragma(const std::string & name);
 
+//! Build an empty declaration (useful for adding precission to comments and CPP handling under token-based unparsing).
+ROSE_DLL_API SgEmptyDeclaration* buildEmptyDeclaration();
+
 //! Build a SgBasicBlock, setting file info internally
 ROSE_DLL_API SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 ROSE_DLL_API SgBasicBlock * buildBasicBlock_nfi();

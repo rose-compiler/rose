@@ -3155,6 +3155,20 @@ HEADER_PRAGMA_STATEMENT_START
 HEADER_PRAGMA_STATEMENT_END
 
 
+HEADER_EMPTY_DECLARATION_START
+
+       // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+HEADER_EMPTY_DECLARATION_END
+
+
 HEADER_NAMESPACE_DECLARATION_STATEMENT_START
 
        // DQ (9/8/2004): Added to support qualified name generation
@@ -18395,6 +18409,32 @@ SgPragmaDeclaration::get_mangled_name(void) const
    }
 
 SOURCE_PRAGMA_STATEMENT_END
+
+
+SOURCE_EMPTY_DECLARATION_START
+void
+SgEmptyDeclaration::post_construction_initialization()
+   {
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgEmptyDeclaration::get_mangled_name(void) const
+   {
+     SgName returnName;
+
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+  // SgScopeStatement* scope = get_scope();
+  // ROSE_ASSERT(scope != NULL);
+
+  // This is a poor way to handle the generation of a mangled name (will be improved)
+     returnName = "empty_declaration";
+
+     return returnName;
+   }
+
+SOURCE_EMPTY_DECLARATION_END
+
 
 SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT_START
 void
