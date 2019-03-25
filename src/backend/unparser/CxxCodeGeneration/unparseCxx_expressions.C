@@ -631,7 +631,8 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
 
 #if 0
-     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p = %s \n",templateInstantiationDeclaration,templateInstantiationDeclaration->class_name().c_str());
+     unp->u_exprStmt->curprint ("/* In unparseTemplateName(): output templateInstantiationDeclaration->get_templateName() */ ");
 #endif
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
@@ -647,8 +648,18 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
   // ROSE_ASSERT(info.isTypeFirstPart()  == false);
      ROSE_ASSERT(info.isTypeSecondPart() == false);
 
-  // DQ (6/21/2011): Refactored this code to generate more then templated class names.
+#if 0
+     printf ("In unparseTemplateName(): templateInstantiationDeclaration = %p = %s \n",templateInstantiationDeclaration,templateInstantiationDeclaration->class_name().c_str());
+     unp->u_exprStmt->curprint ("/* In unparseTemplateName(): output unparseTemplateArgumentList() */ ");
+#endif
+
+  // DQ (6/21/2011): Refactored this code to generate more than templated class names.
      unparseTemplateArgumentList(templateInstantiationDeclaration->get_templateArguments(),info);
+
+#if 0
+     printf ("Leaving unparseTemplateName(): templateInstantiationDeclaration = %p = %s \n",templateInstantiationDeclaration,templateInstantiationDeclaration->class_name().c_str());
+     unp->u_exprStmt->curprint ("/* Leaving unparseTemplateName() */ ");
+#endif
    }
 
 

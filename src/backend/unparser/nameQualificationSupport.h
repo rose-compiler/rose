@@ -104,6 +104,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // from different locations in the source code.
           std::map<SgNode*,std::string> & typeNameMap;
 
+       // DQ (3/13/2019): Adding support for name qualification of the many parts of more complex types such as template types.
+          std::map<SgNode*,std::map<SgNode*,std::string> > & qualifiedNameMapForMapsOfTypes;
+
        // DQ (1/24/2019): We need to accumulate the list of possible classes that are private base classes so 
        // that additional name qualification can be added to prevent the access of base classes that have been 
        // made private in nested chass hierarchies.
@@ -148,10 +151,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // HiddenListTraversal(SgNode* root);
 
        // DQ (9/7/2014): Modified to handle template header map (for template declarations).
-          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, 
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, 
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders, 
-                                     std::map<SgNode*,std::string> & input_typeNameMap, 
+          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
+                                     std::map<SgNode*,std::string> & input_typeNameMap,
+                                     std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes, 
                                      std::set<SgNode*> & input_referencedNameSet);
 
        // DQ (7/23/2011): This permits recursive calls to the traversal AND specification of the current scope
@@ -259,6 +263,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTypes() const;
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTemplateHeaders() const;
 
+       // DQ (3/13/2019): Adding support for name qualification to support multiple types that may be asociated with a 
+       // single type used as a function return type (for example, always a template type containing multiple template 
+       // arguments that require additional name qualification).
+          const std::map<SgNode*,std::map<SgNode*,std::string> > & get_qualifiedNameMapForMapsOfTypes() const;
+
        // DQ (6/3/2011): Evaluate types to permit the strings representing unparsing the types 
        // are saved in a separate map associated with the IR node referencing the type.  This 
        // supports the cases where a type with template arguments may require different name 
@@ -297,6 +306,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (1/24/2019): display accumulated private base class map.
        // void displayBaseClassMap (BaseClassSetMap & x);
           void displayBaseClassMap ( const std::string & label, BaseClassSetMap & x );
+
+       // DQ (3/14/2019): Adding debugging support to output the map of names.
+          void outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap );
    };
 
 
