@@ -1446,9 +1446,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate);
-    } else if(funName=="alloca"||funName=="__builtin_alloca") {
-      // treat alloca like a malloc (TODO: dealloc in functionExit transfer function)
-      return evalFunctionCallMalloc(funCall,estate);
     } else if(funName=="memcpy") {
       return evalFunctionCallMemCpy(funCall,estate);
     } else if(funName=="free") {
