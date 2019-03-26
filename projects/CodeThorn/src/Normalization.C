@@ -707,6 +707,19 @@ namespace CodeThorn {
     exprTransformationList.push_back(subExprTransformationList);
   }
 
+#if 0
+  Normalization::TmpVarNrType Normalization::skipSubExpressionOperator(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
+add
+      ROSE_ASSERT(addressOfOp);
+      if(isSgUnaryOp(addressOfOp)) {
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
+      } else if(isSgBinaryOp(addressOfOp)) {
+        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(addressOfOp)),subExprTransformationList,insideExprToBeEliminated);
+      }
+  }
+#endif
+
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
     Normalization::TmpVarNrType mostRecentTmpVarNr=0;
@@ -718,18 +731,32 @@ namespace CodeThorn {
       // special case: normalize array index-expressions
       registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
+    } else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(expr)) {
+      // never normalize address operator - skip all address operators
+      SAWYER_MESG(logger[TRACE])<<"skipping argument of address operator to be normalized: "<<addressOfOp->unparseToString()<<endl;
+      SgExpression* addressOfOperand=isSgExpression(SgNodeHelper::getUnaryOpChild(addressOfOp));
+      // same as for lhs of assignment
+      ROSE_ASSERT(addressOfOperand);
+      if(isSgUnaryOp(addressOfOperand)) {
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(addressOfOperand)),subExprTransformationList,insideExprToBeEliminated);
+      } else if(isSgBinaryOp(addressOfOperand)) {
+        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(addressOfOperand)),subExprTransformationList,insideExprToBeEliminated);
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(addressOfOperand)),subExprTransformationList,insideExprToBeEliminated);
+      }
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
+
       // normalize rhs of assignment
       mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
+
       // normalize lhs of assignment
-      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
-      ROSE_ASSERT(lhs);
-      // skip normalizing top-most operator of lhs because a an
+      // skip normalizing top-most operator of lhs because an
       // lvalue-expression must remain an
       // lvalue-expression. Introduction of temporary would be
       // wrong. Note: not all operators can appear as top-most op on
       // lhs.
+      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
+      ROSE_ASSERT(lhs);
       if(isSgUnaryOp(lhs)) {
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList,insideExprToBeEliminated);
       } else if(isSgBinaryOp(lhs)) {
