@@ -40,7 +40,8 @@ void TFTransformation::addIncludeTransformation(string includeFile, bool systemH
 //Methods to analyze and execute
 int ADTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
   tf->instrumentADIntermediate(funDef);
-  tf->instrumentADGlobals(project, ast);
+  RoseAst fdef_ast(funDef);
+  tf->instrumentADGlobals(project, fdef_ast);
   return 0;
 }
 
@@ -181,6 +182,7 @@ void TFTransformation::appendNode(SgNode* node, string newCode){
 
 void TFTransformation::transformationAnalyze(SgProject* project){
   RoseAst ast(project);
+
   for(auto spec : _transformationList){
     spec->run(project, ast, this);
   }
@@ -554,6 +556,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
 //Adds instrumentataion for initalized gobal variables after the pragma adapt begin
 void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
+
   if(listOfGlobalVars.size() > 0){
     string instString = "";
     for(RoseAst::iterator i = ast.begin(); i != ast.end();i++){

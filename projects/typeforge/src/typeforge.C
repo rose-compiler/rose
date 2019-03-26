@@ -249,18 +249,18 @@ int main (int argc, char* argv[])
 #ifdef EXPLICIT_VAR_FORGE
   if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
     TFTypeTransformer::VarTypeVarNameTupleList list;
-    SgFunctionDefinition* funDef=nullptr;
+    SgFunctionDeclaration* funDecl=nullptr;
     if(args.isUserProvided("float-var")) {
       string varNames=args.getString("float-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildFloatType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildFloatType(),funDecl,varNames);
     }
     if(args.isUserProvided("double-var")) {
       string varNames=args.getString("double-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildDoubleType(),funDecl,varNames);
     } 
     if(args.isUserProvided("long-double-var")) {
       string varNames=args.getString("long-double-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
+      tt.addNameTransformationToList(list,SageBuilder::buildLongDoubleType(),funDecl,varNames);
     }
     tt.transformCommandLineFiles(sageProject,list);
     backend(sageProject);

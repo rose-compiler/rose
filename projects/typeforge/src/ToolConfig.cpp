@@ -1,5 +1,6 @@
 #include "ToolConfig.hpp"
 #include <unistd.h>
+#include <iostream>
 
 #define MAXPATHLEN 255
 

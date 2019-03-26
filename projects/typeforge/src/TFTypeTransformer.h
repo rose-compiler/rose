@@ -30,20 +30,20 @@ class TransformDirective{
 
 class NameTransformDirective : public TransformDirective{
   private:
-    SgFunctionDefinition* funDef;
+    SgFunctionDeclaration* funDecl;
     std::string name;
   public:
-    NameTransformDirective(std::string varName, SgFunctionDefinition* functionDefinition, bool base, bool listing, SgType* toType);
+    NameTransformDirective(std::string varName, SgFunctionDeclaration* functionDeclaration, bool base, bool listing, SgType* toType);
     int run(SgProject* project, TFTypeTransformer* tt);
 };
 
 class TypeTransformDirective : public TransformDirective{
   private:
-    SgFunctionDefinition* funDef;
+    SgFunctionDeclaration* funDecl;
     SgType* fromType;
     std::string location;
   public:
-    TypeTransformDirective(std::string functionLocation, SgFunctionDefinition* functionDefinition, SgType* from_type, bool base, bool listing, SgType* toType);
+    TypeTransformDirective(std::string functionLocation, SgFunctionDeclaration* functionDeclaration, SgType* from_type, bool base, bool listing, SgType* toType);
     int run(SgProject* project, TFTypeTransformer* tt);
 };
 
@@ -77,8 +77,8 @@ class TFTypeTransformer {
   typedef std::list<VarTypeVarNameTuple> VarTypeVarNameTupleList;
   //Methods to add transformation directives
   void addHandleTransformationToList(VarTypeVarNameTupleList& list,SgType* type,bool base,SgNode* handleNode, bool listing);
-  void addTypeTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base, SgType* fromType, bool listing);
-  void addNameTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDefinition* funDef, std::string varNames, bool base=false, bool listing=false);
+  void addTypeTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDeclaration* funDecl, std::string varNames, bool base, SgType* fromType, bool listing);
+  void addNameTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDeclaration* funDecl, std::string varNames, bool base=false, bool listing=false);
   void addFileChangeToList(VarTypeVarNameTupleList& list, std::string file);
   void addSetChangeToList(VarTypeVarNameTupleList& list, bool flag);
   // searches for variable in the given subtree 'root'
@@ -92,7 +92,7 @@ class TFTypeTransformer {
   void analyzeTransformations(SgProject* project, VarTypeVarNameTupleList& list);
   void executeTransformations(SgProject* project);
   SgType* rebuildBaseType(SgType* root, SgType* newBaseType);
-  int changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDefinition* funDef, SgNode* handleNode,bool listing);
+  int changeType(SgInitializedName* varInitName, SgType* newType, SgType* oldType, std::string varName, bool base, SgFunctionDeclaration* funDecl, SgNode* handleNode,bool listing);
   void makeAllCastsExplicit(SgProject* root);
   void annotateImplicitCastsAsComments(SgProject* root);
   void transformCastsInCommandLineFiles(SgProject* project);
