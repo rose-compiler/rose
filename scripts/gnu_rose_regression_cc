@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# your translator goes here!!!
-# gcc $@ -std=iso9899:1999
-gcc $@
