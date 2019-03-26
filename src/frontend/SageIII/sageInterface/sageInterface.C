@@ -1730,6 +1730,15 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (3/26/2019): Adding support for new declaration.
+          case V_SgEmptyDeclaration:
+             {
+               const SgEmptyDeclaration * emptyDeclaration = isSgEmptyDeclaration(declaration);
+               ROSE_ASSERT(emptyDeclaration != NULL);
+               name = string("emptyDeclaration") + StringUtility::numberToString(const_cast<SgDeclarationStatement*>(declaration));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
