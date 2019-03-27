@@ -108,7 +108,11 @@ endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
-
+# Commmented out some very old projects, Liao, 2019 March
+#	$(MAKE) install -C $(top_builddir)/projects/LineDeleter
+#	$(MAKE) install -C $(top_builddir)/projects/mint
+#	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+#	$(MAKE) install -C $(top_builddir)/projects/OpenMP_Translator
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
@@ -116,15 +120,10 @@ install-core: core rosePublicConfig.h
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
-	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
-	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) install -C $(top_builddir)/projects/autoTuning
 	$(MAKE) install -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) install -C $(top_builddir)/projects/LineDeleter
-	$(MAKE) install -C $(top_builddir)/projects/mint
-	$(MAKE) install -C $(top_builddir)/projects/OpenMP_Translator
 	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) install -C $(top_builddir)/projects/vectorization
