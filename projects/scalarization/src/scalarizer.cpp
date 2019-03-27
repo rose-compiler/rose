@@ -65,6 +65,75 @@ parseCommandLine(int argc, char *argv[]) {
 }
 //! [parseCommandLine parse]
 
+//! Check if the current Fortran SgFile has fixed source form
+static bool scalarizer::isFixedSourceForm(SgNode* c_sgnode)
+{
+  bool result = false;
+  SgFile * file = SageInterface::getEnclosingFileNode(c_sgnode);
+  ROSE_ASSERT(file != NULL);
+
+  // Only make sense for Fortran files
+  ROSE_ASSERT (file->get_Fortran_only());
+  if (file->get_inputFormat()==SgFile::e_unknown_output_format )
+  { // default case: only f77 has fixed form
+    if (file->get_F77_only())
+      result = true;
+    else 
+      result = false;
+  }
+  else // explicit case: any Fortran could be set to fixed form 
+  {
+    if (file->get_inputFormat()==SgFile::e_fixed_form_output_format)
+      result = true;
+    else
+      result = false;
+  }
+  return result;
+}
+
+static bool scalarizer::is_directive_sentinels(const char* str, SgNode* c_sgnode)
+{
+  static const char* c_char = str;
+  bool result = false;
+  // two additional case for fixed form
+  if (isFixedSourceForm(c_sgnode))
+  {
+    if (match_substr("c$rose scalarization", c_char) || match_substr("*$rose scalarization", c_char))
+      result = true;
+  }
+  // a common case for all situations
+  if (match_substr("!$rose scalarization", c_char))
+    result = true;
+  return result;
+}
+
+static bool scalarizer::match_substr(const char* substr, const char* c_char)
+{
+  bool result = true;
+  const char* old_char = c_char;
+  // we skip leading space from the target string
+
+  while ((*c_char)==' '||(*c_char)=='\t')
+  {
+    c_char++;
+  }  
+  size_t len =strlen(substr);
+  for (size_t i =0; i<len; i++)
+  {
+    if ((*c_char)==substr[i])
+    {
+      c_char++;
+    }
+    else
+    {
+      result = false;
+      c_char = old_char;
+      break;
+    }
+  }
+  return result;
+}
+
 
 // Find variable name lsit from the pragma statement. works for Fortran only
 vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
@@ -86,7 +155,7 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
         if(pinfo->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
         {
            string buffer = pinfo->getString();
-           if(buffer.compare(0,21,"!pragma privatization") == 0)
+           if(is_directive_sentinels(buffer.c_str(), *i))
            {
              if(enable_debug)
                cout << "found matched pragma" << endl;
@@ -126,7 +195,7 @@ vector<string> scalarizer::getTargetnameList(SgNode* root)
     SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
     ROSE_ASSERT(pragma); 
     string srcString = pragma->get_pragma();
-    if(srcString.compare(0,21,"!pragma privatization") == 0)
+    if(srcString.compare(0,26,"pragma rose scalarization") == 0)
     {
       if(enable_debug)
         cout << "found pragma" << endl;
@@ -210,7 +279,7 @@ int main(int argc, char** argv)
     SgFile* sageFile = (*iter);
     SgSourceFile * sfile = isSgSourceFile(sageFile);
     ROSE_ASSERT(sfile);
-    SgGlobal *root = sfile->get_globalScope();
+    //SgGlobal *root = sfile->get_globalScope();
 
     // find the function list
     Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 

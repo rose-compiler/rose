@@ -3,7 +3,7 @@ int main()
 {
   const int vecsize = 10;
   
-#pragma privatization
+#pragma rose scalarization
   double array1[10];
   double array2[10];
   for (int i = 0; i < vecsize; i++) 

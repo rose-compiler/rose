@@ -1,6 +1,6 @@
 SUBROUTINE test()
 INTEGER, PARAMETER :: vecsize = 10
-!pragma privatization
+!$rose scalarization
 REAL(kind=8) :: array1
 DO i = 1, vecsize
 array1 = 1.

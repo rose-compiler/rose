@@ -37,7 +37,7 @@ subroutine sub1 (fff,e_s,var1,var2,var3)
 
   integer :: i,j,k
   real(8) :: scal1,scal2,scal3,scal4
-!pragma privatization
+!$rose scalarization
   real(8),dimension(vecsize) :: fac,&
        sv11,sv21,sv31,sv41,sv51,sv61,sv71,sv81, &
        sv12,sv22,sv32,sv42,sv52,sv62,sv72,sv82, &

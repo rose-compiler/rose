@@ -23,7 +23,7 @@ REAL(kind=8) :: e_s, var1, var2, var3
 REAL(kind=8), DIMENSION(12,vecsize) :: fff
 INTEGER :: i, j, k
 REAL(kind=8) :: scal1, scal2, scal3, scal4
-!pragma privatization
+!$rose scalarization
 REAL(kind=8) :: fac, sv11, sv21, sv31, sv41, sv51, sv61, sv71, sv81, sv12, sv22, sv32, sv42, sv52, sv62, sv72, sv82, sv13, sv23, sv33, sv43, sv53, sv63, sv73, sv83, sv14, sv24, sv34, sv44, sv54, sv64, sv74, sv84, qqx1, qqx2, qqx3, qqx4, qqy1, qqy2, qqy3, qqy4, qqz1, qqz2, qqz3, qqz4, hx1, hx2, hx3, hx4, hy1, hy2, hy3, hy4, hz1, hz2, hz3, hz4, hx1v, hx2v, hx3v, hx4v, hy1v, hy2v, hy3v, hy4v, hz1v, hz2v, hz3v, hz4v, qqwk
 IF (var1 <= 0.0d0 .AND. var2 <= 0.0d0) THEN
 !$acc parallel loop gang vector collapse(3) async(1)
