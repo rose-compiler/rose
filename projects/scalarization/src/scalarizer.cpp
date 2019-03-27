@@ -56,13 +56,15 @@ int main(int argc, char** argv)
       // Process each variable name and perform the transformation
       for(vector<string>::iterator it=namelist.begin(); it != namelist.end(); it++)
       {
-        cout << "Processing name: " << *it << endl;
+        if(enable_debug)
+          cout << "Processing name: " << *it << endl;
         SgVariableSymbol* sym = lookupVariableSymbolInParentScopes(*it, funcBody);
         ROSE_ASSERT(sym);
         SgArrayType* symType = isSgArrayType(sym->get_type());
         if(symType == NULL)
         {
-          cout << "Not a variable with array type" << endl;
+          if(enable_debug)
+            cout << "Not a variable with array type" << endl;
           break;
         }
         //  Assuming single dimension array only
@@ -108,7 +110,8 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
            string buffer = pinfo->getString();
            if(buffer.compare(0,21,"!pragma privatization") == 0)
            {
-             cout << "found pragma!!" << endl;
+             if(enable_debug)
+               cout << "found pragma!!" << endl;
              SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
              ROSE_ASSERT(varDeclStmt);
              SgInitializedNamePtrList varList = varDeclStmt->get_variables();
@@ -147,7 +150,8 @@ vector<string> scalarizer::getTargetnameList(SgNode* root)
     string srcString = pragma->get_pragma();
     if(srcString.compare(0,21,"!pragma privatization") == 0)
     {
-      cout << "found pragma!!" << endl;
+      if(enable_debug)
+        cout << "found pragma!!" << endl;
       SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
       ROSE_ASSERT(varDeclStmt);
       SgInitializedNamePtrList varList = varDeclStmt->get_variables();
@@ -181,11 +185,13 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,funcBody);
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    std::cout << "MATCH-LHS: \n"; 
+    if(enable_debug)
+      std::cout << "MATCH-LHS: \n"; 
     //SgNode* n=(*i)["X"];
     for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
       SgNode* matchedTerm=(*vars_iter).second;
-      std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      if(enable_debug)
+        std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
     SgNode* root=(*i)["$Root"];
     SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(root);
@@ -196,7 +202,8 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
       if(arrayNameSymbol==sym) {
         SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
       } else {
-        cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
+        if(enable_debug)
+          cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
         continue;
       }
     }
