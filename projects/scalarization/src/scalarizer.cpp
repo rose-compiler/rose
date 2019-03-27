@@ -2,7 +2,6 @@
  Scalarization transformation for paraDyn
 
  Pei-Hung Lin (06/29/2018)
-
  */
 
 #include "rose.h"
@@ -11,14 +10,11 @@
 #include "AstMatching.h"
 #include "AstTerm.h"
 
+#include "scalarizer.h"
+
 using namespace std;
 using namespace SageInterface;
-
-vector<string> getFortranTargetnameList(SgNode* root);
-vector<string> getTargetnameList(SgNode* root);
-void transformType(SgVariableSymbol* sym, SgType* newType);
-void transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType);
-bool isFortran = false;
+using namespace scalarizer;
 
 int main(int argc, char** argv)
 {
@@ -91,7 +87,7 @@ int main(int argc, char** argv)
 
 // Find variable name lsit from the pragma statement. works for Fortran only
 //
-vector<string> getFortranTargetnameList(SgNode* root)
+vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
 {
   vector<string> resultlist;
   ROSE_ASSERT(root);
@@ -135,7 +131,7 @@ vector<string> getFortranTargetnameList(SgNode* root)
 
 // Find variable name lsit from the pragma statement. works for C only
 //
-vector<string> getTargetnameList(SgNode* root)
+vector<string> scalarizer::getTargetnameList(SgNode* root)
 {
   vector<string> resultlist;
   ROSE_ASSERT(root);
@@ -169,14 +165,14 @@ vector<string> getTargetnameList(SgNode* root)
 }
 
 // Change the type of a variable symbol
-void transformType(SgVariableSymbol* sym, SgType* newType)
+void scalarizer::transformType(SgVariableSymbol* sym, SgType* newType)
 {
   SgInitializedName* initName = sym->get_declaration();
   initName->set_type(newType);
 }
 
 // Change the type of a variable symbol
-void transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType)
+void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType)
 {
   RoseAst ast(funcBody);
   std::string matchexpression;
