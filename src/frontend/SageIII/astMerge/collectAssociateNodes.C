@@ -2403,6 +2403,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+        // DQ (3/27/2019): Added case for new IR node.
+           case V_SgEmptyDeclaration:
+             {
+               SgEmptyDeclaration * emptyDeclaration = isSgEmptyDeclaration(node);
+               ROSE_ASSERT(emptyDeclaration != NULL);
+               break;
+             }
+
        // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
        // parsing Fortran as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
