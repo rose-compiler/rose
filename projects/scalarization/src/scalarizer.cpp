@@ -9,6 +9,7 @@
 #include "SgNodeHelper.h"
 #include "AstMatching.h"
 #include "AstTerm.h"
+#include <Sawyer/CommandLine.h>
 
 #include "scalarizer.h"
 
@@ -16,8 +17,182 @@ using namespace std;
 using namespace SageInterface;
 using namespace scalarizer;
 
+
+//! [parseCommandLine decl]
+Sawyer::CommandLine::ParserResult
+parseCommandLine(int argc, char *argv[]) {
+    using namespace Sawyer::CommandLine;
+    //! [parseCommandLine decl]
+
+    //! [parseCommandLine standard]
+    SwitchGroup standard;
+    standard.doc("The following switches are recognized by all tools in this package.");
+    //! [parseCommandLine standard]
+
+    //! [parseCommandLine helpversion]
+    standard.insert(Switch("help", 'h')
+                    .shortName('?')
+                    .action(showHelpAndExit(0))
+                    .doc("Show this documentation."));
+
+    standard.insert(Switch("version", 'V')
+                    .action(showVersionAndExit("1.2.3", 0))
+                    .doc("Show version number."));
+    //! [parseCommandLine helpversion]
+    
+
+    //! [parseCommandLine debug]
+    SwitchGroup scalarizer;
+    scalarizer.doc("The following switches are specific to scalarizer.");
+
+    scalarizer.insert(Switch("debug")
+                .intrinsicValue(true, scalarizer::enable_debug)
+                .doc("Enable the debugging mode"));
+
+    //! [parseCommandLine parser]
+    Parser parser;
+    parser
+        .purpose("Array scalarization")
+        .doc("synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen_name}")
+        .doc("description",
+             "This program performs array scalarization for C and Fortran program "
+             "to help GPU performance optimization. ");
+    //! [parseCommandLine parser]
+
+    //! [parseCommandLine parse]
+    return parser.with(standard).with(scalarizer).parse(argc, argv).apply();
+}
+//! [parseCommandLine parse]
+
+
+// Find variable name lsit from the pragma statement. works for Fortran only
+vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
+{
+  vector<string> resultlist;
+  ROSE_ASSERT(root);
+
+  // Fortran AST does not support SgPragmaNode.  Need to look for every comment and check if it has valid pragma
+  vector<SgLocatedNode*> LocatedNodeList = SageInterface::querySubTree<SgLocatedNode> (root,V_SgLocatedNode);
+
+  for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
+  {
+    AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
+    if(comments)
+    {
+      for (AttachedPreprocessingInfoType::iterator j = comments->begin(); j != comments->end(); j++)
+      {
+        PreprocessingInfo * pinfo = *j;
+        if(pinfo->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
+        {
+           string buffer = pinfo->getString();
+           if(buffer.compare(0,21,"!pragma privatization") == 0)
+           {
+             if(enable_debug)
+               cout << "found matched pragma" << endl;
+             SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
+             ROSE_ASSERT(varDeclStmt);
+             SgInitializedNamePtrList varList = varDeclStmt->get_variables();
+
+             for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
+             {
+               SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
+               ROSE_ASSERT(symbol);
+               SgName varname = symbol->get_name();
+               resultlist.push_back(varname.getString());
+             }
+           }
+        }
+      }
+    }
+  }
+  return resultlist;
+}
+
+
+// Find variable name lsit from the pragma statement. works for C only
+//
+vector<string> scalarizer::getTargetnameList(SgNode* root)
+{
+  vector<string> resultlist;
+  ROSE_ASSERT(root);
+
+  // Search for SgPragmaDeclaration to find C pragma list
+  Rose_STL_Container<SgNode*> pragmaList = NodeQuery::querySubTree(root, V_SgPragmaDeclaration); 
+  for(Rose_STL_Container<SgNode*>::iterator it = pragmaList.begin(); it != pragmaList.end(); it++)
+  {
+    ROSE_ASSERT(*it);
+    SgPragmaDeclaration* pragmaStmt = isSgPragmaDeclaration(*it);
+    SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
+    ROSE_ASSERT(pragma); 
+    string srcString = pragma->get_pragma();
+    if(srcString.compare(0,21,"!pragma privatization") == 0)
+    {
+      if(enable_debug)
+        cout << "found pragma" << endl;
+      SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
+      ROSE_ASSERT(varDeclStmt);
+      SgInitializedNamePtrList varList = varDeclStmt->get_variables();
+
+      for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
+      {
+        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(symbol);
+        SgName varname = symbol->get_name();
+        resultlist.push_back(varname.getString());
+      }
+    }
+  }
+  return resultlist;
+}
+
+// Change the type of a variable symbol
+void scalarizer::transformType(SgVariableSymbol* sym, SgType* newType)
+{
+  SgInitializedName* initName = sym->get_declaration();
+  initName->set_type(newType);
+}
+
+// Change the type of a variable symbol
+void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType)
+{
+  RoseAst ast(funcBody);
+  std::string matchexpression;
+  // $ARR[$IDX1,$IDX2]=$RHS
+  matchexpression+="$Root=SgPntrArrRefExp($ARR,$IDX1)";
+  AstMatching m;
+  MatchResult r=m.performMatching(matchexpression,funcBody);
+  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+    if(enable_debug)
+      std::cout << "MATCH-LHS: \n"; 
+    //SgNode* n=(*i)["X"];
+    for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
+      SgNode* matchedTerm=(*vars_iter).second;
+      if(enable_debug)
+        std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+    }
+    SgNode* root=(*i)["$Root"];
+    SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(root);
+    if((*i)["$ARR"]) {
+      SgVarRefExp* lhsVarRef = isSgVarRefExp((*i)["$ARR"]);
+      ROSE_ASSERT(lhsVarRef);
+      SgVariableSymbol* arrayNameSymbol = lhsVarRef->get_symbol();
+      if(arrayNameSymbol==sym) {
+        SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
+      } else {
+        if(enable_debug)
+          cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
+        continue;
+      }
+    }
+  }
+}
+
 int main(int argc, char** argv)
 {
+  Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv);
+  std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
+
   // Build the AST used by ROSE
   SgProject* project = frontend(argc, argv);
 
@@ -80,133 +255,11 @@ int main(int argc, char** argv)
   }
 
 
-  generateDOT(*project);
+  if(enable_debug)
+    generateDOT(*project);
 
   // Output preprocessed source file.
   unparseProject(project);
   return 0;
-}
-
-// Find variable name lsit from the pragma statement. works for Fortran only
-//
-vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
-{
-  vector<string> resultlist;
-  ROSE_ASSERT(root);
-
-  // Fortran AST does not support SgPragmaNode.  Need to look for every comment and check if it has valid pragma
-  vector<SgLocatedNode*> LocatedNodeList = SageInterface::querySubTree<SgLocatedNode> (root,V_SgLocatedNode);
-
-  for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
-  {
-    AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
-    if(comments)
-    {
-      for (AttachedPreprocessingInfoType::iterator j = comments->begin(); j != comments->end(); j++)
-      {
-        PreprocessingInfo * pinfo = *j;
-        if(pinfo->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
-        {
-           string buffer = pinfo->getString();
-           if(buffer.compare(0,21,"!pragma privatization") == 0)
-           {
-             if(enable_debug)
-               cout << "found pragma!!" << endl;
-             SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
-             ROSE_ASSERT(varDeclStmt);
-             SgInitializedNamePtrList varList = varDeclStmt->get_variables();
-
-             for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
-             {
-               SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
-               ROSE_ASSERT(symbol);
-               SgName varname = symbol->get_name();
-               resultlist.push_back(varname.getString());
-             }
-           }
-        }
-      }
-    }
-  }
-  return resultlist;
-}
-
-
-// Find variable name lsit from the pragma statement. works for C only
-//
-vector<string> scalarizer::getTargetnameList(SgNode* root)
-{
-  vector<string> resultlist;
-  ROSE_ASSERT(root);
-
-  // Search for SgPragmaDeclaration to find C pragma list
-  Rose_STL_Container<SgNode*> pragmaList = NodeQuery::querySubTree(root, V_SgPragmaDeclaration); 
-  for(Rose_STL_Container<SgNode*>::iterator it = pragmaList.begin(); it != pragmaList.end(); it++)
-  {
-    ROSE_ASSERT(*it);
-    SgPragmaDeclaration* pragmaStmt = isSgPragmaDeclaration(*it);
-    SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
-    ROSE_ASSERT(pragma); 
-    string srcString = pragma->get_pragma();
-    if(srcString.compare(0,21,"!pragma privatization") == 0)
-    {
-      if(enable_debug)
-        cout << "found pragma!!" << endl;
-      SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
-      ROSE_ASSERT(varDeclStmt);
-      SgInitializedNamePtrList varList = varDeclStmt->get_variables();
-
-      for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
-      {
-        SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
-        ROSE_ASSERT(symbol);
-        SgName varname = symbol->get_name();
-        resultlist.push_back(varname.getString());
-      }
-    }
-  }
-  return resultlist;
-}
-
-// Change the type of a variable symbol
-void scalarizer::transformType(SgVariableSymbol* sym, SgType* newType)
-{
-  SgInitializedName* initName = sym->get_declaration();
-  initName->set_type(newType);
-}
-
-// Change the type of a variable symbol
-void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType)
-{
-  RoseAst ast(funcBody);
-  std::string matchexpression;
-  // $ARR[$IDX1,$IDX2]=$RHS
-  matchexpression+="$Root=SgPntrArrRefExp($ARR,$IDX1)";
-  AstMatching m;
-  MatchResult r=m.performMatching(matchexpression,funcBody);
-  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    if(enable_debug)
-      std::cout << "MATCH-LHS: \n"; 
-    //SgNode* n=(*i)["X"];
-    for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
-      SgNode* matchedTerm=(*vars_iter).second;
-      if(enable_debug)
-        std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
-    }
-    SgNode* root=(*i)["$Root"];
-    SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(root);
-    if((*i)["$ARR"]) {
-      SgVarRefExp* lhsVarRef = isSgVarRefExp((*i)["$ARR"]);
-      ROSE_ASSERT(lhsVarRef);
-      SgVariableSymbol* arrayNameSymbol = lhsVarRef->get_symbol();
-      if(arrayNameSymbol==sym) {
-        SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
-      } else {
-        if(enable_debug)
-          cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
-        continue;
-      }
-    }
-  }
 }
 
