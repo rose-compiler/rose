@@ -1,4 +1,0 @@
-
-Typical configure line required to specify location of Wine to provide 
-the headers to compile MS Windows applications using ROSE on Linux platforms:
-/home/dquinlan/ROSE/svn-rose/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/svn_LINUX-64bit-4.2.2_install --with-boost=/home/dquinlan/local/boost_1_35_0_install --with-wine=/home/dquinlan/ROSE/WINE/wine-1.1.4

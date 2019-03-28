@@ -89,7 +89,7 @@ namespace CodeThorn {
       if(S0.size()>0) {
         EStatePtrSet::const_iterator it(S0.begin());
         int r = rand() % S0.size();
-        advance(it,r);
+        std::advance(it,r);
         return *it;
       } else {
         return 0;
@@ -100,7 +100,7 @@ namespace CodeThorn {
       if(S0.size()>0) {
         InputPathSet::const_iterator it(S0.begin());
         int r = rand() % S0.size();
-        advance(it,r);
+        std::advance(it,r);
         return *it;
       } else {
         cerr<<"Error: choosing from empty set."<<endl;

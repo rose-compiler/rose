@@ -37,6 +37,9 @@
 #include "AnalysisParameters.h"
 #include "CounterexampleGenerator.h"
 
+#include "VariableIdMapping.h"
+#include "FunctionIdMapping.h"
+
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
@@ -146,6 +149,7 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
+    FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
     CTIOLabeler* getLabeler() const;
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
@@ -347,6 +351,7 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
+    FunctionIdMapping functionIdMapping;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;

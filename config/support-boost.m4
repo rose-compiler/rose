@@ -50,13 +50,20 @@ dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only
 dnl be used to set --with-boost in distcheck.
 AC_SUBST(ac_boost_path)
 
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
+BOOST_VERSION_HEADER="${ac_boost_path}/include/boost/version.hpp"
+
+# Liao, 2019/3/12. Check file existence before calling grep
+if test -f "$BOOST_VERSION_HEADER" ; then
+  rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
+else
+  ROSE_MSG_ERROR([Unable to find $ac_boost_path/include/boost/version.hpp . Please specify the right boost installation path with --with-boost=/path/to/boost])
+fi
 
 AC_MSG_NOTICE([rose_boost_version = '$rose_boost_version'])
 ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN boost-$rose_boost_version"
 
 if test "x$rose_boost_version" = "x"; then
-  ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries: '$ac_boost_path'])
+  ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries from '$ac_boost_path'/include/boost/version.hpp . Please make sure the file exists or specify the right path with --with-boost])
 fi
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
