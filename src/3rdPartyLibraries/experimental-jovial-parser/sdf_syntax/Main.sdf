@@ -644,7 +644,7 @@ context-free syntax
   StatusTypeDescription       -> ItemTypeDescription
   PointerTypeDescription      -> ItemTypeDescription
 
-  ItemTypeName                -> ItemTypeDescription     {cons("ItemTypeName"), prefer}
+  ItemTypeName                -> ItemTypeDescription     {prefer}
   %% Prefer above fixes ambiguity with type names
 
 %% 2.1.1.1 INTEGER TYPE DESCRIPTIONS
@@ -1047,7 +1047,7 @@ context-free syntax
   'TYPE' ItemTypeName
     ItemTypeDescription ';'       -> ItemTypeDeclaration   {cons("ItemTypeDeclaration")}
 
-  Name                            -> ItemTypeName
+  Name                            -> ItemTypeName          {cons("Name")}
 
   'TYPE'  TableTypeName
   'TABLE' TableTypeSpecifier      -> TableTypeDeclaration  {cons("TableTypeDeclaration")}
@@ -1081,7 +1081,7 @@ context-free syntax
 'DEFINE' DefineName
   DefinitionPart                  -> DefineDeclaration         {cons("DefineDeclaration")}
 
-  Name                            -> DefineName
+  Name                            -> DefineName                {cons("Name")}
 
   OptFormalDefineParameterList
     DefineString ';'              -> DefinitionPart            {cons("DefinitionPart")}
@@ -1095,10 +1095,10 @@ context-free syntax
 
   Letter                          -> FormalDefineParameter        {cons("FormalDefineParameter")}
 
-%% Moved to lexer
-%%'"'
+%% Moved to lexical analysis
+%%'?'
 %%   {Character ','}*
-%%'"'                             -> DefineString                 {cons("DefineString")}
+%%'?'                             -> DefineString                 {cons("DefineString")}
 
   DefString                       -> DefineString                 {cons("DefineString")}
 

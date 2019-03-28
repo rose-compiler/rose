@@ -62,8 +62,7 @@ ROSE_UTIL_API std::string bourneEscape(const std::string&);
  *
  *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
  *  and replaces double quotes by a backslash followed by a double qoute. */
-ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&)
-    SAWYER_DEPRECATED("tell us if you use this");       // ROSE_DEPRECATED is not defined here; lack of sage3basic.h
+ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&);
 
 // DQ (12/8/2016): This is ued in the generation of dot files.
 ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::string&);

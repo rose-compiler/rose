@@ -411,31 +411,11 @@ MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, Risc
     return retval;
 }
 
-// [Robb P. Matzke 2015-08-10]: deprecated; use getWritersUnion instead.
-std::set<rose_addr_t>
-MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps) {
-    AddressSet writers = getWritersUnion(addr, nbits, addrOps, valOps);
-    std::set<rose_addr_t> retval;
-    BOOST_FOREACH (rose_addr_t va, writers.values())
-        retval.insert(va);
-    return retval;
-}
-
 void
 MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 {
     for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)
         stream <<fmt.get_line_prefix() <<(**ci+fmt) <<"\n";
-}
-
-// [Robb P. Matzke 2015-08-18]: deprecated
-MemoryCellList::CellList
-MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
-                     bool &short_circuited/*out*/) const {
-    CellList::const_iterator cursor = get_cells().begin();
-    CellList retval = scan(cursor, addr, nbits, addrOps, valOps);
-    short_circuited = cursor != get_cells().end();
-    return retval;
 }
 
 std::vector<MemoryCellPtr>

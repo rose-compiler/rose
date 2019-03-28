@@ -4,7 +4,7 @@ dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
 dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
 dnl shell variable.
-AC_INIT([ROSE], [0.9.10.175])
+AC_INIT([ROSE], [0.9.10.212])
 AC_PREREQ([2.59])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
@@ -143,6 +143,8 @@ ${T_BM}
 | Configure Terminated Normally! |
 +--------------------------------+
 ${T_NM}
-Now type 'make' and then 'make install'.
+Now type 'make core -jN' and then 'make install-core -jN' to only build essential libraries and tools (Recommended).
+Type 'make -jN' and 'make install -jN' to build and install everything (takes a very long time).
+N is the number of concurrent processes you wan to use for your build. 
 Thank you for using ROSE.
 X

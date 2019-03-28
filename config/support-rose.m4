@@ -2532,6 +2532,7 @@ tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/x10_tests/Makefile
+tests/nonsmoke/functional/CompileTests/unparse_template_from_ast/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/preinclude_tests/Makefile

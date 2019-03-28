@@ -599,11 +599,18 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
 
+     SgInitializedName * init_name_reference_node = isSgInitializedName(nodeReferenceToType);
+     if (init_name_reference_node != NULL) {
+       if (init_name_reference_node->get_auto_decltype() != NULL) {
+         nodeReferenceToType = NULL;
+       }
+     }
+
 #if 0
      printf ("In unparseType(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,(nodeReferenceToType != NULL) ? nodeReferenceToType->class_name().c_str() : "null");
 #endif
 
-     if (nodeReferenceToType != NULL && !isSgAutoType(type))
+     if (nodeReferenceToType != NULL)
         {
 #if 0
           printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
@@ -628,7 +635,10 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseType(): usingGeneratedNameQualifiedTypeNameString = %s \n",usingGeneratedNameQualifiedTypeNameString ? "true" : "false");
 #endif
 #if 0
-     curprint ("\n /* In unparseType(): usingGeneratedNameQualifiedTypeNameString = " + string(usingGeneratedNameQualifiedTypeNameString ? "true" : "false") + " */ \n");
+     if (usingGeneratedNameQualifiedTypeNameString == true)
+        {
+          curprint ("\n /* In unparseType(): usingGeneratedNameQualifiedTypeNameString = " + string(usingGeneratedNameQualifiedTypeNameString ? "true" : "false") + " */ \n");
+        }
 #endif
 
      if (usingGeneratedNameQualifiedTypeNameString == true)
@@ -2032,7 +2042,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_UNPARSE_CLASS_TYPE
           printf ("In unparseClassType: nm = %s \n",nm.str());
 #endif
-#if DEBUG_UNPARSE_CLASS_TYPE
+#if DEBUG_UNPARSE_CLASS_TYPE && 0
           curprint ( string("\n/* In unparseClassType: nm = ") + nm.str() + " */ \n ");
 #endif
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
@@ -2060,6 +2070,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
 #if DEBUG_UNPARSE_CLASS_TYPE
                     curprint ( string("\n/* In unparseClassType: info.get_reference_node_for_qualification() = ") + ((info.get_reference_node_for_qualification() != NULL) ? Rose::StringUtility::numberToString(info.get_reference_node_for_qualification()) : "null") + " */ \n");
+                    curprint ( string("\n/* In unparseClassType: info.get_reference_node_for_qualification() = ") + ((info.get_reference_node_for_qualification() != NULL) ? info.get_reference_node_for_qualification()->class_name() : "null") + " */ \n");
                  // curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
 #endif
                  // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 

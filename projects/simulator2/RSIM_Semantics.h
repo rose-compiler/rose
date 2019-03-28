@@ -171,7 +171,7 @@ public:
     Architecture architecture() const { return architecture_; }
 
 public:
-    virtual void hlt() {
+    virtual void hlt() ROSE_OVERRIDE {
         throw Halt(currentInstruction()->get_address());
     }
 

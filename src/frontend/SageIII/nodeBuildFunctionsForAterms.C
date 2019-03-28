@@ -3112,11 +3112,6 @@ SgUntypedStatement* SgUntypedStatement::build_node_from_nonlist_children ( Sg_Fi
    }
 
 
-/* #line 2970 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
@@ -3130,11 +3125,19 @@ SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_no
    }
 
 
-/* #line 2988 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
+SgUntypedDirectiveDeclaration* SgUntypedDirectiveDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedDirectiveDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
+     SgUntypedDirectiveDeclaration* returnNode = NULL;
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+     return returnNode;
+   }
+
+
 SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0

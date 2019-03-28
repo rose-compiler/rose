@@ -571,6 +571,43 @@ UntypedConverter::convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgS
    return sg_scope;
 }
 
+SgC_PreprocessorDirectiveStatement*
+UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclaration* ut_stmt, SgScopeStatement* scope)
+   {
+      using namespace General_Language_Translation;
+
+   // Use the C preprocessing directives.  It it not clear that AST will be properly formed,
+   // but as this is the Jovial language perhaps we can get away with it.
+   // see SageInterface::buildCpreprocessorDefineDeclaration
+   //
+      SgC_PreprocessorDirectiveStatement* sg_stmt = NULL;
+
+      switch (ut_stmt->get_statement_enum())
+        {
+        case e_define_directive_stmt:
+           {
+              std::string define_string = ut_stmt->get_directive_string();
+
+              SgDefineDirectiveStatement* define_decl = new SgDefineDirectiveStatement();
+              ROSE_ASSERT(define_decl);
+              setSourcePositionFrom(define_decl, ut_stmt);
+
+              define_decl->set_directiveString("DEFINE " + define_string);
+              SageInterface::appendStatement(define_decl, scope);
+              define_decl->set_parent(scope);
+
+              sg_stmt = define_decl;
+              break;
+           }
+        default:
+           {
+              cout << "Warning: UntypedDirectiveDeclaration stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
+           }
+        }
+
+      return sg_stmt;
+   }
+
 void
 UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
    {
@@ -2143,7 +2180,7 @@ UntypedConverter::convertSgUntypedLabelStatement (SgUntypedLabelStatement* ut_st
    }
 
 SgStatement*
-UntypedConverter::convertSgUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt, SgScopeStatement* scope)
+UntypedConverter::convertUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt, SgScopeStatement* scope)
    {
       using namespace General_Language_Translation;
 

@@ -1,4 +1,3 @@
-
 add_executable(RTC
   RTC.C
   CheckBase.C
@@ -11,4 +10,3 @@ add_executable(RTC
   BinarySimpleTraversal.h
   RTC.h)
 target_link_libraries(RTC ROSE_DLL ${Boost_LIBRARIES})
-

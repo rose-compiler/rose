@@ -560,7 +560,7 @@ AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled) {
         HexdumpFormat tmp_fmt = fmt;
-        tmp_fmt.addr_fmt = args.unparser->get_prefix_format().c_str();
+        tmp_fmt.addr_fmt = args.unparser->get_prefix_format();
         SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_raw_bytes()[0]),
                                            args.insn->get_size(), tmp_fmt);
     }
@@ -944,12 +944,12 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
                 tmp_fmt.prefix = "";
             }
         } else {
-            tmp_fmt.prefix = NULL;
+            tmp_fmt.prefix = "";
             addr_fmt = strdup("");
         }
 
         tmp_fmt.addr_fmt = addr_fmt;
-        if (!tmp_fmt.multiline && tmp_fmt.prefix)
+        if (!tmp_fmt.multiline)
             args.output <<tmp_fmt.prefix;
 
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),

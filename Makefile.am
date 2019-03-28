@@ -86,18 +86,52 @@ core:
 	$(MAKE) -C $(top_builddir)/src
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
+	$(MAKE) -C $(top_builddir)/projects/xgenTranslator
+	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) -C $(top_builddir)/projects/autoTuning
+	$(MAKE) -C $(top_builddir)/projects/DataFaultTolerance
+	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) -C $(top_builddir)/projects/LineDeleter
+	$(MAKE) -C $(top_builddir)/projects/mint
+	$(MAKE) -C $(top_builddir)/projects/OpenMP_Translator
+	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
+	$(MAKE) -C $(top_builddir)/projects/vectorization
+	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
+#	$(MAKE) -C $(top_builddir)/projects/vulnerabilitySeeding
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
-
+# Commmented out some very old projects, Liao, 2019 March
+#	$(MAKE) install -C $(top_builddir)/projects/LineDeleter
+#	$(MAKE) install -C $(top_builddir)/projects/mint
+#	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+#	$(MAKE) install -C $(top_builddir)/projects/OpenMP_Translator
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) install -C $(top_builddir)/projects/autoTuning
+	$(MAKE) install -C $(top_builddir)/projects/DataFaultTolerance
+	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
+	$(MAKE) install -C $(top_builddir)/projects/vectorization
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
-	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+#	$(MAKE) install -C $(top_builddir)/projects/vulnerabilitySeeding
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) install -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

@@ -413,7 +413,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
-    sg.name("out");
+    sg.name("unparse");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
            "blocks, data blocks, and functions to a textual representation.");
 
@@ -1406,7 +1406,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             std::ostringstream prefix;
             state.frontUnparser().emitLinePrefix(prefix, state);
             HexdumpFormat fmt;
-            fmt.prefix = prefix.str().c_str();
+            fmt.prefix = prefix.str();
             fmt.multiline = true;
 
             // Read the data in chunks and produce a hexdump

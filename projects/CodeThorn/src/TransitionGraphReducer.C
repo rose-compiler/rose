@@ -30,6 +30,7 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   worklist.push_back(_stg->getStartEState());
   visited.insert(_stg->getStartEState());
   // traverse the entire _stg
+  cout<<"STATUS: traversing AST and creating reduced graph ... "<<endl;
   while (!worklist.empty()) {
     const EState* current = *worklist.begin();
     ROSE_ASSERT(current);
@@ -39,8 +40,8 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
     list<const EState*> successors = successorsOfStateSatisfying(current, predicate);
     for (list<const EState*>::iterator i=successors.begin(); i!= successors.end(); ++i) {
       if (visited.find(*i) == visited.end()) {
-	worklist.push_back(*i);
-      visited.insert(*i);
+        worklist.push_back(*i);
+        visited.insert(*i);
       }
       Edge* newEdge = new Edge(current->label(),EDGE_PATH,(*i)->label());
       reducedStg->add(Transition(current, *newEdge, *i));
@@ -50,6 +51,7 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   *_stg = *reducedStg;
   // "garbage collection": Remove all states from _states that were bypassed during the reduction
   // (cannot simply replace the set because of potential states in the analyzer's worklist)
+  cout<<"STATUS: removing states  ... "<<endl;
   EStateSet::iterator i=_states->begin();
   while (i!=_states->end()) {
     if (visited.find(*i) == visited.end()) {
@@ -74,14 +76,15 @@ list<const EState*> TransitionGraphReducer::successorsOfStateSatisfying(const ES
     set<const EState*> successors = _stg->succ(current);
     for (set<const EState*>::iterator i=successors.begin(); i!= successors.end(); ++i) {
       if (visited.find(*i) == visited.end()) {
-	if (predicate(*i) || *i == _stg->getStartEState()) {
-	  result.push_back(*i); // stop exploration when predicate is satisfied	
-	} else {
-	  worklist.push_back(*i);
-	}
-	visited.insert(*i);
+        if (predicate(*i) || *i == _stg->getStartEState()) {
+          result.push_back(*i); // stop exploration when predicate is satisfied	
+        } else {
+          worklist.push_back(*i);
+        }
+        visited.insert(*i);
       }
     }
   }
   return result;
 }
+

@@ -46,6 +46,11 @@ void ProgramLocationsReport::recordDefinitiveLocation(SPRAY::Label lab) {
 }
 void ProgramLocationsReport::recordPotentialLocation(SPRAY::Label lab) {
   potentialLocations.insert(lab);
-
 }
 
+size_t ProgramLocationsReport::numDefinitiveLocations() {
+  return definitiveLocations.size();
+}
+size_t ProgramLocationsReport::numPotentialLocations() {
+  return potentialLocations.size();
+}

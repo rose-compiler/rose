@@ -66,6 +66,10 @@ SgAsmInstruction::explicitConstants() const {
     return std::set<rose_addr_t>();
 }
 
+size_t SgAsmInstruction::semanticFailure() const { abort(); }
+void SgAsmInstruction::semanticFailure(size_t) { abort(); }
+void SgAsmInstruction::incrementSemanticFailure() { abort(); }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
 

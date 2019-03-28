@@ -37,37 +37,6 @@ buildBinaryComposite(const std::string &fileName) {
     return retval;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmDirectRegisterExpression *
-buildSgAsmx86RegisterReferenceExpression(RegisterDescriptor desc) {
-    return new SgAsmDirectRegisterExpression(desc);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmDirectRegisterExpression *
-buildSgAsmArmRegisterReferenceExpression(RegisterDescriptor desc) {
-    return new SgAsmDirectRegisterExpression(desc);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmDirectRegisterExpression *
-buildSgAsmMipsRegisterReferenceExpression(RegisterDescriptor desc) {
-    return new SgAsmDirectRegisterExpression(desc);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmDirectRegisterExpression *
-buildSgAsmPowerpcRegisterReferenceExpression(RegisterDescriptor desc)
-{
-    return new SgAsmDirectRegisterExpression(desc);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmX86Instruction*
-buildx86Instruction(X86InstructionKind kind) {
-    return buildX86Instruction(kind);
-}
-
 SgAsmX86Instruction*
 buildX86Instruction(X86InstructionKind kind) {
     // These are the default values used for the construction of new instructions.
@@ -89,24 +58,12 @@ buildX86Instruction(X86InstructionKind kind) {
     return instruction;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmX86Instruction*
-buildx86Instruction(X86InstructionKind kind, SgAsmExpression *operand) {
-    return buildX86Instruction(kind, operand);
-}
-
 SgAsmX86Instruction*
 buildX86Instruction(X86InstructionKind kind, SgAsmExpression *operand)
 {
     SgAsmX86Instruction* instruction = buildX86Instruction(kind);
     appendOperand(instruction,operand);
     return instruction;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmX86Instruction*
-buildx86Instruction(X86InstructionKind kind, SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildX86Instruction(kind, lhs, rhs);
 }
 
 SgAsmX86Instruction*
@@ -228,24 +185,6 @@ buildValueX86Float64(double x) {
 SgAsmFloatValueExpression*
 buildValueX86Float80(double x) {
     return new SgAsmFloatValueExpression(x, buildTypeX86Float80());
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-buildAsmDWordValue(uint32_t val) {
-    return buildValueX86DWord(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-buildAsmByteValue(uint8_t val) {
-    return buildValueX86Byte(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-buildAsmWordValue(uint16_t val) {
-    return buildValueX86Word(val);
 }
 
 SgAsmIntegerType*
@@ -478,42 +417,6 @@ buildTypeX86DoubleQuadWord() {
     return SgAsmType::registerOrDelete(new SgAsmVectorType(2, quadword));
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerType*
-buildAsmTypeByte() {
-    return buildTypeX86Byte();
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmFloatType*
-buildAsmTypeSingleFloat() {
-    return buildTypeX86Float32();
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmFloatType*
-buildAsmTypeDoubleFloat() {
-    return buildTypeX86Float64();
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmFloatType*
-buildAsmType80bitFloat() {
-    return buildTypeX86Float80();
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmVectorType*
-buildAsmTypeDoubleQuadWord() {
-    return buildTypeX86DoubleQuadWord();
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmInstruction*
-buildMultibyteNopInstruction(int n) {
-    return buildX86MultibyteNopInstruction(n);
-}
-
 SgAsmX86Instruction*
 buildX86MultibyteNopInstruction(size_t nBytes) {
     ASSERT_require(nBytes > 0);
@@ -539,36 +442,6 @@ buildX86MultibyteNopInstruction(size_t nBytes) {
     return instruction;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-makeByteValue(uint8_t val) {
-    return buildValueX86Byte(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-makeWordValue(uint16_t val) {
-    return buildValueX86Word(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-makeDWordValue(uint32_t val) {
-    return buildValueX86DWord(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmIntegerValueExpression*
-makeQWordValue(uint64_t val) {
-    return buildValueX86QWord(val);
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmMemoryReferenceExpression*
-makeMemoryReference(SgAsmExpression *addr, SgAsmExpression *segment, SgAsmType *type) {
-    return buildMemoryReferenceExpression(addr, segment, type);
-}
-
 SgAsmMemoryReferenceExpression*
 buildMemoryReferenceExpression(SgAsmExpression *addr, SgAsmExpression *segment, SgAsmType *type) {
     SgAsmMemoryReferenceExpression *r = new SgAsmMemoryReferenceExpression(addr);
@@ -580,12 +453,6 @@ buildMemoryReferenceExpression(SgAsmExpression *addr, SgAsmExpression *segment, 
     if (type)
         r->set_type(type);
     return r;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryAdd*
-makeAdd(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildAddExpression(lhs, rhs);
 }
 
 SgAsmBinaryAdd*
@@ -603,12 +470,6 @@ buildAddExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinarySubtract*
-makeSubtract(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildSubtractExpression(lhs, rhs);
-}
-
 SgAsmBinarySubtract*
 buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtract *a = new SgAsmBinarySubtract(lhs, rhs);
@@ -622,12 +483,6 @@ buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *t
         a->set_type(rhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryAddPreupdate*
-makeAddPreupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildAddPreupdateExpression(lhs, rhs);
 }
 
 SgAsmBinaryAddPreupdate*
@@ -645,12 +500,6 @@ buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmTyp
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinarySubtractPreupdate*
-makeSubtractPreupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildSubtractPreupdateExpression(lhs, rhs);
-}
-
 SgAsmBinarySubtractPreupdate*
 buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtractPreupdate *a = new SgAsmBinarySubtractPreupdate(lhs, rhs);
@@ -664,12 +513,6 @@ buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgA
         a->set_type(rhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryAddPostupdate*
-makeAddPostupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildAddPostupdateExpression(lhs, rhs);
 }
 
 SgAsmBinaryAddPostupdate*
@@ -687,12 +530,6 @@ buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmTy
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinarySubtractPostupdate*
-makeSubtractPostupdate(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildSubtractPostupdateExpression(lhs, rhs);
-}
-
 SgAsmBinarySubtractPostupdate*
 buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinarySubtractPostupdate *a = new SgAsmBinarySubtractPostupdate(lhs, rhs);
@@ -706,12 +543,6 @@ buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, Sg
         a->set_type(rhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryMultiply*
-makeMul(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildMultiplyExpression(lhs, rhs);
 }
 
 SgAsmBinaryMultiply*
@@ -729,12 +560,6 @@ buildMultiplyExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *t
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryLsl*
-makeLsl(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildLslExpression(lhs, rhs);
-}
-
 SgAsmBinaryLsl*
 buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryLsl *a = new SgAsmBinaryLsl(lhs, rhs);
@@ -748,12 +573,6 @@ buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
         a->set_type(rhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryLsr*
-makeLsr(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildLsrExpression(lhs, rhs);
 }
 
 SgAsmBinaryLsr*
@@ -771,12 +590,6 @@ buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryAsr*
-makeAsr(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildAsrExpression(lhs, rhs);
-}
-
 SgAsmBinaryAsr*
 buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryAsr *a = new SgAsmBinaryAsr(lhs, rhs);
@@ -790,12 +603,6 @@ buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
         a->set_type(rhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmBinaryRor*
-makeRor(SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    return buildRorExpression(lhs, rhs);
 }
 
 SgAsmBinaryRor*
@@ -813,12 +620,6 @@ buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmUnaryRrx*
-makeRrx(SgAsmExpression *lhs) {
-    return buildRrxExpression(lhs);
-}
-
 SgAsmUnaryRrx*
 buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type) {
     SgAsmUnaryRrx *a = new SgAsmUnaryRrx(lhs);
@@ -829,12 +630,6 @@ buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type) {
         a->set_type(lhs->get_type());
     }
     return a;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmUnaryArmSpecialRegisterList*
-makeArmSpecialRegisterList(SgAsmExpression *lhs) {
-    return buildArmSpecialRegisterList(lhs);
 }
 
 SgAsmUnaryArmSpecialRegisterList*
@@ -886,12 +681,6 @@ buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgA
     appendExpression(retval->get_operands(), e3);
     appendExpression(retval->get_operands(), e4);
     return retval;
-}
-
-// FIXME[Robb P. Matzke 2014-07-21]: deprecated
-SgAsmExprListExp*
-makeExprListExp() {
-    return buildExprListExpression();
 }
 
 SgAsmExprListExp*

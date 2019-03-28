@@ -116,17 +116,17 @@ dataMemberInitializationWithoutOffsetSupport( SgProject* project, SgAsmRegisterR
      using namespace SageBuilderAsm;
 
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
-     SgAsmInstruction* target = buildx86Instruction(x86_mov,
+     SgAsmInstruction* target = buildX86Instruction(x86_mov,
                    buildAsmMemoryReferenceExpression(
                         buildAsmRegisterReferenceExpression(x86_regclass_gpr,registerName),
                         buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
                      // This value should match the type below.
-                        buildAsmTypeDoubleWord() ),
+                        buildTypeX86DoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
                 // To provide more flexability we could use a function pointer as a function 
                 // parameter, but it would be difficult ot match types.  Better ot just specify 
                 // a type via an enum value (and then internally build the matching value and type).
-                   buildAsmDWordValue(0x8048858));
+                   buildValueX86DWord(0x8048858));
 
      printf ("In dataMemberInitializationWithoutOffset() target instruction = %s \n",unparseInstructionWithAddress(target).c_str());
 
@@ -156,19 +156,19 @@ dataMemberInitializationWithOffsetSupport( SgProject* project, SgAsmRegisterRefe
      using namespace SageBuilderAsm;
 
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
-     SgAsmInstruction* target = buildx86Instruction(x86_mov,
+     SgAsmInstruction* target = buildX86Instruction(x86_mov,
                    buildAsmMemoryReferenceExpression(
                         buildAsmAddExpression(
                           // buildAsmRegisterReferenceExpression(x86_regclass_gpr,SgAsmRegisterReferenceExpression::e_eax),
                              buildAsmRegisterReferenceExpression(x86_regclass_gpr,registerName),
                           // This value will be ignored in matching.
-                             buildAsmByteValue(0x04)),
+                             buildValueX86Byte(0x04)),
                      // buildAsmRegisterReferenceExpression(x86_regclass_segment,SgAsmRegisterReferenceExpression::e_ds),
                         buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
                      // Note that the type will not be checked since it is not traversed in the AST.
-                        buildAsmTypeDoubleWord() ),
+                        buildTypeX86DoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
-                   buildAsmDWordValue(0x8048858));
+                   buildValueX86DWord(0x8048858));
 
      printf ("In dataMemberInitializationWithOffset(): target instruction = %s \n",unparseInstructionWithAddress(target).c_str());
 
@@ -197,14 +197,14 @@ dataMemberInitializationUsingAddressSupport( SgProject* project, SgAsmRegisterRe
      using namespace SageBuilderAsm;
 
 #ifdef USE_NEW_ISA_INDEPENDENT_REGISTER_HANDLING
-     SgAsmInstruction* target = buildx86Instruction(x86_mov,
+     SgAsmInstruction* target = buildX86Instruction(x86_mov,
                    buildAsmMemoryReferenceExpression(
                      // This value will be ignored in matching.
-                        buildAsmDWordValue(0x8049c8c),
+                        buildValueX86DWord(0x8049c8c),
                         buildAsmRegisterReferenceExpression(x86_regclass_segment,segmentRegister),
-                        buildAsmTypeDoubleWord() ),
+                        buildTypeX86DoubleWord() ),
                 // This value will be ignored in matching (but the type will be checked).
-                   buildAsmDWordValue(0x8048858)->addRegExpAttribute("regex",new AstRegExAttribute("*")));
+                   buildValueX86DWord(0x8048858)->addRegExpAttribute("regex",new AstRegExAttribute("*")));
 
      printf ("In dataMemberInitializationWithoutOffset() target instruction = %s \n",unparseInstructionWithAddress(target).c_str());
 
