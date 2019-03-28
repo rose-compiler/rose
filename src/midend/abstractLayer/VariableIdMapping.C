@@ -309,6 +309,7 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
   ROSE_ASSERT(variableId.isValid());
+  //cout<<"DEBUG: VariableIdMapping::setNumberOfElements: "<<variableName(variableId)<<" size: "<<size<<endl;
   mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
@@ -376,10 +377,10 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           //cout<<"DEBUG VIM: symbol: "<<sym<<endl;
           // determine the declaration to check for bitfields
            if(isAnonymousBitfield(initName)) {
-            // MS (2018-12-4): skip anonymous bitfields because in the
-            // same struct/class/union they are mapped to the same
-            // SgSymbol.
-            continue;
+             // MS (2018-12-4/2019-03-20): workaround: ROSE BUG: if a struct contains more than one anonymous bitfield
+             // they are assigned the same symbol.
+             // ROSE AST BUG WORKAROUND (ROSE-1867)
+             continue;
           }
           type = initName->get_type();
           initializer = initName->get_initializer();
@@ -407,7 +408,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
             }
             if(arraySize > 0) {
-              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<(*i)->unparseToString()<<endl;
               // Array dimensions found: Registration as array symbol:
               registerNewArraySymbol(sym, arraySize);
               // Remember that this symbol is already registered:
@@ -570,7 +571,7 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   * \date 2012.
  */
 // deprecated (use createAndRegisterVariableId instead)
-VariableId
+VariableId  
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
       i!=temporaryVariableIdMapping.end();
@@ -597,7 +598,7 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setNumberOfElements(varId,1); // default
+  setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
   return varId;
 }
 
@@ -652,7 +653,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
-    setNumberOfElements(newVarId,1);
+    setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
@@ -873,6 +874,9 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         SPRAY::VariableId newVariableId=createAndRegisterNewVariableId(ss.str());
         sgStringValueToVariableIdMapping[stringVal]=newVariableId;
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
+        // the size of the memory region of a string is its length + 1 (for terminating 0).
+        setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
+        // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
         //cout<<"registered."<<endl;
       } else {

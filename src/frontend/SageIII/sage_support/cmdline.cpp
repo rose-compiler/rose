@@ -1846,14 +1846,15 @@ GetRoseClasspath ()
   string classpath = "-Djava.class.path=";
 
   // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.
+  // CER (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
-  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 3)
+  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 5)
   {
       classpath +=
           findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar",
-              "lib/antlr-3.3-complete.jar");
+              "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
+              "lib/antlr-3.5.2-complete.jar");
       classpath += ":";
   }
   else
@@ -3272,6 +3273,9 @@ SgFile::usage ( int status )
 "                             file format for binaries)\n"
 "     -rose:skipAstConsistancyTests\n"
 "                             skip AST consitancy testing (for better performance)\n"
+"     -rose:no_optimize_flag_for_frontend\n"
+"                             ignore use of __builtin functions in frontend processing\n"
+"                             all optimization specified is still done on ROSE generated code\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -3321,20 +3325,6 @@ SgFile::usage ( int status )
 "                             assertions that use the Sawyer mechanism are affected.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
-"     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
-"                             Supported for C/C++, and currently only generates token \n"
-"                             stream for fortran (call parser with --tokens option)\n"
-"                             call parser with --tokens option (fortran only)\n"
-"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
-"                             unparses code using original token stream and forces the output \n"
-"                             of two files representing the unparsing of each statement using \n"
-"                             the token stream mapping to the AST.  The token_leading_* file \n"
-"                             uses the mapping and the leading whitespace mapping between \n"
-"                             statements, where as the token_trailing_* file uses the mapping \n"
-"                             and the trailing whitespace mapping between statements.  Both \n"
-"                             files should be identical, and the same as the input file. \n"
-"     -rose:unparse_template_ast\n"
-"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3455,6 +3445,19 @@ SgFile::usage ( int status )
 "     -rose:appendPID\n"
 "                             append PID into the temporary output name. \n"
 "                             This can avoid issues in parallel compilation (default: false). \n"
+"     -rose:unparse_tokens\n"
+"                             Unparses code using original token stream where possible.\n"
+"                             Only C/C++ are supported now. Fortran support is under development \n"
+"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
+"                             unparses code using original token stream and forces the output \n"
+"                             of two files representing the unparsing of each statement using \n"
+"                             the token stream mapping to the AST.  The token_leading_* file \n"
+"                             uses the mapping and the leading whitespace mapping between \n"
+"                             statements, where as the token_trailing_* file uses the mapping \n"
+"                             and the trailing whitespace mapping between statements.  Both \n"
+"                             files should be identical, and the same as the input file. \n"
+"     -rose:unparse_template_ast\n"
+"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:unparseTemplateDeclarationsFromAST\n"
 "                             (experimental) option to permit unparsing template declarations \n"
 "                             from the AST (default: false). \n"
@@ -5373,6 +5376,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_translation_from_edg_ast_to_rose_ast)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_transformation)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(skip_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_line_directives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_syntax)",1);

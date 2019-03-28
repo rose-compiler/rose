@@ -35,6 +35,7 @@ JOVIAL_TESTCODES = \
 
 COMPOOL_TESTCODES = \
  1_2_1_compool_a.cpl                    \
+ define_dollar.cpl                      \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl
 

@@ -78,7 +78,8 @@ else()
 
     if(enable-c)
       add_subdirectory(copyAST_tests)
-      add_subdirectory(RoseExample_tests)
+# ROSE-1738
+#     add_subdirectory(RoseExample_tests)
       add_subdirectory(PythonExample_tests)
       add_subdirectory(colorAST_tests)
       add_subdirectory(unparseToString_tests)

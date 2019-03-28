@@ -3,6 +3,9 @@
 
 #include "commandline_processing.h"
 
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <limits.h>
 #include <map>
 #include <sstream>
@@ -59,8 +62,7 @@ ROSE_UTIL_API std::string bourneEscape(const std::string&);
  *
  *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
  *  and replaces double quotes by a backslash followed by a double qoute. */
-ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&)
-    SAWYER_DEPRECATED("tell us if you use this");       // ROSE_DEPRECATED is not defined here; lack of sage3basic.h
+ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&);
 
 // DQ (12/8/2016): This is ued in the generation of dot files.
 ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::string&);
@@ -500,14 +502,14 @@ std::string plural(T n, const std::string &plural_word, const std::string &singu
     if (1==n) {
         if (!singular_word.empty()) {
             retval += singular_word;
-        } else if (plural_word == "vertices") {
-            retval = "vertex";
-        } else if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
+        } else if (boost::ends_with(plural_word, "vertices")) {
+            retval += boost::replace_tail_copy(plural_word, 8, "vertex");
+        } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
-            retval += plural_word.substr(0, plural_word.size()-3) + "y";
-        } else if (plural_word.size()>1 && plural_word[plural_word.size()-1]=='s') {
-            // just drop the final 's'
-            retval += plural_word.substr(0, plural_word.size()-1);
+            retval += boost::replace_tail_copy(plural_word, 3, "y");
+        } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
+            // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
+            retval += boost::erase_tail_copy(plural_word, 1);
         } else {
             // I give up.  Use the plural and risk being grammatically incorrect.
             retval += plural_word;

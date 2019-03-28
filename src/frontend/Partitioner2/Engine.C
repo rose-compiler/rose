@@ -4,6 +4,7 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
+#include "BinarySerialIo.h"
 #include "CommandLine.h"
 #include "Diagnostics.h"
 #include "DisassemblerM68k.h"
@@ -57,7 +58,7 @@ Engine::init() {
 void
 Engine::reset() {
     interp_ = NULL;
-    binaryLoader_ = NULL;
+    binaryLoader_ = BinaryLoader::Ptr();
     disassembler_ = NULL;
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
@@ -140,7 +141,8 @@ Engine::loaderSwitches() {
     sg.name("loader");
     sg.doc("The loader is responsible for mapping a specimen into the address space used for disassembling and analysis. "
            "ROSE uses a virtualized address space (the MemoryMap class) to isolate the address space of a specimen from "
-           "the address space of ROSE itself.");
+           "the address space of ROSE itself. These switches have no effect if the input is a ROSE Binary Analysis (RBA) "
+           "file, since the loader steps in such an input have already been completed.");
 
     sg.insert(Switch("remove-zeros")
               .argument("size", nonNegativeIntegerParser(settings_.loader.deExecuteZerosThreshold), "128")
@@ -244,7 +246,9 @@ Engine::disassemblerSwitches() {
     sg.name("disassemble");
     sg.doc("These switches affect the disassembler proper, which is the software responsible for decoding machine "
            "instruction bytes into ROSE internal representations.  The disassembler only decodes instructions at "
-           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded.");
+           "given addresses and is not responsible for determining what addresses of the virtual address space are decoded. "
+           "These switches have no effect if the input is a ROSE Binary Analysis (RBA) file, since the disassembler steps "
+           "in such an input have already been completed.");
 
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
@@ -261,7 +265,9 @@ Engine::partitionerSwitches() {
     SwitchGroup sg("Partitioner switches");
     sg.name("partition");
     sg.doc("The partitioner is the part of ROSE that drives a disassembler. While the disassembler knows how to decode "
-           "a machine instruction to an internal representation, the partitioner knows where to decode.");
+           "a machine instruction to an internal representation, the partitioner knows where to decode. These switches have "
+           "no effect if the input is a ROSE Binary Analysis (RBA) file, since the partitioner steps in such an input "
+           "have already been completed.");
 
     sg.insert(Switch("start")
               .argument("addresses", listParser(nonNegativeIntegerParser(settings_.partitioner.startingVas)))
@@ -431,6 +437,69 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("no-inter-function-calls")
               .key("inter-function-calls")
               .intrinsicValue(false, settings_.partitioner.findingInterFunctionCalls)
+              .hidden(true));
+
+    sg.insert(Switch("called-functions")
+              .intrinsicValue(true, settings_.partitioner.findingFunctionCallFunctions)
+              .doc("Look for function call instructions or sequences of instructions with similar behavior and assume "
+                   "that the target address is the entry point for a function under most circumstances. The "
+                   "@s{no-called-functions} switch turns this feature off, which can be useful when analyzing virtual "
+                   "memory where targets of call-like sequences have not been initialized (such as in object files). "
+                   "The default is to " + std::string(settings_.partitioner.findingFunctionCallFunctions?"":"not ") +
+                   "perform this analysis."));
+    sg.insert(Switch("no-called-functions")
+              .key("called-functions")
+              .intrinsicValue(false, settings_.partitioner.findingFunctionCallFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("entry-functions")
+              .intrinsicValue(true, settings_.partitioner.findingEntryFunctions)
+              .doc("Create functions at the program entry point(s). The @s{no-entry-functions} switch turns this feature "
+                   "off. The default is to " + std::string(settings_.partitioner.findingEntryFunctions?"":"not ") +
+                   "perform this analysis."));
+    sg.insert(Switch("no-entry-functions")
+              .key("entry-functions")
+              .intrinsicValue(false, settings_.partitioner.findingEntryFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("error-functions")
+              .intrinsicValue(true, settings_.partitioner.findingErrorFunctions)
+              .doc("Create functions based on error handling information that might be present in the container's tables. "
+                   "The @s{no-error-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingErrorFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-error-functions")
+              .key("error-functions")
+              .intrinsicValue(false, settings_.partitioner.findingErrorFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("import-functions")
+              .intrinsicValue(true, settings_.partitioner.findingImportFunctions)
+              .doc("Create functions based on import information that might be present in the container's tables. The "
+                   "@s{no-import-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingImportFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-import-functions")
+              .key("import-functions")
+              .intrinsicValue(false, settings_.partitioner.findingImportFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("export-functions")
+              .intrinsicValue(true, settings_.partitioner.findingExportFunctions)
+              .doc("Create functions based on export information that might be present in the container's tables. The "
+                   "@s{no-export-functions} switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingExportFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-export-functions")
+              .key("export-functions")
+              .intrinsicValue(false, settings_.partitioner.findingExportFunctions)
+              .hidden(true));
+
+    sg.insert(Switch("symbol-functions")
+              .intrinsicValue(true, settings_.partitioner.findingSymbolFunctions)
+              .doc("Create functions based on symbol tables that might be present in the container. The @s{no-symbol-functions} "
+                   "switch turns this feature off. The default is to " +
+                   std::string(settings_.partitioner.findingSymbolFunctions?"":"not ") + "perform this analysis."));
+    sg.insert(Switch("no-symbol-functions")
+              .key("symbol-functions")
+              .intrinsicValue(false, settings_.partitioner.findingSymbolFunctions)
               .hidden(true));
 
     sg.insert(Switch("data-functions")
@@ -750,9 +819,16 @@ Engine::specimenNameDocumentation() {
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
 
+            "@bullet{If the name ends with \".rba\" and doesn't match the previous list of prefixes then it is assumed "
+            "to be a ROSE Binary Analysis file that contains a serialized partitioner and an optional AST. Use of an "
+            "RBA file to describe a specimen precludes the use of any other inputs for that specimen. Furthermore, since "
+            "an RBA file represents a fully parsed and disassembled specimen, the command-line switches that control "
+            "the parsing and disassembly are ignored.}"
+
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "
-            "are then processed in the order they appear, possibly overwriting parts of the map.");
+            "are then processed in the order they appear, possibly overwriting parts of the map. RBA files have special "
+            "handling described above.");
 }
 
 Sawyer::CommandLine::Parser
@@ -805,13 +881,19 @@ Engine::checkSettings() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
+Engine::isRbaFile(const std::string &name) {
+    return boost::ends_with(name, ".rba");
+}
+
+bool
 Engine::isNonContainer(const std::string &name) {
-    return (boost::starts_with(name, "map:") ||         // map file directly into MemoryMap
+    return (boost::starts_with(name, "map:")  ||        // map file directly into MemoryMap
             boost::starts_with(name, "data:") ||        // map data directly into MemoryMap
             boost::starts_with(name, "proc:") ||        // map process memory into MemoryMap
-            boost::starts_with(name, "run:") ||         // run a process in a debugger, then map into MemoryMap
+            boost::starts_with(name, "run:")  ||        // run a process in a debugger, then map into MemoryMap
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
-            boost::ends_with(name, ".srec"));           // Motorola S-Record format
+            boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
+            isRbaFile(name));                           // ROSE Binary Analysis file
 }
 
 bool
@@ -832,27 +914,28 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
         checkSettings();
 
         // Prune away things we recognize as not being binary containers.
-        std::vector<std::string> frontendNames;
+        std::vector<boost::filesystem::path> containerFiles;
         BOOST_FOREACH (const std::string &fileName, fileNames) {
             if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
                 static size_t colon1 = 3;
                 size_t colon2 = fileName.find(':', colon1+1);
                 if (colon2 == std::string::npos) {
                     // [Robb Matzke 2017-07-24]: deprecated: use two colons for consistency with other schemas
-                    frontendNames.push_back(fileName.substr(colon1+1));
+                    containerFiles.push_back(fileName.substr(colon1+1));
                 } else {
-                    frontendNames.push_back(fileName.substr(colon2+1));
+                    containerFiles.push_back(fileName.substr(colon2+1));
                 }
             } else if (!isNonContainer(fileName)) {
-                frontendNames.push_back(fileName);
+                containerFiles.push_back(fileName);
             }
         }
 
-        // Try to link .o and .a files
+        // Try to link all the .o and .a files
+        bool linkerFailed = false;
         Sawyer::FileSystem::TemporaryFile linkerOutput;
-        std::vector<std::string> filesToLink, nonLinkedFiles;
         if (!settings_.loader.linker.empty()) {
-            BOOST_FOREACH (const std::string &file, frontendNames) {
+            std::vector<boost::filesystem::path> filesToLink, nonLinkedFiles;
+            BOOST_FOREACH (const boost::filesystem::path &file, containerFiles) {
                 if (settings_.loader.linkObjectFiles && ModulesElf::isObjectFile(file)) {
                     filesToLink.push_back(file);
                 } else if (settings_.loader.linkStaticArchives && ModulesElf::isStaticArchive(file)) {
@@ -862,22 +945,50 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
                 }
             }
             if (!filesToLink.empty()) {
-                linkerOutput.stream().close();      // will be written by linker command
+                linkerOutput.stream().close();          // will be written by linker command
                 if (ModulesElf::tryLink(settings_.loader.linker, linkerOutput.name().native(), filesToLink, mlog[WARN])) {
-                    frontendNames = nonLinkedFiles;
-                    frontendNames.push_back(linkerOutput.name().native());
+                    containerFiles = nonLinkedFiles;
+                    containerFiles.push_back(linkerOutput.name().native());
+                } else {
+                    mlog[ERROR] <<"linking objects and/or archives failed; falling back to internal (incomplete) linker\n";
+                    filesToLink.clear();
+                    linkerFailed = true;
                 }
             }
         }
 
+        // If we have *.a files that couldn't be linked, extract all their members and replace the archive file with the list
+        // of object files.
+        Sawyer::FileSystem::TemporaryDirectory tempDir;
+        if (linkerFailed) {
+            std::vector<boost::filesystem::path> expandedList;
+            BOOST_FOREACH (const boost::filesystem::path &file, containerFiles) {
+                if (ModulesElf::isStaticArchive(file)) {
+                    std::vector<boost::filesystem::path> objects = ModulesElf::extractStaticArchive(tempDir.name(), file);
+                    if (objects.empty())
+                        mlog[WARN] <<"empty static archive \"" <<StringUtility::cEscape(file.native()) <<"\"\n";
+                    BOOST_FOREACH (const boost::filesystem::path &objectFile, objects)
+                        expandedList.push_back(objectFile.native());
+                } else {
+                    expandedList.push_back(file);
+                }
+            }
+            containerFiles = expandedList;
+        }
+
         // Process through ROSE's frontend()
-        if (!frontendNames.empty()) {
+        if (!containerFiles.empty()) {
+#if 0 // [Robb Matzke 2019-01-29]: old method calling ::frontend
             std::vector<std::string> frontendArgs;
             frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
             frontendArgs.push_back("-rose:binary");
             frontendArgs.push_back("-rose:read_executable_file_format_only");
-            frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
+            BOOST_FOREACH (const boost::filesystem::path &file, containerFiles)
+                frontendArgs.push_back(file.native());
             SgProject *project = ::frontend(frontendArgs);
+#else // [Robb Matzke 2019-01-29]: new method calling Engine::roseFrontendReplacement
+            SgProject *project = roseFrontendReplacement(containerFiles);
+#endif
             ASSERT_not_null(project);                       // an exception should have been thrown
 
             std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
@@ -899,6 +1010,97 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
     }
 }
 
+// Replacement for ::frontend, which is a complete mess, in order create a project containing multiple files. Nothing
+// special happens to any of the input file names--that should have already been done by this point. All the fileNames
+// are expected to be names of existing container (ELF, PE, etc) files that will result in an AST (non-container files
+// typically are loaded into virtual memory and have no AST since they have very little structure).
+SgProject *
+Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) {
+    ASSERT_forbid(fileNames.empty());
+
+    // Create the SgAsmGenericFiles (not a type of SgFile), one per fileName, and add them to a SgAsmGenericFileList node. Each
+    // SgAsmGenericFile has one or more file headers (e.g., ELF files have one, PE files have two).
+    SgAsmGenericFileList *fileList = new SgAsmGenericFileList;
+    BOOST_FOREACH (const boost::filesystem::path &fileName, fileNames) {
+        SAWYER_MESG(mlog[TRACE]) <<"parsing " <<fileName <<"\n";
+        SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.native().c_str());
+        ASSERT_not_null(file);
+#ifdef ROSE_HAVE_LIBDWARF
+        readDwarf(file);
+#endif
+        fileList->get_files().push_back(file); file->set_parent(fileList);
+    }
+    SAWYER_MESG(mlog[DEBUG]) <<"parsed " <<StringUtility::plural(fileList->get_files().size(), "container files") <<"\n";
+
+    // The SgBinaryComposite (type of SgFile) points to the list of SgAsmGenericFile nodes created above.
+    // FIXME[Robb Matzke 2019-01-29]: The defaults set here should be set in the SgBinaryComposite constructor instead.
+    // FIXME[Robb Matzke 2019-01-29]: A SgBinaryComposite represents many files, not just one, so some of these settings
+    //                                don't make much sense.
+    SgBinaryComposite *binaryComposite = new SgBinaryComposite;
+    binaryComposite->initialization(); // SgFile::initialization
+    binaryComposite->set_skipfinalCompileStep(true);
+    binaryComposite->set_genericFileList(fileList); fileList->set_parent(binaryComposite);
+    binaryComposite->set_sourceFileUsesBinaryFileExtension(true);
+    binaryComposite->set_outputLanguage(SgFile::e_Binary_language);
+    binaryComposite->set_inputLanguage(SgFile::e_Binary_language);
+    binaryComposite->set_binary_only(true);
+    binaryComposite->set_requires_C_preprocessor(false);
+    //binaryComposite->set_isObjectFile(???) -- makes no sense since the composite can be multiple files of different types
+    binaryComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(fileNames[0]).native()); // best we can do
+    binaryComposite->set_sourceFileNameWithoutPath(fileNames[0].filename().native());                // best we can do
+    binaryComposite->initializeSourcePosition(fileNames[0].native());                                // best we can do
+    binaryComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, fileNames[0].native())); // best we can do
+    ASSERT_not_null(binaryComposite->get_file_info());
+
+    // Create one or more SgAsmInterpretation nodes. If all the SgAsmGenericFile objects are ELF files, then there's one
+    // SgAsmInterpretation that points to them all. If all the SgAsmGenericFile objects are PE files, then there's two
+    // SgAsmInterpretation nodes: one for all the DOS parts of the files, and one for all the PE parts of the files.
+    std::vector<std::pair<SgAsmExecutableFileFormat::ExecFamily, SgAsmInterpretation*> > interpretations;
+    BOOST_FOREACH (SgAsmGenericFile *file, fileList->get_files()) {
+        SgAsmGenericHeaderList *headerList = file->get_headers();
+        ASSERT_not_null(headerList);
+        BOOST_FOREACH (SgAsmGenericHeader *header, headerList->get_headers()) {
+            SgAsmGenericFormat *format = header->get_exec_format();
+            ASSERT_not_null(format);
+
+            // Find or create the interpretation that holds this family of headers.
+            SgAsmInterpretation *interpretation = NULL;
+            for (size_t i=0; i<interpretations.size() && !interpretation; ++i) {
+                if (interpretations[i].first == format->get_family())
+                    interpretation = interpretations[i].second;
+            }
+            if (!interpretation) {
+                interpretation = new SgAsmInterpretation;
+                interpretations.push_back(std::make_pair(format->get_family(), interpretation));
+            }
+
+            // Add the header to the interpretation. This isn't an AST parent/child link, so don't set the parent ptr.
+            SgAsmGenericHeaderList *interpHeaders = interpretation->get_headers();
+            ASSERT_not_null(interpHeaders);
+            interpHeaders->get_headers().push_back(header);
+        }
+    }
+    SAWYER_MESG(mlog[DEBUG]) <<"created " <<StringUtility::plural(interpretations.size(), "interpretation nodes") <<"\n";
+
+    // Put all the interpretations in a list
+    SgAsmInterpretationList *interpList = new SgAsmInterpretationList;
+    for (size_t i=0; i<interpretations.size(); ++i) {
+        SgAsmInterpretation *interpretation = interpretations[i].second;
+        interpList->get_interpretations().push_back(interpretation); interpretation->set_parent(interpList);
+    }
+    ASSERT_require(interpList->get_interpretations().size() == interpretations.size());
+
+    // Add the interpretation list to the SgBinaryComposite node
+    binaryComposite->set_interpretations(interpList); interpList->set_parent(binaryComposite);
+
+    // The project
+    SgProject *project = new SgProject;
+    project->get_fileList().push_back(binaryComposite);
+    binaryComposite->set_parent(project); // FIXME[Robb Matzke 2019-01-29]: is this the correct parent?
+
+    return project;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory map creation (loading)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -908,14 +1110,14 @@ Engine::areSpecimensLoaded() const {
     return map_!=NULL && !map_->isEmpty();
 }
 
-BinaryLoader*
-Engine::obtainLoader(BinaryLoader *hint) {
+BinaryLoader::Ptr
+Engine::obtainLoader(const BinaryLoader::Ptr &hint) {
     if (!binaryLoader_ && interp_) {
         if ((binaryLoader_ = BinaryLoader::lookup(interp_))) {
             binaryLoader_ = binaryLoader_->clone();
-            binaryLoader_->set_perform_remap(true);
-            binaryLoader_->set_perform_dynamic_linking(false);
-            binaryLoader_->set_perform_relocations(false);
+            binaryLoader_->performingRemap(true);
+            binaryLoader_->performingDynamicLinking(false);
+            binaryLoader_->performingRelocations(false);
         }
     }
 
@@ -1382,7 +1584,10 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
 
     // Try to attach basic blocks to functions
     SAWYER_MESG(where) <<"marking function call targets\n";
-    makeCalledFunctions(partitioner);
+    if (settings_.partitioner.findingFunctionCallFunctions) {
+        SAWYER_MESG(where) <<"finding called functions\n";
+        makeCalledFunctions(partitioner);
+    }
 
     SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
@@ -1473,12 +1678,28 @@ Engine::runPartitioner(Partitioner &partitioner) {
 Partitioner
 Engine::partition(const std::vector<std::string> &fileNames) {
     try {
-        if (!areSpecimensLoaded())
-            loadSpecimens(fileNames);
-        obtainDisassembler();
-        Partitioner partitioner = createPartitioner();
-        runPartitioner(partitioner);
-        return partitioner;
+        BOOST_FOREACH (const std::string &fileName, fileNames) {
+            if (isRbaFile(fileName) && fileNames.size() != 1)
+                throw Exception("specifying an RBA file excludes all other inputs");
+        }
+        if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
+            SerialInput::Ptr archive = SerialInput::instance();
+            archive->open(fileNames[0]);
+            Partitioner partitioner = archive->loadPartitioner();
+            SgNode *ast = archive->loadAst();
+            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
+            if (!interps.empty())
+                interp_ = interps[0];
+            map_ = partitioner.memoryMap();
+            return partitioner;
+        } else {
+            if (!areSpecimensLoaded())
+                loadSpecimens(fileNames);
+            obtainDisassembler();
+            Partitioner partitioner = createPartitioner();
+            runPartitioner(partitioner);
+            return partitioner;
+        }
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
             mlog[FATAL] <<e.what() <<"\n";
@@ -1593,17 +1814,33 @@ Engine::makeSymbolFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
 std::vector<Function::Ptr>
 Engine::makeContainerFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> retval;
+    Sawyer::Message::Stream where(mlog[WHERE]);
 
-    BOOST_FOREACH (const Function::Ptr &function, makeEntryFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeErrorHandlingFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeImportFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeExportFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
-    BOOST_FOREACH (const Function::Ptr &function, makeSymbolFunctions(partitioner, interp))
-        insertUnique(retval, function, sortFunctionsByAddress);
+    if (settings_.partitioner.findingEntryFunctions) {
+        SAWYER_MESG(where) <<"making entry point functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeEntryFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingErrorFunctions) {
+        SAWYER_MESG(where) <<"making error-handling functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeErrorHandlingFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingImportFunctions) {
+        SAWYER_MESG(where) <<"making import functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeImportFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingExportFunctions) {
+        SAWYER_MESG(where) <<"making export functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeExportFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingSymbolFunctions) {
+        SAWYER_MESG(where) <<"making symbol table functions\n";
+        BOOST_FOREACH (const Function::Ptr &function, makeSymbolFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
     return retval;
 }
 
@@ -2034,7 +2271,8 @@ Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
             break;
         retval += n;
         discoverBasicBlocks(partitioner);
-        makeCalledFunctions(partitioner);
+        if (settings_.partitioner.findingFunctionCallFunctions)
+            makeCalledFunctions(partitioner);
         attachBlocksToFunctions(partitioner);
     }
     return retval;
@@ -2402,7 +2640,7 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
     } else {
         if (0 == --maxSorts_)
             mlog[WARN] <<"may-return sort limit reached; reverting to unsorted analysis\n";
-        
+
         // Get the list of virtual addresses that need to be processed
         std::vector<AddressOrder> pending;
         pending.reserve(finalCallReturn_.size() + processedCallReturn_.size());

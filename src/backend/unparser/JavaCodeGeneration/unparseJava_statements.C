@@ -1040,7 +1040,8 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      // Unparse type, unless this a constructor then unparse name
      //
      if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
-         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
+         
+         unparseName(isSgClassDeclaration( mfuncdecl_stmt -> get_associatedClassDeclaration() ) -> get_name(), info);
      }
      else {
 // TODO: Remove this !

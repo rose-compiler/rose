@@ -1,25 +1,23 @@
-class B_
+class B
    {
      public:
           typedef int T;
           enum color { R, O, Y };
           struct S { T i; };
           S b;
-          B_(T t) { b.i = t; }
+          B(T t) { b.i = t; }
    };
 
-struct D_ : B_
+struct D : B
    {
      typedef char color;
-     struct T { B_::color c; };
-     B_::T S;
+     struct T { B::color c; };
+     B::T S;
      T b;
-     D_(int s) : B_(s+1), S(s-1) { b.c = R; }
+     D(int s) : B(s+1), S(s-1) { b.c = R; }
    };
 
 void foobar()
    {
-     D_ d(4);
-  // ieq(d.B_::b.i, 5);
-  // ieq(d.b.c, B_::R);
+     D d(4);
    }

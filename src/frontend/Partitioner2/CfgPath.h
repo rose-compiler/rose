@@ -16,7 +16,7 @@ class CfgPath {
 public:
     /** Stack of inter-connected edges. */
     typedef std::vector<ControlFlowGraph::ConstEdgeIterator> Edges;
-    
+
     /** Stack of vertices. */
     typedef std::vector<ControlFlowGraph::ConstVertexIterator> Vertices;
 
@@ -26,6 +26,12 @@ public:
 private:
     Sawyer::Optional<ControlFlowGraph::ConstVertexIterator> frontVertex_;
     Edges edges_;
+
+    // Optional edge ordering information. This vector parallels, "edges_", although it can be smaller if default ordering is
+    // used. Assuming the vectors are the same size, then edgeOrder_[i] contains the back-tracking information for
+    // edges_[i]. If edges_[i] is popped during backtracking and edgeOrder_[i] exists and is not empty, then edges_[i] will be
+    // replaced by edgeOrders_[i].back() and that edge is popped from edgeOrders_[i].
+    std::vector<Edges> edgeOrders_;
 
     // Attributes stored at each vertex and edge
     std::vector<Attributes> vertexAttributes_;
@@ -47,6 +53,7 @@ public:
     void clear() {
         frontVertex_ = Sawyer::Nothing();
         edges_.clear();
+        edgeOrders_.clear();
         vertexAttributes_.clear();
         edgeAttributes_.clear();
     }
@@ -104,19 +111,37 @@ public:
      *  The list of vertices is not stored explicitly by this path object and must be recomputed for each call. Vertices are
      *  not necessarily unique within a path since they can be reached sometimes by multiple edges. */
     Vertices vertices() const;
-    
+
     /** Append a new edge to the end of the path.
      *
-     *  If the path is not empty then the source vertex for the new edge must be equal to the  @ref backVertex. */
-    void pushBack(const ControlFlowGraph::ConstEdgeIterator &edge);
+     *  If the path is not empty then the source vertex for the new edge must be equal to the @ref backVertex. The specified
+     *  edge is pushed onto the path and the path is configured to visit the sibling edges during the @ref backtrack operation
+     *  in order by incrementing the given iterator. */
+    void pushBack(ControlFlowGraph::ConstEdgeIterator edge);
 
-    /** Append a new edge to the front of the path.
+    /** Append a new edge to the end of the path.
      *
-     *  If the path is not empty, then the target vertex for the new edge must be equal to the @ref frontVertex.
+     *  The argument is a list of edges all originating from the same vertex. If the path is non-empty, then the originating
+     *  vertex must be equal to the @ref backVertex.  The argument specifies the order in which the @ref backtrack operation
+     *  will visit the edges, and only the first edge of this list is actually appended to the path. */
+    void pushBack(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges);
+
+    /** Insert a new edge to the front of the path.
+     *
+     *  If the path is not empty, then the target vertex for the new edge must be equal to the @ref frontVertex. The specified
+     *  edge is inserted at the front of the path and the path is configured to visit the sibling edges during the @ref
+     *  backtrack operation in order by incrementing the given iterator.
      *
      *  Pushing edges onto the front of a path is not efficient; it requires moving all previous edges, taking time linearly
      *  proportional to the length of the path. */
-    void pushFront(const ControlFlowGraph::ConstEdgeIterator &edge);
+    void pushFront(ControlFlowGraph::ConstEdgeIterator edge);
+
+    /** Insert a new edge to the front of the path.
+     *
+     *  The argument is a list of edges all pointing to the same vertex. If the path is non-empty, then the pointed to vertex
+     *  must be equal to @ref frontVertex.  The argument specifies the order in which the @ref backtrack operation will visit
+     *  the edges, and only the first edge of this list is actually inserted at the front of the path. */
+    void pushFront(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges);
 
     /** Erase the final edge from a path.
      *
@@ -420,7 +445,7 @@ public:
     /** Property: inline predicate.
      *
      *  User predicate that controls whether a particular function should be inlined.  If null, then all function calls are
-     *  inlined. 
+     *  inlined.
      *
      * @{ */
     ShouldInline::Ptr shouldInline() const { return shouldInline_; }
@@ -473,9 +498,6 @@ private:
     // Convert global CFG vertices to paths graph vertices. */
     static CfgConstVertexSet cfgToPaths(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap);
 };
-
-
-    
 
 std::ostream& operator<<(std::ostream &out, const CfgPath &path);
 

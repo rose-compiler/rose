@@ -1338,7 +1338,7 @@ problemTests:
 PASSING_MODULE_TEST_Objects = module_B_file.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
-CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.2.jar fortran.ofp.FrontEnd
+CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.5.jar fortran.ofp.FrontEnd
 testSuffixRules:
 	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_01.f

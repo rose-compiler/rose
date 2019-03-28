@@ -12,6 +12,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/variant.hpp>
 #include <ctype.h>
 #include <sstream>
 
@@ -63,23 +64,23 @@ State::cg() const {
     return cg_;
 }
 
-const std::vector<unsigned>
+const std::vector<Reachability::ReasonFlags>
 State::cfgVertexReachability() const {
     return cfgVertexReachability_;
 }
 
 void
-State::cfgVertexReachability(const std::vector<unsigned> &reachability) {
+State::cfgVertexReachability(const std::vector<Reachability::ReasonFlags> &reachability) {
     cfgVertexReachability_ = reachability;
 }
 
-unsigned
+Reachability::ReasonFlags
 State::isCfgVertexReachable(size_t vertexId) const {
     return vertexId < cfgVertexReachability_.size() ? cfgVertexReachability_[vertexId] : Reachability::ASSUMED;
 }
 
 void
-State::reachabilityName(unsigned value, const std::string &name) {
+State::reachabilityName(Reachability::Reason value, const std::string &name) {
     if (name.empty()) {
         reachabilityNames_.erase(value);
     } else {
@@ -88,31 +89,31 @@ State::reachabilityName(unsigned value, const std::string &name) {
 }
 
 std::string
-State::reachabilityName(unsigned value) const {
+State::reachabilityName(Reachability::ReasonFlags value) const {
     std::string s;
-    if (reachabilityNames_.getOptional(value).assignTo(s))
+    if (reachabilityNames_.getOptional(value.vector()).assignTo(s))
         return s;
 
     std::vector<std::string> names;
-    for (size_t i = 0; i < 8*sizeof(unsigned); ++i) {
-        unsigned bit = 1U << i;
-        if ((value & bit) != 0) {
-            if (reachabilityNames_.getOptional(bit).assignTo(s)) {
+    for (size_t i = 0; i < 8*sizeof(Reachability::ReasonFlags::Vector); ++i) {
+        Reachability::ReasonFlags bit(1U << i);
+        if (value.isAllSet(bit)) {
+            if (reachabilityNames_.getOptional(bit.vector()).assignTo(s)) {
                 // void
-            } else if (bit >= Reachability::USER_DEFINED_0) {
+            } else if (bit.vector() >= Reachability::USER_DEFINED_0) {
                 s = "user-defined";
-                for (size_t j=0; j < 8*sizeof(unsigned); j++) {
-                    if (bit >> j == Reachability::USER_DEFINED_0) {
+                for (size_t j=0; j < 8*sizeof(Reachability::ReasonFlags::Vector); j++) {
+                    if (bit.vector() >> j == Reachability::USER_DEFINED_0) {
                         s += "-" + StringUtility::numberToString(j);
                         break;
                     }
                 }
-            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit)) {
+            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit.vector())) {
                 s = cs;
                 BOOST_FOREACH (char &ch, s)
                     ch = tolower(ch);
             } else {
-                s = StringUtility::toHex2(bit, 8*sizeof(unsigned), false, false);
+                s = StringUtility::toHex2(bit.vector(), 8*sizeof(Reachability::ReasonFlags::Vector), false, false);
             }
             names.push_back(s);
         }
@@ -412,7 +413,7 @@ commandLineSwitches(Settings &settings) {
     using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
-    sg.name("out");
+    sg.name("unparse");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
            "blocks, data blocks, and functions to a textual representation.");
 
@@ -737,6 +738,69 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
     }
 }
 
+typedef boost::variant<P2::BasicBlock::Ptr, P2::DataBlock::Ptr> InsnsOrData;
+
+struct AddressVisitor: public boost::static_visitor<rose_addr_t> {
+    template<class T>
+    rose_addr_t operator()(const T& a) const {
+        return a->address();
+    }
+};
+
+static bool
+increasingAddress(const InsnsOrData &a, const InsnsOrData &b) {
+    rose_addr_t aVa = boost::apply_visitor(AddressVisitor(), a);
+    rose_addr_t bVa = boost::apply_visitor(AddressVisitor(), b);
+    return aVa < bVa;
+}
+
+struct EmitBlockVisitor: public boost::static_visitor<> {
+    std::ostream &out;
+    P2::Function::Ptr function;
+    rose_addr_t &nextBlockVa;
+    State &state;
+
+    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, rose_addr_t &nextBlockVa, State &state)
+        : out(out), function(function), nextBlockVa(nextBlockVa), state(state) {}
+
+    void operator()(const P2::BasicBlock::Ptr &bb) const {
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
+        if (bb->address() != *function->basicBlockAddresses().begin()) {
+            if (bb->address() > nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip forward " <<StringUtility::plural(bb->address() - nextBlockVa, "bytes") <<"\n";
+            } else if (bb->address() < nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bb->address(), "bytes") <<"\n";
+            }
+        }
+        state.frontUnparser().emitBasicBlock(out, bb, state);
+        if (bb->nInstructions() > 0) {
+            nextBlockVa = bb->fallthroughVa();
+        } else {
+            nextBlockVa = bb->address();
+        }
+    }
+
+    void operator()(const P2::DataBlock::Ptr &db) const {
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
+        if (db->address() != *function->basicBlockAddresses().begin()) {
+            if (db->address() > nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip forward " <<StringUtility::plural(db->address() - nextBlockVa, "bytes") <<"\n";
+            } else if (db->address() < nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - db->address(), "bytes") <<"\n";
+            }
+        }
+        state.frontUnparser().emitDataBlock(out, db, state);
+        nextBlockVa = db->address() + db->size();
+    }
+};
+
+
 void
 Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     if (nextUnparser()) {
@@ -751,33 +815,27 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
             }
         }
 
-        rose_addr_t nextBlockVa = 0;
+        // Get all the basic blocks and data blocks and sort them by starting address. Be careful because data blocks might
+        // appear more than once since they can be owned by both the function and by multiple basic blocks.
+        std::set<P2::DataBlock::Ptr> dblocks;
+        std::vector<InsnsOrData> blocks;
+        blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
         BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
-            state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\n";
             if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
-                if (bbVa != *function->basicBlockAddresses().begin()) {
-                    if (bbVa > nextBlockVa) {
-                        state.frontUnparser().emitLinePrefix(out, state);
-                        out <<";;; skip forward " <<StringUtility::plural(bbVa - nextBlockVa, "bytes") <<"\n";
-                    } else if (bbVa < nextBlockVa) {
-                        state.frontUnparser().emitLinePrefix(out, state);
-                        out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bbVa, "bytes") <<"\n";
-                    }
-                }
-                state.frontUnparser().emitBasicBlock(out, bb, state);
-                if (bb->nInstructions() > 0) {
-                    nextBlockVa = bb->fallthroughVa();
-                } else {
-                    nextBlockVa = bb->address();
-                }
+                blocks.push_back(bb);
+                BOOST_FOREACH (const P2::DataBlock::Ptr db, bb->dataBlocks())
+                    dblocks.insert(db);
             }
         }
-        BOOST_FOREACH (P2::DataBlock::Ptr db, function->dataBlocks()) {
-            state.frontUnparser().emitLinePrefix(out, state);
-            out <<"\n";
-            state.frontUnparser().emitDataBlock(out, db, state);
-        }
+        BOOST_FOREACH (const P2::DataBlock::Ptr &db, function->dataBlocks())
+            dblocks.insert(db);
+        blocks.insert(blocks.end(), dblocks.begin(), dblocks.end());
+        std::sort(blocks.begin(), blocks.end(), increasingAddress);
+
+        // Emit each basic- or data-block
+        rose_addr_t nextBlockVa = function->address();
+        BOOST_FOREACH (const InsnsOrData &block, blocks)
+            boost::apply_visitor(EmitBlockVisitor(out, function, nextBlockVa, state), block);
     }
 }
 
@@ -1095,8 +1153,10 @@ Base::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockEpilogue(out, bb, state);
     } else {
-        BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks())
-            state.frontUnparser().emitDataBlock(out, db, state);
+        BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks()) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<"\t;; related " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+        }
         if (settings().bblock.cfg.showingSuccessors)
             state.frontUnparser().emitBasicBlockSuccessors(out, bb, state);
     }
@@ -1209,7 +1269,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 state.currentPredSuccId(EdgeArrows::cfgEdgeSourceEndpoint(edge->id()));
                 state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);// nock end of arrow
             }
-            
+
             // Find a matching successor that we haven't emitted yet
             bool emitted = false;
             for (size_t i=0; i<successors.size(); ++i) {
@@ -1289,7 +1349,8 @@ Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &b
     } else if (!state.cfgVertexReachability().empty()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
         if (vertex != state.partitioner().cfg().vertices().end()) {
-            if (unsigned reachable = state.isCfgVertexReachable(vertex->id())) {
+            Reachability::ReasonFlags reachable = state.isCfgVertexReachable(vertex->id());
+            if (reachable.isAnySet()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<"\t;; reachable from: " <<state.reachabilityName(reachable) <<"\n";
             } else {
@@ -1320,6 +1381,18 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockPrologue(out, db, state);
     } else {
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+        if (P2::Function::Ptr function = state.currentFunction()) {
+            BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+                if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
+                    if (bb->dataBlockExists(db)) {
+                        state.frontUnparser().emitLinePrefix(out, state);
+                        out <<"\t;; referenced by " <<bb->printableName() <<"\n";
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1327,9 +1400,29 @@ void
 Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockBody(out, db, state);
-    } else {
-        state.frontUnparser().emitLinePrefix(out, state);
-        out <<"data blocks not implemented yet";
+    } else if (AddressInterval where = db->extent()) {
+        if (MemoryMap::Ptr map = state.partitioner().memoryMap()) {
+            // hexdump format
+            std::ostringstream prefix;
+            state.frontUnparser().emitLinePrefix(prefix, state);
+            HexdumpFormat fmt;
+            fmt.prefix = prefix.str();
+            fmt.multiline = true;
+
+            // Read the data in chunks and produce a hexdump
+            while (where) {
+                uint8_t buf[8192];                      // multiple of 16
+                size_t maxSize = std::min(where.size(), (rose_addr_t)(sizeof buf));
+                AddressInterval read = state.partitioner().memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
+                SgAsmExecutableFileFormat::hexdump(out, read.least(), buf, read.size(), fmt);
+                if (read.greatest() == where.greatest())
+                    break;                              // avoid possible overflow
+                where = AddressInterval::hull(read.greatest()+1, where.greatest());
+            }
+        } else {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<";;; no memory map from which to obtain the static block data\n";
+        }
     }
 }
 

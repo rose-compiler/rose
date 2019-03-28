@@ -1,4 +1,3 @@
-
 add_executable(mint
   main.C
   midend/MintCudaMidend.C
@@ -41,4 +40,3 @@ add_executable(mint
 )
 
 target_link_libraries(mint ROSE_DLL ${Boost_LIBRARIES})
-

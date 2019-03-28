@@ -286,9 +286,14 @@ private:
     NodeLabelList& exit_nodes, NodeLabelList* break_nodes,
     NodeLabelList* return_nodes, NodeLabelList* continue_nodes);
 
+#if __cplusplus < 201103L
   IRStmtType build_stmt (Node* prev_node, StmtHandle, NodeLabelList& exit_nodes, NodeLabelList* break_nodes,
                             NodeLabelList* return_nodes, NodeLabelList* continue_nodes)
     throw (Unexpected_Break, Unexpected_Return, Unexpected_Continue);
+#else
+  IRStmtType build_stmt (Node* prev_node, StmtHandle, NodeLabelList& exit_nodes, NodeLabelList* break_nodes,
+                            NodeLabelList* return_nodes, NodeLabelList* continue_nodes);
+#endif
   IRStmtType build_CFG_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,
                              NodeLabelList* return_nodes);
   IRStmtType build_CFG_end_tested_loop (Node* prev_node, StmtHandle th, NodeLabelList& exit_nodes,

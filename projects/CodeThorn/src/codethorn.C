@@ -397,6 +397,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
+    ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
@@ -578,7 +579,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.9.1\n";
+    cout << "CodeThorn version 1.10.3\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1115,7 +1116,7 @@ int main( int argc, char * argv[] ) {
 
     // Start execution
     mfacilities.control(args["log-level"].as<string>());
-    logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
+    SAWYER_MESG(logger[TRACE]) << "Log level is " << args["log-level"].as<string>() << endl;
 
     if (args.count("generate-automata")) {
       generateAutomata();
@@ -1154,6 +1155,9 @@ int main( int argc, char * argv[] ) {
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
     analyzerSetup(analyzer, logger);
+   
+    // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
+    // needs to set CFAnalysis functionResolutionMode
 
     if(args.count("threads")) {
       int numThreads=args["threads"].as<int>();
@@ -1231,7 +1235,7 @@ int main( int argc, char * argv[] ) {
 
     // handle RERS mode: reconfigure options
     if(args.getBool("rersmode")) {
-      logger[TRACE] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+      SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       args.setOption("stderr-like-failed-assert",true);
     }
 
@@ -1253,17 +1257,17 @@ int main( int argc, char * argv[] ) {
     analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
-    logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "INIT: Parsing and creating AST: started."<<endl;
     timer.stop();
     timer.start();
 
     vector<string> argvList(argv,argv+argc);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
-      logger[TRACE]<<"selected OpenMP AST."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
-    logger[TRACE] << "Parsing and creating AST: finished."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "Parsing and creating AST: finished."<<endl;
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     /* perform inlining before variable ids are computed, because
@@ -1271,12 +1275,12 @@ int main( int argc, char * argv[] ) {
     Normalization lowering;
     if(args.getBool("normalize-fcalls")) {
       lowering.normalizeAst(sageProject,1);
-      logger[TRACE]<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
     if(args.getBool("normalize-all")) {
       lowering.normalizeAst(sageProject,2);
-      logger[TRACE]<<"STATUS: normalize all expressions."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
 
     /* Context sensitive analysis using call strings.
@@ -1296,7 +1300,7 @@ int main( int argc, char * argv[] ) {
       }
       inliner->inlineFunctions(sageProject);
       size_t numInlined=inliner->getNumInlinedFunctions();
-      logger[TRACE]<<"inlined "<<numInlined<<" functions"<<endl;
+      SAWYER_MESG(logger[TRACE])<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
     {
@@ -1339,14 +1343,14 @@ int main( int argc, char * argv[] ) {
 
       // test: constant expressions
       {
-        logger[TRACE] <<"STATUS: testing constant expressions."<<endl;
+        SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
         list<SgExpression*> exprList=exprRootList(sageProject);
         logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
           if(r.isConst()) {
-            logger[TRACE]<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
+            SAWYER_MESG(logger[TRACE])<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
           }
         }
         delete evaluator;
@@ -1361,14 +1365,14 @@ int main( int argc, char * argv[] ) {
 
     // only handle pragmas if fun_name is not set on the command line
     if(option_specialize_fun_name=="") {
-      logger[TRACE]<<"STATUS: handling pragmas started."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas started."<<endl;
       PragmaHandler pragmaHandler;
       pragmaHandler.handlePragmas(sageProject,analyzer);
       // TODO: requires more refactoring
       option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
       // unparse specialized code
       //sageProject->unparse(0,0);
-      logger[TRACE]<<"STATUS: handling pragmas finished."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas finished."<<endl;
     } else {
       // do specialization and setup data structures
       analyzer->setSkipSelectedFunctionCalls(true);
@@ -1379,7 +1383,7 @@ int main( int argc, char * argv[] ) {
       int numSubst=0;
       if(option_specialize_fun_name!="") {
         Specialization speci;
-        logger[TRACE]<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
+        SAWYER_MESG(logger[TRACE])<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
         string funNameToFind=option_specialize_fun_name;
 
@@ -1388,7 +1392,7 @@ int main( int argc, char * argv[] ) {
           int constInt=option_specialize_fun_const_list[i];
           numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer->getVariableIdMapping());
         }
-        logger[TRACE]<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+        SAWYER_MESG(logger[TRACE])<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
         int numInit=0;
         //logger[DEBUG]<<"var init spec: "<<endl;
         for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
@@ -1397,19 +1401,19 @@ int main( int argc, char * argv[] ) {
           //logger[DEBUG]<<"checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
           numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer->getVariableIdMapping());
         }
-        logger[TRACE]<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+        SAWYER_MESG(logger[TRACE])<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
       }
     }
 
     if(args.count("rewrite")) {
-      logger[TRACE]<<"STATUS: rewrite started."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
       rewriteSystem.rewriteAst(root,analyzer->getVariableIdMapping(), false, true/*eliminate compound assignments*/);
       // TODO: Outputs statistics
       cout <<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
       sageProject->unparse(0,0);
-      logger[TRACE]<<"STATUS: generated rewritten program."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: generated rewritten program."<<endl;
       exit(0);
     }
 
@@ -1417,21 +1421,21 @@ int main( int argc, char * argv[] ) {
       // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer->
       set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
       analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      logger[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
     }
     {
       AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
-      logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
     if(args.getBool("eliminate-compound-assignments")) {
-      logger[TRACE]<<"STATUS: Elimination of compound assignments started."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-      logger[TRACE]<<"STATUS: Elimination of compound assignments finished."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
-    logger[TRACE]<< "INIT: Checking input program."<<endl;
+    SAWYER_MESG(logger[TRACE])<< "INIT: Checking input program."<<endl;
     CodeThornLanguageRestrictor lr;
     //lr.checkProgram(root);
     timer.start();
@@ -1453,7 +1457,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
+    SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer->initializeSolver(option_specialize_fun_name,root,true);
@@ -1509,7 +1513,7 @@ int main( int argc, char * argv[] ) {
 
     double extractAssertionTracesTime= 0;
     if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
-      logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
+      SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
       extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
@@ -1534,7 +1538,7 @@ int main( int argc, char * argv[] ) {
     }
     if(args.getBool("eliminate-stg-back-edges")) {
       int numElim=analyzer->getTransitionGraph()->eliminateBackEdges();
-      logger[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
     if(args.getBool("status")) {
@@ -1632,12 +1636,12 @@ int main( int argc, char * argv[] ) {
     }
     
     if(args.getBool("std-io-only")) {
-      logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
+      SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
       if (args.getBool("keep-error-states")) {
-	analyzer->reduceStgToInOutAssertStates();
+        analyzer->reduceStgToInOutAssertStates();
       } else {
-	analyzer->reduceStgToInOutStates();
+        analyzer->reduceStgToInOutStates();
       }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
@@ -1654,7 +1658,7 @@ int main( int argc, char * argv[] ) {
       string ltl_filename = args["check-ltl"].as<string>();
       if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
         if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer->getModeLTLDriven()) {
-          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
+          cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
           infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1665,14 +1669,15 @@ int main( int argc, char * argv[] ) {
           eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
         }
         if (!args.getBool("std-io-only") &&!analyzer->getModeLTLDriven()) {
-          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
+          cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
-	  if (args.getBool("keep-error-states")) {
-	    analyzer->reduceStgToInOutAssertStates();
-	  } else {
-	    analyzer->reduceStgToInOutStates();
-	  }
-	  stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+          printStgSize(analyzer->getTransitionGraph(), "before reducing non-I/O states");
+          if (args.getBool("keep-error-states")) {
+            analyzer->reduceStgToInOutAssertStates();
+          } else {
+            analyzer->reduceStgToInOutStates();
+          }
+          stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
           printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
@@ -1691,14 +1696,14 @@ int main( int argc, char * argv[] ) {
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
         ltlInAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "LTL input alphabet explicitly selected: "<< setstring << endl;
+        SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (args.count("ltl-out-alphabet")) {
         string setstring=args["ltl-out-alphabet"].as<string>();
         ltlOutAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "LTL output alphabet explicitly selected: "<< setstring << endl;
+        SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
       }
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
@@ -1707,9 +1712,9 @@ int main( int argc, char * argv[] ) {
 	analyzer->setSpotConnection(&spotConnection);
       }
 
-      logger[TRACE] << "STATUS: generating LTL results"<<endl;
+      SAWYER_MESG(logger[TRACE]) << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
-      logger[TRACE] << "LTL: check properties."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
       if (args.count("single-property")) {
 	int propertyNum = args["single-property"].as<int>();
 	spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
@@ -1717,9 +1722,9 @@ int main( int argc, char * argv[] ) {
 	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
-      logger[TRACE] << "LTL: get results from spot connection."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
       ltlResults = spotConnection.getLtlResults();
-      logger[TRACE] << "LTL: results computed."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
 
       if (args.isDefined("cegpra-ltl") || (args.isDefined("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
         if (args.count("csv-stats-cegpra")) {
@@ -1750,7 +1755,7 @@ int main( int argc, char * argv[] ) {
       }
       if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
         std::string csv_filename = args["csv-spot-ltl"].as<string>();
-        logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
+        SAWYER_MESG(logger[TRACE]) << "STATUS: writing ltl results to file: " << csv_filename << endl;
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
       if (args.count("csv-stats-size-and-ltl")) {
@@ -1777,7 +1782,7 @@ int main( int argc, char * argv[] ) {
       assertionExtractor.annotateAst();
       AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements  (sageProject,"ctgen-pre-condition");
-      logger[TRACE] << "STATUS: Generated assertions."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "STATUS: Generated assertions."<<endl;
     }
 
     double arrayUpdateExtractionRunTime=0.0;
@@ -1810,8 +1815,8 @@ int main( int argc, char * argv[] ) {
       }
       Specialization speci;
       ArrayUpdatesSequence arrayUpdates;
-      logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
-      logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      SAWYER_MESG(logger[TRACE]) <<"STATUS: performing array analysis on STG."<<endl;
+      SAWYER_MESG(logger[TRACE]) <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
       bool useRuleConstSubstitution=args.getBool("rule-const-subst");
       bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
@@ -1835,7 +1840,7 @@ int main( int argc, char * argv[] ) {
       if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
       }
-      logger[TRACE] <<"STATUS: establishing array-element SSA numbering."<<endl;
+      SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
@@ -1999,14 +2004,14 @@ int main( int argc, char * argv[] ) {
       assert(analyzer->startFunRoot);
       //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
       //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-      logger[TRACE] << "Option VIZ: generate ast node info."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
       analyzer->generateAstNodeInfo(sageProject);
       cout << "generating AST node info ... "<<endl;
       dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
       write_file("ast.dot", dotFile);
       cout << "generated ast.dot."<<endl;
 
-      logger[TRACE] << "Option VIZ: generating cfg dot file ..."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
       write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
@@ -2044,16 +2049,16 @@ int main( int argc, char * argv[] ) {
           exit(1);
         }
         string fileName=args["iseq-file"].as<string>();
-        logger[TRACE] <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
+        SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
         IOSequenceGenerator iosgen;
         if(args.count("iseq-random-num")) {
           int randomNum=args["iseq-random-num"].as<int>();
-          logger[TRACE] <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
+          SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
           iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
         } else {
           iosgen.computeInputPathSet(iseqLen,*analyzer->getTransitionGraph());
         }
-        logger[TRACE] <<"STATUS: generating input sequence file "<<fileName<<endl;
+        SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
       } else {
         if(args.count("iseq-length")) {
@@ -2126,11 +2131,11 @@ void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment, str
   long inStates = model->numberOfObservableStates(true, false, false);
   long outStates = model->numberOfObservableStates(false, true, false);
   long errStates = model->numberOfObservableStates(false, false, true);
-  cout << "STATUS: STG size";
+  cout << "STATUS: STG size ";
   if (optionalComment != "") {
-    cout << " (" << optionalComment << ")";
+    cout << "(" << optionalComment << "): ";
   }
-  cout << ". #transitions: " << model->size();
+  cout << "#transitions: " << model->size();
   cout << ", #states: " << model->estateSet().size()
     << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)" << endl;
   if (csvOutput) {

@@ -75,8 +75,17 @@ enum Boolean {
  *
  *  The substring "%o" is replaced by the quoted output name, and the substring "%f" is replaced by the space separated list of
  *  quoted input names.  Bourne shell escape syntax is used. Returns true if the link command was successful, false otherwise. */
-bool tryLink(const std::string &command, std::string outputName, std::vector<std::string> inputNames,
-             Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols = FixUndefinedSymbols::YES);
+bool tryLink(const std::string &command, const boost::filesystem::path &outputName,
+             std::vector<boost::filesystem::path> inputNames, Sawyer::Message::Stream &errors,
+             FixUndefinedSymbols::Boolean fixUndefinedSymbols = FixUndefinedSymbols::YES);
+
+/** Extract object files from a static archive.
+ *
+ *  Given the name of an archive file, extract the member files and return a list of object files. The files are extracted into
+ *  a subdirectory of the specified @p directory. The name of the subdirectory is the same as the file name (not directory
+ *  part) of the archive. */
+std::vector<boost::filesystem::path>
+extractStaticArchive(const boost::filesystem::path &directory, const boost::filesystem::path &archive);
 
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */

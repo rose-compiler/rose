@@ -236,11 +236,6 @@ RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
 }
 
 SValuePtr
-RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
-    return isEqual(a, b);
-}
-
-SValuePtr
 RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
     return equalToZero(xor_(a, b));
 }

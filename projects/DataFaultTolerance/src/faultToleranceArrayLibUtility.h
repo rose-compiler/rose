@@ -17,7 +17,7 @@ using namespace std;
 /*
  * Block Parity Algorithm
  */
-typedef struct hashVal
+struct hashVal
 {
 	vector<bool> parity_col;
 	unsigned int parity_row;

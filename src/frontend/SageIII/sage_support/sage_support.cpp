@@ -24,6 +24,7 @@
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
+#   include <Partitioner2/ModulesElf.h>
 #endif
 
 #include <algorithm>
@@ -33,11 +34,12 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/FileSystem.h>
 
+
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
 // We have not identified why this is required.  This fixes the problem of
 // a link error for the "std::ostream & operator<<()" used with "std::vector<bool>".
-std::ostream & 
+std::ostream &
 operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m)
    {
      printf ("Inside of std::ostream & operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m): A test! \n");
@@ -54,6 +56,7 @@ using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
+using namespace Sawyer::Message::Common;
 
 const string FileHelper::pathDelimiter = "/";
 
@@ -65,7 +68,7 @@ extern const std::string ROSE_GFORTRAN_PATH;
 extern const std::string ROSE_OFP_VERSION_STRING;
 */
 
-// DQ (12/6/2014): Moved this from the unparser.C fle to here so that it can 
+// DQ (12/6/2014): Moved this from the unparser.C fle to here so that it can
 // be called before any processing of the AST (so that it relates to the original
 // AST before transformations).
 void buildTokenStreamMapping(SgSourceFile* sourceFile);
@@ -120,7 +123,7 @@ SgValueExp::get_constant_folded_value_as_string() const
                s = buffer;
                break;
              }
-          
+
          case V_SgLongLongIntVal:
          {
             const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
@@ -343,6 +346,29 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (2/12/2019): Adding support for SgWcharVal.
+          case V_SgWcharVal:
+             {
+               const SgWcharVal* wideCharValueExpression = isSgWcharVal(this);
+               ROSE_ASSERT(wideCharValueExpression != NULL);
+            // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
+            // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
+            // s = charValueExpression->get_value();
+               char value = wideCharValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = wideCharValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
+               break;
+             }
+
           default:
              {
                printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
@@ -372,7 +398,8 @@ whatTypeOfFileIsThis( const string & name )
 
   // Use "-b" for brief mode!
      string commandLine = "file " + name;
-     system(commandLine.c_str());
+     if (system(commandLine.c_str()))
+         mlog[ERROR] <<"command failed: \"" <<StringUtility::cEscape(commandLine) <<"\"\n";
    }
 
 
@@ -496,7 +523,7 @@ bool roseInstallPrefix(std::string& result) {
  // This is built on the stack and initialized using the function: dladdr().
     Dl_info info;
 
- // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized 
+ // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized
  // by dladdr(), so this is likely redundant; but we can initialize it anyway.
  // info.dli_fname = NULL;
     info.dli_fname = "";
@@ -504,18 +531,18 @@ bool roseInstallPrefix(std::string& result) {
     int retval = dladdr((void*)(&roseInstallPrefix), &info);
     if (retval == 0) goto default_check;
 
- // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to 
+ // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to
  // a position inside a DLL and thus is a region of memory controled/monitored or allocated by Insure++. Thus
  // Insure++ is marking this as an issue while it is not an issue. The reported issue by Insure++ is: "READ_WILD",
  // implying that a pointer set to some wild area of memory is being read.
 #if __INSURE__
  // Debugging information. Trying to understand this insure issue and the value of "info.dli_fname" data member.
  // if (retval != 0)
- //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???"); 
+ //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???");
 
     _Insure_checking_enable(0); // disable Insure++ checking
 #endif
- // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(), 
+ // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(),
  // but I think it is always non-NULL (added assertion and put back the original code).
  // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
     ROSE_ASSERT(info.dli_fname != NULL);
@@ -537,7 +564,7 @@ bool roseInstallPrefix(std::string& result) {
     char* prefixCS = dirname(libdirCopy2);
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
-    free(libdirCopy2); 
+    free(libdirCopy2);
 
     // Zack Galbreath, June 2013
     // When building with CMake, detect build directory by searching
@@ -817,14 +844,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      if (fileList.empty() == false)
         {
-if (fileList.size() != 1){
-cout << endl;
-for ( Rose_STL_Container<string>::iterator i = fileList.begin(); i != fileList.end(); i++) {
-cout << (*i) << endl;
-}
-cout << endl;
-cout.flush();
-}
+            if (fileList.size() != 1){
+                cout << endl;
+                for ( Rose_STL_Container<string>::iterator i = fileList.begin(); i != fileList.end(); i++) {
+                    cout << (*i) << endl;
+                }
+                cout << endl;
+                cout.flush();
+            }
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
@@ -858,7 +885,7 @@ cout.flush();
           //if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
           //     printf ("sourceFilename encountered an error in filename\n");
        #endif
-       
+
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
@@ -1153,7 +1180,7 @@ cout.flush();
                                 // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                                    file->set_sourceFileUsesCppFileExtension(false);
 
-                                // Note that we can use the C++ unparser to provide output that will support inspection of 
+                                // Note that we can use the C++ unparser to provide output that will support inspection of
                                 // code from the AST, but this is a temporary solution.  The only correct setting is to use
                                 // the ongoing support within the Java specific unparser.
                                 // file->set_outputLanguage(SgFile::e_C_output_language);
@@ -1301,139 +1328,87 @@ cout.flush();
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-                                }
-                               else
-                                {
-                                // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
-#if 0
-                                   printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-#endif
-                                // Detect if this is a binary (executable) file!
-                                   bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-                                   bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+                                } else if (true) {
+                                   // This is not a source file recognized by ROSE, so it is either a binary executable or
+                                   // library archive or something that we can't process.
+                                   static bool didWarn = false;
+                                   if (!didWarn) {
+                                       mlog[WARN]
+                                           <<"global \"::frontend\" is being used for parsing binary analysis inputs\n"
+                                           <<"  It is better to use the Rose::BinaryAnaysis::Partitioner2::Engine interface\n"
+                                           <<"  which is dedicated to binary analysis and has more features and better\n"
+                                           <<"  control over the details. The closest replacement to \"::frontend\" is\n"
+                                           <<"  Rose::BinaryAnalysis::Partitioner2::Engine::frontend.\n";
+                                       didWarn = true;
+                                   }
 
-                                // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
-                                // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
-                                   if (!isBinaryExecutable && !isLibraryArchive)
-                                       isBinaryExecutable = true;
+                                   // Build a SgBinaryComposite to represent either the binary executable or the library
+                                   // archive.
+                                   SgBinaryComposite *binary = new SgBinaryComposite(argv,  project);
+                                   file = binary;
+                                   file->set_sourceFileUsesBinaryFileExtension(true);
+                                   file->set_outputLanguage(SgFile::e_Binary_language);
+                                   file->set_inputLanguage(SgFile::e_Binary_language);
 
-                                // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
-                                   if (isBinaryExecutable == true || isLibraryArchive == true)
-                                      {
-                                     // Build a SgBinaryComposite to represent either the binary executable or the library archive.
-                                        SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
-                                        file = binary;
+                                   // If this is an object file being processed for binary analysis then mark it as an object
+                                   // file so that we can trigger analysis to mark the sections that will be disassembled.
+                                   string binaryFileName = file->get_sourceFileNameWithPath();
+                                   if (CommandlineProcessing::isObjectFilename(binaryFileName))
+                                       file->set_isObjectFile(true);
 
-                                     // This should have already been setup!
-                                     // file->initializeSourcePosition();
+                                   // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
+                                   // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
+                                   file->set_binary_only(true);
 
-                                        file->set_sourceFileUsesBinaryFileExtension(true);
+                                   // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C
+                                   // preprocessor.
+                                   file->set_requires_C_preprocessor(false);
+                                   ASSERT_not_null(file->get_file_info());
 
-                                     // DQ (11/15/2017): This this convention of setting the output file type.
-                                     // file->set_sourceFileUsesCobolFileExtension(true);
-                                     // file->set_outputLanguage(SgFile::e_Cobol_language);
-                                        file->set_outputLanguage(SgFile::e_Binary_language);
-
-                                     // DQ (11/15/2017): Set the input language as well.
-                                        file->set_inputLanguage(SgFile::e_Binary_language);
-
-                                     // If this is an object file being processed for binary analysis then mark it as an object
-                                     // file so that we can trigger analysis to mar the sections that will be disassembled.
-                                        string binaryFileName = file->get_sourceFileNameWithPath();
-                                        if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
-                                           {
-                                             file->set_isObjectFile(true);
-                                           }
-
-                                      // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
-                                      // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
-                                      file->set_binary_only(true);
-
-#if 0
-                                      printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 2) \n");
-#endif
-                                      // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                                      file->set_requires_C_preprocessor(false);
-
-                                      ROSE_ASSERT(file->get_file_info() != NULL);
-
-                                      if (isLibraryArchive == true)
-                                      {
+                                   if (isLibraryArchiveFile(sourceFilename)) {
+                                       // WARNING: Static archives aren't handled correctly here (called from ::frontend)
+                                       // because we're already at too low a level in the call chain to really do things
+                                       // properly. They should have been either linked to form an executable or replaced by a
+                                       // list of object files that all go into one SgAsmInterpretation. It's better to handle
+                                       // binary analysis command-line arguments with the
+                                       // Rose::BinaryAnalysis::Partitioner2::Engine interface.
 #ifdef _MSC_VER
-                                          /* The following block of code deals with *.a library archives files found on
-                                           * Unix systems. I added better temporary file and directory names, but this
-                                           * block of code also has commands that likely won't run on Windows
-                                           * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
-                                          ROSE_ASSERT(!"Windows not supported");
-#else
-
-                                          // This is the case of processing a library archive (*.a) file. We want to process these files so that
-                                          // we can test the library identification mechanism to build databases of the binary functions in
-                                          // libraries (so that we detect these in staticaly linked binaries).
-                                          ROSE_ASSERT(isBinaryExecutable == false);
-
-                                          // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and
-                                          // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
-                                          string archiveName = file->get_sourceFileNameWithPath();
-
-                                          printf ("archiveName = %s \n",archiveName.c_str());
-
-                                          // Mark this as a library archive.
-                                          file->set_isLibraryArchive(true);
-
-                                          // Extract the archive into a temporary directory and create a file in that
-                                          // directory that will have the names of objects stored in the archive.  We have
-                                          // to be careful about name choices since this function could be called multiple
-                                          // times from one process, and by multiple processes.
-                                          static int tmpDirectorySequence = 0;
-                                          string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
-                                              "-" + StringUtility::numberToString(tmpDirectorySequence++);
-                                          string objectNameFile = tmpDirectory + "/object_names.txt";
-                                          string commandLine = "mkdir -p " + tmpDirectory +
-                                              "&& cd " + tmpDirectory +
-                                              "&& ar -vox " + archiveName +
-                                              ">" + objectNameFile;
-                                          printf ("Running System Command: %s \n",commandLine.c_str());
-
-                                          // Run the system command...
-                                          system(commandLine.c_str());
-
-                                          vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
-                                          vector<string> objectFileList;
-
-                                          for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
-                                          {
-                                              // Get each word in the file of names (*.o)
-                                              string word = *i;
-                                              // printf ("word = %s \n",word.c_str());
-                                              size_t wordSize = word.length();
-                                              string targetSuffix = ".o";
-                                              size_t targetSuffixSize = targetSuffix.length();
-                                              if (wordSize > targetSuffixSize &&
-                                                      word.substr(wordSize-targetSuffixSize) == targetSuffix)
-                                                  objectFileList.push_back(tmpDirectory + "/" + word);
-                                          }
-
-                                          for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-                                          {
-                                              // Get each object file name (*.o)
-                                              string objectFileName = *i;
-                                              printf ("objectFileName = %s \n",objectFileName.c_str());
-                                              binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %" PRIuPTR " \n",binary->get_libraryArchiveObjectFileNameList().size());
-                                          }
-#if 0
-                                          printf ("Exiting in processing a library archive file. \n");
-                                          // ROSE_ASSERT(false);
+                                       /* The following block of code deals with *.a library archives files found on Unix
+                                        * systems. I added better temporary file and directory names, but this block of code
+                                        * also has commands that likely won't run on Windows systems, so I'm commenting out the
+                                        * whole block. [RPM 2010-11-03] */
+                                       ASSERT_not_implemented("Windows not supported");
 #endif
-#endif /* _MSC_VER */
-                                      }
-#if 0
-                                   printf ("Processed as a binary file! \n");
-#endif
-                                 }
-                                else
-                                 {
+                                       // This is the case of processing a library archive (*.a) file. We want to process these
+                                       // files so that we can test the library identification mechanism to build databases of
+                                       // the binary functions in libraries (so that we detect these in staticaly linked
+                                       // binaries).
+                                       ROSE_ASSERT(!isBinaryExecutableFile(sourceFilename));
+
+                                       // Note that since a archive can contain many *.o files each of these will be a
+                                       // SgAsmGenericFile object and the SgBinaryComposite will contain a list of
+                                       // SgAsmGenericFile objects to hold them all.
+                                       string archiveName = file->get_sourceFileNameWithPath();
+                                       file->set_isLibraryArchive(true);
+
+                                       // Extract the archive into a temporary directory and create a file in that directory
+                                       // that will have the names of objects stored in the archive.  We have to be careful
+                                       // about name choices since this function could be called multiple times from one
+                                       // process, and by multiple processes.
+                                       boost::filesystem::path tmpDirectory =
+                                           boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
+                                       boost::filesystem::create_directory(tmpDirectory);
+                                       std::vector<boost::filesystem::path> memberNames =
+                                           BinaryAnalysis::Partitioner2::ModulesElf::extractStaticArchive(tmpDirectory,
+                                                                                                          archiveName);
+                                       BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
+                                           binary->get_libraryArchiveObjectFileNameList().push_back(memberName.native());
+                                   }
+#endif // ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+                               }
+                              else
+                               {
                                    file = new SgUnknownFile ( argv,  project );
 
                                 // This should have already been setup!
@@ -1459,7 +1434,6 @@ cout.flush();
                                    outputTypeOfFileAndExit(sourceFilename);
                                  }
                             }
-                       }
                        }
                   }
 
@@ -1495,7 +1469,7 @@ cout.flush();
   // file->display("SgFile* determineFileType(): before calling file->callFrontEnd()");
 
 #if 0
-  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all 
+  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all
   // of the SgSourceFile IR nodes are constructed.
 
   // The frontend is called explicitly outside the constructor since that allows for a cleaner
@@ -1551,8 +1525,8 @@ cout.flush();
         }
 #else
 #if 0
-  // DQ (6/12/2013): I think this is required to support having all of the SgSourceFile 
-  // IR nodes pre-built as part of the new Java support required to be better performance 
+  // DQ (6/12/2013): I think this is required to support having all of the SgSourceFile
+  // IR nodes pre-built as part of the new Java support required to be better performance
   // in the Java frontend AST translation.
      printf ("***************************************************************************************************************************************************************************** \n");
      printf ("***************************************************************************************************************************************************************************** \n");
@@ -1591,10 +1565,10 @@ cout.flush();
    }
 
 
-void 
+void
 SgFile::runFrontend(int & nextErrorCode)
 {
-  // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the 
+  // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the
   // invocation of the frontend on each SgFile IR node.
 
 #if 0
@@ -1617,7 +1591,7 @@ SgFile::runFrontend(int & nextErrorCode)
   // DQ (6/13/2013): This is wrong, the parent of the SgFile is the SgFileList IR node.
   // ROSE_ASSERT(isSgProject(get_parent()) != NULL);
 
-  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all 
+  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all
   // of the SgSourceFile IR nodes are constructed.
 
   // The frontend is called explicitly outside the constructor since that allows for a cleaner
@@ -1694,7 +1668,7 @@ namespace X10c {
 //! Return a description of the outliner's command-line switches. When these switches are parsed, they will adjust settings
 //  in this @ref Outliner.
 Sawyer::CommandLine::SwitchGroup
-SgProject::commandLineSwitches() 
+SgProject::commandLineSwitches()
    {
      using namespace Sawyer::CommandLine;
 
@@ -1760,7 +1734,7 @@ SgProject::commandLineSwitches()
 
 
 Sawyer::CommandLine::SwitchGroup
-SgProject::frontendAllSwitches() 
+SgProject::frontendAllSwitches()
    {
      using namespace Sawyer::CommandLine;
 
@@ -1774,7 +1748,7 @@ SgProject::frontendAllSwitches()
 
 
 Sawyer::CommandLine::SwitchGroup
-SgProject::backendAllSwitches() 
+SgProject::backendAllSwitches()
    {
      using namespace Sawyer::CommandLine;
 
@@ -1810,7 +1784,7 @@ struct RoseSettings {
 
 // DQ (4/10/2017): Added commandline support from Saywer (most comments are from Robb's definition of this function for the tutorial/outliner.cc).
 std::vector<std::string>
-SgProject::parseCommandLine(std::vector<std::string> argv) 
+SgProject::parseCommandLine(std::vector<std::string> argv)
    {
   // Parse the tool's command-line, processing only those switches recognized by Sawyer. Then return the non-parsed switches for
   // the next stage of parsing. We have three more stages that need to process the command-line: Outliner (the old approach),
@@ -1835,7 +1809,7 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
 
   // User errors (what few will be reported since this is only a first-stage parser) should be sent to standard error instead
   // of raising an exception.  Programmer errors still cause exceptions.
-     p.errorStream(::mlog[FATAL]);
+     p.errorStream(SageBuilder::mlog[FATAL]);
 
   // All ROSE tools have some switches in common, such as --version, -V, --help, -h, -?, --log, -L, --threads, etc. We
   // include them first so they appear near the top of the documentation.  The genericSwitches returns a
@@ -1873,7 +1847,7 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
   // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
   // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
-     Rose::CommandLine::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
+     Rose::CommandLine::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser,
                                             "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
 
   // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
@@ -2038,19 +2012,18 @@ SgProject::parse(const vector<string>& argv)
 // current platform.  But we only want to inialize the JVM server if we require Fortran or Java language support.
 // So use the explicit macros defined in rose_config header file for this level of control.
 #if (defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT))
-// #ifdef USE_ROSE_INTERNAL_JAVA_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-                    Rose::Frontend::Fortran::Ofp::jserver_init();
-#endif
+// Rasmussen (2/17/2019): jserver_init() should not be called. Apparently it interferes with
+// the functionality of the JNI functions if called in JNI version 1.8.
+//#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+//
+//                  Rose::Frontend::Fortran::Ofp::jserver_init();
+//#endif
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
 #endif
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
                     Rose::Frontend::X10::X10c::jserver_init();
 #endif
-// #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
                     errorCode = parse();
 
@@ -2295,7 +2268,7 @@ SgProject::parse()
           i++;
         }
 #else
-  // The goal in this version of the code is to seperate the construction of the SgFile objects 
+  // The goal in this version of the code is to seperate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the compilation to reference the other SgFile objects on an as needed basis as part of running
   // the frontend.  This is importnat from the optimization of Java.
@@ -2417,7 +2390,7 @@ SgProject::parse()
                cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
              }
           CompilerOutputParser compilerOutputParser(this);
-          const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();  
+          const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();
           set_quotedIncludesSearchPaths(includedFilesSearchPaths.first);
           set_bracketedIncludesSearchPaths(includedFilesSearchPaths.second);
 
@@ -2463,7 +2436,7 @@ SgProject::parse()
                          << "[FATAL] "
                          << "Unable to keep going due to an unrecoverable internal error"
                          << std::endl;
-                 // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
+                 // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.
                     exit(1);
                  // return std::max(100, errorCode);
                   }
@@ -2485,7 +2458,7 @@ SgProject::parse()
                if (file->get_disable_edg_backend() == false)
                   {
 #if 0
-                 // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
+                 // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version
                  // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
                  // generateDOT ( *globalProject );
                     printf ("\n\nGenerating a dot file of the secondaryPassOverSourceFile AST (could be very large) \n");
@@ -2563,7 +2536,7 @@ SgProject::parse()
      ROSE_ASSERT(false);
 #endif
 
-  // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after 
+  // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after
   // AST Postprocessing and before any transformations are done. The token steam mapping only
   // really makes since at this position in the time-line since otherwise removed statements would
   // be included as whitespace between remaining statements.
@@ -2578,7 +2551,7 @@ SgProject::parse()
                   {
                  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
                  // if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
-                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && 
+                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) &&
                          ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
@@ -2586,7 +2559,7 @@ SgProject::parse()
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
                       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
-                      // and attaches the toke stream to the SgSourceFile IR node.  
+                      // and attaches the toke stream to the SgSourceFile IR node.
                       // *** Next we have to attached the data base ***
                          buildTokenStreamMapping(sourceFile);
 
@@ -2619,7 +2592,7 @@ SgProject::parse()
                                    printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
                                 // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
-                                // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the 
+                                // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the
                                 // the source (*.C) file.
                                    SgSourceFile* header_file = includeFile->get_source_file();
                                 // ROSE_ASSERT(header_file != NULL);
@@ -2651,7 +2624,7 @@ SgProject::parse()
                          ROSE_ASSERT(false);
 #endif
                       // DQ (11/30/2015): Add support to detect macro and include file expansions (can use the token sequence mapping if available).
-                      // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the 
+                      // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the
                       // token sequence, but usig the token sequence permit us to gather more data.
                          detectMacroOrIncludeFileExpansions(sourceFile);
                        }
@@ -2707,8 +2680,8 @@ SgProject::parse()
 
 
 //negara1 (07/29/2011)
-//The returned file path is not normalized. 
-//TODO: Return the normalized path after the bug in ROSE is fixed. The bug manifests itself when the same header file is included in 
+//The returned file path is not normalized.
+//TODO: Return the normalized path after the bug in ROSE is fixed. The bug manifests itself when the same header file is included in
 //multiple places using different paths. In such a case, ROSE treats the same file as different files and generates different IDs for them.
 string SgProject::findIncludedFile(PreprocessingInfo* preprocessingInfo) {
     IncludeDirective includeDirective(preprocessingInfo -> getString());
@@ -3330,7 +3303,7 @@ SgFile::secondaryPassOverSourceFile()
 #endif
                // Liao, 1/29/2014, handle failsafe pragmas for resilience work
                if (sourceFile->get_failsafe())
-                 FailSafe::process_fail_safe_directives (sourceFile); 
+                 FailSafe::process_fail_safe_directives (sourceFile);
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -3350,7 +3323,7 @@ SgFile::secondaryPassOverSourceFile()
                     printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
                   }
 
-            // DQ (12/13/2012): Insert pass over AST to detect "#line" directives within only the input source file and 
+            // DQ (12/13/2012): Insert pass over AST to detect "#line" directives within only the input source file and
             // accoumulate a list of filenames that will have statements incorrectly marked as being from another file.
             // This might be something we want to control via a command line option.  This sort fo processing can be
             // important for generated files (e.g. the sudo application has four generated C language files from lex
@@ -3428,7 +3401,7 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
   // DQ (12/14/2012): This functionality is being added to support applications like sudo which have generated code from tools like lex.
   // This traversal is defined to detect the use of "#line" directived and then accumulate the list of filenames used in the #line directives.
   // When #line directives are used in the input source file then we consider all statements associated with those filenames to be from the
-  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to 
+  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to
   // be unparsed in the Sg_File_Info object, this is enough to force the unparsed to output those statements.
   // TODO: It might be that this should operate on SgLocatedNode IR nodes instead of SgStatement IR nodes.
 
@@ -3502,7 +3475,7 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
                          printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
 #endif
                          string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
-#if 0                         
+#if 0
                          printf ("quotedFilename = %s \n",quotedFilename.c_str());
 #endif
                          ROSE_ASSERT(quotedFilename[0] == '\"');
@@ -3599,7 +3572,7 @@ SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDi
   // DQ (12/14/2012): This functionality is being added to support applications like sudo which have generated code from tools like lex.
   // This traversal is defined to detect the use of "#line" directived and then accumulate the list of filenames used in the #line directives.
   // When #line directives are used in the input source file then we consider all statements associated with those filenames to be from the
-  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to 
+  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to
   // be unparsed in the Sg_File_Info object, this is enough to force the unparsed to output those statements.
   // TODO: It might be that this should operate on SgLocatedNode IR nodes instead of SgStatement IR nodes.
 
@@ -3645,7 +3618,7 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
 #if 0
   // DQ (12/23/2012): This function is called from: AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute().
   // It is used to map filenames generated from #line directives into thoses associated with the
-  // physical filename.  However, now that we internally keep references to both the logical 
+  // physical filename.  However, now that we internally keep references to both the logical
   // source position AND the physical source position, this should not be required.
 
      printf ("ERROR: Now that we strore both logical and physical source position information, this function shuld not be used \n");
@@ -3739,10 +3712,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      if (requires_C_preprocessor == true)
         {
           int errorCode;
-          
-       // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
-       // we generate the command to run CPP on the input file and collect the results in a file with 
-       // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
+
+       // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then
+       // we generate the command to run CPP on the input file and collect the results in a file with
+       // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran
        // compiler with the "-E" option.
 
           vector<string> fortran_C_preprocessor_commandLine;
@@ -4359,7 +4332,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         {
           vector<string> experimentalFrontEndCommandLine;
 
-       // Push an initial argument onto the command line stack so that the command line can be interpreted 
+       // Push an initial argument onto the command line stack so that the command line can be interpreted
        // as coming from an command shell command line (where the calling program is always argument zero).
           experimentalFrontEndCommandLine.push_back("dummyArg_0");
 
@@ -4403,7 +4376,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         {
           frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
         }
-     
+
 
   // DQ (11/11/2010): There should be no include files left in the stack, see test2010_78.C and test2010_79.C when
   // compiled together on the same command line.
@@ -4560,7 +4533,7 @@ Rose::Frontend::RunSerial(SgProject* project)
           else
           {
 #if 0
-           // DQ (9/5/2014): I sometimes need to avoid the try catch mechanism for debugging 
+           // DQ (9/5/2014): I sometimes need to avoid the try catch mechanism for debugging
            // (allows better use of gdb since traces on exceptions are not supported).
               printf ("In Rose::Frontend::RunSerial(): Skipping try...catch mechanism in call to file->runFrontend(status_of_file); \n");
               file->runFrontend(status_of_file);
@@ -4730,7 +4703,7 @@ Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
 
      return status;
   // Rose::Frontend::Java::Ecj::Run
-   } 
+   }
 
 
 std::vector<std::string>
@@ -5005,7 +4978,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      // *******************************************************
 
   // Note that for the ECJ JVM support, the filename must appear last on the command line.
-  // I think it is only an intermediate test before actually calling ECJ that requires 
+  // I think it is only an intermediate test before actually calling ECJ that requires
   // this so it could be relaxed with a bit of work.
      vector<string> frontEndCommandLine;
      frontEndCommandLine.push_back(argv[0]);
@@ -5395,9 +5368,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
 #else /* default to EDG */
 
-  // DQ (1/24/2017): We want to conditionally support C++11 input files. It is an error 
+  // DQ (1/24/2017): We want to conditionally support C++11 input files. It is an error
   // to violate this conditions.  Within the ROSE regression test we don't test C++11
-  // files if they would violate this conditions. 
+  // files if they would violate this conditions.
 #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER == 9))
      #ifdef BACKEND_CXX_IS_GNU_COMPILER
        // DQ (1/24/2017): Add restrictions to handle exclusigon of C++11 specific files when ROSE is configured using EDG 4.9 and GNU 4.9 as the backend.
@@ -5886,7 +5859,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     //
-                    // PC 03/20/14 - This invocation of build_Java_AST will first invoke Javac (if the -rose:skip_syntax_check 
+                    // PC 03/20/14 - This invocation of build_Java_AST will first invoke Javac (if the -rose:skip_syntax_check
                     //               option was not requested) to check whether or not the input is correct.  In such a case,
                     //               if the input is incorrect then processing is stopped and the return code produced by javac
                     //               is returned here.  If, on the other hand, the input is correct then processing continues with
@@ -5898,7 +5871,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                     //               SUGGESTION: The fact that this arrangement requires so much explanation suggests that it's
                     //               not a good one.  For clarity, I would have factored the syntax check out of the build_Java_AST
                     //               function like this:
-                    // 
+                    //
                     //                       if (syntaxCheckInputCode == true) {
                     //                           frontendErrorLevel = syntaxCheck(argv, inputCommandLine);
                     //                           this -> set_javacErrorCode(frontendErrorLevel);
@@ -5906,7 +5879,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                     //                       if (frontendErrorLevel == 0) { // if the syntax check was successful...
                     //                           frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
                     //                           this -> set_ecjErrorCode(frontendErrorLevel);
-                    //                           /* 
+                    //                           /*
                     //                              I still think it's prefarable to let the translator set this code rather than
                     //                              having the C++ function (JavaParserActionRose.C) return a code to a Java
                     //                              method (JavaTraversal.java) which in turn would return that code (indirectly)
@@ -6043,7 +6016,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                if (Rose::KeepGoing::g_keep_going) {
                  raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017
                }
-               else  
+               else
                   exit(1);
              }
         }
@@ -6160,7 +6133,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           string outputFilename = get_sourceFileNameWithPath();
 
        // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
-       // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we 
+       // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we
        // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
           SgProject* project = TransformationSupport::getProject(this);
        // ROSE_ASSERT(project != NULL);
@@ -6189,11 +6162,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                   // nothing to do...
                   }
-                 else 
+                 else
                     if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
                        {
-                 // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
-                 // header file list, and is required to be supported in ROSE as part of some application 
+                 // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the
+                 // header file list, and is required to be supported in ROSE as part of some application
                  // specific configuration testing (when configure tests ROSE translators)).
 
                  // TOO1 (9/23/2013): There was never an else branch (or assertion) here before.
@@ -6381,7 +6354,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
             // Insert warning flags to command line
             // if (BACKEND_JAVA_COMPILER_NAME_WITH_PATH == "javac")
-               if (string(BACKEND_JAVA_COMPILER_NAME_WITH_PATH) == "javac") 
+               if (string(BACKEND_JAVA_COMPILER_NAME_WITH_PATH) == "javac")
                   {
                     string warningOpt = "-Xlint";
                     if (!get_output_warnings())
@@ -6428,9 +6401,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                                     << "Original input file is invalid: "
                                     << "'" << this->getFileName() << "'"
                                     << "\n\treported by " << __FILE__ <<":"<<__LINE__ <<std::endl;
-                         if (Rose::KeepGoing::g_keep_going)  
-                           raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017  
-                         else  
+                         if (Rose::KeepGoing::g_keep_going)
+                           raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017
+                         else
                            exit(1);
                        }
                       else
@@ -6443,11 +6416,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                       }
                   }
                //
-               // Note that in the case of java, a correct unparsed file may not compile because it 
+               // Note that in the case of java, a correct unparsed file may not compile because it
                // depends on another file that has errors.  We test for this condition by checking
                // whether or not the original input file compiles correctly with javac.
                //
-               // Note that the fact that Javac fails on the original input does not prove that 
+               // Note that the fact that Javac fails on the original input does not prove that
                // the unparsed file is correct. It simply proves that the input file is incorrect.
                //
                else if (get_Java_only() == true) {
@@ -6565,9 +6538,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 
   // printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);
-   // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what. 
+   // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what.
     if (Rose::KeepGoing::g_keep_going)
-      finalCompiledExitStatus = 0; 
+      finalCompiledExitStatus = 0;
      return finalCompiledExitStatus;
    }
 
@@ -6592,7 +6565,7 @@ Rose::Backend::Java::CompileBatch(SgProject* project, std::vector<std::string> a
           // Add backend compiler executable
           cmdline.insert(cmdline.begin(), BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
 
-          // Add user 
+          // Add user
           //compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
           std::vector<std::string> source_filenames =
@@ -6734,7 +6707,7 @@ SgProject::compileOutput()
 
           return errorCode + linkingReturnVal;
         }
-     
+
 
      if (numberOfFiles() == 0)
         {
@@ -6814,16 +6787,16 @@ SgProject::compileOutput()
        // printf ("originalCommandLine = %s \n",originalCommandLine.c_str());
 
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
-       // DQ (12/18/2016): In the case of using "-E" with the Intel backend compiler we need to 
-       // add -D__INTEL_CLANG_COMPILER so that we can take a path through the Intel header files 
-       // that avoids editing header Intel specific header files to handle builtin functions that 
+       // DQ (12/18/2016): In the case of using "-E" with the Intel backend compiler we need to
+       // add -D__INTEL_CLANG_COMPILER so that we can take a path through the Intel header files
+       // that avoids editing header Intel specific header files to handle builtin functions that
        // use types defined in the header files.
           originalCommandLine.push_back("-D__INTEL_CLANG_COMPILER");
 #endif
 
-       // DQ (12/18/2016): Add a ROSE specific macro definition that will permit our ROSE specific 
-       // preinclude header file to skip over the ROSE specific macros and builting functions.  This 
-       // will allow ROSE to be use to generate CPP output that ROSE could then use as input (without 
+       // DQ (12/18/2016): Add a ROSE specific macro definition that will permit our ROSE specific
+       // preinclude header file to skip over the ROSE specific macros and builting functions.  This
+       // will allow ROSE to be use to generate CPP output that ROSE could then use as input (without
        // specific declarations being defined twice).  Markus had also requested this behavior.
           originalCommandLine.push_back("-DUSE_ROSE_CPP_PROCESSING");
 
@@ -6893,7 +6866,7 @@ SgProject::compileOutput()
                   {
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
                     printf ("In Project::compileOutput(): Need to handled multiple files: \n");
-                    printf ("   1) run each one separately through ROSE to generate the translated source file, and object files (compile only), then \n"); 
+                    printf ("   1) run each one separately through ROSE to generate the translated source file, and object files (compile only), then \n");
                     printf ("   2) collect the object files in a final link command \n");
 #endif
                     multifile_support_compile_only_flag = true;
@@ -6934,7 +6907,7 @@ SgProject::compileOutput()
                       else
                        {
                          localErrorCode = file.compileOutput(0);
-                         if (get_Java_only() && this->get_keep_going() == false) 
+                         if (get_Java_only() && this->get_keep_going() == false)
                             {
                               localErrorCode = 0; // PC: Always keep going for Java!
                             }
@@ -6985,11 +6958,11 @@ SgProject::compileOutput()
 
             // ROSE_ASSERT(get_compileOnly() == true);
 
-            // Liao, 11/19/2009, 
-            // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
+            // Liao, 11/19/2009,
+            // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput()
             // and have both compilation and linking finished at the same time, just as the original command line does.
             // Then we don't have to compose compilation command line for each of the input source file
-            // or to compose the final linking command line. 
+            // or to compose the final linking command line.
             //
             // But there may be some advantages of doing the compilation and linking separately at two levels.
             // I just discussed it with Dan.
@@ -7195,7 +7168,7 @@ int SgProject::link ( std::string linkerName )
                std::string quotedSubstring = i->substr(startingQuote,endingQuote);
 
             // DQ (11/1/2012): Robb has suggested using single quote instead of double quotes here.
-            // This is a problem for the processing of mutt (large C application) (but we can figure 
+            // This is a problem for the processing of mutt (large C application) (but we can figure
             // out the link command after the compile command).
             // std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
             // std::string fixedQuotedSubstring = std::string("\\\'") + quotedSubstring + std::string("\\\'");
@@ -7306,7 +7279,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 // Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
 #if (__GNUC__ < 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ < 4)))
-#warning "GNU version lower than expected"    
+#warning "GNU version lower than expected"
           printf("GCC version must be 4.4.0 or later when linking with GOMP OpenMP Runtime Library \n(OpenMP tasking calls are not implemented in previous versions)\n");
           ROSE_ASSERT(false);
 #endif
@@ -7953,8 +7926,13 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                                    SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
                                    if (varRefExp == NULL)
                                       {
-                                        dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
-                                        printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        SgNonrealRefExp* nrRefExp = isSgNonrealRefExp(dotExp->get_rhs_operand());
+                                        if (nrRefExp == NULL) {
+                                          dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
+                                          printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                        } else {
+                                          // FIXME should we return the non-real symbol?
+                                        }
                                       }
                                      else
                                       {
@@ -8111,15 +8089,15 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 #endif
                break;
              }
-          case V_SgFunctionSymbol: 
+          case V_SgFunctionSymbol:
              {
                returnSymbol = isSgFunctionSymbol(functionExp);
-               break; 
+               break;
              }
           default:
              {
-               // Send out error message before the assertion, which may fail and stop first otherwise. 
-               mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+               // Send out error message before the assertion, which may fail and stop first otherwise.
+                 mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 

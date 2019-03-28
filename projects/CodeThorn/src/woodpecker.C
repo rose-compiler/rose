@@ -210,6 +210,8 @@ int main(int argc, char* argv[]) {
   SgTypeSizeMapping _typeSizeMapping;
   AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
   
+  logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
+  
   if(args.count("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);

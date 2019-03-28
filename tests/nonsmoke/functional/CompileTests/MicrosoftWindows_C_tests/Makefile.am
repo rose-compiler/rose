@@ -74,15 +74,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:C89 -pedantic-errors
+LANG_FLAGS = -std=c89
+
+ROSE_FLAGS = -pedantic-errors
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -93,7 +95,7 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipfinal
 
 $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.c.passed=.c)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.c.passed=.c)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 

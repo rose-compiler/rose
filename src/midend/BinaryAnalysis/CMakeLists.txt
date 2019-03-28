@@ -1,59 +1,57 @@
-if (enable-binary-analysis)
-add_library(midend_binary OBJECT
-  AbstractLocation.C
-  BinaryBestMapAddress.C
-  BinaryCallingConvention.C
-  BinaryCodeInserter.C
-  BinaryControlFlow.C
-  BinaryDataFlow.C
-  BinaryDemangler.C
-  BinaryDominance.C
-  BinaryFeasiblePath.C
-  BinaryFunctionCall.C
-  BinaryFunctionSimilarity.C
-  BinaryMagic.C
-  BinaryNoOperation.C
-  BinaryPointerDetection.C
-  BinaryReachability.C
-  BinaryReturnValueUsed.C
-  BinarySmtCommandLine.C
-  BinarySmtSolver.C
-  BinarySmtlibSolver.C
-  BinaryStackDelta.C
-  BinaryString.C
-  BinarySymbolicExpr.C
-  BinarySymbolicExprParser.C
-  BinarySystemCall.C
-  BinaryTaintedFlow.C
-  BinaryToSource.C
-  BinaryYicesSolver.C
-  BinaryZ3Solver.C
-  DwarfLineMapper.C
-  instructionSemantics/BaseSemantics2.C
-  instructionSemantics/ConcreteSemantics2.C
-  instructionSemantics/DataFlowSemantics2.C
-  instructionSemantics/DispatcherM68k.C
-  instructionSemantics/DispatcherPowerpc.C
-  instructionSemantics/DispatcherX86.C
-  instructionSemantics/IntervalSemantics2.C
-  instructionSemantics/LlvmSemantics2.C
-  instructionSemantics/MemoryCell.C
-  instructionSemantics/MemoryCellList.C
-  instructionSemantics/MemoryCellMap.C
-  instructionSemantics/MemoryCellState.C
-  instructionSemantics/MultiSemantics2.C
-  instructionSemantics/NullSemantics2.C
-  instructionSemantics/PartialSymbolicSemantics2.C
-  instructionSemantics/RegisterStateGeneric.C
-  instructionSemantics/SourceAstSemantics2.C
-  instructionSemantics/StaticSemantics2.C
-  instructionSemantics/SymbolicMemory2.C
-  instructionSemantics/SymbolicSemantics2.C
-  instructionSemantics/TraceSemantics2.C)
+if(enable-binary-analysis)
+  add_library(midend_binary OBJECT
+    AbstractLocation.C
+    BinaryBestMapAddress.C
+    BinaryCallingConvention.C
+    BinaryCodeInserter.C
+    BinaryControlFlow.C
+    BinaryDataFlow.C
+    BinaryDemangler.C
+    BinaryDominance.C
+    BinaryFeasiblePath.C
+    BinaryFunctionCall.C
+    BinaryFunctionSimilarity.C
+    BinaryMagic.C
+    BinaryNoOperation.C
+    BinaryPointerDetection.C
+    BinaryReachability.C
+    BinaryReturnValueUsed.C
+    BinarySmtCommandLine.C
+    BinarySmtSolver.C
+    BinarySmtlibSolver.C
+    BinaryStackDelta.C
+    BinaryString.C
+    BinarySymbolicExpr.C
+    BinarySymbolicExprParser.C
+    BinarySystemCall.C
+    BinaryTaintedFlow.C
+    BinaryToSource.C
+    BinaryYicesSolver.C
+    BinaryZ3Solver.C
+    DwarfLineMapper.C
+    instructionSemantics/BaseSemantics2.C
+    instructionSemantics/ConcreteSemantics2.C
+    instructionSemantics/DataFlowSemantics2.C
+    instructionSemantics/DispatcherM68k.C
+    instructionSemantics/DispatcherPowerpc.C
+    instructionSemantics/DispatcherX86.C
+    instructionSemantics/IntervalSemantics2.C
+    instructionSemantics/LlvmSemantics2.C
+    instructionSemantics/MemoryCell.C
+    instructionSemantics/MemoryCellList.C
+    instructionSemantics/MemoryCellMap.C
+    instructionSemantics/MemoryCellState.C
+    instructionSemantics/MultiSemantics2.C
+    instructionSemantics/NullSemantics2.C
+    instructionSemantics/PartialSymbolicSemantics2.C
+    instructionSemantics/RegisterStateGeneric.C
+    instructionSemantics/SourceAstSemantics2.C
+    instructionSemantics/StaticSemantics2.C
+    instructionSemantics/SymbolicMemory2.C
+    instructionSemantics/SymbolicSemantics2.C
+    instructionSemantics/TraceSemantics2.C)
 else()
-add_library(midend_binary OBJECT
-  dummyBinaryMidend.C
-)
+  add_library(midend_binary OBJECT dummyBinaryMidend.C)
 endif()
 add_dependencies(midend_binary rosetta_generated)
 
@@ -119,4 +117,4 @@ install(
     libraryIdentification/FunctionInfo.h  
     libraryIdentification/libraryIdentification.h
     libraryIdentification/LibraryInfo.h    
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

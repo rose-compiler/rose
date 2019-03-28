@@ -47,7 +47,7 @@ void Solver5::run() {
     ioReductionThreshold = args["io-reduction"].as<int>();
   }
 
-  logger[TRACE]<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   _analyzer->printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)
   {
@@ -139,7 +139,7 @@ void Solver5::run() {
               if(_analyzer->isVerificationErrorEState(&newEState)) {
 #pragma omp critical
                 {
-                  logger[TRACE] <<"STATUS: detected verification error state ... terminating early"<<endl;
+                  SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
 		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
