@@ -81,12 +81,13 @@ class TFTypeTransformer {
   void addNameTransformationToList(VarTypeVarNameTupleList& list,SgType* type, SgFunctionDeclaration* funDecl, std::string varNames, bool base=false, bool listing=false);
   void addFileChangeToList(VarTypeVarNameTupleList& list, std::string file);
   void addSetChangeToList(VarTypeVarNameTupleList& list, bool flag);
+
   // searches for variable in the given subtree 'root'
-  int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type);
-  int changeVariableType(SgNode* root, std::string varNameToFind, SgType* type, bool base, SgType* fromType, bool listing);
-  int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type);
-  int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base, SgNode* handleNode, bool listing);
+  int changeVariableType(SgProject * project, SgFunctionDeclaration* funDecl, std::string varNameToFind, SgType* type, bool base=false, SgType* fromType=nullptr, bool listing=false);
+
+  int changeTypeIfInitNameMatches(SgInitializedName* varInitName, SgNode* root, std::string varNameToFind, SgType* type, bool base=false, SgNode* handleNode=nullptr, bool listing=false);
   int changeTypeIfFromTypeMatches(SgInitializedName* varInitName, SgNode* root, SgType* newType, SgType* fromType, bool base, SgNode* handleNode, bool listing);
+
   void transformCommandLineFiles(SgProject* project);
   void transformCommandLineFiles(SgProject* project, VarTypeVarNameTupleList& list);
   void analyzeTransformations(SgProject* project, VarTypeVarNameTupleList& list);

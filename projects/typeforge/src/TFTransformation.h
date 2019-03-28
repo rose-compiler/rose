@@ -19,7 +19,7 @@ class ADTransformation : public TransformationSpec{
   public:
     ADTransformation(SgFunctionDefinition* def);
     int run(SgProject* project, RoseAst ast, TFTransformation* tf);
-};  
+};
 
 class ArrayStructTransformation : public TransformationSpec{
   private:

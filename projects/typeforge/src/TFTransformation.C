@@ -468,7 +468,10 @@ string getVarRefHandle(SgVarRefExp* varRef){
 int TFTransformation::instrumentADDecleration(SgInitializer* init){
   if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
     SgType* type = initName->get_type();
-    if(SgNodeHelper::isFloatingPointType(type->stripTypedefsAndModifiers())){
+    if(SgNodeHelper::isFloatingPointType(type->stripType(
+//    SgType::STRIP_MODIFIER_TYPE  |
+      SgType::STRIP_TYPEDEF_TYPE
+    ))){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
         SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
         string varName   = SgNodeHelper::symbolToString(varSym); 
@@ -517,7 +520,10 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
       else break;
     }
     if(!varRefExp) continue;
-    if(SgNodeHelper::isFloatingPointType(varType->stripTypedefsAndModifiers())) {
+    if(SgNodeHelper::isFloatingPointType(varType->stripType(
+//    SgType::STRIP_MODIFIER_TYPE  |
+      SgType::STRIP_TYPEDEF_TYPE
+    ))) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
         string varHandle = getVarRefHandle(varRefExp);

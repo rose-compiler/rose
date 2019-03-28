@@ -238,12 +238,10 @@ int main (int argc, char* argv[])
     }
   
     TFToolConfig::write();    
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
   else{
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
 
 #ifdef EXPLICIT_VAR_FORGE
