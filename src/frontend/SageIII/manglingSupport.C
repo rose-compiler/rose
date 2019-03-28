@@ -817,10 +817,12 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, c
 #if 0
           printf ("In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p = %s \n",arg_counter,arg,arg->unparseToString().c_str());
 #endif
-          mangled_name << arg->get_mangled_name().getString();
+#if 0
+          printf ("In mangleTemplateArgsToString(): arg->get_mangled_name() = %s \n", arg->get_mangled_name().str());
+#endif
+          mangled_name << arg->get_mangled_name().str();
 #if 0
           string tmp_s = mangled_name.str();
-       // printf ("DONE: In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p mangled_name = %s \n",arg_counter,arg,mangled_name.str().c_str());
           printf ("DONE: In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p mangled_name = %s \n",arg_counter,arg,tmp_s.c_str());
 #endif
           arg_counter++;
@@ -829,132 +831,45 @@ mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, c
      return mangled_name.str();
    }
 
-#if 0
-// DQ (2/7/2006): This function is not used or required.
-SgName
-mangleTemplateArgs (const SgTemplateArgumentPtrList::const_iterator b,
-                    const SgTemplateArgumentPtrList::const_iterator e)
-  {
-    string s_mangled = mangleTemplateArgsToString (b, e);
-    return SgName (s_mangled.c_str ());
-  }
-#endif
 
-
-#if 0
-// DQ (3/19/2017): This function does not appear to ever be called (experiment with commenting it out).
-void
-testForCycleInTemplateArgumentsOfTemplateDeclaration ( const SgTemplateInstantiationDefn* templateInstantiationDefinition )
+string
+mangleTemplateParamsToString (const SgTemplateParameterPtrList::const_iterator b, const SgTemplateParameterPtrList::const_iterator e)
    {
-  // DQ (10/29/2015): This function evaluates a specific error case where a cycle is detected in the type system.
+     ostringstream mangled_name;
+     bool is_first = true;
 
-     const SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(templateInstantiationDefinition->get_declaration());
-     ROSE_ASSERT(templateInstantiationDeclaration != NULL);
+     size_t param_counter = 0;
 
-     const SgTemplateArgumentPtrList & templ_args = templateInstantiationDeclaration->get_templateArguments();
-
-     if (templ_args.size() > 0)
+     for (SgTemplateParameterPtrList::const_iterator i = b; i != e; ++i)
         {
-       // DQ (10/29/2015): Adding test on the scope to make sure we don't have a recursive scope evaluation.
-          size_t arg_counter = 0;
-          for (SgTemplateArgumentPtrList::const_iterator i = templ_args.begin(); i != templ_args.end(); ++i)
+          if (is_first == true)
              {
-               const SgTemplateArgument* arg = *i;
-               ROSE_ASSERT (arg != NULL);
-#if 0
-               printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: arg_counter = %zu arg = %p = %s \n",
-                    arg_counter,arg,arg->unparseToString().c_str());
-#endif
-               switch (arg->get_argumentType())
-                  {
-                    case SgTemplateArgument::type_argument:
-                       {
-                         const SgType* type = arg->get_type();
-                         assert (type != NULL);
-#if 0
-                         printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: arg_counter = %zu type = %p = %s = %s \n",
-                              arg_counter,type,type->class_name().c_str(),type->unparseToString().c_str());
-#endif
-
-                         const SgModifierType* modifierType = isSgModifierType(type);
-                         if (modifierType != NULL)
-                            {
-                           // Look for the scope.
-                              const SgType* base_type = modifierType->get_base_type();
-#if 0
-                              printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: SgModifierType: arg_counter = %zu base_type = %p = %s = %s \n",
-                                   arg_counter,base_type,base_type->class_name().c_str(),base_type->unparseToString().c_str());
-                              modifierType->get_typeModifier().display("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*)");
-#endif
-                              const SgTypedefType* typedefType = isSgTypedefType(base_type);
-                              if (typedefType != NULL)
-                                 {
-                                   const SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
-                                   ROSE_ASSERT(typedefDeclaration != NULL);
-
-                                   SgScopeStatement* typedefScope = typedefDeclaration->get_scope();
-                                   ROSE_ASSERT(typedefScope != NULL);
-#if 0
-                                   printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: SgTypedefDeclaration: arg_counter = %zu typedefScope = %p = %s \n",
-                                        arg_counter,typedefScope,typedefScope->class_name().c_str());
-#endif
-                                // Test for cycle through typedef and template arguments.
-                                   if (templateInstantiationDefinition == typedefScope)
-                                      {
-                                        printf ("ERROR: This typedef declaration is a scope that is the same as where it is used as a typedef type in a template argument list: \n");
-                                        printf ("   --- templateInstantiationDeclaration = %p = %s = %s \n",templateInstantiationDeclaration,
-                                             templateInstantiationDeclaration->class_name().c_str(),templateInstantiationDeclaration->get_name().str());
-                                        typedefDeclaration->get_file_info()->display("location of problem typedef declaration");
-                                        templateInstantiationDefinition->get_file_info()->display("location of problem scope");
-                                      }
-
-                                // DQ (10/29/2015): Restrict this to template instantiation definition scopes.
-                                   if (isSgTemplateInstantiationDefn(typedefScope) != NULL)
-                                      {
-#if 0
-                                     // DQ (10/31/2015): Disable the detection if we want to leverage the newer mechanism
-                                     // to avoid redundant processing of the template class instantiations definitions.
-                                        ROSE_ASSERT(templateInstantiationDefinition != typedefDeclaration->get_scope());
-#endif
-                                      }
-                                 }
-                            }
-
-                     //  SgName mangled_type = type->get_mangled();
-                         break;
-                       }
-
-                     default:
-                       {
-                       }
-                  }
-
-               arg_counter++;
+               is_first = false;
              }
-        }
-   }
-#endif
+            else
+             {
+            // !is_first, so insert a seperator string.
+               mangled_name << "__sep__";
+             }
 
+          const SgTemplateParameter* param = *i;
+          ROSE_ASSERT (param != NULL);
 #if 0
-// DQ (3/19/2017): This function does not appear to ever be called (experiment with commenting it out).
-void
-MangledNameSupport::outputVisitedTemplateDefinitions()
-   {
-     printf ("\n***** visitedTemplateDefinitions (set) members (size = %zu): \n",visitedTemplateDefinitions.size());
-     setType::iterator i = visitedTemplateDefinitions.begin();
-     while (i != visitedTemplateDefinitions.end())
-        {
-          SgClassDefinition* entry = *i;
-          ROSE_ASSERT(entry != NULL);
-
-          printf ("   --- entry: i = %p = %s = %s \n",entry,entry->class_name().c_str(),entry->get_declaration()->get_name().str());
-
-          i++;
+          printf ("In mangleTemplateParamsToString(): calling template param->get_mangled_name(): param_counter = %zu param = %p = %s \n",param_counter,param,param->unparseToString().c_str());
+#endif
+#if 0
+          printf ("In mangleTemplateParamsToString(): param->get_mangled_name() = %s \n", param->get_mangled_name().str());
+#endif
+          mangled_name << param->get_mangled_name().str();
+#if 0
+          string tmp_s = mangled_name.str();
+          printf ("DONE: In mangleTemplateParamsToString(): calling template param->get_mangled_name(): param_counter = %zu param = %p mangled_name = %s \n",param_counter,param,tmp_s.c_str());
+#endif
+          param_counter++;
         }
 
-     printf ("   --- end of list \n\n");
+     return mangled_name.str();
    }
-#endif
 
 string
 mangleTemplateToString (const string& templ_name,
@@ -964,17 +879,16 @@ mangleTemplateToString (const string& templ_name,
   // Mangle all the template arguments
 
   // DQ (10/29/2015): Added assertion.
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
 #if 0
      printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_args.size(),scope,scope->class_name().c_str());
 #endif
 
      string args_mangled;
-  // if (templ_args.begin() != templ_args.end())
      if (templ_args.empty() == true)
         {
-          args_mangled = "unknown_arg";
+          args_mangled = "no_templ_args";
         }
        else
         {
@@ -985,7 +899,6 @@ mangleTemplateToString (const string& templ_name,
      printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): compute the mangled name for the scope: template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_args.size(),scope,scope->class_name().c_str());
 #endif
 
-#if 1
   // Compute the name qualification, if any.
      string scope_name;
      if (scope == NULL)
@@ -999,11 +912,6 @@ mangleTemplateToString (const string& templ_name,
 
   // Compute the final mangled name.
      string mangled_name = joinMangledQualifiersToString (scope_name, templ_name);
-  // printf ("joinMangledQualifiersToString (scope_name, templ_name) : mangled_name = %s \n",mangled_name.c_str());
-#else
-     printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): Skipping the handling fo the scope in the mangled name computation for template instatiations \n");
-     string mangled_name = templ_name;
-#endif
 
      if (mangled_name.empty() == true)
         {
@@ -1017,19 +925,94 @@ mangleTemplateToString (const string& templ_name,
      return mangled_name;
    }
 
+string
+mangleTemplateToString (const string& templ_name,
+                        const SgTemplateParameterPtrList& templ_params,
+                        const SgScopeStatement* scope)
+   {
+  // Mangle all the template parameters
+
+  // DQ (10/29/2015): Added assertion.
+  // ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In mangleTemplateToString(string&,SgTemplateParameterPtrList&,SgScopeStatement*): template name = %s templ_params.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_params.size(),scope,scope->class_name().c_str());
+#endif
+
+     string params_mangled;
+     if (templ_params.empty() == true)
+        {
+          params_mangled = "unknown_param";
+        }
+       else
+        {
+          params_mangled = mangleTemplateParamsToString(templ_params.begin(),templ_params.end());
+        }
+
+#if 0
+     printf ("In mangleTemplateToString(string&,SgTemplateParameterPtrList&,SgScopeStatement*): compute the mangled name for the scope: template name = %s templ_params.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_params.size(),scope,scope->class_name().c_str());
+#endif
+
+  // Compute the name qualification, if any.
+     string scope_name;
+     if (scope == NULL)
+        {
+          scope_name = "unknown_scope";
+        }
+       else
+        {
+          scope_name = mangleQualifiersToString (scope);
+        }
+
+  // Compute the final mangled name.
+     string mangled_name = joinMangledQualifiersToString (scope_name, templ_name);
+
+     if (mangled_name.empty() == true)
+        {
+          mangled_name = "unknown_template_name";
+        }
+
+     mangled_name += "__tps__" + params_mangled + "__tpe__";
+
+  // printf ("params_mangled = %s mangled_name = %s \n",params_mangled.c_str(),mangled_name.c_str());
+
+     return mangled_name;
+   }
+
 SgName
 mangleTemplate (const SgName& templ_name,
                 const SgTemplateArgumentPtrList& templ_args,
                 const SgScopeStatement* scope)
    {
   // DQ (10/29/2015): Added assertion.
-     ROSE_ASSERT(scope != NULL);
+  // ROSE_ASSERT(scope != NULL);
 
 #if 0
      printf ("In mangleTemplate(SgName&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.str(),templ_args.size(),scope,scope->class_name().c_str());
 #endif
+     string mangled_name = templ_name.str();
+     mangled_name = mangleTemplateToString(mangled_name,templ_args,scope);
 
-     string mangled_name = mangleTemplateToString(templ_name.getString(),templ_args,scope);
+#if 0
+     printf ("In mangleTemplate(): mangled_name = %s \n",mangled_name.c_str());
+#endif
+
+     return SgName (mangled_name.c_str());
+   }
+
+SgName
+mangleTemplate (const SgName& templ_name,
+                const SgTemplateParameterPtrList& templ_params,
+                const SgScopeStatement* scope)
+   {
+  // DQ (10/29/2015): Added assertion.
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In mangleTemplate(SgName&,SgTemplateParameterPtrList&,SgScopeStatement*): template name = %s templ_params.size() = %zu scope = %p = %s \n",templ_name.str(),templ_params.size(),scope,scope->class_name().c_str());
+#endif
+
+     string mangled_name = mangleTemplateToString(templ_name.getString(),templ_params,scope);
 
 #if 0
      printf ("In mangleTemplate(): mangled_name = %s \n",mangled_name.c_str());
@@ -1197,8 +1180,17 @@ mangleValueExp (const SgValueExp* expr)
 
    // DQ (7/21/2012): Added support for IR node not seen previously except in new C++11 work.
       case V_SgTemplateParameterVal:
-        mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
-        break;
+         {
+           mangled_name = "unsupported_SgTemplateParameterVal"; // mangleSgValueExp<SgTemplateParameterVal> (isSgTemplateParameterVal(expr));
+           break;
+         }
+
+   // DQ (2/14/2019): Adding support for C++14 void values (still unclear what this should look like).
+      case V_SgVoidVal:
+         {
+           mangled_name = "unsupported_SgVoidVal";
+           break;
+         }
 
       default:
         std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
@@ -1269,6 +1261,16 @@ mangleExpression (const SgExpression* expr)
           mangled_name << fdecl->get_mangled_name().str();
           break;
         }
+        case V_SgNonrealRefExp: {
+          const SgNonrealRefExp* nrref = isSgNonrealRefExp (expr);
+          SgNonrealSymbol * nrsym = nrref->get_symbol();
+          ROSE_ASSERT(nrsym != NULL);
+          SgNonrealDecl * nrdecl = nrsym->get_declaration();
+          ROSE_ASSERT(nrdecl != NULL);
+          nrdecl->get_is_nonreal_template(); // FIXME TMP Reference to get as it is not visible in the lib!!!
+          mangled_name << nrdecl->get_mangled_name().str();
+          break;
+        }
         case V_SgCastExp: {
           const SgCastExp* e = isSgCastExp (expr);
           mangled_name << "_bCastExp_" << e->get_type()->get_mangled().getString() << "__" << mangleExpression (e->get_operand_i()) << "_eCastExp_";
@@ -1279,6 +1281,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bNotOp_" << mangleExpression (e->get_operand_i()) << "_eNotOp_";
           break;
         }
+        case V_SgBitComplementOp: {
+          const SgBitComplementOp* e = isSgBitComplementOp (expr);
+          mangled_name << "_bBitComplementOp_" << mangleExpression (e->get_operand_i()) << "_eBitComplementOp_";
+          break;
+        }
         case V_SgMinusOp: {
           const SgMinusOp* e = isSgMinusOp (expr);
           mangled_name << "_bMinusOp_" << mangleExpression (e->get_operand_i()) << "_eMinusOp_";
@@ -1287,6 +1294,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgAddressOfOp: {
           const SgAddressOfOp* e = isSgAddressOfOp (expr);
           mangled_name << "_bAddressOfOp_" << mangleExpression (e->get_operand_i()) << "_eAddressOfOp_";
+          break;
+        }
+        case V_SgPointerDerefExp: {
+          const SgPointerDerefExp* e = isSgPointerDerefExp (expr);
+          mangled_name << "_bPointerDerefExp_" << mangleExpression (e->get_operand_i()) << "_ePointerDerefExp_";
           break;
         }
         case V_SgNoexceptOp: {
@@ -1338,6 +1350,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgBitXorOp: {
           const SgBitXorOp* e = isSgBitXorOp (expr);
           mangled_name << "_bBitXorOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitXorOp_";
+          break;
+        }
+        case V_SgBitOrOp: {
+          const SgBitOrOp* e = isSgBitOrOp (expr);
+          mangled_name << "_bBitOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitOrOp_";
           break;
         }
         case V_SgOrOp: {
@@ -1420,6 +1437,21 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
           break;
         }
+        case V_SgCommaOpExp: {
+          const SgCommaOpExp* e = isSgCommaOpExp (expr);
+          mangled_name << "_bCommaOpExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eCommaOpExp_";
+          break;
+        }
+        case V_SgDotStarOp: {
+          const SgDotStarOp* e = isSgDotStarOp (expr);
+          mangled_name << "_bDotStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotStarOp_";
+          break;
+        }
+        case V_SgArrowStarOp: {
+          const SgArrowStarOp* e = isSgArrowStarOp (expr);
+          mangled_name << "_bArrowStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowStarOp_";
+          break;
+        }
         case V_SgConditionalExp: {
           const SgConditionalExp* e = isSgConditionalExp (expr);
           mangled_name << "_bConditionalExp_";
@@ -1488,6 +1520,27 @@ mangleExpression (const SgExpression* expr)
             mangled_name << mangleExpression (*it);
           }
           mangled_name << "_eExprListExp_";
+          break;
+        }
+        case V_SgAggregateInitializer: {
+          const SgAggregateInitializer* e = isSgAggregateInitializer (expr);
+          mangled_name << "_bAggregateInitializer_" << mangleExpression (e->get_initializers()) << "_eAggregateInitializer_";
+          break;
+        }
+        case V_SgBracedInitializer: {
+          const SgBracedInitializer* e = isSgBracedInitializer (expr);
+          mangled_name << "_bBracedInitializer_" << mangleExpression (e->get_initializers()) << "_eBracedInitializer_";
+          break;
+        }
+        case V_SgNewExp: {
+          // FIXME ROSE-1783
+          const SgNewExp* e = isSgNewExp (expr);
+          mangled_name << "_bNewExpr_" << std::hex << e << "_eNewExpr_";
+          break;
+        }
+        case V_SgFunctionParameterRefExp: {
+          const SgFunctionParameterRefExp* e = isSgFunctionParameterRefExp (expr);
+          mangled_name << "_bFunctionParameterRefExp_" << std::hex << e << "_eFunctionParameterRefExp_";
           break;
         }
         default: {

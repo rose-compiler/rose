@@ -324,14 +324,14 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 
       else
         AC_MSG_NOTICE([Detected using MacPorts GCC backend compiler])
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -s -d\. -f2`
       fi
 
     else
         AC_MSG_NOTICE([else case not using Clang (choose backend compiler)])
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -d\. -f1`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion | cut -s -d\. -f2`
 
         AC_MSG_NOTICE([(non-clang) C++ back-end compiler major version number = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
         AC_MSG_NOTICE([(non-clang) C++ back-end compiler minor version number = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
@@ -352,10 +352,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # gfortran --version | sed -n '1s/.*) //;1p'
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
 
-# Testing the 4.0.x compiler
-# BACKEND_FORTRAN_COMPILER="/usr/apps/gcc/4.0.2/bin/gfortran"
-# echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
-
 # DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
 # the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
 # So for this case we detect it explicitly and fill in the values directly!
@@ -373,15 +369,17 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   AC_MSG_NOTICE([Fortran back-end compiler major version number = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"])
   AC_MSG_NOTICE([Fortran back-end compiler minor version number = "$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER"])
 
-# Test that we have correctly evaluated the major and minor versions numbers...
-  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
-    AC_MSG_ERROR([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
-  fi
-
-  if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-  # This will fail in build (sage_support.cpp), better to fail here [Rasmussen 2019.02.04]
-    AC_MSG_ERROR([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
+## Test that we have correctly evaluated the major and minor versions numbers...
+#  If incorrect better to fail here rather than in build (sage_support.cpp),
+#  but only fail if Fortran support is requested [Rasmussen 2019.02.21]
+#
+  if test "x$support_fortran_frontend" = "xyes" ; then
+    if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+      AC_MSG_ERROR([could not compute the major version number of "$BACKEND_FORTRAN_COMPILER"])
+    fi
+    if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+      AC_MSG_ERROR([could not compute the minor version number of "$BACKEND_FORTRAN_COMPILER"])
+    fi
   fi
 
 # DQ (9/16/2009): GNU gfortran 4.0 has special problems so we avoid some tests where it fails.
@@ -548,6 +546,17 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
         gcc_version_later_4_9=yes
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_9, [test "x$gcc_version_later_4_9" = "xyes"])
+
+# ROSE-1858: A compass example causes a g++ internal error for gcc 4.9.1
+  gcc_version_equal_4_9_1=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == x9; then
+       if test x$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER == x1; then
+         gcc_version_equal_4_9_1=yes
+       fi
+     fi
+   fi
+   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_EQUAL_4_9_1, [test "x$gcc_version_equal_4_9_1" = "xyes"])
 
 # DQ (11/9/2016): GNU GCC 5.2 adds more C14 support (we need this to control what tests are run).
   gcc_version_later_5_1=no
@@ -757,10 +766,9 @@ AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CRO
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_CXX_COMPILER, [test "x$with_alternate_backend_Cxx_compiler" != "x"])
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, [test "x$with_alternate_backend_C_compiler" != "x"])
 
-
 # TOO (2/14/2011): Enforce backend C/C++ compilers to be the same version
-BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpversion`"
-BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpversion`"
+BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dumpversion`"
+BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpfullversion -dumpversion`"
 BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
 if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
   AC_MSG_FAILURE([the backend C++ and C compilers must be the same])

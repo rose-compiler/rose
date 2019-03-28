@@ -6,11 +6,11 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 # Used in ../src/3rdPartyLibraries/fortran-parser/Makefile.am
 # and     ../src/frontend/SageIII/sageSupport.C
 #
-default_ofp_version=20111001
+default_ofp_version=20190206
 
 ofp_major_version_number=0
 ofp_minor_version_number=8
-ofp_patch_version_number=3
+ofp_patch_version_number=5
 
 # DQ (10/18/2010): If fortran is enabled then OFP must be allowed and this was already check previously.
 # This step is taken to simplify how we handle OFP and Fortran.  Of course OFP is enabled if Fortran is
@@ -59,7 +59,7 @@ AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
 
 # DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
 AC_ARG_ENABLE(ofp-version,
-[  --enable-ofp-version    version number for OFP Java-based parser (e.g. 20111225).],
+[  --enable-ofp-version    version number for OFP Java-based parser (e.g. 20190206).],
 [ AC_MSG_NOTICE([setting up OFP version])
 ])
 
@@ -106,7 +106,7 @@ AC_DEFINE_UNQUOTED([ROSE_OFP_JAR_FILE], $ofp_jar_file , [OFP jar file])
 # DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
 # of OFP version number so that we can use it to set the class path.
 
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/${ROSE_OFP_JAR_FILE}
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/${ROSE_OFP_JAR_FILE}
 
 export CLASSPATH
 AC_SUBST(CLASSPATH)

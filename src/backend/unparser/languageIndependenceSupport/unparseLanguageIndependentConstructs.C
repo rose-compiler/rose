@@ -195,7 +195,23 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      printf ("\n");
      printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
      printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
+     printf ("   --- stmt->get_file_info()->get_fileIDsToUnparse().size() = %zu \n",stmt->get_file_info()->get_fileIDsToUnparse().size());
 #endif
+
+  // DQ (2/26/2019): Adding support for multiple file to reference defining declaration and still unparse them.
+     if (stmt->get_file_info()->get_fileIDsToUnparse().empty() == false)
+        {
+       // Found case of multiple file handling causing a definng declaration to be used within more than one file.
+       // This design permits both files to reference the single definig declaration, while having only one 
+       // defining declaration across the multi-file support (this permits global analysis, especially effective 
+       // when used with the AST merge mechanism).
+
+       // For the moment we can attemt to test this support by retuning true when we detect the use of this feature.
+#if 0
+          printf ("In statementFromFile(): stmt->get_file_info()->get_fileIDsToUnparse().empty() == false: return true \n");
+#endif
+          return true;
+        }
 
   // FMZ (comment by DQ (11/14/2008)):
   // This is part of the support for module files in Fortran.  Modules seen in the compilation 
@@ -3961,6 +3977,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
             // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
                (*i)->getString().c_str());
+
+       // DQ (2/27/2019): Adding support for multi-file handling.
+          printf (" --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+          printf (" --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
 #endif
 
        // Check and see if the info object would indicate that the statement would 
@@ -3970,7 +3990,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           bool infoSaysGoAhead = !info.SkipEnumDefinition()  &&
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
-
 #if 0
           printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
           printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
@@ -3988,6 +4007,62 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
        // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
+       // DQ (2/27/2019): Added assertions for debugging.
+          ROSE_ASSERT(*i != NULL);
+
+       // DQ (2/27/2019): Added assertions for debugging, for Cxx_tests/test2005_15.C (and many other files) this can be NULL.
+       // ROSE_ASSERT(info.get_current_source_file() != NULL);
+          bool isCommentFromCurrentFile = true;
+
+          bool isSharedLocatedNode = (stmt->get_file_info()->isShared() == true);
+
+       // DQ (3/12/2019): Only review the decission to reset infoSaysGoAhead if it is true.
+       // if (info.get_current_source_file() != NULL)
+       // if (infoSaysGoAhead == true && info.get_current_source_file() != NULL)
+          if (isSharedLocatedNode == true && infoSaysGoAhead == true && info.get_current_source_file() != NULL)
+             {
+               ROSE_ASSERT(info.get_current_source_file()->get_file_info() != NULL);
+
+            // DQ (2/27/2019): If this is a comment from a different file (not current file) then we can't unparse it here.
+               isCommentFromCurrentFile = (info.get_current_source_file()->get_file_info()->get_file_id() == (*i)->getFileId());
+
+               if (isCommentFromCurrentFile == false)
+                  {
+#if 0
+                    printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+                 // DQ (3/2/2019): so when this fails for generated comments, what does the file info look like?
+                 // (*i)->get_file_info()->display("so when this fails for generated comments, what does the file info look like");
+
+                 // DQ (3/2/2019): I will alow this for now, but it is an inappropriate use of the Sg_File_Info object to define a file that does not exist.
+                    if ( ((*i)->get_file_info()->get_filenameString() == "Compiler-Generated in PRE") ||
+                         ((*i)->get_file_info()->get_filenameString() =="Compiler-Generated in Finite Differencing") ||
+                         ((*i)->get_file_info()->isTransformation() == true) )
+                       {
+                      // Don't suppress the output of ROSE generated comments in this case.
+                       }
+                      else
+                       {
+                         infoSaysGoAhead = false;
+#if 0
+                         printf (" --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                         printf (" --- stmt->get_file_info()->isShared() = %s \n",stmt->get_file_info()->isShared() ? "true" : "false");
+                         printf (" --- Test 1.5: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
+#endif
+#if 0
+                      // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
+                         printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+                              PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
+                              (*i)->getString().c_str());
+
+                      // DQ (2/27/2019): Adding support for multi-file handling.
+                         printf (" --- --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+                         printf (" --- --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
+#endif
+                       }
+                  }
+             }
+
 #if 0
           printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
@@ -4002,7 +4077,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                ROSE_ABORT();
              }
 #endif
-
        // DQ (2/5/2003):
        // The old directive handling allows all the test codes to parse properly, but
        // is not sufficent for handling the A++ transformations which are more complex.
@@ -6541,8 +6615,11 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
    {
      SgExprListExp* expr_list = isSgExprListExp(expr);
      ROSE_ASSERT(expr_list != NULL);
-  /* code inserted from specification */
-  
+
+#if 0
+     curprint("/* output SgExprListExp */");
+#endif
+
      SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
      if (i != expr_list->get_expressions().end())
@@ -6551,6 +6628,22 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
              {
                SgUnparse_Info newinfo(info);
                newinfo.set_SkipBaseType();
+
+#if 0
+            // DQ (2/20/2019): Check if this is a compiler generated SgConstructorInitializer
+            // (see Cxx11_tests/test2019_171.C).  I think this may be the wrong place for this.
+               SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(*i);
+               if (constructorInitializer != NULL)
+                  {
+                    if (constructorInitializer->isCompilerGenerated() == true)
+                       {
+                         printf ("In UnparseLanguageIndependentConstructs::unparseExprList(): Found compiler generated constructor initializer \n");
+                      // break out of this loop.
+                         break;
+                       }
+                  }
+#endif
+
                unparseExpression(*i, newinfo);
                i++;
                if (i != expr_list->get_expressions().end())
@@ -8035,6 +8128,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                               if (func_ref != NULL)
                                  {
                                    name = func_ref->get_symbol()->get_name();
+#if 0
+                                   printf ("In getPrecedence(): Get function name = %s \n",name.str());
+#endif
                                  }
                                 else
                                  {
@@ -8237,6 +8333,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (4/29/2016): Not clear if this is the correct precedence for these C++11 expressions.
           case V_SgRealPartOp:
           case V_SgImagPartOp:
+                                     precedence_value = 0; break;
+          case V_SgNonrealRefExp:
                                      precedence_value = 0; break;
 
           default:
@@ -8612,6 +8710,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
        // DQ (12/2/2004): Original cases
           case VAR_REF:
+          case NONREAL_REF:
           case CLASSNAME_REF:
           case FUNCTION_REF:
           case MEMBER_FUNCTION_REF:

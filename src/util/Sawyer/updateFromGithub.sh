@@ -38,7 +38,7 @@ for f in																\
     DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList		\
     Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
     PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch		\
-    Synchronization ThreadWorkers Trace Type WarningsOff WarningsRestore
+    Synchronization ThreadWorkers Trace Tracker Tree Type WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h

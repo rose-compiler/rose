@@ -16,6 +16,7 @@
 #if !defined(NDEBUG)
 #include <typeinfo>
 #include <iostream>
+#include <sstream>
 #endif /* NDEBUG */
 
 
@@ -62,17 +63,60 @@ namespace sg
   //
   // error reporting
 
+#define SG_UNEXPECTED_NODE(X) (sg::unexpected_node(X, __FILE__, __LINE__))
+
   static inline
-  void unexpected_node(const SgNode& n)
+  void report_error(std::string desc)
   {
-    sg::unused(n);
+    throw std::logic_error(desc);
+  }
+
+  static inline
+  void report_error_if(bool iserror, std::string desc)
+  {
+    if (!iserror) return;
+
+    report_error(desc);
+  }
 
 #if !defined(NDEBUG)
-    std::cerr << typeid(n).name() << std::endl;
+  /// converts object of type E to T via string conversion
+  template <class T, class E>
+  static inline
+  T conv(const E& el)
+  {
+    std::stringstream s;
+    T                 res;
+
+    s << el;
+    s >> res;
+    return res;
+  }
 #endif
 
-    ROSE_ASSERT(false);
-    throw std::logic_error("Encountered unexpected sage node. Please send a bug report to the maintainer.");
+  static inline
+  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  {
+    sg::unused(n), sg::unused(file), sg::unused(ln);
+
+    std::string msg = "unexpected node-type: ";
+
+#if !defined(NDEBUG)
+    msg = msg + typeid(n).name();
+
+    if (file)
+    {
+      const std::string at(" at ");
+      const std::string sep(" : ");
+      const std::string num(conv<std::string>(ln));
+
+      msg = msg + at + file + sep + num;
+    }
+
+    std::cerr << msg << std::endl;
+#endif
+
+    report_error(msg);
   }
 
   //
@@ -988,6 +1032,7 @@ namespace sg
     return *res;
   }
 
+/// \private
   template <class SageNode>
   struct TypeRecoveryHandler
   {
@@ -996,14 +1041,23 @@ namespace sg
     SageNode* res;
 
     TypeRecoveryHandler()
-    : res(NULL)
+    : res(NULL), loc(NULL), loc_ln(0)
     {}
 
-    void handle(SgBaseNode& n) { unexpected_node(n); }
+    TypeRecoveryHandler(const char* f, size_t ln)
+    : res(NULL), loc(f), loc_ln(ln)
+    {}
+
+    void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
     void handle(SageNode& n)   { res = &n; }
 
     operator SageNode* () { return res; }
+
+    const char* loc;
+    size_t      loc_ln;
   };
+
+#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 
 /// \brief   asserts that n has type SageNode
 /// \details the ROSE assert in the following example holds b/c assert_sage_type
@@ -1013,16 +1067,16 @@ namespace sg
 ///   ROSE_ASSERT(stmt);
 /// \endcode
   template <class SageNode>
-  SageNode* assert_sage_type(SgNode* n)
+  SageNode* assert_sage_type(SgNode* n, const char* f = 0, size_t ln = 0)
   {
-    return sg::dispatch(TypeRecoveryHandler<SageNode>(), n);
+    return sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), n);
   }
 
 /// \overload
   template <class SageNode>
-  const SageNode* assert_sage_type(const SgNode* n)
+  const SageNode* assert_sage_type(const SgNode* n, const char* f = 0, size_t ln = 0)
   {
-    return sg::dispatch(TypeRecoveryHandler<const SageNode>(), n);
+    return sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), n);
   }
 
 /// \brief swaps the parent pointer of two nodes
@@ -1060,6 +1114,167 @@ namespace sg
     (rhs.*setter)(lhs_child);
 
     swap_parent(lhs_child, rhs_child);
+  }
+
+
+/// \brief executes a functor for a specific node type
+/// \details internal use
+  template <class SageNode>
+  struct TraversalFunction
+  {
+    typedef void (*TransformHandlerFn)(SageNode*);
+
+    explicit
+    TraversalFunction(TransformHandlerFn fun)
+    : fn(fun)
+    {}
+
+    void handle(SgNode&)     { /* ignore */ }
+    void handle(SageNode& n) { fn(&n); }
+
+    TransformHandlerFn fn;
+  };
+
+/// \brief creates a functor that executes code for a specific node type
+/// \details internal use
+  template <class SageNode>
+  static inline
+  TraversalFunction<SageNode>
+  createTraversalFunction(void (* fn)(SageNode*))
+  {
+    return TraversalFunction<SageNode>(fn);
+  }
+
+  //
+  // function type extractor
+  //   see https://stackoverflow.com/questions/28033251/can-you-extract-types-from-template-parameter-function-signature
+
+
+  template <class GVisitor>
+  struct TraversalClass : AstSimpleProcessing
+  {
+    explicit
+    TraversalClass(GVisitor gv)
+    : gvisitor(gv)
+    //~ : gvisitor(std::move(gv))
+    {}
+
+    void visit(SgNode* n)
+    {
+      gvisitor = sg::dispatch(gvisitor, n);
+    }
+
+    // GVisitor&& visitor() { return std::move(gvisitor); }
+    GVisitor visitor() { return gvisitor; }
+
+    GVisitor gvisitor;
+  };
+
+
+
+  /// \brief calls fn with all applicable nodes in the AST
+  /// \details
+  ///   extracts the variant type from the function argument in fn
+  ///   and collects all nodes using querySubTree.
+  ///   After that, iterates through the result list and executes
+  ///   fn all all identified nodes.
+  template <class F>
+  static inline
+  F
+  forAllNodes(F fn, SgNode* root, AstSimpleProcessing::Order order = postorder)
+  {
+    ROSE_ASSERT(root);
+
+    TraversalClass<F> tt(fn);
+    //~ TraversalClass<F> tt(std::move(fn));
+
+    tt.traverse(root, order);
+    return tt.visitor();
+  }
+
+  template <class SageNode>
+  static inline
+  void
+  forAllNodes(void (*fn)(SageNode*), SgNode* root, AstSimpleProcessing::Order order = postorder)
+  {
+    forAllNodes(createTransformExecutor(fn), root, order);
+  }
+
+#if !defined(NDEBUG)
+  static inline
+  std::string nodeType(const SgNode& n)
+  {
+    return typeid(n).name();
+  }
+
+  static inline
+  std::string nodeType(const SgNode* n)
+  {
+    if (n == NULL) return "<null>";
+
+    return nodeType(*n);
+  }
+#endif
+
+  template <class GVisitor>
+  struct DispatchHelper
+  {
+    explicit
+    DispatchHelper(GVisitor gv, SgNode* p)
+    //~ : gvisitor(std::move(gv)), parent(p), cnt(0)
+    : gvisitor(gv), parent(p), cnt(0)
+    {}
+
+    void operator()(SgNode* n)
+    {
+      ++cnt;
+
+#if !defined(NDEBUG)
+      if (n == NULL)
+      {
+        std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
+        return;
+      }
+#endif
+
+      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
+    }
+
+    operator GVisitor() { return gvisitor; }
+    //~ operator GVisitor() { return std::move(gvisitor); }
+
+    GVisitor gvisitor;
+    SgNode*  parent;
+    size_t   cnt;
+  };
+
+
+  template <class GVisitor>
+  static inline
+  DispatchHelper<GVisitor>
+  dispatchHelper(GVisitor gv, SgNode* parent = NULL)
+  {
+    return DispatchHelper<GVisitor>(gv, parent);
+    //~ return DispatchHelper<GVisitor>(std::move(gv), parent);
+  }
+
+
+  template <class GVisitor>
+  static inline
+  GVisitor traverseChildren(GVisitor gv, SgNode& n)
+  {
+    std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
+
+    return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
+  }
+
+
+  template <class GVisitor>
+  static inline
+  GVisitor traverseChildren(GVisitor gv, SgNode* n)
+  {
+    return traverseChildren(gv, sg::deref(n));
+    //~ return traverseChildren(sg::deref(n), std::move(gv));
   }
 }
 #endif /* _SAGEGENERIC_H */

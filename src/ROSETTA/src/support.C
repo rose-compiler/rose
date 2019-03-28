@@ -144,7 +144,8 @@ Grammar::setUpSupport ()
 
   // DQ (4/25/2004): Must be placed before the modifiers (since it includes one as a data member)
      NEW_TERMINAL_MACRO (ExpBaseClass, "ExpBaseClass", "ExpBaseClassTag" );
-     NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass, "BaseClass", "BaseClassTag", false );
+     NEW_TERMINAL_MACRO (NonrealBaseClass, "NonrealBaseClass", "NonrealBaseClassTag" );
+     NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass | NonrealBaseClass, "BaseClass", "BaseClassTag", false );
 
 // #define OLD_GRAPH_NODES 0
 // #if OLD_GRAPH_NODES
@@ -565,8 +566,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","use_generated_name_for_template_arguments","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Unparse_Info.setDataPrototype("bool","user_defined_literal","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
-     ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
+     NonrealBaseClass.setFunctionPrototype    ( "HEADER_NONREAL_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (4/29/2004): Removed in place of new modifier interface
   // BaseClass.setDataPrototype               ( "int"                , "base_specifier", "= 0",
@@ -615,6 +620,9 @@ Grammar::setUpSupport ()
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ExpBaseClass.setDataPrototype ( "SgExpression*", "base_class_exp", "= NULL",
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     NonrealBaseClass.setDataPrototype ( "SgNonrealDecl*", "base_class_nonreal", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      FuncDecl_attr.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
@@ -2419,14 +2427,27 @@ Specifiers that can have only one value (implemented with a protected enum varia
      File_Info.setDataPrototype("unsigned int","source_sequence_number","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/27/2019): I want to add line number support, and use this to test if we can support 
+  // CPP directives and comments added to alll shared IR nodes from all files.  If this works
+  // then we can consider a better design that would use a different data structure.
+  // DQ (2/26/2019): We need to use BUILD_LIST_ACCESS_FUNCTIONS else we return a copy of
+  // the list and only modify the copy instead of the list stored in the IR node.
   // MK (8/2/05) : This set contains a list of file ids. During unparsing, if we encounter
   //               a node with this Sg_File_Info object, we only want to unparse this file
   //               if the file we are currently unparsing is in this list.
   //               NOTE: this set should be empty unless the node is marked as shared
   //! This set contains a list of all file ids for which the accompanying node should be unparsed
   // File_Info.setDataPrototype("std::set<int>","fileIDsToUnparse","",
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("SgFileIdList","fileIDsToUnparse","",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File_Info.setDataPrototype("SgFileLineNumberList","fileLineNumbersToUnparse","",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // I can't see where this is being used or that it needs to be here (these are used in unparser!)
   // File_Info.setDataPrototype("int","referenceCount","= 0",
@@ -2643,6 +2664,12 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype("SgTemplateArgument*","next_instance","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates. 
+  // TemplateArgument.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
+  //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype     ( "bool", "is_pack_element", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (3/10/2018): I think these IR nodes are not longer used.  If so then we could remove them.
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
@@ -2825,8 +2852,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Project.setFunctionSource         ( "SOURCE_APPLICATION_PROJECT", "../Grammar/Support.code");
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");
      Unparse_Info.setFunctionSource    ( "SOURCE_UNPARSE_INFO", "../Grammar/Support.code");
-     BaseClass.setFunctionSource       ( "SOURCE_BASECLASS", "../Grammar/Support.code");
-     ExpBaseClass.setFunctionSource    ( "SOURCE_EXP_BASE_CLASS", "../Grammar/Support.code");
+
+     BaseClass.setFunctionSource        ( "SOURCE_BASECLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionSource     ( "SOURCE_EXP_BASE_CLASS", "../Grammar/Support.code");
+     NonrealBaseClass.setFunctionSource ( "SOURCE_NONREAL_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (12/19/2005): Support for explicitly specified qualified names
      QualifiedName.setFunctionSource   ( "SOURCE_QUALIFIED_NAME", "../Grammar/Support.code");

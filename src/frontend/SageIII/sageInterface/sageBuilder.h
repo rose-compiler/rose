@@ -283,14 +283,14 @@ ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionPa
 ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
 //! DQ (1/16/2009): Added to support member function in C++ (for new interface)
-ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier);
+ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // DQ (3/20/2017): This function is not used (so let's see if we can remove it).
 //! DQ (12/2/2011): Added for symetry with other functios to generate SgFunctionType
 // ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterList* argList = NULL, SgClassDefinition *struct_name = NULL, unsigned int mfunc_specifier = 0);
 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
-ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassType *classType, unsigned int mfunc_specifier);
+ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // PP (07/14/2016):
 //! Some support for building class template instantiation declarations.
@@ -393,6 +393,10 @@ ROSE_DLL_API SgCharVal* buildCharVal_nfi(char value, const std::string& str);
 ROSE_DLL_API SgNullptrValExp* buildNullptrValExp();
 ROSE_DLL_API SgNullptrValExp* buildNullptrValExp_nfi();
 
+//! DQ (2/14/2019): Adding support for C++14 void value expressions.
+ROSE_DLL_API SgVoidVal* buildVoidVal();
+ROSE_DLL_API SgVoidVal* buildVoidVal_nfi();
+
 ROSE_DLL_API SgWcharVal* buildWcharVal(wchar_t value = 0);
 ROSE_DLL_API SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
 
@@ -483,11 +487,17 @@ ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal(int template_para
 ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal_nfi(int template_parameter_position, const std::string& str);
 
 //! Build a template type, used for template parameter and later argument
-ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="", int template_parameter_position = -1);
+ROSE_DLL_API SgTemplateType* buildTemplateType(SgName name="");
 
 //! Build a template parameter, passing enum kind and SgTemplateType
 //! template_parameter_enum { parameter_undefined = 0, type_parameter = 1, nontype_parameter = 2,  template_parameter = 3}
 ROSE_DLL_API SgTemplateParameter * buildTemplateParameter (SgTemplateParameter::template_parameter_enum parameterType, SgType*);
+
+//! Build a declaration of a non-real class or class-member representing template parameters and their members
+ROSE_DLL_API SgNonrealDecl * buildNonrealDecl(const SgName & name, SgDeclarationScope * scope, SgDeclarationScope * child_scope = NULL);
+
+//! Build a reference to the non-real declaration of a member of a non-real class
+ROSE_DLL_API SgNonrealRefExp * buildNonrealRefExp_nfi(SgNonrealSymbol * sym);
 
 //! Build UPC THREADS (integer expression)
 ROSE_DLL_API SgUpcThreads* buildUpcThreads();
@@ -498,8 +508,8 @@ ROSE_DLL_API SgUpcMythread* buildUpcMythread();
 ROSE_DLL_API SgUpcMythread* buildUpcMythread_nfi();
 
 //! Build this pointer
-ROSE_DLL_API SgThisExp* buildThisExp(SgClassSymbol* sym);
-ROSE_DLL_API SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
+ROSE_DLL_API SgThisExp* buildThisExp(SgSymbol* sym);
+ROSE_DLL_API SgThisExp* buildThisExp_nfi(SgSymbol* sym);
 
 //! Build super pointer
 ROSE_DLL_API SgSuperExp* buildSuperExp(SgClassSymbol* sym);
@@ -1443,7 +1453,10 @@ SgAsmStmt* buildAsmStatement_nfi(std::string s);
 ROSE_DLL_API SgAsmStmt* buildMultibyteNopStatement( int n );
 
 //! DQ (5/6/2013): Added build functions to support SgBaseClass construction.
-SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+ROSE_DLL_API SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+
+ROSE_DLL_API SgNonrealBaseClass* buildNonrealBaseClass ( SgNonrealDecl* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+
 // SgAccessModifier buildAccessModifier ( unsigned int access );
 
 //! DQ (7/25/2014): Adding support for C11 static assertions.

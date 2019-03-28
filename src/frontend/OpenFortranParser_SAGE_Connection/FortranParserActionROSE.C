@@ -11858,10 +11858,9 @@ void c_action_label(Token_t * lbl)
      *
      * @param label The label.
      * @param id Identifier for do construct name, if present. Otherwise, null.
-     * @param digitString The value of the digit stringi, if there. Otherwise, null.
+     * @param digitString The value of the digit string, if there. Otherwise, null.
      * @param hasLoopControl True if there is a loop control.
      */
-// void c_action_do_stmt(Token_t * label, Token_t * id, Token_t * digitString, ofp_bool hasLoopControl)
     void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
             Token_t *digitString, Token_t *eos, ofp_bool hasLoopControl)
     {
@@ -11880,11 +11879,6 @@ void c_action_label(Token_t * lbl)
             printf("   eos         = %p = %s \n", eos,
                     (eos != NULL) ? eos->text : "NULL");
         }
-
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R827 c_action_do_stmt()");
-#endif
 
         // At this point for "DO I = 1, 100" the expressions for "I", "1", and "100" are on the astExpressionStack.
 

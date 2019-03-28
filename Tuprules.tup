@@ -1,5 +1,9 @@
 .gitignore
 
+# This file should not contain anything that needs to be modified per ROSE build. I.e., all configuration
+# variables are stored elsewhere (defaults in $ROSE_SOURCE/tup.config and build-specific values in
+# $ROSE_BUILD/tup.config).
+
 ########################################################################################################################
 # General variables, defaults.
 ########################################################################################################################
@@ -305,15 +309,26 @@ endif
 ifneq (@(WITH_QT),no)
     QT_ROOT = @(WITH_QT)
     ifneq (@(WITH_QT),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtCore
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtGui @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtWidgets
+        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtCore
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtGui
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(QT_ROOT)/include/QtWidgets
         LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
         LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(QT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(QT_ROOT)/lib
     endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Charts @(CXX_LIB_SWITCH)Qt5Widgets @(CXX_LIB_SWITCH)Qt5Gui
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Core @(CXX_LIB_SWITCH)GL @(CXX_LIB_SWITCH)pthread
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Charts @(CXX_LIB_SWITCH)Qt5Widgets @(CXX_LIB_SWITCH)Qt5Gui
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Core @(CXX_LIB_SWITCH)GL @(CXX_LIB_SWITCH)pthread
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Charts
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Widgets
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Gui
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)Qt5Core
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)GL
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)pthread
+
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Charts
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Widgets
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Gui
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)Qt5Core
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)GL
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pthread
 endif
 
 # Readline command-line editing library
@@ -360,8 +375,15 @@ ifneq (@(WITH_WT),no)
 	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
 	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt @(CXX_LIB_SWITCH)wthttp @(CXX_LIB_SWITCH)wtdbo @(CXX_LIB_SWITCH)wtdbopostgres
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt @(CXX_LIB_SWITCH)wthttp @(CXX_LIB_SWITCH)wtdbo @(CXX_LIB_SWITCH)wtdbopostgres
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wthttp
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbo
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbopostgres
+
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wthttp
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbo
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbopostgres
 endif
 
 # YamlCPP is a YAML parser and emitter in C++
@@ -412,17 +434,33 @@ else
     endif
     # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
     CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_date_time
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_iostreams
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_random
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_regex
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_serialization
+    #LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_signals -- removed in 1.69.0
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_system
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wserialization
 
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono @(CXX_LIB_SWITCH)boost_date_time @(CXX_LIB_SWITCH)boost_filesystem
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_iostreams @(CXX_LIB_SWITCH)boost_program_options
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_random @(CXX_LIB_SWITCH)boost_regex @(CXX_LIB_SWITCH)boost_serialization
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_signals @(CXX_LIB_SWITCH)boost_system @(CXX_LIB_SWITCH)boost_thread
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wave @(CXX_LIB_SWITCH)boost_wserialization
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_date_time
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_filesystem
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_iostreams
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_program_options
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_random
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_regex
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_serialization
+    #LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_signals -- removed in 1.69.0
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_system
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_thread
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wave
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_wserialization
 endif
 
 # Python development
@@ -434,8 +472,11 @@ ifneq (@(WITH_PYTHON),no)
 	LDFLAGS_SHARED += @(CXX_RPATH_SWITCH)$(PYTHON_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PYTHON_ROOT)/lib
     endif
     # Note: static linking with python is not yet tested
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_python @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_python @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_python
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
+
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_python
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
 endif
 
 # Bzip2 compression library

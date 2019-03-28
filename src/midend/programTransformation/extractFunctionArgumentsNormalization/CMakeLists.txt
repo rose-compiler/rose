@@ -1,3 +1,3 @@
 install(FILES
     ExtractFunctionArguments.h functionEvaluationOrderTraversal.h
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

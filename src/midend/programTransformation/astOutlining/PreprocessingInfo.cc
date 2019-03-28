@@ -146,6 +146,12 @@ ASTtools::attachComment (const string& comment, SgStatement* s)
         new PreprocessingInfo (PreprocessingInfo::CplusplusStyleComment,
                                "// " + comment, "user-generated", 0, 0, 0,
                                PreprocessingInfo::before);
+
+   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+   // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+   // when multiple files are used on the command line.
+      comment_info->get_file_info()->setTransformation();
+
       s->addToAttachedPreprocessingInfo (comment_info);
     }
 }

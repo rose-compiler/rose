@@ -2141,6 +2141,15 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
+projects/TemplateAnalysis/Makefile
+projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/include/ROSE/proposed/Makefile
+projects/TemplateAnalysis/include/nlohmann/Makefile
+projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
+projects/TemplateAnalysis/src/Makefile
+projects/TemplateAnalysis/examples/Makefile
+projects/TemplateAnalysis/examples/inspect-autovar/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy
@@ -2523,6 +2532,7 @@ tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/x10_tests/Makefile
+tests/nonsmoke/functional/CompileTests/unparse_template_from_ast/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/preinclude_tests/Makefile
@@ -2636,6 +2646,7 @@ tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
+tools/fortranTranslation/Makefile
 tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
