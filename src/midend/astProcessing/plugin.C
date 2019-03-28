@@ -140,7 +140,6 @@ namespace Rose {
       {
         cout<<"Error in dlopen: error code: "<<dlerror()<<" when loading "<<lib_file_name <<endl;
         exit(1);
-        return NULL;
       }
     }
 

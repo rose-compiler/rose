@@ -176,16 +176,18 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
             ;;
 
         gnu)
-            # Note that "--version" spits out X.Y.Z but is harder to parse than "-dumpversion" which shows only X.Y
-            CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f1)
-            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f2)
-            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f3)
+            # Trying out various way of getting GCC version number: after version 7 "-dumpversion" was replaced by "-dumpfullversion"
+            #     CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND --dumpversion | grep "^gcc" | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
+            CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpfullversion -dumpversion 2> /dev/null)
+            CXX_VERSION_MAJOR=$(echo $CXX_VERSION_TRIPLET |cut -d. -f1)
+            CXX_VERSION_MINOR=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f2)
+            CXX_VERSION_PATCH=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f3)
             ;;
 
         intel)
             CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f1)
-            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f2)
-            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f3)
+            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -s -d. -f2)
+            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -s -d. -f3)
             ;;
 
          rose)
@@ -196,6 +198,10 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
             AC_MSG_ERROR([unknown vendor ($CXX_COMPILER_VENDOR) for backend compiler ($CXX_COMPILER_COMMAND)])
             ;;
     esac
+
+    if test "$CXX_VERSION_MINOR" = ""; then
+        AC_MSG_ERROR([cannot extract the version minor level for $CXX_COMPILER_COMMAND])
+    fi
 
     if test "$CXX_VERSION_PATCH" = ""; then
         AC_MSG_WARN([cannot extract the version patch level for $CXX_COMPILER_COMMAND (assuming 0)])

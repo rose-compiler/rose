@@ -8,4 +8,7 @@ function(gp_resolved_file_type_override resolved_file type_var)
   endif()
 endfunction()
 
-fixup_bundle(${CMAKE_INSTALL_PREFIX}/bin/testTranslator@CMAKE_EXECUTABLE_SUFFIX@ "" ${CMAKE_INSTALL_PREFIX}/lib)
+set(disable-example-translators-directory @disable-example-translators-directory@)
+if(NOT disable-examples-translators-directory)
+  fixup_bundle(${CMAKE_INSTALL_PREFIX}/bin/testTranslator@CMAKE_EXECUTABLE_SUFFIX@ "" ${CMAKE_INSTALL_PREFIX}/lib)
+endif()

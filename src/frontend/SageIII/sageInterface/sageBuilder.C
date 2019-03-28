@@ -2876,7 +2876,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false);
 
      ROSE_ASSERT(struct_name != NULL);
-  // ROSE_ASSERT(isSgTemplateClassDefinition(struct_name) == NULL);
+
+#if 0
+     printf("In buildMemberFunctionType():\n");
+     printf("  - struct_name = %p (%s)\n", struct_name, struct_name->class_name().c_str());
+#endif
 
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
@@ -12859,7 +12863,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else
         {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unknow.
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
@@ -12933,6 +12937,12 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (9/24/2012): This only appears to happen for large tests (e.g. ROSE compiling ROSE), alow it for the moment and look into this later.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): but a defining declaration was found to have already been built (might be an error), so returning it defining_classDeclaration = %p \n",defining_classDeclaration);
+#endif
+
+#if 0
+            // DQ (2/26/2019): Debugging support for multiple files on the command line.
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
 #endif
                return defining_classDeclaration;
              }

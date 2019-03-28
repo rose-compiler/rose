@@ -1663,6 +1663,11 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
   ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
 
+
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+  ROSE_DLL_API void outputSharedNodes( SgNode* node );
+
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
