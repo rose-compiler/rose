@@ -595,16 +595,12 @@ UntypedConverter::convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgS
    return sg_scope;
 }
 
-SgC_PreprocessorDirectiveStatement*
+SgDeclarationStatement*
 UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclaration* ut_stmt, SgScopeStatement* scope)
    {
       using namespace General_Language_Translation;
 
-   // Use the C preprocessing directives.  It it not clear that AST will be properly formed,
-   // but as this is the Jovial language perhaps we can get away with it.
-   // see SageInterface::buildCpreprocessorDefineDeclaration
-   //
-      SgC_PreprocessorDirectiveStatement* sg_stmt = NULL;
+      SgDeclarationStatement* sg_stmt = NULL;
 
       switch (ut_stmt->get_statement_enum())
         {
@@ -612,11 +608,13 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
            {
               std::string define_string = ut_stmt->get_directive_string();
 
-              SgDefineDirectiveStatement* define_decl = new SgDefineDirectiveStatement();
+              SgJovialDefineDeclaration* define_decl = new SgJovialDefineDeclaration(define_string);
               ROSE_ASSERT(define_decl);
               setSourcePositionFrom(define_decl, ut_stmt);
 
-              define_decl->set_directiveString("DEFINE " + define_string);
+           // The first nondefining declaration must be set
+              define_decl->set_firstNondefiningDeclaration(define_decl);
+
               SageInterface::appendStatement(define_decl, scope);
               define_decl->set_parent(scope);
 
@@ -628,6 +626,8 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
               cout << "Warning: UntypedDirectiveDeclaration stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
            }
         }
+
+      ROSE_ASSERT(sg_stmt);
 
       return sg_stmt;
    }

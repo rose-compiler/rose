@@ -28,29 +28,6 @@ vector<SgStatement*> statementList;
 vector<SgNode*> removeList;
 stack<SgStatement*> insertList;
 
-// Memory pool traversal for variable declarations
-//
-#ifdef USE_PLACEHOLDER_TRAVERSAL
-class VariableDeclTraversal : public ROSE_VisitorPattern
-{
-  public:
-    void visit(SgVariableDeclaration* varDecl);
-};
-
-void VariableDeclTraversal::visit(SgVariableDeclaration* decl)
-{
-    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl);
-    ROSE_ASSERT(variableDeclaration);
-    SgInitializedNamePtrList initializedNameList = variableDeclaration->get_variables();
-    for (SgInitializedNamePtrList::iterator i=initializedNameList.begin(); i!=initializedNameList.end();++i)
-       {
-          SgInitializedName* initializedName = isSgInitializedName(*i);
-       }
-
-    variableDeclList.push_back(decl);
-}
-#endif
-
 // Simple traversal for general language translation
 //
 class Jovial2cTraversal : public AstSimpleProcessing
@@ -60,6 +37,9 @@ class Jovial2cTraversal : public AstSimpleProcessing
 
   private:
    SgSourceFile* src_file{nullptr};
+
+  private:
+   PreprocessingInfo* preprocess_directive{nullptr};
 };
 
 void Jovial2cTraversal::visit(SgNode* n)
@@ -105,6 +85,15 @@ void Jovial2cTraversal::visit(SgNode* n)
          global->set_isModified(true);
          global->set_containsTransformation(true);
 
+         break;
+      }
+    case V_SgJovialDefineDeclaration:
+      {
+         SgJovialDefineDeclaration* defineDeclaration = isSgJovialDefineDeclaration(n);
+         ROSE_ASSERT(defineDeclaration);
+         preprocess_directive = translateJovialDefineDeclaration(defineDeclaration);
+      // Deep delete the original SgJovialDefineDeclaration
+         removeList.push_back(defineDeclaration);
          break;
       }
     case V_SgProgramHeaderStatement:
@@ -163,6 +152,19 @@ void Jovial2cTraversal::visit(SgNode* n)
     default:
        break;
   }
+
+  // Attach any dangling preprocessor directives
+  // TODO - this should be a list
+  if (preprocess_directive && (n->variantT() == V_SgVariableDeclaration))
+     {
+        SgLocatedNode* located_node = isSgLocatedNode(n);
+        if (located_node)
+           {
+              located_node->addToAttachedPreprocessingInfo(preprocess_directive);
+              preprocess_directive = nullptr;
+           }
+     }
+
 }
 
 int main( int argc, char * argv[] )
@@ -188,9 +190,9 @@ int main( int argc, char * argv[] )
      SgSourceFile* src_file = isSgSourceFile(file);
      ROSE_ASSERT(src_file);
 
-     std::cout << std::endl;
-     std::cout << "STARTING translation to C ..." << std::endl;
-     std::cout << std::endl;
+  // std::cout << std::endl;
+  // std::cout << "STARTING translation to C ..." << std::endl;
+  // std::cout << std::endl;
 
   // Simple traversal, bottom-up, to translate the rest
      Jovial2cTraversal j2c;
@@ -250,7 +252,7 @@ int main( int argc, char * argv[] )
      timer.set_project(project);
 
   // Finished with translation
-     std::cout << "Finished with translation ........... \n" << std::endl;
+  // std::cout << "finished translation \n" << std::endl;
 
      return backend(project);
 }

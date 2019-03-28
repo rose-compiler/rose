@@ -63,10 +63,15 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // module support
-          case V_SgJovialCompoolStatement:     unparseCompoolStmt(stmt, info);      break;
-          case V_SgProgramHeaderStatement:     unparseProgHdrStmt(stmt, info);      break;
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);      break;
+          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);      break;
           case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
+
+       // directives, define
+
+          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);    break;
+          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);    break;
 
        // declarations
 
@@ -122,6 +127,42 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
         }
    }
 
+
+//----------------------------------------------------------------------------
+//  Unparse_Jovial::DIRECTIVES and DEFINE
+//----------------------------------------------------------------------------
+
+void
+Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(stmt);
+     ROSE_ASSERT(directive);
+
+     int directive_type  = directive->get_directive_type();
+     std::string content = directive->get_content_string();
+
+  // TODO - implement other directives
+     ROSE_ASSERT(directive_type == SgJovialDirectiveStatement::e_compool);
+
+     curprint("!COMPOOL ");
+     curprint(content);
+     curprint(";\n");
+   }
+
+void
+Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
+     ROSE_ASSERT(define);
+
+     curprint("DEFINE ");
+     curprint(define->get_define_string());
+     curprint(";\n");
+   }
 
 //----------------------------------------------------------------------------
 //  Unparse_Jovial::MODULES

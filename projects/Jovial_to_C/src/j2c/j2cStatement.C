@@ -302,6 +302,45 @@ void Jovial_to_C::translateInitializedName(SgInitializedName* name)
 }  // End of Jovial_to_C::translateInitializedName
 
 
+/******************************************************************************************************************/
+/*
+  Translate SgJovialDefineDeclaration in Jovial into a C #define preprocessing statement
+*/
+/******************************************************************************************************************/
+PreprocessingInfo* Jovial_to_C::translateJovialDefineDeclaration(SgJovialDefineDeclaration* defineStatement)
+{
+   std::string define_line = "#define " + defineStatement->get_define_string();
+   PreprocessingInfo::DirectiveType directive_type = PreprocessingInfo::CpreprocessorDefineDeclaration;
+   PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before;
+
+   boost::replace_all(define_line, "\"", "");
+
+   PreprocessingInfo* directive = (PreprocessingInfo*) NULL;
+
+   directive = new PreprocessingInfo(directive_type, define_line, "transformation-generated", 0, 0, 0, position);
+   ROSE_ASSERT(directive);
+
+// Maybe need to set source position
+#if 0
+   SgNullStatement* null_stmt = SageBuilder::buildNullStatement();
+   ROSE_ASSERT(null_stmt);
+
+   //   replaceStatement(defineStatement, null_stmt, true);
+   //   defineStatement->set_parent(NULL);
+
+   SageInterface::prependStatement(null_stmt);
+
+   null_stmt->addToAttachedPreprocessingInfo(directive);
+#endif
+
+   statementList.push_back(defineStatement);
+//   removeList.push_back(defineStatement);
+
+   return directive;
+
+}  // End of Jovial_to_C::translateJovialDefineDeclaration
+
+
 PreprocessingInfo* Jovial_to_C::attachIncludeDeclaration(SgLocatedNode* target, const std::string & include_target,
                                                          PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
 {

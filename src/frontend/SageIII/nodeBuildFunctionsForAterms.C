@@ -4656,6 +4656,30 @@ SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_chil
      return returnNode;
    }
 
+SgJovialDefineDeclaration* SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDefineDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialDirectiveStatement* SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDirectiveStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name)
    {
 #if 0

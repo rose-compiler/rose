@@ -28,6 +28,8 @@ namespace Jovial_to_C
  // SgType* translateType(SgType*);
     void translateDoubleVal(SgFloatVal*);
 
+    PreprocessingInfo* translateJovialDefineDeclaration (SgJovialDefineDeclaration*);
+
     PreprocessingInfo* attachIncludeDeclaration(SgLocatedNode* target, const std::string & content,
                                                 PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
