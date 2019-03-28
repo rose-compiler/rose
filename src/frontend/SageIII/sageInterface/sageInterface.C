@@ -8853,6 +8853,38 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
         }
    }
 
+
+void
+SageInterface::outputSharedNodes( SgNode* node )
+   {
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+
+     class OutputSharedNodesTraversal : public SgSimpleProcessing
+        {
+       // This traversal collects the includes at the top of a file.
+          public:
+               void visit(SgNode *astNode)
+                  {
+                    ROSE_ASSERT(astNode != NULL);
+                    Sg_File_Info* file_info = astNode->get_file_info();
+                    if (file_info != NULL)
+                       {
+                         if (file_info->isShared() == true)
+                            {
+                              printf ("Found shared node: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+     OutputSharedNodesTraversal tt;
+     tt.traverse(node,preorder);
+   }
+
+
+
+
+
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
   return isSgStatement(n);
@@ -14613,6 +14645,11 @@ PreprocessingInfo* SageInterface::attachComment(SgSourceFile * source_file, cons
   PreprocessingInfo* result = new PreprocessingInfo(directive_type, content, "Transformation generated",0, 0, 0, position);
   ROSE_ASSERT(result);
 
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+  result->get_file_info()->setTransformation();
+
   global_scope->addToAttachedPreprocessingInfo(result, position);
 
   return result;
@@ -14692,6 +14729,13 @@ PreprocessingInfo* SageInterface::attachComment(
        // Call the Sg_File_Info::operator=() member function.
           *(result->get_file_info()) = *(target->get_file_info());
         }
+       else
+        {
+       // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+       // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+       // when multiple files are used on the command line.
+          result->get_file_info()->setTransformation();
+        }
 
      ROSE_ASSERT(result);
      target->addToAttachedPreprocessingInfo(result);
@@ -14714,6 +14758,12 @@ void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
     PreprocessingInfo::after
   );
   target->addToAttachedPreprocessingInfo(endif_macro);
+
+// DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+// This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+// when multiple files are used on the command line.
+  if_macro->get_file_info()->setTransformation();
+  endif_macro->get_file_info()->setTransformation();
 }
 
 PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) {
@@ -14730,6 +14780,11 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
   PreprocessingInfo* result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, position);
   ROSE_ASSERT(result);
+
+// DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+// This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+// when multiple files are used on the command line.
+  result->get_file_info()->setTransformation();
 
   global_scope->addToAttachedPreprocessingInfo(result, position);
 
@@ -14788,6 +14843,16 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
        globalScope->addToAttachedPreprocessingInfo(result,position);
        //successful = true;
     }
+
+ // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // when multiple files are used on the command line.
+ // DQ (3/12/2019): This can be NULL for the omp tests.
+    if (result != NULL)
+       {
+         result->get_file_info()->setTransformation();
+       }
+
     // must be inserted once somehow
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
     // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
@@ -14879,7 +14944,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
-  {                     
+  {
     for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
         j != stmtList.end (); j++)
     {
@@ -14895,22 +14960,32 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
         ROSE_ASSERT(result);
         insertHeader (*j, result, asLastHeader);
         //successful = true;
-        break;                                                                                                               
-      }                                                                                                                      
-    } // end for                                                                                                                         
-  }                                                                                                                          
-  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!                                    
-  {                                                                                                                          
-    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;                                                        
+        break;
+      }
+    } // end for                                               
+  }
+  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
+  {
+    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
     cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
-    cerr<<"You may have to insert some statement first before inserting a header"<<endl;                                     
-    ROSE_ASSERT(false);                                                                                                      
-    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,                                       
-        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);                                         
-    ROSE_ASSERT(result);                                                                                                     
+    cerr<<"You may have to insert some statement first before inserting a header"<<endl;
+    ROSE_ASSERT(false);
+    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
+    ROSE_ASSERT(result);
     globalScope->addToAttachedPreprocessingInfo(result,position);
 //    successful = true;                                                                                                       
-  }                                                                                                                           
+  }
+
+#if 1
+     printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
+#endif
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+     result->get_file_info()->setTransformation();
+
   // must be inserted once somehow
   // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
   // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
@@ -14939,6 +15014,11 @@ SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & te
 
      result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
      ROSE_ASSERT(result);
+
+ // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // when multiple files are used on the command line.
+    result->get_file_info()->setTransformation();
 
      target->addToAttachedPreprocessingInfo(result);
 
@@ -17784,6 +17864,11 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
      PreprocessingInfo* messageToUser = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,message,fileName,0,0,1,PreprocessingInfo::before);
   // requiredDirectivesList.push_back(messageToUser);
      stmt->addToAttachedPreprocessingInfo(messageToUser,PreprocessingInfo::before);
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+     messageToUser->get_file_info()->setTransformation();
    }
 
 

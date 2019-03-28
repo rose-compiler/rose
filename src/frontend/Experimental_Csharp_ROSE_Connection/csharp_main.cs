@@ -19,7 +19,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-using UsingCollectorCS;
+// using UsingCollectorCS;
 
 // Failing cases of using declarations.
 using Microsoft.CodeAnalysis;
@@ -48,12 +48,12 @@ namespace TestDLL
 
                Console.WriteLine (filename);
 
-               using (FileStream fs = File.Open(filename, FileMode.Open)) 
+               using (FileStream fs = File.Open(filename, FileMode.Open))
                   {
                     byte[] b = new byte[1024];
                     UTF8Encoding temp = new UTF8Encoding(true);
 
-                    while (fs.Read(b,0,b.Length) > 0) 
+                    while (fs.Read(b,0,b.Length) > 0)
                        {
                       // Console.WriteLine ("In C# process(string) reading file! \n");
                       // Console.WriteLine(temp.GetString(b));
@@ -72,9 +72,14 @@ namespace TestDLL
                SyntaxTree tree = CSharpSyntaxTree.ParseText(filetext);
 
                Console.WriteLine ("In C# process(System.UInt64) after parsing C# file");
+               var compilation = CSharpCompilation.Create("MyCompilation", syntaxTrees: new[] { tree });
+
+               SemanticModel model = compilation.GetSemanticModel(tree);
+
+               Console.WriteLine ("In C# process(System.UInt64) after compiling C# file");
 
                var root    = tree.GetRoot() as CSharpSyntaxNode;
-               var builder = new AstBuilder();
+               var builder = new AstBuilder(model);
 
                root.Accept(builder);
                csharpBuilder.basicFinalChecks();
@@ -92,7 +97,7 @@ namespace TestDLL
 #if VERBOSE_MODE
                Console.WriteLine ("In C# process(System.UInt64) after outputing the using directives!");
                Console.WriteLine ("In C# process(System.UInt64) generate DOT file of Roslyn AST!");
-#endif // VERBOSE_MODE               
+#endif // VERBOSE_MODE
 
 #if OUTPUT_DOT_GRAPH_OF_ABSTRACT_SYNTAX_TREE
                var buildDotGraph_object = new BuildDotGraph(filename);
@@ -114,7 +119,7 @@ namespace TestDLL
 
 #if VERBOSE_MODE
                Console.WriteLine ("In C# process(System.UInt64) output Roslyn AST!");
-#endif // VERBOSE_MODE 
+#endif // VERBOSE_MODE
 
 #if OUTPUT_PARSE_TREE
                var parseTreeTraversal_object = new ParseTreeTraversal();
@@ -125,8 +130,7 @@ namespace TestDLL
                Console.WriteLine ("In C# process(System.UInt64) after output of Roslyn AST!");
 
                Console.WriteLine ("Leaving C# process(System.UInt64)");
-#endif // VERBOSE_MODE 
+#endif // VERBOSE_MODE
              }
         }
    }
-

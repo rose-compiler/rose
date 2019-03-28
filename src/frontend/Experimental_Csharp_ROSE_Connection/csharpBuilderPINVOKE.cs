@@ -208,6 +208,9 @@ class csharpBuilderPINVOKE {
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_varDecl")]
   public static extern void varDecl(int jarg1);
 
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_paramDecl")]
+  public static extern void paramDecl(int jarg1);
+
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_classDecl")]
   public static extern void classDecl(int jarg1);
 
@@ -217,14 +220,26 @@ class csharpBuilderPINVOKE {
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_stageMethodDecl")]
   public static extern void stageMethodDecl(int jarg1);
 
-  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_initVarDecl")]
-  public static extern void initVarDecl(int jarg1);
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_refVarParamDecl")]
+  public static extern void refVarParamDecl(int jarg1);
+
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_refFunDecl")]
+  public static extern void refFunDecl(int jarg1);
+
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_initVarParamDecl")]
+  public static extern void initVarParamDecl(int jarg1);
+
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_returnStmt")]
+  public static extern void returnStmt(int jarg1);
 
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_valueInitializer")]
   public static extern void valueInitializer();
 
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_literal")]
   public static extern void literal(string jarg1);
+
+  [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_binary")]
+  public static extern void binary(string jarg1);
 
   [global::System.Runtime.InteropServices.DllImport("csharpBuilder", EntryPoint="CSharp_basicFinalChecks")]
   public static extern void basicFinalChecks();
