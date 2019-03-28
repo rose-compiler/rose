@@ -141,8 +141,8 @@ int main(int argc, char** argv)
             }
             else if(APIInfo.find(funcName)->second == twosub)
             {
+              replaceFuncArgument(expList, 0);
               replaceFuncArgument(expList, 1);
-              replaceFuncArgument(expList, 2);
             }
             // Step 3: perform function call repalcement
             SgFunctionCallExp* newCallExp = buildFunctionCallExp(newname, funcCallExp->get_type() , newExprListExp,scope);
