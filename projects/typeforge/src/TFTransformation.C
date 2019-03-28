@@ -7,6 +7,8 @@
 #include <boost/algorithm/string.hpp>
 #include "TFHandles.h"
 
+namespace Typeforge {
+
 using namespace std;
 
 //Methods for building transform list
@@ -592,3 +594,6 @@ void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
     }
   }
 }
+
+}
+

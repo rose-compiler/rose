@@ -5,6 +5,9 @@
 #include <string>
 
 class SgNode;
+
+namespace Typeforge {
+
 class TFTransformation;
 
 class TransformationSpec{
@@ -101,5 +104,6 @@ class TFTransformation {
     
 };
 
+}
 
 #endif

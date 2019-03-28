@@ -4,6 +4,8 @@
 
 #define MAXPATHLEN 255
 
+namespace Typeforge {
+
 //////////////
 //ToolAction//
 //////////////
@@ -392,5 +394,7 @@ void from_json(const json& j, ToolConfig& a) {
     } catch (...) {
         actions = {};
     }
+}
+
 }
 

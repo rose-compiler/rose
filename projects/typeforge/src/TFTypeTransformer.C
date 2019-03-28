@@ -36,6 +36,8 @@ bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type = false) {
 
 }
 
+namespace Typeforge {
+
 // static member
 bool TFTypeTransformer::_traceFlag=false;
 
@@ -719,5 +721,7 @@ void TFTypeTransformer::printTransformationStats(int numTypeReplace,TFTypeTransf
   cout<<"STATS: number of ad_intermediate transformations: "<<adIntermediateTransformations<<endl;
   int totalTransformations=numReplacementsFound+arrayReadAccesses+arrayWriteAccesses+arrayOfStructsAccesses+adIntermediateTransformations;
   cout<<"STATS: total number of transformations: "<<totalTransformations<<endl;
+}
+
 }
 

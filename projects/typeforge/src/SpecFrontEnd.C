@@ -47,6 +47,9 @@
 #define FIND_SETS          "find_sets"
 #define ADD_SPEC           "import"
 #define AD_INST            "ad_intermediate_instrumentation"
+
+namespace Typeforge {
+
 using namespace std;
 
 bool isComment(string s) {
@@ -288,3 +291,6 @@ TFTypeTransformer::VarTypeVarNameTupleList
 SpecFrontEnd::getTransformationList() {
   return commandList.getTransformationList();
 }
+
+}
+

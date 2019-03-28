@@ -11,6 +11,8 @@
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
 
+namespace Typeforge {
+
 using namespace std;
 
 //Returns base type of varInitName if the name ofthe base type matches typename. Else returns nullptr.
@@ -447,3 +449,6 @@ void CommandList::nextCommand(){
 TFTypeTransformer::VarTypeVarNameTupleList CommandList::getTransformationList(){
   return _list;
 }
+
+}
+

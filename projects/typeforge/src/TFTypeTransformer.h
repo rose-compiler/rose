@@ -6,6 +6,9 @@
 #include "TFTransformation.h"
 #include "ToolConfig.hpp"
 #include "Analysis.h"
+
+namespace Typeforge {
+
 class TFTypeTransformer;
 
 class Transformer{
@@ -121,5 +124,7 @@ class TFTypeTransformer {
   ToolConfig* _outConfig = nullptr;
   std::string _writeConfig = "";
 };
+
+}
 
 #endif

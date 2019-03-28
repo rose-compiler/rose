@@ -4,7 +4,9 @@
 #include "sage3basic.h"
 #include "AstTerm.h"
 
-class Analysis{
+namespace Typeforge {
+
+class Analysis {
   public:
     Analysis();
     int variableSetAnalysis(SgProject* project, SgType* matchType, bool base);
@@ -17,5 +19,7 @@ class Analysis{
     std::list<std::set<SgNode*>*> listSets;
     std::map<SgNode*,std::set<SgNode*>*> setMap;
 };
+
+}
 
 #endif

@@ -1,37 +1,46 @@
 #include "TFToolConfig.h"
 #include <iostream>
+
+namespace Typeforge {
+
+namespace TFToolConfig {
+
 using namespace std;
 
-ToolConfig* TFToolConfig::config = nullptr;
-string TFToolConfig::fileName = "";
+ToolConfig* config = nullptr;
+string fileName = "";
 
-void TFToolConfig::open(string name){
-  TFToolConfig::fileName = name;
-  if(TFToolConfig::config == nullptr){
+void open(string name){
+  fileName = name;
+  if(config == nullptr){
     try{
-      TFToolConfig::config = new ToolConfig(name);
+      config = new ToolConfig(name);
     }catch(...){
-      TFToolConfig::config = new ToolConfig();
+      config = new ToolConfig();
     }
-    TFToolConfig::config->setToolID("typeforge");
+    config->setToolID("typeforge");
   }
 }
 
-void TFToolConfig::write(){
-  if(TFToolConfig::config == nullptr) return;
-  if(TFToolConfig::fileName != ""){
-    TFToolConfig::config->saveConfig(TFToolConfig::fileName);
+void write(){
+  if(config == nullptr) return;
+  if(fileName != ""){
+    config->saveConfig(fileName);
   }
-  TFToolConfig::fileName = "";
-  delete TFToolConfig::config;
-  TFToolConfig::config = nullptr;
+  fileName = "";
+  delete config;
+  config = nullptr;
 }
 
-void TFToolConfig::addChangeVarType(string handle, string name, string scope, string source, string fromType, string toType){
-  if(TFToolConfig::config != nullptr) TFToolConfig::config->addReplaceVarType(handle, name, scope, source, fromType, toType);
+void addChangeVarType(string handle, string name, string scope, string source, string fromType, string toType){
+  if(config != nullptr) config->addReplaceVarType(handle, name, scope, source, fromType, toType);
 }
 
-void TFToolConfig::addChangeVarBaseType(string handle, string name, string scope, string source, string fromType, string toType){
-  if(TFToolConfig::config != nullptr) TFToolConfig::config->addReplaceVarBaseType(handle, name, scope, source, fromType, toType);
+void addChangeVarBaseType(string handle, string name, string scope, string source, string fromType, string toType){
+  if(config != nullptr) config->addReplaceVarBaseType(handle, name, scope, source, fromType, toType);
+}
+
+}
+
 }
 

@@ -38,12 +38,7 @@
 #include "TFTransformation.h"
 
 using namespace std;
-
-class TestTraversal : public AstSimpleProcessing {
-public:
-  virtual void visit(SgNode* node) { /* do nothing */ };
-};
-
+using namespace Typeforge;
 
 string toolName="typeforge";
 
