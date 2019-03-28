@@ -12,6 +12,28 @@ void set_language(SgFile::languageOption_enum current_language)
 }
 
 
+SgUntypedScope* buildUntypedScope(const std::string & label)
+   {
+      SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
+      ROSE_ASSERT(decl_list);
+      SageInterface::setSourcePosition(decl_list);
+
+      SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
+      ROSE_ASSERT(stmt_list);
+      SageInterface::setSourcePosition(stmt_list);
+
+      SgUntypedFunctionDeclarationList* func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(func_list);
+      SageInterface::setSourcePosition(func_list);
+
+      SgUntypedScope* scope = new SgUntypedScope(label, decl_list, stmt_list, func_list);
+      ROSE_ASSERT(scope);
+      SageInterface::setSourcePosition(scope);
+
+      return scope;
+   }
+
+
 SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
 {
    SgUntypedExpression* type_kind = NULL;

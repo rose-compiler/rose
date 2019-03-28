@@ -58,21 +58,26 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
      ROSE_ASSERT(stmt != NULL);
 
-  // curprint_indented("", info);
-
      switch (stmt->variantT())
         {
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // module support
-          case V_SgJovialCompoolStatement:     unparseCompoolStmt(stmt, info);      break;
-          case V_SgProgramHeaderStatement:     unparseProgHdrStmt(stmt, info);      break;
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);      break;
+          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);      break;
           case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
+       // directives, define
+
+          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);    break;
+          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);    break;
+
        // declarations
 
-          case V_SgVariableDeclaration:        unparseVarDeclStmt (stmt, info);     break;
+          case V_SgEnumDeclaration:            unparseEnumDeclStmt (stmt, info);    break;
+          case V_SgJovialTableStatement:       unparseTableDeclStmt(stmt, info);    break;
+          case V_SgVariableDeclaration:        unparseVarDeclStmt  (stmt, info);    break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
@@ -100,8 +105,6 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
 
-          case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
-
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
           case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
@@ -124,6 +127,42 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
         }
    }
 
+
+//----------------------------------------------------------------------------
+//  Unparse_Jovial::DIRECTIVES and DEFINE
+//----------------------------------------------------------------------------
+
+void
+Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(stmt);
+     ROSE_ASSERT(directive);
+
+     int directive_type  = directive->get_directive_type();
+     std::string content = directive->get_content_string();
+
+  // TODO - implement other directives
+     ROSE_ASSERT(directive_type == SgJovialDirectiveStatement::e_compool);
+
+     curprint("!COMPOOL ");
+     curprint(content);
+     curprint(";\n");
+   }
+
+void
+Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
+     ROSE_ASSERT(define);
+
+     curprint("DEFINE ");
+     curprint(define->get_define_string());
+     curprint(";\n");
+   }
 
 //----------------------------------------------------------------------------
 //  Unparse_Jovial::MODULES
@@ -576,6 +615,85 @@ Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
+     ROSE_ASSERT(enum_decl != NULL);
+
+     SgName enum_name = enum_decl->get_name();
+
+     curprint("TYPE ");
+     curprint(enum_name.str());
+     curprint(" STATUS");
+     unp->cur.insert_newline(1);
+
+     curprint("(");
+     unp->cur.insert_newline(1);
+
+     int n = enum_decl->get_enumerators().size();
+     BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
+         {
+            SgName name = init_name->get_name();
+
+            SgInitializer* init_expr = init_name->get_initializer();
+            ROSE_ASSERT(init_expr);
+            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
+            ROSE_ASSERT(assign_expr);
+            SgExpression* expr = assign_expr->get_operand();
+            ROSE_ASSERT(expr);
+
+            curprint("  ");
+            unparseExpression(expr, info);
+            curprint(" V(");
+            curprint(name.str());
+            curprint(")");
+            if (--n > 0) curprint(",");
+            unp->cur.insert_newline(1);
+         }
+
+     curprint(");");
+     unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
+     ROSE_ASSERT(table_decl != NULL);
+
+     SgClassDefinition* table_def = table_decl->get_definition();
+     ROSE_ASSERT(table_def);
+
+     SgName table_name = table_decl->get_name();
+
+     curprint("TYPE ");
+     curprint(table_name.str());
+     curprint(" TABLE");
+
+  // WordsPerEntry
+     if (table_decl->get_has_table_entry_size())
+        {
+           curprint(" W ");
+           unparseExpression(table_decl->get_table_entry_size(), info);
+        }
+
+     curprint(";");
+     unp->cur.insert_newline(1);
+
+     curprint("BEGIN");
+     unp->cur.insert_newline(1);
+
+     BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+        {
+           unparseVarDeclStmt(item_decl, info);
+        }
+
+     unp->cur.insert_newline(1);
+     curprint("END");
+     unp->cur.insert_newline(1);
+   }
+
+void
 Unparse_Jovial::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgVariableDeclaration* vardecl = isSgVariableDeclaration(stmt);
@@ -622,6 +740,23 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
      unparseType(type, info);
+
+  // Unparse the LocationSpecifier if present
+     if (variableDeclaration->get_bitfield() != NULL)
+        {
+           SgExpression* bitfield = variableDeclaration->get_bitfield();
+           SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
+           ROSE_ASSERT(sg_location_specifier);
+
+           SgExpressionPtrList & location_exprs = sg_location_specifier->get_expressions();
+           ROSE_ASSERT(location_exprs.size() == 2);
+
+           curprint(" POS(");
+           unparseExpression(location_exprs[0], info);
+           curprint(",");
+           unparseExpression(location_exprs[1], info);
+           curprint(")");
+        }
 
      if (init != NULL)
         {

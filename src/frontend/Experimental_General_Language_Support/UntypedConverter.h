@@ -57,8 +57,10 @@ class UntypedConverter
 
       virtual SgGlobal* convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
 
-      virtual SgC_PreprocessorDirectiveStatement*
-                                          convertUntypedDirectiveDeclaration     (SgUntypedDirectiveDeclaration*     ut_decl, SgScopeStatement* scope);
+      virtual SgDeclarationStatement*     convertUntypedDirectiveDeclaration     (SgUntypedDirectiveDeclaration*     ut_decl, SgScopeStatement* scope);
+      virtual SgEnumDeclaration*          convertUntypedEnumDeclaration          (SgUntypedEnumDeclaration*          ut_decl, SgScopeStatement* scope);
+
+      virtual SgClassDeclaration*         convertUntypedStructureDeclaration     (SgUntypedStructureDeclaration*     ut_decl, SgScopeStatement* scope);
 
       virtual SgModuleStatement*          convertUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
       virtual SgProgramHeaderStatement*   convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);

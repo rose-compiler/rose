@@ -52,6 +52,20 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          currentScope = SageBuilder::topScopeStack();
          break;
       }
+    case V_SgUntypedEnumDeclaration:
+      {
+         SgUntypedEnumDeclaration* ut_decl = dynamic_cast<SgUntypedEnumDeclaration*>(node);
+         pConverter->convertUntypedEnumDeclaration(ut_decl, currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SgUntypedStructureDeclaration* ut_struct = dynamic_cast<SgUntypedStructureDeclaration*>(node);
+         pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
     case V_SgUntypedModuleDeclaration:
       {
          SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(node);
@@ -387,6 +401,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          sg_node = SageBuilder::topScopeStack();
          SageBuilder::popScopeStack();
 
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SageBuilder::popScopeStack();  // structure scope
          currentScope = SageBuilder::topScopeStack();
          break;
       }

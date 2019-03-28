@@ -48,7 +48,10 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    Sg_File_Info* start = fromNode->get_startOfConstruct();
    Sg_File_Info*   end = fromNode->get_endOfConstruct();
 
-   ROSE_ASSERT(start != NULL && end != NULL);
+   if (start == NULL || end == NULL) {
+      cerr << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << " from: " << fromNode << endl;
+      ROSE_ASSERT(start != NULL && end != NULL);
+   }
 
 // SageBuilder may have been used and it builds FileInfo
    if (toNode->get_startOfConstruct() != NULL) {
@@ -61,10 +64,9 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    }
 
 #if DEBUG_SOURCE_POSITION
-   std::cout << "UntypedConverter::setSourcePositionFrom: ";
-   printf("   --- toNode: %p from: %p", toNode, fromNode);
-   std::cout << " strt: " << start->get_line() << " " << start->get_col();
-   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+   cout << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << " from: " << fromNode;
+   cout << " strt: " << start->get_line() << " " << start->get_col();
+   cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
 #endif
 
    std::string filename = start->get_filenameString();
@@ -198,6 +200,27 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
 
    BOOST_FOREACH(SgUntypedExpression* ut_expr, modifier_list->get_expressions())
     {
+    // Check for Jovial LocationSpecifier
+       SgUntypedExprListExpression* expr_list = isSgUntypedExprListExpression(ut_expr);
+       if (expr_list)
+          {
+             SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
+             ROSE_ASSERT(var_decl);
+             ROSE_ASSERT(expr_list->get_expressions().size() == 2);
+
+          // If deleted illegal object is found in tree traversal
+             SgExprListExp* sg_location_specifier = convertSgUntypedExprListExpression(expr_list, /*delete*/false);
+             ROSE_ASSERT(sg_location_specifier);
+
+          // The bitfield will contain both the start_bit and start_word as an expression list
+             var_decl->set_bitfield(sg_location_specifier);
+             sg_location_specifier->set_parent(var_decl);
+
+          // NOTE: this saves indenting the rather large switch statement; not clear the an else clause is more readable
+             continue;
+          }
+
+    // Otherwise not a Jovial LocationSpecifier, must be a simple modifier based on the expression enum
        ROSE_ASSERT( isSgUntypedOtherExpression(ut_expr) );
 
        switch(ut_expr->get_expression_enum())
@@ -524,7 +547,8 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
       {
          SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_name->get_type());
 #if 0
-         cout << "--- convertSgUntypedInitializedName:    dim_info is " << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
+         cout << "--- convertSgUntypedInitializedName:    dim_info is "
+              << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
 #endif
          SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
 
@@ -571,16 +595,12 @@ UntypedConverter::convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgS
    return sg_scope;
 }
 
-SgC_PreprocessorDirectiveStatement*
+SgDeclarationStatement*
 UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclaration* ut_stmt, SgScopeStatement* scope)
    {
       using namespace General_Language_Translation;
 
-   // Use the C preprocessing directives.  It it not clear that AST will be properly formed,
-   // but as this is the Jovial language perhaps we can get away with it.
-   // see SageInterface::buildCpreprocessorDefineDeclaration
-   //
-      SgC_PreprocessorDirectiveStatement* sg_stmt = NULL;
+      SgDeclarationStatement* sg_stmt = NULL;
 
       switch (ut_stmt->get_statement_enum())
         {
@@ -588,11 +608,13 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
            {
               std::string define_string = ut_stmt->get_directive_string();
 
-              SgDefineDirectiveStatement* define_decl = new SgDefineDirectiveStatement();
+              SgJovialDefineDeclaration* define_decl = new SgJovialDefineDeclaration(define_string);
               ROSE_ASSERT(define_decl);
               setSourcePositionFrom(define_decl, ut_stmt);
 
-              define_decl->set_directiveString("DEFINE " + define_string);
+           // The first nondefining declaration must be set
+              define_decl->set_firstNondefiningDeclaration(define_decl);
+
               SageInterface::appendStatement(define_decl, scope);
               define_decl->set_parent(scope);
 
@@ -605,7 +627,78 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
            }
         }
 
+      ROSE_ASSERT(sg_stmt);
+
       return sg_stmt;
+   }
+
+SgEnumDeclaration*
+UntypedConverter::convertUntypedEnumDeclaration (SgUntypedEnumDeclaration* ut_decl, SgScopeStatement* scope)
+   {
+      int enum_val = 0;
+      SgName enum_name = ut_decl->get_enum_name();
+
+      SgEnumDeclaration* enum_decl = SageBuilder::buildEnumDeclaration(enum_name, scope);
+      ROSE_ASSERT(enum_decl);
+      setSourcePositionFrom(enum_decl, ut_decl);
+
+   // First assume easy case where enum hasn't been declared yet
+      SgEnumSymbol* enum_symbol = SageInterface::lookupEnumSymbolInParentScopes(enum_name, scope);
+      ROSE_ASSERT(enum_symbol);
+
+   // Build the integer type for tne enumerators
+      SgType * enum_int_type = SageBuilder::buildIntType();
+      ROSE_ASSERT(enum_int_type != NULL);
+
+      SgUntypedInitializedNamePtrList ut_init_names = ut_decl->get_enumerators()->get_name_list();
+
+      BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_init_names)
+         {
+         // BIG ASSUMPTION: assume that the initializer is an integer value expression
+            SgIntVal* val_expr = NULL;
+
+            SgName name = ut_init_name->get_name();
+
+         // enumerator value
+            if (ut_init_name->get_has_initializer())
+               {
+                  SgUntypedExpression* ut_init_expr = ut_init_name->get_initializer();
+                  SgUntypedValueExpression* ut_val_expr = isSgUntypedValueExpression(ut_init_expr);
+                  ROSE_ASSERT(ut_val_expr);
+                  SgValueExp* sg_val_expr = convertSgUntypedValueExpression(ut_val_expr, true);
+                  val_expr = isSgIntVal(sg_val_expr);
+                  ROSE_ASSERT(val_expr);
+                  enum_val = val_expr->get_value();
+               }
+            else
+               {
+                  val_expr = SageBuilder::buildIntVal(enum_val);
+                  ROSE_ASSERT(val_expr);
+                  SageInterface::setSourcePosition(val_expr);
+               }
+
+            enum_val += 1;
+
+         // enumerator initializer
+            SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer(val_expr, enum_int_type);
+            ROSE_ASSERT(initializer);
+            SageInterface::setSourcePosition(initializer);
+
+         // initialized name
+            SgInitializedName* init_name = SageBuilder::buildInitializedName(name, enum_int_type, initializer);
+            ROSE_ASSERT(init_name);
+            SageInterface::setSourcePosition(init_name);
+
+         // set the scope (especially) otherwise will fail in initializeExplicitScopeData.C
+            init_name->set_parent(enum_decl);
+            init_name->set_scope(scope);
+
+            enum_decl->append_enumerator(init_name);
+         }
+
+      SageInterface::appendStatement(enum_decl, scope);
+
+      return enum_decl;
    }
 
 void
@@ -613,6 +706,51 @@ UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclar
    {
    // Only a Fortran specific implementation needed for now
    }
+
+SgClassDeclaration*
+UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
+   {
+      SgName name = ut_struct->get_name();
+
+#if 0
+      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
+      cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
+      cout << "..........\n\n";
+      cout << "-x- creating SgClassDeclaration for name " << name << endl;
+      cout << "    size of modifier list is " << ut_struct->get_modifiers()->get_expressions().size()
+           << endl;
+#endif
+
+      SgJovialTableStatement* class_decl = SageBuilder::buildJovialTableStatement(name, scope);
+      ROSE_ASSERT(class_decl);
+      setSourcePositionFrom(class_decl, ut_struct);
+
+      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
+         {
+         // TODO: move to Jovial
+         // ROSE_ASSERT(ut_struct->get_modifiers()->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_w);
+            ROSE_ASSERT(ut_struct->get_modifiers()->get_expressions().size() == 1);
+            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
+            ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+            // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
+
+            class_decl->set_has_table_entry_size(true);
+            class_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+         }
+
+      SgClassDefinition* class_def = class_decl->get_definition();
+      ROSE_ASSERT(class_def);
+
+      SgScopeStatement* class_scope = class_def->get_scope();
+      ROSE_ASSERT(class_scope);
+
+      SageInterface::appendStatement(class_decl, scope);
+
+      SageBuilder::pushScopeStack(class_def);
+
+      return NULL;
+   }
+
 
 SgModuleStatement*
 UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
@@ -664,7 +802,7 @@ UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* u
   // Set the parent explicitly
      nondefiningClassDeclaration->set_parent(scope);
 
-  // Set the defining and no-defining declarations in the non-defining class declaration!
+  // Set the defining and non-defining declarations in the non-defining class declaration!
      nondefiningClassDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
      nondefiningClassDeclaration->set_definingDeclaration(classDeclaration);
 
@@ -1107,8 +1245,10 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          param_list->get_args().push_back(param_name);
       }
 
+#if 0
    SgInitializedNamePtrList & new_names = param_list->get_args();
-   //cout << "---                   # args is : " << new_names.size() << endl;
+   cout << "---                   # args is : " << new_names.size() << endl;
+#endif
 
 // return type
    SgType* return_type = prev_nondef_func_decl->get_type()->get_return_type();
@@ -1373,12 +1513,12 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration_nfi(name(), sg_type, /*sg_init*/NULL, scope);
 #else
    SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
+   ROSE_ASSERT(sg_decl);
    setSourcePositionFrom(sg_decl, ut_decl);
 
    sg_decl->set_parent(scope);
    //   sg_decl->set_definingDeclaration(sg_decl);
    sg_decl->set_firstNondefiningDeclaration(sg_decl);
-   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
 #endif
 
 // add variables
@@ -1463,6 +1603,9 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
       ROSE_ASSERT(variableSymbol != NULL);
       ROSE_ASSERT(sg_init_name->get_scope() != NULL);
    }
+
+// Modifiers must be set after the variable declaration setup is finished
+   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
 
    scope->append_statement(sg_decl);
    convertLabel(ut_decl, sg_decl, scope);
@@ -1738,13 +1881,13 @@ UntypedConverter::convertUntypedForStatement (SgUntypedForStatement* ut_stmt, Sg
 SgStatement*
 UntypedConverter::convertSgUntypedForAllStatement (SgUntypedForAllStatement* ut_stmt, SgScopeStatement* scope)
    {
-      SgUntypedType* type = ut_stmt->get_type();
       SgUntypedExprListExpression* iterates = ut_stmt->get_iterates();
-      SgUntypedExprListExpression* locality = ut_stmt->get_local();
-      SgUntypedExpression* mask = ut_stmt->get_mask();
       std::string name = ut_stmt->get_do_construct_name();
 
 #if 0
+      SgUntypedType* type = ut_stmt->get_type();
+      SgUntypedExpression* mask = ut_stmt->get_mask();
+      SgUntypedExprListExpression* locality = ut_stmt->get_local();
       cout << "-x- convert forall: enum is "       << ut_stmt->get_statement_enum() << endl;
       cout << "-x- convert forall: type is "       << type << endl;
       cout << "-x- convert forall: iterates are "  << iterates << endl;
@@ -2396,7 +2539,6 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
               {
                  SgUntypedValueExpression* ut_value_expr = isSgUntypedValueExpression(ut_expr);
                  sg_expr = convertSgUntypedValueExpression(ut_value_expr, delete_ut_expr);
-                 setSourcePositionFrom(sg_expr, ut_expr);
                  if (delete_ut_expr && ut_value_expr->get_type())
                     {
                        delete ut_value_expr->get_type();
@@ -2415,6 +2557,13 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, bool 
                     // Break here on purpose to otherwise fall through to default
                        break;
                     }
+              }
+           case V_SgUntypedExprListExpression:
+              {
+                 SgUntypedExprListExpression* ut_list = isSgUntypedExprListExpression(ut_expr);
+                 SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_list,delete_ut_expr);
+                 sg_expr = sg_expr_list;
+                 break;
               }
            default:
               {
@@ -2614,6 +2763,14 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
             }
        }
 
+    if (delete_ut_expr)
+       {
+#if 0
+          cout << "--- deleting node " << ut_expr << " " << ut_expr->class_name() << endl;
+#endif
+          delete ut_expr;
+       }
+
     return sg_expr;
  }
 
@@ -2678,6 +2835,10 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_fortran_sync_stat_stat:       break;
        case e_fortran_sync_stat_errmsg:     break;
        case e_fortran_stat_acquired_lock:   break;
+
+    // Jovial specific (for location-specifier)
+       case e_struct_item_modifier_list:    break;
+       case e_storage_modifier_location:    break;
 
        case e_unknown:
          {
@@ -2764,7 +2925,6 @@ UntypedConverter::convertSgUntypedSubscriptExpression(SgUntypedSubscriptExpressi
    if (isSgUntypedNullExpression(ut_expr->get_lower_bound()))
       {
          sg_expr = sg_upper_bound;
-         setSourcePositionFrom(sg_expr, ut_expr);
       }
    else
       {

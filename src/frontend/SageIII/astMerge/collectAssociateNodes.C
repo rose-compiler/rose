@@ -2408,6 +2408,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
           case V_SgUntypedExprListExpression:
+          case V_SgUntypedValueExpression:
              {
                break;
              }
