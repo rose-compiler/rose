@@ -289,8 +289,12 @@ Grammar::setUpStatements ()
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
-  // Rasmussen (11/12/2018): Support for Jovial IR nodes
+  // Rasmussen (11/12/2018): Support for Jovial Compool modules
      NEW_TERMINAL_MACRO (JovialCompoolStatement, "JovialCompoolStatement", "JOVIAL_COMPOOL_STATEMENT" );
+
+  // Rasmussen (03/26/2019): Support for Jovial directives and define declarations
+     NEW_TERMINAL_MACRO (JovialDefineDeclaration,  "JovialDefineDeclaration",  "JOVIAL_DEFINE_DECLARATION" );
+     NEW_TERMINAL_MACRO (JovialDirectiveStatement, "JovialDirectiveStatement", "JOVIAL_DIRECTIVE_STATEMENT" );
 
   // Rasmussen (10/22/2018): Node specific to Jovial for statements with a then construct.
      NEW_TERMINAL_MACRO (JovialForThenStatement, "JovialForThenStatement", "JOVIAL_FOR_THEN_STATEMENT");
@@ -559,7 +563,8 @@ Grammar::setUpStatements ()
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
-          JovialCompoolStatement                  | NonrealDecl             /*| ClassPropertyList |*/,
+          JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
+          NonrealDecl                           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -3854,6 +3859,20 @@ Grammar::setUpStatements ()
      C_StyleCommentStatement.setDataPrototype     ( "std::string"   , "dummyString2", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 #endif
+
+  // Rasmussen (03/26/2019): Added support for Jovial directives and define declarations.
+
+     JovialDirectiveStatement.setFunctionPrototype ( "HEADER_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+     JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+     JovialDirectiveStatement.setDataPrototype     ( "std::string", "content_string", "= \"\"",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_compool",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     JovialDefineDeclaration.setFunctionPrototype  ( "HEADER_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
+     JovialDefineDeclaration.setFunctionSource     ( "SOURCE_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
+     JovialDefineDeclaration.setDataPrototype      ( "std::string", "define_string", "= \"\"",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/23/2008): Added support for CPP directives as IR nodes.
      C_PreprocessorDirectiveStatement.setFunctionPrototype ( "HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );

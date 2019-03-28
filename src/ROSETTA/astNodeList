@@ -441,6 +441,8 @@ SgIsNotOp
 SgIorAssignOp
 SgJovialCompoolStatement
 SgJovialForThenStatement
+SgJovialDefineDeclaration
+SgJovialDirectiveStatement
 SgJovialTableStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
