@@ -14774,16 +14774,13 @@ void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
 }
 
 
-;;;
-
-
 PreprocessingInfo*
 SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) 
    {
   // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
   // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
-     bool supportTokenUnparsing = true;
+     bool supportTokenUnparsing = false;
 
      assert(source_file != NULL);
      assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
@@ -14827,7 +14824,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
   // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
   // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
-     bool supportTokenUnparsing = true;
+     bool supportTokenUnparsing = false;
 
     //bool successful = false;
     if (scope == NULL)
