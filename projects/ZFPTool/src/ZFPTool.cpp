@@ -120,6 +120,11 @@ int main(int argc, char** argv)
         {
             // Step 1: repalcing funciton call name
             string newname = funcName;
+
+            // switch if _prefixFOR is needed  
+            bool withPrefix = false;
+            // switch if _prefixFOR is needed  
+            bool isStreamOpen = false;
             // This should be bitstream prefix API
             if(newname.find("zfp",0) == string::npos)
             {
@@ -128,6 +133,10 @@ int main(int argc, char** argv)
             else
             {
               newname.replace(newname.begin(),newname.begin()+3,"zforp");
+              withPrefix = true;
+              if(newname == "zforp_stream_open")
+                isStreamOpen = true;
+               
             }
             cout << "processing and repalce " << funcName << " to " << newname << endl;
 
@@ -135,17 +144,44 @@ int main(int argc, char** argv)
             SgScopeStatement* scope = getScope(funcCallExp);
             SgExprListExp* newExprListExp = deepCopy(funcCallExp->get_args());
             SgExpressionPtrList expList = newExprListExp->get_expressions();
-            if(APIInfo.find(funcName)->second == onesub)
+            if(isStreamOpen)
             {
-              replaceFuncArgument(expList, 0);
+              SgStatement* stmt = getEnclosingStatement(funcCallExp);
+              ROSE_ASSERT(stmt);
+              SgType* voidType = buildVoidType ();
+              SgPointerType* voidPtrType = buildPointerType(voidType);
+              SgAssignInitializer* initializer = buildAssignInitializer(buildIntVal(),NULL);
+              SgVariableDeclaration* newVarDecl = buildVariableDeclaration("bs",voidPtrType, initializer, scope);
+              insertStatement(stmt,newVarDecl,true,true);
+//              SgInitializedNamePtrList varList = newVarDecl->get_variables();
+//              ROSE_ASSERT(varList.size() == 1);
+//              SgInitializedName initName = varList[0];
+//              SgSymbol* symbol = initName->get_symbol_from_symbol_table();
+              SgAddressOfOp* addrOfExp = buildAddressOfOp(buildVarRefExp("bs",scope));
+              replaceExpression(expList[0], addrOfExp, false);
+
             }
-            else if(APIInfo.find(funcName)->second == twosub)
+            else
             {
-              replaceFuncArgument(expList, 1);
-              replaceFuncArgument(expList, 2);
+               if(APIInfo.find(funcName)->second == onesub)
+               {
+                 replaceFuncArgument(expList, 0);
+               }
+               else if(APIInfo.find(funcName)->second == twosub)
+               {
+                 replaceFuncArgument(expList, 0);
+                 replaceFuncArgument(expList, 1);
+               }
             }
             // Step 3: perform function call repalcement
             SgFunctionCallExp* newCallExp = buildFunctionCallExp(newname, funcCallExp->get_type() , newExprListExp,scope);
+           
+            if(withPrefix) 
+            {
+              SgExpression* funcNameExp = newCallExp->get_function();
+              SgNodeHelper::replaceAstWithString(funcNameExp,"_prefixFOR("+newname+")");
+            }
+
             replaceExpression(funcCallExp, newCallExp,true);
         }
      }
