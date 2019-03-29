@@ -4920,6 +4920,23 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // set_collectAllCommentsAndDirectives(false);
         }
 
+  // DQ (3/24/2019): Adding support to translate comments and CPP directives into explicit IR nodes in the AST.
+  // This can simplify how transformations are done when intended to be a part of the token-baed unparsing.
+  //
+  // This translateCommentsAndDirectivesIntoAST option: When using the token based unparsing, and soemtime even 
+  // if not, a greater degree of precisison in the unparsing is possible if new directives can be positioned into 
+  // the AST with more precission relative to other directives that are already present.  This option adds the 
+  // comments and CPP directives as explicit IR nodes in each scope where they can be added as such.
+  // This also has the advantage of making them more trivially availalbe in the analysis as well.
+  // This is however, not the default in ROSE, and it an experimental option that may be adopted more
+  // formally later if it can be demonstraed to be robust.
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(translateCommentsAndDirectivesIntoAST)",true) == true )
+        {
+          printf ("option -rose:translateCommentsAndDirectivesIntoAST found \n");
+          set_translateCommentsAndDirectivesIntoAST(true);
+        }
+
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of
   // the binary executable file format and not the instructions).  This is also useful for testing.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only)",true) == true )
