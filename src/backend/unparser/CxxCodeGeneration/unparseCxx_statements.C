@@ -7374,7 +7374,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
 
             // TV (09/06/2018): if auto keyword is used then we unparse the associated declared type (before `auto` is resolved)
-               if (decl_item->get_using_auto_keyword() == true && decl_item->get_auto_decltype() != NULL)
+               if (decl_item->get_auto_decltype() != NULL)
                   {
                     tmp_type = decl_item->get_auto_decltype();
                   }

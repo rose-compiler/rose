@@ -8,7 +8,7 @@
 #include "sageGeneric.h"
 
 #include "csharpBuilder.h"
-
+#include "ast2dot.hpp"
 
 // proposed extensions to SageBuilder
 namespace SageBuilderX
@@ -41,23 +41,35 @@ namespace csharp_translator
     SgGlobal*            theGlobalScope = NULL; // only one global scope
 
     // mappings from UIDs to ROSE declaration nodes
-    std::map<int, SgVariableDeclaration*>       vardecls;
+    std::map<int, SgInitializedName*>           vardecls;
     std::map<int, SgClassDeclaration*>          classdecls;
     std::map<int, SgMemberFunctionDeclaration*> fundecls;
 
     //
     // helper functions to access the builder stacks
 
+    SgNode* assert_node_type(SgNode* n, SgNode*)
+    {
+      return n;
+    }
+
+    template <class SageNode>
+    SageNode* assert_node_type(SgNode* n, SageNode*)
+    {
+      return SG_ASSERT_TYPE(SageNode, n);
+    }
+
     template <class SageNode, class BaseSageNode>
     SageNode* pop_if(std::vector<BaseSageNode*>& cont, bool cond)
     {
-      ROSE_ASSERT(cont.size() > 0);
       if (!cond) return NULL;
 
-      BaseSageNode* node = nodes.back();
+      ROSE_ASSERT(cont.size() > 0);
+      BaseSageNode* node = cont.back();
 
-      nodes.pop_back();
-      return sg::assert_sage_type<SageNode>(node);
+      std::cerr << "< -1" << std::endl;
+      cont.pop_back();
+      return assert_node_type(node, static_cast<SageNode*>(NULL));
     }
 
     template <class SageNode, class BaseSageNode>
@@ -70,7 +82,7 @@ namespace csharp_translator
     SageNode* top(std::vector<BaseSageNode*>& cont)
     {
       ROSE_ASSERT(cont.size() > 0);
-      return sg::assert_sage_type<SageNode>(cont.back());
+      return SG_ASSERT_TYPE(SageNode, cont.back());
     }
 
     template <class T>
@@ -125,9 +137,17 @@ namespace csharp_translator
       return theGlobalScope;
     }
 
+    template <class SageNode, class SageChild>
+    void setChild(SageNode& n, void (SageNode::*setter)(SageChild*), SageChild& child)
+    {
+      (n.*setter)(&child);
+      child.set_parent(&n);
+    }
+
     //
     // maker (aka builder) functions
 
+/*
     SgInitializer& mkInit(SgExpression& exp, SgType& ty)
     {
       SgInitializer* res = sb::buildAssignInitializer(&exp, &ty);
@@ -139,6 +159,7 @@ namespace csharp_translator
     {
       return &mkInit(sg::deref(exp), sg::deref(ty));
     }
+*/
 
     std::string mkScopedName(size_t lv)
     {
@@ -180,6 +201,78 @@ namespace csharp_translator
       return lst.back();
     }
 
+    typedef SgExpression* (*mk_binary_fun)(SgExpression*, SgExpression*);
+
+    // homogeneous return types instead of covariant ones
+    template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
+    SgExpression* mk2_wrapper(SgExpression* lhs, SgExpression* rhs)
+    {
+      return mkexp(lhs, rhs);
+    }
+
+    SgExpression* mkCall(SgExpression* callee, SgExpression* args)
+    {
+      SgExprListExp* lst = SG_ASSERT_TYPE(SgExprListExp, args);
+
+      return sb::buildFunctionCallExp(callee, lst);
+    }
+
+    std::map<std::string, mk_binary_fun> binary_maker_map;
+
+    static inline
+    SgExpression*
+    mk_binary(const std::string& op, SgExpression* lhs, SgExpression* rhs)
+    {
+      if (binary_maker_map.size() == 0)
+      {
+        binary_maker_map["+"]  = mk2_wrapper<SgAddOp,            sb::buildAddOp>;
+        binary_maker_map["-"]  = mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp>;
+        binary_maker_map["*"]  = mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp>;
+        binary_maker_map["/"]  = mk2_wrapper<SgDivideOp,         sb::buildDivideOp>;
+        binary_maker_map["%"]  = mk2_wrapper<SgModOp,            sb::buildModOp>;
+
+        binary_maker_map["<"]  = mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp>;
+        binary_maker_map[">"]  = mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp>;
+        binary_maker_map["=="] = mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp>;
+        binary_maker_map[">="] = mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp>;
+        binary_maker_map["<="] = mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp>;
+        binary_maker_map["!="] = mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp>;
+
+        binary_maker_map[">>"] = mk2_wrapper<SgRshiftOp,         sb::buildRshiftOp>;
+        binary_maker_map["<<"] = mk2_wrapper<SgLshiftOp,         sb::buildLshiftOp>;
+        binary_maker_map["^"]  = mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp>;
+        binary_maker_map["&"]  = mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp>;
+        binary_maker_map["|"]  = mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp>;
+
+        binary_maker_map["&&"] = mk2_wrapper<SgAndOp,            sb::buildAndOp>;
+        binary_maker_map["||"] = mk2_wrapper<SgOrOp,             sb::buildOrOp>;
+        binary_maker_map["()"] = mkCall;
+      }
+
+      mk_binary_fun fn = binary_maker_map[op];
+
+      ROSE_ASSERT(fn != NULL);
+      return fn(lhs, rhs);
+    }
+
+    std::map<std::string, SgType*> type_maker_map;
+
+    static inline
+    SgType* mk_type(const std::string& op)
+    {
+      if (type_maker_map.size() == 0)
+      {
+        type_maker_map["void"] = sb::buildVoidType();
+        type_maker_map["bool"] = sb::buildBoolType();
+        type_maker_map["int"]  = sb::buildIntType();
+      }
+
+      SgType* res = type_maker_map[op];
+
+      ROSE_ASSERT(res != NULL);
+      return res;
+    }
+
     template <class U, class V>
     U as(V val)
     {
@@ -190,6 +283,53 @@ namespace csharp_translator
       str >> res;
 
       return res;
+    }
+
+    /// sets the symbols defining decl
+    template <class SageSymbol, class SageDecl>
+    void link_decls(SageSymbol& funcsy, SageDecl& func)
+    {
+      SageDecl& sdcl = sg::deref(funcsy.get_declaration());
+
+      sdcl.set_definingDeclaration(&func);
+      func.set_firstNondefiningDeclaration(&sdcl);
+
+      // \todo \pp is sdcl == func allowed in ROSE/C++?
+    }
+
+    SgBasicBlock&
+    mkBasicBlock()
+    {
+      SgBasicBlock& bdy = sg::deref(sb::buildBasicBlock());
+
+      //~ markCompilerGenerated(bdy);
+      return bdy;
+    }
+
+    SgFunctionDefinition&
+    mkFunctionDefinition(SgFunctionDeclaration& dcl)
+    {
+      SgFunctionDefinition& def = *new SgFunctionDefinition(&dcl, NULL);
+
+      setChild(dcl, &SgFunctionDeclaration::set_definition, def);
+      //~ markCompilerGenerated(def);
+      return def;
+    }
+
+    template <class SageSymbol, class SageDecl>
+    void promoteToDefinition(SageDecl& func)
+    {
+      SgSymbol*             baseSy = func.search_for_symbol_from_symbol_table();
+      SageSymbol&           funcSy = *SG_ASSERT_TYPE(SageSymbol, baseSy);
+
+      link_decls(funcSy, func);
+      func.set_definingDeclaration(&func);
+      func.unsetForward();
+
+      SgFunctionDefinition& fdef   = mkFunctionDefinition(func);
+      SgBasicBlock&         body   = mkBasicBlock();
+
+      setChild(fdef, &SgFunctionDefinition::set_body, body);
     }
   }
 
@@ -202,7 +342,9 @@ namespace csharp_translator
   void beginSeq(SgNode* n)
   {
     seqs.push_back(nodes.size());
-    nodes.push_back(n);
+
+    std::cerr << ">seq +1" << std::endl;
+    push(nodes, n);
   }
 
   void beginSeq(SeqKind kind)
@@ -238,12 +380,10 @@ namespace csharp_translator
       case PARAMETERSEQ:
         {
           SgMemberFunctionDeclaration* fdecl  = top<SgMemberFunctionDeclaration>(nodes);
-          SgFunctionDefinition*        fdef   = fdecl->get_definition();
+          SgScopeStatement*            prmscp = fdecl->get_functionParameterScope();
           SgFunctionParameterList*     params = fdecl->get_parameterList();
 
-          // \todo ??? is this the right scope, or do we ???
-          //       ??? need to push the parameter scope  ???
-          sb::pushScopeStack(fdef);
+          sb::pushScopeStack(prmscp);
           res = params;
           msg = "paramlist";
           break;
@@ -251,14 +391,37 @@ namespace csharp_translator
 
       case METHODBODYSEQ:
         {
-          SgMemberFunctionDeclaration* fdecl  = top<SgMemberFunctionDeclaration>(nodes);
-          SgFunctionDefinition*        fdef   = fdecl->get_definition();
-          SgBasicBlock*                body   = sg::deref(fdef).get_body();
+          SgMemberFunctionDeclaration* decl = top<SgMemberFunctionDeclaration>(nodes);
+
+          promoteToDefinition<SgMemberFunctionSymbol>(*decl);
+
+          SgFunctionDefinition*        fdef = decl->get_definition();
+          SgBasicBlock*                body = sg::deref(fdef).get_body();
 
           ROSE_ASSERT(body);
           sb::pushScopeStack(body);
-          res = body;
+          res = fdef;
           msg = "methodbody";
+          break;
+        }
+
+      case EXPRLISTSEQ:
+        {
+          SgExprListExp* lst = sb::buildExprListExp();
+
+          res = lst;
+          msg = "exprlist";
+          break;
+        }
+
+      case IFSTMT:
+        {
+          SgStatement* nullstmt = NULL;
+          SgIfStmt*    ifstmt = new SgIfStmt(nullstmt, nullstmt, nullstmt);
+
+          sb::pushScopeStack(ifstmt);
+          res = ifstmt;
+          msg = "if";
           break;
         }
 
@@ -267,7 +430,7 @@ namespace csharp_translator
         break;
     }
 
-    std::cerr << "open: " << msg << std::endl;
+    std::cerr << "open: " << msg << "  *" << nodes.size() << std::endl;
     beginSeq(res);
   }
 
@@ -281,7 +444,7 @@ namespace csharp_translator
     template <class BaseSageNode>
     void operator()(BaseSageNode* n)
     {
-      (cont.*adder)(sg::assert_sage_type<SageElement>(n));
+      (cont.*adder)(SG_ASSERT_TYPE(SageElement, n));
     }
 
     SageSequence& cont;
@@ -295,6 +458,14 @@ namespace csharp_translator
     return NodeAdder<SageSequence, SageElement>(seq, fn);
   }
 
+  struct ConvertToStmt : sg::DispatchHandler<SgStatement*>
+  {
+    void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgStatement& n)  { res = &n; }
+    void handle(SgExpression& n) { res = sb::buildExprStatement(&n); }
+  };
+
   struct Incorporate
   {
     Incorporate(std::vector<SgNode*>& nodestack, size_t numnodes)
@@ -304,30 +475,74 @@ namespace csharp_translator
     }
 
     template <class SageSequence, class SageElement>
-    void incorporate(SageSequence& parent, void (SageSequence::*fn)(SageElement*))
+    void _incorporate(SageSequence& parent, void (SageSequence::*fn)(SageElement*), SgNode* ctrl)
     {
       std::for_each(nodes.end()-num, nodes.end(), nodeAdder(parent, fn));
+      std::cerr << "< -" << num << std::endl;
       pop_n(nodes, num);
+
+      ROSE_ASSERT(nodes.back() == ctrl);
+    }
+
+    template <class SageSequence, class SageElement>
+    void incorporate(SageSequence& parent, void (SageSequence::*fn)(SageElement*))
+    {
+      _incorporate(parent, fn, &parent);
     }
 
     void handle(SgNode& n)                  { sg::unexpected_node(n); }
+
+    // true sequences
     void handle(SgClassDefinition& n)       { incorporate(n, &SgClassDefinition::append_member); }
     void handle(SgFunctionParameterList& n) { incorporate(n, &SgFunctionParameterList::append_arg); }
+    void handle(SgExprListExp& n)           { incorporate(n, &SgExprListExp::append_expression); }
     void handle(SgGlobal& n)                { incorporate(n, &SgGlobal::append_declaration); }
     void handle(SgBasicBlock& n)            { incorporate(n, &SgBasicBlock::append_statement); }
+
+    void handle(SgFunctionDefinition& n)
+    {
+      _incorporate(sg::deref(n.get_body()), &SgBasicBlock::append_statement, &n);
+    }
+
+    // pseudo sequences
+    void handle(SgIfStmt& n)
+    {
+      assert(num == 2 || num == 3);
+
+      // std::cerr << " || " << nodes.size() << " " << num << std::endl ;
+
+      if (num > 2)
+      {
+        setChild(n, &SgIfStmt::set_false_body, *pop<SgStatement>(nodes));
+      }
+
+      setChild(n, &SgIfStmt::set_true_body, *pop<SgStatement>(nodes));
+      setChild(n, &SgIfStmt::set_conditional, *sg::dispatch(ConvertToStmt(), pop<SgNode>(nodes)));
+
+      ROSE_ASSERT(nodes.back() == &n);
+    }
 
     std::vector<SgNode*>& nodes;
     size_t                num;
   };
 
+  /// pops nodes from scope- and node-stacks as needed
+  ///   e.g., none for SgExprListExp ...
   struct ScopePopper
   {
     static inline
-    void pop_s() { sb::popScopeStack(); }
+    void pop_scope() { sb::popScopeStack(); }
+
+    static inline
+    void pop_node()  { pop(nodes); }
 
     void handle(SgNode&)                    {}
-    void handle(SgScopeStatement& n)        { pop_s(); }
-    void handle(SgFunctionParameterList& n) { pop_s(); } // pop associated function def scope
+    void handle(SgGlobal& n)                { pop_scope(); dot::save_dot("csharp.dot", n); }
+    void handle(SgScopeStatement& n)        { pop_scope(); }
+
+    void handle(SgFunctionDefinition& n)    { pop_scope(); pop_node(); }
+    void handle(SgClassDefinition& n)       { pop_scope(); pop_node(); }
+    void handle(SgFunctionParameterList& n) { pop_scope(); pop_node(); } // pop associated function def scope
   };
 
   void closeSeq()
@@ -339,31 +554,19 @@ namespace csharp_translator
     size_t  num  = nodes.size() - pos;
     ROSE_ASSERT(num > 0); // needs to contain seq
 
-    std::cerr << "closing (C++) " << typeid(sg::deref(seq)).name() << std::endl;
-
+    std::cerr << "x= " << typeid(*seq).name() << std::endl;
     sg::dispatch(Incorporate(nodes, num-1), seq);
     sg::dispatch(ScopePopper(), seq);
 
-    SgNode* n = pop(nodes);
-    ROSE_ASSERT(n == seq);
+    std::cerr << "closing (C++) " << typeid(sg::deref(seq)).name()
+              << "  *" << nodes.size()
+              << "  #" << num-1
+              << std::endl;
   }
 
   void predefinedType(const char* tyname)
   {
-    std::string tn = tyname;
-    SgType*     ty = NULL;
-
-    if (tn == "int")
-    {
-      ty = sb::buildIntType();
-    }
-    else if (tn == "void")
-    {
-      ty = sb::buildVoidType();
-    }
-
-    ROSE_ASSERT(ty);
-    types.push_back(ty);
+    types.push_back(mk_type(tyname));
   }
 
   void name(const char* n)
@@ -379,6 +582,7 @@ namespace csharp_translator
     SgNamespaceDeclarationStatement* nspdecl = mkHiddenNamespace(nspname);
     SgUsingDeclarationStatement*     usgdecl = sbx::buildUsingDeclaration(nspdecl);
 
+    std::cerr << ">usn +1" << std::endl;
     push(nodes, usgdecl);
   }
 
@@ -388,14 +592,52 @@ namespace csharp_translator
     SgType*                ty = pop(types);
     SgVariableDeclaration* vr = sb::buildVariableDeclaration(nm, ty, NULL);
 
+    std::cerr << ">vardecl +1" << std::endl;
     push(nodes, vr);
-    vardecls[uid] = vr;
+    vardecls[uid] = oneAndOnly(vr);
   }
 
-  void initVarDecl(int uid)
+  void paramDecl(int uid)
   {
-    SgVariableDeclaration* decl = retrieve(vardecls, uid);
-    SgInitializedName*     var  = oneAndOnly(decl);
+    SgName                    nm  = pop(names);
+    SgType*                   ty  = pop(types);
+    SgInitializedName*        prm = sb::buildInitializedName(nm, ty);
+    SgFunctionParameterScope* scp = isSgFunctionParameterScope(sb::topScopeStack());
+    SgSymbolTable*            tab = sg::deref(scp).get_symbol_table();
+
+    ROSE_ASSERT(tab);
+    prm->set_scope(scp);
+    tab->insert(nm, new SgVariableSymbol(prm));
+
+    std::cerr << ">prm +1" << std::endl;
+    push(nodes, prm);
+    vardecls[uid] = prm;
+  }
+
+  void refVarParamDecl(int uid)
+  {
+    SgInitializedName* var = retrieve(vardecls, uid);
+    SgVariableSymbol*  sym = SG_ASSERT_TYPE( SgVariableSymbol,
+                                             sg::deref(var).get_symbol_from_symbol_table()
+                                           );
+    ROSE_ASSERT(sym != NULL);
+    std::cerr << ">var +1" << std::endl;
+    push(nodes, sb::buildVarRefExp(sym));
+  }
+
+  void refFunDecl(int uid)
+  {
+    SgMemberFunctionDeclaration* fun = retrieve(fundecls, uid);
+
+    ROSE_ASSERT(fun != NULL);
+    std::cerr << ">fun +1" << std::endl;
+    push(nodes, sb::buildFunctionRefExp(fun));
+  }
+
+
+  void initVarParamDecl(int uid)
+  {
+    SgInitializedName*     var  = retrieve(vardecls, uid);
     SgInitializer*         init = pop<SgInitializer>(nodes);
 
     var->set_initializer(init);
@@ -416,18 +658,23 @@ namespace csharp_translator
                                                             NULL /* no template args */
                                                           );
 
+    std::cerr << ">clsdecl +1" << std::endl;
     push(nodes, cd);
     classdecls[uid] = cd;
   }
 
   void methodDecl(int uid)
   {
-    SgName                       nm = pop(names);
-    SgType*                      ty = pop(types);
-    SgFunctionParameterList*     pl = sb::buildFunctionParameterList(); // pop<SgFunctionParameterList>(nodes);
-    SgScopeStatement*            sp = sb::topScopeStack();
-    SgMemberFunctionDeclaration* mf = sb::buildDefiningMemberFunctionDeclaration(nm, ty, pl, sp);
+    SgName                       nm  = pop(names);
+    SgType*                      ty  = pop(types);
+    SgFunctionParameterList*     pl  = sb::buildFunctionParameterList(); // pop<SgFunctionParameterList>(nodes);
+    SgScopeStatement*            sp  = sb::topScopeStack();
+    SgMemberFunctionDeclaration* mf  = sb::buildNondefiningMemberFunctionDeclaration(nm, ty, pl, sp);
+    SgFunctionParameterScope*    psc = new SgFunctionParameterScope(dummyFileInfo());
 
+    mf->set_functionParameterScope(psc);
+
+    std::cerr << ">methdecl +1" << std::endl;
     push(nodes, mf);
     fundecls[uid] = mf;
   }
@@ -436,7 +683,20 @@ namespace csharp_translator
   {
     SgMemberFunctionDeclaration* mf = retrieve(fundecls, uid);
 
+    std::cerr << ">method +1" << std::endl;
     push(nodes, mf);
+  }
+
+  //
+  // statement builders
+
+  void returnStmt(int args)
+  {
+    ROSE_ASSERT(args == 0 || args == 1);
+    SgExpression* expr = (args == 0) ? NULL : pop<SgExpression>(nodes);
+
+    std::cerr << ">ret " << args << std::endl;
+    push(nodes, sb::buildReturnStmt(expr));
   }
 
   //
@@ -448,6 +708,7 @@ namespace csharp_translator
     SgType*        ty   = pop(types);
     SgInitializer* init = sb::buildAssignInitializer(ex, ty);
 
+    std::cerr << ">val-ini =" << std::endl;
     push(nodes, init);
   }
 
@@ -458,8 +719,20 @@ namespace csharp_translator
     : sg::DispatchHandler<SgExpression*>(), rep(str)
     {}
 
-    void handle(SgNode& n)  { sg::unexpected_node(n); }
-    void handle(SgTypeInt&) { res = sb::buildIntVal(as<int>(rep)); }
+    void handle(SgNode& n)   { sg::unexpected_node(n); }
+    void handle(SgTypeInt&)  { res = sb::buildIntVal(as<int>(rep)); }
+
+    void handle(SgTypeBool&)
+    {
+      if ("true" == rep)
+      {
+        res = sb::buildBoolValExp(1);
+        return;
+      }
+
+      ROSE_ASSERT("false" == rep);
+      res = sb::buildBoolValExp(0);
+    }
 
     std::string rep;
   };
@@ -470,19 +743,37 @@ namespace csharp_translator
     SgExpression*  lit  = sg::dispatch(LiteralMaker(rep), ty);
 
     ROSE_ASSERT(lit);
+    std::cerr << ">lit" << std::endl;
     push(nodes, lit);
+  }
+
+  void binary(const char* rep)
+  {
+    /*SgType* ty = */     pop(types);
+    SgExpression*  rhs  = pop<SgExpression>(nodes);
+    SgExpression*  lhs  = pop<SgExpression>(nodes);
+    SgExpression*  res  = mk_binary(rep, lhs, rhs);
+
+    ROSE_ASSERT(res);
+    std::cerr << ">bin -1 " << rep << std::endl;
+    push(nodes, res);
   }
 
   void basicFinalChecks()
   {
     // no left overs - everything produced was consumed
     ROSE_ASSERT(names.size() == 0);
-    ROSE_ASSERT(nodes.size() == 0);
+    ROSE_ASSERT(nodes.size() == 1); // SgGlobal remains on the stack
     ROSE_ASSERT(types.size() == 0);
     ROSE_ASSERT(seqs.size()  == 0);
     ROSE_ASSERT(theGlobalScope != NULL);
 
     //~ ROSE_ASSERT(sb::emptyScopeStack());
   }
+
 }
 
+SgNode* popBuiltAST()
+{
+  return csharp_translator::pop<SgNode>(csharp_translator::nodes);
+}

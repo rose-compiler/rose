@@ -14806,31 +14806,52 @@ SgNonrealDecl::get_mangled_name (void) const {
 #if DEBUG_NONREAL_DECL_MANGLED
   printf("In SgNonrealDecl::get_mangled_name():\n");
   printf("  - this = %p\n", this);
+  printf("  - name = %s\n", get_name().str());
 #endif
   ostringstream mangled_name;
 
   if (get_is_class_member()) {
-    SgNode * parent = get_parent();
-    ROSE_ASSERT(parent != NULL);
+    SgNode * parent_decl = NULL;
+    SgScopeStatement * scope = get_scope();
+    if (scope != NULL) {
 #if DEBUG_NONREAL_DECL_MANGLED
-    printf("  - parent[1] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+      printf("  - scope = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
 #endif
-    SgDeclarationScope * p_nrscope = isSgDeclarationScope(parent);
-    ROSE_ASSERT(p_nrscope != NULL);
 
-    parent = p_nrscope->get_parent();
+      SgDeclarationScope * s_nrscope = isSgDeclarationScope(scope);
+      if (s_nrscope == NULL) {
+        printf("[ROSE-1881] SgNonrealDecl::get_mangled_name:\n> Scope is not an instantiation scope (nonreal)!\n> First observed for test2007_41.C in copyAST_tests.\n> Please report to nersc-rose-public@lbl.gov\n");
+      }
+
+      parent_decl = scope->get_parent();
+    } else {
+      parent_decl = get_parent();
+
+      SgNonrealBaseClass * nrbaseclass = isSgNonrealBaseClass(parent_decl);
+      if (nrbaseclass != NULL) {
+        printf("[ROSE-1881] SgNonrealDecl::get_mangled_name:\n> Scope is not set when parent is nonreal base class!\n> First observed for test2006_79.C in copyAST_tests.\n> Please report to nersc-rose-public@lbl.gov\n");
+
+        SgClassDefinition * xdefn = isSgClassDefinition(nrbaseclass->get_parent());
+        ROSE_ASSERT(xdefn != NULL);
+        parent_decl = xdefn->get_parent();
+      } else {
+        ROSE_ASSERT(false);
+      }
+      ROSE_ASSERT(parent_decl != NULL);
+    }
 #if DEBUG_NONREAL_DECL_MANGLED
-    printf("  - parent[2] = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
+    printf("  - parent_decl = %p (%s)\n", parent_decl, parent_decl ? parent_decl->class_name().c_str() : "");
 #endif
-    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent);
-    SgClassDeclaration * xdecl = isSgClassDeclaration(parent);
-    SgNonrealDecl * nrdecl = isSgNonrealDecl(parent);
+
+    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent_decl);
+    SgClassDeclaration * xdecl = isSgClassDeclaration(parent_decl);
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(parent_decl);
     if (tplcdecl != NULL) {
        SgDeclarationScope * nrscope = tplcdecl->get_nonreal_decl_scope();
 #if DEBUG_NONREAL_DECL_MANGLED
        printf("  - nrscope = %p\n", nrscope);
 #endif
-       if (nrscope != p_nrscope) {
+       if (nrscope != scope) {
          mangled_name << tplcdecl->get_mangled_name().getString() << "___";
        }
     } else if (xdecl != NULL) {
@@ -14840,9 +14861,7 @@ SgNonrealDecl::get_mangled_name (void) const {
 #if DEBUG_NONREAL_DECL_MANGLED
        printf("  - nrscope = %p\n", nrscope);
 #endif
-       if (nrscope != p_nrscope) {
-         mangled_name << nrdecl->get_mangled_name().getString() << "___";
-       }
+       mangled_name << nrdecl->get_mangled_name().getString() << "___";
     }
   }
 

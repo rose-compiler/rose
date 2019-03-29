@@ -295,6 +295,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1522-0.C \
    rose-1774.C \
    rose-1763.C \
+   rose-1863.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
