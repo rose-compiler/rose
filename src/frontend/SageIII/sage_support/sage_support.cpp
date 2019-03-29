@@ -2537,7 +2537,7 @@ SgProject::parse()
 #endif
 
   // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after
-  // AST Postprocessing and before any transformations are done. The token steam mapping only
+  // AST Postprocessing and before any transformations are done. The token stream mapping only
   // really makes since at this position in the time-line since otherwise removed statements would
   // be included as whitespace between remaining statements.
 
@@ -2555,6 +2555,11 @@ SgProject::parse()
                          ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+                         if (file->get_translateCommentsAndDirectivesIntoAST() == true)
+                            {
+                              printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
+                              ROSE_ASSERT(false);
+                            }
 #if 0
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
