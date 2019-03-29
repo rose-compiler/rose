@@ -2186,6 +2186,26 @@ SgTypedefDeclaration::cfgInEdges(unsigned int idx)
    }
 
 unsigned int
+SgUsingDirectiveStatement::cfgIndexForEnd() const {
+  return 0;
+}
+
+std::vector<CFGEdge> SgUsingDirectiveStatement::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<CFGEdge> SgUsingDirectiveStatement::cfgInEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+  return result;
+}
+
+unsigned int
 SgPragmaDeclaration::cfgIndexForEnd() const {
   return 0;
 }
@@ -2205,25 +2225,30 @@ std::vector<CFGEdge> SgPragmaDeclaration::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+// DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+// token-based unparsing to work with greater precision. For example, used to add an include directive with 
+// greater precission to the global scope and permit the unparsing via the token stream to be used as well.
 unsigned int
-SgUsingDirectiveStatement::cfgIndexForEnd() const {
+SgEmptyDeclaration::cfgIndexForEnd() const {
   return 0;
 }
 
-std::vector<CFGEdge> SgUsingDirectiveStatement::cfgOutEdges(unsigned int idx) {
+std::vector<CFGEdge> SgEmptyDeclaration::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   return result;
 }
 
-std::vector<CFGEdge> SgUsingDirectiveStatement::cfgInEdges(unsigned int idx) {
+std::vector<CFGEdge> SgEmptyDeclaration::cfgInEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
   makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
   return result;
 }
+
+
 
 unsigned int
 SgUsingDeclarationStatement::cfgIndexForEnd() const {
