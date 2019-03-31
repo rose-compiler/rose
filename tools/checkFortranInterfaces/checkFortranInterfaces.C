@@ -23,7 +23,7 @@ SgType* InterfaceChecker::fortran_to_c_type(SgType* f_type, SgExpression* kind_t
       kind_name = kind_symbol->get_name().str();
    }
 
-// TODO: check for case in kind_name
+// TODO: convert for case in kind_name
    switch (f_type->variantT())
       {
       case V_SgTypeInt:
@@ -119,17 +119,13 @@ SgType* InterfaceChecker::fortran_to_c_type(SgType* f_type, SgExpression* kind_t
             }
             break;
          }
+
+// TODO: implement (note fall through)
       case V_SgTypeBool:
-         {
-            break;
-         }
       case V_SgTypeChar:
-         {
-            break;
-         }
       default:
          {
-            std::cout <<  "Type " << f_type->class_name() <<" is not implemented" << std::endl;
+            std::cout <<  "Type " << f_type->class_name() <<" is not yet implemented" << std::endl;
             break;
          }
       }
@@ -198,11 +194,11 @@ bool InterfaceChecker::compare_type_class(SgClassType* f_class, SgClassType* c_c
 
    SgDerivedTypeStatement* f_struct_decl = isSgDerivedTypeStatement(f_class->get_declaration());
    SgClassDeclaration* c_struct_decl = isSgClassDeclaration(c_class->get_declaration());
-   ROSE_ASSERT(f_struct_decl || c_struct_decl);
+   ROSE_ASSERT(f_struct_decl && c_struct_decl);
 
    SgClassDeclaration* f_def_decl = isSgDerivedTypeStatement(f_struct_decl->get_definingDeclaration());
    SgClassDeclaration* c_def_decl = isSgClassDeclaration(c_struct_decl->get_definingDeclaration());
-   ROSE_ASSERT(f_def_decl || c_def_decl);
+   ROSE_ASSERT(f_def_decl && c_def_decl);
 
    SgDeclarationStatementPtrList & f_decl_stmt_ptr_list = f_def_decl->get_definition()->get_members();
    SgDeclarationStatementPtrList & c_decl_stmt_ptr_list = c_def_decl->get_definition()->get_members();
@@ -214,7 +210,7 @@ bool InterfaceChecker::compare_type_class(SgClassType* f_class, SgClassType* c_c
       for (int i = 0; i < f_size; i++) {
          SgVariableDeclaration* f_var = isSgVariableDeclaration(f_decl_stmt_ptr_list[i]);
          SgVariableDeclaration* c_var = isSgVariableDeclaration(c_decl_stmt_ptr_list[i]);
-         ROSE_ASSERT(f_var || c_var);
+         ROSE_ASSERT(f_var && c_var);
 
          SgInitializedName* f_name = f_var->get_definition()->get_vardefn();
          SgInitializedName* c_name = c_var->get_definition()->get_vardefn();
@@ -245,7 +241,7 @@ bool InterfaceChecker::compare_types(SgInitializedName* f_name, SgInitializedNam
          {
             SgArrayType* f_array = isSgArrayType(f_type);
             SgArrayType* c_array = isSgArrayType(c_type);
-            ROSE_ASSERT(f_array || c_array);
+            ROSE_ASSERT(f_array && c_array);
             matches = compare_type_array(f_array, c_array);
             break;
          }
@@ -253,7 +249,7 @@ bool InterfaceChecker::compare_types(SgInitializedName* f_name, SgInitializedNam
          {
             SgClassType* f_class = isSgClassType(f_type);
             SgClassType* c_class = isSgClassType(c_type);
-            ROSE_ASSERT(f_class || c_class);
+            ROSE_ASSERT(f_class && c_class);
             matches = compare_type_class(f_class, c_class);
             break;
          }
@@ -422,7 +418,7 @@ InheritedAttribute Traversal::evaluateInheritedAttribute(SgNode* astNode, Inheri
             functionDeclaration = interfaceBody->get_functionDeclaration();
          }
 
-         if (interfaceBody != NULL || functionDeclaration != NULL) {
+         if (functionDeclaration != NULL) {
             std::string func_name = functionDeclaration->get_name().getString();
             map_f.insert(mapPair(func_name, functionDeclaration));
 
