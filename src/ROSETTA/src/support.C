@@ -1245,6 +1245,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool","collectAllCommentsAndDirectives", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/24/2019): Adding an option to support addition of CPP directives to the AST.  Currently only restricted 
+  // to CPP directives, and may be extended to comments later. Default is false to preserve original ROSE AST behavior.
+     File.setDataPrototype( "bool", "translateCommentsAndDirectivesIntoAST", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // negara1 (07/08/2011): Added to permit optional header files unparsing.
      File.setDataPrototype("bool","unparseHeaderFiles", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

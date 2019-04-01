@@ -683,14 +683,18 @@ Outliner::insert (SgFunctionDeclaration* func,
 
      SgFunctionType *ftype = buildFunctionType(buildVoidType(), tlist);//func->get_type();
      string var_name = func->get_name().getString()+"p";
-     SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
-     prependStatement(ptofunc,src_global);
+  // SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
+  // prependStatement(ptofunc,src_global);
+     SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, target_outlined_code->get_scope());
+  // prependStatement(ptofunc,target_outlined_code);
+     SageInterface::insertStatementBefore(target_outlined_code,ptofunc);
    }
 //   else 
 //   Liao, 5/1/2009
 //   We still generate the prototype even they are not needed if dlopen() is used. 
 //   since SageInterface::appendStatementWithDependentDeclaration() depends on it
-   if (SageInterface::is_Fortran_language() == false ) // C/C++ only
+// if (SageInterface::is_Fortran_language() == false ) // C/C++ only
+   if (use_dlopen == false && SageInterface::is_Fortran_language() == false ) // C/C++ only
    {
      // This is done in the original file (does not effect the separate file if we outline the function there)
      // Insert a single, global prototype (i.e., a first non-defining
