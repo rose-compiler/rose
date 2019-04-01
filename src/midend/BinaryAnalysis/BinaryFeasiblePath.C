@@ -950,7 +950,6 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
     }
 }
 
-
 void
 FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
                             const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
@@ -1435,11 +1434,22 @@ FeasiblePath::vertexSize(const P2::ControlFlowGraph::ConstVertexIterator &vertex
 }
 
 size_t
-FeasiblePath::pathLength(const Partitioner2::CfgPath &path) {
+FeasiblePath::pathLength(const P2::CfgPath &path) {
     size_t retval = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices())
         retval += vertexSize(vertex);
     return retval;
+}
+
+const FeasiblePath::AddressSet&
+FeasiblePath::reachedBlockVas() const {
+    return reachedBlockVas_;
+}
+
+void
+FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
+    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+        reachedBlockVas_.insert(*addr);
 }
 
 void
@@ -1447,6 +1457,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
     static size_t callId = 0;                           // number of calls to this function
     size_t graphId = 0;                                 // incremented each time the graph is modified
+    reachedBlockVas_.clear();
     {
         static SAWYER_THREAD_TRAITS::Mutex mutex;
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
@@ -1538,6 +1549,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // If backVertex is a function summary, then there is no corresponding cfgBackVertex.
             P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
             P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = pathToCfg(backVertex);
+            if (settings_.trackingCodeCoverage)
+                markAsReached(backVertex);
 
             bool doBacktrack = false;
             bool atEndOfPath = pathsEndVertices_.find(backVertex) != pathsEndVertices_.end();
