@@ -5,6 +5,7 @@
 #include <string>
 
 namespace Typeforge {
+
   class Exception : public std::exception {
   public:
     Exception(std::string text) {
@@ -18,5 +19,8 @@ namespace Typeforge {
   private:
     std::string text;
   };
+
 } // end of namespace Typeforge
+
 #endif
+

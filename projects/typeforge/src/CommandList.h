@@ -6,6 +6,8 @@
 #include "TFTransformation.h"
 #include "TFTypeTransformer.h"
 
+namespace Typeforge {
+
 class Command{
   protected:
     bool base;
@@ -115,5 +117,7 @@ class CommandList{
     TFTypeTransformer::VarTypeVarNameTupleList _list;
     int nextCommandNumber = 1;
 };
+
+}
 
 #endif

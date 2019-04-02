@@ -5,6 +5,8 @@
 #include "SgNodeHelper.h"
 #include "TFTypeTransformer.h" // only required for trace
 
+namespace Typeforge {
+
 using namespace std;
 
 bool CastTransformer::isLessPrecise(SgType* t1, SgType* t2) {
@@ -138,5 +140,7 @@ void CastTransformer::traverseWithinCommandLineFiles(SgProject* project) {
 
 void CastTransformer::traverseWithinCommandLineFiles(SgProject* project, CTInheritedAttributeType inh) {
   traverseInputFiles(project,inh);
+}
+
 }
 
