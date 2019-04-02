@@ -1,3 +1,5 @@
+#include <sage3basic.h>
+
 #include <BinaryConcolic.h>
 
 namespace Rose {
@@ -28,7 +30,7 @@ LinuxExitStatus::create(const std::string databaseUrl, const boost::filesystem::
 void
 LinuxExitStatus::run() {
     LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance();
-    SymbolicExecutor::Ptr symbolicExecutor = SymbolicExecutor::instance();
+    ConcolicExecutor::Ptr concolicExecutor = ConcolicExecutor::instance();
 
     while (!isFinished()) {
         // Run as many test cases concretely as possible.
@@ -38,13 +40,13 @@ LinuxExitStatus::run() {
             insertConcreteResults(testCase, *concreteResult);
         }
 
-        // Now that all the test cases have run concretely, run a few of the "best" ones symbolically.  The "best" is defined
-        // either by the ranks returned from the concrete executor, or by this class overriding pendingSymbolicResult (which we
+        // Now that all the test cases have run concretely, run a few of the "best" ones concolically.  The "best" is defined
+        // either by the ranks returned from the concrete executor, or by this class overriding pendingConcolicResult (which we
         // haven't done).
-        BOOST_FOREACH (Database::TestCaseId testCaseId, pendingSymbolicResults(10 /*arbitrary*/)) {
+        BOOST_FOREACH (Database::TestCaseId testCaseId, pendingConcolicResults(10 /*arbitrary*/)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            std::vector<TestCase::Ptr> newTestCases = symbolicExecutor->execute(testCase);
-            insertSymbolicResults(testCase, newTestCases);
+            std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(testCase);
+            insertConcolicResults(testCase, newTestCases);
         }
     }
 }

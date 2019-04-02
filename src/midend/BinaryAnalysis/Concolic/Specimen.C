@@ -1,10 +1,9 @@
 #include <sage3basic.h>
-#include <BinaryAnalysis/Concolic.h>
+#include <BinaryConcolic.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
-
 
 // class method
 Specimen::Ptr
@@ -15,13 +14,23 @@ Specimen::instance(const boost::filesystem::path &executableName) {
     return self;
 }
 
-void
-Specimen::open(const boost::filesystem::path &executableName) {
-    if (!isEmpty())
-        throw Exception("specimen object is non-empty");
+bool
+Specimen::isEmpty() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return specimen_.empty();
+}
 
-    
-    
+std::string
+Specimen::name() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return name_;
+}
+
+void
+Specimen::name(const std::string &s) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    name_ = s;
+}
 
 } // namespace
 } // namespace
