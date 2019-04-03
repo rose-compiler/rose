@@ -1,6 +1,8 @@
 #ifndef CAST_TRANSFORMER_H
 #define CAST_TRANSFORMER_H
 
+namespace Typeforge {
+
 typedef bool CTInheritedAttributeType;
 typedef SgType* CTSynthesizedAttributeType;
 
@@ -26,5 +28,7 @@ class CastTransformer : public AstTopDownBottomUpProcessing<CTInheritedAttribute
   bool isEqualPrecise(SgType*,SgType*);
   bool isLessOrEqualPrecise(SgType* t1, SgType* t2);
 };
+
+}
 
 #endif

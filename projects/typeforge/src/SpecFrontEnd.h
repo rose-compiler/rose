@@ -4,6 +4,8 @@
 #include "TFTypeTransformer.h"
 #include "CommandList.h"
 
+namespace Typeforge {
+
 class SpecFrontEnd {
  public:
   // run frontend for typeforge specification file
@@ -20,5 +22,7 @@ class SpecFrontEnd {
   //TFTypeTransformer::VarTypeVarNameTupleList _list;
   CommandList commandList;
 };
+
+}
 
 #endif

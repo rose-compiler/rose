@@ -1,7 +1,10 @@
 #include "ToolConfig.hpp"
 #include <unistd.h>
+#include <iostream>
 
 #define MAXPATHLEN 255
+
+namespace Typeforge {
 
 //////////////
 //ToolAction//
@@ -391,5 +394,7 @@ void from_json(const json& j, ToolConfig& a) {
     } catch (...) {
         actions = {};
     }
+}
+
 }
 
