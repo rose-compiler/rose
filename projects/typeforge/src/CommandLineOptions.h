@@ -14,6 +14,8 @@
 #include <boost/program_options.hpp>
 #endif
 
+namespace Typeforge {
+
 class CommandLineOptions 
 #ifdef USE_SAWYER_COMMANDLINE
   : public Sawyer::CommandLine::Boost::variables_map
@@ -56,5 +58,8 @@ void CommandLineOptions::setOption(string option, T value) {
   const_cast<boost::program_options::variable_value&>(operator[](option)) = 
     boost::program_options::variable_value(boost::any(value), false);
 }
+
+}
+
 #endif
 

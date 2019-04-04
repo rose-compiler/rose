@@ -9576,6 +9576,31 @@ SgPragma* SageBuilder::buildPragma(const std::string & name)
   return result;
 }
 
+
+SgEmptyDeclaration* SageBuilder::buildEmptyDeclaration()
+   {
+  // Build an empty declaration (useful for adding precission to comments and CPP handling under token-based unparsing).
+     SgEmptyDeclaration* emptyDeclaration = new SgEmptyDeclaration();
+     ROSE_ASSERT(emptyDeclaration != NULL);
+
+     setOneSourcePositionForTransformation(emptyDeclaration);
+
+     emptyDeclaration->set_definingDeclaration (emptyDeclaration);
+     emptyDeclaration->set_firstNondefiningDeclaration(emptyDeclaration);
+
+  // DQ (7/14/2012): Set the parent so that we can be consistent where possible (class declarations and
+  // enum declaration can't have there parent set since they could be non-autonomous declarations).
+     emptyDeclaration->set_parent(topScopeStack());
+
+     if (topScopeStack() != NULL)
+        {
+          ROSE_ASSERT(emptyDeclaration->get_parent() != NULL);
+        }
+
+     return emptyDeclaration;
+   }
+
+
 SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* stmt2, SgStatement* stmt3, SgStatement* stmt4, SgStatement* stmt5, SgStatement* stmt6, SgStatement* stmt7, SgStatement* stmt8, SgStatement* stmt9, SgStatement* stmt10)
 {
   SgBasicBlock* result = new SgBasicBlock();

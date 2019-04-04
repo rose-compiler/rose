@@ -15496,3 +15496,10 @@ SgVoidVal* SgVoidVal::build_node_from_nonlist_children (Sg_File_Info*)
      return returnNode;
    }
 
+SgEmptyDeclaration* SgEmptyDeclaration::build_node_from_nonlist_children (Sg_File_Info*)
+   {
+     SgEmptyDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 $Interpreter ||= "/usr/bin/perl";
 #-------------------------------------------------------------------------------
 #
@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "4";
-$mkinstaller_ver_build = "3";
+$mkinstaller_ver_build = "7";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.4.3";
-$mkinstaller_ver_time  = "12Feb2019 15:39:19z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.3 - 12Feb2019 15:39:19z";
+$mkinstaller_ver_name  = "2.4.7";
+$mkinstaller_ver_time  = "29Mar2019 19:37:55z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.7 - 29Mar2019 19:37:55z";
 
 #{------------------------------------------------------------------------------
 #
@@ -246,6 +246,7 @@ if ($valueOfDebugVar ne "") {
    my $scriptNameU                     = "";
    my $SCRIPTNAME                      = "";
    my $SCRIPTNAME_TMPDIR               = "";
+   my $slash                           = "";
    my $stdMode                         = 0;
    my $tarIsGNUtar                     = -1;
    my $theCommandLine                  = "";
@@ -267,6 +268,7 @@ if ($valueOfDebugVar ne "") {
    my $use_hasher                      = "";
    my $use_hasherOpt                   = "";
    my $use_hasher                      = "";
+   my $use_ls                          = "";
    my $use_makensis                    = "";
    my $use_pshaw                       = "";
    my $use_shaNNNsum                   = "";
@@ -285,6 +287,18 @@ if ($valueOfDebugVar ne "") {
 
    if ( exists $ENV{"INEFFECTIVE_mkinstaller"}) {
       $withPayload                     = 0;
+   }
+
+   if ($OSclass eq "UNIX-like") {
+      $slash                           = "/";
+   }
+   elsif ($OSclass eq "Windows-like") {
+      $slash                           = "\\";
+   }
+   else {
+      print STDERR "mkinstaller: fatal -- host doesn't appear either UNIX-like nor Windows-like\n";
+      close DBGOUT if $dbgOutToPathname ne "";
+      exit 1;
    }
 
    #---------------------------------------
@@ -2262,16 +2276,16 @@ if ($valueOfDebugVar ne "") {
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
    $TmpDir  = absname($TmpDir);
-   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir).$slash."\"\n" if $debugging;
    $TmpDirT = "$TmpDir/mki.$$";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT).$slash."\"\n" if $debugging;
    $TmpDirA = "$TmpDirT/accumulator";
    $TmpDirF = "$TmpDirT/files";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirA)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirA).$slash."\"\n" if $debugging;
    $TmpDirI = "$TmpDirT/initial";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirI)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirI).$slash."\"\n" if $debugging;
    $TmpDirW = "$TmpDirT/wrapper";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW).$slash."\"\n" if $debugging;
    $TmpFile = "$TmpDirT/script.tmp";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpFile)."\"\n" if $debugging;
 
@@ -2647,7 +2661,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
          #---------------------------------------
          #
          #  On a UNIX-like host the --CC=... and
@@ -2660,14 +2674,14 @@ if ($valueOfDebugVar ne "") {
          if ( defined $CC_options) {
             print DBGOUT "mkinstaller:    C compiler options were specified (=$CC_options)\n" if $debugging;
             if ( ! defined $CC_name) {
-               print DBGOUT "mkinstaller:    but no C compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: warning -- $CC_optionGiven was used but no C compiler was specified\n";
             }
          }
          if ( defined $CXX_options) {
             print DBGOUT "mkinstaller:    C++ compiler options were specified (=$CXX_options)\n" if $debugging;
             if ( ! defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but no C++ compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C++ compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: warning -- $CXX_optionGiven was used but no C++ compiler was specified\n";
             }
          }
@@ -2675,7 +2689,7 @@ if ($valueOfDebugVar ne "") {
             print DBGOUT "mkinstaller: ...a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if $debugging;
             my $told = 0;
             if ( ! defined $CC_name) {
-               print DBGOUT "mkinstaller:    but no C compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: error - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
                $told = 1;
                print STDERR "mkinstaller: ...but no C compiler was specified\n";
@@ -2683,38 +2697,36 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
             if ( ! defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but no C++ compiler was specified\n" if $debugging;
-               print STDERR "mkinstaller: error - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
+               print DBGOUT "mkinstaller:    ...but no C++ compiler was specified\n" if $debugging;
+               print STDERR "mkinstaller: warning - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
                $told = 1;
                print STDERR "mkinstaller: ...but no C++ compiler was specified\n";
-               close DBGOUT if $dbgOutToPathname ne "";
-               exit 1;
             }
          }
          else {
             print DBGOUT "mkinstaller:    no \"bin\", \"lib\", or \"lib64\" directory was specified\n" if $debugging;
             if ( defined $CC_name) {
-               print DBGOUT "mkinstaller:    but a C compiler was specified (as $CC_name)\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but a C compiler was specified (as $CC_name)\n" if $debugging;
             }
             if ( defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but a C++ compiler was specified (as $CXX_name)\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but a C++ compiler was specified (as $CXX_name)\n" if $debugging;
             }
          }
          if ( defined $CC_name) {
-            print DBGOUT "mkinstaller:    a C compiler was specified\n" if $debugging;
+            print DBGOUT "mkinstaller:    a C compiler was specified (as $CC_name)\n" if $debugging;
             if ( ! defined $CC_options) {
-               print DBGOUT "mkinstaller:    but no C compiler options were specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler options were specified\n" if $debugging;
                $CC_options = "";
             }
          }
          if ( defined $CXX_name) {
-            print DBGOUT "mkinstaller:    a C++ compiler was specified\n" if $debugging;
+            print DBGOUT "mkinstaller:    a C++ compiler was specified (as $CXX_name)\n" if $debugging;
             if ( ! defined $CXX_options) {
-               print DBGOUT "mkinstaller:    but no C++ compiler options were specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C++ compiler options were specified\n" if $debugging;
                $CXX_options = "";
             }
          }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
       }
       if ($ProjectVer ne "") {
          if ($ProjectName eq "") {
@@ -2727,7 +2739,7 @@ if ($valueOfDebugVar ne "") {
          print DBGOUT "mkinstaller: ...identify host OS\n" if $debugging;
          if ($OSclass eq "UNIX-like") {
             print DBGOUT "mkinstaller:    is \"UNIX-like\"\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
             my $Sreturn = "";
             my $Rreturn = "";
             my $cmd     = "uname -s";
@@ -2762,7 +2774,7 @@ if ($valueOfDebugVar ne "") {
                   print DBGOUT "mkinstaller:    host OS = \"$OSname\"\n" if $debugging;
                }
             }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
          }
          elsif ($OSclass eq "Windows-like") {
             print DBGOUT "mkinstaller:    is \"Windows-like\"\n" if $debugging;
@@ -2795,7 +2807,8 @@ if ($valueOfDebugVar ne "") {
       $scriptNameU       = $scriptName;
       $scriptNameU       =~ tr/\x20-\x7f//cd;
       $scriptNameU       =~ tr/a-zA-Z0-9_/_/c;
-      print DBGOUT "mkinstaller:    scriptNameU       = \"".nativePathname($scriptName)."\"\n" if $debugging;
+      $scriptNameU       =~ s/__+/_/;
+      print DBGOUT "mkinstaller:    scriptNameU       = \"".nativePathname($scriptNameU)."\"\n" if $debugging;
 
       $SCRIPTNAME        = $scriptNameU;
       $SCRIPTNAME        =~ tr/a-z/A-Z/;
@@ -3107,7 +3120,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
+         print DBGOUT "mkinstaller: ...operating in nonstandard (explicit) mode\n" if $debugging;
       }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
@@ -3286,7 +3299,7 @@ if ($valueOfDebugVar ne "") {
    #============================================================================
 
    if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #-------------------------------------------------------------------------
       #
@@ -3337,6 +3350,20 @@ if ($valueOfDebugVar ne "") {
       #  On a UNIX-like host (Linux in particular) we will want to get version
       #  numbers for the C library, Standard C++ library, and C++ ABI.
       #
+      #  Note that to identify the C library we need to use:
+      #
+      #     C compiler and linker
+      #     fgrep
+      #     ldd
+      #     strings
+      #
+      #  Note that to identify the C++ standard library we need to use:
+      #
+      #     C++ compiler and linker
+      #     fgrep
+      #     ldd
+      #     strings
+      #
       #-------------------------------------------------------------------------
 
       print DBGOUT "mkinstaller: Check library versions\n" if $debugging;
@@ -3348,6 +3375,7 @@ if ($valueOfDebugVar ne "") {
       @CXX_stdcxxlib_libcVerList = ( );
       $CXX_stdcxxlib_libcVersion = "";
       if ( defined $CC_name) {
+         print DBGOUT "mkinstaller: ...for $CC_name\n" if $debugging;
          $CC_libc_XversionX = mki_libc_version();
          if (2 <= $verbosityLevel) {
             print STDERR "mkinstaller: $CC_name reports:\n";
@@ -3365,7 +3393,11 @@ if ($valueOfDebugVar ne "") {
             }
          }
       }
+      else {
+         print DBGOUT "mkinstaller: ...no C compiler, can't identify C library\n" if $debugging;
+      }
       if ( defined $CXX_name) {
+         print DBGOUT "mkinstaller: ...for $CXX_name\n" if $debugging;
          if (mki_stdcxxlib_version()) {
             print DBGOUT "mkinstaller: ...done\n" if $debugging;
             my $Nlibc      = $#CXX_stdcxxlib_libcVerList + 1;
@@ -3428,7 +3460,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller:    ...failed\n" if $debugging;
+         print DBGOUT "mkinstaller: ...no C++ compiler, can't identify C++ standard library\n" if $debugging;
       }
 
       #-------------------------------------------------------------------------
@@ -3436,9 +3468,13 @@ if ($valueOfDebugVar ne "") {
       #  On a UNIX-like host we will want to get version number for the
       #  operating system (aka. kernel on Linux).
       #
+      #  Note that to identify the OS (kernel) version we need to use:
+      #
+      #     uname
+      #
       #-------------------------------------------------------------------------
 
-      print DBGOUT "mkinstaller: Check library versions\n" if $debugging;
+      print DBGOUT "mkinstaller: Check OS version\n" if $debugging;
       {
          my $versionNumber = mki_os_version();
          if ($versionNumber != "") {
@@ -3455,10 +3491,10 @@ if ($valueOfDebugVar ne "") {
             print STDERR "mkinstaller: warning didn't find operating system version number\n";
          }
       }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    elsif ($OSclass eq "Windows-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
       #-------------------------------------------------------------------------
       #
       #  On a Window-like host there isn't really a need for version numbers
@@ -3467,7 +3503,7 @@ if ($valueOfDebugVar ne "") {
       #-------------------------------------------------------------------------
 
       print DBGOUT "mkinstaller: Don't bother checking library versions\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    else {
       print STDERR "mkinstaller: error -- can't identify the class of host\n";
@@ -3701,7 +3737,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
+         print DBGOUT "mkinstaller: ...operating in nonstandard (explicit) mode\n" if $debugging;
       }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
@@ -3878,7 +3914,7 @@ if ($valueOfDebugVar ne "") {
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
 
    if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #=========================================================================
       #
@@ -4048,6 +4084,7 @@ if ($valueOfDebugVar ne "") {
             exit 1;
          }
          elsif ( -f "$here/$scriptName") {
+            print DBGOUT "mkinstaller: ...\"$here/$scriptName\"\n" if $debugging;
             print STDERR "mkinstaller: ...destroy existing \"".nativePathname($here."/".$scriptName)."\" script\n" if (2 <= $verbosityLevel);
             my $Ndeleted = unlink "$here/$scriptName";
             if ($Ndeleted < 1) {
@@ -4065,6 +4102,7 @@ if ($valueOfDebugVar ne "") {
             print STDERR "mkinstaller:    done\n" if (3 <= $verbosityLevel);
          }
          elsif ( -e "$here/$scriptName") {
+            print DBGOUT "mkinstaller: ...but \"$here/$scriptName\" isn't a file\n" if $debugging;
             print STDERR "mkinstaller: error -- existing \"".nativePathname($here."/".$scriptName)."\" is not a file\n";
             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
@@ -4096,8 +4134,32 @@ if ($valueOfDebugVar ne "") {
       #  individual tarballs into the wrapper
       #  directory TmpDirW.
       #
-      #  Note that these individual tarballs
-      #  are normally compressed (.tar.gz files).
+      #  Steps:
+      #
+      #     1) cd into the directory that contains the
+      #        directory of interest (ie. into prefix
+      #        directory containing "bin").
+      #
+      #     2) tarup the directory of interest (such as
+      #        "bin") forming a tarball in the temporary
+      #        "initial" directory.
+      #
+      #        The "initial" directory contains individual
+      #        tarballs.
+      #
+      #     3) untar the tarball in the temporary "initial"
+      #        directory. "bin") into the temporary
+      #        "accumulator" directory. Note that this
+      #        will overlay and existing directory to
+      #        allow for directory merging (such as when
+      #        multiple "bin" directories were specified).
+      #
+      #        The "accumulator" directory contains individual
+      #        directories.
+      #
+      #  Note that these individual directory
+      #  tarballs are normally compressed
+      #  (.tar.gz files).
       #
       #---------------------------------------
 
@@ -4141,8 +4203,9 @@ if ($valueOfDebugVar ne "") {
                         }
                         #---------------------------------------
                         #
-                        #  First tar it up in to the individual
-                        #  tarball directory TmpDirI
+                        #  First tar up the directory in to the
+                        #  individual ("initial") tarball directory
+                        #  TmpDirI
                         #
                         print DBGOUT "mkinstaller:    tarup \"$dn/$bn\" to form \"$TmpDirI/$bn.tar.gz\"\n" if $debugging;
                         my $cmd;
@@ -4173,6 +4236,27 @@ if ($valueOfDebugVar ne "") {
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
                         }
+                        if ($debugging) {
+                           #
+                           #  Show what the "initial" directory
+                           #  now contains...
+                           #
+                           my $back = `pwd`; chomp $back;
+                           chdir($TmpDirI);
+                              if (opendir(DIR,$TmpDirI)) {
+                                 print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
+                                 while (defined($tmp = readdir(DIR))) {
+                                    if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                       print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                    }
+                                 }
+                                 closedir(DIR);
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirI.$slash."\" contains\n" if $debugging;
+                              }
+                           chdir($back);
+                        }
                      }
                      if ( ! chdir($here)) {
                         print STDERR "mkinstaller: error -- can't cd back to \"$here\"\n";
@@ -4188,8 +4272,9 @@ if ($valueOfDebugVar ne "") {
                            exit 1;
                         }
                         #
-                        #  Then untar the individual tarball over any existing
-                        #  directory in to the accumulator directory TmpDirA
+                        #  Then untar the individual directory tarball over any
+                        #  existing directory in to the accumulator directory
+                        #  TmpDirA
                         #
                         if ($debugging) {
                            my $imInDir = `pwd`; chomp $imInDir;
@@ -4237,6 +4322,27 @@ if ($valueOfDebugVar ne "") {
                               exit 1;
                            }
                         }
+                        if ($debugging) {
+                           #
+                           #  Show what the "accumulator" directory
+                           #  now contains...
+                           #
+                           my $back = `pwd`; chomp $back;
+                           chdir($TmpDirA);
+                              if (opendir(DIR,$TmpDirA)) {
+                                 print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
+                                 while (defined($tmp = readdir(DIR))) {
+                                    if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                       print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                    }
+                                 }
+                                 closedir(DIR);
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirA.$slash."\" contains\n" if $debugging;
+                              }
+                           chdir($back);
+                        }
                      }
                   }
                   if ($debugging) {
@@ -4251,7 +4357,7 @@ if ($valueOfDebugVar ne "") {
                   }
                   if ($debugging) {
                      my $imInDir = `pwd`; chomp $imInDir;
-                     print DBGOUT "mkinstaller: ...now in \"$imInDir\"\n" if $debugging;
+                     print DBGOUT "mkinstaller: ...back in \"$imInDir\"\n" if $debugging;
                   }
                }
                my $Tend = time();
@@ -4354,6 +4460,32 @@ if ($valueOfDebugVar ne "") {
                print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
             }
             {
+               if ($debugging) {
+                  #
+                  #  Show what the "wrapper" directory
+                  #  now contains...
+                  #
+                  my $back = `pwd`; chomp $back;
+                  chdir($TmpDirW);
+                     if (opendir(DIR,$TmpDirW)) {
+                        my $count = 0;
+                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                        while (defined($tmp = readdir(DIR))) {
+                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                              $count += 1;
+                           }
+                        }
+                        closedir(DIR);
+                        if ($count <= 0) {
+                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                        }
+                     }
+                     else {
+                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     }
+                  chdir($back);
+               }
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
                   print DBGOUT "mkinstaller:    \"$bn\"\n" if $debugging;
@@ -4390,6 +4522,32 @@ if ($valueOfDebugVar ne "") {
                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
+                  }
+                  if ($debugging) {
+                     #
+                     #  Show what the "wrapper" directory
+                     #  now contains...
+                     #
+                     my $back = `pwd`; chomp $back;
+                     chdir($TmpDirW);
+                        if (opendir(DIR,$TmpDirW)) {
+                           my $count = 0;
+                           print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                           while (defined($tmp = readdir(DIR))) {
+                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                 print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                 $count += 1;
+                              }
+                           }
+                           closedir(DIR);
+                           if ($count <= 0) {
+                              print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                           }
+                        }
+                        else {
+                           print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                        }
+                     chdir($back);
                   }
                }
             }
@@ -4601,8 +4759,8 @@ if ($valueOfDebugVar ne "") {
 
          #---------------------------------------
          #
-         #  Finally arup the temporary wrapper
-         #  directory TmpDirW carrying the individual
+         #  Finally tarup the temporary wrapper
+         #  directory TmpDirW (carrying the individual
          #  tarballs).
          #
          #  Note that this wrapper tarball is NOT
@@ -4649,6 +4807,12 @@ if ($valueOfDebugVar ne "") {
                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   close DBGOUT if $dbgOutToPathname ne "";
                   exit 1;
+               }
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the tarball\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$wrapper.tar\"";
+                  system "pwd";
                }
                my $Tend   = time();
                my $dT     = $Tend - $Tstart;
@@ -7076,18 +7240,24 @@ EOF38
          |      bn=`basename \${Target_CC}`
          |      if [ "X\${bn}" != "X" ]
          |      then
-         |         if [ "X\${bn}" = "Xgcc" ]
+         |         if [ "X\${bn}" = "Xbgclang" ]
+         |         then
+         |            cmd="bgclang --version"
+         |         elif [ "X\${bn}" = "Xclang" ]
+         |         then
+         |            cmd="clang --version"
+         |         elif [ "X\${bn}" = "Xgcc" ]
          |         then
          |            cmd="gcc --version"
          |         elif [ "X\${bn}" = "Xicc" ]
          |         then
          |            cmd="icc --version"
-         |         elif [ "X\${bn}" = "Xclang" ]
-         |         then
-         |            cmd="clang --version"
          |         elif [ "X\${bn}" = "Xpgcc" ]
          |         then
          |            cmd="pgcc -V"
+         |         elif [ "X\${bn}" = "Xxlc" ]
+         |         then
+         |            cmd="xlc -qversion"
          |         else
          |            cmd=
          |         fi
@@ -7619,7 +7789,13 @@ EOF39
          |      bn=`basename \${Target_CXX}`
          |      if [ "X\${bn}" != "X" ]
          |      then
-         |         if [ "\${bn}" = "g++" ]
+         |         if [ "\${bn}" = "bgclang++" ]
+         |         then
+         |            cmd="bgclang++ --version"
+         |         elif [ "\${bn}" = "clang++" ]
+         |         then
+         |            cmd="clang++ --version"
+         |         elif [ "\${bn}" = "g++" ]
          |         then
          |            cmd="g++ --version"
          |         elif [ "\${bn}" = "icpc" ]
@@ -7628,6 +7804,9 @@ EOF39
          |         elif [ "\${bn}" = "pgCC" ]
          |         then
          |            cmd="pgCC -V"
+         |         elif [ "\${bn}" = "xlC" ]
+         |         then
+         |            cmd="xlC -qversion"
          |         else
          |            cmd=
          |         fi
@@ -8463,20 +8642,35 @@ EOF50
          |then                                                                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
-         |   echo "$scriptName: ...run [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\" 2>/dev/null]" >&2 # DEBUGGING
+         |   echo "$scriptName: ...run [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\"] " >&2 # DEBUGGING
          |fi                                                                                                                       # DEBUGGING
          |PAYLOAD_LINE=\`\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' "\${commandPathname}"\`
+         |status=\$?
+         |if [ "X\${status}" != "X0" ]
+         |then
+         |   echo "$scriptName: [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\"] failed, exit code \${status}" >&2
+         |   exit 1
+         |fi
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
          |   echo "$scriptName:    gives: [\${PAYLOAD_LINE}]" >&2                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
-         |   echo "$scriptName: ...run [\${Use_tail} +\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2                      # DEBUGGING
+         |   echo "$scriptName: ...run [\${Use_tail} -n +\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2                      # DEBUGGING
          |fi                                                                                                                       # DEBUGGING
-         |\${Use_tail} +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar" 2>/dev/null
+         |\${Use_tail} -n +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar"
+         |status=\$?
+         |if [ "X\${status}" != "X0" ]
+         |then
+         |   echo "$scriptName: [\${Use_tail} +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar"] failed, exit code \${status}" >&2
+         |   exit 1
+         |fi
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
          |   echo "$scriptName:    done" >&2                                                                                         # DEBUGGING
+         |   pwd                                                                                                                     # DEBUGGING
+         |   /bin/ls -aldF                                                                                                           # DEBUGGING
+         |   pwd                                                                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
          |   if [ "X\${IsGNUtar}" = "Xtrue" ]
@@ -8496,7 +8690,7 @@ EOF50
          |   exit 1                                                                                                                   # DEBUGGING
          |fi
          |
-         |\${Use_tar} -xf "wrapper.tar" >/dev/null 2>&1
+         |\${Use_tar} -xf "wrapper.tar" >tar.output 2>&1
          |status=\$?
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
@@ -8504,10 +8698,28 @@ EOF50
          |fi                                                                                                                       # DEBUGGING
          |if [ "X\${status}" != "X0" ]
          |then
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      echo "$scriptName:    ...failure" >&2                                                                                 # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
          |   echo "$scriptName: error -- problem extracting tarball(=\"wrapper.tar\") from script(=\"\${commandPathname}\")" >&2
-         |   echo "$scriptName: ...[\${Use_tar} -xf \"wrapper.tar\"] returned exit code \${status}" >&2 >&2
-         |   exit 1
+         |   echo "$scriptName: ...[\${Use_tar} -xf \"wrapper.tar\"] returned exit code \${status}" >&2
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      if [ -f "tar.output" ]                                                                                             # DEBUGGING
+         |      then                                                                                                               # DEBUGGING
+         |         cat "tar.output" >&2                                                                                            # DEBUGGING
+         |         rm -f "tar.output"                                                                                              # DEBUGGING
+         |      fi                                                                                                                 # DEBUGGING
+         |      exit 1                                                                                                             # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
+         |else
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      echo "$scriptName:    ...success" >&2                                                                                 # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
          |fi
+         |rm -f "tar.output"
          |
          |if [ 2 -le \${verbosityLevel} ]
          |then
@@ -8528,7 +8740,7 @@ EOF50
          |   then                                                                                                                  # DEBUGGING
          |      nowIn="`pwd`"                                                                                                      # DEBUGGING
          |      echo "$scriptName: ...in \\"\${nowIn}\\" " >&2                                                                          # DEBUGGING
-         |      echo "$scriptName: ...run [rm -rf \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
+         |      echo "$scriptName: ...run [rm \\"wrapper.tar\\"]" >&2                                                              # DEBUGGING
          |   fi                                                                                                                    # DEBUGGING
          |   rm "wrapper.tar"
          |   status=\$?
@@ -9067,6 +9279,12 @@ EOF65
          |#
          |#-------------------------------------------------------------------------------
          |
+         |if [ 1 -le \${verbosityLevel} ]
+         |then
+         |   echo "$scriptName: back to \"\${here}\" " >&2
+         |fi
+         |cd "\${here}"
+         |
          |exitCode=0
          |if [ "X\${keep}" != "Xtrue" ]
          |then
@@ -9078,20 +9296,22 @@ EOF65
          |   then                                                                                                                  # DEBUGGING
          |      nowIn="`pwd`"                                                                                                      # DEBUGGING
          |      echo "$scriptName: ...in \\"\${nowIn}\\" " >&2                                                                          # DEBUGGING
-         |      echo "$scriptName: ...run [rm -rf \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
+         |      echo "$scriptName: ...run [rm -r \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
          |   fi                                                                                                                    # DEBUGGING
-         |   rm -rf "\${MyTmpDir}" >/dev/null 2>&1
+         |   rm -r "\${MyTmpDir}" >/dev/null 2>&1
          |   status=\$?
          |   if [ "X\${status}" != "X0" ]
          |   then
          |      echo "$scriptName: error -- can't cleanup the temporary directory(=\\"\${MyTmpDir}\\")" >&2
-         |      echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] returned exit code \${status}" >&2
+         |	echo "$scriptName: ...from \"`pwd`\" " >&2
+         |      echo "$scriptName: ...[rm -r \\"\${MyTmpDir}\\"] returned exit code \${status}" >&2
          |      exitCode=1
          |   else
          |      if [ -d "\${MyTmpDir}" ]
          |      then
          |         echo "$scriptName: error -- didn't cleanup the temporary directory(=\\"\${MyTmpDir}\\")" >&2
-         |         echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] failed" >&2
+         |         echo "$scriptName: ...from \"`pwd`\" " >&2
+         |         echo "$scriptName: ...[rm -r \\"\${MyTmpDir}\\"] failed" >&2
          |         echo "$scriptName:    directory \\"\${MyTmpDir}\\" is still there" >&2
          |         exitCode=1
          |      else
@@ -9156,10 +9376,24 @@ EOF67
             my $cmd;
             my $status;
             if ($withPayload) {
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the script fragment and tarball\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$TmpFile\"";
+                  system "/bin/ls -aldF \"$TmpDirT/wrapper.tar\"";
+                  system "pwd";
+               }
                print STDERR "mkinstaller: ...adding the payload (\"$TmpDirT/wrapper.tar\") to \"$scriptName\" script\n" if (1 <= $verbosityLevel);
                $cmd = "cat \"$TmpFile\" \"$TmpDirT/wrapper.tar\" > \"$scriptName\"";
             }
             else {
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the script fragment (no tarball)\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$TmpFile\"";
+                  system "/bin/ls -aldF \"$TmpDirT/wrapper.tar\"";
+                  system "pwd";
+               }
                print STDERR "mkinstaller: ...without payload!\n" if (1 <= $verbosityLevel);
                $cmd = "cat \"$TmpFile\" > \"$scriptName\"";
             }
@@ -9185,6 +9419,12 @@ EOF67
             }
             else {
                print DBGOUT "mkinstaller:       generated \"$scriptName\"\n" if $debugging;
+            }
+            if ($debugging) {
+               print DBGOUT "mkinstaller: ...the generated script\n" if $debugging;
+               system "pwd";
+               system "/bin/ls -aldF \"$scriptName\"";
+               system "pwd";
             }
 
             my $Tend = time();
@@ -9293,10 +9533,10 @@ EOF67
          }
       }
       print DBGOUT "mkinstaller: ...done\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    elsif ($OSclass eq "Windows-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #=========================================================================
       #
@@ -9695,7 +9935,7 @@ EOF67
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
       print DBGOUT "mkinstaller: ...done\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    else {
       print STDERR "mkinstaller: error -- can't identify the class of host\n";
@@ -9822,7 +10062,7 @@ EOF67
       }
    }
 
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
    #----------------------------------------------------------------------------
    #
    #  This function is used to figure-out the version number of the given
@@ -9954,6 +10194,10 @@ EOF67
                         $response    =~ tr!\n! !;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                           $result   = "clang++ $2";
+                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^.*\bbgclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
                            $result   = "clang++ $2";
                            print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                         }
@@ -12132,6 +12376,8 @@ EOFc
    #  Get the version numbers for the OS version. This is only done on
    #  UNIX-like hosts.
    #
+   #  Uses: uname
+   #
    #----------------------------------------------------------------------------
 
    sub mki_os_version {
@@ -13435,7 +13681,7 @@ EOFc
       return $result;
    }
 
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
 }
 
 # MyUniqueFileId: d1e4e179-f5ab-4da0-a4b3-3904cdc4feb2
@@ -13653,7 +13899,7 @@ sub convertTimeToDateTime {
    return $result;
 }
 
-# MyUniqueFileId: c74b22fd-6ce7-417f-95b3-89ed86a69cbe
+# MyUniqueFileId: 57febf05-5939-4d9f-d57a-0d9531fe0948
 #-------------------------------------------------------------------------------
 #
 #  This subroutine deletes one or more directories and all of the content.
@@ -16709,7 +16955,7 @@ EOF2
 
 sub html {
    my $pathname = shift;
-   if (! open(HTML,"> $pathname")) {
+   if ( ! open(HTML,"> $pathname")) {
       print STDERR "mkinstaller: can't create/write \"$pathname\"\n";
       exit 1;
    }
@@ -17555,7 +17801,7 @@ sub html {
    |            Used to specify the name of the C++ compiler. Note that this is
    |            just the compiler name, not a pathname. This will be encoded
    |            in the generated installer that indicates how the binaries to be
-   |            installed were built. Not really an option, it is required.
+   |            installed were built.
    |            <blockquote>
    |<pre>
    |/opt/boost/{include,lib} \\

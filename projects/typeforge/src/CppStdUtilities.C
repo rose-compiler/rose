@@ -4,10 +4,11 @@
 #include <regex>
 #include <string>
 
-using namespace std;
-
+namespace Typeforge {
 // C++11, requires at least gcc 4.9
 namespace CppStdUtilities {
+
+  using namespace std;
 
   bool readDataFile(std::string fileName, DataFileVector& dfv) {
     string line;
@@ -62,5 +63,7 @@ namespace CppStdUtilities {
       return false;
     }
   }
+}
+
 }
 

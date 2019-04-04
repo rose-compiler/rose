@@ -11,6 +11,8 @@
 
 #define newVersion "1.0"
 
+namespace Typeforge {
+
 using json = nlohmann::json;
 
 class ToolAction
@@ -100,5 +102,7 @@ private:
 
 void to_json(json &j, const ToolConfig &a);
 void from_json(const json& j, ToolConfig& a);
+
+}
 
 #endif
