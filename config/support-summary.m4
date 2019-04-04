@@ -68,6 +68,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     if test -n "$support_binaries_frontend" -o -n "$verbose"; then
         ROSE_SUMMARY_HEADING([Binary analysis support])
 	echo "    i386 support                     ${CFLAGS32:-none}"
+	echo "    libcapstone                      ${ROSE_HAVE_CAPSTONE:-none}"
 	echo "    libmagic                         ${ROSE_HAVE_LIBMAGIC:-none}"
 	echo "    readline                         ${LIBREADLINE_LIBRARY_PATH:-none}"
 	echo "    SQLite3                          ${SQLITE3_VERSION:-none}"
