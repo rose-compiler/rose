@@ -43,8 +43,13 @@ AddressUser::operator==(const AddressUser &other) const {
         return false;
     if (bblocks_.size() != other.bblocks_.size() || !std::equal(bblocks_.begin(), bblocks_.end(), other.bblocks_.begin()))
         return false;
-    if (odblock_.dataBlock() != other.odblock_.dataBlock())
-        return false;
+    if (odblock_.dataBlock() != other.odblock_.dataBlock()) {
+        // Data blocks are not same object, so compare by using their sort predicate. If a < b || b < a then a != b
+        if (sortDataBlocks(odblock_.dataBlock(), other.odblock_.dataBlock()) ||
+            sortDataBlocks(other.odblock_.dataBlock(), odblock_.dataBlock()))
+            return false;
+    }
+
     return true;
 }
 
@@ -53,11 +58,14 @@ AddressUser::operator<(const AddressUser &other) const {
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     if (insn_!=NULL && other.insn_!=NULL) {
+        // Both users have instructions, so sort by instruction address
         ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
         return insn_->get_address() < other.insn_->get_address();
     } else if (insn_!=NULL || other.insn_!=NULL) {
-        return insn_==NULL;                         // instructions come before data blocks
+        // Exactly one user lacks an instruction.
+        return insn_==NULL;                         // data blocks come before instructions
     } else {
+        // Neither user has instructions, therefore both must have data blocks. Sort by the data blocks.
         ASSERT_not_null(odblock_.dataBlock());
         ASSERT_not_null(other.odblock_.dataBlock());
         return sortDataBlocks(odblock_.dataBlock(), other.odblock_.dataBlock());
