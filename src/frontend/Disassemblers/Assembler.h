@@ -1,6 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Assembler_H
 #define ROSE_BinaryAnalysis_Assembler_H
 
+#include <RoseException.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -52,15 +54,15 @@ namespace BinaryAnalysis {
 class Assembler {
 public:
     /** %Exception thrown by the assemblers. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : std::runtime_error(reason), insn(insn)
+            : Rose::Exception(reason), insn(insn)
             {}
         /** An exception not bound to a particular instruction. */
         Exception(const std::string &reason)
-            : std::runtime_error(reason), insn(NULL)
+            : Rose::Exception(reason), insn(NULL)
             {}
         void print(std::ostream&) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
