@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryToSource_H
 
 #include <Partitioner2/Partitioner.h>
+#include <RoseException.h>
 #include <SourceAstSemantics2.h>
 #include <TraceSemantics2.h>
 
@@ -43,10 +44,10 @@ public:
     };
 
     /** Exceptions thrown by this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Constructs an exception with the specified message. */
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
     };
 
 private:

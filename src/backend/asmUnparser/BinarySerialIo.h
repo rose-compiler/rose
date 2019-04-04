@@ -2,6 +2,7 @@
 #define Rose_BinaryAnalysis_SerialIo_H
 
 #include <Progress.h>
+#include <RoseException.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -135,10 +136,10 @@ public:
     };
 
     /** Errors thrown by this API. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construct an exception with an error message. */
-        explicit Exception(const std::string &s): std::runtime_error(s) {}
+        explicit Exception(const std::string &s): Rose::Exception(s) {}
         ~Exception() throw() {}
     };
 

@@ -11,6 +11,7 @@
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>
 
@@ -128,10 +129,10 @@ public:
     };
 
     /** Errors from the engine. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         Exception(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
 

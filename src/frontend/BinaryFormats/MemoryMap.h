@@ -3,6 +3,7 @@
 
 #include <ByteOrder.h>
 #include <Combinatorics.h>
+#include <RoseException.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -182,9 +183,9 @@ public:
 
 public:
     /** Exception for MemoryMap operations. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &mesg, const MemoryMap::Ptr map): std::runtime_error(mesg), map(map) {}
+        Exception(const std::string &mesg, const MemoryMap::Ptr map): Rose::Exception(mesg), map(map) {}
         virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
