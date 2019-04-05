@@ -1586,7 +1586,6 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
 
 void
 Partitioner::checkConsistency() const {
-#ifndef NDEBUG
     static const bool extraDebuggingOutput = false;
     using namespace StringUtility;
     Stream debug(mlog[DEBUG]);
@@ -1622,60 +1621,59 @@ Partitioner::checkConsistency() const {
             }
 
             if (BasicBlock::Ptr bb = vertex.value().bblock()) {
-                ASSERT_require(bb->isFrozen());
-                ASSERT_require(bb->address() == vertex.value().address());
+                ASSERT_always_require(bb->isFrozen());
+                ASSERT_always_require(bb->address() == vertex.value().address());
                 if (bb->isEmpty()) {
                     // Non-existing basic block
-                    ASSERT_require2(vertex.nOutEdges()==1,
-                                    "nonexisting block " + addrToString(bb->address()) + " must have one outgoing edge");
+                    ASSERT_always_require2(vertex.nOutEdges()==1,
+                                           "nonexisting block " + addrToString(bb->address()) + " must have one outgoing edge");
                     ControlFlowGraph::ConstEdgeIterator edge = vertex.outEdges().begin();
-                    ASSERT_require2(edge->target() == nonexistingVertex_,
-                                    "nonexisting block " + addrToString(bb->address()) + " edges must go to a special vertex");
+                    ASSERT_always_require2(edge->target() == nonexistingVertex_,
+                                           "nonexisting block " + addrToString(bb->address()) + " edges must go to a special vertex");
                 } else {
                     // Existing basic block
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
                         static const AddressUser NO_USER;
                         AddressUser insnAddrUser = aum_.instructionExists(insn->get_address()).orElse(NO_USER);
-                        ASSERT_require2(insnAddrUser.insn() == insn,
-                                        "instruction " + addrToString(insn->get_address()) + " in block " +
-                                         addrToString(bb->address()) + " must be present in the AUM");
+                        ASSERT_always_require2(insnAddrUser.insn() == insn,
+                                               "instruction " + addrToString(insn->get_address()) + " in block " +
+                                               addrToString(bb->address()) + " must be present in the AUM");
                         bool foundBlock = false;
                         BOOST_FOREACH (const BasicBlock::Ptr &bb2, insnAddrUser.basicBlocks()) {
                             if ((foundBlock = bb2 == bb))
                                 break;
                         }
-                        ASSERT_require2(foundBlock,
-                                        "instruction " + addrToString(insn->get_address()) + " in " +
-                                        bb->printableName() + " does not have correct ownership in AUM\n");
+                        ASSERT_always_require2(foundBlock,
+                                               "instruction " + addrToString(insn->get_address()) + " in " +
+                                               bb->printableName() + " does not have correct ownership in AUM\n");
                         AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
                         AddressUsers addressUsers = aum_.spanning(insnInterval);
-                        ASSERT_require2(addressUsers.instructionExists(insn->get_address()),
-                                        "instruction " + addrToString(insn->get_address()) + " in block " +
-                                        addrToString(bb->address()) + " must span its own address interval in the AUM");
+                        ASSERT_always_require2(addressUsers.instructionExists(insn->get_address()),
+                                               "instruction " + addrToString(insn->get_address()) + " in block " +
+                                               addrToString(bb->address()) + " must span its own address interval in the AUM");
                     }
                 }
             } else {
                 // Basic block placeholder
-                ASSERT_require2(vertex.nOutEdges() == 1,
-                                "placeholder " + addrToString(vertex.value().address()) +
-                                " must have exactly one outgoing edge");
+                ASSERT_always_require2(vertex.nOutEdges() == 1,
+                                       "placeholder " + addrToString(vertex.value().address()) +
+                                       " must have exactly one outgoing edge");
                 ControlFlowGraph::ConstEdgeIterator edge = vertex.outEdges().begin();
-                ASSERT_require2(edge->target() == undiscoveredVertex_,
-                                "placeholder " + addrToString(vertex.value().address()) +
-                                " edge must go to a special vertex");
+                ASSERT_always_require2(edge->target() == undiscoveredVertex_,
+                                       "placeholder " + addrToString(vertex.value().address()) +
+                                       " edge must go to a special vertex");
             }
 
-            ASSERT_require2(vertexIndex_.exists(vertex.value().address()),
-                            "bb/placeholder " + addrToString(vertex.value().address()) +
-                            " must exist in the vertex index");
+            ASSERT_always_require2(vertexIndex_.exists(vertex.value().address()),
+                                   "bb/placeholder " + addrToString(vertex.value().address()) +
+                                   " must exist in the vertex index");
 
         } else {
             // Special vertices
-            ASSERT_require2(vertex.nOutEdges()==0,
-                            "special vertices must have no outgoing edges");
+            ASSERT_always_require2(vertex.nOutEdges()==0,
+                                   "special vertices must have no outgoing edges");
         }
     }
-#endif
 }
 
 // class method
