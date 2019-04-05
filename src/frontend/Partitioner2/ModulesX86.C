@@ -178,6 +178,35 @@ isJmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction
 }
 
 size_t
+isAddJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+    if (insns.size() < 2)
+        return 0;
+    SgAsmX86Instruction *add = isSgAsmX86Instruction(insns[0]);
+    if (!add || add->get_kind() != x86_add)
+        return 0;
+    const SgAsmExpressionPtrList &addArgs = add->get_operandList()->get_operands();
+    if (addArgs.size() != 2)
+        return 0;
+    SgAsmDirectRegisterExpression *addArg0 = isSgAsmDirectRegisterExpression(addArgs[0]);
+    if (!addArg0 || addArg0->get_descriptor().majorNumber() != x86_regclass_gpr ||
+        addArg0->get_descriptor().minorNumber() != x86_gpr_cx)
+        return 0;
+    SgAsmIntegerValueExpression *addArg1 = isSgAsmIntegerValueExpression(addArgs[1]);
+    if (!addArg1)
+        return 0;
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
+    if (!jmp || jmp->get_kind() != x86_jmp)
+        return 0;
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    if (jmpArgs.size() != 1)
+        return 0;
+    SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
+    if (!jmpArg0)
+        return 0;
+    return 2;
+}
+
+size_t
 isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     // Longer patterns must be before shorter patterns if they could both match
     if (size_t n = isLeaJmpThunk(partitioner, insns))
@@ -185,6 +214,8 @@ isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &in
     if (size_t n = isMovJmpThunk(partitioner, insns))
         return n;
     if (size_t n = isJmpMemThunk(partitioner, insns))
+        return n;
+    if (size_t n = isAddJmpThunk(partitioner, insns))
         return n;
 #if 0 // [Robb P. Matzke 2015-06-23]: disabled for now, but see splitThunkFunctions
     // This matcher is causing too many false positives. The problem is that when the partitioner fails to find some code of a
