@@ -9,6 +9,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
 #include <RoseException.h>
@@ -238,6 +239,8 @@ private:
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     Progress::Ptr progress_;                            // optional progress reporting
     ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
+    ThunkPredicates::Ptr functionMatcherThunks_;        // predicates to find thunks when looking for functions
+    ThunkPredicates::Ptr functionSplittingThunks_;      // predicates for splitting thunks from front of functions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -1213,6 +1216,18 @@ public:
     virtual void findingThunks(bool b) { settings_.partitioner.findingThunks = b; }
     /** @} */
 
+    /** Property: Predicate for finding functions that are thunks.
+     *
+     *  This collective predicate is used when searching for function prologues in order to create new functions. It's purpose
+     *  is to try to match sequences of instructions that look like thunks and the create a function at that address. A suitable
+     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
+    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    /** @} */
+
     /** Property: Whether to split thunk instructions into mini functions.
      *
      *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
@@ -1221,6 +1236,18 @@ public:
      * @{ */
     bool splittingThunks() const /*final*/ { return settings_.partitioner.splittingThunks; }
     virtual void splittingThunks(bool b) { settings_.partitioner.splittingThunks = b; }
+    /** @} */
+
+    /** Property: Predicate for finding thunks at the start of functions.
+     *
+     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
+     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
+     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
+     *  The list is consulted only when @ref splittingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
+    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
     /** @} */
 
     /** Property: Whether to find dead code.

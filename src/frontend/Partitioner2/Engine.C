@@ -46,6 +46,8 @@ void
 Engine::init() {
     ASSERT_require(map_ == NULL);
     Rose::initialize(NULL);
+    functionMatcherThunks_ = ThunkPredicates::functionMatcherThunks();
+    functionSplittingThunks_ = ThunkPredicates::allThunks();
 #if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     static bool emitted = false;
     if (!emitted) {
@@ -1433,7 +1435,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
+        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
@@ -1462,7 +1464,7 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
         if (settings_.partitioner.findingThunks)
-            p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
+            p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks_));
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -1624,7 +1626,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
         // single blocks at a time -- splitting the block may have broken the opaque predicate.
         SAWYER_MESG(where) <<"splitting thunks from functions\n";
-        ModulesX86::splitThunkFunctions(partitioner);
+        splitThunkFunctions(partitioner, functionSplittingThunks_);
         discoverBasicBlocks(partitioner);
     }
 
