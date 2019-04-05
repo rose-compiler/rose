@@ -2371,20 +2371,15 @@ AddressUsageMap
 Partitioner::aum(const Function::Ptr &function) const {
     AddressUsageMap retval;
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(blockVa);
-        if (placeholder != cfg_.vertices().end()) {
-            ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
-            if (BasicBlock::Ptr bb = placeholder->value().bblock()) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    retval.insertInstruction(insn, bb);
-                BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
-                    retval.insertDataBlock(OwnedDataBlock(dblock, bb));
-            }
+        if (BasicBlock::Ptr bb = basicBlockExists(blockVa)) {
+            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                retval.insertInstruction(insn, bb);
+            BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
+                retval.insertDataBlock(OwnedDataBlock(dblock, bb));
         }
     }
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
         retval.insertDataBlock(OwnedDataBlock(dblock, function));
-
     return retval;
 }
 

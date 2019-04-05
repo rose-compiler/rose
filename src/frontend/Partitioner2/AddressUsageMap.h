@@ -22,6 +22,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUser
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Address usage item.
  *
  *  This struct represents one user for an address interval.  The user can be either an instruction with at least one valid
@@ -151,6 +155,9 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUsers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** List of virtual address users.
  *
@@ -338,6 +345,9 @@ protected:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUsageMap
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Address usage map.
  *
@@ -536,8 +546,9 @@ private:
     // Insert an instruction/block pair into the map.
     void insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
-    // Insert a data block into the map.  The data block must not be a null pointer and must not already exist in the map. A
-    // data pointer is always inserted along with ownership information--which functions and basic blocks own this data block.
+    // Insert or merge a data block into the map.  The data block must not be a null pointer. A data pointer is always inserted
+    // along with ownership information--which functions and basic blocks own this data block. If the address usage map already
+    // has this data block, then the provided ownership information is merged into the existing ownership lists.
     void insertDataBlock(const OwnedDataBlock&);
 
     // Remove an instruction/block pair from the map.  If the instruction exists in the map then the specified block is removed

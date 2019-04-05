@@ -420,16 +420,24 @@ AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr
 void
 AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
-    ASSERT_forbid2(dataBlockExists(odb.dataBlock()).isValid(), "data block must not already exist in the AUM");
     AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
-    Map adjustment;
-    adjustment.insert(interval, AddressUsers(odb));
+
+    // Either the data block is present in the AUM or it isn't. If it is present, then the AUM contains the entire block's
+    // interval, otherwise it might contain only parts of the interval. Keep track of which parts of the interval are missing
+    // so we can add them after the loop.
+    AddressIntervalSet missingParts;
+    missingParts.insert(interval);
+
+    // Update the existing parts of the interval.
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        missingParts.erase(node.key());
         AddressUsers newUsers = node.value();
         newUsers.insertDataBlock(odb);
-        adjustment.insert(interval.intersection(node.key()), newUsers);
     }
-    map_.insertMultiple(adjustment);
+
+    // Add the missing parts of the interval.
+    BOOST_FOREACH (const AddressInterval &i, missingParts.intervals())
+        map_.insert(i, AddressUsers(odb));
 }
 
 void
