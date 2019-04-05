@@ -1681,7 +1681,7 @@ public:
      *  One of the things that are merged are the basic blocks.  If the function being attached is A and the partitioner
      *  already knows about B having the same entry address as A, then all basic blocks owned by A are now (also) owned by
      *  B. Some of those blocks happened to be owned by other functions also attached to the partitioner they continue to be
-     *  owned also by those other functions.
+     *  owned also by those other functions. Data blocks are handled in a similar fashion.
      *
      *  Thread safety: Not thread safe. */
     Function::Ptr attachOrMergeFunction(const Function::Ptr&) /*final*/;
