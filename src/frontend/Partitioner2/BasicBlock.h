@@ -461,10 +461,10 @@ public:
      *  Thread safety: This method is not thread safe. */
     AddressIntervalSet dataAddresses() const;
 
-    /** Determine if this basic block contains the specified data block.
+    /** Determine if this basic block contains the specified data block, or equivalent.
      *
-     *  If the basic block owns the specified data block then this method returns the specified pointer, otherwise it returns
-     *  the null pointer.
+     *  If the basic block owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
      *
      *  Thread safety: This method is not thread safe. */
     DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;

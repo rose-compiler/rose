@@ -37,6 +37,14 @@ Function::eraseDataBlock(const DataBlock::Ptr &dblock) {
     }
 }
 
+DataBlock::Ptr
+Function::dataBlockExists(const DataBlock::Ptr &dblock) const {
+    Sawyer::Optional<DataBlock::Ptr> found;
+    if (dblock)
+        found = getUnique(dblocks_, dblock, sortDataBlocks);
+    return found ? *found : DataBlock::Ptr();
+}
+
 std::string
 Function::printableName() const {
     std::string s = "function " + StringUtility::addrToString(address());

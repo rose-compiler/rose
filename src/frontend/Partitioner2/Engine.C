@@ -2283,7 +2283,7 @@ DataBlock::Ptr
 Engine::attachPaddingToFunction(Partitioner &partitioner, const Function::Ptr &function) {
     ASSERT_not_null(function);
     if (DataBlock::Ptr padding = partitioner.matchFunctionPadding(function)) {
-        partitioner.attachFunctionDataBlock(function, padding);
+        partitioner.attachDataBlockToFunction(padding, function);
         return padding;
     }
     return DataBlock::Ptr();
@@ -2411,7 +2411,7 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
+                DataBlock::Ptr dblock = partitioner.attachDataBlockToFunction(interval.least(), interval.size(), function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }
         }

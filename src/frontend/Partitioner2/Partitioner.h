@@ -1093,6 +1093,8 @@ public:
      *  attached if the CFG/AUM already knows about a different basic block at the same address.  Attempting to attach a block
      *  which is already attached is allowed, and is a no-op. It is an error to specify a null pointer for the basic block.
      *
+     *  If the basic block owns any data blocks, those data blocks are also attached to the partitioner.
+     *
      *  The basic block's cached successors are consulted when creating the new edges in the CFG.  The block's successor types
      *  are used as-is except for the following modifications:
      *
@@ -1495,6 +1497,43 @@ public:
      *  Thread safety: Not thread safe. */
     DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
+    /** Attach a data block into an attached or detached function.
+     *
+     *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
+     *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
+     *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
+     *  as we learn more about how it is accessed.
+     *
+     *  Returns the data block that has been attached to the function.
+     *
+     *  Thread safety: Not thread safe. */
+    DataBlock::Ptr attachDataBlockToFunction(rose_addr_t startVa, size_t nBytes, const Function::Ptr&) /*final*/;
+
+    /** Attach a data block to an attached or detached function.
+     *
+     *  Causes the data block to be owned by the specified function. If the function is attached to this partitioner (i.e.,
+     *  appears in the control flow graph and address usage map) then the specified data block is also attached to this
+     *  partitioner (if it wasn't already) and will appear in the address usage map.
+     *
+     *  Returns either the specified data block or an equivalent data block that's already owned by the function.
+     *
+     *  Thread safety: Not thread safe. */
+    DataBlock::Ptr attachDataBlockToFunction(const DataBlock::Ptr&, const Function::Ptr&) /*final*/;
+
+    /** Attach a data block to a basic block.
+     *
+     *  Causes the data block to be owned by the specified basic block. If the basic block is attached to this partitioner
+     *  (i.e., appears in the control flow graph and address usage map) then the specified data block is also attached to this
+     *  partitioner (if it wasn't already) and will appear in the address usage map.
+     *
+     *  If the basic block already owns a data block with the same starting address and size, then the specified data block
+     *  is not attached to the basic block.
+     *
+     *  Returns either the specified data block or an equivalent data block that's already owned by the basic block.
+     *
+     *  Thread safety: Not thread safe. */
+    DataBlock::Ptr attachDataBlockToBasicBlock(const DataBlock::Ptr&, const BasicBlock::Ptr&) /*final*/;
+
     /** Returns data blocks that overlap with specified address interval.
      *
      *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM and which overlap at least one byte in
@@ -1720,25 +1759,6 @@ public:
      *
      *  Thread safety: Not thread safe. */
     void detachFunction(const Function::Ptr&) /*final*/;
-
-    /** Attach a data block into an attached or detached function.
-     *
-     *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
-     *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
-     *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
-     *  as we learn more about how it is accessed.
-     *
-     *  Returns the data block that has been attached to the function.
-     *
-     *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes) /*final*/;
-
-    /** Attach a data block to an attached or detached function.
-     *
-     *  Causes the specified function to become an owner of the specified data block.
-     *
-     *  Thread safety: Not thread safe. */
-    void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
     /** Finds functions that own the specified basic block.
      *

@@ -1339,6 +1339,7 @@ Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
                                  StringUtility::plural(dblock->nAttachedOwners(), "basic block and/or function owners"));
         }
         aum_.eraseDataBlock(dblock);
+        dblock->thaw();
     }
     return dblock;
 }
@@ -1394,7 +1395,7 @@ Partitioner::findBestDataBlock(const AddressInterval &interval) const {
 
 // FIXME[Robb P. Matzke 2014-08-12]: nBytes to be replaced by a data type
 DataBlock::Ptr
-Partitioner::attachFunctionDataBlock(const Function::Ptr &function, rose_addr_t startVa, size_t nBytes) {
+Partitioner::attachDataBlockToFunction(rose_addr_t startVa, size_t nBytes, const Function::Ptr &function) {
     ASSERT_not_null(function);
     ASSERT_require(nBytes>0);
     AddressInterval needInterval = AddressInterval::baseSize(startVa, nBytes);
@@ -1413,16 +1414,17 @@ Partitioner::attachFunctionDataBlock(const Function::Ptr &function, rose_addr_t 
         dblock->freeze();
         aum_.insertDataBlock(odb);                      // insert it back into the AUM w/new size
     }
-    attachFunctionDataBlock(function, dblock);
-    return dblock;
+    return attachDataBlockToFunction(dblock, function);
 }
 
-void
-Partitioner::attachFunctionDataBlock(const Function::Ptr &function, const DataBlock::Ptr &dblock) {
+DataBlock::Ptr
+Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Function::Ptr &function) {
     ASSERT_not_null(function);
     ASSERT_not_null(dblock);
 
-    if (functionExists(function)) {
+    if (DataBlock::Ptr existingDb = function->dataBlockExists(dblock)) {
+        return existingDb;
+    } else if (functionExists(function) == function) {
         // The function is in the CFG/AUM, so make sure its data block is also in the CFG/AUM.  In any case, we need to add the
         // function as a data block owner.
         OwnedDataBlock odb = aum_.dataBlockExists(dblock);
@@ -1440,8 +1442,44 @@ Partitioner::attachFunctionDataBlock(const Function::Ptr &function, const DataBl
         if (function->insertDataBlock(dblock))          // false if dblock is already in the function
             dblock->incrementOwnerCount();
         function->freeze();
+        return dblock;
+    } else if (function->insertDataBlock(dblock)) {
+        return dblock;
     } else {
-        function->insertDataBlock(dblock);
+        return function->dataBlockExists(dblock);
+    }
+}
+
+DataBlock::Ptr
+Partitioner::attachDataBlockToBasicBlock(const DataBlock::Ptr &dblock, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(bblock);
+    ASSERT_not_null(dblock);
+
+    if (DataBlock::Ptr existingDb = bblock->dataBlockExists(dblock)) {
+        return existingDb;
+    } else if (basicBlockExists(bblock) == bblock) {
+        // The basic block is in the CFG/AUM, so make sure its data block is also in the CFG/AUM. In any case, we need to add
+        // the basic block as a data block owner.
+        OwnedDataBlock odb = aum_.dataBlockExists(dblock);
+        if (odb.isValid()) {
+            aum_.eraseDataBlock(dblock);
+            odb.insertOwner(bblock);
+        } else {
+            dblock->freeze();
+            odb = OwnedDataBlock(dblock, bblock);
+        }
+        aum_.insertDataBlock(odb);
+
+        // Add the data block to the basic block.
+        bblock->thaw();
+        if (bblock->insertDataBlock(dblock))            // false if dblock is already owned by the basic block
+            dblock->incrementOwnerCount();
+        bblock->freeze();
+        return dblock;
+    } else if (bblock->insertDataBlock(dblock)) {
+        return dblock;
+    } else {
+        return bblock->dataBlockExists(dblock);
     }
 }
 
@@ -1592,7 +1630,7 @@ Partitioner::matchFunctionPadding(const Function::Ptr &function) {
     BOOST_FOREACH (const FunctionPaddingMatcher::Ptr &matcher, functionPaddingMatchers_) {
         rose_addr_t paddingVa = matcher->match(*this, anchor);
         if (paddingVa < anchor)
-            return attachFunctionDataBlock(function, paddingVa, anchor-paddingVa);
+            return attachDataBlockToFunction(paddingVa, anchor-paddingVa, function);
     }
     return DataBlock::Ptr();
 }
@@ -1700,7 +1738,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
     if (newFunction->isFrozen())
         return newFunction;
 
-    // Is there some other function with the same entry address? If not, then degenerate to a plain attach.
+    // If there is not some other function with the same entry address, then degenerate to a plain attach.
     Function::Ptr existingFunction = functionExists(newFunction->address());
     if (existingFunction == NULL) {
         attachFunction(newFunction);
@@ -1747,11 +1785,10 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
             existingFunction->insertBasicBlock(bblockVa);
         attachFunctionBasicBlocks(existingFunction);
 
-        // Add this function's data blocks to the existing function.
-        BOOST_FOREACH (const DataBlock::Ptr &dblock, newFunction->dataBlocks()) {
-            attachDataBlock(dblock);
-            dblock->incrementOwnerCount();
-        }
+        // Add this function's data blocks to the existing function. They well be attached to the AUM shortly when we reattach
+        // the function.
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, newFunction->dataBlocks())
+            existingFunction->insertDataBlock(dblock);
 
         attachFunction(existingFunction);
     }

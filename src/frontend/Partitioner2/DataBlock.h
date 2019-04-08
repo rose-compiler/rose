@@ -46,7 +46,7 @@ protected:
     DataBlock(): isFrozen_(false), startVa_(0), size_(0), nAttachedOwners_(0) {}
 
     // use instance() instead
-    DataBlock(rose_addr_t startVa, size_t size): startVa_(startVa), size_(size), nAttachedOwners_(0) {
+    DataBlock(rose_addr_t startVa, size_t size): isFrozen_(false), startVa_(startVa), size_(size), nAttachedOwners_(0) {
         ASSERT_require(size_ > 0);
     }
 
