@@ -1,0 +1,11 @@
+# Source this from a bourne or bash shell.
+# Sets ROSE_HOME to the currently-desired ROSE installation.
+# Change this file to use a different version of ROSE.
+
+export ROSE_HOME=/g/g17/charles/code/ROSE/rose-master-0.9.10.216-intel-18.0.1.mpi-intel-18.0.1.mpi
+#export ROSE_HOME=/collab/usr/global/tools/rose/toss_3_x86_64_ib/rose-0.9.9.67-8d57b29
+#export ROSE_HOME=/collab/usr/global/tools/rose/toss_3_x86_64_ib/rose-0.9.9.83-1742d17-gcc
+export ROSE_LD_LIBRARY_PATH=\
+"${ROSE_HOME}/src/.libs":\
+"${ROSE_HOME}/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
+

@@ -1,0 +1,16 @@
+#!/bin/bash
+# Prints total / passed
+
+script_dir=`dirname $0`
+
+collect () {
+  rm -f $1
+  names=`find . -name "$1"`
+  cat ${names} >  $1
+}
+
+collect passed.txt
+collect failed.txt
+
+${script_dir}/passrate
+

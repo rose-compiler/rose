@@ -1,0 +1,160 @@
+# Steps to prepare an ARES workspace for use:
+
+export ARES_PROJECT_BASE="${HOME}/code/ARES"
+
+export ARES_REMOTE_PROJECT="ssh://git@rz-bitbucket.llnl.gov:7999/ares"
+export ARES_REPO_NAME="ares"
+# default on ARES is develop:
+#export ARES_BRANCH_NAME_GIT="feature/rose"
+export ARES_BRANCH_NAME_GIT="feature/rose3"
+#export ARES_BRANCH_NAME_GIT="develop"
+
+# e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
+export ARES_REMOTE_REPO="${ARES_REMOTE_PROJECT}/${ARES_REPO_NAME}"
+# e.g. "${HOME}/code/ROSE/rose":
+export ARES_REPO_PATH_CLONED=${ARES_PROJECT_BASE}/${ARES_REPO_NAME}
+# Change slashes to dashes:
+# e.g. "dquinlan/dq-development-dev" -> "rose-dquinlan-dq-development-dev"
+export ARES_BRANCH_PATH_PART=$(echo ${ARES_BRANCH_NAME_GIT} | tr '/' '-')
+
+# Bear:
+export ARES_COMP_DB_FILE="compile_commands.json"
+
+# ROSE:
+# Set ROSE_HOME and ROSE_REPO:
+source ${ARES_PROJECT_BASE}/ares_testing/set_ROSE_HOME
+## Use /bin? 158?
+##export ROSE_COMP_DB_SCRIPTS_PATH="${ROSE_REPO}/projects/CompilationDB/scripts"
+export TOOL_NAME_PATH_PART="run-rose-tool-py"
+
+#===============
+# FOR NEW CLONE:
+#===============
+cd ${ARES_PROJECT_BASE}
+git clone ${ARES_REMOTE_REPO}
+cd ${ARES_REPO_PATH_CLONED}
+git checkout ${ARES_BRANCH_NAME_GIT}
+# Find out what version (date) you have, and set ARES_REPO_VERSION accordingly:
+git log
+export ARES_VERSION="2019-03-14"
+export ARES_BRANCH_VERSION="${ARES_BRANCH_PATH_PART}-${ARES_VERSION}"
+export ARES_REPO_PATH_VERSIONED="${ARES_REPO_PATH_CLONED}-${ARES_BRANCH_VERSION}"
+mv ${ARES_REPO_PATH_CLONED} ${ARES_REPO_PATH_VERSIONED}
+#====================
+# FOR EXISTING CLONE:
+#====================
+export ARES_VERSION="2018-08-28"
+export ARES_BRANCH_VERSION="${ARES_BRANCH_PATH_PART}-${ARES_VERSION}"
+export ARES_REPO_PATH_VERSIONED="${ARES_REPO_PATH_CLONED}-${ARES_BRANCH_VERSION}"
+#====================
+
+#=========================
+# FOR NEW BUILD DIRECTORY:
+#=========================
+export ARES_BUILD_PATH="${ARES_REPO_PATH_VERSIONED}-build"
+mkdir ${ARES_BUILD_PATH}
+# ARES autobuild wants a link back to the workspace called "ares":
+ln -s ${ARES_REPO_PATH_VERSIONED} ${ARES_BUILD_PATH}/ares
+#=========================
+
+# No compilers in build path yet.
+
+#==============================
+# FOR NEW COMPILATION DATABASE:
+#==============================
+cd ${ARES_BUILD_PATH}
+srun_do run_and_log ${ARES_REPO_PATH_VERSIONED}/scripts/bin/ares_autobuild
+cd "${ARES_BUILD_PATH}/TOSS3/build"
+# Turns off colorized output in make - good for making log files more readable:
+export COLOR=0
+# Turns back on suppressed make output:
+export AT=''
+srun_do -c36 run_and_log --name=bear_make \
+"${HOME}/code/BEAR/Bear-master-2.3.13-gcc-6.1.0-install/bin/bear" \
+make -j36
+#==============================
+
+
+
+
+#=================================
+# When first using this workspace:
+#=================================
+# Do "make rosetest", to make sure everything works and to do any code generation needed:
+cd ${ARES_PROJECT_BASE}/ares_testing
+module load gcc/4.9.3
+module load gcc/4.9.3/mvapich2/2.2
+# In do_make.sh, be sure the "make rosetest" is uncommented, then:
+srun_do -c 36 run_and_log do_make.sh
+#=================================
+
+# Get a list of the source files:
+
+# Do a parallel run with identityTranslator
+
+Scripts:
+do_make.sh
+do_one_make.sh
+do_one_rose.sh.0.9.7.147
+ssh://git@rz-bitbucket.llnl.gov:7999/ares/ares.git
+
+
+
+Liao notes:
+Create a project directory.  For me, it is "ARES"
+In that dir:
+Clone ares_test:
+git clone ssh://git@rz-bitbucket.llnl.gov:7999/rt/ares_testing.git 
+
+Then: 
+cd ares_testing
+
+Get the right compiler and mpi on the path (SEE MPI: section below!)TOOL_NAME_PATH_PART
+
+# FOR rzgenie:
+# Yes, gcc not intel!
+module load gcc/4.9.3
+module load gcc/4.9.3/mvapich2/2.2
+which mpicc
+# Result should be: /usr/tce/packages/mvapich2/mvapich2-2.2-gcc-4.9.3/bin/mpicc
+
+# Then:
+srun_do -c 36 run_and_log  do_make.sh
+
+# Above depends on scripts:
+#   utility_functions.sh
+#   run_and_log - tees output to a log file named after the command
+#   srun_do - runs the command on one compute node
+
+
+--MPI:
+
+ARES wants intel 16.0.3, mvapich2-2.2!!!  Make a ROSE to match.
+(or 18.0.1)
+
+---rzalastor info
+
+Steps:
+. /usr/local/tools/dotkit/init.sh
+use gcc-4.9.3p
+which mpicc
+Result should be: /usr/local/bin/mpicc
+
+---rzgenie info
+
+https://myconfluence.llnl.gov/display/RAM/Rzgenie
+https://lc.llnl.gov/confluence/pages/viewpage.action?spaceKey=TCE&title=Using+TOSS+3#UsingTOSS3-MPI
+
+Steps:
+module load gcc/4.9.3
+module load gcc/4.9.3/mvapich2/2.2
+which mpicc
+# Result should be: /usr/tce/packages/mvapich2/mvapich2-2.2-gcc-4.9.3/bin/mpicc
+# NOT/usr/tce/packages/openmpi/openmpi-2.0.0-gcc-4.9.3/bin/mpicc?
+
+---SBATCH PARALLEL
+
+do_sbatch_in_subdir.sh source_files.txt 144 2 do_one_2.sh
+
+analyze_out (job number) in the resulting subdir
+

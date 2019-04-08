@@ -1,0 +1,14 @@
+#!/bin/bash
+# Runs "$@". Creates a line in passes.txt if it exits with status 0, creates a
+# line in failures.txt if it doesn't.  Always returns status 0.
+
+commandline="$@"
+
+${commandline}
+status=$?
+if [ ${status} = 0 ]
+then
+  echo "$commandline" >> passed.txt
+else
+  echo "$commandline (status=${status})" >> failed.txt
+fi

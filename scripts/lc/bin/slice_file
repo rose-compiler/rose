@@ -1,0 +1,68 @@
+#!/bin/bash
+# Slices the file at $1 into $2 files, distributing the lines round-robin style.
+# Output files are named $1.n, where n is the slice number.
+#
+# After running this, try running:
+# run_and_log do_sbatch 2 sbatch_test.sh source_files.txt
+# or:
+# run_and_log do_sbatch 2 sbatch_process_files.sh source_files.txt do_one.sh
+
+# Sets strict, defines log, log_then_run, etc.:
+source `which utility_functions.sh`
+
+file_name=$1
+slice_count=$2
+line_number=0
+slice_number=1
+status=0
+
+slice_name () {
+  echo "${file_name}.$1"
+}
+
+clean_slices () {
+  log "Removing `slice_name 1`-${slice_count} if present"	
+  for ((index=1; index <= ${slice_count}; index += 1))
+  do
+    rm -f `slice_name ${index}`
+  done
+}
+
+increment_slice () {
+  if [ ${slice_number} -lt ${slice_count} ]
+  then
+    let slice_number=slice_number+1
+  else
+    slice_number=1
+  fi
+}
+
+process_line () {
+  if [ ${status} -eq 0 ]
+  then
+    let line_number=line_number+1
+#    echo ${line_number}
+#    echo ${slice_number}
+#    echo ${line}
+    echo ${line} >> `slice_name ${slice_number}`
+    increment_slice
+  fi
+}
+
+process_file () {
+  log "Creating `slice_name 1`-${slice_count}"
+  # Don't exit on error:
+  set +o errexit
+  while [ ${status} -eq 0 ]
+  do 
+    read line
+    status=$?
+    process_line
+  done
+  log "Sliced ${line_number} lines"
+}
+
+log "Slicing ${file_name} into ${slice_count} files"
+clean_slices
+cat ${file_name} | process_file
+

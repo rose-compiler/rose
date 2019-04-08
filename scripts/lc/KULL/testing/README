@@ -1,0 +1,149 @@
+# ROSE-specific files in kull/feature/rose*:
+
+#KULL/kull/systemconf/compilers/Linux_run_rose_gnu_4_9_3_mvapich2_2_2_compiler.py
+# KULL/kull_testing/mpi_wrappers/run_rose_mpicc.py
+# KULL/kull_testing/mpi_wrappers/run_rose_mpicxx.py
+# KULL/kull_testing/run_rose_cc.py
+# KULL/kull_testing/run_rose_cxx.py
+#  KULL/kull_testing/support/local_logging.py
+#  KULL/kull_testing/support/runner.py
+
+#Changed kull/configtools/MeshTypes.py
+#???
+
+# Steps to prepare a KULL workspace for use:
+ 
+export PROJECT_BASE="/g/g17/charles/code/KULL"
+export PROJECT_NAME="kull"
+export REPO_NAME="kull"
+export REPO_PATH_CLONED=${PROJECT_BASE}/${REPO_NAME}
+export BRANCH_NAME_GIT="feature/rose-2018-06-20"
+export BRANCH_NAME_PATH_PART="feature-rose-2018-06-20"
+#export TOOL_NAME_PATH_PART="gnu-4.9.3.mvapich2.2.2"
+#export TOOL_NAME_FOR_KULL_COMPILER="gnu-4.9.3.mvapich2.2.2"
+export TOOL_NAME_PATH_PART="run-rose-tool-py"
+export TOOL_NAME_FOR_KULL_COMPILER="run-rose.tool.py.gnu.4.9.3.mvapich2.2.2"
+
+#========================
+# SKIP IF ALREADY CLONED:
+#========================
+cd ${PROJECT_BASE}
+git clone ssh://git@rz-bitbucket.llnl.gov:7999/${PROJECT_NAME}/${REPO_NAME}.git
+cd ${REPO_PATH_CLONED}
+git checkout ${BRANCH_NAME_GIT}
+#========================
+
+# Find out what version (date) you have, and set REPO_VERSION accordingly:
+cd ${REPO_PATH_CLONED}
+git log
+
+export REPO_VERSION="${BRANCH_NAME_PATH_PART}"
+#export REPO_VERSION="${BRANCH_NAME_PATH_PART}-2018-06-20"
+#export REPO_VERSION="${BRANCH_NAME_PATH_PART}-2018-08-16"
+export REPO_PATH_VERSIONED=${PROJECT_BASE}/${REPO_NAME}-${REPO_VERSION}
+export BUILD_PATH_VERSIONED=${REPO_PATH_VERSIONED}-build-${TOOL_NAME_PATH_PART}
+
+#========================
+# SKIP IF ALREADY CLONED:
+#========================
+mv ${REPO_PATH_CLONED} ${REPO_PATH_VERSIONED}
+#========================
+
+#========================
+# Skip this if already done:
+#========================
+# Also does cmake and other moduleloads:
+source ${REPO_PATH_VERSIONED}/set_path
+#========================
+
+#########################################################################
+### Start over here if need to do build again and clean doesn't work. ###
+#########################################################################
+
+cd ${REPO_PATH_VERSIONED}
+srun_do run_and_log start -p default -c ${BUILD_PATH_VERSIONED}
+
+# Sometimes this fails ("No such file or directory") if run too quickly after
+# the "srun_do... start" command above:
+sleep 5
+cd ${BUILD_PATH_VERSIONED}
+srun_do run_and_log configure --with-compiler=${TOOL_NAME_FOR_KULL_COMPILER}
+
+# On a second make run, removing the conduit directory may fail with:
+# OSError: [Errno 21] Is a directory: '/usr/workspace/wsrzd/charles/code/KULL/kull-build-feature-rose-2018-08-16/include/conduit'
+# So remove it by hand:
+rm -rf ${BUILD_PATH_VERSIONED}/include/conduit
+# On a second make run, gmake ... conduit may fail (in conduit....log) with:
+#CMake Error at libs/relay/cmake_install.cmake:60 (file):
+#  file INSTALL cannot find
+#  "/usr/workspace/wsrzd/charles/code/KULL/kull-build-feature-rose-2018-06-20-run-rose-tool.py/libraries/conduit-0.3.0-build/libs/relay/conduit_relay_node_viewer".
+
+
+# SO, always start over with a fresh build dir!!
+
+srun_do -c 36 run_and_log --use_first_parm make all -j 36
+srun_do -c 36 run_and_log --use_first_parm make all -j 36
+srun_do -c 36 run_and_log --use_first_parm make all -j 36
+sleep 15000; srun_do -c 36 run_and_log --use_first_parm make all -j 36
+sleep 15000; srun_do -c 36 run_and_log --use_first_parm make all -j 36
+
+# For debugging, run single-threaded:
+srun_do run_and_log --use_first_parm make all
+
+
+###############################################################################
+# If something goes wrong in the make like this:
+#
+# cmake .. -DCMAKE_VERBOSE:BOOL=ON -
+# ...
+# Traceback (most recent call last):
+# 
+# then:
+# When a cmake fails, cut it out of the log and run it out of a temp script:
+# - put the call in a "doit" file
+# - put everyting after each -D...:STRING=... in quotes
+# 
+# The call will contain stuff like:
+# -DCMAKE_BUILD_TYPE=Release 
+# and 
+# -DCMAKE_Fortran_FLAGS:STRING=-Wall -fdiagnostics-show-op...
+# the STRING ones have to be quoted!
+# 
+# In gedit, use a search and replace pattern like:
+#  -D([^ ]*?)=
+#  \\\\\\n-D\1=
+# or:
+#  -DCMAKE([^ ]*?)=
+#  \\\\\\n-DCMAKE\1=
+# to put all the -D...= on a separate line for clarity. (leading space is important!)
+# AND put quotes around spaces in -DCMAKE_C_FLAGS etc., e.g.:
+# -DCMAKE_C_FLAGS="-Wall -Wno-unknown-pragmas -fdiagnostics-show-option   -DLinux -DLINUX -DLinux64  -O2 -g1 -DUSE_LINUX_FPE -fPIC"
+#
+# LOG FILES for cmake in kull-build.../libraries/conduit-0.3.0/src/ etc. are in:
+# kull-build.../libraries (not subdir!)
+###############################################################################
+
+
+Kulls make can create compiler calls like:
+
+identityTranslator_mpicxx ... 
+-DKULL_PHYSICAL_DATA='"/usr/gapps/kull/data"' ... 
+-DPROGNAME=\"kull\" ... 
+-DPACKAGE_STRING=\"MSLIB\ 4.11.37\" ...
+-DPROGBANNER=\"(kull 4.1.dev.111718, Feb 16 2018, 00:00:00) [gnu 4.9.3]\" version.cc -o
+
+- The quoted strings lose one set of quotes when they go through a shell, so -DTHIS='this' or -DTHIS="this" turns into -DTHIS=-this in the callee (compiler/ROSE).
+- version.cc wants literal quotes, or it fails.
+- -DTHIS=\"this\"- turns into -DTHIS="this" in the callee, so good.
+- However, -DTHIS=\"this that\" turns into TWO tokens:
+- - -DTHIS=\"this
+- - that\"
+- and the compiler call fails, saying that it cant find the source file: that\"
+- -DTHIS=\"this\ that\" turns into:
+- - -DTHIS=\"this\
+- - that\"
+
+SOLUTION: run_rose_tool.py, which deals with the parameters.
+
+###############################################################################
+
