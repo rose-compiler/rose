@@ -95,6 +95,14 @@ public:
     /** A printable name for this data block.  Returns a string like 'data block 0x10001234'. */
     std::string printableName() const;
 
+    /** Read static data from a memory map.
+     *
+     *  This is a simple wrapper around memory map reading functionality so that the data for this static data block can
+     *  be retrieved from the memory map without needing to know how to use the quite extensive memory map API.  This
+     *  method reads this object's data from the provided memory map and returns a vector of the bytes.  The returned
+     *  vector will be truncated if any of the bytes of this data block are not present in the map. */
+    std::vector<uint8_t> read(const MemoryMap::Ptr&) const;
+
 private:
     friend class Partitioner;
     void freeze() { isFrozen_ = true; }

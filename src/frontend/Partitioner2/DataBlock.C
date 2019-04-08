@@ -28,6 +28,16 @@ DataBlock::printableName() const {
     return "data block " + StringUtility::addrToString(address());
 }
 
+std::vector<uint8_t>
+DataBlock::read(const MemoryMap::Ptr &map) const {
+    std::vector<uint8_t> retval(size());
+    if (map) {
+        size_t nread = map->at(address()).read(retval).size();
+        retval.resize(nread);
+    }
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace
