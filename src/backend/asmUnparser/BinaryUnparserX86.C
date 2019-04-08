@@ -3,7 +3,7 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <sageBuilderAsm.h>
+#include <SageBuilderAsm.h>
 #include <stringify.h>
 
 namespace Rose {

@@ -9,7 +9,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include "DisassemblerX86.h"
 #include "integerOps.h"
 #include "stringify.h"
