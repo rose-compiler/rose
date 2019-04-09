@@ -2752,6 +2752,11 @@ Partitioner::aum(const Function::Ptr &function) const {
     return retval;
 }
 
+std::vector<AddressUser>
+Partitioner::users(rose_addr_t va) const {
+    return aum_.overlapping(va).addressUsers();
+}
+
 std::set<rose_addr_t>
 Partitioner::ghostSuccessors() const {
     std::set<rose_addr_t> ghosts;

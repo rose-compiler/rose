@@ -627,6 +627,12 @@ public:
     /** Returns the address usage map for a single function. */
     AddressUsageMap aum(const Function::Ptr&) const /*final*/;
 
+    /** Entities that exist at a particular address.
+     *
+     *  Returns a vector of @ref AddressUser objects that describe instructions, basic blocks, data blocks, and functions that
+     *  exist at the specified address. */
+    std::vector<AddressUser> users(rose_addr_t) const /*final*/;
+
     /** Determine all ghost successors in the control flow graph.
      *
      *  The return value is a list of basic block ghost successors for which no basic block or basic block placeholder exists.
