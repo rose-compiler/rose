@@ -9,7 +9,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 static void
 testNoOwner() {
     P2::Partitioner p;
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(0, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(0, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -39,7 +39,7 @@ testBasicBlockOwner(P2::Partitioner &p) {
     ASSERT_not_null(bb);
 
     // Create data block
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(10, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(10, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -100,7 +100,7 @@ testTwoBasicBlocks(P2::Partitioner &p) {
     ASSERT_not_null(bb2);
 
     // Create data block
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(20, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(20, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -155,7 +155,7 @@ testFunctionOwner(P2::Partitioner &p) {
     P2::Function::Ptr f = p.functions()[0];
 
     // Create data block
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(20, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(20, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -188,7 +188,7 @@ testTwoFunctions(P2::Partitioner &p) {
     P2::Function::Ptr f2 = p.functions()[1];
 
     // Create data block
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(30, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(30, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -251,7 +251,7 @@ testBasicBlockFunction(P2::Partitioner &p) {
     P2::Function::Ptr f = p.functions()[0];
 
     // Create data block
-    P2::DataBlock::Ptr db = P2::DataBlock::instance(40, 10);
+    P2::DataBlock::Ptr db = P2::DataBlock::instanceBytes(40, 10);
     ASSERT_not_null(db);
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
@@ -306,12 +306,12 @@ testOverlaps(P2::Partitioner &p) {
     P2::Function::Ptr f = p.functions()[0];
 
     // Create two data blocks with the same address and size
-    P2::DataBlock::Ptr db1 = P2::DataBlock::instance(50, 10);
+    P2::DataBlock::Ptr db1 = P2::DataBlock::instanceBytes(50, 10);
     ASSERT_not_null(db1);
     ASSERT_always_require(db1->nAttachedOwners() == 0);
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!f->dataBlockExists(db1));
-    P2::DataBlock::Ptr db2 = P2::DataBlock::instance(50, 10);
+    P2::DataBlock::Ptr db2 = P2::DataBlock::instanceBytes(50, 10);
     ASSERT_not_null(db2);
     ASSERT_always_require(db2->nAttachedOwners() == 0);
     ASSERT_always_require(!db2->isFrozen());

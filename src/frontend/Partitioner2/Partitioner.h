@@ -1497,18 +1497,6 @@ public:
      *  Thread safety: Not thread safe. */
     DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
-    /** Attach a data block into an attached or detached function.
-     *
-     *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
-     *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
-     *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
-     *  as we learn more about how it is accessed.
-     *
-     *  Returns the data block that has been attached to the function.
-     *
-     *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachDataBlockToFunction(rose_addr_t startVa, size_t nBytes, const Function::Ptr&) /*final*/;
-
     /** Attach a data block to an attached or detached function.
      *
      *  Causes the data block to be owned by the specified function. If the function is attached to this partitioner (i.e.,

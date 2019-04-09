@@ -1393,30 +1393,6 @@ Partitioner::findBestDataBlock(const AddressInterval &interval) const {
     return existing;
 }
 
-// FIXME[Robb P. Matzke 2014-08-12]: nBytes to be replaced by a data type
-DataBlock::Ptr
-Partitioner::attachDataBlockToFunction(rose_addr_t startVa, size_t nBytes, const Function::Ptr &function) {
-    ASSERT_not_null(function);
-    ASSERT_require(nBytes>0);
-    AddressInterval needInterval = AddressInterval::baseSize(startVa, nBytes);
-    DataBlock::Ptr dblock = findBestDataBlock(needInterval);
-    if (dblock==NULL) {
-        // Create a new data block since there is none at this location.
-        dblock = DataBlock::instance(startVa, nBytes);
-    } else if (!dblock->extent().isContaining(needInterval)) {
-        // A data block exists in the CFG/AUM but it doesn't contain everything we want.  We can extend the extent of the
-        // existing data block.  FIXME[Robb P. Matzke 2014-08-20]: This will eventually merge data types.
-        OwnedDataBlock odb = aum_.dataBlockExists(dblock);
-        ASSERT_require(odb.isValid());                  // we know it exists in the AUM because of findBestDataBlock above
-        aum_.eraseDataBlock(dblock);                    // temporarily erase the data block from the AUM
-        dblock->thaw();                                 // needs to be thawed and refrozen to change the size
-        dblock->size(startVa+nBytes - dblock->address());
-        dblock->freeze();
-        aum_.insertDataBlock(odb);                      // insert it back into the AUM w/new size
-    }
-    return attachDataBlockToFunction(dblock, function);
-}
-
 DataBlock::Ptr
 Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Function::Ptr &function) {
     ASSERT_not_null(function);
@@ -1629,8 +1605,11 @@ Partitioner::matchFunctionPadding(const Function::Ptr &function) {
     rose_addr_t anchor = function->address();
     BOOST_FOREACH (const FunctionPaddingMatcher::Ptr &matcher, functionPaddingMatchers_) {
         rose_addr_t paddingVa = matcher->match(*this, anchor);
-        if (paddingVa < anchor)
-            return attachDataBlockToFunction(paddingVa, anchor-paddingVa, function);
+        if (paddingVa < anchor) {
+            DataBlock::Ptr paddingBlock = DataBlock::instanceBytes(paddingVa, anchor - paddingVa);
+            paddingBlock->comment("function padding");
+            return attachDataBlockToFunction(paddingBlock, function);
+        }
     }
     return DataBlock::Ptr();
 }

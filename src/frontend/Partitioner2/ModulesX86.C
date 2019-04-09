@@ -509,8 +509,8 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
-    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSize));
+    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
     AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
 
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
@@ -534,7 +534,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Read the table
     std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                                 targetLimits, wordSize);
+                                                                 targetLimits, wordSizeBytes);
     if (tableEntries.empty())
         return chain;
 
@@ -542,10 +542,13 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     std::set<rose_addr_t> successors(tableEntries.begin(), tableEntries.end());
     args.bblock->successors().clear();
     BOOST_FOREACH (rose_addr_t va, successors)
-        args.bblock->insertSuccessor(va, wordSize*8);
+        args.bblock->insertSuccessor(va, wordSizeBytes*8);
 
     // Create a data block for the offset table and attach it to the basic block
-    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableLimits.size());
+    size_t nTableEntries = tableLimits.size() / wordSizeBytes;
+    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
+    SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
+    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging

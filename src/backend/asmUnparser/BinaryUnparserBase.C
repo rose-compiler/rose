@@ -1388,6 +1388,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockPrologue(out, db, state);
     } else {
+        if (!db->comment().empty())
+            state.frontUnparser().emitCommentBlock(out, db->comment(), state, "\t;; ");
+
         state.frontUnparser().emitLinePrefix(out, state);
         out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
         if (P2::Function::Ptr function = state.currentFunction()) {
@@ -1400,6 +1403,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
                 }
             }
         }
+
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; block type is " <<db->type()->toString() <<"\n";
     }
 }
 

@@ -1537,7 +1537,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         }
 
         BOOST_FOREACH (SgAsmStaticData *dataAst, SageInterface::querySubTree<SgAsmStaticData>(funcAst)) {
-            DataBlock::Ptr dblock = DataBlock::instance(dataAst->get_address(), dataAst->get_size());
+            DataBlock::Ptr dblock = DataBlock::instanceBytes(dataAst->get_address(), dataAst->get_size());
             partitioner.attachDataBlock(dblock);
             function->insertDataBlock(dblock);
         }
@@ -2411,7 +2411,8 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = partitioner.attachDataBlockToFunction(interval.least(), interval.size(), function);
+                DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
+                dblock = partitioner.attachDataBlockToFunction(dblock, function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }
         }

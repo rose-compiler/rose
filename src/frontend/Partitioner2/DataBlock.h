@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_DataBlock_H
 
 #include <Partitioner2/BasicTypes.h>
+#include <SageBuilderAsm.h>
 
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>
@@ -24,46 +25,49 @@ public:
 private:
     bool isFrozen_;                                     // true if object is read-only because it's in the CFG
     rose_addr_t startVa_;                               // starting address
-    size_t size_;                                       // size in bytes; FIXME[Robb P. Matzke 2014-08-12]: replace with type
+    SgAsmType *type_;                                   // type of data stored in this block
     size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
+    std::string comment_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         // s & boost::serialization::base_object<Sawyer::Attribute::Storage>(*this); -- not serialized
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
-        s & BOOST_SERIALIZATION_NVP(size_);
+        if (version >= 1) {
+            s & BOOST_SERIALIZATION_NVP(type_);
+            s & BOOST_SERIALIZATION_NVP(comment_);
+        } else if (S::is_loading::value) {
+            size_t nBytes = 0;
+            s & boost::serialization::make_nvp("size_", nBytes);
+            type_ = SageBuilderAsm::buildTypeVector(nBytes, SageBuilderAsm::buildTypeU8());
+        }
         s & BOOST_SERIALIZATION_NVP(nAttachedOwners_);
     }
 #endif
     
 protected:
     // needed for serialization
-    DataBlock(): isFrozen_(false), startVa_(0), size_(0), nAttachedOwners_(0) {}
+    DataBlock()
+        : isFrozen_(false), startVa_(0), type_(NULL), nAttachedOwners_(0) {}
 
-    // use instance() instead
-    DataBlock(rose_addr_t startVa, size_t size): isFrozen_(false), startVa_(startVa), size_(size), nAttachedOwners_(0) {
-        ASSERT_require(size_ > 0);
-    }
+    DataBlock(rose_addr_t startVa, SgAsmType *type)
+        : isFrozen_(false), startVa_(startVa), type_(type), nAttachedOwners_(0) {}
 
 public:
+    /** Static allocating constructor. */
+    static Ptr instance(rose_addr_t startVa, SgAsmType*);
+
     /** Static allocating constructor.
      *
-     *  The @p startVa is the starting address of the data block. */
-    static Ptr instance(rose_addr_t startVa, size_t size) {
-        return Ptr(new DataBlock(startVa, size));
-    }
-
-    /** Virtual constructor.
+     *  Creates a data block whose type is just an array of bytes.
      *
-     *  The @p startVa is the starting address for this data block. */
-    virtual Ptr create(rose_addr_t startVa, size_t size) const {
-        return instance(startVa, size);
-    }
+     *  The @p startVa is the starting address of the data block. */
+    static Ptr instanceBytes(rose_addr_t startVa, size_t nBytes);
 
     /** Determine if data block is read-only.
      *
@@ -74,15 +78,23 @@ public:
     rose_addr_t address() const { return startVa_; }
 
     /** Returns the size in bytes. */
-    size_t size() const { return size_; }
+    size_t size() const;
 
-    /** Change size of data block.
+    /** Property: Type of data stored in this block.
      *
-     *  The size of a data block can only be changed directly when it is not represented by the control flow graph. That
-     *  is, when this object is not in a frozen state.
+     *  The type can only be changed when the data block is in a detached state (i.e., when @ref isFrozen is false).
      *
-     *  @todo In the future, data block sizes will be modified only by changing the associated data type. */
-    void size(size_t nBytes);
+     * @{ */
+    SgAsmType* type() const { return type_; }
+    void type(SgAsmType *t);
+    /** @} */
+
+    /** Property: Comment.
+     *
+     * @{ */
+    const std::string& comment() const { return comment_; }
+    void comment(const std::string& s) { comment_ = s; }
+    /** @} */
 
     /** Number of attached basic block and function owners.
      *
@@ -90,7 +102,7 @@ public:
     size_t nAttachedOwners() const { return nAttachedOwners_; }
 
     /** Addresses represented. */
-    AddressInterval extent() const { return AddressInterval::baseSize(address(), size()); }
+    AddressInterval extent() const;
 
     /** A printable name for this data block.  Returns a string like 'data block 0x10001234'. */
     std::string printableName() const;
@@ -115,5 +127,8 @@ private:
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DataBlock, 1);
 
 #endif
