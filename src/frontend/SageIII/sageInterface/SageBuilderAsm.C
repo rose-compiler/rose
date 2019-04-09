@@ -190,113 +190,96 @@ buildValueX86Float80(double x) {
 }
 
 SgAsmIntegerType*
-buildTypeU1() {
-    static SgAsmIntegerType *cached = NULL;
+buildTypeU(size_t nBits) {
+    typedef boost::unordered_map<size_t, SgAsmIntegerType*> Cache;
+    static Cache cache;
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 1, false /*unsigned*/));
-    return cached;
+    SgAsmIntegerType *retval = NULL;
+    Cache::iterator found = cache.find(nBits);
+    if (found == cache.end()) {
+        ByteOrder::Endianness sex = nBits <= 8 ? ByteOrder::ORDER_UNSPECIFIED : ByteOrder::ORDER_LSB;
+        retval = SgAsmType::registerOrDelete(new SgAsmIntegerType(sex, nBits, false /*unsigned*/));
+        cache.insert(std::make_pair(nBits, retval));
+    } else {
+        retval = found->second;
+    }
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+SgAsmIntegerType*
+buildTypeI(size_t nBits) {
+    if (1 == nBits)
+        return buildTypeU(1);
+
+    typedef boost::unordered_map<size_t, SgAsmIntegerType*> Cache;
+    static Cache cache;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    SgAsmIntegerType *retval = NULL;
+    Cache::iterator found = cache.find(nBits);
+    if (found == cache.end()) {
+        ByteOrder::Endianness sex = nBits <= 8 ? ByteOrder::ORDER_UNSPECIFIED : ByteOrder::ORDER_LSB;
+        retval = SgAsmType::registerOrDelete(new SgAsmIntegerType(sex, nBits, true /*signed*/));
+        cache.insert(std::make_pair(nBits, retval));
+    } else {
+        retval = found->second;
+    }
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+SgAsmIntegerType*
+buildTypeU1() {
+    return buildTypeU(1);
 }
 
 SgAsmIntegerType*
 buildTypeU4() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 4, false /*unsigned*/));
-    return cached;
+    return buildTypeU(4);
 }
 
 SgAsmIntegerType*
 buildTypeU8() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 8, false /*unsigned*/));
-    return cached;
+    return buildTypeU(8);
 }
 
 SgAsmIntegerType*
 buildTypeU16() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, false /*unsigned*/));
-    return cached;
+    return buildTypeU(16);
 }
 
 SgAsmIntegerType*
 buildTypeU32() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, false /*unsigned*/));
-    return cached;
+    return buildTypeU(32);
 }
 
 SgAsmIntegerType*
 buildTypeU64() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, false /*unsigned*/));
-    return cached;
+    return buildTypeU(64);
 }
 
 SgAsmIntegerType*
 buildTypeI8() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 8, true /*signed*/));
-    return cached;
+    return buildTypeI(8);
 }
 
 SgAsmIntegerType*
 buildTypeI16() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, true /*signed*/));
-    return cached;
+    return buildTypeI(16);
 }
 
 SgAsmIntegerType*
 buildTypeI32() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, true /*signed*/));
-    return cached;
+    return buildTypeI(32);
 }
 
 SgAsmIntegerType*
 buildTypeI64() {
-    static SgAsmIntegerType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, true /*signed*/));
-    return cached;
+    return buildTypeI(64);
 }
 
 SgAsmFloatType*
