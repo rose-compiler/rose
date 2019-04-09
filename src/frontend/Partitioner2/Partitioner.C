@@ -1549,6 +1549,36 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     return functions;
 }
 
+std::vector<Function::Ptr>
+Partitioner::functionsSpanning(const AddressInterval &interval) const {
+    std::vector<Function::Ptr> retval = functionsOverlapping(interval);
+    std::vector<Function::Ptr>::iterator iter = retval.begin();
+    while (iter != retval.end()) {
+        if (functionExtent(*iter).contains(interval)) {
+            ++iter;
+        } else {
+            iter = retval.erase(iter);
+        }
+    }
+    return retval;
+}
+
+std::vector<Function::Ptr>
+Partitioner::functionsContainedIn(const AddressInterval &interval) const {
+    std::vector<Function::Ptr> retval = functionsOverlapping(interval);
+    AddressIntervalSet addressSet;
+    addressSet.insert(interval);
+    std::vector<Function::Ptr>::iterator iter = retval.begin();
+    while (iter != retval.end()) {
+        if (addressSet.contains(functionExtent(*iter))) {
+            ++iter;
+        } else {
+            iter = retval.erase(iter);
+        }
+    }
+    return retval;
+}
+
 void
 Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const {
     ASSERT_not_null(function);
