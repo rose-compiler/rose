@@ -65,6 +65,12 @@ public:
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
     AddressUser(const OwnedDataBlock &odblock): insn_(NULL), odblock_(odblock) {}
 
+    /** Address of user.
+     *
+     *  Returns the address of the instruction or the address of the data block, depending on which of @ref isBasicBlock or
+     *  @ref isDataBlock returns true. */
+    rose_addr_t address() const;
+
     /** Predicate returning true if user is a basic block or instruction. */
     bool isBasicBlock() const { return insn_!=NULL; }
 

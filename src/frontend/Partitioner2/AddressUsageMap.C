@@ -13,6 +13,14 @@ namespace Partitioner2 {
 //                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+rose_addr_t
+AddressUser::address() const {
+    if (insn_)
+        return insn_->get_address();
+    ASSERT_require(odblock_.isValid());
+    return odblock_.dataBlock()->address();
+}
+
 void
 AddressUser::insertBasicBlock(const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn_);
