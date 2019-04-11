@@ -184,6 +184,7 @@ BinaryToSource::defineInterrupts(std::ostream &out) {
 
     if (disassembler_->instructionPointerRegister().nBits() == 32) {
         out <<"    if (0 == majr && 0x80 == minr && 1 == R_eax) {\n"
+            <<"        fprintf(stderr, \"exited with status %d\", R_ebx);\n"
             <<"        exit(R_ebx);\n";
     } else {
         out <<"    if (0) {\n"
@@ -210,11 +211,24 @@ BinaryToSource::emitEffects(std::ostream &out) {
         }
     }
     out <<"                    /* Side effects */\n";
-    BOOST_FOREACH (const RiscOperators::SideEffect &sideEffect, raisingOps_->sideEffects()) {
-        if (sideEffect.location) {
-            std::string location = SValue::promote(sideEffect.location)->ctext();
-            std::string tempName = SValue::promote(sideEffect.temporary)->ctext();
-            out <<"                    " <<location <<" = " <<tempName <<";\n";
+
+    // Show last occurrence of each side effect.
+    const std::vector<RiscOperators::SideEffect> &sideEffects = raisingOps_->sideEffects();
+    for (size_t i = 0; i < sideEffects.size(); ++i) {
+        if (sideEffects[i].location) {
+            std::string location = SValue::promote(sideEffects[i].location)->ctext();
+            bool isLastOccurrence = true;
+            for (size_t j = i+1; isLastOccurrence && j < sideEffects.size(); ++j) {
+                if (sideEffects[j].location) {
+                    std::string laterLocation = SValue::promote(sideEffects[j].location)->ctext();
+                    if (location == laterLocation)
+                        isLastOccurrence = false;
+                }
+            }
+            if (isLastOccurrence) {
+                std::string tempName = SValue::promote(sideEffects[i].temporary)->ctext();
+                out <<"                    " <<location <<" = " <<tempName <<";\n";
+            }
         }
     }
 }
@@ -229,7 +243,11 @@ BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
             <<", stderr);\n";
 
     raisingOps_->reset();
-    raisingCpu_->processInstruction(insn);
+    try {
+        raisingCpu_->processInstruction(insn);
+    } catch (const BaseSemantics::Exception &e) {
+        out <<"                fputs(\"semantics exception: " <<StringUtility::cEscape(e.what()) <<"\", stderr);\n";
+    }
     out <<"                {\n";
     emitEffects(out);
     out <<"                }\n";
