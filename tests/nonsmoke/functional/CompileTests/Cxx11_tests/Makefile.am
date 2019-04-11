@@ -515,7 +515,29 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_182.C \
    test2019_183.C \
    test2019_234.C \
-   test2019_235.C 
+   test2019_235.C \
+   test2019_314.C \
+   test2019_315.C \
+   test2019_316.C \
+   test2019_317.C \
+   test2019_318.C \
+   test2019_319.C \
+   test2019_320.C \
+   test2019_321.C \
+   test2019_322.C \
+   test2019_323.C \
+   test2019_324.C \
+   test2019_325.C \
+   test2019_326.C \
+   test2019_327.C \
+   test2019_328.C \
+   test2019_329.C \
+   test2019_330.C \
+   test2019_331.C \
+   test2019_332.C \
+   test2019_333.C \
+   test2019_334.C \
+   test2019_335.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
