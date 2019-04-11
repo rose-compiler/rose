@@ -1,0 +1,26 @@
+// ROSE-1910: (C++03) Template argument not qualified when typedef'd in template class
+
+//  This bug comes from minimizing a failure when unparsing template from the AST in kripke .
+//  For the issue to happen, we need:
+//   - typedef in A
+//   - var init in A's ctor
+//   - defined ctor in B
+
+        namespace N0 {
+          using I = int;
+
+          template <typename T>
+          struct A {
+              typedef T v_t;
+              A() : v(0) {}
+              v_t v;
+          };
+        }
+
+        namespace N1 {
+          struct B : public N0::A<N0::I> {
+            B() {}
+          };
+        }
+
+

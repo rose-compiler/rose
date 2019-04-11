@@ -587,6 +587,13 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                break;
              }
 
+       // DQ (4/11/2019): This case appears in the testRoseHeaders_03.C test code (ROSE compiling ROSE).
+          case V_SgTypeUnknown:
+             {
+               return_declaration = NULL;
+               break;
+             }
+
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {

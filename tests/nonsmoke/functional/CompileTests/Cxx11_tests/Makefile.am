@@ -537,7 +537,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_332.C \
    test2019_333.C \
    test2019_334.C \
-   test2019_335.C 
+   test2019_335.C \
+   test2019_344.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -635,7 +636,17 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_310.C \
    test2019_311.C \
    test2019_312.C \
-   test2019_313.C 
+   test2019_313.C \
+   test2019_336.C \
+   test2019_337.C \
+   test2019_338.C \
+   test2019_339.C \
+   test2019_340.C \
+   test2019_341.C \
+   test2019_342.C \
+   test2019_343.C \
+   test2019_345.C \
+   test2019_346.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 

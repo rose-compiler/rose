@@ -1680,6 +1680,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                                       }
                                      else
                                       {
+                                     // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
+                                     // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
 #if 1
                                         printf ("NOTE: In unparseMemberPointerType(): not a SgInitializedName, SgTypedefDeclaration, SgTemplateArgument, or SgTypeIdOp: info.get_reference_node_for_qualification() = %p = %s \n",
                                              info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
@@ -2580,6 +2582,8 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_ENUM_TYPE
      printf ("Inside of unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("Inside of unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true)  ? "true" : "false");
+     printf ("Inside of unparseEnumType(): info.SkipClassSpecifier()  = %s \n",(info.SkipClassSpecifier() == true) ? "true" : "false");
+  // printf ("Inside of unparseEnumType(): info.SkipEnumSpecifier()   = %s \n",(info.SkipEnumSpecifier() == true)  ? "true" : "false");
 #endif
 #if 0
      info.display("Inside of unparseEnumType(): call to info.display()");
