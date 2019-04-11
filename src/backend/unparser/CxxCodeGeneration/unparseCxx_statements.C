@@ -1300,13 +1300,20 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
                   {
                     ninfo.set_inArgList();
                   }
-
+#if 0
+            // DQ (4/11/2019): Try to comment this out to support Clang 8.0 which can't handle the "enum class" type elaboration.
                if (initializedName->get_needs_definitions())
                   {
                     ninfo.unset_SkipClassDefinition();
                     ninfo.unset_SkipEnumDefinition();
                   }
-
+#else
+            // If we are using Clang then we might require this, GNU accepts with or without..
+               if (isSgEnumType(tmp_type) != NULL)
+                  {
+                    ninfo.set_SkipClassSpecifier();
+                  }
+#endif
             // DQ (5/5/2013): Refactored code used here and in the unparseTemplateArgument().
                unp->u_type->outputType<SgInitializedName>(initializedName,tmp_type,ninfo);
 

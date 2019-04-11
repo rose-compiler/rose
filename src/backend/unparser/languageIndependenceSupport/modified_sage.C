@@ -1973,10 +1973,12 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
           ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().isDefault() == false);
 
+       // DQ (4/11/2019): Don't allow friend and extern together (see Cxx11_tests/test2019_338.C).
        // DQ (1/3/2016): We may have to suppress this for SgTemplateVariableDeclaration IR nodes.
        // curprint("extern ");
        // curprint("/* extern from storageModifier */ extern ");
-          if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+       // if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+          if ( (decl_stmt->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(decl_stmt) == NULL) )
              {
                curprint("extern ");
              }
