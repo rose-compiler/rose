@@ -2919,6 +2919,19 @@ Grammar::setUpStatements ()
      TypedefDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/10/2019): This is needed to support pointers to member type variables.
+     TypedefDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/10/2019): This is needed to support pointers to member type variables.
+     TypedefDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/10/2019): This is needed to support pointers to member type variables.
+     TypedefDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      PragmaDeclaration.setFunctionPrototype ( "HEADER_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (3/17/2007): Since we traverse the SgPragma in a SgPragmaDeclaration, don't delete it. OK to share in AST merge also.
