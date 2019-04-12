@@ -1831,7 +1831,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                        }
                   }
 #endif
-               curprint("virtual ");
+
+            // DQ (4/11/2019): Only output the "virtual" keyword for functions defined in a class definition.
+            // curprint("virtual ");
+               SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+               if (classDefinition != NULL)
+                  {
+                    curprint("virtual ");
+                  }
              }
 
        // if (unp->opt.get_inline_opt())
