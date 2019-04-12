@@ -1300,7 +1300,8 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
                   {
                     ninfo.set_inArgList();
                   }
-#if 0
+#if 1
+            // DQ (4/12/2019): This version is required for C old-style function parameters.
             // DQ (4/11/2019): Try to comment this out to support Clang 8.0 which can't handle the "enum class" type elaboration.
                if (initializedName->get_needs_definitions())
                   {
