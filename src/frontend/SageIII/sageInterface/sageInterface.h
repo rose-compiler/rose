@@ -1663,6 +1663,11 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
   ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
 
+
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+  ROSE_DLL_API void outputSharedNodes( SgNode* node );
+
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
@@ -2053,6 +2058,15 @@ ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node 
 
 // DQ (10/23/2018): Report nodes that are marked as modified.
 ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);
+
+// DQ (3/22/2019): Translate CPP directives from attached preprocessor information to CPP Directive Declaration IR nodes.
+ROSE_DLL_API void translateToUseCppDeclarations( SgNode* n );
+
+ROSE_DLL_API void translateScopeToUseCppDeclarations( SgScopeStatement* scope );
+
+ROSE_DLL_API std::vector<SgC_PreprocessorDirectiveStatement*> translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope);
+ROSE_DLL_API void printOutComments ( SgLocatedNode* locatedNode );
+ROSE_DLL_API bool skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPreprocessingInfo );
 
 
 //@}

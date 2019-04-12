@@ -1730,6 +1730,15 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (3/26/2019): Adding support for new declaration.
+          case V_SgEmptyDeclaration:
+             {
+               const SgEmptyDeclaration * emptyDeclaration = isSgEmptyDeclaration(declaration);
+               ROSE_ASSERT(emptyDeclaration != NULL);
+               name = string("emptyDeclaration") + StringUtility::numberToString(const_cast<SgDeclarationStatement*>(declaration));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -8851,6 +8860,38 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
         }
    }
 
+
+void
+SageInterface::outputSharedNodes( SgNode* node )
+   {
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+
+     class OutputSharedNodesTraversal : public SgSimpleProcessing
+        {
+       // This traversal collects the includes at the top of a file.
+          public:
+               void visit(SgNode *astNode)
+                  {
+                    ROSE_ASSERT(astNode != NULL);
+                    Sg_File_Info* file_info = astNode->get_file_info();
+                    if (file_info != NULL)
+                       {
+                         if (file_info->isShared() == true)
+                            {
+                              printf ("Found shared node: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+                            }
+                       }
+                  }
+        };
+
+     OutputSharedNodesTraversal tt;
+     tt.traverse(node,preorder);
+   }
+
+
+
+
+
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
   return isSgStatement(n);
@@ -14611,6 +14652,11 @@ PreprocessingInfo* SageInterface::attachComment(SgSourceFile * source_file, cons
   PreprocessingInfo* result = new PreprocessingInfo(directive_type, content, "Transformation generated",0, 0, 0, position);
   ROSE_ASSERT(result);
 
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+  result->get_file_info()->setTransformation();
+
   global_scope->addToAttachedPreprocessingInfo(result, position);
 
   return result;
@@ -14690,6 +14736,13 @@ PreprocessingInfo* SageInterface::attachComment(
        // Call the Sg_File_Info::operator=() member function.
           *(result->get_file_info()) = *(target->get_file_info());
         }
+       else
+        {
+       // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+       // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+       // when multiple files are used on the command line.
+          result->get_file_info()->setTransformation();
+        }
 
      ROSE_ASSERT(result);
      target->addToAttachedPreprocessingInfo(result);
@@ -14712,30 +14765,67 @@ void SageInterface::guardNode(SgLocatedNode * target, std::string guard) {
     PreprocessingInfo::after
   );
   target->addToAttachedPreprocessingInfo(endif_macro);
+
+// DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+// This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+// when multiple files are used on the command line.
+  if_macro->get_file_info()->setTransformation();
+  endif_macro->get_file_info()->setTransformation();
 }
 
-PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) {
-  assert(source_file != NULL);
-  assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
 
-  SgGlobal * global_scope = source_file->get_globalScope();
+PreprocessingInfo*
+SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) 
+   {
+  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
+  // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
+  // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
+     bool supportTokenUnparsing = false;
 
-  string content;
-  if (isSystemHeader)
-    content = "#include <" + header_file_name + "> \n";
-  else
-    content = "#include \"" + header_file_name + "\" \n";
+     assert(source_file != NULL);
+     assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
 
-  PreprocessingInfo* result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, position);
-  ROSE_ASSERT(result);
+     SgGlobal * global_scope = source_file->get_globalScope();
 
-  global_scope->addToAttachedPreprocessingInfo(result, position);
+     string content;
+     if (isSystemHeader)
+        content = "#include <" + header_file_name + "> \n";
+     else
+        content = "#include \"" + header_file_name + "\" \n";
 
-  return result;
-}
+     PreprocessingInfo* result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, position);
+     ROSE_ASSERT(result);
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+     result->get_file_info()->setTransformation();
+
+  // global_scope->addToAttachedPreprocessingInfo(result, position);
+     if (supportTokenUnparsing == false)
+        {
+          global_scope->addToAttachedPreprocessingInfo(result, position);
+        }
+       else
+        {
+       // global_scope->prepend_statement(null_statement);
+          SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+          emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
+
+          global_scope->prepend_statement(emptyDeclaration);
+        }
+
+     return result;
+   }
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
+  // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not 
+  // be marked as a transformation.  So it might be better to implement this with an option to support the token based 
+  // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
+     bool supportTokenUnparsing = false;
+
     //bool successful = false;
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
@@ -14751,7 +14841,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
       content = "#include \"" + filename + "\" \n";
 
     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
-    if (stmtList.size()>0) // the source file is not empty
+    if (stmtList.size() > 0) // the source file is not empty
      {
       for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
            j != stmtList.end (); j++)
@@ -14765,10 +14855,27 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
            result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                                           content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
            ROSE_ASSERT(result);
+
+           // DQ (3/22/2019): Fixing this to work with the token-based unparsing.
            // add to the last position 
            // TODO: support to add to the first, 
            // TODO: support fine positioning with #include directives
-           (*j)->addToAttachedPreprocessingInfo(result,position);
+           // (*j)->addToAttachedPreprocessingInfo(result,position);
+
+           if (supportTokenUnparsing == false)
+              {
+                (*j)->addToAttachedPreprocessingInfo(result,position);
+              }
+             else
+              {
+             // global_scope->prepend_statement(null_statement);
+                SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+                emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
+
+                globalScope->insert_statement(*j,emptyDeclaration);
+              }
+
           // successful = true;
            break;
          }
@@ -14786,6 +14893,16 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
        globalScope->addToAttachedPreprocessingInfo(result,position);
        //successful = true;
     }
+
+ // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // when multiple files are used on the command line.
+ // DQ (3/12/2019): This can be NULL for the omp tests.
+    if (result != NULL)
+       {
+         result->get_file_info()->setTransformation();
+       }
+
     // must be inserted once somehow
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
     // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
@@ -14877,7 +14994,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
-  {                     
+  {
     for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
         j != stmtList.end (); j++)
     {
@@ -14893,22 +15010,32 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
         ROSE_ASSERT(result);
         insertHeader (*j, result, asLastHeader);
         //successful = true;
-        break;                                                                                                               
-      }                                                                                                                      
-    } // end for                                                                                                                         
-  }                                                                                                                          
-  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!                                    
-  {                                                                                                                          
-    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;                                                        
+        break;
+      }
+    } // end for                                               
+  }
+  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
+  {
+    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
     cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
-    cerr<<"You may have to insert some statement first before inserting a header"<<endl;                                     
-    ROSE_ASSERT(false);                                                                                                      
-    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,                                       
-        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);                                         
-    ROSE_ASSERT(result);                                                                                                     
+    cerr<<"You may have to insert some statement first before inserting a header"<<endl;
+    ROSE_ASSERT(false);
+    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
+    ROSE_ASSERT(result);
     globalScope->addToAttachedPreprocessingInfo(result,position);
 //    successful = true;                                                                                                       
-  }                                                                                                                           
+  }
+
+#if 1
+     printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
+#endif
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+     result->get_file_info()->setTransformation();
+
   // must be inserted once somehow
   // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
   // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
@@ -14937,6 +15064,11 @@ SageInterface::attachArbitraryText(SgLocatedNode* target, const std::string & te
 
      result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
      ROSE_ASSERT(result);
+
+ // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+ // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+ // when multiple files are used on the command line.
+    result->get_file_info()->setTransformation();
 
      target->addToAttachedPreprocessingInfo(result);
 
@@ -17782,6 +17914,11 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
      PreprocessingInfo* messageToUser = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,message,fileName,0,0,1,PreprocessingInfo::before);
   // requiredDirectivesList.push_back(messageToUser);
      stmt->addToAttachedPreprocessingInfo(messageToUser,PreprocessingInfo::before);
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen 
+  // when multiple files are used on the command line.
+     messageToUser->get_file_info()->setTransformation();
    }
 
 
@@ -22282,6 +22419,294 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
         }
 
      printf ("##################################################### \n\n\n");
+   }
+
+
+
+
+// DQ (3/22/2019): Translate CPP directives from attached preprocessor information to CPP Directive Declaration IR nodes.
+
+void
+SageInterface::printOutComments ( SgLocatedNode* locatedNode )
+   {
+  // Debugging function to print out comments in the statements (added by DQ)
+
+     ROSE_ASSERT(locatedNode != NULL);
+     AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+#if 0
+     curprint ("/* Inside of printOutComments() */");
+#endif
+
+     if (comments != NULL)
+        {
+#if 0
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+          curprint ("/* Inside of printOutComments(): comments != NULL */");
+#endif
+
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+            // curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
+
+#if 0
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+             }
+        }
+       else
+        {
+          printf ("No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+        }
+   }
+
+
+
+bool
+SageInterface::skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPreprocessingInfo )
+   {
+     bool returnValue = false;
+
+     ROSE_ASSERT(currentPreprocessingInfo != NULL);
+
+     PreprocessingInfo::DirectiveType directive = currentPreprocessingInfo->getTypeOfDirective();
+
+     if (directive == PreprocessingInfo::C_StyleComment ||
+         directive == PreprocessingInfo::CplusplusStyleComment ||
+         directive == PreprocessingInfo::FortranStyleComment ||
+         directive == PreprocessingInfo::CpreprocessorBlankLine ||
+         directive == PreprocessingInfo::ClinkageSpecificationStart ||
+         directive == PreprocessingInfo::ClinkageSpecificationEnd)
+       {
+         returnValue = true;
+       }
+
+     return returnValue;
+   }
+
+std::vector<SgC_PreprocessorDirectiveStatement*>
+SageInterface::translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope)
+   {
+
+#if 1
+     printOutComments(statement);
+#endif
+
+     std::vector<SgC_PreprocessorDirectiveStatement*> directiveList;
+
+  // Find existing first and last header.
+     AttachedPreprocessingInfoType *comments = statement->getAttachedPreprocessingInfo ();
+
+     if (comments != NULL)
+        {
+       // DQ (3/23/2019): I think we can use this function instead.
+       // SgC_PreprocessorDirectiveStatement* SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* currentPreprocessingInfo )
+
+       // PreprocessingInfo * firstExistingHeader = NULL;
+       // PreprocessingInfo * lastExistingHeader  = NULL;
+          AttachedPreprocessingInfoType::iterator i; // , firsti, lasti;
+          for (i = comments->begin (); i != comments->end(); i++)
+             {
+               if (skipTranslateToUseCppDeclaration(*i) == true)
+                  {
+                 // We are not processing these types of directives into IR nodes (new IR nodes would have to be added and this can be done later if required).
+                  }
+                 else
+                  {
+                    SgC_PreprocessorDirectiveStatement* directive = SgC_PreprocessorDirectiveStatement::createDirective(*i);
+                    ROSE_ASSERT(directive != NULL);
+                    directiveList.push_back(directive);
+                  }
+
+               printf ("directiveList.size() = %zu \n",directiveList.size());
+             }
+        }
+
+     return directiveList;
+   }
+
+
+void
+SageInterface::translateScopeToUseCppDeclarations( SgScopeStatement* scope )
+   {
+     bool declarationsOnly = scope->containsOnlyDeclarations();
+
+     printf ("In translateScopeToUseCppDeclarations(): declarationsOnly = %s scope = %p = %s \n",declarationsOnly ? "true" : "false",scope,scope->class_name().c_str());
+
+     std::map<SgStatement*,std::vector<SgC_PreprocessorDirectiveStatement*> > directiveMap;
+
+     if (declarationsOnly == true)
+        {
+       // These are scopes such as global scope, namespace definitions, class definitions, etc.
+          SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+          SgDeclarationStatementPtrList::iterator i = declarationList.begin();
+          while (i != declarationList.end())
+             {
+               SgDeclarationStatement* declaration = *i;
+               ROSE_ASSERT(declaration != NULL);
+
+               std::vector<SgC_PreprocessorDirectiveStatement*> attachDirectives = translateStatementToUseCppDeclarations(declaration,scope);
+
+               printf ("attachDirectives.size() = %zu \n",attachDirectives.size());
+
+               if (attachDirectives.empty() == false)
+                  {
+                    directiveMap.insert(std::pair<SgStatement*,std::vector<SgC_PreprocessorDirectiveStatement*> >(declaration,attachDirectives));
+                  }
+
+               i++;
+             }
+
+            // Need to save the list of things that will be added so we can avoid iterator invalidation.
+        }
+       else
+        {
+       // These are scopes such as SgBasicBlock (which can contain non-declaration statements.
+          SgStatementPtrList & statementList = scope->getStatementList();
+          SgStatementPtrList::iterator i = statementList.begin();
+          while (i != statementList.end())
+             {
+               SgStatement* statement = *i;
+               ROSE_ASSERT(statement != NULL);
+
+               std::vector<SgC_PreprocessorDirectiveStatement*> attachDirectives = translateStatementToUseCppDeclarations(statement,scope);
+
+               printf ("attachDirectives.size() = %zu \n",attachDirectives.size());
+
+               if (attachDirectives.empty() == false)
+                  {
+                    directiveMap.insert(std::pair<SgStatement*,std::vector<SgC_PreprocessorDirectiveStatement*> >(statement,attachDirectives));
+                  }
+
+               i++;
+             }
+        }
+
+     printf ("directiveMap.size() = %zu \n",directiveMap.size());
+
+     printf ("Processing the directiveMap: \n");
+     std::map<SgStatement*,std::vector<SgC_PreprocessorDirectiveStatement*> >::iterator i = directiveMap.begin();
+     while (i != directiveMap.end())
+        {
+          SgStatement* statement                                      = i->first;
+          std::vector<SgC_PreprocessorDirectiveStatement*> directives = i->second;
+
+          printf ("statement = %p = %s \n",statement,statement->class_name().c_str());
+          printf ("directives.size() = %zu \n",directives.size());
+       // std::vector<SgC_PreprocessorDirectiveStatement*>::reverse_iterator j = directives.begin();
+          std::vector<SgC_PreprocessorDirectiveStatement*>::iterator j = directives.begin();
+          while (j != directives.end())
+             {
+               scope->insert_statement(statement,*j);
+
+               j++;
+             }
+
+       // Remove the directives there were attached to the statement.
+          AttachedPreprocessingInfoType *comments = statement->getAttachedPreprocessingInfo();
+          ROSE_ASSERT(comments != NULL);
+
+          AttachedPreprocessingInfoType deleteList;
+       // std::vector<PreprocessingInfo*> deleteList;
+
+       // comments->erase();
+       // statement->setAttachedPreprocessingInfo(NULL);
+          AttachedPreprocessingInfoType::iterator k;
+          for (k = comments->begin(); k != comments->end(); k++)
+             {
+#if 1
+               ROSE_ASSERT ( (*k) != NULL );
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*k)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*k)->getString().c_str());
+               printf ("translateScopeToUseCppDeclarations(): Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*k)->getNumberOfLines(),(*k)->getColumnNumberOfEndOfString());
+#endif
+
+            // We only want to process the CPP directives (skipping comments and a few othr kinds of obscure directives).
+               if (skipTranslateToUseCppDeclaration(*k) == true)
+                  {
+                 // We are not processing these types of directives into IR nodes (new IR nodes would have to be added and this can be done later if required).
+                    printf ("Do NOT delete *k = %p = %s \n",*k,(*k)->getString().c_str());
+                  }
+                 else
+                  {
+                    printf ("DO delete *k = %p = %s \n",*k,(*k)->getString().c_str());
+
+                    deleteList.push_back(*k);
+                 // delete *k;
+                 // *k = NULL;
+                  }
+             }
+
+          printf ("Iterate over the deleteList: deleteList.size() = %zu comments->size() = %zu \n",deleteList.size(),comments->size());
+          AttachedPreprocessingInfoType::iterator m = deleteList.begin();
+          while (m != deleteList.end())
+             {
+            // comments->erase(m);
+            // std::remove(comments->begin(), comments->end(), *m);
+               comments->erase(std::remove(comments->begin(), comments->end(), *m), comments->end());
+
+               printf (" --- comments->size() = %zu \n",comments->size());
+
+               m++;
+             }
+
+       // comments->clear();
+       // delete comments; // statement->getAttachedPreprocessingInfoPtr();
+       // statement->set_attachedPreprocessingInfoPtr(NULL);
+
+          i++;
+        }
+
+     printf ("Leaving translateScopeToUseCppDeclarations(): scope = %p = %s \n",scope,scope->class_name().c_str());
+   }
+
+
+void
+SageInterface::translateToUseCppDeclarations( SgNode* n )
+   {
+     class CppTranslationTraversal : public AstSimpleProcessing
+        {
+          public:
+               CppTranslationTraversal() {}
+               void visit (SgNode* node)
+                  {
+                    printf ("In CppTranslationTraversal::visit(): node = %p = %s \n",node,node->class_name().c_str());
+
+                    SgScopeStatement* scope = isSgScopeStatement(node);
+                    SgGlobal* globalScope = isSgGlobal(scope);
+                 // if (scope != NULL)
+                    if (globalScope != NULL)
+                       {
+                         printf ("In CppTranslationTraversal::visit(): processing scope = %p = %s \n",scope,scope->class_name().c_str());
+                         translateScopeToUseCppDeclarations(scope);
+                       }
+                      else
+                       {
+                         if (scope != NULL)
+                            {
+                              printf ("In SageInterface::translateToUseCppDeclarations(): Currently skipping all but global scope! \n");
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     CppTranslationTraversal traversal;
+
+     printf ("In translateToUseCppDeclarations(): Calling traversal.traverse() \n");
+
+  // We might want to do this traversla POSTORDER since we are transforming the AST at each scope.
+  // traversal.traverse(n, preorder);
+     traversal.traverse(n, postorder);
+
+     printf ("Leaving translateToUseCppDeclarations(): DONE: Calling traversal.traverse() \n");
    }
 
 

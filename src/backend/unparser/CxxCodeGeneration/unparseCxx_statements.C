@@ -1843,6 +1843,11 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // pragmas
           case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
 
+       // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+       // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+       // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+          case V_SgEmptyDeclaration:      unparseEmptyDeclaration(stmt, info); break;
+
        // case DECL_STMT:          unparseDeclStmt(stmt, info);         break;
        // case SCOPE_STMT:         unparseScopeStmt(stmt, info);        break;
        //        case V_SgFunctionTypeTable:      unparseFuncTblStmt(stmt, info);      break;
@@ -3416,6 +3421,23 @@ Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info& info
 
 
 void
+Unparse_ExprStmt::unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEmptyDeclaration* emptyDeclaration = isSgEmptyDeclaration(stmt);
+     ROSE_ASSERT(emptyDeclaration != NULL);
+
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+
+  // Nothing to unparse for this case, comment and CPP directives should have been unparsed before getting to this point.
+#if 0
+     curprint( string("\n /* unparseEmptyDeclaration */ " ) );
+#endif
+
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+   }
+
+
+void
 Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
@@ -4238,12 +4260,14 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
           printf ("--- *i = %p = %s \n",*i,(*i)->class_name().c_str());
           curprint("/* unparseForInitStmt: " + (*i)->class_name() + " */ ");
 #endif
+
+#if 0
        // DQ (8/30/2014): For all but the first entry we should have get_isAssociatedWithDeclarationList() == true.
        // if (i != forInitStmt->get_init_stmt().begin())
           if (forInitStmt->get_init_stmt().size() > 1)
              {
                SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*i);
-
+            // DQ (3/2/2019): Commented out output spew (see roseTests/programTransformationTests/pass1.C for an example).
             // Note that not all entries will be a SgVariableDeclaration (e.g. detected case of SgNullStatement).
             // ROSE_ASSERT(variableDeclaration != NULL);
                if (variableDeclaration != NULL)
@@ -4257,6 +4281,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
                  // ROSE_ASSERT(variableDeclaration->get_isAssociatedWithDeclarationList() == true);
                   }
              }
+#endif
 
           unparseStatement(*i, newinfo);
           i++;
@@ -5128,6 +5153,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // output the return type
 #define OUTPUT_FUNCTION_DECLARATION_DATA 0
 #if OUTPUT_FUNCTION_DECLARATION_DATA
+          printf ("rtype = %p = %s \n",rtype,rtype->class_name().c_str());
           curprint ("\n/* output the return type */ \n");
 #endif
 #if 0
@@ -5313,12 +5339,14 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_isTypeSecondPart();
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("output the second part of the type \n");
           curprint ("/* output the second part of the type */");
 #endif
 
           unp->u_type->unparseType(rtype, ninfo);
 
 #if OUTPUT_FUNCTION_DECLARATION_DATA || 0
+          printf ("DONE: output the second part of the type \n");
           curprint("/* DONE: output the second part of the type */");
 #endif
 
@@ -7346,7 +7374,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
 
             // TV (09/06/2018): if auto keyword is used then we unparse the associated declared type (before `auto` is resolved)
-               if (decl_item->get_using_auto_keyword() == true && decl_item->get_auto_decltype() != NULL)
+               if (decl_item->get_auto_decltype() != NULL)
                   {
                     tmp_type = decl_item->get_auto_decltype();
                   }
@@ -10491,24 +10519,26 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
      SgTemplateTypedefDeclaration* templateTypedef_stmt = isSgTemplateTypedefDeclaration(stmt);
      ROSE_ASSERT(templateTypedef_stmt != NULL);
 
-#if 0
+#define DEBUG_TEMPLATE_TYPEDEF 0
+
+#if DEBUG_TEMPLATE_TYPEDEF
      printf ("In unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
 #endif
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
      curprint(" /* Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
 
      if (templateTypedef_stmt->get_templateParameters().empty() == false)
         {
        // DQ (2/19/2019): The support for unparsing a SgTemplateTypedefDeclaration is different enough that this function is not useful.
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           curprint(" /* templateParameters FOUND: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
           unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>(stmt,info);
         }
        else
         {
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           curprint(" /* templateParameters NOT found: Calling unparseTemplateDeclarationStatment_support<SgTemplateTypedefDeclaration>() */ ");
 #endif
 
@@ -10526,7 +10556,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
        // DQ (2/19/2019): Not clear that I want the extra "\n".
           curprint("\nusing ");
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           printf ("In unparseTemplateTypeDefStmt(): templateTypedef_stmt->get_name() = %s \n",templateTypedef_stmt->get_name().str());
 #endif
 
@@ -10537,7 +10567,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           SgType* base_type = templateTypedef_stmt->get_base_type();
           ROSE_ASSERT(base_type != NULL);
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
           printf ("In unparseTemplateTypeDefStmt(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
 #endif
 
@@ -10546,9 +10576,13 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           ROSE_ASSERT(ninfo.SkipClassDefinition() == false);
           ROSE_ASSERT(ninfo.SkipEnumDefinition()  == false);
 
-#if 0
-          printf ("templateTypedef_stmt->get_declaration() = %p \n",templateTypedef_stmt->get_declaration());
+#if DEBUG_TEMPLATE_TYPEDEF
+          printf ("In unparseTemplateTypeDefStmt(): templateTypedef_stmt->get_declaration() = %p \n",templateTypedef_stmt->get_declaration());
 #endif
+#if DEBUG_TEMPLATE_TYPEDEF
+          printf ("In unparseTemplateTypeDefStmt(): set reference_node_for_qualification: templateTypedef_stmt = %p = %s \n",templateTypedef_stmt,templateTypedef_stmt->class_name().c_str());
+#endif
+          ninfo.set_reference_node_for_qualification(templateTypedef_stmt);
 
        // DQ (2/19/2019): Cxx_tests/test2019_153.C demonstrates that a class declaration can be define in the C++11 SgTemplateTypedefDeclaration.
        // ROSE_ASSERT(templateTypedef_stmt->get_declaration() == NULL);
@@ -10564,7 +10598,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
           curprint(";");
         }
 
-#if 0
+#if DEBUG_TEMPLATE_TYPEDEF
      printf ("Leaving unparseTemplateTypeDefStmt() = %p \n",templateTypedef_stmt);
 #endif
 #if 0

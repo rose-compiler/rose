@@ -12,5 +12,5 @@ install(FILES
     IntervalSetMap.h HashMap.h Lexer.h LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h
     Optional.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h SharedPointer.h
     SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h
-    Trace.h Tracker.h Type.h WarningsOff.h WarningsRestore.h
-  DESTINATION ${INCLUDE_INSTALL_DIR}/Sawyer)
+    Trace.h Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h
+  DESTINATION include/Sawyer) # installed in $PREFIX/Sawyer, not $PREFIX/rose/Sawyer.

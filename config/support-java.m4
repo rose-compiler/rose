@@ -99,7 +99,7 @@ fi
 # echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
 if test "x$USE_JAVA" = x1; then
 
-  #echo "Now verifying aspects of the found java software (java, javac, javah, jar)..."
+  AC_MSG_NOTICE([Now verifying aspects of the found java software (java, javac, javah, jar)])
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
@@ -108,10 +108,16 @@ if test "x$USE_JAVA" = x1; then
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
 
-#echo "JAVA=${JAVA}"
+  AC_MSG_NOTICE([JAVA = "$JAVA"])
 
     # Determine java version, e.g. java version "1.7.0_51"
     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "java version" | sed 's/java version//' | sed 's/"//g'`
+
+# try to detect openjdk if previous command fails , Liao 3/11/2019
+   if test "x$JAVA_VERSION" = x; then
+     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "openjdk version" | sed 's/openjdk version//' | sed 's/"//g'`
+   fi
+
     JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]1}'`
     JAVA_VERSION_MINOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]2}'`
     JAVA_VERSION_PATCH=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]1}'`
@@ -137,7 +143,11 @@ if test "x$USE_JAVA" = x1; then
        test -z "${JAVA_VERSION_PATCH}" ||
        test -z "${JAVA_VERSION_RELEASE}"
     then
-       ROSE_MSG_ERROR([An error occurred while trying to determine your java -version])
+      echo "JAVA_VERSION_MAJOR = $JAVA_VERSION_MAJOR"
+      echo "JAVA_VERSION_MINOR = $JAVA_VERSION_MINOR"
+      echo "JAVA_VERSION_PATCH = $JAVA_VERSION_PATCH"
+      echo "JAVA_VERSION_RELEASE = $JAVA_VERSION_RELEASE"
+      ROSE_MSG_ERROR([An error occurred while trying to determine your java version: one or more extracted major, minor, patch and release version numbers displayed above are empty. Please look into rose/config/support-java.m4 to make sure the extraction commands inside the m4 file work as expected.])
     else
       if test ${JAVA_VERSION_MAJOR} -lt 1 ||
         (test ${JAVA_VERSION_MAJOR} -eq 1 &&

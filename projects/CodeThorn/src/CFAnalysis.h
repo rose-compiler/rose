@@ -73,7 +73,11 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
+  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING };
+  static FunctionResolutionMode functionResolutionMode;
  protected:
+  SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
+  SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   static void initDiagnostics();
   static Sawyer::Message::Facility logger;
  private:

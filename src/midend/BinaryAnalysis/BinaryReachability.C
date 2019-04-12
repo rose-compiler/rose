@@ -712,7 +712,7 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
     dfEngine.runToFixedPoint();
 
     // Copy out all the vertex final states from the data-flow engine.
-    bool nChanges = 0;
+    size_t nChanges = 0;
     if (vertexIds != NULL)
         vertexIds->reserve(partitioner.cfg().nVertices());
     for (size_t vertexId = 0; vertexId < partitioner.cfg().nVertices(); ++vertexId) {

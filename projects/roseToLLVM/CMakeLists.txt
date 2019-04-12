@@ -1,5 +1,4 @@
-
-add_subdirectory(src)
-add_subdirectory(tests)
-#add_subdirectory(Analysis)
-
+if(with-llvm)
+  add_subdirectory(src)
+  add_subdirectory(tests)
+endif()

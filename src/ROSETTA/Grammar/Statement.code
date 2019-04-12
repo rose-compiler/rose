@@ -2848,7 +2848,7 @@ HEADER_NONREAL_DECL_START
           SgNonrealType* get_type (void) const;
           void set_type (SgNonrealType* t);
 
-          SgName get_mangled_name (void) const;
+          SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
           virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
           SgName get_qualified_name() const;
@@ -3153,6 +3153,20 @@ HEADER_PRAGMA_STATEMENT_START
 #endif
 
 HEADER_PRAGMA_STATEMENT_END
+
+
+HEADER_EMPTY_DECLARATION_START
+
+       // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+HEADER_EMPTY_DECLARATION_END
 
 
 HEADER_NAMESPACE_DECLARATION_STATEMENT_START
@@ -14785,32 +14799,68 @@ void SgNonrealDecl::set_type (SgNonrealType* t) {
   p_type = t;
 }
 
+#define DEBUG_NONREAL_DECL_MANGLED 0
+
 SgName
 SgNonrealDecl::get_mangled_name (void) const {
-#if 0
+#if DEBUG_NONREAL_DECL_MANGLED
   printf("In SgNonrealDecl::get_mangled_name():\n");
   printf("  - this = %p\n", this);
+  printf("  - name = %s\n", get_name().str());
 #endif
   ostringstream mangled_name;
 
   if (get_is_class_member()) {
-    SgNode * type_parent = get_parent();
-    ROSE_ASSERT(type_parent != NULL);
-#if 0
-    printf("  - type_parent = %p (%s)\n", type_parent, type_parent ? type_parent->class_name().c_str() : "");
+    SgNode * parent_decl = NULL;
+    SgScopeStatement * scope = get_scope();
+    if (scope != NULL) {
+#if DEBUG_NONREAL_DECL_MANGLED
+      printf("  - scope = %p (%s)\n", scope, scope ? scope->class_name().c_str() : "");
 #endif
-    SgNode * decl_parent = type_parent->get_parent();
-#if 0
-    printf("  - decl_parent = %p (%s)\n", decl_parent, decl_parent ? decl_parent->class_name().c_str() : "");
+
+      SgDeclarationScope * s_nrscope = isSgDeclarationScope(scope);
+      if (s_nrscope == NULL) {
+        printf("[ROSE-1881] SgNonrealDecl::get_mangled_name:\n> Scope is not an instantiation scope (nonreal)!\n> First observed for test2007_41.C in copyAST_tests.\n> Please report to nersc-rose-public@lbl.gov\n");
+      }
+
+      parent_decl = scope->get_parent();
+    } else {
+      parent_decl = get_parent();
+
+      SgNonrealBaseClass * nrbaseclass = isSgNonrealBaseClass(parent_decl);
+      if (nrbaseclass != NULL) {
+        printf("[ROSE-1881] SgNonrealDecl::get_mangled_name:\n> Scope is not set when parent is nonreal base class!\n> First observed for test2006_79.C in copyAST_tests.\n> Please report to nersc-rose-public@lbl.gov\n");
+
+        SgClassDefinition * xdefn = isSgClassDefinition(nrbaseclass->get_parent());
+        ROSE_ASSERT(xdefn != NULL);
+        parent_decl = xdefn->get_parent();
+      } else {
+        ROSE_ASSERT(false);
+      }
+      ROSE_ASSERT(parent_decl != NULL);
+    }
+#if DEBUG_NONREAL_DECL_MANGLED
+    printf("  - parent_decl = %p (%s)\n", parent_decl, parent_decl ? parent_decl->class_name().c_str() : "");
 #endif
-    SgClassDeclaration * xdecl = isSgClassDeclaration(decl_parent);
-    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(decl_parent);
-    SgNonrealDecl * nrdecl = isSgNonrealDecl(decl_parent);
-    if (xdecl != NULL) {
+
+    SgTemplateClassDeclaration * tplcdecl = isSgTemplateClassDeclaration(parent_decl);
+    SgClassDeclaration * xdecl = isSgClassDeclaration(parent_decl);
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(parent_decl);
+    if (tplcdecl != NULL) {
+       SgDeclarationScope * nrscope = tplcdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
+       if (nrscope != scope) {
+         mangled_name << tplcdecl->get_mangled_name().getString() << "___";
+       }
+    } else if (xdecl != NULL) {
        mangled_name << xdecl->get_mangled_name().getString() << "___";
-    } else if (tplcdecl != NULL) {
-       mangled_name << tplcdecl->get_mangled_name().getString() << "___";
     } else if (nrdecl != NULL) {
+       SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+#if DEBUG_NONREAL_DECL_MANGLED
+       printf("  - nrscope = %p\n", nrscope);
+#endif
        mangled_name << nrdecl->get_mangled_name().getString() << "___";
     }
   }
@@ -18378,6 +18428,32 @@ SgPragmaDeclaration::get_mangled_name(void) const
    }
 
 SOURCE_PRAGMA_STATEMENT_END
+
+
+SOURCE_EMPTY_DECLARATION_START
+void
+SgEmptyDeclaration::post_construction_initialization()
+   {
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgEmptyDeclaration::get_mangled_name(void) const
+   {
+     SgName returnName;
+
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+  // SgScopeStatement* scope = get_scope();
+  // ROSE_ASSERT(scope != NULL);
+
+  // This is a poor way to handle the generation of a mangled name (will be improved)
+     returnName = "empty_declaration";
+
+     return returnName;
+   }
+
+SOURCE_EMPTY_DECLARATION_END
+
 
 SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT_START
 void

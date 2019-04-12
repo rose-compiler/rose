@@ -1,4 +1,3 @@
-
 add_executable(graphColoringMain
   graphColoringMain.cpp interferenceGraph.cpp interferenceGraph.h
 )
