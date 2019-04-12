@@ -50,6 +50,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
      SgExpression* expr = isSgExpression(referencedNode);
      if (expr != NULL) {
        nameQualifier = expr->get_qualified_name_prefix_for_referenced_type();
+#if 0
+     printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case of SgExpression: referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
+#endif
        return nameQualifier;
      }
 
@@ -166,6 +169,24 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // DQ (5/4/2013): This was previously disabled, maybe because the SgTemplateArgument is shared between too many declarations (in different scopes).
                printf ("WARNING: lookup of qualifier prefix from SgTemplateArgument was previously disabled \n");
 #endif
+#if 0
+            // DQ (3/14/2019): Avaliable collections of data to support name qualification.
+            // SgNode::get_globalQualifiedNameMapForNames(),
+            // SgNode::get_globalQualifiedNameMapForTypes(),
+            // SgNode::get_globalQualifiedNameMapForTemplateHeaders(),
+            // SgNode::get_globalTypeNameMap(),
+            // SgNode::get_globalQualifiedNameMapForMapsOfTypes(),
+            // referencedNameSet
+
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForNames() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForNames());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForTypes() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForTypes());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForTemplateHeaders() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForTemplateHeaders());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalTypeNameMap() \n");
+               outputNameQualificationMap(SgNode::get_globalTypeNameMap());
+#endif
                SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
                nameQualifier = node->get_qualified_name_prefix_for_type();
                break;
@@ -243,9 +264,29 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
              }
         }
 
+#if 0
+     printf ("In Unparser_Nameq::lookup_generated_qualified_name(): info.get_reference_node_for_qualification() = %p = %s nameQualifier = %s \n",
+          referencedNode,referencedNode->class_name().c_str(),nameQualifier.str());
+#endif
+
      return nameQualifier;
    }
 
+// DQ (3/14/2019): Adding debugging support to output the map of names.
+void
+Unparser_Nameq::outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap )
+   {
+     printf ("qualifiedNameMap.size() = %zu \n",qualifiedNameMap.size());
+     std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
+     while (i != qualifiedNameMap.end())
+       {
+         ROSE_ASSERT(i->first != NULL);
+
+         printf (" --- *i = i->first = %p = %s i->second = %s \n",i->first,i->first->class_name().c_str(),i->second.c_str());
+
+         i++;
+       }
+   }
 
 
 

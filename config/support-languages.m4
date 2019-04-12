@@ -483,6 +483,21 @@ esac
 done
 
 
+#
+# Check Java version for Fortran front-end support
+#
+# Versions greater than 1.8 may work but haven't been tested [Rasmussen, 2019.02.27]
+#
+if test "x$support_fortran_frontend" = "xyes" ; then
+    if test "x$JAVA_VERSION_MAJOR" != x1; then
+	AC_MSG_FAILURE([Java version for Fortran front-end must be 1.8])
+    fi
+    if test "x$JAVA_VERSION_MINOR" != x8; then
+	AC_MSG_FAILURE([Java version for Fortran front-end must be 1.8 [minor version not 8]])
+    fi
+fi
+
+
 #########################################################################################
 #
 #  Output language support

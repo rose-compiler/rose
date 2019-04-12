@@ -2,7 +2,6 @@
 #define ROSE_Combinatorics_H
 
 #include <rosePublicConfig.h>
-#include <LinearCongruentialGenerator.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -13,6 +12,7 @@
 #include <ostream>
 #include <rose_override.h>
 #include <Sawyer/Assert.h>
+#include <Sawyer/Synchronization.h>
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
@@ -41,8 +41,7 @@ factorial(T n)
     return retval;
 }
 
-/** Simulate flipping a coin. Randomly returns true or false with equal probability. See also,
- *  LinearCongruentialGenerator::flip_coin(). */
+/** Simulate flipping a coin. Randomly returns true or false with equal probability. */
 ROSE_DLL_API bool flip_coin();
 
 /** Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
@@ -66,22 +65,22 @@ permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
     }
 }
 
-/** Shuffle the values of a vector.  If @p nitems is supplied then only the first @p nitems of the vector are shuffled. If
- *  @p limit is specified then the algorithm returns after at least the first @p limit elements are sufficiently shuffled. If
- *  an @p lcg is specified, then it will be used to generate the random numbers, otherwise a built-in random number generator
- *  is used. */
+/** Shuffle the values of a vector.
+ *
+ *  This algorithm randomly shuffles the items in the vector by swapping values at indexes zero through @p limit with
+ *  values at randomly selected indexes zero through @p nitems. The defaults for @p nitems and @p limit are the size
+ *  of the input @p vector. */
 template<typename T>
 void
-shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t)(-1), LinearCongruentialGenerator *lcg=NULL)
+shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t)(-1))
 {
-    static LinearCongruentialGenerator my_lcg;
-    if (!lcg)
-        lcg = &my_lcg;
     nitems = std::min(nitems, vector.size());
     limit = std::min(limit, nitems);
 
-    for (size_t i=0; i<limit; ++i)
-        std::swap(vector[i], vector[lcg->next()%nitems]);
+    for (size_t i=0; i<limit; ++i) {
+        size_t j = Sawyer::fastRandomIndex(nitems);
+        std::swap(vector[i], vector[j]);
+    }
 }
 
 // [Robb Matzke 2018-05-09]: deprecated. Use HasherSha1 instead.

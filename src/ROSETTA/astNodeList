@@ -348,6 +348,7 @@ SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
+SgEmptyDeclaration
 SgEmptyDirectiveStatement
 SgEndfileStatement
 SgEndifDirectiveStatement
@@ -774,6 +775,7 @@ SgUntypedImageControlStatement
 SgUntypedOtherStatement
 SgUntypedUseStatement
 SgUntypedDeclarationStatement
+SgUntypedDirectiveDeclaration
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration

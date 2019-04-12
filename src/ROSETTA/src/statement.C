@@ -537,7 +537,11 @@ Grammar::setUpStatements ()
   // DQ (8/16/2014): Adding support for Microsoft attributes (e.g. "[repeatable] int x;")
      NEW_TERMINAL_MACRO (MicrosoftAttributeDeclaration, "MicrosoftAttributeDeclaration", "MS_ATTRIBUTE_DECL_STMT"    );
 
-  // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
+  // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+  // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+  // greater precission to the global scope and permit the unparsing via the token stream to be used as well.
+     NEW_TERMINAL_MACRO (EmptyDeclaration,"EmptyDeclaration","EMPTY_DECLARATION_STMT" );
+
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
           ClinkageDeclarationStatement            | EnumDeclaration           | /* StronglyTypedEnumDeclaration | */  AsmStmt                  |
@@ -552,11 +556,11 @@ Grammar::setUpStatements ()
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
-          JovialCompoolStatement                  | NonrealDecl             /*| ClassPropertyList |*/,
+          JovialCompoolStatement                  | NonrealDecl               | EmptyDeclaration
+        /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
-  // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
   // Rasmussen (9/20/2018): Added ImageControlStatement
      NEW_NONTERMINAL_MACRO (Statement,
              ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
@@ -2930,6 +2934,13 @@ Grammar::setUpStatements ()
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
+  // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+  // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+  // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+     EmptyDeclaration.setFunctionPrototype ( "HEADER_EMPTY_DECLARATION", "../Grammar/Statement.code" );
+
+
   // Support for extern "C" and extern "C++"
   // ClinkageStatement.setDataPrototype      ( "char*"   , "languageSpecifier", "= \"\"",
   //                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -3865,36 +3876,72 @@ Grammar::setUpStatements ()
 
 
 #if 0
+  // DQ (3/23/2019): We want to use these to improve the precision of transformation, especially when using the token based unparsing.
   // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
-     IncludeDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString3", "= \"\"",
+     IncludeDirectiveStatement.setDataPrototype ( "std::string"   , "dummyString3", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     DefineDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString4", "= \"\"",
+     DefineDirectiveStatement.setDataPrototype  ( "std::string"   , "dummyString4", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UndefDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString5", "= \"\"",
+     UndefDirectiveStatement.setDataPrototype   ( "std::string"   , "dummyString5", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     IfdefDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString6", "= \"\"",
+     IfdefDirectiveStatement.setDataPrototype   ( "std::string"   , "dummyString6", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     IfndefDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString7", "= \"\"",
+     IfndefDirectiveStatement.setDataPrototype  ( "std::string"   , "dummyString7", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     IfDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString8", "= \"\"",
+     IfDirectiveStatement.setDataPrototype      ( "std::string"   , "dummyString8", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     DeadIfDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString8", "= \"\"",
+     DeadIfDirectiveStatement.setDataPrototype  ( "std::string"   , "dummyString8", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ElseDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString9", "= \"\"",
+     ElseDirectiveStatement.setDataPrototype    ( "std::string"   , "dummyString9", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ElseifDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString10", "= \"\"",
+     ElseifDirectiveStatement.setDataPrototype  ( "std::string"   , "dummyString10", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     EndifDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString11", "= \"\"",
+     EndifDirectiveStatement.setDataPrototype   ( "std::string"   , "dummyString11", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     LineDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString12", "= \"\"",
+     LineDirectiveStatement.setDataPrototype    ( "std::string"   , "dummyString12", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     WarningDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString13", "= \"\"",
+     WarningDirectiveStatement.setDataPrototype ( "std::string"   , "dummyString13", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ErrorDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString14", "= \"\"",
+     ErrorDirectiveStatement.setDataPrototype   ( "std::string"   , "dummyString14", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     EmptyDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString15", "= \"\"",
+     EmptyDirectiveStatement.setDataPrototype   ( "std::string"   , "dummyString15", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+#if 0
+  // DQ (3/24/2019): The base class has this information.
+  // DQ (3/23/2019): We want to use these to improve the precision of transformation, especially when using the token based unparsing.
+  // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
+     IncludeDirectiveStatement.setDataPrototype ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DefineDirectiveStatement.setDataPrototype  ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UndefDirectiveStatement.setDataPrototype   ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfdefDirectiveStatement.setDataPrototype   ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfndefDirectiveStatement.setDataPrototype  ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     IfDirectiveStatement.setDataPrototype      ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeadIfDirectiveStatement.setDataPrototype  ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ElseDirectiveStatement.setDataPrototype    ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ElseifDirectiveStatement.setDataPrototype  ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     EndifDirectiveStatement.setDataPrototype   ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LineDirectiveStatement.setDataPrototype    ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     WarningDirectiveStatement.setDataPrototype ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ErrorDirectiveStatement.setDataPrototype   ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     EmptyDirectiveStatement.setDataPrototype   ( "std::string"   , "directive", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
   // DQ (11/28/2008): Thes are used to mark line numbers in generated CPP output.
      LinemarkerDirectiveStatement.setFunctionPrototype ( "HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -4112,6 +4159,11 @@ Grammar::setUpStatements ()
 
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+  // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+  // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+     EmptyDeclaration.setFunctionSource      ( "SOURCE_EMPTY_DECLARATION", "../Grammar/Statement.code" );
 
   // driscoll6 (6/30/11) Support for python
      PythonPrintStmt.setFunctionPrototype ( "HEADER_PYTHON_PRINT_STMT", "../Grammar/Statement.code" );

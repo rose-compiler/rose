@@ -38,6 +38,10 @@ public class csharpBuilder {
     csharpBuilderPINVOKE.varDecl(uid);
   }
 
+  public static void paramDecl(int uid) {
+    csharpBuilderPINVOKE.paramDecl(uid);
+  }
+
   public static void classDecl(int uid) {
     csharpBuilderPINVOKE.classDecl(uid);
   }
@@ -50,8 +54,20 @@ public class csharpBuilder {
     csharpBuilderPINVOKE.stageMethodDecl(uid);
   }
 
-  public static void initVarDecl(int uid) {
-    csharpBuilderPINVOKE.initVarDecl(uid);
+  public static void refVarParamDecl(int uid) {
+    csharpBuilderPINVOKE.refVarParamDecl(uid);
+  }
+
+  public static void refFunDecl(int uid) {
+    csharpBuilderPINVOKE.refFunDecl(uid);
+  }
+
+  public static void initVarParamDecl(int uid) {
+    csharpBuilderPINVOKE.initVarParamDecl(uid);
+  }
+
+  public static void returnStmt(int args) {
+    csharpBuilderPINVOKE.returnStmt(args);
   }
 
   public static void valueInitializer() {
@@ -60,6 +76,10 @@ public class csharpBuilder {
 
   public static void literal(string lit) {
     csharpBuilderPINVOKE.literal(lit);
+  }
+
+  public static void binary(string rep) {
+    csharpBuilderPINVOKE.binary(rep);
   }
 
   public static void basicFinalChecks() {

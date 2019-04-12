@@ -8,8 +8,7 @@ namespace Combinatorics {
 ROSE_DLL_API bool
 flip_coin()
 {
-    static LinearCongruentialGenerator rng;
-    return 0 == (rng() & 1);
+    return Sawyer::fastRandomIndex(2) == 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
