@@ -7,6 +7,9 @@
 
         struct error_code {
           private:
+         // Unparsed as: template<> friend struct hash< error_code  > ;
+         // The use of template<> causes it to be a template specialization which is then in the wrong scope.
+         // friend class hash<error_code>;
             friend class hash<error_code>;
         };
 

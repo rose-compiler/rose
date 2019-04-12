@@ -646,7 +646,9 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_342.C \
    test2019_343.C \
    test2019_345.C \
-   test2019_346.C 
+   test2019_346.C \
+   test2019_347.C \
+   test2019_348.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
