@@ -1843,6 +1843,11 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // pragmas
           case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
 
+       // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+       // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+       // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+          case V_SgEmptyDeclaration:      unparseEmptyDeclaration(stmt, info); break;
+
        // case DECL_STMT:          unparseDeclStmt(stmt, info);         break;
        // case SCOPE_STMT:         unparseScopeStmt(stmt, info);        break;
        //        case V_SgFunctionTypeTable:      unparseFuncTblStmt(stmt, info);      break;
@@ -3412,6 +3417,23 @@ Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info& info
 
   // printf ("Output the pragma = %s \n",pragma->get_pragma());
   // ROSE_ASSERT (0);
+   }
+
+
+void
+Unparse_ExprStmt::unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEmptyDeclaration* emptyDeclaration = isSgEmptyDeclaration(stmt);
+     ROSE_ASSERT(emptyDeclaration != NULL);
+
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+
+  // Nothing to unparse for this case, comment and CPP directives should have been unparsed before getting to this point.
+#if 0
+     curprint( string("\n /* unparseEmptyDeclaration */ " ) );
+#endif
+
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
    }
 
 

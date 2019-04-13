@@ -1,5 +1,8 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
+namespace Rose {
+namespace BinaryAnalysis {
+
 bool x86InstructionIsConditionalFlagControlTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_ja:
@@ -769,3 +772,6 @@ const char* flagToString(X86Flag n) {
   ROSE_ASSERT ((int)n >= 0 && (int)n < 32);
   return names[(int)n];
 }
+
+} // namespace
+} // namespace
