@@ -6737,6 +6737,9 @@ HEADER_UNPARSE_INFO_START
            //! to setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis.
                b_inTypedefDecl             = 52, /*!< setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis */
 
+            // DQ (4/13/2019): Generated strings of template instantiations need to sometimes exclude the initial name qualification to avoid it being redundantly generated, see Cxx11_tests/test2019_350.C).
+               b_SkipNameQualification     = 53, /*!< Skip the use of name qualification (used in generating strings of template instantiations) */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -7053,6 +7056,11 @@ HEADER_UNPARSE_INFO_START
           bool inTypedefDecl() const;
           void set_inTypedefDecl();
           void unset_inTypedefDecl();
+
+       // DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+          bool SkipNameQualification() const;
+          void set_SkipNameQualification();
+          void unset_SkipNameQualification();
 
 
 #if 0
@@ -20258,6 +20266,22 @@ void
 SgUnparse_Info::unset_inTypedefDecl()
    { unsetBit(b_inTypedefDecl); }
 
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+bool
+SgUnparse_Info::SkipNameQualification() const
+   { return checkBit(b_SkipNameQualification); }
+
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+void
+SgUnparse_Info::set_SkipNameQualification()
+   { setBit(b_SkipNameQualification); }
+
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+void
+SgUnparse_Info::unset_SkipNameQualification()
+   { unsetBit(b_SkipNameQualification); }
+
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -20349,6 +20373,9 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (2/3/2019): Ading support to know when we are in a typedef.
      printf ("inTypedefDecl                          = %s \n",( inTypedefDecl() == true ) ? "true" : "false");
+
+  // DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+     printf ("SkipNameQualification                  = %s \n",( SkipNameQualification() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
