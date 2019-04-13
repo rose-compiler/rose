@@ -8542,7 +8542,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        else
         {
 #if 0
-          printf ("Not unparsing the class definition \n");
+          printf ("In unparseClassDeclStmt(): Not unparsing the class definition \n");
 #endif
           if (!info.inEmbeddedDecl())
              {
@@ -8561,7 +8561,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgClassDefinition *cdefn = isSgClassDefinition(classdecl_stmt->get_parent());
 
                if(cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
+                  {
                     ninfo.set_CheckAccess();
+                  }
 
             // DQ (8/19/2004): Removed functions using old attribute mechanism (old CC++ mechanism)
             // printf ("Commented out get_suppress_global(classdecl_stmt) \n");
@@ -8703,7 +8705,18 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseClassDeclStmt(): Now output the template name plus arguments \n");
 #endif
-               curprint (nameQualifier);
+            // DQ (4/13/2019): Make this conditional upon the setting of info.SkipNameQualification()
+            // curprint (nameQualifier);
+               if (info.SkipNameQualification() == false)
+                  {
+                    curprint (nameQualifier);
+                 // curprint ("/* conditional output of name qualification */");
+                  }
+
+            // DQ (4/13/2019): Turn this off before processing the rest of the template instantiation which man contain template 
+            // arguments that require name qualification.
+               info.unset_SkipNameQualification();
+
                unparseTemplateName(templateInstantiation,info);
 #if 0
                printf ("Exiting as a test! \n");
@@ -8936,7 +8949,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                  // printf ("In Unparse_ExprStmt::unparseClassDefnStmt(): nameQualifier = %s \n",nameQualifier.str());
                   }
-               curprint(nameQualifier.str());
+
+            // DQ (4/12/2019): Supress the name qualification we are are using a previously generated string for the class name.
+            // curprint(nameQualifier.str());
 
             // print the base class name
             // DQ (8/20/2014): We need to output the template name when this is a templated base class.
@@ -8951,18 +8966,95 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                     printf ("In unparseClassDefnStmt(): calling unparseTemplateName() \n");
                     curprint ("/* calling unparseTemplateName */ ");
 #endif
-                 // DQ (4/12/2019): We need to access any possible previously saved stringified version 
-                 // of the type name from the name qualificaiton.
-                    SgUnparse_Info ninfo2(ninfo);
 
-                    SgBaseClass* baseClass = *p;
-                    ROSE_ASSERT(baseClass != NULL);
+#if 1
+                 // DQ (4/12/2019): Support for output of generated string for type (used where name 
+                 // qualification is required for subtypes (e.g. template arguments)).
+                 // SgNode* nodeReferenceToClass = info.get_reference_node_for_qualification();
+                    SgNode* nodeReferenceToClass = *p;
+#if 0
+                    printf ("In unparseClassDefnStmt(): nodeReferenceToClass = %p \n",nodeReferenceToClass);
+#endif
+                    if (nodeReferenceToClass != NULL)
+                       {
+#if 0
+                         printf ("rrrrrrrrrrrr In unparseClassDefnStmt() output type generated name: nodeReferenceToClass = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
+                              nodeReferenceToClass,nodeReferenceToClass->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+#endif
+                         std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToClass);
+                         if (i != SgNode::get_globalTypeNameMap().end())
+                            {
+                           // I think this branch supports non-template member functions in template classes (called with explicit template arguments).
+                           // usingGeneratedNameQualifiedClassNameString = true;
 
-                 // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
-                    ninfo2.set_reference_node_for_qualification(baseClass);
+                              string classNameString = i->second.c_str();
+#if 0
+                              printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
+                                   classNameString.c_str(),nodeReferenceToClass,nodeReferenceToClass->class_name().c_str());
+#endif
 
-                 // unparseTemplateName(templateInstantiationDeclaration,info);
-                    unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+                              curprint(nameQualifier.str());
+
+                              curprint (classNameString);
+                            }
+                           else
+                            {
+                            // Note that the globalTypeNameMap is populated with entries only when name qualification is detected, so it is OK for entries not to be found there.
+#if 0
+                              printf ("Could not find saved name qualified class name in globalTypeNameMap: using key: nodeReferenceToClass = %p = %s \n",nodeReferenceToClass,nodeReferenceToClass->class_name().c_str());
+#endif
+
+                           // curprint ("/* Could not find properly saved name from name qualification */ ");
+
+#if 1
+                           // DQ (4/12/2019): We need to access any possible previously saved stringified version 
+                           // of the type name from the name qualificaiton.
+                              SgUnparse_Info ninfo2(ninfo);
+
+                              SgBaseClass* baseClass = *p;
+                              ROSE_ASSERT(baseClass != NULL);
+
+                           // Output the name qualification explicitly.
+                              curprint(nameQualifier.str());
+
+                           // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
+                              ninfo2.set_reference_node_for_qualification(baseClass);
+
+                           // unparseTemplateName(templateInstantiationDeclaration,info);
+                              unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+#endif
+#if 0
+                              printf ("Error: there should have been a globalTypeNameMap entry! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+#if 1
+                      // DQ (4/12/2019): We need to access any possible previously saved stringified version 
+                      // of the type name from the name qualificaiton.
+                         SgUnparse_Info ninfo2(ninfo);
+
+                         SgBaseClass* baseClass = *p;
+                         ROSE_ASSERT(baseClass != NULL);
+
+                      // Output the name qualification explicitly.
+                         curprint(nameQualifier.str());
+
+                      // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
+                         ninfo2.set_reference_node_for_qualification(baseClass);
+
+                      // unparseTemplateName(templateInstantiationDeclaration,info);
+                         unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+#endif
+                       }
+#endif
 #if 0
                     printf ("In unparseClassDefnStmt(): DONE calling unparseTemplateName() \n");
                     curprint ("/* DONE calling unparseTemplateName */ ");
@@ -8970,6 +9062,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                  else
                   {
+                 // DQ (4/12/2019): Use the name qualification if we are not using the previously generated string for the class name.
+                    curprint(nameQualifier.str());
+
                     curprint(tmp_decl->get_name().str());
                   }
 

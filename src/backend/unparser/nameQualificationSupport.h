@@ -290,8 +290,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (6/21/2011): Added support to generate function names containing template arguments.
           void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
-       // DQ (5/24/2013): Added support to generate function names containing template arguments.
+       // DQ (5/24/2013): Added support to generate member function names containing template arguments.
           void traverseTemplatedMemberFunction(SgMemberFunctionRefExp* memberFunctionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
+       // DQ (4/12/2019): Added support to generate class names containing template arguments.
+          void traverseTemplatedClass(SgBaseClass* baseClass, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
        // DQ (6/21/2011): Added function to store names with associated SgNode IR nodes.
           void addToNameMap ( SgNode* nodeReference, std::string typeNameString );
