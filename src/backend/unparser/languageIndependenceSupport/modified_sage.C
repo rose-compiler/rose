@@ -1882,13 +1882,32 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                   }
              }
 
+#if 0
+          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+          printf ("functionDeclaration->get_functionModifier().isExplicit() = %s \n",functionDeclaration->get_functionModifier().isExplicit() ? "true" : "false");
+          printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization ? "true" : "false");
+#endif
+
+       // DQ (4/13/2019): We want to output the explicit keyword even when info.SkipFunctionDefinition() == true.
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
        // if ((!info.SkipFunctionDefinition()) && functionDeclaration->get_functionModifier().isExplicit())
-          if ( (info.SkipFunctionDefinition() == false) &&
-               (functionDeclaration->get_functionModifier().isExplicit() == true) &&
+       // if ( (info.SkipFunctionDefinition() == false) &&
+       //      (functionDeclaration->get_functionModifier().isExplicit() == true) &&
+       //      (isDeclarationOfTemplateSpecialization == false) )
+          if ( (functionDeclaration->get_functionModifier().isExplicit() == true) &&
                (isDeclarationOfTemplateSpecialization == false) )
              {
-               curprint( "explicit ");
+#if 0
+               printf ("@@@@@@@@ Detected use of keyword and explicit keyword is being output \n");
+#endif
+            // DQ (4/13/2019): We can't output the "explicit" keyword for a function outside of it's class.
+            // curprint( "explicit ");
+            // check that this is a declaration appearing in a class.
+               SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+               if (classDefinition != NULL)
+                  {
+                    curprint( "explicit ");
+                  }
              }
 
        // TV (04/26/2010): CUDA function modifiers
