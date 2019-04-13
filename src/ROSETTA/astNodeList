@@ -348,6 +348,7 @@ SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
+SgEmptyDeclaration
 SgEmptyDirectiveStatement
 SgEndfileStatement
 SgEndifDirectiveStatement

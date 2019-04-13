@@ -138,6 +138,12 @@ AtermSupport::uniqueId(uint64_t n)
    }
 
 string 
+AtermSupport::uniqueId(Rose::BinaryAnalysis::RegisterDescriptor) {
+    // This supports generation of strings from addresses (mostly so that the SgAsm support will compile).
+    return "empty_string_Rose::BinaryAnalysis::RegisterDescriptor";
+}
+
+string 
 AtermSupport::uniqueId(const rose_rva_t & n)
    {
   // This supports generation of strings from rose_rva_t (so that the SgAsm support will compile).

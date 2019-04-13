@@ -22,6 +22,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUser
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Address usage item.
  *
  *  This struct represents one user for an address interval.  The user can be either an instruction with at least one valid
@@ -60,6 +64,12 @@ public:
 
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
     AddressUser(const OwnedDataBlock &odblock): insn_(NULL), odblock_(odblock) {}
+
+    /** Address of user.
+     *
+     *  Returns the address of the instruction or the address of the data block, depending on which of @ref isBasicBlock or
+     *  @ref isDataBlock returns true. */
+    rose_addr_t address() const;
 
     /** Predicate returning true if user is a basic block or instruction. */
     bool isBasicBlock() const { return insn_!=NULL; }
@@ -151,6 +161,9 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUsers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** List of virtual address users.
  *
@@ -338,6 +351,9 @@ protected:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// AddressUsageMap
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Address usage map.
  *
@@ -536,8 +552,9 @@ private:
     // Insert an instruction/block pair into the map.
     void insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
-    // Insert a data block into the map.  The data block must not be a null pointer and must not already exist in the map. A
-    // data pointer is always inserted along with ownership information--which functions and basic blocks own this data block.
+    // Insert or merge a data block into the map.  The data block must not be a null pointer. A data pointer is always inserted
+    // along with ownership information--which functions and basic blocks own this data block. If the address usage map already
+    // has this data block, then the provided ownership information is merged into the existing ownership lists.
     void insertDataBlock(const OwnedDataBlock&);
 
     // Remove an instruction/block pair from the map.  If the instruction exists in the map then the specified block is removed

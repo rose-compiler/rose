@@ -9,7 +9,7 @@ namespace Unparser {
 // class method
 std::string
 Arm::unparseArmCondition(ArmInstructionCondition cond) {
-    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+    std::string retval = stringifyBinaryAnalysisArmInstructionCondition(cond, "arm_cond_");
     ASSERT_require(!retval.empty() && retval[0]!='(');
     return retval;
 }

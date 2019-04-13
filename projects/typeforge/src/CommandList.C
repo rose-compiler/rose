@@ -11,6 +11,8 @@
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
 
+namespace Typeforge {
+
 using namespace std;
 
 //Returns base type of varInitName if the name ofthe base type matches typename. Else returns nullptr.
@@ -140,23 +142,21 @@ int TypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt
     tt.addTypeTransformationToList(_list,newBuiltType,nullptr,"",base,oldBuiltType,listing);
     return false;
   } else {
-    list<SgFunctionDefinition*> listOfFunctionDefinitions;
+    list<SgFunctionDeclaration*> listOfFunctionDeclarations;
     if(funName=="*") {
-      listOfFunctionDefinitions=SgNodeHelper::listOfFunctionDefinitions(root);
+      listOfFunctionDeclarations=SgNodeHelper::listOfFunctionDeclarations(root);
     } else {
-      SgFunctionDefinition* funDef=completeAst.findFunctionByName(funName);
-      if(funDef==nullptr) {
+      listOfFunctionDeclarations=completeAst.findFunctionDeclarationsByName(funName);
+      if(listOfFunctionDeclarations.empty()) {
         cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist."<<endl;
         return true;
-      } else {
-        listOfFunctionDefinitions.push_back(funDef);
       }
     }
-    for (auto funDef : listOfFunctionDefinitions) {
-      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDef);
-      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDef);
+    for (auto funDecl : listOfFunctionDeclarations) {
+      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDecl->get_scope());
+      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDecl->get_scope());
       if(tt.getTraceFlag()) { cout<<"TRACE: TypeCommand::run : adding type transformation to list: "<<oldBuiltType->unparseToString()<<" ==> "<<newBuiltType->unparseToString()<<endl;}
-      tt.addTypeTransformationToList(_list,newBuiltType,funDef,"TYPEFORGE"+location,base,oldBuiltType,listing);
+      tt.addTypeTransformationToList(_list,newBuiltType,funDecl,"TYPEFORGE"+location,base,oldBuiltType,listing);
     }
     return false;
   }
@@ -170,29 +170,27 @@ VarTypeCommand::VarTypeCommand(string name, string fun, string toType, bool base
 }
 
 int VarTypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
-  SgFunctionDefinition* funDef;
   SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-  //SgType* builtType;
+
   SgType* builtType = buildTypeFromStringSpec(newType,globalScope);
-  if(funName=="$global") {
-    funDef=nullptr; 
-    //SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
-    //builtType = buildTypeFromStringSpec(newType,globalScope);
-  } else {
-    funDef=completeAst.findFunctionByName(funName);
-    if(funDef==0) {
-      cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist in file."<<endl;
-      return true;
-    }
-    //builtType=buildTypeFromStringSpec(newType,funDef);
-  }
   if(builtType==nullptr) {
     cerr<<"Error: Command "<<commandNumber<<": unknown type "<<newType<<"."<<endl;
     return true;
-  } else {
-    tt.addNameTransformationToList(_list,builtType,funDef,varName,base,listing);
-    return false;
   }
+
+  if(funName=="$global") {
+    tt.addNameTransformationToList(_list,builtType,nullptr,varName,base,listing);
+  } else {
+    list<SgFunctionDeclaration*> listOfFunctionDeclarations = completeAst.findFunctionDeclarationsByName(funName);
+    if(listOfFunctionDeclarations.empty()) {
+      cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist in file."<<endl;
+      return true;
+    }
+    for (auto funDecl : listOfFunctionDeclarations) {
+      tt.addNameTransformationToList(_list,builtType,funDecl,varName,base,listing);
+    }
+  }
+  return false;
 } 
 
 //Replaces the type of the variable specified by the handlde with newType
@@ -243,6 +241,7 @@ int TransformCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransforme
       listOfFunctionDefinitions.push_back(funDef);
     }
   }
+
   for (auto funDef : listOfFunctionDefinitions) {
     SgType* accessType=buildTypeFromStringSpec(accessTypeName,funDef);
     if(tt.getTraceFlag()) { cout<<"TRACE: transformation: "<<transformationName<<endl;}
@@ -319,27 +318,32 @@ SetTypeCommand::SetTypeCommand(string name, string fun, string toType, string va
 int SetTypeCommand::run(SgProject* root, RoseAst completeAst, TFTypeTransformer& tt, TFTransformation& tfTransformation, TFTypeTransformer::VarTypeVarNameTupleList& _list){
   tt.addSetChangeToList(_list, true);
   if(handle == ""){
-    SgFunctionDefinition* funDef;
     SgType* builtType;
     if(funName=="$global") {
-      funDef=nullptr; 
       SgGlobal* globalScope = root->get_globalScopeAcrossFiles();
       builtType = buildTypeFromStringSpec(newType,globalScope);
+      if(builtType==nullptr) {
+        cerr<<"Error: Command "<<commandNumber<<": unknown type "<<newType<<"."<<endl;
+        tt.addSetChangeToList(_list, false);
+        return true;
+      }
+      tt.addNameTransformationToList(_list,builtType,nullptr,varName,base,listing);
     } else {
-      funDef=completeAst.findFunctionByName(funName);
-      if(funDef==0) {
+      list<SgFunctionDeclaration*> listOfFunctionDeclarations = completeAst.findFunctionDeclarationsByName(funName);
+      if(listOfFunctionDeclarations.empty()) {
         cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist in file."<<endl;
         tt.addSetChangeToList(_list, false);
         return true;
       }
-      builtType=buildTypeFromStringSpec(newType,funDef);
-    }
-    if(builtType==nullptr) {
-      cerr<<"Error: Command "<<commandNumber<<": unknown type "<<newType<<"."<<endl;
-      tt.addSetChangeToList(_list, false);
-      return true;
-    } else {
-      tt.addNameTransformationToList(_list,builtType,funDef,varName,base,listing);
+      builtType=buildTypeFromStringSpec(newType,listOfFunctionDeclarations.front()->get_scope());
+      if(builtType==nullptr) {
+        cerr<<"Error: Command "<<commandNumber<<": unknown type "<<newType<<"."<<endl;
+        tt.addSetChangeToList(_list, false);
+        return true;
+      }
+      for (auto funDecl : listOfFunctionDeclarations) {
+        tt.addNameTransformationToList(_list,builtType,funDecl,varName,base,listing);
+      }
     }
   } else {
     vector<SgNode*> nodeVector = TFHandles::getNodeVectorFromString(root, handle);
@@ -445,3 +449,6 @@ void CommandList::nextCommand(){
 TFTypeTransformer::VarTypeVarNameTupleList CommandList::getTransformationList(){
   return _list;
 }
+
+}
+

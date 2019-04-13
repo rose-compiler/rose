@@ -47,6 +47,9 @@
 #define FIND_SETS          "find_sets"
 #define ADD_SPEC           "import"
 #define AD_INST            "ad_intermediate_instrumentation"
+
+namespace Typeforge {
+
 using namespace std;
 
 bool isComment(string s) {
@@ -63,6 +66,14 @@ bool checkTypeforgeExtension(string filePath, string extension){
 
 //Read in json and generate command list
 bool SpecFrontEnd::readJSONFile(string fileName){
+  {
+    std::ifstream f(fileName.c_str());
+    if (!f.good()) {
+      std::cerr << "Cannot open the file " << fileName << ". It is advised to use absolute files." << std::endl;
+      exit(1);
+    }
+  }
+
   ToolConfig* config = new ToolConfig(fileName);
   vector<ToolAction>& actions = config->getActions();
   for(auto act: actions){
@@ -280,3 +291,6 @@ TFTypeTransformer::VarTypeVarNameTupleList
 SpecFrontEnd::getTransformationList() {
   return commandList.getTransformationList();
 }
+
+}
+

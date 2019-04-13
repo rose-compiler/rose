@@ -1706,9 +1706,12 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         prevLoOffset = curLoOffset;                     // valid only if isPrevExtract is non-null
     }
 
-    // Construct a new, simplified expression
+    // Identity
+    // (concat x) => x (flags from both)
     if (newArgs.size() == 1)
-        return newArgs[0]->newFlags(inode->flags());    // (concat X) => X, flags from both
+        return newArgs[0]->newFlags(inode->flags());
+
+    // Construct a new, simplified expression
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
     return Interior::create(inode->nBits(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
@@ -2013,7 +2016,12 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
-    if (oldsize==newsize)
+
+    // Identity
+    // (uextend newsize arg[oldsize])
+    //   and newsize = oldsize
+    // => arg[oldsize]
+    if (oldsize == newsize)
         return inode->child(1);
 
     // Constant folding
@@ -2024,10 +2032,28 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
-    // If the new size is smaller than the old size, use OP_EXTRACT instead.
-    if (newsize<oldsize) {
+    // Extending an extend
+    // (uextend newsize (uextend oldsize arg[k]))
+    //   and newsize >= oldsize
+    //   and oldsize >= k
+    // => (uextend newsize arg[k])
+    InteriorPtr arg = inode->child(1)->isInteriorNode();
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= oldsize && oldsize >= arg->child(1)->nBits())
+        return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
+
+    // Shrinking an extend
+    // (uextend newsize (uextend oldsize arg[k]))
+    //   and k <= newsize <= oldsize
+    // => (uextend newsize arg[k])
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->child(1)->nBits() && newsize <= oldsize)
+        return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
+    
+    // Shrinking
+    // (uextend newsize arg[oldsize])
+    //   and newsize < oldsize
+    // => (extract 0 newsize arg[oldsize])
+    if (newsize < oldsize)
         return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
-    }
 
     return Ptr();
 }

@@ -422,7 +422,7 @@ RSIM_Linux64::syscall_arch_prctl_body(RSIM_Thread *t, int callno) {
             if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
                 retval = -EFAULT;
             } else {
-                t->operators()->segmentInfo(x86_segreg_fs).base = val;
+                t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_fs).base = val;
             }
             break;
         }
@@ -431,18 +431,18 @@ RSIM_Linux64::syscall_arch_prctl_body(RSIM_Thread *t, int callno) {
             if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
                 retval = -EFAULT;
             } else {
-                t->operators()->segmentInfo(x86_segreg_gs).base = val;
+                t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_gs).base = val;
             }
             break;
         }
         case ARCH_GET_FS: {
-            uint64_t val = t->operators()->segmentInfo(x86_segreg_fs).base;
+            uint64_t val = t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_fs).base;
             if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
                 retval = -EFAULT;
             break;
         }
         case ARCH_GET_GS: {
-            uint64_t val = t->operators()->segmentInfo(x86_segreg_gs).base;
+            uint64_t val = t->operators()->segmentInfo(Rose::BinaryAnalysis::x86_segreg_gs).base;
             if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
                 retval = -EFAULT;
             break;
@@ -594,7 +594,6 @@ RSIM_Linux64::syscall_futex_body(RSIM_Thread *t, int callno)
     int op = t->syscall_arg(1);
     int val1 = t->syscall_arg(2);
     uint32_t timeout_va = 0;                    /* arg 3 when present */
-    uint32_t futex2_va = 0;                     /* arg 4 when present */
     uint32_t val3 = 0;                          /* arg 5 when present */
 
     int result = -ENOSYS;
@@ -610,27 +609,41 @@ RSIM_Linux64::syscall_futex_body(RSIM_Thread *t, int callno)
         case 2: /*FUTEX_FD*/
             assert(0); // NOT HANDLED YET
             break;
-        case 3: /*FUTEX_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
-            assert(0); // NOT HANDLED YET
+        case 3: /*FUTEX_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             break;
-        case 4: /*FUTEX_CMP_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
+        case 4: /*FUTEX_CMP_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
         case 9: /*FUTEX_WAIT_BITSET*/
             timeout_va = t->syscall_arg(3);
             assert(0==timeout_va); // NOT HANDLED YET
             val3 = t->syscall_arg(5);
             result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;
-        default:
+        default: {
+#if 0 // [Robb Matzke 2019-04-09]
             timeout_va =t->syscall_arg(3);
-            futex2_va = t->syscall_arg(4);
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
     }
 
     t->syscall_return(result);

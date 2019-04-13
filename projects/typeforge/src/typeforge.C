@@ -38,12 +38,7 @@
 #include "TFTransformation.h"
 
 using namespace std;
-
-class TestTraversal : public AstSimpleProcessing {
-public:
-  virtual void visit(SgNode* node) { /* do nothing */ };
-};
-
+using namespace Typeforge;
 
 string toolName="typeforge";
 
@@ -85,9 +80,6 @@ int main (int argc, char* argv[])
   hidden_desc.add_options()
     ("source-file", po::value<vector<string> >(),"Name of source files.")
     ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
-    ("float-var", po::value< string >(),"Change type of var [arg] to float.")
-    ("double-var", po::value< string >(),"Change type of var [arg] to double.")
-    ("long-double-var", po::value< string >(),"Change type of var [arg] to long double.")
     ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
     ;
 
@@ -110,19 +102,8 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.7.1"<<endl;
+    cout<<toolName<<" version 0.8.0"<<endl;
     return 0;
-  }
-
-  for (int i=1; i<argc; ++i) {
-    if (string(argv[i]) == "--float-var"
-        || string(argv[i]) == "--double-var"
-	|| string(argv[i]) == "--long-double-var"
-        ) {
-      argv[i] = strdup("");
-      assert(i+1<argc);
-      argv[i+1] = strdup("");
-    }
   }
 
   //check if given object files for linking allow 1 to account for -o to gcc
@@ -238,33 +219,11 @@ int main (int argc, char* argv[])
     }
   
     TFToolConfig::write();    
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
   else{
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
 
-#ifdef EXPLICIT_VAR_FORGE
-  if(args.isUserProvided("float-var")||args.isUserProvided("double-var")||args.isUserProvided("long-double-var")) {
-    TFTypeTransformer::VarTypeVarNameTupleList list;
-    SgFunctionDefinition* funDef=nullptr;
-    if(args.isUserProvided("float-var")) {
-      string varNames=args.getString("float-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildFloatType(),funDef,varNames);
-    }
-    if(args.isUserProvided("double-var")) {
-      string varNames=args.getString("double-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildDoubleType(),funDef,varNames);
-    } 
-    if(args.isUserProvided("long-double-var")) {
-      string varNames=args.getString("long-double-var");
-      tt.addNameTransformationToList(list,SageBuilder::buildLongDoubleType(),funDef,varNames);
-    }
-    tt.transformCommandLineFiles(sageProject,list);
-    backend(sageProject);
-  }
-#endif  
   return 0;
 }

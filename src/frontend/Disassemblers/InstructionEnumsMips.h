@@ -1,6 +1,9 @@
 /* Enum constants for MIPS architectures */
-#ifndef ROSE_ENUMS_MIPS_H
-#define ROSE_ENUMS_MIPS_H
+#ifndef ROSE_BinaryAnalysis_InstructionEnumsMips_H
+#define ROSE_BinaryAnalysis_InstructionEnumsMips_H
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** MIPS major register numbers. */
 enum MipsRegisterClass {
@@ -346,5 +349,7 @@ enum MipsInstructionKind {
     mips_last_instruction // must be last enum member
 };
 
+} // namespace
+} // namespace
 
 #endif

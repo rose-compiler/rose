@@ -1,4 +1,6 @@
 include_rules
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
 tool_CPPFLAGS += -I.
 
 run $(public_header)				\
@@ -44,3 +46,4 @@ run $(tool_compile_linkexe) --install -o rsim-x86sim x86sim.C libRSIM -lrt
 run $(tool_compile_linkexe) --install -o rsim-show-initial-stack show-initial-stack.C libRSIM -lrt
 run $(tool_compile_linkexe) --install -o rsim-ports-opened demos/ports_opened.C libRSIM -lrt
 
+endif
