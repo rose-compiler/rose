@@ -545,10 +545,22 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_340.C \
    test2019_341.C \
    test2019_342.C \
+   test2019_343.C \
    test2019_344.C \
    test2019_347.C \
    test2019_349.C \
-   test2019_350.C 
+   test2019_350.C \
+   test2019_351.C \
+   test2019_352.C \
+   test2019_353.C \
+   test2019_354.C \
+   test2019_355.C \
+   test2019_356.C \
+   test2019_357.C \
+   test2019_358.C \
+   test2019_359.C \
+   test2019_360.C \
+   test2019_361.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -647,7 +659,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_311.C \
    test2019_312.C \
    test2019_313.C \
-   test2019_343.C \
    test2019_345.C \
    test2019_346.C \
    test2019_348.C 

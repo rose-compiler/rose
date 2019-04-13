@@ -7,7 +7,7 @@ struct error_code
    {
      private:
           friend class hash<error_code>;
-        };
+   };
 
 // When this is a forward declaration the friend declaration disappears from the class.
 // template<> struct hash<error_code> {};

@@ -1,3 +1,6 @@
+
+// This code passes for EDG, but fails for GNU 5.1 (so the identity translator fails in the backend as well).
+
 class myVector
    {
      public:
