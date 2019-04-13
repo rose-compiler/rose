@@ -539,6 +539,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_334.C \
    test2019_335.C \
    test2019_338.C \
+   test2019_339.C \
+   test2019_340.C \
+   test2019_341.C \
    test2019_344.C 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -640,9 +643,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_313.C \
    test2019_336.C \
    test2019_337.C \
-   test2019_339.C \
-   test2019_340.C \
-   test2019_341.C \
    test2019_342.C \
    test2019_343.C \
    test2019_345.C \

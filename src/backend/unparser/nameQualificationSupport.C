@@ -594,6 +594,13 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                break;
              }
 
+       // DQ (4/12/2019): This case appears in the roseTests/astInterfaceTests/inputbuildIfStmt.C code.
+          case V_SgTypeString:
+             {
+               return_declaration = NULL;
+               break;
+             }
+
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {
@@ -2394,6 +2401,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                             {
                               SgDeclarationStatement* nestedDeclaration = classSymbol->get_declaration();
                               ROSE_ASSERT(nestedDeclaration != NULL);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Need to dig deeper into this symbol! \n");
                               printf ("nestedDeclaration = %p = %s \n",nestedDeclaration,nestedDeclaration->class_name().c_str());
@@ -4579,6 +4587,33 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
    }
 
 
+#if 0
+
+// DQ (4/12/2019): Notes on Cxx11_tests/test342.C:
+// It may be that we need a function like "traverseTemplatedFunction" for classes to support the reference to a template class instantiation in a SgBaseClass.
+// The issue is that the template arguments can have arbitrary complexity of name qualification requirements such that we need to save the associtate string
+// generated once after all of the required name qualification (of the template arguments) has been figured out.
+
+// The point is to save the generated name of the class declaration, correctly name qualified (with all template parameters name qualified) so that it can
+// be used directly (as a string) in the unparsing. The call to "addToNameMap()" is the key part that saves the name of the template instantiation.
+
+// Currently the base class references the shared template class instantiation (so this might be the root of the problem as well).
+// If sharing is the issue, then generateding a strring to hold the name of the class with ccntext depenent template argument name 
+// qualification would be the solution (just as it is for shared types).
+
+// Using this as an example:
+void
+NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement )
+   {
+   }
+
+// We might want to build something like:
+void
+NameQualificationTraversal::traverseTemplatedClassDeclaration(SgClassDeclaration* classDeclaration, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement )
+   {
+   }
+
+#endif
 
 bool
 NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(SgDeclarationStatement* declaration)
@@ -4866,6 +4901,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgBaseClassPtrList::iterator i = baseClassList.begin();
           while (i != baseClassList.end())
              {
+
+#define DEBUG_BASE_CLASS_SUPPORT 0
+
             // Check each base class.
                SgBaseClass* baseClass = *i;
                ROSE_ASSERT(baseClass != NULL);
@@ -4885,7 +4923,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  if (derivedClassDeclaration != derivedClassDeclaration->get_firstNondefiningDeclaration())
                     {
                       derivedClassDeclaration = isSgClassDeclaration(derivedClassDeclaration->get_firstNondefiningDeclaration());
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                       printf ("RESET derivedClassDeclaration to firstNondefiningDeclaration: %p \n",derivedClassDeclaration);
 #endif
                     }
@@ -4894,7 +4932,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  if (baseClassDeclaration != baseClassDeclaration->get_firstNondefiningDeclaration())
                     {
                       baseClassDeclaration = isSgClassDeclaration(baseClassDeclaration->get_firstNondefiningDeclaration());
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                       printf ("RESET baseClassDeclaration to firstNondefiningDeclaration: %p \n",baseClassDeclaration);
 #endif
                     }
@@ -4908,7 +4946,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  SgBaseClassModifier* baseClassDeclarationBaseClassModifier = baseClass->get_baseClassModifier();
                  ROSE_ASSERT(baseClassDeclarationBaseClassModifier != NULL);
                  SgAccessModifier & baseClassDeclarationAccessModifier = baseClassDeclarationBaseClassModifier->get_accessModifier();
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                  printf ("  --- derivedClassDeclaration = %p name = %s \n",derivedClassDeclaration,SageInterface::get_name(derivedClassDeclaration).c_str());
                  printf ("  --- baseClassDeclaration    = %p name = %s \n",baseClassDeclaration,SageInterface::get_name(baseClassDeclaration).c_str());
                  printf ("  --- classDeclarationAccessModifier = %s \n",baseClassDeclarationAccessModifier.displayString().c_str());
@@ -4918,12 +4956,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                  if (baseClassDeclarationAccessModifier.isPrivate() == true)
                     {
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                       printf ("Found private derivation of baseClassDeclaration = %s from derivedClassDeclaration = %s \n",baseClassDeclaration->get_name().str(),derivedClassDeclaration->get_name().str());
 #endif
                       if (privateBaseClassSets.find(derivedClassDeclaration) != privateBaseClassSets.end())
                          {
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                            printf ("privateBaseClassSets has an entry for this class: derivedClassDeclaration = %p = %s name = %s \n",
                                 derivedClassDeclaration,derivedClassDeclaration->class_name().c_str(),derivedClassDeclaration->get_name().str());
 #endif
@@ -4949,7 +4987,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  if (privateBaseClassSets.find(baseClassDeclaration) != privateBaseClassSets.end())
                     {
                       std::set<SgClassDeclaration*> & privateBaseClasses = privateBaseClassSets[baseClassDeclaration];
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                       printf ("In base class: find the set of private base classes: privateBaseClasses.size() = %zu \n",privateBaseClasses.size());
 #endif
                       std::set<SgClassDeclaration*>::iterator j = privateBaseClasses.begin();
@@ -4957,19 +4995,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          {
                            SgClassDeclaration* privateBaseClassDeclaration = *j;
                            ROSE_ASSERT(privateBaseClassDeclaration != NULL);
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                            printf ("  --- privateBaseClassDeclaration = %p = %s name = %s \n",privateBaseClassDeclaration,privateBaseClassDeclaration->class_name().c_str(),privateBaseClassDeclaration->get_name().str());
 #endif
                            std::set<SgClassDeclaration*> privateClasses;
                            privateClasses.insert(privateBaseClassDeclaration);
                            inaccessibleClassSets.insert(std::pair<SgClassDeclaration*,std::set<SgClassDeclaration*> >(derivedClassDeclaration,privateClasses));
-                                   
+
                            j++;
                          }
                     }
                    else
                     {
-#if 0
+#if DEBUG_BASE_CLASS_SUPPORT
                       printf ("baseClassDeclaration = %p = %s name = %s : has no recorded private base classes \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
 #endif
                     }
@@ -4992,6 +5030,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  printf ("amountOfNameQualificationRequired (base class) = %d \n",amountOfNameQualificationRequired);
 #endif
                  setNameQualification(baseClass,baseClassDeclaration,amountOfNameQualificationRequired);
+
+#if 0
+              // DQ (4/12/2019): There is no support currently in unparseToString() for the SgBaseClass IR node.
+                 printf ("8888888888888888888888888 Case of processing name qualification for classDeclaration = %p = %s \n",classDeclaration,classDeclaration->unparseToString().c_str());
+#endif
                }
 
             // DQ (12/23/2015): Also need to add this to the aliasSymbolCausalNodeSet.
@@ -7460,7 +7503,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               string previousQualifier = i->second.c_str();
-                              printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+                              printf ("WARNING: test 0: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
                               if (i->second != qualifier)
                                  {
@@ -7972,7 +8015,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               string previousQualifier = i->second.c_str();
-                              printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+                              printf ("WARNING: test 1: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
                               if (i->second != qualifier)
                                  {
@@ -9510,7 +9553,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                string previousQualifier = i->second.c_str();
-               printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+               printf ("WARNING: test 2: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
                if (i->second != qualifier)
                   {
@@ -9713,7 +9756,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 3: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
           if (i->second != qualifier)
              {
@@ -9774,7 +9817,7 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 4: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
           if (i->second != qualifier)
              {
@@ -9840,7 +9883,7 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 5: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -9907,7 +9950,7 @@ NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDecla
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test6: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -9977,7 +10020,7 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 7: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10118,7 +10161,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 8: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10159,7 +10202,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                string previous_template_header = i->second.c_str();
-               printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previous_template_header.c_str(),template_header.c_str());
+               printf ("WARNING: test 9: replacing previousQualifier = %s with new qualifier = %s \n",previous_template_header.c_str(),template_header.c_str());
 #endif
                if (i->second != template_header)
                   {
@@ -10231,7 +10274,7 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 10: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10296,7 +10339,7 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 11: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10564,7 +10607,7 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 12: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10659,7 +10702,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 13: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10727,7 +10770,7 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 14: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10792,7 +10835,7 @@ NameQualificationTraversal::setNameQualificationOnBaseType(SgTypedefDeclaration*
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 15: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -10864,7 +10907,7 @@ NameQualificationTraversal::setNameQualificationOnPointerMemberClass(SgTypedefDe
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 16: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11090,7 +11133,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 17: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11190,7 +11233,7 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 18: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11263,7 +11306,7 @@ NameQualificationTraversal::setNameQualification(SgNonrealRefExp* exp, SgDeclara
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 19: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11339,7 +11382,7 @@ NameQualificationTraversal::setNameQualification(SgAggregateInitializer* exp, Sg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 20: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11404,7 +11447,7 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 21: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -11473,7 +11516,7 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 22: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
