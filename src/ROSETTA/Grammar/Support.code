@@ -5016,6 +5016,18 @@ HEADER_INITIALIZED_NAME_START
        // DQ (12/16/2013): Added support for name qualification on SgInitializedName for use in preinitialization lists.
           SgName get_qualified_name_prefix() const;
 
+       // DQ (3/21/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length_for_type);
+
+       // DQ (3/31/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required_for_type);
+
+       // DQ (3/31/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required_for_type);
+
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
           SgName get_qualified_name_prefix_for_type() const;
@@ -6725,6 +6737,9 @@ HEADER_UNPARSE_INFO_START
            //! to setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis.
                b_inTypedefDecl             = 52, /*!< setup unparsing of base types in typedef declarations (for SgPointerMemberType) which requires extra parenthesis */
 
+            // DQ (4/13/2019): Generated strings of template instantiations need to sometimes exclude the initial name qualification to avoid it being redundantly generated, see Cxx11_tests/test2019_350.C).
+               b_SkipNameQualification     = 53, /*!< Skip the use of name qualification (used in generating strings of template instantiations) */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -7041,6 +7056,11 @@ HEADER_UNPARSE_INFO_START
           bool inTypedefDecl() const;
           void set_inTypedefDecl();
           void unset_inTypedefDecl();
+
+       // DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+          bool SkipNameQualification() const;
+          void set_SkipNameQualification();
+          void unset_SkipNameQualification();
 
 
 #if 0
@@ -12714,6 +12734,60 @@ void SgInitializedName::unset_ms_declspec_parameter_thread()     { unsetBit(e_ms
 bool SgInitializedName::is_ms_declspec_parameter_uuid() const  { return checkBit(e_ms_declspec_parameter_uuid); }
 void SgInitializedName::set_ms_declspec_parameter_uuid()       { setBit(e_ms_declspec_parameter_uuid); }
 void SgInitializedName::unset_ms_declspec_parameter_uuid()     { unsetBit(e_ms_declspec_parameter_uuid); }
+
+// DQ (3/31/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+int
+SgInitializedName::get_name_qualification_length() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgInitializedName::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+// DQ (3/31/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+bool 
+SgInitializedName::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgInitializedName::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+// DQ (3/31/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+bool 
+SgInitializedName::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgInitializedName::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
 
 // DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
 // so that we could avoid them setting the isModified flag which is a problem in the
@@ -20192,6 +20266,22 @@ void
 SgUnparse_Info::unset_inTypedefDecl()
    { unsetBit(b_inTypedefDecl); }
 
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+bool
+SgUnparse_Info::SkipNameQualification() const
+   { return checkBit(b_SkipNameQualification); }
+
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+void
+SgUnparse_Info::set_SkipNameQualification()
+   { setBit(b_SkipNameQualification); }
+
+// DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+void
+SgUnparse_Info::unset_SkipNameQualification()
+   { unsetBit(b_SkipNameQualification); }
+
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -20283,6 +20373,9 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (2/3/2019): Ading support to know when we are in a typedef.
      printf ("inTypedefDecl                          = %s \n",( inTypedefDecl() == true ) ? "true" : "false");
+
+  // DQ (4/13/2019): unparsing for generated template instantiations need to sometime skip the initial name qualification.
+     printf ("SkipNameQualification                  = %s \n",( SkipNameQualification() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
