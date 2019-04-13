@@ -8701,7 +8701,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if (templateInstantiation != NULL)
              {
 #if 0
-               printf ("Now output the template arguments \n");
+               printf ("In unparseClassDeclStmt(): Now output the template name plus arguments \n");
 #endif
                curprint (nameQualifier);
                unparseTemplateName(templateInstantiation,info);
@@ -8947,7 +8947,26 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                if (templateInstantiationDeclaration != NULL)
                   {
-                    unparseTemplateName(templateInstantiationDeclaration,info);
+#if 0
+                    printf ("In unparseClassDefnStmt(): calling unparseTemplateName() \n");
+                    curprint ("/* calling unparseTemplateName */ ");
+#endif
+                 // DQ (4/12/2019): We need to access any possible previously saved stringified version 
+                 // of the type name from the name qualificaiton.
+                    SgUnparse_Info ninfo2(ninfo);
+
+                    SgBaseClass* baseClass = *p;
+                    ROSE_ASSERT(baseClass != NULL);
+
+                 // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
+                    ninfo2.set_reference_node_for_qualification(baseClass);
+
+                 // unparseTemplateName(templateInstantiationDeclaration,info);
+                    unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+#if 0
+                    printf ("In unparseClassDefnStmt(): DONE calling unparseTemplateName() \n");
+                    curprint ("/* DONE calling unparseTemplateName */ ");
+#endif
                   }
                  else
                   {
