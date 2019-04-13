@@ -6287,8 +6287,18 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("info.SkipFunctionDefinition()    = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
 #endif
 
+  // DQ (4/13/2019): If this is a defaulted constructor, then we don't want to unparse the body, so we want to treat it the same as a forward declaration.
+  // bool isDefaultedMemberFunction = (mfuncdecl_stmt->get_functionModifier().isMarkedDefault() == true);
+     bool isDefaultedOrDeletedMemberFunction = (mfuncdecl_stmt->get_functionModifier().isMarkedDefault() == true) || (mfuncdecl_stmt->get_functionModifier().isMarkedDelete() == true);
+
+#if 0
+     printf ("In unparseMFuncDeclStmt(): isDefaultedOrDeletedMemberFunction = %s \n",isDefaultedOrDeletedMemberFunction ? "true" : "false");
+#endif
+
+  // DQ (4/13/2019): If this is a defaulted constructor, then we don't want to unparse the body, so we want to treat it the same as a forward declaration.
   // if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !info.SkipFunctionDefinition() )
-     if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() )
+  // if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() )
+     if ( !mfuncdecl_stmt->isForward() && mfuncdecl_stmt->get_definition() && !ninfo.SkipFunctionDefinition() && isDefaultedOrDeletedMemberFunction == false)
         {
 #if 0
           printf ("Unparsing special case of non-forward, valid definition and !skip function definition \n");
@@ -6762,7 +6772,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           curprint(" /* unparse semicolon */ ");
 #endif
-          if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
+
+       // DQ (4/13/2019): Handle the case of a defaulted constructor.
+       // if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
+          if ((mfuncdecl_stmt->isForward() && !info.SkipSemiColon()) || (isDefaultedOrDeletedMemberFunction == true))
              {
                curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
@@ -6998,6 +7011,18 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
      if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
         {
           curprint(" override");
+        }
+
+  // DQ (4/13/2019): Added support for default keyword unparsing.
+     if (mfuncdecl_stmt->get_functionModifier().isMarkedDefault() == true)
+        {
+          curprint(" = default");
+        }
+
+  // DQ (4/13/2019): Added support for delete keyword unparsing.
+     if (mfuncdecl_stmt->get_functionModifier().isMarkedDelete() == true)
+        {
+          curprint(" = delete");
         }
    }
 
