@@ -1503,7 +1503,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
-#if 0
+
+#define DEBUG_TEMPLATE_SPECIALIZATION 0
+
+#if DEBUG_TEMPLATE_SPECIALIZATION
      printf ("In outputTemplateSpecializationSpecifier(): experimentalMode = %s \n",experimentalMode ? "true" : "false");
      curprint( "\n/* In outputTemplateSpecializationSpecifier(): TOP of function */ ");
 #endif
@@ -1525,19 +1528,20 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           curprint( "template<> ");
         }
 #else
+
      if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
        // DQ (1/3/2016): Adding support for template variable declarations.
           (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
           curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a template instantiation */ ");
 #endif
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
             // Template instantiation directives use "template" instead of "template<>"
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a SgTemplateInstantiationDirectiveStatement */ ");
 #endif
                curprint( "template ");
@@ -1546,7 +1550,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations: " +  decl_stmt->class_name() + " */ ");
 #endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
@@ -1557,7 +1561,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                  // DQ (4/6/2014): This happens when a member function template in embedded in a class
                  // template and thus there is not an associated template for the member function separate
                  // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
 
                  // DQ (8/8/2012): This is a valid branch, commented out assert(false).
@@ -1577,7 +1581,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                          if (templateClassInstatiationDefn != NULL)
                             {
                            // Supress output of "template<>" syntax for template member function instantiations.
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
                               printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
                               printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
@@ -1591,7 +1595,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
                               SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
                               ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                               printf("  nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() = %p (%s)\n", nondefiningTemplateInstantiationMemberFunctionDecl->get_parent(), nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() ? nondefiningTemplateInstantiationMemberFunctionDecl->get_parent()->class_name().c_str() : "");
 #endif
                               bool isOutput = false;
@@ -1600,7 +1604,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                               if (nondefiningTemplateClassInstatiationDefn != NULL) {
                                 SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
                                 ROSE_ASSERT(templateClassInstantiation != NULL);
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                 printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
                                 printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
 #endif
@@ -1610,13 +1614,13 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                               }
                               if (isOutput == true)
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Member function's class instantation WAS output, so we need to supress the output of template<> syntax */ ");
 #endif
                                  }
                                 else
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Member function's class instantation was NOT output, so we need to output of template<> syntax */ ");
 #endif
                                    curprint("template<> ");
@@ -1641,15 +1645,15 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             }
                            else
                             {
-#if 0
-                              curprint("/* Member function instantiations in non-template clases still output template<> syntax */ ");
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                              curprint("/* Member function instantiations in non-template classes still output template<> syntax */ ");
 #endif
                               curprint("template<> ");
                             }
                        }
                       else
                        {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                          curprint("/* This still might require the output of the template<> syntax */ ");
 #endif
                       // DQ (11/27/2015): If this is a friend function then supress the "template<>" syntax (see test2015_123.C).
@@ -1660,14 +1664,14 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             {
                               if (nondefiningTemplateInstantiationFunctionDecl->get_declarationModifier().isFriend() == true)
                                  {
-#if 0
-                                   printf ("Supress the output fo the template<> syntax \n");
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   printf ("Supress the output of the template<> syntax \n");
                                    curprint("/* Non-Member friend function instantiations cause us to supress the output of template<> syntax */ ");
 #endif
                                  }
                                 else
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Non-Member (non-friend) function instantiations still output template<> syntax */ ");
 #endif
                                    curprint("template<> ");
@@ -1675,18 +1679,28 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             }
                            else
                             {
-#if 0
-                              curprint("/* Non function instantiations still output template<> syntax */ ");
+                           // DQ (4/11/2019): Check if this is a friend declaration.
+                              if (decl_stmt->get_declarationModifier().isFriend() == true)
+                                 {
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   printf ("Supress the output of the template<> syntax for friend non-function specializations \n");
+                                   curprint("/* Non-Member friend non-function instantiations cause us to supress the output of template<> syntax */ ");
 #endif
-                              curprint("template<> ");
+                                 }
+                                else
+                                 {
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   curprint("/* Non function instantiations still output template<> syntax */ ");
+#endif
+                                   curprint("template<> ");
+                                 }
                             }
-
                        }
                   }
              }
         }
 
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
      curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
 #endif
 #endif
@@ -1817,7 +1831,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                        }
                   }
 #endif
-               curprint("virtual ");
+
+            // DQ (4/11/2019): Only output the "virtual" keyword for functions defined in a class definition.
+            // curprint("virtual ");
+               SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+               if (classDefinition != NULL)
+                  {
+                    curprint("virtual ");
+                  }
              }
 
        // if (unp->opt.get_inline_opt())
@@ -1973,10 +1994,12 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
           ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().isDefault() == false);
 
+       // DQ (4/11/2019): Don't allow friend and extern together (see Cxx11_tests/test2019_338.C).
        // DQ (1/3/2016): We may have to suppress this for SgTemplateVariableDeclaration IR nodes.
        // curprint("extern ");
        // curprint("/* extern from storageModifier */ extern ");
-          if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+       // if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+          if ( (decl_stmt->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(decl_stmt) == NULL) )
              {
                curprint("extern ");
              }
