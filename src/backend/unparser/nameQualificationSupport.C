@@ -3525,6 +3525,34 @@ NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
      printf ("In getDeclarationAssociatedWithType(): declaration = %p \n",declaration);
 #endif
 
+#if 0
+  // DQ (4/14/2019): Alternatively, it might be better to make a recursive call in the evaluateInheritedAttribute() traversal.
+
+  // DQ (4/14/2019): I think we might support decltype() via this function.
+     SgDeclType* declType = isSgDeclType(type);
+     if (declType != NULL)
+        {
+       // Not clear if we need to worry about when the base type of the SgPointerMemberType is a SgDeclType.
+
+       // We need to handle any possible name qualification of a type or SgVarRefExp used as decltype argument.
+          SgExpression* baseExpression = declType->get_base_expression();
+          SgType*       baseType       = declType->get_base_type();
+          if (baseExpression != NULL)
+             {
+            // Need name qualification for expression used in decltype().
+               declaration = baseExpression->getAssociatedDeclaration();
+             }
+            else
+             {
+            // Need name qualification for type used in decltype().
+               ROSE_ASSERT(baseType != NULL);
+
+               declaration = baseType->getAssociatedDeclaration();
+             }
+        }
+#endif
+
+
   // Primative types will not have an asociated declaration...
   // ROSE_ASSERT(declaration != NULL);
      if (declaration == NULL)
@@ -5872,6 +5900,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // DQ (4/11/2019): If this is not a SgClassDeclaration thenit can be a nonreal declaration which is not handled yet.
                   }
              }
+
 #if 0
        // DQ (3/31/2019): debugging support.
           if (debugging == true)
@@ -5915,6 +5944,78 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     declaration = getDeclarationAssociatedWithType(baseType);
                   }
              }
+
+#if 1
+       // DQ (4/14/2019): Add support for declType.
+
+       // DQ (4/14/2019): An alternative might be to support this in the getDeclarationAssociatedWithType() function.
+
+          SgDeclType* declType = isSgDeclType(type);
+          if (declType != NULL)
+             {
+            // Not clear if we need to worry about when the base type of the SgPointerMemberType is a SgDeclType.
+#if 0
+               printf ("################################################################################## \n");
+               printf ("Case SgInitializedName: Processing the SgInitializedName decltype IR node directly \n");
+               printf ("################################################################################## \n");
+#endif
+
+            // We need to handle any possible name qualification of a type or SgVarRefExp used as decltype argument.
+               SgExpression* baseExpression = declType->get_base_expression();
+               SgType*       baseType       = declType->get_base_type();
+               if (baseExpression != NULL)
+                  {
+                 // Need name qualification for expression used in decltype().
+#if 0
+                    printf ("Make a recursive call from this context (processing decltype taking SgExpression) \n");
+#endif
+                 // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+                    SgStatement* currentStatement = TransformationSupport::getStatement(n);
+#if 0
+                    printf ("SgInitializedName: decltype: currentStatement = %p = %s \n",currentStatement,currentStatement != NULL ? currentStatement->class_name().c_str() : "null");
+#endif
+#if 0
+                    printf ("Exiting as a test! (before recursive call) \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // DQ (9/14/2015): Added debugging code.
+                 // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
+                    if (currentStatement == NULL)
+                       {
+                      // This can be an expression in a type, in which case we don't have an associated scope.
+                         printf ("Note: This can be an expression in a type, in which case we don't have an associated scope: baseExpression = %p = %s \n",
+                                 baseExpression,baseExpression->class_name().c_str());
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(currentStatement != NULL);
+                         SgScopeStatement* currentScope = currentStatement->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
+
+                      // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+                      // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+                         generateNestedTraversalWithExplicitScope(baseExpression,currentScope);
+                       }
+#if 0
+                    printf ("Exiting as a test! (after recursive call) \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // Need name qualification for type used in decltype().  Not clear what I good example is of this!
+                    ROSE_ASSERT(baseType != NULL);
+#if 0
+                    printf ("REPORT ME: Unknow case: SgInitializedName: decltype: calling getDeclarationAssociatedWithType(): baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+#endif
+                    declaration = getDeclarationAssociatedWithType(baseType);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Case of SgInitializedName: getDeclarationAssociatedWithType(): type = %p = %s declaration = %p \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str(),declaration);
@@ -7741,9 +7842,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               SgArrayType* arrayType = isSgArrayType(associatedType);
                               if (arrayType == NULL)
                                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("Warning: Location of where we can NOT associate the expression to a SgArrayType \n");
                                    memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
                                    memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+#endif
                                  }
                                 else
                                  {
