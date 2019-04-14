@@ -560,7 +560,11 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_358.C \
    test2019_359.C \
    test2019_360.C \
-   test2019_361.C 
+   test2019_360.C \
+   test2019_361.C \
+   test2019_362.C \
+   test2019_363.C \
+   test2019_364.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
