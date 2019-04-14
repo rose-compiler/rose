@@ -9819,6 +9819,10 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
      ROSE_ASSERT(declarationSet != NULL);
   // ROSE_ASSERT(declarationSet->getDeclarationMap().size() != 0);
 
+#if 0
+  // DQ (4/14/2019): I think that this logic is incorrect, and it is causeing Cxx11_tess/test2019_363.C to fail.
+  // Experiment with commenting it out to run more tests.  Skipping this appears to work will for Cxx11_tess/test2019_363.C.
+
   // DQ (4/1/2014): It might be that we need a still better test (such as if it a friend function).
      if (isFriend == true)
         {
@@ -9826,7 +9830,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
              {
             // We need to check if there is a non-defining declaration (beyond the friend declaration
             // in the Class definition) appearing in a named scope (which specifies the scope where 
-            // the defining declaration would appear.
+            // the defining declaration would appear).
 
                SgDeclarationStatement* firstNondefiningDeclaration = functionDeclaration->get_firstNondefiningDeclaration();
                ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -9888,6 +9892,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
                   }
              }
         }
+#endif
 
 #if 0
   // DQ (4/1/2014): This causes test2014_29.C to fail I think it might be that the defining declaration 
