@@ -11969,9 +11969,13 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                     qualifierString = "";
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("In NameQualificationTraversal::setNameQualificationSupport(): Exiting loop prematurely... \n");
+                 // printf ("In NameQualificationTraversal::setNameQualificationSupport(): Exiting loop prematurely... \n");
+                    printf ("In NameQualificationTraversal::setNameQualificationSupport(): skip over this un-named declaration in the generation of the more complete qualified name... \n");
 #endif
-                    break;
+                 // DQ (4/14/2019): If there is an un-named declaration we just want to not use that name, but
+                 // we want to continue to iterate to collect the associated scopes to build the qualified name.
+                 // Note that Cxx11_tests/test2019_373.C is an example where this is required.
+                 // break;
                   }
                  else
                   {
