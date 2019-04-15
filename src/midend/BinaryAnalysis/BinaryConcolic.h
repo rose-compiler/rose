@@ -4,12 +4,13 @@
 // ROSE headers
 #include <Diagnostics.h>
 #include <rose_isnan.h>
+#include <Partitioner2/BasicTypes.h>
+#include <RoseException.h>
 
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
-#include <RoseException.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
@@ -67,6 +68,36 @@ public:
     ~Exception() throw () {}
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Forward references
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class Specimen;
+typedef Sawyer::SharedPointer<Specimen> SpecimenPtr;
+
+class TestCase;
+typedef Sawyer::SharedPointer<TestCase> TestCasePtr;
+
+class ConcreteExecutor;
+typedef Sawyer::SharedPointer<ConcreteExecutor> ConcreteExecutorPtr;
+
+class LinuxExecutor;
+typedef Sawyer::SharedPointer<LinuxExecutor> LinuxExecutorPtr;
+
+class ConcolicExecutor;
+typedef Sawyer::SharedPointer<ConcolicExecutor> ConcolicExecutorPtr;
+
+class TestSuite;
+typedef Sawyer::SharedPointer<TestSuite> TestSuitePtr;
+
+class Database;
+typedef Sawyer::SharedPointer<Database> DatabasePtr;
+
+class ExecutionManager;
+typedef Sawyer::SharedPointer<ExecutionManager> ExecutionManagerPtr;
+
+class LinuxExitStatus;
+typedef Sawyer::SharedPointer<LinuxExitStatus> LinuxExitStatusPtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Specimens
@@ -86,7 +117,7 @@ public:
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // name of specimen (e.g., for debugging)
-    std::vector<uint8_t> specimen_;                     // content of the binary executable file
+    std::vector<uint8_t> content_;                     // content of the binary executable file
 
 private:
     friend class boost::serialization::access;
@@ -94,7 +125,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(name_);
-        s & BOOST_SERIALIZATION_NVP(specimen_);
+        s & BOOST_SERIALIZATION_NVP(content_);
     }
     
 protected:
@@ -139,6 +170,16 @@ public:
     void name(const std::string&);
     /** @} */
 
+    /** Property: Specimen content.
+     *
+     *  This property contains the bytes that compose a specimen. For instance, for an ELF executable, the content is the bytes
+     *  that compose the executable file.  This property is read-only, initialized when the @ref Specimen is created.
+     *
+     *  Thread safety: This method is thread safe. */
+    const std::vector<uint8_t>& content() const {       // reference return is okay since content never changes
+        return content_;
+    }
+    
 private:
     // TO BE REMOVED BY PETER: Since mutex_ is not a recursive mutex, none of the thread-safe public API methods can call other
     // thread-safe public API methods. Therefore, if one method needs to call another, you should create a non-synchronized
@@ -147,7 +188,6 @@ private:
     // call "isEmptyNS". The same applies for all the other thread-safe classes.  Also, remember not to return references; only
     // return copies.
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test cases
@@ -269,8 +309,10 @@ public:
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
+#if __cplusplus >= 201103L // needs to be fixed. Commented out for Jenkins testing.
     // TO BE REMOVED BY PETER: Oops, the return value of "execute" is a C++11 type. We'll need to change that.
     virtual std::unique_ptr<Result> execute(const TestCase::Ptr&) = 0;
+#endif
 };
 
 
@@ -334,8 +376,10 @@ public:
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
 
+#if __cplusplus >= 201103L // needs to be fixed; commented out for Jenkins testing
     // TO BE REMOVED BY PETER: Oops, C++11 return type.
     virtual std::unique_ptr<ConcreteExecutor::Result> execute(const TestCase::Ptr&) ROSE_OVERRIDE;
+#endif
 };
 
 
@@ -351,19 +395,45 @@ public:
     /** Reference counting pointer to @ref ConcolicExecutor. */
     typedef Sawyer::SharedPointer<ConcolicExecutor> Ptr;
 
+    /** Settings to control various aspects of an executor. */
+    struct Settings {
+        Partitioner2::EngineSettings partitionerEngine;
+        Partitioner2::LoaderSettings loader;
+        Partitioner2::DisassemblerSettings disassembler;
+        Partitioner2::PartitionerSettings partitioner;
+    };
+
+private:
+    Settings settings_;
+
 protected:
     ConcolicExecutor() {}
 
 public:
     /** Allcoating constructor. */
-    static Ptr instance() {
-        return Ptr(new ConcolicExecutor);
-    }
+    static Ptr instance();
+
+    /** Property: Configuration settings.
+     *
+     *  These settings control the finer aspects of this @ref ConcolicExecutor. They should generally be set immediately
+     *  after construction this executor and before any operations are invoked that might use the settings.
+     *
+     *  Thread safety: Not thread safe.
+     *
+     * @{ */
+    const Settings& settings() const { return settings_; }
+    Settings& settings() { return settings_; }
+    /** @} */
 
     /** Execute the test case.
      *
      *  Executes the test case to produce new test cases. */
-    std::vector<TestCase::Ptr> execute(const TestCase::Ptr&);
+    std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
+
+private:
+    // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
+    // then reconstitute the analysis results from the database.
+    Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
 
     // TODO: Lots of properties to control the finer aspects of executing a test case!
 };
@@ -538,6 +608,44 @@ public:
     TestCaseId id(const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // Cached info about disassembly. This is large data. Each specimen has zero or one associated RBA data blob.
+    //------------------------------------------------------------------------------------------------------------------------
+
+    /** Check whether a specimen has associated RBA data.
+     *
+     *  Returns true if the indicated specimen has associated ROSE Binary Analysis (RBA) data, and false if it doesn't. Each
+     *  specimen can have zero or one associated RBA data blob. The specimen ID must be valid.
+     *
+     *  Thread safety: Not thread safe. */
+    bool rbaExists(SpecimenId);
+
+    /** Associate new RBA data with a specimen.
+     *
+     *  The ROSE Binary Analysis (RBA) data is read from the specified existing, readable file and copied into this database to
+     *  be associated with the indicated specimen.  If the specimen had previous RBA data, the new data read from the file
+     *  replaces the old data.  If any data cannot be copied from the file into the database then an @ref Exception is thrown
+     *  and the database is not modified.  The specimen ID must be valid.
+     *
+     *  Thread safety: Not thread safe. */
+    void saveRbaFile(const boost::filesystem::path&, SpecimenId);
+
+    /** Extract RBA data from the database into a file.
+     *
+     *  The ROSE Binary Analysis (RBA) data associated with the indicated specimen is copied from the database into the specified
+     *  file. The is created if it doesn't exist, or truncated if it does exist. If the specimen does not have associated RBA data
+     *  or if any data could not be copied to the file, then an @ref Exception is thrown. The specimen ID must be valid.
+     *
+     *  Thread safety: Not thread safe. */
+    void extractRbaFile(const boost::filesystem::path&, SpecimenId);
+
+    /** Remove any associated RBA data.
+     *
+     *  If the indicated specimen has ROSE Binary Analysis (RBA) data, then it is removed from the database.
+     *
+     *  Thread safety: Not thread safe. */
+    void eraseRba(SpecimenId);
 };
 
 

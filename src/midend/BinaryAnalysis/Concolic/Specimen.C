@@ -14,10 +14,20 @@ Specimen::instance(const boost::filesystem::path &executableName) {
     return self;
 }
 
+void
+Specimen::open(const boost::filesystem::path &executableName) {
+    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+}
+
+void
+Specimen::close() {
+    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+}
+
 bool
 Specimen::isEmpty() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return specimen_.empty();
+    return content_.empty();
 }
 
 std::string

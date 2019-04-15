@@ -27,8 +27,14 @@ LinuxExitStatus::create(const std::string databaseUrl, const boost::filesystem::
     return Ptr(new LinuxExitStatus(db));
 }
 
+LinuxExitStatus::Ptr
+LinuxExitStatus::instance(const std::string databaseUri, const std::string &testSuiteName) {
+    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+}
+
 void
 LinuxExitStatus::run() {
+#if __cplusplus >= 201103L // needs to be fixed; commented out for Jenkins
     LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance();
     ConcolicExecutor::Ptr concolicExecutor = ConcolicExecutor::instance();
 
@@ -45,10 +51,11 @@ LinuxExitStatus::run() {
         // haven't done).
         BOOST_FOREACH (Database::TestCaseId testCaseId, pendingConcolicResults(10 /*arbitrary*/)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(testCase);
+            std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(database(), testCase);
             insertConcolicResults(testCase, newTestCases);
         }
     }
+#endif
 }
 
 } // namespace
