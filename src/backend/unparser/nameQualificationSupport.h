@@ -210,13 +210,21 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
        // void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
-          void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
+       // void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
+          void setNameQualificationOnType ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
 
        // DQ (12/17/2013): Added support for the name qualification of the SgInitializedName object when used in the context of the preinitialization list.
           void setNameQualificationOnName(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification);
 
           void setNameQualification ( SgVariableDeclaration* variableDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
-          void setNameQualification ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
+       // DQ (4/10/2019): We need to handle the general case of name qualification on the base type, AND also when the base type is a SgPointerMemberType 
+       // we need to handled the PointerMemberType base type and the SgPointerMemberType class.  The setNameQualificationOnBaseType() is used to support 
+       // the base type of the SgPointerMemberType where that is used.
+       // void setNameQualification ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnBaseType ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnPointerMemberClass ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
           void setNameQualification ( SgTemplateArgument* templateArgument, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
        // void setNameQualification ( SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
@@ -282,8 +290,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (6/21/2011): Added support to generate function names containing template arguments.
           void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
-       // DQ (5/24/2013): Added support to generate function names containing template arguments.
+       // DQ (5/24/2013): Added support to generate member function names containing template arguments.
           void traverseTemplatedMemberFunction(SgMemberFunctionRefExp* memberFunctionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
+       // DQ (4/12/2019): Added support to generate class names containing template arguments.
+          void traverseTemplatedClass(SgBaseClass* baseClass, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
        // DQ (6/21/2011): Added function to store names with associated SgNode IR nodes.
           void addToNameMap ( SgNode* nodeReference, std::string typeNameString );
