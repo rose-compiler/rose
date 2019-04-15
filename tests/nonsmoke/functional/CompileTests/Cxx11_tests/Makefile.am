@@ -570,7 +570,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_368.C \
    test2019_369.C \
    test2019_370.C \
-   test2019_371.C 
+   test2019_371.C \
+   test2019_372.C \
+   test2019_373.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
