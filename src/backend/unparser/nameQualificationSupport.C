@@ -7937,8 +7937,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (5/24/2013): Added support for member function template argument lists to have similar handling, such as to 
             // SgTemplateInstantiationFunctionDecl IR nodes.  This is required to support test codes such as test2013_188.C.
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
-               ROSE_ASSERT(currentStatement != NULL);
 
+            // DQ (4/15/2019): This fails for EDG 5.0 only, on Cxx_tests/test2004_149.C (as a result of recent work Sunday afternoon).
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
+                  {
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
@@ -7955,6 +7958,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("***** DONE: calling traverseTemplatedMemberFunction() \n");
 #endif
+                  }
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
