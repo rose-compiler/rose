@@ -17,16 +17,16 @@ namespace BinaryAnalysis {
     {
         //Always include the type of each node in the hash
         VariantT vType = node->variantT();
-        hasher_.insert(vType);
+        hasher_->insert(vType);
         
         //If it's an instruction, include the mnemonic, and maybe the address
         SgAsmInstruction* asmInstruction = isSgAsmInstruction(node);
         if(asmInstruction != NULL) {
             std::string mnemonic = asmInstruction->get_mnemonic();
-            hasher_.insert(mnemonic);
+            hasher_->insert(mnemonic);
             if(includeAddresses) {
                 rose_addr_t addr = asmInstruction->get_address();
-                hasher_.insert(addr);
+                hasher_->insert(addr);
             }
             return;
         }
@@ -36,7 +36,7 @@ namespace BinaryAnalysis {
         if(regRef != NULL)
             {
                 unsigned regHash = regRef->get_descriptor().hash();
-                hasher_.insert(regHash);
+                hasher_->insert(regHash);
                 return;
             }
         
@@ -45,7 +45,7 @@ namespace BinaryAnalysis {
             SgAsmConstantExpression* constExpr = isSgAsmConstantExpression(node);
             if(constExpr != NULL) {
                 std::string mnemonic = constExpr->get_bitVector().toHex();
-                hasher_.insert(mnemonic);
+                hasher_->insert(mnemonic);
                 return;
             }
         }    
