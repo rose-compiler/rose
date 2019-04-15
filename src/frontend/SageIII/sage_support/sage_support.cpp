@@ -2559,6 +2559,9 @@ SgProject::parse()
                             {
                               printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
                               ROSE_ASSERT(false);
+
+                           // DQ (3/29/2019): This still needs to be debugged.
+                              SageInterface::translateToUseCppDeclarations(sourceFile);
                             }
 #if 0
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");

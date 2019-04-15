@@ -2840,7 +2840,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     default:
                        {
                          printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->class_name().c_str());
-                         ROSE_ABORT();
+
+                      // DQ (4/12/2019): Calling ROSE_ASSERT() is more useful in debugging than calling ROSE_ABORT().
+                      // ROSE_ABORT();
+                         ROSE_ASSERT(false);
                        }
                   }
              }

@@ -8,6 +8,7 @@
 #include <istream>
 #include <list>
 #include <ostream>
+#include <RoseException.h>
 #include <rose_override.h>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Synchronization.h>
@@ -146,10 +147,10 @@ public:
     typedef std::vector<uint8_t> Digest;
 
     /** Exceptions for hashing. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Constructor. */
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
     

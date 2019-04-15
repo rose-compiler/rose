@@ -1540,6 +1540,24 @@ testPeekRegister.passed: $(top_srcdir)/scripts/test_exit_status testPeekRegister
 		CMD="$$(pwd)/testPeekRegister"			\
 		$< $@
 
+########################################################################################################################
+# Test P2 data blocks
+########################################################################################################################
+
+noinst_PROGRAMS += testDataBlockOwnership
+testDataBlockOwnership_SOURCES = testDataBlockOwnership.C
+testDataBlockOwnership_LDADD = $(ROSE_SEPARATE_LIBS)
+testDataBlockOwnership_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
+TEST_TARGETS += testDataBlockOwnership.passed
+testDataBlockOwnership.passed: $(top_srcdir)/scripts/test_exit_status testDataBlockOwnership $(testDataBlockOwnership_specimen)
+	@$(RTH_RUN)									\
+		TITLE="test data block ownership [$@]"					\
+		DISABLED="$$(./conditionalDisable)"					\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/testDataBlockOwnership $(testDataBlockOwnership_specimen)"	\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

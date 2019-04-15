@@ -193,9 +193,9 @@ private:
     std::string exeName_;                               // Specimen name as given on command-line, original argv[0]
     std::vector<std::string> exeArgs_;                  // Specimen argv, eventually with PATH-resolved argv[0]
     Settings settings_;                                 // Settings from the command-line
-    std::vector<RegisterDescriptor> syscallArgRegs_;    // Registers that store system call arguments
-    RegisterDescriptor syscallNumReg_;                  // Register that stores the system call number
-    RegisterDescriptor syscallRetReg_;                  // Register to hold the system call result
+    std::vector<Rose::BinaryAnalysis::RegisterDescriptor> syscallArgRegs_; // Registers that store system call arguments
+    Rose::BinaryAnalysis::RegisterDescriptor syscallNumReg_; // Register that stores the system call number
+    Rose::BinaryAnalysis::RegisterDescriptor syscallRetReg_; // Register to hold the system call result
     
 public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
@@ -719,15 +719,15 @@ public:
     /** Property: Register that stores a syscall return value.
      *
      * @{ */
-    RegisterDescriptor syscallReturnRegister() const { return syscallRetReg_; }
-    void syscallReturnRegister(RegisterDescriptor r) { syscallRetReg_ = r; }
+    Rose::BinaryAnalysis::RegisterDescriptor syscallReturnRegister() const { return syscallRetReg_; }
+    void syscallReturnRegister(Rose::BinaryAnalysis::RegisterDescriptor r) { syscallRetReg_ = r; }
     /** @} */
 
     /** Property: System call argument registers.
      *
      * @{ */
-    const std::vector<RegisterDescriptor>& syscallArgumentRegisters() const { return syscallArgRegs_; }
-    std::vector<RegisterDescriptor>& syscallArgumentRegisters() { return syscallArgRegs_; }
+    const std::vector<Rose::BinaryAnalysis::RegisterDescriptor>& syscallArgumentRegisters() const { return syscallArgRegs_; }
+    std::vector<Rose::BinaryAnalysis::RegisterDescriptor>& syscallArgumentRegisters() { return syscallArgRegs_; }
     /** @} */
 
 private:

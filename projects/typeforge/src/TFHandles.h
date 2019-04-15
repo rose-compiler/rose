@@ -5,6 +5,8 @@
 #include "AstTerm.h"
 #include <iterator>
 
+namespace Typeforge {
+
 namespace TFHandles{
   
   //Methods to take a single node to a handle and a single handle to a node
@@ -24,6 +26,8 @@ namespace TFHandles{
   std::string        getHandleVectorString(std::set<SgNode*>  nodeSet);
   std::string        getHandleVectorString(std::vector<SgNode*> nodeVector);
   std::vector<SgNode*> getNodeVectorFromString(SgProject* project, std::string stringVector);
+
+}
 
 }
 

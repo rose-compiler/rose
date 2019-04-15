@@ -5,6 +5,8 @@
 #include <sstream>
 #include <iostream>
 
+namespace Typeforge {
+
 using namespace std;
 /////////////////////////////////////////////////
 // Command line processing global options
@@ -62,3 +64,6 @@ string CommandLineOptions::getString(string option) {
     throw Typeforge::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
   }
 }
+
+}
+
