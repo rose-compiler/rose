@@ -8746,14 +8746,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parent);
-                    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
-                    SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
-                    SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
-                    SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+                    SgDeclarationScope * decl_scope = isSgDeclarationScope(parent);
                     if (variableDeclaration != NULL) {
                       int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
                       setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                    } else if (decl_scope != NULL) {
+                      // NOP that is a nontype template parameter
                     } else {
+                      SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
+                      SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
+                      SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
+                      SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+                      
                       int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
                       if (functionParameterList != NULL) {
                         setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
