@@ -100,6 +100,10 @@ bool option_show_source_code=false;
 bool option_show_path=true;
 //boost::program_options::variables_map args;
 
+void myInitDiagnostics() {
+  Normalization::initDiagnostics();
+}
+
 void writeFile(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
@@ -676,6 +680,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 }
 
 int main(int argc, char* argv[]) {
+  // required for Sawyer logger streams
+  ROSE_INITIALIZE;
+  myInitDiagnostics();
+
   try {
     if(argc==1) {
       cout << "Error: wrong command line options."<<endl;
