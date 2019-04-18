@@ -109,16 +109,10 @@ namespace EDG_ROSE_Translation
 
 AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles )
    {
-// #ifndef  CXX_IS_ROSE_CODE_GENERATION
-  // previousLocNodePtr            = NULL;
-  // currentListOfAttributes       = NULL;
-  // sizeOfCurrentListOfAttributes = 0;
-  // currentFileName               = NULL;
-  // currentMapOfAttributes        = NULL;
      use_Wave                      = file->get_wave();
 
-     //Wave will get all Preprocessor Diretives by default and it is therefore reasonable
-     //that it will attach all
+  // Wave will get all Preprocessor Diretives by default and it is therefore reasonable
+  // that it will attach all
 #if 0
      if(use_Wave)
           processAllIncludeFiles = true;
@@ -136,10 +130,12 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
      ROSE_ASSERT(false);
 #endif
 
-  // start_index                   = 0;
-
      sourceFile = file;
-// #endif
+
+  // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+     ROSE_ASSERT(sourceFile != NULL);
+     ROSE_ASSERT(sourceFile->get_file_info() != NULL);
+     source_file_id = sourceFile->get_file_info()->get_physical_file_id();
 
 #if 0
      printf ("In AttachPreprocessingInfoTreeTrav() constructor: sourceFile = %p sourceFile->getFileName() = %s \n",sourceFile,sourceFile->getFileName().c_str());
@@ -238,11 +234,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
      if ( locatedNode != NULL )
         {
        // printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_line());
-          printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_physical_line());
+          printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_physical_line(source_file_id));
           if (locatedNode->get_endOfConstruct() != NULL)
              {
             // printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_line());
-               printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_physical_line());
+               printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_physical_line(source_file_id));
              }
         }
        else
@@ -258,10 +254,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // Debugging information...
         {
        // int line        = locatedNode->get_startOfConstruct()->get_line();
-          int line        = locatedNode->get_startOfConstruct()->get_physical_line();
+          int line        = locatedNode->get_startOfConstruct()->get_physical_line(source_file_id);
           int col         = locatedNode->get_startOfConstruct()->get_col();
        // int ending_line = locatedNode->get_endOfConstruct()->get_line();
-          int ending_line = locatedNode->get_endOfConstruct()->get_physical_line();
+          int ending_line = locatedNode->get_endOfConstruct()->get_physical_line(source_file_id);
           int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
        // DQ (8/6/2012): Added support for endOfConstruct().
@@ -303,7 +299,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // DQ (12/18/2012): Switch to using the physical file id now that we support this feature.
      int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                          Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                         locatedFileInfo->get_physical_file_id();
+                         locatedFileInfo->get_physical_file_id(source_file_id);
 #endif
 
 #if 0
@@ -434,14 +430,16 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                if ( attachCommentOrDirective == true )
                   {
 #if DEBUG_ATTACH_PREPROCESSING_INFO || 0
-                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
+                    printf ("Attaching \"%s\" (from file = %s file_id = %d line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
                          currentPreprocessingInfoPtr->getString().c_str(),
+                         currentPreprocessingInfoPtr->getFilename().c_str(),
+                         currentPreprocessingInfoPtr->getFileId(),
                          currentPreprocessingInfoPtr->getLineNumber(),
                          (locatedNode->get_file_info()->isCompilerGenerated() == true) ? "compiler-generated" : "non-compiler-generated",
                          locatedNode,
                          locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str(),
                       // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
-                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(),
+                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(source_file_id),
                          PreprocessingInfo::relativePositionName(location).c_str());
                     SgNode* parentNode = locatedNode->get_parent();
                     if (parentNode != NULL)
@@ -1275,7 +1273,7 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
 #else
      int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                          Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                         locatedFileInfo->get_physical_file_id();
+                         locatedFileInfo->get_physical_file_id(source_file_id);
 #endif
 
 #if 0
@@ -1649,7 +1647,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
                int sourceFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                // Sg_File_Info::getIDFromFilename(sourceFileInfo->get_filename()) : 
                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFileInfo->get_filename())) : 
-                                  sourceFileInfo->get_physical_file_id();
+                                  sourceFileInfo->get_physical_file_id(source_file_id);
 #endif
 #endif
 
@@ -1831,7 +1829,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
                                // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
                                   Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                  currentFileInfo->get_physical_file_id();
+                                  currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 #endif
 
@@ -1962,7 +1960,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #else
           int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                   currentFileInfo->get_physical_file_id();
+                                   currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 
 #if 0
@@ -2018,7 +2016,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  //                         currentFileInfo->get_file_id();
                     fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                             Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                            currentFileInfo->get_physical_file_id();
+                                            currentFileInfo->get_physical_file_id(source_file_id);
                   }
                 
 #if 0
@@ -2028,10 +2026,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
                if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
                   {
-                 // Current node belongs to the file the name of which has been specified
-                 // on the command line
+                 // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+                 // Current node belongs to the file the name of which has been specified on the command line
                  // line = currentLocNodePtr->get_file_info()->get_line();
-                    line = currentLocNodePtr->get_file_info()->get_physical_line();
+                 // line = currentLocNodePtr->get_file_info()->get_physical_line();
+                    line = currentLocNodePtr->get_file_info()->get_physical_line(source_file_id);
 
                  // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
                  // col  = currentLocNodePtr->get_file_info()->get_col();
@@ -2186,7 +2185,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                locatedNode->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): debug");
 #endif
             // currentFileNameId = locatedNode->get_file_info()->get_file_id();
-               currentFileNameId = locatedNode->get_file_info()->get_physical_file_id();
+               currentFileNameId = locatedNode->get_file_info()->get_physical_file_id(source_file_id);
              }
             else
              {
@@ -2202,7 +2201,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // Newer version of code using the physical source code position.
                currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                   currentFileInfo->get_physical_file_id();
+                                   currentFileInfo->get_physical_file_id(source_file_id);
 #endif
              }
 #if 0
@@ -2227,7 +2226,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
        // DQ (12/20/2012): Adding support for physical source position.
           if (locatedNode != NULL)
              {
-               ROSE_ASSERT(locatedNode->get_file_info()->get_physical_file_id() == currentFileNameId);
+               ROSE_ASSERT(locatedNode->get_file_info()->get_physical_file_id(source_file_id) == currentFileNameId);
              }
 
 #if 0
@@ -2258,14 +2257,14 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                if ( locatedNode->get_file_info()->hasPositionInSource() == true )
                   {
                  // fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_file_id();
-                    fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_physical_file_id();
+                    fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_physical_file_id(source_file_id);
                   }
 
                if (locatedNode->get_endOfConstruct() != NULL)
                   {
                     ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
                  // lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_line();
-                    lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_physical_line();
+                    lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_physical_line(source_file_id);
                   }
              }
             else
@@ -2283,7 +2282,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #else
                fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                   currentFileInfo->get_physical_file_id();
+                                   currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 
             // Use one billion as the max number of lines in a file
@@ -2421,13 +2420,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
                          // if (targetNode->get_file_info()->get_file_id() < 0)
-                            if (targetNode->get_file_info()->get_physical_file_id() < 0)
+                            if (targetNode->get_file_info()->get_physical_file_id(source_file_id) < 0)
                                {
 #if 1
                                  printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
 #endif
 #if 1
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id());
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id(source_file_id));
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());

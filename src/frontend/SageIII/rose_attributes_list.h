@@ -278,7 +278,7 @@ class PreprocessingInfo
        // contains more information since it is a tokenized stream.
           token_container* tokenStream;
 
-     public:         
+     public:
           typedef struct r_include_directive
              {
             // The parameter 'directive' contains the (expanded) file name found after 
@@ -402,6 +402,10 @@ class PreprocessingInfo
           DirectiveType getTypeOfDirective() const;
           RelativePositionType getRelativePosition(void) const;
           void setRelativePosition(RelativePositionType relPos);
+
+       // DQ (2/27/2019): Adding support for CPP directives and comments to have filename information (already present, but we need to access it).
+          std::string getFilename() const;
+          int getFileId() const;
 
        // Number of lines occupied by this comment (count the number of line feeds)
           int getNumberOfLines() const;

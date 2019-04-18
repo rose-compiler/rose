@@ -364,6 +364,22 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* p
 
 
 /*! 
+  * \author Tristan Vanderbruggen
+  * \date 2019.
+ */
+list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgProject* project) {
+  list<SgFunctionDeclaration*> funDeclList;
+  RoseAst ast(project);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgFunctionDeclaration * funDecl = isSgFunctionDeclaration(*i);
+    if (funDecl == NULL) continue;
+    funDeclList.push_back(funDecl);
+  }
+  return funDeclList;
+}
+
+
+/*! 
   * \author Markus Schordan
   * \date 2012.
  */

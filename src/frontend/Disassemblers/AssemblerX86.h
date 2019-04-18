@@ -1,11 +1,12 @@
 /* Assembly specific to the x86 architecture. */
 
-#ifndef ROSE_ASSEMBLER_X86_H
-#define ROSE_ASSEMBLER_X86_H
+#ifndef ROSE_BinaryAnalysis_AssemblerX86_H
+#define ROSE_BinaryAnalysis_AssemblerX86_H
 
 #include "Assembler.h"
 
-//#include "sage3.h"
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** This class contains methods for assembling x86 instructions (SgAsmX86Instruction).
  *
@@ -464,5 +465,8 @@ private:
     static InsnDictionary defns;                /**< Instruction assembly definitions organized by X86InstructionKind. */
     bool honor_operand_types;                   /**< If true, operand types rather than values determine assembled form. */
 };
+
+} // namespace
+} // namespace
 
 #endif

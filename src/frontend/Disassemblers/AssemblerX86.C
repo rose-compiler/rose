@@ -13,7 +13,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
-using namespace Rose;
+namespace Rose {
+namespace BinaryAnalysis {
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
@@ -1825,3 +1826,6 @@ AssemblerX86::assembleProgram(const std::string &source)
     return SgUnsignedCharList(buf->data(), buf->data() + buf->size());
 #endif
 }
+
+} // namespace
+} // namespace
