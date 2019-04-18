@@ -1053,7 +1053,7 @@ StatementImpl::begin(const StatementPtr &stmt)
                     sqlite3_cmd = NULL;
                 }
             } catch (const std::runtime_error &e) {
-                throw Exception(e, tranx->impl->conn, tranx, stmt);
+                throw Exception(e.what(), tranx->impl->conn, tranx, stmt);
             }
             break;
         }
@@ -1065,7 +1065,7 @@ StatementImpl::begin(const StatementPtr &stmt)
                 postgres_result = tranx->impl->postgres_tranx->exec(sql_expanded);
                 postgres_iter = postgres_result.begin();
             } catch (const std::runtime_error &e) { // postgres exception
-                throw Exception(e, tranx->impl->conn, tranx, stmt);
+                throw Exception(e.what(), tranx->impl->conn, tranx, stmt);
             }
             break;
         }

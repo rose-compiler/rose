@@ -24,6 +24,10 @@ namespace Partitioner2 {
 
 namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BasicBlockSemantics
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Information related to instruction semantics.
  *
  *  The purpose of this class is mainly to encapsulate all instruction semantics information so it can be accessed
@@ -95,7 +99,11 @@ public:
         return usingDispatcher && operators ? operators->currentState() : BaseSemantics::StatePtr();
     }
 };
-    
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BasicBlock
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Basic block information.
  *
  *  A basic block is a sequence of distinct instructions with linear control flow from the first instruction to the last.  No
@@ -453,10 +461,10 @@ public:
      *  Thread safety: This method is not thread safe. */
     AddressIntervalSet dataAddresses() const;
 
-    /** Determine if this basic block contains the specified data block.
+    /** Determine if this basic block contains the specified data block, or equivalent.
      *
-     *  If the basic block owns the specified data block then this method returns the specified pointer, otherwise it returns
-     *  the null pointer.
+     *  If the basic block owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
      *
      *  Thread safety: This method is not thread safe. */
     DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;

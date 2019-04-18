@@ -32,5 +32,6 @@ install(FILES  transformationSupport.h
 	       initialize.h
 	       CommandLine.h
 	       Combinatorics.h
+	       RoseException.h
 	DESTINATION ${INCLUDE_INSTALL_DIR}
   )

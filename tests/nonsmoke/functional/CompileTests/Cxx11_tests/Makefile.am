@@ -295,6 +295,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1522-0.C \
    rose-1774.C \
    rose-1763.C \
+   rose-1863.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -334,6 +335,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_45.C \
    test2019_46.C \
    test2019_47.C \
+   test2019_48.C \
+   test2019_49.C \
    test2019_50.C \
    test2019_51.C \
    test2019_52.C \
@@ -341,6 +344,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_54.C \
    test2019_55.C \
    test2019_56.C \
+   test2019_59.C \
+   test2019_60.C \
+   test2019_61.C \
    test2019_62.C \
    test2019_63.C \
    test2019_64.C \
@@ -430,6 +436,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_164.C \
    test2019_165.C \
    test2019_166.C \
+   test2019_167.C \
    test2019_168.C \
    test2019_169.C \
    test2019_170.C \
@@ -455,41 +462,219 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_192.C \
    test2019_193.C \
    test2019_194.C \
-   test2019_195.C 
-
-TESTCODE_CURRENTLY_FAILING = \
-   test2012_10.C \
+   test2019_195.C \
+   test2019_196_a.C \
+   test2019_196_b.C \
+   test2019_197.C \
+   test2019_198_a.C \
+   test2019_198_b.C \
+   test2019_200_a.C \
+   test2019_200_b.C \
+   test2019_202.C \
+   test2019_205.C \
+   test2019_206.C \
+   test2019_207.C \
+   test2019_208.C \
+   test2019_209.C \
+   test2019_210.C \
+   test2019_211.C \
+   test2019_212.C \
+   test2019_213.C \
+   test2019_214.C \
+   test2019_215.C \
+   test2019_216.C \
+   test2019_217.C \
+   test2019_218.C \
+   test2019_219.C \
+   test2019_220.C \
+   test2019_221.C \
+   test2019_222.C \
+   test2019_223.C \
+   test2019_224.C \
+   test2019_225.C \
+   test2019_226.C \
+   test2019_227.C \
+   test2019_228.C \
+   test2019_229.C \
+   test2019_230.C \
+   test2019_231.C \
+   test2019_232.C \
+   test2019_233.C \
    test2012_23.C \
-   test2012_24.C \
    test2014_46.C \
    test2015_11.C \
    test2016_40.C \
+   test2019_15.C \
+   test2019_43.C \
+   test2019_44.C \
+   test2019_46.C \
+   test2019_109.C \
+   test2019_126.C \
+   test2019_127.C \
+   test2019_128.C \
+   test2019_182.C \
+   test2019_183.C \
+   test2019_234.C \
+   test2019_235.C \
+   test2019_314.C \
+   test2019_315.C \
+   test2019_316.C \
+   test2019_317.C \
+   test2019_318.C \
+   test2019_319.C \
+   test2019_320.C \
+   test2019_321.C \
+   test2019_322.C \
+   test2019_323.C \
+   test2019_324.C \
+   test2019_325.C \
+   test2019_326.C \
+   test2019_327.C \
+   test2019_328.C \
+   test2019_329.C \
+   test2019_330.C \
+   test2019_331.C \
+   test2019_332.C \
+   test2019_333.C \
+   test2019_334.C \
+   test2019_335.C \
+   test2019_336.C \
+   test2019_337.C \
+   test2019_338.C \
+   test2019_339.C \
+   test2019_340.C \
+   test2019_341.C \
+   test2019_342.C \
+   test2019_343.C \
+   test2019_344.C \
+   test2019_347.C \
+   test2019_349.C \
+   test2019_350.C \
+   test2019_351.C \
+   test2019_352.C \
+   test2019_353.C \
+   test2019_354.C \
+   test2019_355.C \
+   test2019_356.C \
+   test2019_357.C \
+   test2019_358.C \
+   test2019_359.C \
+   test2019_360.C \
+   test2019_360.C \
+   test2019_361.C \
+   test2019_362.C \
+   test2019_363.C \
+   test2019_364.C \
+   test2019_365.C \
+   test2019_367.C \
+   test2019_368.C \
+   test2019_369.C \
+   test2019_370.C \
+   test2019_371.C \
+   test2019_372.C \
+   test2019_373.C 
+
+TESTCODE_CURRENTLY_FAILING = \
+   test2012_10.C \
+   test2012_24.C \
    test2016_41.C \
    test2017_17.C \
-   test2019_15.C \
    test2019_16.C \
    test2019_34.C \
    test2019_37.C \
    test2019_38.C \
-   test2019_43.C \
-   test2019_44.C \
-   test2019_48.C \
-   test2019_49.C \
-   test2019_59.C \
-   test2019_60.C \
    test2019_103.C \
    test2019_104.C \
-   test2019_109.C \
    test2019_122.C \
-   test2019_126.C \
-   test2019_127.C \
-   test2019_128.C \
    test2019_132.C \
    test2019_148.C \
    test2019_149.C \
-   test2019_167.C \
-   test2019_182.C \
-   test2019_183.C 
+   test2019_199.C \
+   test2019_201.C \
+   test2019_203.C \
+   test2019_204.C \
+   test2019_236.C \
+   test2019_237.C \
+   test2019_238.C \
+   test2019_239.C \
+   test2019_240.C \
+   test2019_241.C \
+   test2019_242.C \
+   test2019_243.C \
+   test2019_244.C \
+   test2019_245.C \
+   test2019_246.C \
+   test2019_247.C \
+   test2019_248.C \
+   test2019_249.C \
+   test2019_250.C \
+   test2019_251.C \
+   test2019_252.C \
+   test2019_253.C \
+   test2019_254.C \
+   test2019_255.C \
+   test2019_256.C \
+   test2019_257.C \
+   test2019_258.C \
+   test2019_259.C \
+   test2019_260.C \
+   test2019_261.C \
+   test2019_262.C \
+   test2019_263.C \
+   test2019_264.C \
+   test2019_265.C \
+   test2019_266.C \
+   test2019_267.C \
+   test2019_268.C \
+   test2019_269.C \
+   test2019_270.C \
+   test2019_271.C \
+   test2019_272.C \
+   test2019_273.C \
+   test2019_274.C \
+   test2019_275.C \
+   test2019_276.C \
+   test2019_277.C \
+   test2019_278.C \
+   test2019_279.C \
+   test2019_280.C \
+   test2019_281.C \
+   test2019_282.C \
+   test2019_283.C \
+   test2019_284.C \
+   test2019_285.C \
+   test2019_286.C \
+   test2019_287.C \
+   test2019_288.C \
+   test2019_289.C \
+   test2019_290.C \
+   test2019_291.C \
+   test2019_292.C \
+   test2019_293.C \
+   test2019_294.C \
+   test2019_295.C \
+   test2019_296.C \
+   test2019_297.C \
+   test2019_298.C \
+   test2019_299.C \
+   test2019_300.C \
+   test2019_301.C \
+   test2019_302.C \
+   test2019_303.C \
+   test2019_304.C \
+   test2019_305.C \
+   test2019_306.C \
+   test2019_307.C \
+   test2019_308.C \
+   test2019_309.C \
+   test2019_310.C \
+   test2019_311.C \
+   test2019_312.C \
+   test2019_313.C \
+   test2019_345.C \
+   test2019_346.C \
+   test2019_348.C \
+   test2019_366.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -619,6 +804,20 @@ RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
 
 rajaTest:../../testTranslator
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
+
+# DQ (2/25/2019): Combined compilation of two files has particular errors.
+test2019_196_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_196_a.C $(srcdir)/test2019_196_b.C
+
+# DQ (2/26/2019): Combined compilation of two files has particular errors.
+test2019_198_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_198_a.C $(srcdir)/test2019_198_b.C
+
+# DQ (2/27/2019): Combined compilation of two files has particular errors.
+test2019_200_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_200_a.C $(srcdir)/test2019_200_b.C
+
+
 
 #########
 # Targets lists

@@ -332,7 +332,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                RegisterDescriptor REG_SP = args.thread->get_process()->disassembler()->stackPointerRegister();
+                Rose::BinaryAnalysis::RegisterDescriptor REG_SP = args.thread->get_process()->disassembler()->stackPointerRegister();
                 uint64_t sp = args.thread->operators()->readRegister(REG_SP)->get_number();
                 uint64_t top = 0;
                 bool isTopValid = false;
@@ -348,13 +348,16 @@ public:
                     }
                     if (isTopValid) {
                         if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-5))) &&
-                            (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                            (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                             Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-2))) &&
-                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                                   (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                                    Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-6))) &&
-                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                                   (Rose::BinaryAnalysis::x86_call==call_insn->get_kind() ||
+                                    Rose::BinaryAnalysis::x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         }
                     }

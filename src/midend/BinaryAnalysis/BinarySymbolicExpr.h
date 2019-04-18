@@ -18,6 +18,7 @@
 #include <boost/unordered_map.hpp>
 #include <cassert>
 #include <inttypes.h>
+#include <RoseException.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Set.h>
@@ -43,9 +44,9 @@ namespace SymbolicExpr {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Exceptions for symbolic expressions. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    explicit Exception(const std::string &mesg): Rose::Exception(mesg) {}
 };
 
 /** Operators for interior nodes of the expression tree.

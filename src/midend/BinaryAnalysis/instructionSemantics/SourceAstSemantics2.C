@@ -164,7 +164,9 @@ RiscOperators::makeMask(size_t nBits, size_t nSet, size_t sa) {
 
 BaseSemantics::SValuePtr
 RiscOperators::unspecified_(size_t nbits) {
-    return makeSValue(nbits, NULL, "unspecified()");
+    ASSERT_require(nbits <= 32);
+    uint32_t mask = IntegerOps::genMask<uint32_t>(nbits);
+    return makeSValue(nbits, NULL, "(unspecified() & " + StringUtility::intToHex(mask) + ")");
 }
 
 void
@@ -438,7 +440,18 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemanti
 
 BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    TODO("[Robb P. Matzke 2015-09-23]: generate signed binary '*' expression");
+    size_t operandsSize = std::max(a->get_width(), b->get_width());
+    std::string aSignedType = SValue::signedTypeNameForSize(a->get_width());
+    std::string bSignedType = SValue::signedTypeNameForSize(b->get_width());
+    std::string operandsSignedType = SValue::signedTypeNameForSize(operandsSize);
+    size_t productSize = a->get_width() + b->get_width();
+    std::string productUnsignedType = SValue::unsignedTypeNameForSize(productSize);
+
+    // ctext = ((productUnsigned)((operandsSigned)(aSigned)a * (operandsSigned)(bSigned)b))
+    std::string ctext = "((" + productUnsignedType + ")("
+                        "(" + operandsSignedType + ")(" + aSignedType + ")" + SValue::promote(a)->ctext() + " * " +
+                        "(" + operandsSignedType + ")(" + bSignedType + ")" + SValue::promote(b)->ctext() + "))";
+    return makeSValue(productSize, NULL, ctext);
 }
 
 BaseSemantics::SValuePtr

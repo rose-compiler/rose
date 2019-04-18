@@ -9576,6 +9576,31 @@ SgPragma* SageBuilder::buildPragma(const std::string & name)
   return result;
 }
 
+
+SgEmptyDeclaration* SageBuilder::buildEmptyDeclaration()
+   {
+  // Build an empty declaration (useful for adding precission to comments and CPP handling under token-based unparsing).
+     SgEmptyDeclaration* emptyDeclaration = new SgEmptyDeclaration();
+     ROSE_ASSERT(emptyDeclaration != NULL);
+
+     setOneSourcePositionForTransformation(emptyDeclaration);
+
+     emptyDeclaration->set_definingDeclaration (emptyDeclaration);
+     emptyDeclaration->set_firstNondefiningDeclaration(emptyDeclaration);
+
+  // DQ (7/14/2012): Set the parent so that we can be consistent where possible (class declarations and
+  // enum declaration can't have there parent set since they could be non-autonomous declarations).
+     emptyDeclaration->set_parent(topScopeStack());
+
+     if (topScopeStack() != NULL)
+        {
+          ROSE_ASSERT(emptyDeclaration->get_parent() != NULL);
+        }
+
+     return emptyDeclaration;
+   }
+
+
 SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* stmt2, SgStatement* stmt3, SgStatement* stmt4, SgStatement* stmt5, SgStatement* stmt6, SgStatement* stmt7, SgStatement* stmt8, SgStatement* stmt9, SgStatement* stmt10)
 {
   SgBasicBlock* result = new SgBasicBlock();
@@ -12863,7 +12888,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
        else
         {
-       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unknow.
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
@@ -12937,6 +12962,12 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (9/24/2012): This only appears to happen for large tests (e.g. ROSE compiling ROSE), alow it for the moment and look into this later.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                printf ("WARNING: In SageBuilder::buildClassDeclaration_nfi(): but a defining declaration was found to have already been built (might be an error), so returning it defining_classDeclaration = %p \n",defining_classDeclaration);
+#endif
+
+#if 0
+            // DQ (2/26/2019): Debugging support for multiple files on the command line.
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
 #endif
                return defining_classDeclaration;
              }

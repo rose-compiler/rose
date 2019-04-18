@@ -118,7 +118,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 if !ROSE_USING_GCC_VERSION_LATER_6_1
 TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_04.C \
-     mergeTest_05.C 
+     mergeTest_05.C
 
 # DQ (4/9/2017): This appears to be a problem for GNU 4.8 using EDG 4.9.
 if !ROSE_USE_EDG_VERSION_4_9

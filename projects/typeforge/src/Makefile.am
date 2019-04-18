@@ -11,7 +11,7 @@ typeforge_YFLAGS = -p ltl_ # yacc flags for specification parser (not used yet)
 typeforge_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 typeforge_DEPENDENCIES=
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/typeforge/src -g -rdynamic
 
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -28,8 +28,7 @@ check-typeforge: typeforge
 	@echo ================================================================
 	@echo RUNNING TYPEFORGE TESTS
 	@echo ================================================================
-	rm -f typegraph.dot
-	rm -f rose_casttest3.C
+	rm -f typegraph.dot craft_initial.json rose_casttest3.C
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
 #	./typeforge --explicit $(srcdir)/tests/casttest1.C
@@ -58,6 +57,7 @@ docs:
 	cd "$(srcdir)" && doxygen
 
 clean-local:
+	rm craft_initial.json 
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg

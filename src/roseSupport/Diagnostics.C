@@ -14,8 +14,9 @@
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
 #include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
 #include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
-#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParsser
+#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
+#include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
@@ -133,6 +134,7 @@ void initialize() {
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::SymbolicExprParser::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
+        BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif

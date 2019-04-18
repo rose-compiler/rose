@@ -70,6 +70,7 @@ struct Settings {
 
         struct {
             size_t fieldWidth;                          /**< Min characters to use for the instruction mnemonic. */
+            std::string semanticFailureMarker;          /**< Mark instruction if it had semantic failures. */
         } mnemonic;                                     /**< Settings for instruction mnemonics. */
 
         struct {

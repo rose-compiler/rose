@@ -25,7 +25,7 @@ enum DUPLICATE_OPTION LibraryIdentification::duplicateOptionFromString(std::stri
 
 
 
-FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(std::string dbName) 
+FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbName) 
 {
     database_name = dbName;
     //open the database

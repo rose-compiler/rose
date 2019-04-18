@@ -165,6 +165,10 @@ called "support", "library" and "tool".
 The phases can have any name you like, and the rules that this script generates will refer to variables and macros
 whose names begin with the phase followed by an underscore (or no prefix if no phase).
 
+=item --rpath=I<PATHS>
+
+A colon-separated list of directory names that will be set as the RPATH value when generating an executable.
+
 =item Compiler and linker switches
 
 The following switches are recognized and passed along to the compiler and/or linker. This list is intentionally short
@@ -271,6 +275,7 @@ my $ncompiled = 0;	    # number of sources compiled
 my @mapped_dirs;	    # empty, or the arguments of --map switch (absolute source dir and relative build dir)
 my $command_flags = "";     # content of the ^-flags in tup commands
 my $emit_compilation_db;    # emit rules to generate LLVM compilation database files; value is Tup group name
+my $rpath;
 
 ########################################################################################################################
 sub parse_command_line {
@@ -443,6 +448,17 @@ sub parse_command_line {
             $phase = $1;
             next;
         }
+
+	# --rpath=DIRS
+	if ($arg eq "--rpath") {
+	    die "$arg0: \"$arg\" expects an argument\n" unless @_;
+	    $rpath = shift @_;
+	    next;
+	}
+	if ($arg =~ /^--rpath=(.*)/) {
+	    $rpath = $1;
+	    next;
+	}
 
         # Switches passed to the compiler
         if ($arg =~ /^-[DIU]$/) {
@@ -734,6 +750,7 @@ sub generate_link_rules {
 
     my $lang = linker_language(keys %{$sources});
     my $uc_compiler = TupScripts::compiler_exe($lang);
+    my @rpath_list = split /:/, $rpath;
 
     # Get the list of linker inputs
     my @linker_inputs;
@@ -794,11 +811,21 @@ sub generate_link_rules {
 	my($lib_dirname) = TupScripts::directory_name($lib);
 	push @linker_order_inputs, $lib unless $lib =~ /^\//; # absolute names are not managed by Tup
 	if ($lang eq 'cxx' || $lang eq 'c') {
-	    unshift @linker_args, "\@(${uc_compiler}_LIBDIR_SWITCH)$lib_dirname", "\@(${uc_compiler}_RPATH_SWITCH)$lib_dirname", "\@(${uc_compiler}_LIB_SWITCH)$lib_name";
+	    unshift @linker_args, "\@(${uc_compiler}_LIBDIR_SWITCH)$lib_dirname", "\@(${uc_compiler}_LIB_SWITCH)$lib_name";
+	    push @rpath_list, $lib_dirname;
 	} elsif ($lang eq 'd') {
 	    unshift @linker_args, $lib, "\@(${uc_compiler}_L_SWITCH)-rpath", "\@(${uc_compiler}_L_SWITCH)$lib_dirname";
 	} else {
 	    unshift @linker_args, $lib;
+	}
+    }
+
+    # RPATH stuff
+    if (@rpath_list) {
+	my %unique;
+	for my $path (@rpath_list) {
+	    push @linker_args, "\@(${uc_compiler}_RPATH_SWITCH)$path" unless $unique{$path};
+	    $unique{$path} = 1;
 	}
     }
 

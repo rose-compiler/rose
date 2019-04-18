@@ -4,6 +4,7 @@
 #include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
@@ -60,9 +61,9 @@ class FunctionSimilarity {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /* Exceptions thrown by this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &what): std::runtime_error(what) {}
+        Exception(const std::string &what): Rose::Exception(what) {}
         ~Exception() throw () {}
     };
 

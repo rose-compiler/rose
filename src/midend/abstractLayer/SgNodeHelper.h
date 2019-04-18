@@ -301,7 +301,8 @@ namespace SgNodeHelper {
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
 
-  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* SgProject);
+  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* project);
+  std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgProject* project);
   std::list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope

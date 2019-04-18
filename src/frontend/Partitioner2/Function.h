@@ -238,6 +238,14 @@ public:
      *  the specified pointer is null or the data block does not exist in this function then this method is a no-op. */
     void eraseDataBlock(const DataBlock::Ptr&);
 
+    /** Determine if this function contains the specified data block, or equivalent.
+     *
+     *  If this function owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
+     *
+     *  Thread safety: This method is not thread safe. */
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+
     /** Determines whether a function is frozen.  The ownership relations (instructions, basic blocks, and data blocks) cannot
      *  be adjusted while a function is in a frozen state.  All functions that are represented in the control flow graph are in
      *  a frozen state; detaching a function from the CFG thaws it. */

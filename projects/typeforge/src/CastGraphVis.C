@@ -6,6 +6,8 @@
 #include "AstProcessing.h"
 #include "RoseAst.h"
 
+namespace Typeforge {
+
 using namespace std;
 using namespace CppStdUtilities;
 
@@ -150,3 +152,6 @@ bool generateTypeGraph(SgProject* root, string dotFileName) {
   ss<<"}"<<endl;
   return writeFile(dotFileName,ss.str());
 }
+
+}
+

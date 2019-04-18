@@ -26,7 +26,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libsageInterface_la_SOURCES += \
      sageInterfaceAsm.C \
      sageInterface_asm.C \
-     sageBuilderAsm.C
+     SageBuilderAsm.C
 endif
 
 libsageInterface_la_LIBADD       =
@@ -46,7 +46,7 @@ pkginclude_HEADERS = \
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    pkginclude_HEADERS += \
      sageInterfaceAsm.h \
-     sageBuilderAsm.h
+     SageBuilderAsm.h
 # endif
 
 
