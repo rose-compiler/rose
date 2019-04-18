@@ -549,6 +549,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "generating icfg_backward.dot."<<endl;
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
 
+    lvAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+
     lvAnalysis->determineExtremalLabels(startFunRoot);
     lvAnalysis->run();
     cout << "INFO: attaching LV-data to AST."<<endl;
@@ -591,6 +593,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       std::string funtofind=option_start_function;
       RoseAst completeast(root);
       SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      rdAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
       rdAnalysis->determineExtremalLabels(startFunRoot);
       rdAnalysis->run();
     

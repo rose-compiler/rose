@@ -91,9 +91,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         return;
       }
     } else {
-      cerr<<"Error: function-call-return unhandled function call."<<endl;
-      cerr<<node->unparseToString()<<endl;
-      exit(1);
+      if(getSkipSelectedFunctionCalls()) {
+        // ignore unknown function call (requires command line option --ignore-unknown-functions)
+      } else {
+        cerr<<"Error: function-call-return unhandled function call."<<endl;
+        cerr<<node->unparseToString()<<endl;
+        exit(1);
+      }
     }
   }
 
@@ -285,8 +289,11 @@ VariableId DFTransferFunctions::getResultVariableId() {
 }
 
 void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
-  // empty by default. Only transfer functions that reason on function
-  // calls need to override this function.
+  _skipSelectedFunctionCalls=flag;
+}
+                       
+bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
 }
 
 bool DFTransferFunctions::isExternalFunctionCall(Label lab) {
