@@ -1696,24 +1696,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 ## Setup the EDG specific stuff
 SETUP_EDG
 
-# Find md5 or md5sum and create a signature for ROSE binary compatibility
-AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
-AC_SUBST(MD5)
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
-  has_edg_source=yes
-  if test "x$MD5" = "xfalse"; then
-    AC_MSG_WARN([could not find either md5 or md5sum; building binary EDG tarballs is disabled])
-    binary_edg_tarball_enabled=no
-  else
-    binary_edg_tarball_enabled=yes
-  fi
-else
-  has_edg_source=no
-  binary_edg_tarball_enabled=no # This is a binary release version of ROSE anyway
-fi
-
-AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
-AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 ROSE_ARG_ENABLE(
   [alternate-edg-build-cpu],
