@@ -574,9 +574,16 @@ string get_type_name(SgType* t)
                return nrtype->get_name();
              }
 
+         case T_RVALUE_REFERENCE:
+             {
+               SgRvalueReferenceType* rref_type = isSgRvalueReferenceType(t);
+               ROSE_ASSERT(rref_type != NULL);
+               return get_type_name(rref_type->get_base_type()) + "&&";
+             }
+
           default:
              {
-               printf("Error: unparse_type.C get_type_name(): Default case reached in switch: Unknown type \n");
+               printf("Error: unparse_type.C get_type_name(): Default case reached in switch: %s\n", t->class_name().c_str());
                ROSE_ASSERT(false);
                break;
              }
