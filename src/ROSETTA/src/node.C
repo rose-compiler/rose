@@ -364,13 +364,15 @@ Grammar::setUpNodes ()
   // printf ("nonTerminalList.size() = %" PRIuPTR " \n",nonTerminalList.size());
 
   // DQ (4/20/2014): Adding more support for ATerm library.
-     NEW_TERMINAL_MACRO (Aterm, "Aterm", "ATERM" );
+  // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+  // NEW_TERMINAL_MACRO (Aterm, "Aterm", "ATERM" );
 
   // DQ (3/14/2007): Added IR support for binaries
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
   // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
+  // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
+     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
 
   // ***********************************************************************
   // ***********************************************************************
@@ -623,9 +625,10 @@ Grammar::setUpNodes ()
   // well though the use of the ATerm API in ROSE (all this is demonstrated in the examples
   // in the projects/AtermTranslation directory).
 
-     Aterm.setFunctionPrototype ( "HEADER_ATERM_NODE", "../Grammar/LocatedNode.code");
-     Aterm.setDataPrototype     ( "std::string", "name", "= \"\"",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+  // Aterm.setFunctionPrototype ( "HEADER_ATERM_NODE", "../Grammar/LocatedNode.code");
+  // Aterm.setDataPrototype     ( "std::string", "name", "= \"\"",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ***************************************************************************************
   // ***************************************************************************************
@@ -1551,7 +1554,8 @@ Grammar::setUpNodes ()
   // ***************************************************************************************
   // DQ (4/20/2014): Added support for ATerms in the IR.
 
-     Aterm.setFunctionSource    ( "SOURCE_ATERM_NODE", "../Grammar/LocatedNode.code");
+  // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+  // Aterm.setFunctionSource    ( "SOURCE_ATERM_NODE", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************
