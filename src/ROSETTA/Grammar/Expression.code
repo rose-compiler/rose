@@ -4792,6 +4792,11 @@ SgDotStarOp::get_type() const
                someType = modifierType->get_base_type();
                goto keepStripping;
              }
+          case V_SgNonrealType:
+             {
+               returnType = someType;
+               break;
+             }
           default:
              {
 #if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
