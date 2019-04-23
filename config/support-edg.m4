@@ -1,6 +1,5 @@
 AC_DEFUN([ROSE_SUPPORT_EDG], [
 
-<<<<<<< HEAD
     ###############################################################################################################################
     # This part of the configuration is about what *version* of EDG to use when building ROSE. It has nothing to do with deciding
     # whether to compile EDG from source code, use a precompiled EDG binary, or do neither (that's all later).
@@ -15,9 +14,9 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 
     AC_MSG_NOTICE([enable_edg_version = "$enable_edg_version"])
     if test "$enable_edg_version" = ""; then
-       AC_MSG_NOTICE([default version of EDG used (4.9)])
-       edg_major_version_number=4
-       edg_minor_version_number=9
+       AC_MSG_NOTICE([default version of EDG used (5.0)])
+       edg_major_version_number=5
+       edg_minor_version_number=0
     else
        AC_MSG_NOTICE([specifying EDG version is not recommended])
        edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
