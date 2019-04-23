@@ -1622,7 +1622,8 @@ HEADER_LIST_DECLARATIONS
           SgName get_qualified_name_prefix_for_return_type() const;
 
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
-          static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+       // static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
           bool isNormalizedTemplateFunction() const;
@@ -2987,6 +2988,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           void set_definition( SgTemplateInstantiationDefn* definition );
 
        // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated. But this may be used elsewhere.
           void set_definition( SgClassDefinition* definition );
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly

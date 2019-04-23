@@ -1633,7 +1633,7 @@ bool Grammar::isIntegerKind(const string & typenameString)
 void
 Grammar::buildAtermSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)
    {
-  // This function calls the two seperate function to write and read the aterm.
+  // This function calls the two separate function to write and read the aterm.
 
      outputFile << "\n";
      outputFile << "// Conditional compilation of ATerm support in ROSE (see ROSE configure options).\n";
