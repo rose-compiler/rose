@@ -93,7 +93,8 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
  * @param[in] partitioner  Binary partitioner has the functions to
  * write or find
  * @return libToFuncsMap Libraries->set(Functions) unmatched
- * functions under "UNKNOWN"
+ * functions under "UNKNOWN", multimatched functions returned in 
+ * "MULTIPLE_LIBS"
  **/
 LibraryIdentification::LibToFuncsMap 
 LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& databaseName,

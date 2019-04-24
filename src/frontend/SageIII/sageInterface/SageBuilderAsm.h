@@ -36,6 +36,8 @@ SgBinaryComposite* buildBinaryComposite(const std::string &fileName);
 // These data type builders always return the same IR node and are thread-safe.
 
 // Generic data types
+SgAsmIntegerType* buildTypeU(size_t nBits);             /**< Unsigned type of specified size. */
+SgAsmIntegerType* buildTypeI(size_t nBits);             /**< Signed type of specified size. */
 SgAsmIntegerType* buildTypeU1();                        /**< 1-bit unsigned (Boolean) */
 SgAsmIntegerType* buildTypeU4();                        /**< 4-bit unsigned */
 SgAsmIntegerType* buildTypeU8();                        /**< 8-bit unsigned */
@@ -131,9 +133,9 @@ inline Insn* appendOperand(Insn* insn, SgAsmExpression* op) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build instruction
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind);
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *operand);
-SgAsmX86Instruction* buildX86Instruction(X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind, SgAsmExpression *operand);
+SgAsmX86Instruction* buildX86Instruction(Rose::BinaryAnalysis::X86InstructionKind, SgAsmExpression *lhs, SgAsmExpression *rhs);
 SgAsmX86Instruction *buildX86MultibyteNopInstruction(size_t nBytes);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

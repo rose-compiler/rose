@@ -254,8 +254,9 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         if (!remapped) {
-            mlog[ERROR] <<"cannot find a valid destination address for \"" <<StringUtility::cEscape(segment.name()) <<"\""
-                        <<" originally at " <<StringUtility::addrToString(interval.least()) <<"\n";
+            mlog[WARN] <<"cannot find a valid destination address for \"" <<StringUtility::cEscape(segment.name()) <<"\""
+                       <<"; leaving at " <<StringUtility::addrToString(interval.least()) <<"\n";
+            retval->insert(interval, segment);
         }
 
         // Add adjusted entry addresses to the set of all entry addresses.  This is optional, but sometimes helps the remap

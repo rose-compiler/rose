@@ -3,8 +3,9 @@
 
 #include "BinarySmtSolver.h"
 #include "Diagnostics.h"
-#include "Registers.h"
 #include "FormatRestorer.h"
+#include "Registers.h"
+#include "RoseException.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -411,10 +412,10 @@ typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for exceptions thrown by instruction semantics. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
     SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
+    Exception(const std::string &mesg, SgAsmInstruction *insn): Rose::Exception(mesg), insn(insn) {}
     void print(std::ostream&) const;
 };
 

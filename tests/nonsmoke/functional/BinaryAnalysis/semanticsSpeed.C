@@ -22,6 +22,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define NEW_API 2
 
 #include "DispatcherX86.h"
+
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();

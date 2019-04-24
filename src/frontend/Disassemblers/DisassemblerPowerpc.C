@@ -3,7 +3,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
 #include "BinaryUnparserPowerpc.h"
 #include "DispatcherPowerpc.h"

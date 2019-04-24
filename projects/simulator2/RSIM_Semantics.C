@@ -154,7 +154,7 @@ RiscOperators::dumpState() {
         out <<"  segments:\n";
         RegisterNames regNames(currentState()->registerState()->get_register_dictionary());
         BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
-            RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
+            Rose::BinaryAnalysis::RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
             out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)
                 <<" limit=" <<StringUtility::addrToString(node.value().limit)
                 <<" present=" <<(node.value().present?"yes":"no") <<"\n";
@@ -186,7 +186,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
     Super::writeRegister(reg, value);
     if (ARCH_X86 == architecture_ && reg.get_major() == x86_regclass_segment) {
         ASSERT_require2(0 == value->get_number() || 3 == (value->get_number() & 7), "GDT and privilege level 3");
@@ -195,7 +195,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
@@ -261,7 +261,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();

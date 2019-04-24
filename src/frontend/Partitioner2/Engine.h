@@ -2,14 +2,17 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>
 
@@ -127,10 +130,10 @@ public:
     };
 
     /** Errors from the engine. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         Exception(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
 
@@ -236,6 +239,8 @@ private:
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     Progress::Ptr progress_;                            // optional progress reporting
     ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
+    ThunkPredicates::Ptr functionMatcherThunks_;        // predicates to find thunks when looking for functions
+    ThunkPredicates::Ptr functionSplittingThunks_;      // predicates for splitting thunks from front of functions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -423,6 +428,19 @@ public:
     SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
     SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
     /** @} */
+
+    /** Save a partitioner and AST to a file.
+     *
+     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
+    virtual void savePartitioner(const Partitioner&, const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
+    /** Load a partitioner and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    virtual Partitioner loadPartitioner(const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
@@ -1198,6 +1216,18 @@ public:
     virtual void findingThunks(bool b) { settings_.partitioner.findingThunks = b; }
     /** @} */
 
+    /** Property: Predicate for finding functions that are thunks.
+     *
+     *  This collective predicate is used when searching for function prologues in order to create new functions. It's purpose
+     *  is to try to match sequences of instructions that look like thunks and the create a function at that address. A suitable
+     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
+    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    /** @} */
+
     /** Property: Whether to split thunk instructions into mini functions.
      *
      *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
@@ -1206,6 +1236,18 @@ public:
      * @{ */
     bool splittingThunks() const /*final*/ { return settings_.partitioner.splittingThunks; }
     virtual void splittingThunks(bool b) { settings_.partitioner.splittingThunks = b; }
+    /** @} */
+
+    /** Property: Predicate for finding thunks at the start of functions.
+     *
+     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
+     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
+     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
+     *  The list is consulted only when @ref splittingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
+    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
     /** @} */
 
     /** Property: Whether to find dead code.

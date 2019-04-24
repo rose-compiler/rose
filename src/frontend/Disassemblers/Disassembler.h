@@ -4,8 +4,9 @@
 #include "BinaryCallingConvention.h"
 #include "BinaryUnparser.h"
 #include "Diagnostics.h"                                // Rose::Diagnostics
-#include "Registers.h"
 #include "MemoryMap.h"
+#include "Registers.h"
+#include "RoseException.h"
 #include "integerOps.h"
 #include "Map.h"
 #include "BaseSemantics2.h"
@@ -13,6 +14,11 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
+
+#ifdef REG_SP
+// \pp possibly defined on __sun
+#undef REG_SP
+#endif /* REG_SP */
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,26 +48,26 @@ namespace BinaryAnalysis {
 class Disassembler {
 public:
     /** Exception thrown by the disassemblers. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** A bare exception not bound to any particular instruction. */
         Exception(const std::string &reason)
-            : std::runtime_error(reason), ip(0), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(0), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a virtual address but no raw data or instruction. */
         Exception(const std::string &reason, rose_addr_t ip)
-            : std::runtime_error(reason), ip(ip), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being disassembled. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-            : std::runtime_error(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : std::runtime_error(reason), ip(insn->get_address()), bit(0), insn(insn)
+            : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
 
         ~Exception() throw() {}

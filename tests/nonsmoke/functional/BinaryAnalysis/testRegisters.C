@@ -8,6 +8,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "Registers.h"
 
+using namespace Rose::BinaryAnalysis;
+
 int
 main()
 {

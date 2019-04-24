@@ -6,6 +6,7 @@
 #include "Diagnostics.h"
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 
 Printer::~Printer() {

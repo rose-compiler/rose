@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_ModulesX86_H
 
 #include <Partitioner2/Modules.h>
+#include <Partitioner2/Thunk.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -65,19 +66,6 @@ public:
     virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
-/** Match thunk.
- *
- *  Matches any thunk of the form matched by @ref isThunk.  This callback is invoked at addresses that are not part of the
- *  partitioner's CFG and will only match instructions not in the CFG. */
-class MatchThunk: public FunctionPrologueMatcher {
-protected:
-    std::vector<Function::Ptr> functions_;
-public:
-    static Ptr instance() { return Ptr(new MatchThunk); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
-};
-
 /** Match RET followed by PUSH with intervening no-op padding. */
 class MatchRetPadPush: public FunctionPrologueMatcher {
 protected:
@@ -110,24 +98,6 @@ public:
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
-/** Determines whether an instruction sequence begins with a thunk.  There are a number of these functions:
- *
- *  @li @ref isJmpImmThunk looks for "JMP address"
- *  @li @ref isJmpMemThunk looks for "JMP [address]"
- *  @li @ref isLeaJmpThunk looks for "LEA ECX, [EBP+const]; JMP address"
- *  @li @ref isMovJmpThunk looks for "MOV reg, [address]; JMP reg"
- *
- *  The @ref isThunk function tries to match any of the above patterns.  The return value is the number of instructions that
- *  were matched.
- *
- * @{ */
-size_t isJmpMemThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
-size_t isLeaJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
-size_t isMovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
-size_t isJmpImmThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
-size_t isThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
-/** @} */
-
 /** Matches "ENTER x, 0" */
 bool matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction*);
 
@@ -153,14 +123,6 @@ bool matchPushBp(const Partitioner&, SgAsmX86Instruction*);
 
 /** Matches "PUSH SI" or variant. */
 bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
-
-/** Returns number of leading instructions that form a valid thunk. */
-size_t isThunk(const std::vector<SgAsmInstruction*> &insns);
-
-/** Split thunks off from start of functions.
- *
- *  Splits as many thunks as possible off the front of all functions currently attached to the partitioner's CFG. */
-void splitThunkFunctions(Partitioner&);
 
 /** Reads a table of code addresses.
  *

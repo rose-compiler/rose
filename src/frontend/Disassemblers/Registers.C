@@ -680,8 +680,14 @@ RegisterDictionary::dictionary_arm7() {
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_powerpc()
-{
+RegisterDictionary::dictionary_powerpc() {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // WARNING: PowerPC documentation numbers register bits in reverse of their power-of-two position. ROSE numbers bits
+    //          according to their power of two, so that the bit corresponding to 2^i is said to be at position i in the
+    //          reigster.  In PowerPC documentation, the bit for 2^i is at N - (i+1) where N is the total number of bits in the
+    //          reigster.  All PowerPC bit position numbers need to be converted to the ROSE numbering.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("powerpc");
@@ -704,33 +710,64 @@ RegisterDictionary::dictionary_powerpc()
         /* Floating point status and control register */
         regs->insert("fpscr", powerpc_regclass_fpscr, 0, 0, 32);
 
-        /* Condition Register. This register is grouped into eight fields, where each field is 4 bits. Many PowerPC
-         * instructions define bit 31 of the instruction encoding as the Rc bit, and some instructions imply an Rc value equal
-         * to 1. When Rc is equal to 1 for integer operations, the CR field 0 is set to reflect the result of the instruction's
-         * operation: Equal (EQ), Greater Than (GT), Less Than (LT), and Summary Overflow (SO). When Rc is equal to 1 for
-         * floating-point operations, the CR field 1 is set to reflect the state of the exception status bits in the FPSCR: FX,
-         * FEX, VX, and OX. Any CR field can be the target of an integer or floating-point comparison instruction. The CR field
-         * 0 is also set to reflect the result of a conditional store instruction (stwcx or stdcx). There is also a set of
-         * instructions that can manipulate a specific CR bit, a specific CR field, or the entire CR, usually to combine
-         * several conditions into a single bit for testing. */
-        regs->insert("cr", powerpc_regclass_cr, 0, 0, 32);
-        for (unsigned i=0; i<32; i++) {
-            switch (i%4) {
-                case 0:
-                    regs->insert("cr"+StringUtility::numberToString(i/4), powerpc_regclass_cr, 0, i, 4);
-                    regs->insert("cr"+StringUtility::numberToString(i/4)+"*4+lt", powerpc_regclass_cr, 0, i, 1);
-                    break;
-                case 1:
-                    regs->insert("cr"+StringUtility::numberToString(i/4)+"*4+gt", powerpc_regclass_cr, 0, i, 1);
-                    break;
-                case 2:
-                    regs->insert("cr"+StringUtility::numberToString(i/4)+"*4+eq", powerpc_regclass_cr, 0, i, 1);
-                    break;
-                case 3:
-                    regs->insert("cr"+StringUtility::numberToString(i/4)+"*4+so", powerpc_regclass_cr, 0, i, 1);
-                    break;
-            }
-        }
+        // Condition Register. This register is grouped into eight fields, where each field is 4 bits. Many PowerPC
+        // instructions define the least significant bit of the instruction encoding as the Rc bit, and some instructions imply
+        // an Rc value equal to 1. When Rc is equal to 1 for integer operations, the CR0 field is set to reflect the result of
+        // the instruction's operation: Less than zero (LT), greater than zero (GT), equal to zero (EQ), and summary overflow
+        // (SO). When Rc is equal to 1 for floating-point operations, the CR1 field is set to reflect the state of the
+        // exception status bits in the FPSCR: FX, FEX, VX, and OX. Any CR field can be the target of an integer or
+        // floating-point comparison instruction. The CR0 field is also set to reflect the result of a conditional store
+        // instruction (stwcx or stdcx). There is also a set of instructions that can manipulate a specific CR bit, a specific
+        // CR field, or the entire CR, usually to combine several conditions into a single bit for testing.
+        regs->insert("cr",  powerpc_regclass_cr, 0,  0, 32);
+
+        regs->insert("cr0", powerpc_regclass_cr, 0, 28,  4);
+        regs->insert("cr0*4+lt", powerpc_regclass_cr, 0, 31, 1);
+        regs->insert("cr0*4+gt", powerpc_regclass_cr, 0, 30, 1);
+        regs->insert("cr0*4+eq", powerpc_regclass_cr, 0, 29, 1);
+        regs->insert("cr0*4+so", powerpc_regclass_cr, 0, 28, 1);
+
+        regs->insert("cr1", powerpc_regclass_cr, 0, 24,  4);
+        regs->insert("cr1*4+lt", powerpc_regclass_cr, 0, 27, 1);
+        regs->insert("cr1*4+gt", powerpc_regclass_cr, 0, 26, 1);
+        regs->insert("cr1*4+eq", powerpc_regclass_cr, 0, 25, 1);
+        regs->insert("cr1*4+so", powerpc_regclass_cr, 0, 24, 1);
+
+        regs->insert("cr2", powerpc_regclass_cr, 0, 20,  4);
+        regs->insert("cr2*4+lt", powerpc_regclass_cr, 0, 23, 1);
+        regs->insert("cr2*4+gt", powerpc_regclass_cr, 0, 22, 1);
+        regs->insert("cr2*4+eq", powerpc_regclass_cr, 0, 21, 1);
+        regs->insert("cr2*4+so", powerpc_regclass_cr, 0, 20, 1);
+
+        regs->insert("cr3", powerpc_regclass_cr, 0, 16,  4);
+        regs->insert("cr3*4+lt", powerpc_regclass_cr, 0, 19, 1);
+        regs->insert("cr3*4+gt", powerpc_regclass_cr, 0, 18, 1);
+        regs->insert("cr3*4+eq", powerpc_regclass_cr, 0, 17, 1);
+        regs->insert("cr3*4+so", powerpc_regclass_cr, 0, 16, 1);
+
+        regs->insert("cr4", powerpc_regclass_cr, 0, 12,  4);
+        regs->insert("cr4*4+lt", powerpc_regclass_cr, 0, 15, 1);
+        regs->insert("cr4*4+gt", powerpc_regclass_cr, 0, 14, 1);
+        regs->insert("cr4*4+eq", powerpc_regclass_cr, 0, 13, 1);
+        regs->insert("cr4*4+so", powerpc_regclass_cr, 0, 12, 1);
+
+        regs->insert("cr5", powerpc_regclass_cr, 0,  8,  4);
+        regs->insert("cr5*4+lt", powerpc_regclass_cr, 0, 11, 1);
+        regs->insert("cr5*4+gt", powerpc_regclass_cr, 0, 10, 1);
+        regs->insert("cr5*4+eq", powerpc_regclass_cr, 0,  9, 1);
+        regs->insert("cr5*4+so", powerpc_regclass_cr, 0,  8, 1);
+
+        regs->insert("cr6", powerpc_regclass_cr, 0,  4,  4);
+        regs->insert("cr6*4+lt", powerpc_regclass_cr, 0,  7, 1);
+        regs->insert("cr6*4+gt", powerpc_regclass_cr, 0,  6, 1);
+        regs->insert("cr6*4+eq", powerpc_regclass_cr, 0,  5, 1);
+        regs->insert("cr6*4+so", powerpc_regclass_cr, 0,  4, 1);
+
+        regs->insert("cr7", powerpc_regclass_cr, 0,  0,  4);
+        regs->insert("cr7*4+lt", powerpc_regclass_cr, 0,  3, 1);
+        regs->insert("cr7*4+gt", powerpc_regclass_cr, 0,  2, 1);
+        regs->insert("cr7*4+eq", powerpc_regclass_cr, 0,  1, 1);
+        regs->insert("cr7*4+so", powerpc_regclass_cr, 0,  0, 1);
 
         /* The processor version register is a 32-bit read-only register that identifies the version and revision level of the
          * processor. Processor versions are assigned by the PowerPC architecture process. Revision levels are implementation

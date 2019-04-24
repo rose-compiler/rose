@@ -431,6 +431,47 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
     debug <<"Debugger triggered: #" <<callNumber <<" for " <<(isBblock?"bblock=":"placeholder=") <<addrToString(va) <<"\n";
 }
 
+bool
+MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    // Disassemble the next few undiscovered instructions
+    static const size_t maxInsns = 2;                   // max length of a thunk
+    std::vector<SgAsmInstruction*> insns;
+    rose_addr_t va = anchor;
+    for (size_t i=0; i<maxInsns; ++i) {
+        if (partitioner.instructionExists(va))
+            break;                                      // look only for undiscovered instructions
+        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
+        if (!insn)
+            break;
+        insns.push_back(insn);
+        va += insn->get_size();
+    }
+    if (insns.empty())
+        return false;
+
+    functions_.clear();
+    size_t thunkSize = predicates_->isThunk(partitioner, insns);
+    if (0 == thunkSize)
+        return false;
+
+    // This is a thunk
+    functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
+
+    // Do we know the successors?  They would be the function(s) to which the thunk branches.
+    BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
+    for (size_t i=0; i<thunkSize; ++i)
+        bb->append(partitioner, insns[i]);
+    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
+        if (successor.expr()->is_number()) {
+            rose_addr_t targetVa = successor.expr()->get_number();
+            if (!partitioner.functionExists(targetVa))
+                insertUnique(functions_, Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH), sortFunctionsByAddress);
+        }
+    }
+
+    return true;
+}
+
 AddressIntervalSet
 deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
     ASSERT_not_null(map);

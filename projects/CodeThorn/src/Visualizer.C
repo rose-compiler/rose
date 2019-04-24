@@ -730,7 +730,7 @@ string Visualizer::foldedTransitionGraphToDot() {
     ss<<"style="<<(*j)->edge.dotEdgeStyle();
     ss<<"]";
     ss<<";"<<endl;
-    //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
+    // ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }
   ss<<"}\n";
   tg2=false;

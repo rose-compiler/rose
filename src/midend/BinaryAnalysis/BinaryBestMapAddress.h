@@ -4,6 +4,7 @@
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
@@ -19,11 +20,11 @@ namespace BinaryAnalysis {
 class BestMapAddress {
 public:
     /** Exceptions for this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construct an exception with a message. */
         explicit Exception(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
 
         /** Destructor. */
         ~Exception() throw () {}

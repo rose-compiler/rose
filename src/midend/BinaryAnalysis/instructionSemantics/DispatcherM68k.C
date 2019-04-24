@@ -2162,7 +2162,8 @@ struct IP_mac: P {
             case m68k_mac_acc2: macExtReg = d->REG_MACEXT2; break;
             case m68k_mac_acc3: macExtReg = d->REG_MACEXT3; break;
             default:
-                ASSERT_not_reachable("invalid mac accumulator register: " + stringifyM68kMacRegister(macAccReg.get_minor()));
+                ASSERT_not_reachable("invalid mac accumulator register: " +
+                                     stringifyBinaryAnalysisM68kMacRegister(macAccReg.get_minor()));
         }
         SValuePtr macAcc = ops->readRegister(macAccReg);
         SValuePtr macExt = ops->readRegister(macExtReg);
@@ -3864,7 +3865,8 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
             return ops->or_(z, ops->or_(ops->and_(n, ops->invert(v)), x));
         }
         default:
-            ASSERT_not_reachable("instruction is not conditional: " + stringifyM68kInstructionKind(kind));
+            ASSERT_not_reachable("instruction is not conditional: " +
+                                 stringifyBinaryAnalysisM68kInstructionKind(kind));
     }
 }
 

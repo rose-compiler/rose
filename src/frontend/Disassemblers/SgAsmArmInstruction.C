@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 
 using namespace Rose;                                   // temporary until this lives in "rose"
+using namespace Rose::BinaryAnalysis;                   // temporary
 
 unsigned
 SgAsmArmInstruction::get_anyKind() const {
