@@ -1337,6 +1337,7 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype ( "std::string", "register_name_string", "= \"\"",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/30/2019): I think this is redundent with the similar data member below.
   // DQ (12/20/2006): Record if global name qualification is required on the type.
   // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
@@ -1394,6 +1395,24 @@ Grammar::setUpNodes ()
   // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // to function.
+     InitializedName.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // to function.
+     InitializedName.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // to function.
+     InitializedName.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName

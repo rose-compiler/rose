@@ -115,6 +115,12 @@
 
 #endif
 
+#ifdef __sun
+// \pp This may not be correct
+#warning Is long long 128 bits?
+typedef long long __int128_t;
+#endif
+
 #if __cplusplus >= 201103L
 /* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
 /* DQ (10/8/2015): Added support for Intel compiler to handle fenv.h header file. 

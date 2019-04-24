@@ -154,7 +154,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/asmUnparser/AsmUnparser_compat.h line 44
+// /src/backend/asmUnparser/AsmUnparser_compat.h line 46
 namespace stringify {
     /** Convert ArmSignForExpressionUnparsing enum constant to a string. */
     const char* ArmSignForExpressionUnparsing(long);
@@ -262,7 +262,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 522
+// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 531
 namespace stringify { namespace Unparse_ExprStmt {
     /** Convert Unparse_ExprStmt::token_sequence_position_enum_type enum constant to a string. */
     const char* token_sequence_position_enum_type(long);
@@ -1216,7 +1216,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/abstractLayer/SgNodeHelper.h line 443
+// /src/midend/abstractLayer/SgNodeHelper.h line 446
 namespace stringify { namespace SgNodeHelper { namespace Pattern { namespace OutputTarget {
     /** Convert SgNodeHelper::Pattern::OutputTarget::OType enum constant to a string. */
     const char* OType(long);
@@ -2224,7 +2224,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinarySymbolicExprParser.h line 43
+// /src/midend/BinaryAnalysis/BinarySymbolicExprParser.h line 55
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExprParser { namespace Token {
     /** Convert Rose::BinaryAnalysis::SymbolicExprParser::Token::Type enum constant to a string. */
     const char* Type(long);
@@ -2260,7 +2260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryReachability.h line 21
+// /src/midend/BinaryAnalysis/BinaryReachability.h line 23
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Reachability {
     /** Convert Rose::BinaryAnalysis::Reachability::Reason enum constant to a string. */
     const char* Reason(long);
@@ -2332,7 +2332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinarySymbolicExpr.h line 944
+// /src/midend/BinaryAnalysis/BinarySymbolicExpr.h line 845
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Leaf {
     /** Convert Rose::BinaryAnalysis::SymbolicExpr::Leaf::LeafType enum constant to a string. */
     const char* LeafType(long);
@@ -2386,7 +2386,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 23
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 24
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     /** Convert Rose::BinaryAnalysis::FeasiblePath::SearchMode enum constant to a string. */
     const char* SearchMode(long);
@@ -2404,7 +2404,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 26
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 31
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     /** Convert Rose::BinaryAnalysis::FeasiblePath::SemanticMemoryParadigm enum constant to a string. */
     const char* SemanticMemoryParadigm(long);
@@ -2422,7 +2422,25 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 32
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 37
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
+    /** Convert Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder enum constant to a string. */
+    const char* EdgeVisitOrder(long);
+
+    /** Convert Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder enum constant to a string. */
+    std::string EdgeVisitOrder(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder member values as a vector. */
+    const std::vector<long>& EdgeVisitOrder();
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisFeasiblePathEdgeVisitOrder(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisFeasiblePathEdgeVisitOrder();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 44
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     /** Convert Rose::BinaryAnalysis::FeasiblePath::IoMode enum constant to a string. */
     const char* IoMode(long);
@@ -2440,7 +2458,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 35
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 47
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     /** Convert Rose::BinaryAnalysis::FeasiblePath::MayOrMust enum constant to a string. */
     const char* MayOrMust(long);
@@ -2458,7 +2476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 106
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 146
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath { namespace PathProcessor {
     /** Convert Rose::BinaryAnalysis::FeasiblePath::PathProcessor::Action enum constant to a string. */
     const char* Action(long);
@@ -2689,6 +2707,24 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Code
 namespace Rose {
     std::string stringifyBinaryAnalysisCodeInserterRelocType(long int n, const char *strip=NULL, bool canonic=false);
     const std::vector<long>& stringifyBinaryAnalysisCodeInserterRelocType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/BinaryAnalysis/libraryIdentification/FunctionIdDatabaseInterface.h line 28
+namespace stringify { namespace LibraryIdentification {
+    /** Convert LibraryIdentification::DUPLICATE_OPTION enum constant to a string. */
+    const char* DUPLICATE_OPTION(long);
+
+    /** Convert LibraryIdentification::DUPLICATE_OPTION enum constant to a string. */
+    std::string DUPLICATE_OPTION(long, const std::string &strip);
+
+    /** Return all LibraryIdentification::DUPLICATE_OPTION member values as a vector. */
+    const std::vector<long>& DUPLICATE_OPTION();
+}}
+
+namespace Rose {
+    std::string stringifyLibraryIdentificationDUPLICATE_OPTION(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyLibraryIdentificationDUPLICATE_OPTION();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -2944,6 +2980,24 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/MFB/include/MFB/Sage/graph.hpp line 35
+namespace stringify { namespace MFB { namespace Graph { namespace API {
+    /** Convert MFB::Graph::API::link_kind_e enum constant to a string. */
+    const char* link_kind_e(long);
+
+    /** Convert MFB::Graph::API::link_kind_e enum constant to a string. */
+    std::string link_kind_e(long, const std::string &strip);
+
+    /** Return all MFB::Graph::API::link_kind_e member values as a vector. */
+    const std::vector<long>& link_kind_e();
+}}}}
+
+namespace Rose {
+    std::string stringifyMFB_GraphAPIlink_kind_e(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyMFB_GraphAPIlink_kind_e();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/ROSETTA/src/AstNodeClass.h line 100
 namespace stringify { namespace AstNodeClass {
     /** Convert AstNodeClass::locationInTree enum constant to a string. */
@@ -3088,7 +3142,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 2593
+// /src/ROSETTA/src/binaryInstruction.C line 2617
 namespace stringify { namespace SgAsmRiscOperation {
     /** Convert SgAsmRiscOperation::RiscOperator enum constant to a string. */
     const char* RiscOperator(long);
@@ -3106,7 +3160,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3421
+// /src/ROSETTA/src/binaryInstruction.C line 3433
 namespace stringify { namespace SgAsmFunction {
     /** Convert SgAsmFunction::MayReturn enum constant to a string. */
     const char* MayReturn(long);
@@ -3124,7 +3178,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3431
+// /src/ROSETTA/src/binaryInstruction.C line 3443
 namespace stringify { namespace SgAsmFunction {
     /** Convert SgAsmFunction::FunctionReason enum constant to a string. */
     const char* FunctionReason(long);
@@ -3142,7 +3196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3586
+// /src/ROSETTA/src/binaryInstruction.C line 3598
 namespace stringify { namespace SgAsmFunction {
     /** Convert SgAsmFunction::function_kind_enum enum constant to a string. */
     const char* function_kind_enum(long);
@@ -3160,7 +3214,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3823
+// /src/ROSETTA/src/binaryInstruction.C line 3830
 namespace stringify { namespace SgAsmBlock {
     /** Convert SgAsmBlock::Reason enum constant to a string. */
     const char* Reason(long);
@@ -3178,7 +3232,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 4674
+// /src/ROSETTA/src/binaryInstruction.C line 4681
 namespace stringify { namespace SgAsmElfFileHeader {
     /** Convert SgAsmElfFileHeader::ObjectType enum constant to a string. */
     const char* ObjectType(long);
@@ -3196,7 +3250,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5094
+// /src/ROSETTA/src/binaryInstruction.C line 5101
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     /** Convert SgAsmElfSectionTableEntry::SectionType enum constant to a string. */
     const char* SectionType(long);
@@ -3214,7 +3268,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5121
+// /src/ROSETTA/src/binaryInstruction.C line 5128
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     /** Convert SgAsmElfSectionTableEntry::SectionFlags enum constant to a string. */
     const char* SectionFlags(long);
@@ -3232,7 +3286,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5523
+// /src/ROSETTA/src/binaryInstruction.C line 5530
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     /** Convert SgAsmElfSegmentTableEntry::SegmentType enum constant to a string. */
     const char* SegmentType(long);
@@ -3250,7 +3304,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5551
+// /src/ROSETTA/src/binaryInstruction.C line 5558
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     /** Convert SgAsmElfSegmentTableEntry::SegmentFlags enum constant to a string. */
     const char* SegmentFlags(long);
@@ -3268,7 +3322,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5897
+// /src/ROSETTA/src/binaryInstruction.C line 5904
 namespace stringify { namespace SgAsmElfSymbol {
     /** Convert SgAsmElfSymbol::ElfSymBinding enum constant to a string. */
     const char* ElfSymBinding(long);
@@ -3286,7 +3340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5903
+// /src/ROSETTA/src/binaryInstruction.C line 5910
 namespace stringify { namespace SgAsmElfSymbol {
     /** Convert SgAsmElfSymbol::ElfSymType enum constant to a string. */
     const char* ElfSymType(long);
@@ -3304,7 +3358,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7305
+// /src/ROSETTA/src/binaryInstruction.C line 7312
 namespace stringify { namespace SgAsmElfRelocEntry {
     /** Convert SgAsmElfRelocEntry::RelocType enum constant to a string. */
     const char* RelocType(long);
@@ -3322,7 +3376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7662
+// /src/ROSETTA/src/binaryInstruction.C line 7669
 namespace stringify { namespace SgAsmElfDynamicEntry {
     /** Convert SgAsmElfDynamicEntry::EntryType enum constant to a string. */
     const char* EntryType(long);
@@ -3340,7 +3394,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10161
+// /src/ROSETTA/src/binaryInstruction.C line 10168
 namespace stringify { namespace SgAsmPEFileHeader {
     /** Convert SgAsmPEFileHeader::HeaderFlags enum constant to a string. */
     const char* HeaderFlags(long);
@@ -3358,7 +3412,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10170
+// /src/ROSETTA/src/binaryInstruction.C line 10177
 namespace stringify { namespace SgAsmPEFileHeader {
     /** Convert SgAsmPEFileHeader::Subsystem enum constant to a string. */
     const char* Subsystem(long);
@@ -3376,7 +3430,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10180
+// /src/ROSETTA/src/binaryInstruction.C line 10187
 namespace stringify { namespace SgAsmPEFileHeader {
     /** Convert SgAsmPEFileHeader::DLLFlags enum constant to a string. */
     const char* DLLFlags(long);
@@ -3394,7 +3448,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10189
+// /src/ROSETTA/src/binaryInstruction.C line 10196
 namespace stringify { namespace SgAsmPEFileHeader {
     /** Convert SgAsmPEFileHeader::PairPurpose enum constant to a string. */
     const char* PairPurpose(long);
@@ -3412,7 +3466,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 11970
+// /src/ROSETTA/src/binaryInstruction.C line 11977
 namespace stringify { namespace SgAsmPESectionTableEntry {
     /** Convert SgAsmPESectionTableEntry::PESectionFlags enum constant to a string. */
     const char* PESectionFlags(long);
@@ -3430,7 +3484,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 13998
+// /src/ROSETTA/src/binaryInstruction.C line 14005
 namespace stringify { namespace SgAsmGenericSymbol {
     /** Convert SgAsmGenericSymbol::SymbolDefState enum constant to a string. */
     const char* SymbolDefState(long);
@@ -3448,7 +3502,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14005
+// /src/ROSETTA/src/binaryInstruction.C line 14012
 namespace stringify { namespace SgAsmGenericSymbol {
     /** Convert SgAsmGenericSymbol::SymbolType enum constant to a string. */
     const char* SymbolType(long);
@@ -3466,7 +3520,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14019
+// /src/ROSETTA/src/binaryInstruction.C line 14026
 namespace stringify { namespace SgAsmGenericSymbol {
     /** Convert SgAsmGenericSymbol::SymbolBinding enum constant to a string. */
     const char* SymbolBinding(long);
@@ -3484,7 +3538,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14552
+// /src/ROSETTA/src/binaryInstruction.C line 14559
 namespace stringify { namespace SgAsmGenericSection {
     /** Convert SgAsmGenericSection::SectionPurpose enum constant to a string. */
     const char* SectionPurpose(long);
@@ -3502,7 +3556,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15389
+// /src/ROSETTA/src/binaryInstruction.C line 15396
 namespace stringify { namespace SgAsmGenericFile {
     /** Convert SgAsmGenericFile::AddressSpace enum constant to a string. */
     const char* AddressSpace(long);
@@ -3520,7 +3574,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15396
+// /src/ROSETTA/src/binaryInstruction.C line 15403
 namespace stringify { namespace SgAsmGenericFile {
     /** Convert SgAsmGenericFile::Elasticity enum constant to a string. */
     const char* Elasticity(long);
@@ -3538,7 +3592,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15802
+// /src/ROSETTA/src/binaryInstruction.C line 15803
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecFamily enum constant to a string. */
     const char* ExecFamily(long);
@@ -3556,7 +3610,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15813
+// /src/ROSETTA/src/binaryInstruction.C line 15814
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecABI enum constant to a string. */
     const char* ExecABI(long);
@@ -3574,7 +3628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15837
+// /src/ROSETTA/src/binaryInstruction.C line 15838
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::InsSetArchitecture enum constant to a string. */
     const char* InsSetArchitecture(long);
@@ -3592,7 +3646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 16016
+// /src/ROSETTA/src/binaryInstruction.C line 16017
 namespace stringify { namespace SgAsmExecutableFileFormat {
     /** Convert SgAsmExecutableFileFormat::ExecPurpose enum constant to a string. */
     const char* ExecPurpose(long);
@@ -3607,6 +3661,60 @@ namespace stringify { namespace SgAsmExecutableFileFormat {
 namespace Rose {
     std::string stringifySgAsmExecutableFileFormatExecPurpose(long int n, const char *strip=NULL, bool canonic=false);
     const std::vector<long>& stringifySgAsmExecutableFileFormatExecPurpose();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 119
+namespace stringify { namespace Sawyer { namespace Tree {
+    /** Convert Sawyer::Tree::TraversalEvent enum constant to a string. */
+    const char* TraversalEvent(long);
+
+    /** Convert Sawyer::Tree::TraversalEvent enum constant to a string. */
+    std::string TraversalEvent(long, const std::string &strip);
+
+    /** Return all Sawyer::Tree::TraversalEvent member values as a vector. */
+    const std::vector<long>& TraversalEvent();
+}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeTraversalEvent(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifySawyerTreeTraversalEvent();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 125
+namespace stringify { namespace Sawyer { namespace Tree {
+    /** Convert Sawyer::Tree::TraversalAction enum constant to a string. */
+    const char* TraversalAction(long);
+
+    /** Convert Sawyer::Tree::TraversalAction enum constant to a string. */
+    std::string TraversalAction(long, const std::string &strip);
+
+    /** Return all Sawyer::Tree::TraversalAction member values as a vector. */
+    const std::vector<long>& TraversalAction();
+}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeTraversalAction(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifySawyerTreeTraversalAction();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 481
+namespace stringify { namespace Sawyer { namespace Tree { namespace Node {
+    /** Convert Sawyer::Tree::Node::TraversalDirection enum constant to a string. */
+    const char* TraversalDirection(long);
+
+    /** Convert Sawyer::Tree::Node::TraversalDirection enum constant to a string. */
+    std::string TraversalDirection(long, const std::string &strip);
+
+    /** Return all Sawyer::Tree::Node::TraversalDirection member values as a vector. */
+    const std::vector<long>& TraversalDirection();
+}}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeNodeTraversalDirection(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifySawyerTreeNodeTraversalDirection();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -3736,7 +3844,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 2959
+// /src/util/Sawyer/CommandLine.h line 2986
 namespace stringify { namespace Sawyer { namespace CommandLine { namespace Parser {
     /** Convert Sawyer::CommandLine::Parser::GroupingFlags enum constant to a string. */
     const char* GroupingFlags(long);
@@ -4150,7 +4258,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/SageIII/rose_attributes_list.h line 511
+// /src/frontend/SageIII/rose_attributes_list.h line 515
 namespace stringify { namespace ROSEAttributesList {
     /** Convert ROSEAttributesList::languageTypeEnum enum constant to a string. */
     const char* languageTypeEnum(long);
@@ -6130,7 +6238,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/CxxFrontend/EDG/edgRose/edgRose.C line 6365
+// /src/frontend/CxxFrontend/EDG/edgRose/edgRose.C line 6263
 namespace stringify {
     /** Convert kinds_of_type_references enum constant to a string. */
     const char* kinds_of_type_references(long);
@@ -6379,6 +6487,42 @@ namespace stringify { namespace ByteOrder {
 namespace Rose {
     std::string stringifyByteOrderEndianness(long int n, const char *strip=NULL, bool canonic=false);
     const std::vector<long>& stringifyByteOrderEndianness();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Experimental_Csharp_ROSE_Connection/ast2dot.hpp line 11
+namespace stringify { namespace dot {
+    /** Convert dot::attr_set enum constant to a string. */
+    const char* attr_set(long);
+
+    /** Convert dot::attr_set enum constant to a string. */
+    std::string attr_set(long, const std::string &strip);
+
+    /** Return all dot::attr_set member values as a vector. */
+    const std::vector<long>& attr_set();
+}}
+
+namespace Rose {
+    std::string stringify_dot_attr_set(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringify_dot_attr_set();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Experimental_Csharp_ROSE_Connection/csharpBuilder.h line 10
+namespace stringify { namespace csharp_translator {
+    /** Convert csharp_translator::SeqKind enum constant to a string. */
+    const char* SeqKind(long);
+
+    /** Convert csharp_translator::SeqKind enum constant to a string. */
+    std::string SeqKind(long, const std::string &strip);
+
+    /** Return all csharp_translator::SeqKind member values as a vector. */
+    const std::vector<long>& SeqKind();
+}}
+
+namespace Rose {
+    std::string stringify_csharp_translatorSeqKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringify_csharp_translatorSeqKind();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -7282,7 +7426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Partitioner2/CfgPath.h line 363
+// /src/frontend/Partitioner2/CfgPath.h line 388
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace Inliner {
     /** Convert Rose::BinaryAnalysis::Partitioner2::Inliner::HowInline enum constant to a string. */
     const char* HowInline(long);
@@ -7444,39 +7588,39 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86.h line 141
-namespace stringify { namespace AssemblerX86 {
-    /** Convert AssemblerX86::OperandDefn enum constant to a string. */
+// /src/frontend/Disassemblers/AssemblerX86.h line 142
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AssemblerX86 {
+    /** Convert Rose::BinaryAnalysis::AssemblerX86::OperandDefn enum constant to a string. */
     const char* OperandDefn(long);
 
-    /** Convert AssemblerX86::OperandDefn enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::AssemblerX86::OperandDefn enum constant to a string. */
     std::string OperandDefn(long, const std::string &strip);
 
-    /** Return all AssemblerX86::OperandDefn member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::AssemblerX86::OperandDefn member values as a vector. */
     const std::vector<long>& OperandDefn();
-}}
+}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerX86OperandDefn(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyAssemblerX86OperandDefn();
+    std::string stringifyBinaryAnalysisAssemblerX86OperandDefn(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerX86OperandDefn();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86.h line 382
-namespace stringify { namespace AssemblerX86 {
-    /** Convert AssemblerX86::MemoryReferencePattern enum constant to a string. */
+// /src/frontend/Disassemblers/AssemblerX86.h line 383
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AssemblerX86 {
+    /** Convert Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern enum constant to a string. */
     const char* MemoryReferencePattern(long);
 
-    /** Convert AssemblerX86::MemoryReferencePattern enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern enum constant to a string. */
     std::string MemoryReferencePattern(long, const std::string &strip);
 
-    /** Return all AssemblerX86::MemoryReferencePattern member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern member values as a vector. */
     const std::vector<long>& MemoryReferencePattern();
-}}
+}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerX86MemoryReferencePattern(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyAssemblerX86MemoryReferencePattern();
+    std::string stringifyBinaryAnalysisAssemblerX86MemoryReferencePattern(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerX86MemoryReferencePattern();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -7534,165 +7678,237 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 12
-namespace stringify {
-    /** Convert M68kFamily enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 15
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kFamily enum constant to a string. */
     const char* M68kFamily(long);
 
-    /** Convert M68kFamily enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kFamily enum constant to a string. */
     std::string M68kFamily(long, const std::string &strip);
 
-    /** Return all M68kFamily member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kFamily member values as a vector. */
     const std::vector<long>& M68kFamily();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kFamily(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kFamily();
+    std::string stringifyBinaryAnalysisM68kFamily(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kFamily();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 49
-namespace stringify {
-    /** Convert M68kRegisterClass enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 53
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kRegisterClass enum constant to a string. */
     const char* M68kRegisterClass(long);
 
-    /** Convert M68kRegisterClass enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kRegisterClass enum constant to a string. */
     std::string M68kRegisterClass(long, const std::string &strip);
 
-    /** Return all M68kRegisterClass member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kRegisterClass member values as a vector. */
     const std::vector<long>& M68kRegisterClass();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kRegisterClass();
+    std::string stringifyBinaryAnalysisM68kRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kRegisterClass();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 58
-namespace stringify {
-    /** Convert M68kSpecialPurposeRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 63
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kSpecialPurposeRegister enum constant to a string. */
     const char* M68kSpecialPurposeRegister(long);
 
-    /** Convert M68kSpecialPurposeRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kSpecialPurposeRegister enum constant to a string. */
     std::string M68kSpecialPurposeRegister(long, const std::string &strip);
 
-    /** Return all M68kSpecialPurposeRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kSpecialPurposeRegister member values as a vector. */
     const std::vector<long>& M68kSpecialPurposeRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kSpecialPurposeRegister();
+    std::string stringifyBinaryAnalysisM68kSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kSpecialPurposeRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 66
-namespace stringify {
-    /** Convert M68kMacRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 72
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kMacRegister enum constant to a string. */
     const char* M68kMacRegister(long);
 
-    /** Convert M68kMacRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kMacRegister enum constant to a string. */
     std::string M68kMacRegister(long, const std::string &strip);
 
-    /** Return all M68kMacRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kMacRegister member values as a vector. */
     const std::vector<long>& M68kMacRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kMacRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kMacRegister();
+    std::string stringifyBinaryAnalysisM68kMacRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kMacRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 81
-namespace stringify {
-    /** Convert M68kEmacRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 88
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kEmacRegister enum constant to a string. */
     const char* M68kEmacRegister(long);
 
-    /** Convert M68kEmacRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kEmacRegister enum constant to a string. */
     std::string M68kEmacRegister(long, const std::string &strip);
 
-    /** Return all M68kEmacRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kEmacRegister member values as a vector. */
     const std::vector<long>& M68kEmacRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kEmacRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kEmacRegister();
+    std::string stringifyBinaryAnalysisM68kEmacRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kEmacRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 90
-namespace stringify {
-    /** Convert M68kSupervisorRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 98
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kSupervisorRegister enum constant to a string. */
     const char* M68kSupervisorRegister(long);
 
-    /** Convert M68kSupervisorRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kSupervisorRegister enum constant to a string. */
     std::string M68kSupervisorRegister(long, const std::string &strip);
 
-    /** Return all M68kSupervisorRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kSupervisorRegister member values as a vector. */
     const std::vector<long>& M68kSupervisorRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kSupervisorRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kSupervisorRegister();
+    std::string stringifyBinaryAnalysisM68kSupervisorRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kSupervisorRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 177
-namespace stringify {
-    /** Convert M68kEffectiveAddressMode enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 185
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kEffectiveAddressMode enum constant to a string. */
     const char* M68kEffectiveAddressMode(long);
 
-    /** Convert M68kEffectiveAddressMode enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kEffectiveAddressMode enum constant to a string. */
     std::string M68kEffectiveAddressMode(long, const std::string &strip);
 
-    /** Return all M68kEffectiveAddressMode member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kEffectiveAddressMode member values as a vector. */
     const std::vector<long>& M68kEffectiveAddressMode();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kEffectiveAddressMode(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kEffectiveAddressMode();
+    std::string stringifyBinaryAnalysisM68kEffectiveAddressMode(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kEffectiveAddressMode();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 231
-namespace stringify {
-    /** Convert M68kDataFormat enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 239
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kDataFormat enum constant to a string. */
     const char* M68kDataFormat(long);
 
-    /** Convert M68kDataFormat enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kDataFormat enum constant to a string. */
     std::string M68kDataFormat(long, const std::string &strip);
 
-    /** Return all M68kDataFormat member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kDataFormat member values as a vector. */
     const std::vector<long>& M68kDataFormat();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kDataFormat(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kDataFormat();
+    std::string stringifyBinaryAnalysisM68kDataFormat(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kDataFormat();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 242
-namespace stringify {
-    /** Convert M68kInstructionKind enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 251
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::M68kInstructionKind enum constant to a string. */
     const char* M68kInstructionKind(long);
 
-    /** Convert M68kInstructionKind enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::M68kInstructionKind enum constant to a string. */
     std::string M68kInstructionKind(long, const std::string &strip);
 
-    /** Return all M68kInstructionKind member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::M68kInstructionKind member values as a vector. */
     const std::vector<long>& M68kInstructionKind();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyM68kInstructionKind();
+    std::string stringifyBinaryAnalysisM68kInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisM68kInstructionKind();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 10
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::ArmRegisterClass enum constant to a string. */
+    const char* ArmRegisterClass(long);
+
+    /** Convert Rose::BinaryAnalysis::ArmRegisterClass enum constant to a string. */
+    std::string ArmRegisterClass(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::ArmRegisterClass member values as a vector. */
+    const std::vector<long>& ArmRegisterClass();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisArmRegisterClass();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 16
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::ArmProgramStatusRegister enum constant to a string. */
+    const char* ArmProgramStatusRegister(long);
+
+    /** Convert Rose::BinaryAnalysis::ArmProgramStatusRegister enum constant to a string. */
+    std::string ArmProgramStatusRegister(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::ArmProgramStatusRegister member values as a vector. */
+    const std::vector<long>& ArmProgramStatusRegister();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmProgramStatusRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisArmProgramStatusRegister();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 22
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::ArmInstructionKind enum constant to a string. */
+    const char* ArmInstructionKind(long);
+
+    /** Convert Rose::BinaryAnalysis::ArmInstructionKind enum constant to a string. */
+    std::string ArmInstructionKind(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::ArmInstructionKind member values as a vector. */
+    const std::vector<long>& ArmInstructionKind();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisArmInstructionKind();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 127
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::ArmInstructionCondition enum constant to a string. */
+    const char* ArmInstructionCondition(long);
+
+    /** Convert Rose::BinaryAnalysis::ArmInstructionCondition enum constant to a string. */
+    std::string ArmInstructionCondition(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::ArmInstructionCondition member values as a vector. */
+    const std::vector<long>& ArmInstructionCondition();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmInstructionCondition(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisArmInstructionCondition();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -7750,147 +7966,75 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 6
-namespace stringify {
-    /** Convert MipsRegisterClass enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 9
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::MipsRegisterClass enum constant to a string. */
     const char* MipsRegisterClass(long);
 
-    /** Convert MipsRegisterClass enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::MipsRegisterClass enum constant to a string. */
     std::string MipsRegisterClass(long, const std::string &strip);
 
-    /** Return all MipsRegisterClass member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::MipsRegisterClass member values as a vector. */
     const std::vector<long>& MipsRegisterClass();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyMipsRegisterClass();
+    std::string stringifyBinaryAnalysisMipsRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisMipsRegisterClass();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 18
-namespace stringify {
-    /** Convert MipsFcsrMinors enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 21
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::MipsFcsrMinors enum constant to a string. */
     const char* MipsFcsrMinors(long);
 
-    /** Convert MipsFcsrMinors enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::MipsFcsrMinors enum constant to a string. */
     std::string MipsFcsrMinors(long, const std::string &strip);
 
-    /** Return all MipsFcsrMinors member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::MipsFcsrMinors member values as a vector. */
     const std::vector<long>& MipsFcsrMinors();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsFcsrMinors(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyMipsFcsrMinors();
+    std::string stringifyBinaryAnalysisMipsFcsrMinors(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisMipsFcsrMinors();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 26
-namespace stringify {
-    /** Convert MipsSpecialPurposeRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 29
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::MipsSpecialPurposeRegister enum constant to a string. */
     const char* MipsSpecialPurposeRegister(long);
 
-    /** Convert MipsSpecialPurposeRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::MipsSpecialPurposeRegister enum constant to a string. */
     std::string MipsSpecialPurposeRegister(long, const std::string &strip);
 
-    /** Return all MipsSpecialPurposeRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::MipsSpecialPurposeRegister member values as a vector. */
     const std::vector<long>& MipsSpecialPurposeRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyMipsSpecialPurposeRegister();
+    std::string stringifyBinaryAnalysisMipsSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisMipsSpecialPurposeRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 35
-namespace stringify {
-    /** Convert MipsInstructionKind enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 38
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::MipsInstructionKind enum constant to a string. */
     const char* MipsInstructionKind(long);
 
-    /** Convert MipsInstructionKind enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::MipsInstructionKind enum constant to a string. */
     std::string MipsInstructionKind(long, const std::string &strip);
 
-    /** Return all MipsInstructionKind member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::MipsInstructionKind member values as a vector. */
     const std::vector<long>& MipsInstructionKind();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyMipsInstructionKind();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 6
-namespace stringify {
-    /** Convert ArmRegisterClass enum constant to a string. */
-    const char* ArmRegisterClass(long);
-
-    /** Convert ArmRegisterClass enum constant to a string. */
-    std::string ArmRegisterClass(long, const std::string &strip);
-
-    /** Return all ArmRegisterClass member values as a vector. */
-    const std::vector<long>& ArmRegisterClass();
-}
-
-namespace Rose {
-    std::string stringifyArmRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyArmRegisterClass();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 12
-namespace stringify {
-    /** Convert ArmProgramStatusRegister enum constant to a string. */
-    const char* ArmProgramStatusRegister(long);
-
-    /** Convert ArmProgramStatusRegister enum constant to a string. */
-    std::string ArmProgramStatusRegister(long, const std::string &strip);
-
-    /** Return all ArmProgramStatusRegister member values as a vector. */
-    const std::vector<long>& ArmProgramStatusRegister();
-}
-
-namespace Rose {
-    std::string stringifyArmProgramStatusRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyArmProgramStatusRegister();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 18
-namespace stringify {
-    /** Convert ArmInstructionKind enum constant to a string. */
-    const char* ArmInstructionKind(long);
-
-    /** Convert ArmInstructionKind enum constant to a string. */
-    std::string ArmInstructionKind(long, const std::string &strip);
-
-    /** Return all ArmInstructionKind member values as a vector. */
-    const std::vector<long>& ArmInstructionKind();
-}
-
-namespace Rose {
-    std::string stringifyArmInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyArmInstructionKind();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 123
-namespace stringify {
-    /** Convert ArmInstructionCondition enum constant to a string. */
-    const char* ArmInstructionCondition(long);
-
-    /** Convert ArmInstructionCondition enum constant to a string. */
-    std::string ArmInstructionCondition(long, const std::string &strip);
-
-    /** Return all ArmInstructionCondition member values as a vector. */
-    const std::vector<long>& ArmInstructionCondition();
-}
-
-namespace Rose {
-    std::string stringifyArmInstructionCondition(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyArmInstructionCondition();
+    std::string stringifyBinaryAnalysisMipsInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisMipsInstructionKind();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -7912,327 +8056,327 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 9
-namespace stringify {
-    /** Convert X86InstructionSize enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 12
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86InstructionSize enum constant to a string. */
     const char* X86InstructionSize(long);
 
-    /** Convert X86InstructionSize enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::X86InstructionSize enum constant to a string. */
     std::string X86InstructionSize(long, const std::string &strip);
 
-    /** Return all X86InstructionSize member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::X86InstructionSize member values as a vector. */
     const std::vector<long>& X86InstructionSize();
-}
-
-namespace Rose {
-    std::string stringifyX86InstructionSize(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86InstructionSize();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 17
-namespace stringify {
-    /** Convert X86RegisterClass enum constant to a string. */
-    const char* X86RegisterClass(long);
-
-    /** Convert X86RegisterClass enum constant to a string. */
-    std::string X86RegisterClass(long, const std::string &strip);
-
-    /** Return all X86RegisterClass member values as a vector. */
-    const std::vector<long>& X86RegisterClass();
-}
-
-namespace Rose {
-    std::string stringifyX86RegisterClass(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86RegisterClass();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 30
-namespace stringify {
-    /** Convert X86SegmentRegister enum constant to a string. */
-    const char* X86SegmentRegister(long);
-
-    /** Convert X86SegmentRegister enum constant to a string. */
-    std::string X86SegmentRegister(long, const std::string &strip);
-
-    /** Return all X86SegmentRegister member values as a vector. */
-    const std::vector<long>& X86SegmentRegister();
-}
-
-namespace Rose {
-    std::string stringifyX86SegmentRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86SegmentRegister();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 41
-namespace stringify {
-    /** Convert X86GeneralPurposeRegister enum constant to a string. */
-    const char* X86GeneralPurposeRegister(long);
-
-    /** Convert X86GeneralPurposeRegister enum constant to a string. */
-    std::string X86GeneralPurposeRegister(long, const std::string &strip);
-
-    /** Return all X86GeneralPurposeRegister member values as a vector. */
-    const std::vector<long>& X86GeneralPurposeRegister();
-}
-
-namespace Rose {
-    std::string stringifyX86GeneralPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86GeneralPurposeRegister();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 61
-namespace stringify {
-    /** Convert X86StRegister enum constant to a string. */
-    const char* X86StRegister(long);
-
-    /** Convert X86StRegister enum constant to a string. */
-    std::string X86StRegister(long, const std::string &strip);
-
-    /** Return all X86StRegister member values as a vector. */
-    const std::vector<long>& X86StRegister();
-}
-
-namespace Rose {
-    std::string stringifyX86StRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86StRegister();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 74
-namespace stringify {
-    /** Convert X86Flags enum constant to a string. */
-    const char* X86Flags(long);
-
-    /** Convert X86Flags enum constant to a string. */
-    std::string X86Flags(long, const std::string &strip);
-
-    /** Return all X86Flags member values as a vector. */
-    const std::vector<long>& X86Flags();
-}
-
-namespace Rose {
-    std::string stringifyX86Flags(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86Flags();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 83
-namespace stringify {
-    /** Convert X86Flag enum constant to a string. */
-    const char* X86Flag(long);
-
-    /** Convert X86Flag enum constant to a string. */
-    std::string X86Flag(long, const std::string &strip);
-
-    /** Return all X86Flag member values as a vector. */
-    const std::vector<long>& X86Flag();
-}
-
-namespace Rose {
-    std::string stringifyX86Flag(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86Flag();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 104
-namespace stringify {
-    /** Convert X86BranchPrediction enum constant to a string. */
-    const char* X86BranchPrediction(long);
-
-    /** Convert X86BranchPrediction enum constant to a string. */
-    std::string X86BranchPrediction(long, const std::string &strip);
-
-    /** Return all X86BranchPrediction member values as a vector. */
-    const std::vector<long>& X86BranchPrediction();
-}
-
-namespace Rose {
-    std::string stringifyX86BranchPrediction(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86BranchPrediction();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 112
-namespace stringify {
-    /** Convert X86RepeatPrefix enum constant to a string. */
-    const char* X86RepeatPrefix(long);
-
-    /** Convert X86RepeatPrefix enum constant to a string. */
-    std::string X86RepeatPrefix(long, const std::string &strip);
-
-    /** Return all X86RepeatPrefix member values as a vector. */
-    const std::vector<long>& X86RepeatPrefix();
-}
-
-namespace Rose {
-    std::string stringifyX86RepeatPrefix(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86RepeatPrefix();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 121
-namespace stringify {
-    /** Convert X86Exception enum constant to a string. */
-    const char* X86Exception(long);
-
-    /** Convert X86Exception enum constant to a string. */
-    std::string X86Exception(long, const std::string &strip);
-
-    /** Return all X86Exception member values as a vector. */
-    const std::vector<long>& X86Exception();
-}
-
-namespace Rose {
-    std::string stringifyX86Exception(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86Exception();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86Init.h line 21
-namespace stringify {
-    /** Convert X86InstructionKind enum constant to a string. */
-    const char* X86InstructionKind(long);
-
-    /** Convert X86InstructionKind enum constant to a string. */
-    std::string X86InstructionKind(long, const std::string &strip);
-
-    /** Return all X86InstructionKind member values as a vector. */
-    const std::vector<long>& X86InstructionKind();
-}
-
-namespace Rose {
-    std::string stringifyX86InstructionKind(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyX86InstructionKind();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/Registers.h line 275
-namespace stringify { namespace RegisterDictionary { namespace SortBySize {
-    /** Convert RegisterDictionary::SortBySize::Direction enum constant to a string. */
-    const char* Direction(long);
-
-    /** Convert RegisterDictionary::SortBySize::Direction enum constant to a string. */
-    std::string Direction(long, const std::string &strip);
-
-    /** Return all RegisterDictionary::SortBySize::Direction member values as a vector. */
-    const std::vector<long>& Direction();
 }}}
 
 namespace Rose {
-    std::string stringifyRegisterDictionarySortBySizeDirection(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyRegisterDictionarySortBySizeDirection();
+    std::string stringifyBinaryAnalysisX86InstructionSize(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86InstructionSize();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 8
-namespace stringify {
-    /** Convert PowerpcInstructionKind enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 20
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86RegisterClass enum constant to a string. */
+    const char* X86RegisterClass(long);
+
+    /** Convert Rose::BinaryAnalysis::X86RegisterClass enum constant to a string. */
+    std::string X86RegisterClass(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86RegisterClass member values as a vector. */
+    const std::vector<long>& X86RegisterClass();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86RegisterClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86RegisterClass();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 33
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86SegmentRegister enum constant to a string. */
+    const char* X86SegmentRegister(long);
+
+    /** Convert Rose::BinaryAnalysis::X86SegmentRegister enum constant to a string. */
+    std::string X86SegmentRegister(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86SegmentRegister member values as a vector. */
+    const std::vector<long>& X86SegmentRegister();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86SegmentRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86SegmentRegister();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 44
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86GeneralPurposeRegister enum constant to a string. */
+    const char* X86GeneralPurposeRegister(long);
+
+    /** Convert Rose::BinaryAnalysis::X86GeneralPurposeRegister enum constant to a string. */
+    std::string X86GeneralPurposeRegister(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86GeneralPurposeRegister member values as a vector. */
+    const std::vector<long>& X86GeneralPurposeRegister();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86GeneralPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86GeneralPurposeRegister();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 64
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86StRegister enum constant to a string. */
+    const char* X86StRegister(long);
+
+    /** Convert Rose::BinaryAnalysis::X86StRegister enum constant to a string. */
+    std::string X86StRegister(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86StRegister member values as a vector. */
+    const std::vector<long>& X86StRegister();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86StRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86StRegister();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 77
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86Flags enum constant to a string. */
+    const char* X86Flags(long);
+
+    /** Convert Rose::BinaryAnalysis::X86Flags enum constant to a string. */
+    std::string X86Flags(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86Flags member values as a vector. */
+    const std::vector<long>& X86Flags();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86Flags(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86Flags();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 86
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86Flag enum constant to a string. */
+    const char* X86Flag(long);
+
+    /** Convert Rose::BinaryAnalysis::X86Flag enum constant to a string. */
+    std::string X86Flag(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86Flag member values as a vector. */
+    const std::vector<long>& X86Flag();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86Flag(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86Flag();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 107
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86BranchPrediction enum constant to a string. */
+    const char* X86BranchPrediction(long);
+
+    /** Convert Rose::BinaryAnalysis::X86BranchPrediction enum constant to a string. */
+    std::string X86BranchPrediction(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86BranchPrediction member values as a vector. */
+    const std::vector<long>& X86BranchPrediction();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86BranchPrediction(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86BranchPrediction();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 115
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86RepeatPrefix enum constant to a string. */
+    const char* X86RepeatPrefix(long);
+
+    /** Convert Rose::BinaryAnalysis::X86RepeatPrefix enum constant to a string. */
+    std::string X86RepeatPrefix(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86RepeatPrefix member values as a vector. */
+    const std::vector<long>& X86RepeatPrefix();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86RepeatPrefix(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86RepeatPrefix();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 124
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86Exception enum constant to a string. */
+    const char* X86Exception(long);
+
+    /** Convert Rose::BinaryAnalysis::X86Exception enum constant to a string. */
+    std::string X86Exception(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86Exception member values as a vector. */
+    const std::vector<long>& X86Exception();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86Exception(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86Exception();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/AssemblerX86Init.h line 24
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::X86InstructionKind enum constant to a string. */
+    const char* X86InstructionKind(long);
+
+    /** Convert Rose::BinaryAnalysis::X86InstructionKind enum constant to a string. */
+    std::string X86InstructionKind(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::X86InstructionKind member values as a vector. */
+    const std::vector<long>& X86InstructionKind();
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisX86InstructionKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisX86InstructionKind();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 10
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::PowerpcInstructionKind enum constant to a string. */
     const char* PowerpcInstructionKind(long);
 
-    /** Convert PowerpcInstructionKind enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::PowerpcInstructionKind enum constant to a string. */
     std::string PowerpcInstructionKind(long, const std::string &strip);
 
-    /** Return all PowerpcInstructionKind member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::PowerpcInstructionKind member values as a vector. */
     const std::vector<long>& PowerpcInstructionKind();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyPowerpcInstructionKind();
+    std::string stringifyBinaryAnalysisPowerpcInstructionKind(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcInstructionKind();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 454
-namespace stringify {
-    /** Convert PowerpcRegisterClass enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 456
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::PowerpcRegisterClass enum constant to a string. */
     const char* PowerpcRegisterClass(long);
 
-    /** Convert PowerpcRegisterClass enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::PowerpcRegisterClass enum constant to a string. */
     std::string PowerpcRegisterClass(long, const std::string &strip);
 
-    /** Return all PowerpcRegisterClass member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::PowerpcRegisterClass member values as a vector. */
     const std::vector<long>& PowerpcRegisterClass();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyPowerpcRegisterClass();
+    std::string stringifyBinaryAnalysisPowerpcRegisterClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcRegisterClass();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 470
-namespace stringify {
-    /** Convert PowerpcConditionRegisterAccessGranularity enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 473
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity enum constant to a string. */
     const char* PowerpcConditionRegisterAccessGranularity(long);
 
-    /** Convert PowerpcConditionRegisterAccessGranularity enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity enum constant to a string. */
     std::string PowerpcConditionRegisterAccessGranularity(long, const std::string &strip);
 
-    /** Return all PowerpcConditionRegisterAccessGranularity member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity member values as a vector. */
     const std::vector<long>& PowerpcConditionRegisterAccessGranularity();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcConditionRegisterAccessGranularity(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyPowerpcConditionRegisterAccessGranularity();
+    std::string stringifyBinaryAnalysisPowerpcConditionRegisterAccessGranularity(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcConditionRegisterAccessGranularity();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 477
-namespace stringify {
-    /** Convert PowerpcSpecialPurposeRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 480
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister enum constant to a string. */
     const char* PowerpcSpecialPurposeRegister(long);
 
-    /** Convert PowerpcSpecialPurposeRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister enum constant to a string. */
     std::string PowerpcSpecialPurposeRegister(long, const std::string &strip);
 
-    /** Return all PowerpcSpecialPurposeRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister member values as a vector. */
     const std::vector<long>& PowerpcSpecialPurposeRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyPowerpcSpecialPurposeRegister();
+    std::string stringifyBinaryAnalysisPowerpcSpecialPurposeRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcSpecialPurposeRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 487
-namespace stringify {
-    /** Convert PowerpcTimeBaseRegister enum constant to a string. */
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 494
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    /** Convert Rose::BinaryAnalysis::PowerpcTimeBaseRegister enum constant to a string. */
     const char* PowerpcTimeBaseRegister(long);
 
-    /** Convert PowerpcTimeBaseRegister enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::PowerpcTimeBaseRegister enum constant to a string. */
     std::string PowerpcTimeBaseRegister(long, const std::string &strip);
 
-    /** Return all PowerpcTimeBaseRegister member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::PowerpcTimeBaseRegister member values as a vector. */
     const std::vector<long>& PowerpcTimeBaseRegister();
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcTimeBaseRegister(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyPowerpcTimeBaseRegister();
+    std::string stringifyBinaryAnalysisPowerpcTimeBaseRegister(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcTimeBaseRegister();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/Assembler.h line 71
-namespace stringify { namespace Assembler {
-    /** Convert Assembler::EncodingType enum constant to a string. */
-    const char* EncodingType(long);
+// /src/frontend/Disassemblers/Registers.h line 285
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace RegisterDictionary { namespace SortBySize {
+    /** Convert Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction enum constant to a string. */
+    const char* Direction(long);
 
-    /** Convert Assembler::EncodingType enum constant to a string. */
-    std::string EncodingType(long, const std::string &strip);
+    /** Convert Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction enum constant to a string. */
+    std::string Direction(long, const std::string &strip);
 
-    /** Return all Assembler::EncodingType member values as a vector. */
-    const std::vector<long>& EncodingType();
-}}
+    /** Return all Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction member values as a vector. */
+    const std::vector<long>& Direction();
+}}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerEncodingType(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyAssemblerEncodingType();
+    std::string stringifyBinaryAnalysisRegisterDictionarySortBySizeDirection(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisRegisterDictionarySortBySizeDirection();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/Assembler.h line 74
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Assembler {
+    /** Convert Rose::BinaryAnalysis::Assembler::EncodingType enum constant to a string. */
+    const char* EncodingType(long);
+
+    /** Convert Rose::BinaryAnalysis::Assembler::EncodingType enum constant to a string. */
+    std::string EncodingType(long, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::Assembler::EncodingType member values as a vector. */
+    const std::vector<long>& EncodingType();
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisAssemblerEncodingType(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerEncodingType();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -8866,7 +9010,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/roseSupport/utility_functions.C line 795
+// /src/roseSupport/utility_functions.C line 797
 namespace stringify {
     /** Convert language_enum enum constant to a string. */
     const char* language_enum(long);
@@ -8956,7 +9100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 916
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 927
 namespace stringify {
     /** Convert VariantT enum constant to a string. */
     const char* VariantT(long);
@@ -8974,7 +9118,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11244
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11364
 namespace stringify { namespace SgConstVolatileModifier {
     /** Convert SgConstVolatileModifier::cv_modifier_enum enum constant to a string. */
     const char* cv_modifier_enum(long);
@@ -8992,7 +9136,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11795
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11911
 namespace stringify { namespace SgStorageModifier {
     /** Convert SgStorageModifier::storage_modifier_enum enum constant to a string. */
     const char* storage_modifier_enum(long);
@@ -9010,7 +9154,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12429
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12546
 namespace stringify { namespace SgAccessModifier {
     /** Convert SgAccessModifier::access_modifier_enum enum constant to a string. */
     const char* access_modifier_enum(long);
@@ -9028,7 +9172,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12958
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13076
 namespace stringify { namespace SgFunctionModifier {
     /** Convert SgFunctionModifier::function_modifier_enum enum constant to a string. */
     const char* function_modifier_enum(long);
@@ -9046,7 +9190,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13845
 namespace stringify { namespace SgUPC_AccessModifier {
     /** Convert SgUPC_AccessModifier::upc_access_modifier_enum enum constant to a string. */
     const char* upc_access_modifier_enum(long);
@@ -9064,7 +9208,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14270
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14390
 namespace stringify { namespace SgSpecialFunctionModifier {
     /** Convert SgSpecialFunctionModifier::special_function_modifier_enum enum constant to a string. */
     const char* special_function_modifier_enum(long);
@@ -9082,7 +9226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14821
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14942
 namespace stringify { namespace SgElaboratedTypeModifier {
     /** Convert SgElaboratedTypeModifier::elaborated_type_modifier_enum enum constant to a string. */
     const char* elaborated_type_modifier_enum(long);
@@ -9100,7 +9244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15357
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15479
 namespace stringify { namespace SgLinkageModifier {
     /** Convert SgLinkageModifier::linkage_modifier_enum enum constant to a string. */
     const char* linkage_modifier_enum(long);
@@ -9118,7 +9262,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15884
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16007
 namespace stringify { namespace SgBaseClassModifier {
     /** Convert SgBaseClassModifier::baseclass_modifier_enum enum constant to a string. */
     const char* baseclass_modifier_enum(long);
@@ -9136,7 +9280,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16415
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16539
 namespace stringify { namespace SgTypeModifier {
     /** Convert SgTypeModifier::type_modifier_enum enum constant to a string. */
     const char* type_modifier_enum(long);
@@ -9154,7 +9298,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16499
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16623
 namespace stringify { namespace SgTypeModifier {
     /** Convert SgTypeModifier::gnu_extension_machine_mode_enum enum constant to a string. */
     const char* gnu_extension_machine_mode_enum(long);
@@ -9172,7 +9316,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17282
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17407
 namespace stringify { namespace SgDeclarationModifier {
     /** Convert SgDeclarationModifier::declaration_modifier_enum enum constant to a string. */
     const char* declaration_modifier_enum(long);
@@ -9190,7 +9334,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17329
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17454
 namespace stringify { namespace SgDeclarationModifier {
     /** Convert SgDeclarationModifier::gnu_declaration_visability_enum enum constant to a string. */
     const char* gnu_declaration_visability_enum(long);
@@ -9208,7 +9352,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18048
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18174
 namespace stringify { namespace SgOpenclAccessModeModifier {
     /** Convert SgOpenclAccessModeModifier::access_mode_modifier_enum enum constant to a string. */
     const char* access_mode_modifier_enum(long);
@@ -9226,7 +9370,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22667
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22804
 namespace stringify { namespace Sg_File_Info {
     /** Convert Sg_File_Info::classifier enum constant to a string. */
     const char* classifier(long);
@@ -9244,7 +9388,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22921
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23069
 namespace stringify { namespace Sg_File_Info {
     /** Convert Sg_File_Info::p_fileflags enum constant to a string. */
     const char* p_fileflags(long);
@@ -9262,7 +9406,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23491
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23656
 namespace stringify { namespace SgFile {
     /** Convert SgFile::outputFormatOption_enum enum constant to a string. */
     const char* outputFormatOption_enum(long);
@@ -9280,7 +9424,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23506
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23671
 namespace stringify { namespace SgFile {
     /** Convert SgFile::languageOption_enum enum constant to a string. */
     const char* languageOption_enum(long);
@@ -9298,7 +9442,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23527
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23692
 namespace stringify { namespace SgFile {
     /** Convert SgFile::standard_enum enum constant to a string. */
     const char* standard_enum(long);
@@ -9316,7 +9460,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 27077
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 27254
 namespace stringify { namespace SgProject {
     /** Convert SgProject::template_instantiation_enum enum constant to a string. */
     const char* template_instantiation_enum(long);
@@ -9334,7 +9478,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29044
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29223
 namespace stringify { namespace SgUnparse_Info {
     /** Convert SgUnparse_Info::unparse_type_num enum constant to a string. */
     const char* unparse_type_num(long);
@@ -9352,7 +9496,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29205
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29388
 namespace stringify { namespace SgUnparse_Info {
     /** Convert SgUnparse_Info::access_attr_enum enum constant to a string. */
     const char* access_attr_enum(long);
@@ -9370,7 +9514,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 31726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32406
 namespace stringify { namespace SgTemplateParameter {
     /** Convert SgTemplateParameter::template_parameter_enum enum constant to a string. */
     const char* template_parameter_enum(long);
@@ -9388,7 +9532,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32286
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32969
 namespace stringify { namespace SgTemplateArgument {
     /** Convert SgTemplateArgument::template_argument_enum enum constant to a string. */
     const char* template_argument_enum(long);
@@ -9406,7 +9550,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 36488
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 37198
 namespace stringify { namespace SgGraph {
     /** Convert SgGraph::GraphEdgeType enum constant to a string. */
     const char* GraphEdgeType(long);
@@ -9424,7 +9568,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 36502
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 37212
 namespace stringify { namespace SgGraph {
     /** Convert SgGraph::GraphProperties enum constant to a string. */
     const char* GraphProperties(long);
@@ -9442,7 +9586,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 46731
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 47461
 namespace stringify { namespace SgDataStatementValue {
     /** Convert SgDataStatementValue::data_statement_value_enum enum constant to a string. */
     const char* data_statement_value_enum(long);
@@ -9460,7 +9604,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 48829
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49563
 namespace stringify { namespace SgType {
     /** Convert SgType::useWithinDeclarationEnum enum constant to a string. */
     const char* useWithinDeclarationEnum(long);
@@ -9478,7 +9622,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 48847
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49581
 namespace stringify { namespace SgType {
     /** Convert SgType::fortran_attribute_specifiers_enum enum constant to a string. */
     const char* fortran_attribute_specifiers_enum(long);
@@ -9496,7 +9640,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69074
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70364
 namespace stringify { namespace SgModifierType {
     /** Convert SgModifierType::modifiers enum constant to a string. */
     const char* modifiers(long);
@@ -9514,7 +9658,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69128
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70418
 namespace stringify { namespace SgModifierType {
     /** Convert SgModifierType::type_modifier_enum enum constant to a string. */
     const char* type_modifier_enum(long);
@@ -9532,7 +9676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69145
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70435
 namespace stringify { namespace SgModifierType {
     /** Convert SgModifierType::storage_modifier_enum enum constant to a string. */
     const char* storage_modifier_enum(long);
@@ -9550,7 +9694,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69167
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70457
 namespace stringify { namespace SgModifierType {
     /** Convert SgModifierType::access_modifier_enum enum constant to a string. */
     const char* access_modifier_enum(long);
@@ -9568,7 +9712,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70406
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 71698
 namespace stringify { namespace SgMemberFunctionType {
     /** Convert SgMemberFunctionType::mfunc_specifier_enum enum constant to a string. */
     const char* mfunc_specifier_enum(long);
@@ -9586,7 +9730,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 82255
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84131
 namespace stringify { namespace SgLocatedNode {
     /** Convert SgLocatedNode::PositionOfPreprocessingInfoInListType enum constant to a string. */
     const char* PositionOfPreprocessingInfoInListType(long);
@@ -9604,7 +9748,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83017
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84894
 namespace stringify { namespace SgToken {
     /** Convert SgToken::ROSE_Fortran_Keywords enum constant to a string. */
     const char* ROSE_Fortran_Keywords(long);
@@ -9622,7 +9766,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83184
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85061
 namespace stringify { namespace SgToken {
     /** Convert SgToken::ROSE_C_CXX_keywords enum constant to a string. */
     const char* ROSE_C_CXX_keywords(long);
@@ -9640,7 +9784,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83253
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85130
 namespace stringify { namespace SgToken {
     /** Convert SgToken::ROSE_Fortran_Operators enum constant to a string. */
     const char* ROSE_Fortran_Operators(long);
@@ -9658,7 +9802,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83280
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85157
 namespace stringify { namespace SgToken {
     /** Convert SgToken::ROSE_C_CXX_Operators enum constant to a string. */
     const char* ROSE_C_CXX_Operators(long);
@@ -9676,7 +9820,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83360
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85237
 namespace stringify { namespace SgToken {
     /** Convert SgToken::ROSE_Fortran_Additional_Info enum constant to a string. */
     const char* ROSE_Fortran_Additional_Info(long);
@@ -9694,7 +9838,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84824
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86704
 namespace stringify { namespace SgInitializedName {
     /** Convert SgInitializedName::preinitialization_enum enum constant to a string. */
     const char* preinitialization_enum(long);
@@ -9712,7 +9856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84839
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86719
 namespace stringify { namespace SgInitializedName {
     /** Convert SgInitializedName::asm_register_name_enum enum constant to a string. */
     const char* asm_register_name_enum(long);
@@ -9730,7 +9874,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84901
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86781
 namespace stringify { namespace SgInitializedName {
     /** Convert SgInitializedName::gnu_variable_attribute_enum enum constant to a string. */
     const char* gnu_variable_attribute_enum(long);
@@ -9748,7 +9892,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84935
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86815
 namespace stringify { namespace SgInitializedName {
     /** Convert SgInitializedName::excess_specifier_enum enum constant to a string. */
     const char* excess_specifier_enum(long);
@@ -9766,7 +9910,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87924
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89833
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_default_option_enum enum constant to a string. */
     const char* omp_default_option_enum(long);
@@ -9784,7 +9928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87936
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89845
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_schedule_kind_enum enum constant to a string. */
     const char* omp_schedule_kind_enum(long);
@@ -9802,7 +9946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87946
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89855
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_reduction_operator_enum enum constant to a string. */
     const char* omp_reduction_operator_enum(long);
@@ -9820,7 +9964,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87974
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89883
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_dependence_type_enum enum constant to a string. */
     const char* omp_dependence_type_enum(long);
@@ -9838,7 +9982,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87984
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89893
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_map_operator_enum enum constant to a string. */
     const char* omp_map_operator_enum(long);
@@ -9856,7 +10000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87995
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89904
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_map_dist_data_enum enum constant to a string. */
     const char* omp_map_dist_data_enum(long);
@@ -9874,7 +10018,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 88005
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89914
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_proc_bind_policy_enum enum constant to a string. */
     const char* omp_proc_bind_policy_enum(long);
@@ -9892,7 +10036,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 88014
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89923
 namespace stringify { namespace SgOmpClause {
     /** Convert SgOmpClause::omp_atomic_clause_enum enum constant to a string. */
     const char* omp_atomic_clause_enum(long);
@@ -9910,7 +10054,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 140530
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 143037
 namespace stringify { namespace SgUntypedType {
     /** Convert SgUntypedType::type_enum enum constant to a string. */
     const char* type_enum(long);
@@ -9928,7 +10072,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 158737
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 161285
 namespace stringify { namespace SgForAllStatement {
     /** Convert SgForAllStatement::forall_statement_kind_enum enum constant to a string. */
     const char* forall_statement_kind_enum(long);
@@ -9946,7 +10090,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 164426
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 166985
 namespace stringify { namespace SgDeclarationStatement {
     /** Convert SgDeclarationStatement::template_specialization_enum enum constant to a string. */
     const char* template_specialization_enum(long);
@@ -9964,7 +10108,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 164441
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 167000
 namespace stringify { namespace SgDeclarationStatement {
     /** Convert SgDeclarationStatement::gnu_extension_visability_attribute_enum enum constant to a string. */
     const char* gnu_extension_visability_attribute_enum(long);
@@ -9982,7 +10126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 165894
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 168455
 namespace stringify { namespace SgVariableDeclaration {
     /** Convert SgVariableDeclaration::gnu_extension_declaration_attributes_enum enum constant to a string. */
     const char* gnu_extension_declaration_attributes_enum(long);
@@ -10000,7 +10144,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 170320
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 172926
 namespace stringify { namespace SgAttributeSpecificationStatement {
     /** Convert SgAttributeSpecificationStatement::attribute_spec_enum enum constant to a string. */
     const char* attribute_spec_enum(long);
@@ -10018,7 +10162,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 171382
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 173990
 namespace stringify { namespace SgTemplateDeclaration {
     /** Convert SgTemplateDeclaration::template_type_enum enum constant to a string. */
     const char* template_type_enum(long);
@@ -10036,7 +10180,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 174466
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 177088
 namespace stringify { namespace SgInterfaceStatement {
     /** Convert SgInterfaceStatement::generic_spec_enum enum constant to a string. */
     const char* generic_spec_enum(long);
@@ -10054,7 +10198,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 179726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 182370
 namespace stringify { namespace SgClassDeclaration {
     /** Convert SgClassDeclaration::class_types enum constant to a string. */
     const char* class_types(long);
@@ -10072,7 +10216,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 180420
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 183067
 namespace stringify { namespace SgTemplateClassDeclaration {
     /** Convert SgTemplateClassDeclaration::class_types enum constant to a string. */
     const char* class_types(long);
@@ -10090,61 +10234,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 180957
-namespace stringify { namespace SgTemplateInstantiationDecl {
-    /** Convert SgTemplateInstantiationDecl::template_type_enum enum constant to a string. */
-    const char* template_type_enum(long);
-
-    /** Convert SgTemplateInstantiationDecl::template_type_enum enum constant to a string. */
-    std::string template_type_enum(long, const std::string &strip);
-
-    /** Return all SgTemplateInstantiationDecl::template_type_enum member values as a vector. */
-    const std::vector<long>& template_type_enum();
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationDecl_template_type_enum(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifySgTemplateInstantiationDecl_template_type_enum();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 187460
-namespace stringify { namespace SgTemplateInstantiationMemberFunctionDecl {
-    /** Convert SgTemplateInstantiationMemberFunctionDecl::template_type_enum enum constant to a string. */
-    const char* template_type_enum(long);
-
-    /** Convert SgTemplateInstantiationMemberFunctionDecl::template_type_enum enum constant to a string. */
-    std::string template_type_enum(long, const std::string &strip);
-
-    /** Return all SgTemplateInstantiationMemberFunctionDecl::template_type_enum member values as a vector. */
-    const std::vector<long>& template_type_enum();
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationMemberFunctionDecl_template_type_enum(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifySgTemplateInstantiationMemberFunctionDecl_template_type_enum();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 188029
-namespace stringify { namespace SgTemplateInstantiationFunctionDecl {
-    /** Convert SgTemplateInstantiationFunctionDecl::template_type_enum enum constant to a string. */
-    const char* template_type_enum(long);
-
-    /** Convert SgTemplateInstantiationFunctionDecl::template_type_enum enum constant to a string. */
-    std::string template_type_enum(long, const std::string &strip);
-
-    /** Return all SgTemplateInstantiationFunctionDecl::template_type_enum member values as a vector. */
-    const std::vector<long>& template_type_enum();
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationFunctionDecl_template_type_enum(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifySgTemplateInstantiationFunctionDecl_template_type_enum();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 189116
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 191744
 namespace stringify { namespace SgProcedureHeaderStatement {
     /** Convert SgProcedureHeaderStatement::subprogram_kind_enum enum constant to a string. */
     const char* subprogram_kind_enum(long);
@@ -10162,7 +10252,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 210728
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 214474
 namespace stringify { namespace SgStopOrPauseStatement {
     /** Convert SgStopOrPauseStatement::stop_or_pause_enum enum constant to a string. */
     const char* stop_or_pause_enum(long);
@@ -10180,7 +10270,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 211241
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 214988
 namespace stringify { namespace SgIOStatement {
     /** Convert SgIOStatement::io_statement_enum enum constant to a string. */
     const char* io_statement_enum(long);
@@ -10198,7 +10288,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 240764
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 244571
 namespace stringify { namespace SgImageControlStatement {
     /** Convert SgImageControlStatement::image_control_statement_enum enum constant to a string. */
     const char* image_control_statement_enum(long);
@@ -10216,7 +10306,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 244877
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248692
 namespace stringify { namespace SgUnaryOp {
     /** Convert SgUnaryOp::Sgop_mode enum constant to a string. */
     const char* Sgop_mode(long);
@@ -10234,7 +10324,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 249774
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 253599
 namespace stringify { namespace SgCastExp {
     /** Convert SgCastExp::cast_type_enum enum constant to a string. */
     const char* cast_type_enum(long);
@@ -10252,7 +10342,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 250351
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 254177
 namespace stringify { namespace SgThrowOp {
     /** Convert SgThrowOp::e_throw_kind enum constant to a string. */
     const char* e_throw_kind(long);
@@ -10270,7 +10360,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 317604
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 323057
 namespace stringify { namespace SgAsmOp {
     /** Convert SgAsmOp::asm_operand_modifier_enum enum constant to a string. */
     const char* asm_operand_modifier_enum(long);
@@ -10288,7 +10378,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 317623
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 323076
 namespace stringify { namespace SgAsmOp {
     /** Convert SgAsmOp::asm_operand_constraint_enum enum constant to a string. */
     const char* asm_operand_constraint_enum(long);
@@ -10306,7 +10396,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 345208
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 351725
 namespace stringify { namespace SgLabelSymbol {
     /** Convert SgLabelSymbol::label_type_enum enum constant to a string. */
     const char* label_type_enum(long);
@@ -10324,7 +10414,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 385010
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 391590
 namespace stringify { namespace SgAsmLEFileHeader {
     /** Convert SgAsmLEFileHeader::LEFileHeaderFlags enum constant to a string. */
     const char* LEFileHeaderFlags(long);
@@ -10342,7 +10432,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 385994
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 392575
 namespace stringify { namespace SgAsmNEFileHeader {
     /** Convert SgAsmNEFileHeader::HeaderFlags1 enum constant to a string. */
     const char* HeaderFlags1(long);
@@ -10360,7 +10450,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 386005
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 392586
 namespace stringify { namespace SgAsmNEFileHeader {
     /** Convert SgAsmNEFileHeader::HeaderFlags2 enum constant to a string. */
     const char* HeaderFlags2(long);
@@ -10378,7 +10468,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 427811
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 434470
 namespace stringify { namespace SgAsmNEEntryPoint {
     /** Convert SgAsmNEEntryPoint::NEEntryFlags enum constant to a string. */
     const char* NEEntryFlags(long);
@@ -10396,7 +10486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428333
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 434993
 namespace stringify { namespace SgAsmNERelocEntry {
     /** Convert SgAsmNERelocEntry::NERelocSrcType enum constant to a string. */
     const char* NERelocSrcType(long);
@@ -10414,7 +10504,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428345
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435005
 namespace stringify { namespace SgAsmNERelocEntry {
     /** Convert SgAsmNERelocEntry::NERelocTgtType enum constant to a string. */
     const char* NERelocTgtType(long);
@@ -10432,7 +10522,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428352
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435012
 namespace stringify { namespace SgAsmNERelocEntry {
     /** Convert SgAsmNERelocEntry::NERelocModifiers enum constant to a string. */
     const char* NERelocModifiers(long);
@@ -10450,7 +10540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428357
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435017
 namespace stringify { namespace SgAsmNERelocEntry {
     /** Convert SgAsmNERelocEntry::NERelocFlags enum constant to a string. */
     const char* NERelocFlags(long);
@@ -10468,7 +10558,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428991
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435652
 namespace stringify { namespace SgAsmNESectionTableEntry {
     /** Convert SgAsmNESectionTableEntry::NESectionFlags enum constant to a string. */
     const char* NESectionFlags(long);
@@ -10486,7 +10576,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 431115
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 437780
 namespace stringify { namespace SgAsmLESectionTableEntry {
     /** Convert SgAsmLESectionTableEntry::LESectionFlags enum constant to a string. */
     const char* LESectionFlags(long);
@@ -10596,6 +10686,24 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 18
 namespace stringify {
+    /** Convert E_SgNonrealBaseClass enum constant to a string. */
+    const char* E_SgNonrealBaseClass(long);
+
+    /** Convert E_SgNonrealBaseClass enum constant to a string. */
+    std::string E_SgNonrealBaseClass(long, const std::string &strip);
+
+    /** Return all E_SgNonrealBaseClass member values as a vector. */
+    const std::vector<long>& E_SgNonrealBaseClass();
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealBaseClass(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgNonrealBaseClass();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 21
+namespace stringify {
     /** Convert E_SgBaseClass enum constant to a string. */
     const char* E_SgBaseClass(long);
 
@@ -10612,7 +10720,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 21
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 24
 namespace stringify {
     /** Convert E_SgTemplateParameter enum constant to a string. */
     const char* E_SgTemplateParameter(long);
@@ -10630,7 +10738,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 24
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 27
 namespace stringify {
     /** Convert E_SgTemplateArgument enum constant to a string. */
     const char* E_SgTemplateArgument(long);
@@ -10648,7 +10756,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 27
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 30
 namespace stringify {
     /** Convert E_SgDirectory enum constant to a string. */
     const char* E_SgDirectory(long);
@@ -10666,7 +10774,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 30
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 33
 namespace stringify {
     /** Convert E_SgFileList enum constant to a string. */
     const char* E_SgFileList(long);
@@ -10684,7 +10792,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 33
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 36
 namespace stringify {
     /** Convert E_SgDirectoryList enum constant to a string. */
     const char* E_SgDirectoryList(long);
@@ -10702,7 +10810,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 36
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 39
 namespace stringify {
     /** Convert E_SgTemplateArgumentList enum constant to a string. */
     const char* E_SgTemplateArgumentList(long);
@@ -10720,7 +10828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 39
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 42
 namespace stringify {
     /** Convert E_SgTemplateParameterList enum constant to a string. */
     const char* E_SgTemplateParameterList(long);
@@ -10738,7 +10846,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 42
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 45
 namespace stringify {
     /** Convert E_SgIncludeFile enum constant to a string. */
     const char* E_SgIncludeFile(long);
@@ -10756,7 +10864,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 45
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 48
 namespace stringify {
     /** Convert E_SgJavaImportStatementList enum constant to a string. */
     const char* E_SgJavaImportStatementList(long);
@@ -10774,7 +10882,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 48
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 51
 namespace stringify {
     /** Convert E_SgJavaClassDeclarationList enum constant to a string. */
     const char* E_SgJavaClassDeclarationList(long);
@@ -10792,7 +10900,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 51
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 54
 namespace stringify {
     /** Convert E_SgTypeUnknown enum constant to a string. */
     const char* E_SgTypeUnknown(long);
@@ -10810,7 +10918,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 54
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 57
 namespace stringify {
     /** Convert E_SgTypeChar enum constant to a string. */
     const char* E_SgTypeChar(long);
@@ -10828,7 +10936,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 57
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 60
 namespace stringify {
     /** Convert E_SgTypeSignedChar enum constant to a string. */
     const char* E_SgTypeSignedChar(long);
@@ -10846,7 +10954,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 60
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 63
 namespace stringify {
     /** Convert E_SgTypeUnsignedChar enum constant to a string. */
     const char* E_SgTypeUnsignedChar(long);
@@ -10864,7 +10972,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 63
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 66
 namespace stringify {
     /** Convert E_SgTypeShort enum constant to a string. */
     const char* E_SgTypeShort(long);
@@ -10882,7 +10990,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 66
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 69
 namespace stringify {
     /** Convert E_SgTypeSignedShort enum constant to a string. */
     const char* E_SgTypeSignedShort(long);
@@ -10900,7 +11008,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 69
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 72
 namespace stringify {
     /** Convert E_SgTypeUnsignedShort enum constant to a string. */
     const char* E_SgTypeUnsignedShort(long);
@@ -10918,7 +11026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 72
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 75
 namespace stringify {
     /** Convert E_SgTypeInt enum constant to a string. */
     const char* E_SgTypeInt(long);
@@ -10936,7 +11044,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 75
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 78
 namespace stringify {
     /** Convert E_SgTypeSignedInt enum constant to a string. */
     const char* E_SgTypeSignedInt(long);
@@ -10954,7 +11062,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 78
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 81
 namespace stringify {
     /** Convert E_SgTypeUnsignedInt enum constant to a string. */
     const char* E_SgTypeUnsignedInt(long);
@@ -10972,7 +11080,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 81
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 84
 namespace stringify {
     /** Convert E_SgTypeLong enum constant to a string. */
     const char* E_SgTypeLong(long);
@@ -10990,7 +11098,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 84
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 87
 namespace stringify {
     /** Convert E_SgTypeSignedLong enum constant to a string. */
     const char* E_SgTypeSignedLong(long);
@@ -11008,7 +11116,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 87
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 90
 namespace stringify {
     /** Convert E_SgTypeUnsignedLong enum constant to a string. */
     const char* E_SgTypeUnsignedLong(long);
@@ -11026,7 +11134,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 90
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 93
 namespace stringify {
     /** Convert E_SgTypeVoid enum constant to a string. */
     const char* E_SgTypeVoid(long);
@@ -11044,7 +11152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 93
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 96
 namespace stringify {
     /** Convert E_SgTypeGlobalVoid enum constant to a string. */
     const char* E_SgTypeGlobalVoid(long);
@@ -11062,7 +11170,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 96
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 99
 namespace stringify {
     /** Convert E_SgTypeWchar enum constant to a string. */
     const char* E_SgTypeWchar(long);
@@ -11080,7 +11188,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 99
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 102
 namespace stringify {
     /** Convert E_SgTypeFloat enum constant to a string. */
     const char* E_SgTypeFloat(long);
@@ -11098,7 +11206,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 102
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 105
 namespace stringify {
     /** Convert E_SgTypeDouble enum constant to a string. */
     const char* E_SgTypeDouble(long);
@@ -11116,7 +11224,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 105
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 108
 namespace stringify {
     /** Convert E_SgTypeLongLong enum constant to a string. */
     const char* E_SgTypeLongLong(long);
@@ -11134,7 +11242,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 108
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 111
 namespace stringify {
     /** Convert E_SgTypeSignedLongLong enum constant to a string. */
     const char* E_SgTypeSignedLongLong(long);
@@ -11152,7 +11260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 111
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 114
 namespace stringify {
     /** Convert E_SgTypeUnsignedLongLong enum constant to a string. */
     const char* E_SgTypeUnsignedLongLong(long);
@@ -11170,7 +11278,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 114
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 117
 namespace stringify {
     /** Convert E_SgTypeSigned128bitInteger enum constant to a string. */
     const char* E_SgTypeSigned128bitInteger(long);
@@ -11188,7 +11296,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 117
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 120
 namespace stringify {
     /** Convert E_SgTypeUnsigned128bitInteger enum constant to a string. */
     const char* E_SgTypeUnsigned128bitInteger(long);
@@ -11206,7 +11314,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 120
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 123
 namespace stringify {
     /** Convert E_SgTypeFloat80 enum constant to a string. */
     const char* E_SgTypeFloat80(long);
@@ -11224,7 +11332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 123
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 126
 namespace stringify {
     /** Convert E_SgTypeLongDouble enum constant to a string. */
     const char* E_SgTypeLongDouble(long);
@@ -11242,7 +11350,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 126
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 129
 namespace stringify {
     /** Convert E_SgTypeString enum constant to a string. */
     const char* E_SgTypeString(long);
@@ -11260,7 +11368,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 129
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 132
 namespace stringify {
     /** Convert E_SgTypeBool enum constant to a string. */
     const char* E_SgTypeBool(long);
@@ -11278,7 +11386,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 132
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 135
 namespace stringify {
     /** Convert E_SgPointerMemberType enum constant to a string. */
     const char* E_SgPointerMemberType(long);
@@ -11296,7 +11404,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 135
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 138
 namespace stringify {
     /** Convert E_SgPointerType enum constant to a string. */
     const char* E_SgPointerType(long);
@@ -11314,7 +11422,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 138
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 141
 namespace stringify {
     /** Convert E_SgReferenceType enum constant to a string. */
     const char* E_SgReferenceType(long);
@@ -11332,7 +11440,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 141
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 144
 namespace stringify {
     /** Convert E_SgJavaParameterType enum constant to a string. */
     const char* E_SgJavaParameterType(long);
@@ -11350,7 +11458,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 144
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 147
 namespace stringify {
     /** Convert E_SgClassType enum constant to a string. */
     const char* E_SgClassType(long);
@@ -11368,43 +11476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 147
-namespace stringify {
-    /** Convert E_SgJavaParameterizedType enum constant to a string. */
-    const char* E_SgJavaParameterizedType(long);
-
-    /** Convert E_SgJavaParameterizedType enum constant to a string. */
-    std::string E_SgJavaParameterizedType(long, const std::string &strip);
-
-    /** Return all E_SgJavaParameterizedType member values as a vector. */
-    const std::vector<long>& E_SgJavaParameterizedType();
-}
-
-namespace Rose {
-    std::string stringifyE_SgJavaParameterizedType(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyE_SgJavaParameterizedType();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 150
-namespace stringify {
-    /** Convert E_SgJavaQualifiedType enum constant to a string. */
-    const char* E_SgJavaQualifiedType(long);
-
-    /** Convert E_SgJavaQualifiedType enum constant to a string. */
-    std::string E_SgJavaQualifiedType(long, const std::string &strip);
-
-    /** Return all E_SgJavaQualifiedType member values as a vector. */
-    const std::vector<long>& E_SgJavaQualifiedType();
-}
-
-namespace Rose {
-    std::string stringifyE_SgJavaQualifiedType(long int n, const char *strip=NULL, bool canonic=false);
-    const std::vector<long>& stringifyE_SgJavaQualifiedType();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 153
 namespace stringify {
     /** Convert E_SgEnumType enum constant to a string. */
     const char* E_SgEnumType(long);
@@ -11422,7 +11494,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 156
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 153
 namespace stringify {
     /** Convert E_SgTypedefType enum constant to a string. */
     const char* E_SgTypedefType(long);
@@ -11440,7 +11512,61 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 156
+namespace stringify {
+    /** Convert E_SgNonrealType enum constant to a string. */
+    const char* E_SgNonrealType(long);
+
+    /** Convert E_SgNonrealType enum constant to a string. */
+    std::string E_SgNonrealType(long, const std::string &strip);
+
+    /** Return all E_SgNonrealType member values as a vector. */
+    const std::vector<long>& E_SgNonrealType();
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealType(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgNonrealType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 159
+namespace stringify {
+    /** Convert E_SgJavaParameterizedType enum constant to a string. */
+    const char* E_SgJavaParameterizedType(long);
+
+    /** Convert E_SgJavaParameterizedType enum constant to a string. */
+    std::string E_SgJavaParameterizedType(long, const std::string &strip);
+
+    /** Return all E_SgJavaParameterizedType member values as a vector. */
+    const std::vector<long>& E_SgJavaParameterizedType();
+}
+
+namespace Rose {
+    std::string stringifyE_SgJavaParameterizedType(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgJavaParameterizedType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 162
+namespace stringify {
+    /** Convert E_SgJavaQualifiedType enum constant to a string. */
+    const char* E_SgJavaQualifiedType(long);
+
+    /** Convert E_SgJavaQualifiedType enum constant to a string. */
+    std::string E_SgJavaQualifiedType(long, const std::string &strip);
+
+    /** Return all E_SgJavaQualifiedType member values as a vector. */
+    const std::vector<long>& E_SgJavaQualifiedType();
+}
+
+namespace Rose {
+    std::string stringifyE_SgJavaQualifiedType(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgJavaQualifiedType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 165
 namespace stringify {
     /** Convert E_SgJavaWildcardType enum constant to a string. */
     const char* E_SgJavaWildcardType(long);
@@ -11458,7 +11584,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 162
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 168
 namespace stringify {
     /** Convert E_SgNamedType enum constant to a string. */
     const char* E_SgNamedType(long);
@@ -11476,7 +11602,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 165
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 171
 namespace stringify {
     /** Convert E_SgModifierType enum constant to a string. */
     const char* E_SgModifierType(long);
@@ -11494,7 +11620,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 168
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 174
 namespace stringify {
     /** Convert E_SgPartialFunctionModifierType enum constant to a string. */
     const char* E_SgPartialFunctionModifierType(long);
@@ -11512,7 +11638,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 171
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 177
 namespace stringify {
     /** Convert E_SgPartialFunctionType enum constant to a string. */
     const char* E_SgPartialFunctionType(long);
@@ -11530,7 +11656,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 174
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 180
 namespace stringify {
     /** Convert E_SgMemberFunctionType enum constant to a string. */
     const char* E_SgMemberFunctionType(long);
@@ -11548,7 +11674,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 177
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 183
 namespace stringify {
     /** Convert E_SgFunctionType enum constant to a string. */
     const char* E_SgFunctionType(long);
@@ -11566,7 +11692,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 180
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 186
 namespace stringify {
     /** Convert E_SgArrayType enum constant to a string. */
     const char* E_SgArrayType(long);
@@ -11584,7 +11710,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 183
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 189
 namespace stringify {
     /** Convert E_SgTypeEllipse enum constant to a string. */
     const char* E_SgTypeEllipse(long);
@@ -11602,7 +11728,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 186
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 192
 namespace stringify {
     /** Convert E_SgTemplateType enum constant to a string. */
     const char* E_SgTemplateType(long);
@@ -11620,7 +11746,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 189
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 195
 namespace stringify {
     /** Convert E_SgQualifiedNameType enum constant to a string. */
     const char* E_SgQualifiedNameType(long);
@@ -11638,7 +11764,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 192
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 198
 namespace stringify {
     /** Convert E_SgTypeComplex enum constant to a string. */
     const char* E_SgTypeComplex(long);
@@ -11656,7 +11782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 195
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 201
 namespace stringify {
     /** Convert E_SgTypeImaginary enum constant to a string. */
     const char* E_SgTypeImaginary(long);
@@ -11674,7 +11800,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 198
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 204
 namespace stringify {
     /** Convert E_SgTypeDefault enum constant to a string. */
     const char* E_SgTypeDefault(long);
@@ -11692,7 +11818,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 201
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 207
 namespace stringify {
     /** Convert E_SgTypeCAFTeam enum constant to a string. */
     const char* E_SgTypeCAFTeam(long);
@@ -11710,7 +11836,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 204
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 210
 namespace stringify {
     /** Convert E_SgTypeCrayPointer enum constant to a string. */
     const char* E_SgTypeCrayPointer(long);
@@ -11728,7 +11854,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 207
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 213
 namespace stringify {
     /** Convert E_SgTypeLabel enum constant to a string. */
     const char* E_SgTypeLabel(long);
@@ -11746,7 +11872,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 210
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 216
 namespace stringify {
     /** Convert E_SgJavaUnionType enum constant to a string. */
     const char* E_SgJavaUnionType(long);
@@ -11764,7 +11890,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 213
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 219
 namespace stringify {
     /** Convert E_SgRvalueReferenceType enum constant to a string. */
     const char* E_SgRvalueReferenceType(long);
@@ -11782,7 +11908,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 216
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 222
 namespace stringify {
     /** Convert E_SgTypeNullptr enum constant to a string. */
     const char* E_SgTypeNullptr(long);
@@ -11800,7 +11926,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 219
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 225
 namespace stringify {
     /** Convert E_SgDeclType enum constant to a string. */
     const char* E_SgDeclType(long);
@@ -11818,7 +11944,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 222
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 228
 namespace stringify {
     /** Convert E_SgTypeOfType enum constant to a string. */
     const char* E_SgTypeOfType(long);
@@ -11836,7 +11962,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 225
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 231
 namespace stringify {
     /** Convert E_SgTypeMatrix enum constant to a string. */
     const char* E_SgTypeMatrix(long);
@@ -11854,7 +11980,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 228
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 234
 namespace stringify {
     /** Convert E_SgTypeTuple enum constant to a string. */
     const char* E_SgTypeTuple(long);
@@ -11872,7 +11998,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 231
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 237
 namespace stringify {
     /** Convert E_SgTypeChar16 enum constant to a string. */
     const char* E_SgTypeChar16(long);
@@ -11890,7 +12016,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 234
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 240
 namespace stringify {
     /** Convert E_SgTypeChar32 enum constant to a string. */
     const char* E_SgTypeChar32(long);
@@ -11908,7 +12034,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 237
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 243
 namespace stringify {
     /** Convert E_SgTypeFloat128 enum constant to a string. */
     const char* E_SgTypeFloat128(long);
@@ -11926,7 +12052,25 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 240
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 246
+namespace stringify {
+    /** Convert E_SgAutoType enum constant to a string. */
+    const char* E_SgAutoType(long);
+
+    /** Convert E_SgAutoType enum constant to a string. */
+    std::string E_SgAutoType(long, const std::string &strip);
+
+    /** Return all E_SgAutoType member values as a vector. */
+    const std::vector<long>& E_SgAutoType();
+}
+
+namespace Rose {
+    std::string stringifyE_SgAutoType(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgAutoType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 249
 namespace stringify {
     /** Convert E_SgType enum constant to a string. */
     const char* E_SgType(long);
@@ -11944,7 +12088,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 243
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 252
 namespace stringify {
     /** Convert E_SgCommonBlockObject enum constant to a string. */
     const char* E_SgCommonBlockObject(long);
@@ -11962,7 +12106,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 246
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 255
 namespace stringify {
     /** Convert E_SgInitializedName enum constant to a string. */
     const char* E_SgInitializedName(long);
@@ -11980,7 +12124,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 249
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 258
 namespace stringify {
     /** Convert E_SgJavaMemberValuePair enum constant to a string. */
     const char* E_SgJavaMemberValuePair(long);
@@ -11998,7 +12142,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 252
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 261
 namespace stringify {
     /** Convert E_SgOmpOrderedClause enum constant to a string. */
     const char* E_SgOmpOrderedClause(long);
@@ -12016,7 +12160,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 255
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 264
 namespace stringify {
     /** Convert E_SgOmpCollapseClause enum constant to a string. */
     const char* E_SgOmpCollapseClause(long);
@@ -12034,7 +12178,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 258
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 267
 namespace stringify {
     /** Convert E_SgOmpIfClause enum constant to a string. */
     const char* E_SgOmpIfClause(long);
@@ -12052,7 +12196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 261
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 270
 namespace stringify {
     /** Convert E_SgOmpNumThreadsClause enum constant to a string. */
     const char* E_SgOmpNumThreadsClause(long);
@@ -12070,7 +12214,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 264
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 273
 namespace stringify {
     /** Convert E_SgOmpDeviceClause enum constant to a string. */
     const char* E_SgOmpDeviceClause(long);
@@ -12088,7 +12232,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 267
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 276
 namespace stringify {
     /** Convert E_SgOmpSafelenClause enum constant to a string. */
     const char* E_SgOmpSafelenClause(long);
@@ -12106,7 +12250,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 270
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 279
 namespace stringify {
     /** Convert E_SgOmpSimdlenClause enum constant to a string. */
     const char* E_SgOmpSimdlenClause(long);
@@ -12124,7 +12268,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 273
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 282
 namespace stringify {
     /** Convert E_SgOmpFinalClause enum constant to a string. */
     const char* E_SgOmpFinalClause(long);
@@ -12142,7 +12286,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 276
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 285
 namespace stringify {
     /** Convert E_SgOmpPriorityClause enum constant to a string. */
     const char* E_SgOmpPriorityClause(long);
@@ -12160,7 +12304,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 279
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 288
 namespace stringify {
     /** Convert E_SgOmpExpressionClause enum constant to a string. */
     const char* E_SgOmpExpressionClause(long);
@@ -12178,7 +12322,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 282
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 291
 namespace stringify {
     /** Convert E_SgOmpCopyprivateClause enum constant to a string. */
     const char* E_SgOmpCopyprivateClause(long);
@@ -12196,7 +12340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 285
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 294
 namespace stringify {
     /** Convert E_SgOmpPrivateClause enum constant to a string. */
     const char* E_SgOmpPrivateClause(long);
@@ -12214,7 +12358,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 288
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 297
 namespace stringify {
     /** Convert E_SgOmpFirstprivateClause enum constant to a string. */
     const char* E_SgOmpFirstprivateClause(long);
@@ -12232,7 +12376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 291
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 300
 namespace stringify {
     /** Convert E_SgOmpSharedClause enum constant to a string. */
     const char* E_SgOmpSharedClause(long);
@@ -12250,7 +12394,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 294
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 303
 namespace stringify {
     /** Convert E_SgOmpCopyinClause enum constant to a string. */
     const char* E_SgOmpCopyinClause(long);
@@ -12268,7 +12412,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 297
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 306
 namespace stringify {
     /** Convert E_SgOmpLastprivateClause enum constant to a string. */
     const char* E_SgOmpLastprivateClause(long);
@@ -12286,7 +12430,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 300
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 309
 namespace stringify {
     /** Convert E_SgOmpReductionClause enum constant to a string. */
     const char* E_SgOmpReductionClause(long);
@@ -12304,7 +12448,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 303
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 312
 namespace stringify {
     /** Convert E_SgOmpMapClause enum constant to a string. */
     const char* E_SgOmpMapClause(long);
@@ -12322,7 +12466,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 306
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 315
 namespace stringify {
     /** Convert E_SgOmpUniformClause enum constant to a string. */
     const char* E_SgOmpUniformClause(long);
@@ -12340,7 +12484,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 309
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 318
 namespace stringify {
     /** Convert E_SgOmpAlignedClause enum constant to a string. */
     const char* E_SgOmpAlignedClause(long);
@@ -12358,7 +12502,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 312
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 321
 namespace stringify {
     /** Convert E_SgOmpLinearClause enum constant to a string. */
     const char* E_SgOmpLinearClause(long);
@@ -12376,7 +12520,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 315
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 324
 namespace stringify {
     /** Convert E_SgOmpDependClause enum constant to a string. */
     const char* E_SgOmpDependClause(long);
@@ -12394,7 +12538,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 318
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 327
 namespace stringify {
     /** Convert E_SgOmpVariablesClause enum constant to a string. */
     const char* E_SgOmpVariablesClause(long);
@@ -12412,7 +12556,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 321
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 330
 namespace stringify {
     /** Convert E_SgOmpScheduleClause enum constant to a string. */
     const char* E_SgOmpScheduleClause(long);
@@ -12430,7 +12574,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 324
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 333
 namespace stringify {
     /** Convert E_SgUntypedUnaryOperator enum constant to a string. */
     const char* E_SgUntypedUnaryOperator(long);
@@ -12448,7 +12592,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 327
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 336
 namespace stringify {
     /** Convert E_SgUntypedBinaryOperator enum constant to a string. */
     const char* E_SgUntypedBinaryOperator(long);
@@ -12466,7 +12610,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 330
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 339
 namespace stringify {
     /** Convert E_SgUntypedExprListExpression enum constant to a string. */
     const char* E_SgUntypedExprListExpression(long);
@@ -12484,7 +12628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 333
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 342
 namespace stringify {
     /** Convert E_SgUntypedArrayReferenceExpression enum constant to a string. */
     const char* E_SgUntypedArrayReferenceExpression(long);
@@ -12502,7 +12646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 336
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 345
 namespace stringify {
     /** Convert E_SgUntypedSubscriptExpression enum constant to a string. */
     const char* E_SgUntypedSubscriptExpression(long);
@@ -12520,7 +12664,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 339
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 348
 namespace stringify {
     /** Convert E_SgUntypedNamedExpression enum constant to a string. */
     const char* E_SgUntypedNamedExpression(long);
@@ -12538,7 +12682,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 342
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 351
 namespace stringify {
     /** Convert E_SgUntypedNameListDeclaration enum constant to a string. */
     const char* E_SgUntypedNameListDeclaration(long);
@@ -12556,7 +12700,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 345
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 354
 namespace stringify {
     /** Convert E_SgUntypedUseStatement enum constant to a string. */
     const char* E_SgUntypedUseStatement(long);
@@ -12574,7 +12718,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 348
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 357
 namespace stringify {
     /** Convert E_SgUntypedVariableDeclaration enum constant to a string. */
     const char* E_SgUntypedVariableDeclaration(long);
@@ -12592,7 +12736,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 351
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 360
 namespace stringify {
     /** Convert E_SgUntypedProgramHeaderDeclaration enum constant to a string. */
     const char* E_SgUntypedProgramHeaderDeclaration(long);
@@ -12610,7 +12754,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 354
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 363
 namespace stringify {
     /** Convert E_SgUntypedSubroutineDeclaration enum constant to a string. */
     const char* E_SgUntypedSubroutineDeclaration(long);
@@ -12628,7 +12772,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 357
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 366
 namespace stringify {
     /** Convert E_SgUntypedInterfaceDeclaration enum constant to a string. */
     const char* E_SgUntypedInterfaceDeclaration(long);
@@ -12646,7 +12790,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 360
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 369
 namespace stringify {
     /** Convert E_SgUntypedFunctionDeclaration enum constant to a string. */
     const char* E_SgUntypedFunctionDeclaration(long);
@@ -12664,7 +12808,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 363
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 372
 namespace stringify {
     /** Convert E_SgUntypedModuleDeclaration enum constant to a string. */
     const char* E_SgUntypedModuleDeclaration(long);
@@ -12682,7 +12826,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 366
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 375
 namespace stringify {
     /** Convert E_SgUntypedSubmoduleDeclaration enum constant to a string. */
     const char* E_SgUntypedSubmoduleDeclaration(long);
@@ -12700,7 +12844,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 369
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 378
 namespace stringify {
     /** Convert E_SgUntypedBlockDataDeclaration enum constant to a string. */
     const char* E_SgUntypedBlockDataDeclaration(long);
@@ -12718,7 +12862,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 372
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 381
 namespace stringify {
     /** Convert E_SgUntypedPackageDeclaration enum constant to a string. */
     const char* E_SgUntypedPackageDeclaration(long);
@@ -12736,7 +12880,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 375
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 384
 namespace stringify {
     /** Convert E_SgUntypedStructureDeclaration enum constant to a string. */
     const char* E_SgUntypedStructureDeclaration(long);
@@ -12754,7 +12898,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 378
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 387
 namespace stringify {
     /** Convert E_SgUntypedExceptionHandlerDeclaration enum constant to a string. */
     const char* E_SgUntypedExceptionHandlerDeclaration(long);
@@ -12772,7 +12916,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 381
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 390
 namespace stringify {
     /** Convert E_SgUntypedExceptionDeclaration enum constant to a string. */
     const char* E_SgUntypedExceptionDeclaration(long);
@@ -12790,7 +12934,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 384
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 393
 namespace stringify {
     /** Convert E_SgUntypedTaskDeclaration enum constant to a string. */
     const char* E_SgUntypedTaskDeclaration(long);
@@ -12808,7 +12952,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 387
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 396
 namespace stringify {
     /** Convert E_SgUntypedUnitDeclaration enum constant to a string. */
     const char* E_SgUntypedUnitDeclaration(long);
@@ -12826,7 +12970,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 390
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 399
 namespace stringify {
     /** Convert E_SgUntypedInitializedNameListDeclaration enum constant to a string. */
     const char* E_SgUntypedInitializedNameListDeclaration(long);
@@ -12844,7 +12988,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 393
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 402
 namespace stringify {
     /** Convert E_SgUntypedAssignmentStatement enum constant to a string. */
     const char* E_SgUntypedAssignmentStatement(long);
@@ -12862,7 +13006,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 396
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 405
 namespace stringify {
     /** Convert E_SgUntypedBlockStatement enum constant to a string. */
     const char* E_SgUntypedBlockStatement(long);
@@ -12880,7 +13024,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 399
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 408
 namespace stringify {
     /** Convert E_SgUntypedExpressionStatement enum constant to a string. */
     const char* E_SgUntypedExpressionStatement(long);
@@ -12898,7 +13042,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 402
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 411
 namespace stringify {
     /** Convert E_SgUntypedFunctionCallStatement enum constant to a string. */
     const char* E_SgUntypedFunctionCallStatement(long);
@@ -12916,7 +13060,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 405
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 414
 namespace stringify {
     /** Convert E_SgUntypedImageControlStatement enum constant to a string. */
     const char* E_SgUntypedImageControlStatement(long);
@@ -12934,7 +13078,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 408
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 417
 namespace stringify {
     /** Convert E_SgUntypedFunctionScope enum constant to a string. */
     const char* E_SgUntypedFunctionScope(long);
@@ -12952,7 +13096,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 411
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 420
 namespace stringify {
     /** Convert E_SgUntypedModuleScope enum constant to a string. */
     const char* E_SgUntypedModuleScope(long);
@@ -12970,7 +13114,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 414
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 423
 namespace stringify {
     /** Convert E_SgUntypedGlobalScope enum constant to a string. */
     const char* E_SgUntypedGlobalScope(long);
@@ -12988,7 +13132,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 417
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 426
 namespace stringify {
     /** Convert E_SgUntypedScope enum constant to a string. */
     const char* E_SgUntypedScope(long);
@@ -13006,7 +13150,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 420
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 429
 namespace stringify {
     /** Convert E_SgUntypedIfStatement enum constant to a string. */
     const char* E_SgUntypedIfStatement(long);
@@ -13024,7 +13168,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 423
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 432
 namespace stringify {
     /** Convert E_SgUntypedCaseStatement enum constant to a string. */
     const char* E_SgUntypedCaseStatement(long);
@@ -13042,7 +13186,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 426
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 435
 namespace stringify {
     /** Convert E_SgUntypedLabelStatement enum constant to a string. */
     const char* E_SgUntypedLabelStatement(long);
@@ -13060,7 +13204,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 429
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 438
 namespace stringify {
     /** Convert E_SgUntypedWhileStatement enum constant to a string. */
     const char* E_SgUntypedWhileStatement(long);
@@ -13078,7 +13222,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 432
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 441
 namespace stringify {
     /** Convert E_SgUntypedForStatement enum constant to a string. */
     const char* E_SgUntypedForStatement(long);
@@ -13096,7 +13240,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 435
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 444
 namespace stringify {
     /** Convert E_SgUntypedReturnStatement enum constant to a string. */
     const char* E_SgUntypedReturnStatement(long);
@@ -13114,7 +13258,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 438
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 447
 namespace stringify {
     /** Convert E_SgUntypedStopStatement enum constant to a string. */
     const char* E_SgUntypedStopStatement(long);
@@ -13132,7 +13276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 441
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 450
 namespace stringify {
     /** Convert E_SgUntypedForAllStatement enum constant to a string. */
     const char* E_SgUntypedForAllStatement(long);
@@ -13150,7 +13294,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 444
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 453
 namespace stringify {
     /** Convert E_SgUntypedArrayType enum constant to a string. */
     const char* E_SgUntypedArrayType(long);
@@ -13168,7 +13312,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 447
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 456
 namespace stringify {
     /** Convert E_SgUntypedType enum constant to a string. */
     const char* E_SgUntypedType(long);
@@ -13186,7 +13330,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 450
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 459
 namespace stringify {
     /** Convert E_SgUntypedFile enum constant to a string. */
     const char* E_SgUntypedFile(long);
@@ -13204,7 +13348,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 453
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 462
 namespace stringify {
     /** Convert E_SgUntypedStatementList enum constant to a string. */
     const char* E_SgUntypedStatementList(long);
@@ -13222,7 +13366,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 456
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 465
 namespace stringify {
     /** Convert E_SgUntypedDeclarationStatementList enum constant to a string. */
     const char* E_SgUntypedDeclarationStatementList(long);
@@ -13240,7 +13384,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 459
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 468
 namespace stringify {
     /** Convert E_SgUntypedFunctionDeclarationList enum constant to a string. */
     const char* E_SgUntypedFunctionDeclarationList(long);
@@ -13258,7 +13402,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 462
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 471
 namespace stringify {
     /** Convert E_SgUntypedInitializedNameList enum constant to a string. */
     const char* E_SgUntypedInitializedNameList(long);
@@ -13276,7 +13420,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 465
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 474
 namespace stringify {
     /** Convert E_SgUntypedNameList enum constant to a string. */
     const char* E_SgUntypedNameList(long);
@@ -13294,7 +13438,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 468
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 477
 namespace stringify {
     /** Convert E_SgUntypedTokenList enum constant to a string. */
     const char* E_SgUntypedTokenList(long);
@@ -13312,7 +13456,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 471
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 480
 namespace stringify {
     /** Convert E_SgUntypedTokenPairList enum constant to a string. */
     const char* E_SgUntypedTokenPairList(long);
@@ -13330,7 +13474,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 474
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 483
 namespace stringify {
     /** Convert E_SgLambdaCapture enum constant to a string. */
     const char* E_SgLambdaCapture(long);
@@ -13348,7 +13492,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 477
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 486
 namespace stringify {
     /** Convert E_SgLambdaCaptureList enum constant to a string. */
     const char* E_SgLambdaCaptureList(long);
@@ -13366,7 +13510,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 480
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 489
 namespace stringify {
     /** Convert E_SgGlobal enum constant to a string. */
     const char* E_SgGlobal(long);
@@ -13384,7 +13528,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 483
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 492
 namespace stringify {
     /** Convert E_SgBasicBlock enum constant to a string. */
     const char* E_SgBasicBlock(long);
@@ -13402,7 +13546,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 486
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 495
 namespace stringify {
     /** Convert E_SgIfStmt enum constant to a string. */
     const char* E_SgIfStmt(long);
@@ -13420,7 +13564,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 489
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 498
 namespace stringify {
     /** Convert E_SgForStatement enum constant to a string. */
     const char* E_SgForStatement(long);
@@ -13438,7 +13582,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 492
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 501
 namespace stringify {
     /** Convert E_SgTemplateFunctionDefinition enum constant to a string. */
     const char* E_SgTemplateFunctionDefinition(long);
@@ -13456,7 +13600,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 495
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 504
 namespace stringify {
     /** Convert E_SgFunctionDefinition enum constant to a string. */
     const char* E_SgFunctionDefinition(long);
@@ -13474,7 +13618,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 498
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 507
 namespace stringify {
     /** Convert E_SgTemplateInstantiationDefn enum constant to a string. */
     const char* E_SgTemplateInstantiationDefn(long);
@@ -13492,7 +13636,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 501
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 510
 namespace stringify {
     /** Convert E_SgTemplateClassDefinition enum constant to a string. */
     const char* E_SgTemplateClassDefinition(long);
@@ -13510,7 +13654,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 504
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 513
 namespace stringify {
     /** Convert E_SgClassDefinition enum constant to a string. */
     const char* E_SgClassDefinition(long);
@@ -13528,7 +13672,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 507
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 516
 namespace stringify {
     /** Convert E_SgWhileStmt enum constant to a string. */
     const char* E_SgWhileStmt(long);
@@ -13546,7 +13690,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 510
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 519
 namespace stringify {
     /** Convert E_SgDoWhileStmt enum constant to a string. */
     const char* E_SgDoWhileStmt(long);
@@ -13564,7 +13708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 513
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 522
 namespace stringify {
     /** Convert E_SgSwitchStatement enum constant to a string. */
     const char* E_SgSwitchStatement(long);
@@ -13582,7 +13726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 516
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 525
 namespace stringify {
     /** Convert E_SgCatchOptionStmt enum constant to a string. */
     const char* E_SgCatchOptionStmt(long);
@@ -13600,7 +13744,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 519
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 528
 namespace stringify {
     /** Convert E_SgNamespaceDefinitionStatement enum constant to a string. */
     const char* E_SgNamespaceDefinitionStatement(long);
@@ -13618,7 +13762,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 522
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 531
 namespace stringify {
     /** Convert E_SgAssociateStatement enum constant to a string. */
     const char* E_SgAssociateStatement(long);
@@ -13636,7 +13780,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 525
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 534
 namespace stringify {
     /** Convert E_SgFortranNonblockedDo enum constant to a string. */
     const char* E_SgFortranNonblockedDo(long);
@@ -13654,7 +13798,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 528
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 537
 namespace stringify {
     /** Convert E_SgFortranDo enum constant to a string. */
     const char* E_SgFortranDo(long);
@@ -13672,7 +13816,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 531
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 540
 namespace stringify {
     /** Convert E_SgForAllStatement enum constant to a string. */
     const char* E_SgForAllStatement(long);
@@ -13690,7 +13834,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 534
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 543
 namespace stringify {
     /** Convert E_SgUpcForAllStatement enum constant to a string. */
     const char* E_SgUpcForAllStatement(long);
@@ -13708,7 +13852,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 537
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 546
 namespace stringify {
     /** Convert E_SgCAFWithTeamStatement enum constant to a string. */
     const char* E_SgCAFWithTeamStatement(long);
@@ -13726,7 +13870,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 540
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 549
 namespace stringify {
     /** Convert E_SgJavaForEachStatement enum constant to a string. */
     const char* E_SgJavaForEachStatement(long);
@@ -13744,7 +13888,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 543
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 552
 namespace stringify {
     /** Convert E_SgJavaLabelStatement enum constant to a string. */
     const char* E_SgJavaLabelStatement(long);
@@ -13762,7 +13906,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 546
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 555
 namespace stringify {
     /** Convert E_SgMatlabForStatement enum constant to a string. */
     const char* E_SgMatlabForStatement(long);
@@ -13780,7 +13924,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 549
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 558
 namespace stringify {
     /** Convert E_SgRangeBasedForStatement enum constant to a string. */
     const char* E_SgRangeBasedForStatement(long);
@@ -13798,7 +13942,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 552
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 561
 namespace stringify {
     /** Convert E_SgJovialForThenStatement enum constant to a string. */
     const char* E_SgJovialForThenStatement(long);
@@ -13816,7 +13960,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 555
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 564
 namespace stringify {
     /** Convert E_SgFunctionParameterList enum constant to a string. */
     const char* E_SgFunctionParameterList(long);
@@ -13834,7 +13978,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 558
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 567
 namespace stringify {
     /** Convert E_SgTemplateVariableDeclaration enum constant to a string. */
     const char* E_SgTemplateVariableDeclaration(long);
@@ -13852,7 +13996,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 561
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 570
 namespace stringify {
     /** Convert E_SgVariableDeclaration enum constant to a string. */
     const char* E_SgVariableDeclaration(long);
@@ -13870,7 +14014,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 564
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 573
 namespace stringify {
     /** Convert E_SgVariableDefinition enum constant to a string. */
     const char* E_SgVariableDefinition(long);
@@ -13888,7 +14032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 567
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 576
 namespace stringify {
     /** Convert E_SgEnumDeclaration enum constant to a string. */
     const char* E_SgEnumDeclaration(long);
@@ -13906,7 +14050,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 570
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 579
 namespace stringify {
     /** Convert E_SgAsmStmt enum constant to a string. */
     const char* E_SgAsmStmt(long);
@@ -13924,7 +14068,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 573
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 582
 namespace stringify {
     /** Convert E_SgTemplateInstantiationDirectiveStatement enum constant to a string. */
     const char* E_SgTemplateInstantiationDirectiveStatement(long);
@@ -13942,7 +14086,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 576
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 585
 namespace stringify {
     /** Convert E_SgUseStatement enum constant to a string. */
     const char* E_SgUseStatement(long);
@@ -13960,7 +14104,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 579
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 588
 namespace stringify {
     /** Convert E_SgNamespaceDeclarationStatement enum constant to a string. */
     const char* E_SgNamespaceDeclarationStatement(long);
@@ -13978,7 +14122,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 582
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 591
 namespace stringify {
     /** Convert E_SgInterfaceStatement enum constant to a string. */
     const char* E_SgInterfaceStatement(long);
@@ -13996,7 +14140,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 585
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 594
 namespace stringify {
     /** Convert E_SgCommonBlock enum constant to a string. */
     const char* E_SgCommonBlock(long);
@@ -14014,7 +14158,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 588
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 597
 namespace stringify {
     /** Convert E_SgTemplateTypedefDeclaration enum constant to a string. */
     const char* E_SgTemplateTypedefDeclaration(long);
@@ -14032,7 +14176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 591
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 600
 namespace stringify {
     /** Convert E_SgTemplateInstantiationTypedefDeclaration enum constant to a string. */
     const char* E_SgTemplateInstantiationTypedefDeclaration(long);
@@ -14050,7 +14194,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 594
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 603
 namespace stringify {
     /** Convert E_SgTypedefDeclaration enum constant to a string. */
     const char* E_SgTypedefDeclaration(long);
@@ -14068,7 +14212,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 597
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 606
 namespace stringify {
     /** Convert E_SgStatementFunctionStatement enum constant to a string. */
     const char* E_SgStatementFunctionStatement(long);
@@ -14086,7 +14230,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 600
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 609
 namespace stringify {
     /** Convert E_SgCtorInitializerList enum constant to a string. */
     const char* E_SgCtorInitializerList(long);
@@ -14104,7 +14248,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 603
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 612
 namespace stringify {
     /** Convert E_SgPragmaDeclaration enum constant to a string. */
     const char* E_SgPragmaDeclaration(long);
@@ -14122,7 +14266,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 606
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 615
 namespace stringify {
     /** Convert E_SgTemplateClassDeclaration enum constant to a string. */
     const char* E_SgTemplateClassDeclaration(long);
@@ -14140,7 +14284,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 609
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 618
 namespace stringify {
     /** Convert E_SgTemplateInstantiationDecl enum constant to a string. */
     const char* E_SgTemplateInstantiationDecl(long);
@@ -14158,7 +14302,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 612
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 621
 namespace stringify {
     /** Convert E_SgDerivedTypeStatement enum constant to a string. */
     const char* E_SgDerivedTypeStatement(long);
@@ -14176,7 +14320,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 615
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 624
 namespace stringify {
     /** Convert E_SgModuleStatement enum constant to a string. */
     const char* E_SgModuleStatement(long);
@@ -14194,7 +14338,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 618
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 627
 namespace stringify {
     /** Convert E_SgJavaPackageDeclaration enum constant to a string. */
     const char* E_SgJavaPackageDeclaration(long);
@@ -14212,7 +14356,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 621
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 630
 namespace stringify {
     /** Convert E_SgClassDeclaration enum constant to a string. */
     const char* E_SgClassDeclaration(long);
@@ -14230,7 +14374,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 624
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 633
 namespace stringify {
     /** Convert E_SgImplicitStatement enum constant to a string. */
     const char* E_SgImplicitStatement(long);
@@ -14248,7 +14392,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 627
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 636
 namespace stringify {
     /** Convert E_SgTemplateFunctionDeclaration enum constant to a string. */
     const char* E_SgTemplateFunctionDeclaration(long);
@@ -14266,7 +14410,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 630
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 639
 namespace stringify {
     /** Convert E_SgTemplateMemberFunctionDeclaration enum constant to a string. */
     const char* E_SgTemplateMemberFunctionDeclaration(long);
@@ -14284,7 +14428,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 633
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 642
 namespace stringify {
     /** Convert E_SgTemplateInstantiationMemberFunctionDecl enum constant to a string. */
     const char* E_SgTemplateInstantiationMemberFunctionDecl(long);
@@ -14302,7 +14446,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 636
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 645
 namespace stringify {
     /** Convert E_SgMemberFunctionDeclaration enum constant to a string. */
     const char* E_SgMemberFunctionDeclaration(long);
@@ -14320,7 +14464,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 639
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 648
 namespace stringify {
     /** Convert E_SgTemplateInstantiationFunctionDecl enum constant to a string. */
     const char* E_SgTemplateInstantiationFunctionDecl(long);
@@ -14338,7 +14482,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 642
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 651
 namespace stringify {
     /** Convert E_SgProgramHeaderStatement enum constant to a string. */
     const char* E_SgProgramHeaderStatement(long);
@@ -14356,7 +14500,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 645
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 654
 namespace stringify {
     /** Convert E_SgProcedureHeaderStatement enum constant to a string. */
     const char* E_SgProcedureHeaderStatement(long);
@@ -14374,7 +14518,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 648
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 657
 namespace stringify {
     /** Convert E_SgEntryStatement enum constant to a string. */
     const char* E_SgEntryStatement(long);
@@ -14392,7 +14536,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 651
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 660
 namespace stringify {
     /** Convert E_SgFunctionDeclaration enum constant to a string. */
     const char* E_SgFunctionDeclaration(long);
@@ -14410,7 +14554,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 654
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 663
 namespace stringify {
     /** Convert E_SgIncludeDirectiveStatement enum constant to a string. */
     const char* E_SgIncludeDirectiveStatement(long);
@@ -14428,7 +14572,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 657
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 666
 namespace stringify {
     /** Convert E_SgOmpThreadprivateStatement enum constant to a string. */
     const char* E_SgOmpThreadprivateStatement(long);
@@ -14446,7 +14590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 660
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 669
 namespace stringify {
     /** Convert E_SgStmtDeclarationStatement enum constant to a string. */
     const char* E_SgStmtDeclarationStatement(long);
@@ -14464,7 +14608,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 663
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 672
 namespace stringify {
     /** Convert E_SgStaticAssertionDeclaration enum constant to a string. */
     const char* E_SgStaticAssertionDeclaration(long);
@@ -14482,7 +14626,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 666
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 675
 namespace stringify {
     /** Convert E_SgOmpDeclareSimdStatement enum constant to a string. */
     const char* E_SgOmpDeclareSimdStatement(long);
@@ -14500,7 +14644,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 669
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 678
 namespace stringify {
     /** Convert E_SgExprStatement enum constant to a string. */
     const char* E_SgExprStatement(long);
@@ -14518,7 +14662,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 672
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 681
 namespace stringify {
     /** Convert E_SgLabelStatement enum constant to a string. */
     const char* E_SgLabelStatement(long);
@@ -14536,7 +14680,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 675
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 684
 namespace stringify {
     /** Convert E_SgCaseOptionStmt enum constant to a string. */
     const char* E_SgCaseOptionStmt(long);
@@ -14554,7 +14698,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 678
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 687
 namespace stringify {
     /** Convert E_SgTryStmt enum constant to a string. */
     const char* E_SgTryStmt(long);
@@ -14572,7 +14716,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 681
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 690
 namespace stringify {
     /** Convert E_SgDefaultOptionStmt enum constant to a string. */
     const char* E_SgDefaultOptionStmt(long);
@@ -14590,7 +14734,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 684
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 693
 namespace stringify {
     /** Convert E_SgReturnStmt enum constant to a string. */
     const char* E_SgReturnStmt(long);
@@ -14608,7 +14752,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 687
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 696
 namespace stringify {
     /** Convert E_SgSpawnStmt enum constant to a string. */
     const char* E_SgSpawnStmt(long);
@@ -14626,7 +14770,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 690
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 699
 namespace stringify {
     /** Convert E_SgForInitStatement enum constant to a string. */
     const char* E_SgForInitStatement(long);
@@ -14644,7 +14788,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 693
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 702
 namespace stringify {
     /** Convert E_SgCatchStatementSeq enum constant to a string. */
     const char* E_SgCatchStatementSeq(long);
@@ -14662,7 +14806,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 696
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 705
 namespace stringify {
     /** Convert E_SgPrintStatement enum constant to a string. */
     const char* E_SgPrintStatement(long);
@@ -14680,7 +14824,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 699
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 708
 namespace stringify {
     /** Convert E_SgReadStatement enum constant to a string. */
     const char* E_SgReadStatement(long);
@@ -14698,7 +14842,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 702
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 711
 namespace stringify {
     /** Convert E_SgWriteStatement enum constant to a string. */
     const char* E_SgWriteStatement(long);
@@ -14716,7 +14860,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 705
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 714
 namespace stringify {
     /** Convert E_SgOpenStatement enum constant to a string. */
     const char* E_SgOpenStatement(long);
@@ -14734,7 +14878,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 708
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 717
 namespace stringify {
     /** Convert E_SgCloseStatement enum constant to a string. */
     const char* E_SgCloseStatement(long);
@@ -14752,7 +14896,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 711
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 720
 namespace stringify {
     /** Convert E_SgInquireStatement enum constant to a string. */
     const char* E_SgInquireStatement(long);
@@ -14770,7 +14914,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 714
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 723
 namespace stringify {
     /** Convert E_SgFlushStatement enum constant to a string. */
     const char* E_SgFlushStatement(long);
@@ -14788,7 +14932,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 717
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 726
 namespace stringify {
     /** Convert E_SgBackspaceStatement enum constant to a string. */
     const char* E_SgBackspaceStatement(long);
@@ -14806,7 +14950,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 720
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 729
 namespace stringify {
     /** Convert E_SgRewindStatement enum constant to a string. */
     const char* E_SgRewindStatement(long);
@@ -14824,7 +14968,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 723
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 732
 namespace stringify {
     /** Convert E_SgEndfileStatement enum constant to a string. */
     const char* E_SgEndfileStatement(long);
@@ -14842,7 +14986,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 726
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 735
 namespace stringify {
     /** Convert E_SgWaitStatement enum constant to a string. */
     const char* E_SgWaitStatement(long);
@@ -14860,7 +15004,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 729
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 738
 namespace stringify {
     /** Convert E_SgIOStatement enum constant to a string. */
     const char* E_SgIOStatement(long);
@@ -14878,7 +15022,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 732
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 741
 namespace stringify {
     /** Convert E_SgWhereStatement enum constant to a string. */
     const char* E_SgWhereStatement(long);
@@ -14896,7 +15040,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 735
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 744
 namespace stringify {
     /** Convert E_SgElseWhereStatement enum constant to a string. */
     const char* E_SgElseWhereStatement(long);
@@ -14914,7 +15058,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 738
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 747
 namespace stringify {
     /** Convert E_SgNullifyStatement enum constant to a string. */
     const char* E_SgNullifyStatement(long);
@@ -14932,7 +15076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 741
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 750
 namespace stringify {
     /** Convert E_SgArithmeticIfStatement enum constant to a string. */
     const char* E_SgArithmeticIfStatement(long);
@@ -14950,7 +15094,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 744
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 753
 namespace stringify {
     /** Convert E_SgAssignStatement enum constant to a string. */
     const char* E_SgAssignStatement(long);
@@ -14968,7 +15112,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 747
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 756
 namespace stringify {
     /** Convert E_SgComputedGotoStatement enum constant to a string. */
     const char* E_SgComputedGotoStatement(long);
@@ -14986,7 +15130,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 750
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 759
 namespace stringify {
     /** Convert E_SgAssignedGotoStatement enum constant to a string. */
     const char* E_SgAssignedGotoStatement(long);
@@ -15004,7 +15148,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 753
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 762
 namespace stringify {
     /** Convert E_SgAllocateStatement enum constant to a string. */
     const char* E_SgAllocateStatement(long);
@@ -15022,7 +15166,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 756
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 765
 namespace stringify {
     /** Convert E_SgDeallocateStatement enum constant to a string. */
     const char* E_SgDeallocateStatement(long);
@@ -15040,7 +15184,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 759
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 768
 namespace stringify {
     /** Convert E_SgUpcNotifyStatement enum constant to a string. */
     const char* E_SgUpcNotifyStatement(long);
@@ -15058,7 +15202,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 762
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 771
 namespace stringify {
     /** Convert E_SgUpcWaitStatement enum constant to a string. */
     const char* E_SgUpcWaitStatement(long);
@@ -15076,7 +15220,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 765
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 774
 namespace stringify {
     /** Convert E_SgUpcBarrierStatement enum constant to a string. */
     const char* E_SgUpcBarrierStatement(long);
@@ -15094,7 +15238,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 768
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 777
 namespace stringify {
     /** Convert E_SgOmpFlushStatement enum constant to a string. */
     const char* E_SgOmpFlushStatement(long);
@@ -15112,7 +15256,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 771
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 780
 namespace stringify {
     /** Convert E_SgOmpMasterStatement enum constant to a string. */
     const char* E_SgOmpMasterStatement(long);
@@ -15130,7 +15274,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 774
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 783
 namespace stringify {
     /** Convert E_SgOmpOrderedStatement enum constant to a string. */
     const char* E_SgOmpOrderedStatement(long);
@@ -15148,7 +15292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 777
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 786
 namespace stringify {
     /** Convert E_SgOmpCriticalStatement enum constant to a string. */
     const char* E_SgOmpCriticalStatement(long);
@@ -15166,7 +15310,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 780
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 789
 namespace stringify {
     /** Convert E_SgOmpSectionStatement enum constant to a string. */
     const char* E_SgOmpSectionStatement(long);
@@ -15184,7 +15328,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 783
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 792
 namespace stringify {
     /** Convert E_SgOmpWorkshareStatement enum constant to a string. */
     const char* E_SgOmpWorkshareStatement(long);
@@ -15202,7 +15346,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 786
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 795
 namespace stringify {
     /** Convert E_SgOmpParallelStatement enum constant to a string. */
     const char* E_SgOmpParallelStatement(long);
@@ -15220,7 +15364,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 789
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 798
 namespace stringify {
     /** Convert E_SgOmpSingleStatement enum constant to a string. */
     const char* E_SgOmpSingleStatement(long);
@@ -15238,7 +15382,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 792
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 801
 namespace stringify {
     /** Convert E_SgOmpAtomicStatement enum constant to a string. */
     const char* E_SgOmpAtomicStatement(long);
@@ -15256,7 +15400,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 795
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 804
 namespace stringify {
     /** Convert E_SgOmpTaskStatement enum constant to a string. */
     const char* E_SgOmpTaskStatement(long);
@@ -15274,7 +15418,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 798
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 807
 namespace stringify {
     /** Convert E_SgOmpForStatement enum constant to a string. */
     const char* E_SgOmpForStatement(long);
@@ -15292,7 +15436,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 801
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 810
 namespace stringify {
     /** Convert E_SgOmpDoStatement enum constant to a string. */
     const char* E_SgOmpDoStatement(long);
@@ -15310,7 +15454,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 804
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 813
 namespace stringify {
     /** Convert E_SgOmpSectionsStatement enum constant to a string. */
     const char* E_SgOmpSectionsStatement(long);
@@ -15328,7 +15472,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 807
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 816
 namespace stringify {
     /** Convert E_SgOmpTargetStatement enum constant to a string. */
     const char* E_SgOmpTargetStatement(long);
@@ -15346,7 +15490,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 810
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 819
 namespace stringify {
     /** Convert E_SgOmpTargetDataStatement enum constant to a string. */
     const char* E_SgOmpTargetDataStatement(long);
@@ -15364,7 +15508,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 813
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 822
 namespace stringify {
     /** Convert E_SgOmpSimdStatement enum constant to a string. */
     const char* E_SgOmpSimdStatement(long);
@@ -15382,7 +15526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 816
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 825
 namespace stringify {
     /** Convert E_SgOmpForSimdStatement enum constant to a string. */
     const char* E_SgOmpForSimdStatement(long);
@@ -15400,7 +15544,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 819
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 828
 namespace stringify {
     /** Convert E_SgOmpClauseBodyStatement enum constant to a string. */
     const char* E_SgOmpClauseBodyStatement(long);
@@ -15418,7 +15562,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 822
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 831
 namespace stringify {
     /** Convert E_SgOmpBodyStatement enum constant to a string. */
     const char* E_SgOmpBodyStatement(long);
@@ -15436,7 +15580,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 825
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 834
 namespace stringify {
     /** Convert E_SgWithStatement enum constant to a string. */
     const char* E_SgWithStatement(long);
@@ -15454,7 +15598,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 828
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 837
 namespace stringify {
     /** Convert E_SgPythonPrintStmt enum constant to a string. */
     const char* E_SgPythonPrintStmt(long);
@@ -15472,7 +15616,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 831
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 840
 namespace stringify {
     /** Convert E_SgAssertStmt enum constant to a string. */
     const char* E_SgAssertStmt(long);
@@ -15490,7 +15634,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 834
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 843
 namespace stringify {
     /** Convert E_SgExecStatement enum constant to a string. */
     const char* E_SgExecStatement(long);
@@ -15508,7 +15652,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 837
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 846
 namespace stringify {
     /** Convert E_SgPythonGlobalStmt enum constant to a string. */
     const char* E_SgPythonGlobalStmt(long);
@@ -15526,7 +15670,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 840
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 849
 namespace stringify {
     /** Convert E_SgJavaSynchronizedStatement enum constant to a string. */
     const char* E_SgJavaSynchronizedStatement(long);
@@ -15544,7 +15688,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 843
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 852
 namespace stringify {
     /** Convert E_SgAsyncStmt enum constant to a string. */
     const char* E_SgAsyncStmt(long);
@@ -15562,7 +15706,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 846
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 855
 namespace stringify {
     /** Convert E_SgFinishStmt enum constant to a string. */
     const char* E_SgFinishStmt(long);
@@ -15580,7 +15724,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 849
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 858
 namespace stringify {
     /** Convert E_SgAtStmt enum constant to a string. */
     const char* E_SgAtStmt(long);
@@ -15598,7 +15742,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 852
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 861
 namespace stringify {
     /** Convert E_SgAtomicStmt enum constant to a string. */
     const char* E_SgAtomicStmt(long);
@@ -15616,7 +15760,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 855
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 864
 namespace stringify {
     /** Convert E_SgWhenStmt enum constant to a string. */
     const char* E_SgWhenStmt(long);
@@ -15634,7 +15778,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 858
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 867
 namespace stringify {
     /** Convert E_SgSyncAllStatement enum constant to a string. */
     const char* E_SgSyncAllStatement(long);
@@ -15652,7 +15796,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 861
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 870
 namespace stringify {
     /** Convert E_SgSyncImagesStatement enum constant to a string. */
     const char* E_SgSyncImagesStatement(long);
@@ -15670,7 +15814,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 864
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 873
 namespace stringify {
     /** Convert E_SgSyncMemoryStatement enum constant to a string. */
     const char* E_SgSyncMemoryStatement(long);
@@ -15688,7 +15832,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 867
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 876
 namespace stringify {
     /** Convert E_SgSyncTeamStatement enum constant to a string. */
     const char* E_SgSyncTeamStatement(long);
@@ -15706,7 +15850,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 870
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 879
 namespace stringify {
     /** Convert E_SgLockStatement enum constant to a string. */
     const char* E_SgLockStatement(long);
@@ -15724,7 +15868,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 873
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 882
 namespace stringify {
     /** Convert E_SgUnlockStatement enum constant to a string. */
     const char* E_SgUnlockStatement(long);
@@ -15742,7 +15886,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 876
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 885
 namespace stringify {
     /** Convert E_SgImageControlStatement enum constant to a string. */
     const char* E_SgImageControlStatement(long);
@@ -15760,7 +15904,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 879
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 888
 namespace stringify {
     /** Convert E_SgExpressionRoot enum constant to a string. */
     const char* E_SgExpressionRoot(long);
@@ -15778,7 +15922,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 882
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 891
 namespace stringify {
     /** Convert E_SgMinusOp enum constant to a string. */
     const char* E_SgMinusOp(long);
@@ -15796,7 +15940,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 885
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 894
 namespace stringify {
     /** Convert E_SgUnaryAddOp enum constant to a string. */
     const char* E_SgUnaryAddOp(long);
@@ -15814,7 +15958,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 888
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 897
 namespace stringify {
     /** Convert E_SgNotOp enum constant to a string. */
     const char* E_SgNotOp(long);
@@ -15832,7 +15976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 891
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 900
 namespace stringify {
     /** Convert E_SgPointerDerefExp enum constant to a string. */
     const char* E_SgPointerDerefExp(long);
@@ -15850,7 +15994,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 894
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 903
 namespace stringify {
     /** Convert E_SgAddressOfOp enum constant to a string. */
     const char* E_SgAddressOfOp(long);
@@ -15868,7 +16012,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 897
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 906
 namespace stringify {
     /** Convert E_SgMinusMinusOp enum constant to a string. */
     const char* E_SgMinusMinusOp(long);
@@ -15886,7 +16030,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 900
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 909
 namespace stringify {
     /** Convert E_SgPlusPlusOp enum constant to a string. */
     const char* E_SgPlusPlusOp(long);
@@ -15904,7 +16048,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 903
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 912
 namespace stringify {
     /** Convert E_SgBitComplementOp enum constant to a string. */
     const char* E_SgBitComplementOp(long);
@@ -15922,7 +16066,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 906
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 915
 namespace stringify {
     /** Convert E_SgCastExp enum constant to a string. */
     const char* E_SgCastExp(long);
@@ -15940,7 +16084,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 909
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 918
 namespace stringify {
     /** Convert E_SgThrowOp enum constant to a string. */
     const char* E_SgThrowOp(long);
@@ -15958,7 +16102,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 912
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 921
 namespace stringify {
     /** Convert E_SgRealPartOp enum constant to a string. */
     const char* E_SgRealPartOp(long);
@@ -15976,7 +16120,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 915
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 924
 namespace stringify {
     /** Convert E_SgImagPartOp enum constant to a string. */
     const char* E_SgImagPartOp(long);
@@ -15994,7 +16138,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 918
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 927
 namespace stringify {
     /** Convert E_SgConjugateOp enum constant to a string. */
     const char* E_SgConjugateOp(long);
@@ -16012,7 +16156,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 921
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 930
 namespace stringify {
     /** Convert E_SgUserDefinedUnaryOp enum constant to a string. */
     const char* E_SgUserDefinedUnaryOp(long);
@@ -16030,7 +16174,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 924
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 933
 namespace stringify {
     /** Convert E_SgMatrixTransposeOp enum constant to a string. */
     const char* E_SgMatrixTransposeOp(long);
@@ -16048,7 +16192,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 927
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 936
 namespace stringify {
     /** Convert E_SgUnaryOp enum constant to a string. */
     const char* E_SgUnaryOp(long);
@@ -16066,7 +16210,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 930
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 939
 namespace stringify {
     /** Convert E_SgArrowExp enum constant to a string. */
     const char* E_SgArrowExp(long);
@@ -16084,7 +16228,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 933
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 942
 namespace stringify {
     /** Convert E_SgDotExp enum constant to a string. */
     const char* E_SgDotExp(long);
@@ -16102,7 +16246,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 936
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 945
 namespace stringify {
     /** Convert E_SgDotStarOp enum constant to a string. */
     const char* E_SgDotStarOp(long);
@@ -16120,7 +16264,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 939
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 948
 namespace stringify {
     /** Convert E_SgArrowStarOp enum constant to a string. */
     const char* E_SgArrowStarOp(long);
@@ -16138,7 +16282,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 942
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 951
 namespace stringify {
     /** Convert E_SgEqualityOp enum constant to a string. */
     const char* E_SgEqualityOp(long);
@@ -16156,7 +16300,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 945
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 954
 namespace stringify {
     /** Convert E_SgLessThanOp enum constant to a string. */
     const char* E_SgLessThanOp(long);
@@ -16174,7 +16318,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 948
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 957
 namespace stringify {
     /** Convert E_SgGreaterThanOp enum constant to a string. */
     const char* E_SgGreaterThanOp(long);
@@ -16192,7 +16336,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 951
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 960
 namespace stringify {
     /** Convert E_SgNotEqualOp enum constant to a string. */
     const char* E_SgNotEqualOp(long);
@@ -16210,7 +16354,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 954
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 963
 namespace stringify {
     /** Convert E_SgLessOrEqualOp enum constant to a string. */
     const char* E_SgLessOrEqualOp(long);
@@ -16228,7 +16372,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 957
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 966
 namespace stringify {
     /** Convert E_SgGreaterOrEqualOp enum constant to a string. */
     const char* E_SgGreaterOrEqualOp(long);
@@ -16246,7 +16390,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 960
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 969
 namespace stringify {
     /** Convert E_SgAddOp enum constant to a string. */
     const char* E_SgAddOp(long);
@@ -16264,7 +16408,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 963
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 972
 namespace stringify {
     /** Convert E_SgSubtractOp enum constant to a string. */
     const char* E_SgSubtractOp(long);
@@ -16282,7 +16426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 966
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 975
 namespace stringify {
     /** Convert E_SgMultiplyOp enum constant to a string. */
     const char* E_SgMultiplyOp(long);
@@ -16300,7 +16444,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 969
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 978
 namespace stringify {
     /** Convert E_SgDivideOp enum constant to a string. */
     const char* E_SgDivideOp(long);
@@ -16318,7 +16462,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 972
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 981
 namespace stringify {
     /** Convert E_SgIntegerDivideOp enum constant to a string. */
     const char* E_SgIntegerDivideOp(long);
@@ -16336,7 +16480,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 975
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 984
 namespace stringify {
     /** Convert E_SgModOp enum constant to a string. */
     const char* E_SgModOp(long);
@@ -16354,7 +16498,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 978
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 987
 namespace stringify {
     /** Convert E_SgAndOp enum constant to a string. */
     const char* E_SgAndOp(long);
@@ -16372,7 +16516,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 981
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 990
 namespace stringify {
     /** Convert E_SgOrOp enum constant to a string. */
     const char* E_SgOrOp(long);
@@ -16390,7 +16534,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 984
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 993
 namespace stringify {
     /** Convert E_SgBitXorOp enum constant to a string. */
     const char* E_SgBitXorOp(long);
@@ -16408,7 +16552,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 987
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 996
 namespace stringify {
     /** Convert E_SgBitAndOp enum constant to a string. */
     const char* E_SgBitAndOp(long);
@@ -16426,7 +16570,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 990
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 999
 namespace stringify {
     /** Convert E_SgBitOrOp enum constant to a string. */
     const char* E_SgBitOrOp(long);
@@ -16444,7 +16588,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 993
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1002
 namespace stringify {
     /** Convert E_SgCommaOpExp enum constant to a string. */
     const char* E_SgCommaOpExp(long);
@@ -16462,7 +16606,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 996
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1005
 namespace stringify {
     /** Convert E_SgLshiftOp enum constant to a string. */
     const char* E_SgLshiftOp(long);
@@ -16480,7 +16624,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 999
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1008
 namespace stringify {
     /** Convert E_SgRshiftOp enum constant to a string. */
     const char* E_SgRshiftOp(long);
@@ -16498,7 +16642,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1002
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1011
 namespace stringify {
     /** Convert E_SgPntrArrRefExp enum constant to a string. */
     const char* E_SgPntrArrRefExp(long);
@@ -16516,7 +16660,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1005
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1014
 namespace stringify {
     /** Convert E_SgScopeOp enum constant to a string. */
     const char* E_SgScopeOp(long);
@@ -16534,7 +16678,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1008
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1017
 namespace stringify {
     /** Convert E_SgAssignOp enum constant to a string. */
     const char* E_SgAssignOp(long);
@@ -16552,7 +16696,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1011
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1020
 namespace stringify {
     /** Convert E_SgExponentiationOp enum constant to a string. */
     const char* E_SgExponentiationOp(long);
@@ -16570,7 +16714,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1014
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1023
 namespace stringify {
     /** Convert E_SgJavaUnsignedRshiftOp enum constant to a string. */
     const char* E_SgJavaUnsignedRshiftOp(long);
@@ -16588,7 +16732,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1017
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1026
 namespace stringify {
     /** Convert E_SgConcatenationOp enum constant to a string. */
     const char* E_SgConcatenationOp(long);
@@ -16606,7 +16750,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1020
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1029
 namespace stringify {
     /** Convert E_SgPointerAssignOp enum constant to a string. */
     const char* E_SgPointerAssignOp(long);
@@ -16624,7 +16768,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1023
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1032
 namespace stringify {
     /** Convert E_SgUserDefinedBinaryOp enum constant to a string. */
     const char* E_SgUserDefinedBinaryOp(long);
@@ -16642,7 +16786,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1026
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1035
 namespace stringify {
     /** Convert E_SgPlusAssignOp enum constant to a string. */
     const char* E_SgPlusAssignOp(long);
@@ -16660,7 +16804,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1029
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1038
 namespace stringify {
     /** Convert E_SgMinusAssignOp enum constant to a string. */
     const char* E_SgMinusAssignOp(long);
@@ -16678,7 +16822,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1032
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1041
 namespace stringify {
     /** Convert E_SgAndAssignOp enum constant to a string. */
     const char* E_SgAndAssignOp(long);
@@ -16696,7 +16840,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1035
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1044
 namespace stringify {
     /** Convert E_SgIorAssignOp enum constant to a string. */
     const char* E_SgIorAssignOp(long);
@@ -16714,7 +16858,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1038
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1047
 namespace stringify {
     /** Convert E_SgMultAssignOp enum constant to a string. */
     const char* E_SgMultAssignOp(long);
@@ -16732,7 +16876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1041
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1050
 namespace stringify {
     /** Convert E_SgDivAssignOp enum constant to a string. */
     const char* E_SgDivAssignOp(long);
@@ -16750,7 +16894,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1044
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1053
 namespace stringify {
     /** Convert E_SgModAssignOp enum constant to a string. */
     const char* E_SgModAssignOp(long);
@@ -16768,7 +16912,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1047
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1056
 namespace stringify {
     /** Convert E_SgXorAssignOp enum constant to a string. */
     const char* E_SgXorAssignOp(long);
@@ -16786,7 +16930,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1050
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1059
 namespace stringify {
     /** Convert E_SgLshiftAssignOp enum constant to a string. */
     const char* E_SgLshiftAssignOp(long);
@@ -16804,7 +16948,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1053
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1062
 namespace stringify {
     /** Convert E_SgRshiftAssignOp enum constant to a string. */
     const char* E_SgRshiftAssignOp(long);
@@ -16822,7 +16966,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1056
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1065
 namespace stringify {
     /** Convert E_SgJavaUnsignedRshiftAssignOp enum constant to a string. */
     const char* E_SgJavaUnsignedRshiftAssignOp(long);
@@ -16840,7 +16984,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1059
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1068
 namespace stringify {
     /** Convert E_SgIntegerDivideAssignOp enum constant to a string. */
     const char* E_SgIntegerDivideAssignOp(long);
@@ -16858,7 +17002,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1062
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1071
 namespace stringify {
     /** Convert E_SgExponentiationAssignOp enum constant to a string. */
     const char* E_SgExponentiationAssignOp(long);
@@ -16876,7 +17020,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1065
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1074
 namespace stringify {
     /** Convert E_SgCompoundAssignOp enum constant to a string. */
     const char* E_SgCompoundAssignOp(long);
@@ -16894,7 +17038,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1068
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1077
 namespace stringify {
     /** Convert E_SgMembershipOp enum constant to a string. */
     const char* E_SgMembershipOp(long);
@@ -16912,7 +17056,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1071
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1080
 namespace stringify {
     /** Convert E_SgNonMembershipOp enum constant to a string. */
     const char* E_SgNonMembershipOp(long);
@@ -16930,7 +17074,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1074
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1083
 namespace stringify {
     /** Convert E_SgIsOp enum constant to a string. */
     const char* E_SgIsOp(long);
@@ -16948,7 +17092,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1077
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1086
 namespace stringify {
     /** Convert E_SgIsNotOp enum constant to a string. */
     const char* E_SgIsNotOp(long);
@@ -16966,7 +17110,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1080
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1089
 namespace stringify {
     /** Convert E_SgDotDotExp enum constant to a string. */
     const char* E_SgDotDotExp(long);
@@ -16984,7 +17128,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1083
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1092
 namespace stringify {
     /** Convert E_SgElementwiseMultiplyOp enum constant to a string. */
     const char* E_SgElementwiseMultiplyOp(long);
@@ -17002,7 +17146,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1086
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1095
 namespace stringify {
     /** Convert E_SgElementwisePowerOp enum constant to a string. */
     const char* E_SgElementwisePowerOp(long);
@@ -17020,7 +17164,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1089
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1098
 namespace stringify {
     /** Convert E_SgElementwiseLeftDivideOp enum constant to a string. */
     const char* E_SgElementwiseLeftDivideOp(long);
@@ -17038,7 +17182,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1092
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1101
 namespace stringify {
     /** Convert E_SgElementwiseDivideOp enum constant to a string. */
     const char* E_SgElementwiseDivideOp(long);
@@ -17056,7 +17200,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1095
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1104
 namespace stringify {
     /** Convert E_SgElementwiseAddOp enum constant to a string. */
     const char* E_SgElementwiseAddOp(long);
@@ -17074,7 +17218,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1098
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1107
 namespace stringify {
     /** Convert E_SgElementwiseSubtractOp enum constant to a string. */
     const char* E_SgElementwiseSubtractOp(long);
@@ -17092,7 +17236,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1101
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1110
 namespace stringify {
     /** Convert E_SgElementwiseOp enum constant to a string. */
     const char* E_SgElementwiseOp(long);
@@ -17110,7 +17254,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1104
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1113
 namespace stringify {
     /** Convert E_SgPowerOp enum constant to a string. */
     const char* E_SgPowerOp(long);
@@ -17128,7 +17272,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1107
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1116
 namespace stringify {
     /** Convert E_SgLeftDivideOp enum constant to a string. */
     const char* E_SgLeftDivideOp(long);
@@ -17146,7 +17290,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1110
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1119
 namespace stringify {
     /** Convert E_SgBinaryOp enum constant to a string. */
     const char* E_SgBinaryOp(long);
@@ -17164,7 +17308,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1113
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1122
 namespace stringify {
     /** Convert E_SgListExp enum constant to a string. */
     const char* E_SgListExp(long);
@@ -17182,7 +17326,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1116
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1125
 namespace stringify {
     /** Convert E_SgTupleExp enum constant to a string. */
     const char* E_SgTupleExp(long);
@@ -17200,7 +17344,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1119
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1128
 namespace stringify {
     /** Convert E_SgMatrixExp enum constant to a string. */
     const char* E_SgMatrixExp(long);
@@ -17218,7 +17362,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1122
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1131
 namespace stringify {
     /** Convert E_SgExprListExp enum constant to a string. */
     const char* E_SgExprListExp(long);
@@ -17236,7 +17380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1125
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1134
 namespace stringify {
     /** Convert E_SgComplexVal enum constant to a string. */
     const char* E_SgComplexVal(long);
@@ -17254,7 +17398,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1128
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1137
 namespace stringify {
     /** Convert E_SgCudaKernelCallExp enum constant to a string. */
     const char* E_SgCudaKernelCallExp(long);
@@ -17272,7 +17416,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1131
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1140
 namespace stringify {
     /** Convert E_SgFunctionCallExp enum constant to a string. */
     const char* E_SgFunctionCallExp(long);
@@ -17290,7 +17434,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1134
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1143
 namespace stringify {
     /** Convert E_SgCallExpression enum constant to a string. */
     const char* E_SgCallExpression(long);
@@ -17308,7 +17452,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1137
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1146
 namespace stringify {
     /** Convert E_SgSizeOfOp enum constant to a string. */
     const char* E_SgSizeOfOp(long);
@@ -17326,7 +17470,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1140
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1149
 namespace stringify {
     /** Convert E_SgUpcLocalsizeofExpression enum constant to a string. */
     const char* E_SgUpcLocalsizeofExpression(long);
@@ -17344,7 +17488,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1143
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1152
 namespace stringify {
     /** Convert E_SgUpcBlocksizeofExpression enum constant to a string. */
     const char* E_SgUpcBlocksizeofExpression(long);
@@ -17362,7 +17506,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1146
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1155
 namespace stringify {
     /** Convert E_SgUpcElemsizeofExpression enum constant to a string. */
     const char* E_SgUpcElemsizeofExpression(long);
@@ -17380,7 +17524,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1149
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1158
 namespace stringify {
     /** Convert E_SgJavaInstanceOfOp enum constant to a string. */
     const char* E_SgJavaInstanceOfOp(long);
@@ -17398,7 +17542,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1152
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1161
 namespace stringify {
     /** Convert E_SgTypeIdOp enum constant to a string. */
     const char* E_SgTypeIdOp(long);
@@ -17416,7 +17560,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1155
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1164
 namespace stringify {
     /** Convert E_SgConditionalExp enum constant to a string. */
     const char* E_SgConditionalExp(long);
@@ -17434,7 +17578,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1158
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1167
 namespace stringify {
     /** Convert E_SgNewExp enum constant to a string. */
     const char* E_SgNewExp(long);
@@ -17452,7 +17596,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1161
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1170
 namespace stringify {
     /** Convert E_SgDeleteExp enum constant to a string. */
     const char* E_SgDeleteExp(long);
@@ -17470,7 +17614,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1164
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1173
 namespace stringify {
     /** Convert E_SgAggregateInitializer enum constant to a string. */
     const char* E_SgAggregateInitializer(long);
@@ -17488,7 +17632,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1167
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1176
 namespace stringify {
     /** Convert E_SgCompoundInitializer enum constant to a string. */
     const char* E_SgCompoundInitializer(long);
@@ -17506,7 +17650,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1170
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1179
 namespace stringify {
     /** Convert E_SgConstructorInitializer enum constant to a string. */
     const char* E_SgConstructorInitializer(long);
@@ -17524,7 +17668,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1173
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1182
 namespace stringify {
     /** Convert E_SgAssignInitializer enum constant to a string. */
     const char* E_SgAssignInitializer(long);
@@ -17542,7 +17686,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1176
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1185
 namespace stringify {
     /** Convert E_SgDesignatedInitializer enum constant to a string. */
     const char* E_SgDesignatedInitializer(long);
@@ -17560,7 +17704,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1179
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1188
 namespace stringify {
     /** Convert E_SgBracedInitializer enum constant to a string. */
     const char* E_SgBracedInitializer(long);
@@ -17578,7 +17722,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1182
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1191
 namespace stringify {
     /** Convert E_SgVarArgStartOp enum constant to a string. */
     const char* E_SgVarArgStartOp(long);
@@ -17596,7 +17740,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1185
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1194
 namespace stringify {
     /** Convert E_SgVarArgOp enum constant to a string. */
     const char* E_SgVarArgOp(long);
@@ -17614,7 +17758,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1188
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1197
 namespace stringify {
     /** Convert E_SgVarArgEndOp enum constant to a string. */
     const char* E_SgVarArgEndOp(long);
@@ -17632,7 +17776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1191
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1200
 namespace stringify {
     /** Convert E_SgVarArgCopyOp enum constant to a string. */
     const char* E_SgVarArgCopyOp(long);
@@ -17650,7 +17794,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1194
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1203
 namespace stringify {
     /** Convert E_SgVarArgStartOneOperandOp enum constant to a string. */
     const char* E_SgVarArgStartOneOperandOp(long);
@@ -17668,7 +17812,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1197
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1206
 namespace stringify {
     /** Convert E_SgSubscriptExpression enum constant to a string. */
     const char* E_SgSubscriptExpression(long);
@@ -17686,7 +17830,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1200
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1209
 namespace stringify {
     /** Convert E_SgImpliedDo enum constant to a string. */
     const char* E_SgImpliedDo(long);
@@ -17704,7 +17848,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1203
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1212
 namespace stringify {
     /** Convert E_SgIOItemExpression enum constant to a string. */
     const char* E_SgIOItemExpression(long);
@@ -17722,7 +17866,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1206
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1215
 namespace stringify {
     /** Convert E_SgStatementExpression enum constant to a string. */
     const char* E_SgStatementExpression(long);
@@ -17740,7 +17884,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1209
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1218
 namespace stringify {
     /** Convert E_SgAsmOp enum constant to a string. */
     const char* E_SgAsmOp(long);
@@ -17758,7 +17902,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1212
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1221
 namespace stringify {
     /** Convert E_SgActualArgumentExpression enum constant to a string. */
     const char* E_SgActualArgumentExpression(long);
@@ -17776,7 +17920,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1215
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1224
 namespace stringify {
     /** Convert E_SgUnknownArrayOrFunctionReference enum constant to a string. */
     const char* E_SgUnknownArrayOrFunctionReference(long);
@@ -17794,7 +17938,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1218
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1227
 namespace stringify {
     /** Convert E_SgCAFCoExpression enum constant to a string. */
     const char* E_SgCAFCoExpression(long);
@@ -17812,7 +17956,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1221
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1230
 namespace stringify {
     /** Convert E_SgCudaKernelExecConfig enum constant to a string. */
     const char* E_SgCudaKernelExecConfig(long);
@@ -17830,7 +17974,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1224
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1233
 namespace stringify {
     /** Convert E_SgLambdaRefExp enum constant to a string. */
     const char* E_SgLambdaRefExp(long);
@@ -17848,7 +17992,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1227
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1236
 namespace stringify {
     /** Convert E_SgDictionaryExp enum constant to a string. */
     const char* E_SgDictionaryExp(long);
@@ -17866,7 +18010,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1230
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1239
 namespace stringify {
     /** Convert E_SgKeyDatumPair enum constant to a string. */
     const char* E_SgKeyDatumPair(long);
@@ -17884,7 +18028,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1233
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1242
 namespace stringify {
     /** Convert E_SgComprehension enum constant to a string. */
     const char* E_SgComprehension(long);
@@ -17902,7 +18046,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1236
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1245
 namespace stringify {
     /** Convert E_SgListComprehension enum constant to a string. */
     const char* E_SgListComprehension(long);
@@ -17920,7 +18064,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1239
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1248
 namespace stringify {
     /** Convert E_SgSetComprehension enum constant to a string. */
     const char* E_SgSetComprehension(long);
@@ -17938,7 +18082,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1242
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1251
 namespace stringify {
     /** Convert E_SgDictionaryComprehension enum constant to a string. */
     const char* E_SgDictionaryComprehension(long);
@@ -17956,7 +18100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1245
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1254
 namespace stringify {
     /** Convert E_SgNaryBooleanOp enum constant to a string. */
     const char* E_SgNaryBooleanOp(long);
@@ -17974,7 +18118,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1248
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1257
 namespace stringify {
     /** Convert E_SgNaryComparisonOp enum constant to a string. */
     const char* E_SgNaryComparisonOp(long);
@@ -17992,7 +18136,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1251
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1260
 namespace stringify {
     /** Convert E_SgNaryOp enum constant to a string. */
     const char* E_SgNaryOp(long);
@@ -18010,7 +18154,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1254
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1263
 namespace stringify {
     /** Convert E_SgStringConversion enum constant to a string. */
     const char* E_SgStringConversion(long);
@@ -18028,7 +18172,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1257
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1266
 namespace stringify {
     /** Convert E_SgYieldExpression enum constant to a string. */
     const char* E_SgYieldExpression(long);
@@ -18046,7 +18190,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1260
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1269
 namespace stringify {
     /** Convert E_SgAlignOfOp enum constant to a string. */
     const char* E_SgAlignOfOp(long);
@@ -18064,7 +18208,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1263
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1272
 namespace stringify {
     /** Convert E_SgRangeExp enum constant to a string. */
     const char* E_SgRangeExp(long);
@@ -18082,7 +18226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1266
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1275
 namespace stringify {
     /** Convert E_SgJavaSingleMemberAnnotation enum constant to a string. */
     const char* E_SgJavaSingleMemberAnnotation(long);
@@ -18100,7 +18244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1269
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1278
 namespace stringify {
     /** Convert E_SgJavaNormalAnnotation enum constant to a string. */
     const char* E_SgJavaNormalAnnotation(long);
@@ -18118,7 +18262,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1272
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1281
 namespace stringify {
     /** Convert E_SgFunctionParameterRefExp enum constant to a string. */
     const char* E_SgFunctionParameterRefExp(long);
@@ -18136,7 +18280,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1275
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1284
 namespace stringify {
     /** Convert E_SgLambdaExp enum constant to a string. */
     const char* E_SgLambdaExp(long);
@@ -18154,7 +18298,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1278
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1287
 namespace stringify {
     /** Convert E_SgHereExp enum constant to a string. */
     const char* E_SgHereExp(long);
@@ -18172,7 +18316,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1281
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1290
 namespace stringify {
     /** Convert E_SgAtExp enum constant to a string. */
     const char* E_SgAtExp(long);
@@ -18190,7 +18334,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1284
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1293
 namespace stringify {
     /** Convert E_SgFinishExp enum constant to a string. */
     const char* E_SgFinishExp(long);
@@ -18208,7 +18352,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1287
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1296
 namespace stringify {
     /** Convert E_SgNoexceptOp enum constant to a string. */
     const char* E_SgNoexceptOp(long);
@@ -18226,7 +18370,25 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1290
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1299
+namespace stringify {
+    /** Convert E_SgNonrealSymbol enum constant to a string. */
+    const char* E_SgNonrealSymbol(long);
+
+    /** Convert E_SgNonrealSymbol enum constant to a string. */
+    std::string E_SgNonrealSymbol(long, const std::string &strip);
+
+    /** Return all E_SgNonrealSymbol member values as a vector. */
+    const std::vector<long>& E_SgNonrealSymbol();
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealSymbol(long int n, const char *strip=NULL, bool canonic=false);
+    const std::vector<long>& stringifyE_SgNonrealSymbol();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1302
 namespace stringify {
     /** Convert E_SgTemplateMemberFunctionSymbol enum constant to a string. */
     const char* E_SgTemplateMemberFunctionSymbol(long);
@@ -18244,7 +18406,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1293
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1305
 namespace stringify {
     /** Convert E_SgMemberFunctionSymbol enum constant to a string. */
     const char* E_SgMemberFunctionSymbol(long);
@@ -18262,7 +18424,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1296
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1308
 namespace stringify {
     /** Convert E_SgTemplateFunctionSymbol enum constant to a string. */
     const char* E_SgTemplateFunctionSymbol(long);
@@ -18280,7 +18442,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1299
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1311
 namespace stringify {
     /** Convert E_SgRenameSymbol enum constant to a string. */
     const char* E_SgRenameSymbol(long);
@@ -18298,7 +18460,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1302
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1314
 namespace stringify {
     /** Convert E_SgFunctionSymbol enum constant to a string. */
     const char* E_SgFunctionSymbol(long);
@@ -18316,7 +18478,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1305
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1317
 namespace stringify {
     /** Convert E_SgTemplateClassSymbol enum constant to a string. */
     const char* E_SgTemplateClassSymbol(long);
@@ -18334,7 +18496,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1308
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1320
 namespace stringify {
     /** Convert E_SgClassSymbol enum constant to a string. */
     const char* E_SgClassSymbol(long);
@@ -18352,7 +18514,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1311
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1323
 namespace stringify {
     /** Convert E_SgTemplateSymbol enum constant to a string. */
     const char* E_SgTemplateSymbol(long);
@@ -18370,7 +18532,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1314
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1326
 namespace stringify {
     /** Convert E_SgEnumSymbol enum constant to a string. */
     const char* E_SgEnumSymbol(long);
@@ -18388,7 +18550,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1317
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1329
 namespace stringify {
     /** Convert E_SgTemplateTypedefSymbol enum constant to a string. */
     const char* E_SgTemplateTypedefSymbol(long);
@@ -18406,7 +18568,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1320
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1332
 namespace stringify {
     /** Convert E_SgTypedefSymbol enum constant to a string. */
     const char* E_SgTypedefSymbol(long);
@@ -18424,7 +18586,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1323
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1335
 namespace stringify {
     /** Convert E_SgLabelSymbol enum constant to a string. */
     const char* E_SgLabelSymbol(long);
@@ -18442,7 +18604,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1326
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1338
 namespace stringify {
     /** Convert E_SgNamespaceSymbol enum constant to a string. */
     const char* E_SgNamespaceSymbol(long);
@@ -18460,7 +18622,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1329
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1341
 namespace stringify {
     /** Convert E_SgModuleSymbol enum constant to a string. */
     const char* E_SgModuleSymbol(long);
@@ -18478,7 +18640,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1332
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1344
 namespace stringify {
     /** Convert E_SgAliasSymbol enum constant to a string. */
     const char* E_SgAliasSymbol(long);
@@ -18496,7 +18658,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1335
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1347
 namespace stringify {
     /** Convert E_SgJavaLabelSymbol enum constant to a string. */
     const char* E_SgJavaLabelSymbol(long);
@@ -18514,7 +18676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1338
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1350
 namespace stringify {
     /** Convert E_SgAsmFunction enum constant to a string. */
     const char* E_SgAsmFunction(long);
@@ -18532,7 +18694,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1341
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1353
 namespace stringify {
     /** Convert E_SgAsmBlock enum constant to a string. */
     const char* E_SgAsmBlock(long);
@@ -18550,7 +18712,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1344
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1356
 namespace stringify {
     /** Convert E_SgAsmX86Instruction enum constant to a string. */
     const char* E_SgAsmX86Instruction(long);
@@ -18568,7 +18730,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1347
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1359
 namespace stringify {
     /** Convert E_SgAsmArmInstruction enum constant to a string. */
     const char* E_SgAsmArmInstruction(long);
@@ -18586,7 +18748,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1350
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1362
 namespace stringify {
     /** Convert E_SgAsmPowerpcInstruction enum constant to a string. */
     const char* E_SgAsmPowerpcInstruction(long);
@@ -18604,7 +18766,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1353
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1365
 namespace stringify {
     /** Convert E_SgAsmMipsInstruction enum constant to a string. */
     const char* E_SgAsmMipsInstruction(long);
@@ -18622,7 +18784,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1356
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1368
 namespace stringify {
     /** Convert E_SgAsmM68kInstruction enum constant to a string. */
     const char* E_SgAsmM68kInstruction(long);
@@ -18640,7 +18802,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1359
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1371
 namespace stringify {
     /** Convert E_SgAsmInstruction enum constant to a string. */
     const char* E_SgAsmInstruction(long);
@@ -18658,7 +18820,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1362
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
 namespace stringify {
     /** Convert E_SgAsmIntegerValueExpression enum constant to a string. */
     const char* E_SgAsmIntegerValueExpression(long);
@@ -18676,7 +18838,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1365
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1377
 namespace stringify {
     /** Convert E_SgAsmFloatValueExpression enum constant to a string. */
     const char* E_SgAsmFloatValueExpression(long);
@@ -18694,7 +18856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1368
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1380
 namespace stringify {
     /** Convert E_SgAsmConstantExpression enum constant to a string. */
     const char* E_SgAsmConstantExpression(long);
@@ -18712,7 +18874,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1371
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1383
 namespace stringify {
     /** Convert E_SgAsmValueExpression enum constant to a string. */
     const char* E_SgAsmValueExpression(long);
@@ -18730,7 +18892,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1386
 namespace stringify {
     /** Convert E_SgAsmBinaryAdd enum constant to a string. */
     const char* E_SgAsmBinaryAdd(long);
@@ -18748,7 +18910,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1377
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1389
 namespace stringify {
     /** Convert E_SgAsmBinarySubtract enum constant to a string. */
     const char* E_SgAsmBinarySubtract(long);
@@ -18766,7 +18928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1380
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1392
 namespace stringify {
     /** Convert E_SgAsmBinaryMultiply enum constant to a string. */
     const char* E_SgAsmBinaryMultiply(long);
@@ -18784,7 +18946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1383
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1395
 namespace stringify {
     /** Convert E_SgAsmBinaryDivide enum constant to a string. */
     const char* E_SgAsmBinaryDivide(long);
@@ -18802,7 +18964,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1386
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1398
 namespace stringify {
     /** Convert E_SgAsmBinaryMod enum constant to a string. */
     const char* E_SgAsmBinaryMod(long);
@@ -18820,7 +18982,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1389
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1401
 namespace stringify {
     /** Convert E_SgAsmBinaryAddPreupdate enum constant to a string. */
     const char* E_SgAsmBinaryAddPreupdate(long);
@@ -18838,7 +19000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1392
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1404
 namespace stringify {
     /** Convert E_SgAsmBinarySubtractPreupdate enum constant to a string. */
     const char* E_SgAsmBinarySubtractPreupdate(long);
@@ -18856,7 +19018,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1395
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1407
 namespace stringify {
     /** Convert E_SgAsmBinaryAddPostupdate enum constant to a string. */
     const char* E_SgAsmBinaryAddPostupdate(long);
@@ -18874,7 +19036,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1398
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1410
 namespace stringify {
     /** Convert E_SgAsmBinarySubtractPostupdate enum constant to a string. */
     const char* E_SgAsmBinarySubtractPostupdate(long);
@@ -18892,7 +19054,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1401
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1413
 namespace stringify {
     /** Convert E_SgAsmBinaryLsl enum constant to a string. */
     const char* E_SgAsmBinaryLsl(long);
@@ -18910,7 +19072,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1404
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1416
 namespace stringify {
     /** Convert E_SgAsmBinaryLsr enum constant to a string. */
     const char* E_SgAsmBinaryLsr(long);
@@ -18928,7 +19090,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1407
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1419
 namespace stringify {
     /** Convert E_SgAsmBinaryAsr enum constant to a string. */
     const char* E_SgAsmBinaryAsr(long);
@@ -18946,7 +19108,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1410
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1422
 namespace stringify {
     /** Convert E_SgAsmBinaryRor enum constant to a string. */
     const char* E_SgAsmBinaryRor(long);
@@ -18964,7 +19126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1413
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1425
 namespace stringify {
     /** Convert E_SgAsmBinaryExpression enum constant to a string. */
     const char* E_SgAsmBinaryExpression(long);
@@ -18982,7 +19144,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1416
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1428
 namespace stringify {
     /** Convert E_SgAsmUnaryPlus enum constant to a string. */
     const char* E_SgAsmUnaryPlus(long);
@@ -19000,7 +19162,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1419
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1431
 namespace stringify {
     /** Convert E_SgAsmUnaryMinus enum constant to a string. */
     const char* E_SgAsmUnaryMinus(long);
@@ -19018,7 +19180,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1422
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1434
 namespace stringify {
     /** Convert E_SgAsmUnaryRrx enum constant to a string. */
     const char* E_SgAsmUnaryRrx(long);
@@ -19036,7 +19198,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1425
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1437
 namespace stringify {
     /** Convert E_SgAsmUnaryArmSpecialRegisterList enum constant to a string. */
     const char* E_SgAsmUnaryArmSpecialRegisterList(long);
@@ -19054,7 +19216,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1428
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1440
 namespace stringify {
     /** Convert E_SgAsmUnaryExpression enum constant to a string. */
     const char* E_SgAsmUnaryExpression(long);
@@ -19072,7 +19234,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1431
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1443
 namespace stringify {
     /** Convert E_SgAsmMemoryReferenceExpression enum constant to a string. */
     const char* E_SgAsmMemoryReferenceExpression(long);
@@ -19090,7 +19252,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1434
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1446
 namespace stringify {
     /** Convert E_SgAsmCommonSubExpression enum constant to a string. */
     const char* E_SgAsmCommonSubExpression(long);
@@ -19108,7 +19270,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1437
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1449
 namespace stringify {
     /** Convert E_SgAsmExprListExp enum constant to a string. */
     const char* E_SgAsmExprListExp(long);
@@ -19126,7 +19288,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1440
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1452
 namespace stringify {
     /** Convert E_SgAsmRegisterNames enum constant to a string. */
     const char* E_SgAsmRegisterNames(long);
@@ -19144,7 +19306,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1443
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1455
 namespace stringify {
     /** Convert E_SgAsmRiscOperation enum constant to a string. */
     const char* E_SgAsmRiscOperation(long);
@@ -19162,7 +19324,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1446
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1458
 namespace stringify {
     /** Convert E_SgAsmInterpretation enum constant to a string. */
     const char* E_SgAsmInterpretation(long);
@@ -19180,7 +19342,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1449
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1461
 namespace stringify {
     /** Convert E_SgAsmOperandList enum constant to a string. */
     const char* E_SgAsmOperandList(long);
@@ -19198,7 +19360,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1452
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1464
 namespace stringify {
     /** Convert E_SgAsmGenericDLL enum constant to a string. */
     const char* E_SgAsmGenericDLL(long);
@@ -19216,7 +19378,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1455
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1467
 namespace stringify {
     /** Convert E_SgAsmGenericFile enum constant to a string. */
     const char* E_SgAsmGenericFile(long);
@@ -19234,7 +19396,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1458
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1470
 namespace stringify {
     /** Convert E_SgAsmPEFileHeader enum constant to a string. */
     const char* E_SgAsmPEFileHeader(long);
@@ -19252,7 +19414,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1461
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1473
 namespace stringify {
     /** Convert E_SgAsmLEFileHeader enum constant to a string. */
     const char* E_SgAsmLEFileHeader(long);
@@ -19270,7 +19432,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1464
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
 namespace stringify {
     /** Convert E_SgAsmNEFileHeader enum constant to a string. */
     const char* E_SgAsmNEFileHeader(long);
@@ -19288,7 +19450,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1467
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1479
 namespace stringify {
     /** Convert E_SgAsmDOSFileHeader enum constant to a string. */
     const char* E_SgAsmDOSFileHeader(long);
@@ -19306,7 +19468,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1470
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1482
 namespace stringify {
     /** Convert E_SgAsmElfFileHeader enum constant to a string. */
     const char* E_SgAsmElfFileHeader(long);
@@ -19324,7 +19486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1473
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1485
 namespace stringify {
     /** Convert E_SgAsmGenericHeader enum constant to a string. */
     const char* E_SgAsmGenericHeader(long);
@@ -19342,7 +19504,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1488
 namespace stringify {
     /** Convert E_SgAsmElfSymbolSection enum constant to a string. */
     const char* E_SgAsmElfSymbolSection(long);
@@ -19360,7 +19522,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1479
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1491
 namespace stringify {
     /** Convert E_SgAsmElfRelocSection enum constant to a string. */
     const char* E_SgAsmElfRelocSection(long);
@@ -19378,7 +19540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1482
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1494
 namespace stringify {
     /** Convert E_SgAsmElfDynamicSection enum constant to a string. */
     const char* E_SgAsmElfDynamicSection(long);
@@ -19396,7 +19558,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1485
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1497
 namespace stringify {
     /** Convert E_SgAsmElfStringSection enum constant to a string. */
     const char* E_SgAsmElfStringSection(long);
@@ -19414,7 +19576,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1488
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1500
 namespace stringify {
     /** Convert E_SgAsmElfNoteSection enum constant to a string. */
     const char* E_SgAsmElfNoteSection(long);
@@ -19432,7 +19594,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1491
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1503
 namespace stringify {
     /** Convert E_SgAsmElfEHFrameSection enum constant to a string. */
     const char* E_SgAsmElfEHFrameSection(long);
@@ -19450,7 +19612,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1494
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1506
 namespace stringify {
     /** Convert E_SgAsmElfSymverSection enum constant to a string. */
     const char* E_SgAsmElfSymverSection(long);
@@ -19468,7 +19630,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1497
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1509
 namespace stringify {
     /** Convert E_SgAsmElfSymverDefinedSection enum constant to a string. */
     const char* E_SgAsmElfSymverDefinedSection(long);
@@ -19486,7 +19648,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1500
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1512
 namespace stringify {
     /** Convert E_SgAsmElfSymverNeededSection enum constant to a string. */
     const char* E_SgAsmElfSymverNeededSection(long);
@@ -19504,7 +19666,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1503
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1515
 namespace stringify {
     /** Convert E_SgAsmElfSection enum constant to a string. */
     const char* E_SgAsmElfSection(long);
@@ -19522,7 +19684,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1506
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1518
 namespace stringify {
     /** Convert E_SgAsmPEImportSection enum constant to a string. */
     const char* E_SgAsmPEImportSection(long);
@@ -19540,7 +19702,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1509
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1521
 namespace stringify {
     /** Convert E_SgAsmPEExportSection enum constant to a string. */
     const char* E_SgAsmPEExportSection(long);
@@ -19558,7 +19720,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1512
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1524
 namespace stringify {
     /** Convert E_SgAsmPEStringSection enum constant to a string. */
     const char* E_SgAsmPEStringSection(long);
@@ -19576,7 +19738,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1515
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1527
 namespace stringify {
     /** Convert E_SgAsmPESection enum constant to a string. */
     const char* E_SgAsmPESection(long);
@@ -19594,7 +19756,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1518
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1530
 namespace stringify {
     /** Convert E_SgAsmCoffSymbolTable enum constant to a string. */
     const char* E_SgAsmCoffSymbolTable(long);
@@ -19612,7 +19774,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1521
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1533
 namespace stringify {
     /** Convert E_SgAsmNESection enum constant to a string. */
     const char* E_SgAsmNESection(long);
@@ -19630,7 +19792,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1524
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1536
 namespace stringify {
     /** Convert E_SgAsmNEModuleTable enum constant to a string. */
     const char* E_SgAsmNEModuleTable(long);
@@ -19648,7 +19810,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1527
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1539
 namespace stringify {
     /** Convert E_SgAsmNEEntryTable enum constant to a string. */
     const char* E_SgAsmNEEntryTable(long);
@@ -19666,7 +19828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1530
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1542
 namespace stringify {
     /** Convert E_SgAsmNERelocTable enum constant to a string. */
     const char* E_SgAsmNERelocTable(long);
@@ -19684,7 +19846,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1533
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1545
 namespace stringify {
     /** Convert E_SgAsmLESection enum constant to a string. */
     const char* E_SgAsmLESection(long);
@@ -19702,7 +19864,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1536
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1548
 namespace stringify {
     /** Convert E_SgAsmLEPageTable enum constant to a string. */
     const char* E_SgAsmLEPageTable(long);
@@ -19720,7 +19882,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1539
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1551
 namespace stringify {
     /** Convert E_SgAsmLEEntryTable enum constant to a string. */
     const char* E_SgAsmLEEntryTable(long);
@@ -19738,7 +19900,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1542
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1554
 namespace stringify {
     /** Convert E_SgAsmLERelocTable enum constant to a string. */
     const char* E_SgAsmLERelocTable(long);
@@ -19756,7 +19918,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1545
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1557
 namespace stringify {
     /** Convert E_SgAsmCoffSymbol enum constant to a string. */
     const char* E_SgAsmCoffSymbol(long);
@@ -19774,7 +19936,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1548
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1560
 namespace stringify {
     /** Convert E_SgAsmElfSymbol enum constant to a string. */
     const char* E_SgAsmElfSymbol(long);
@@ -19792,7 +19954,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1551
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1563
 namespace stringify {
     /** Convert E_SgAsmGenericSymbol enum constant to a string. */
     const char* E_SgAsmGenericSymbol(long);
@@ -19810,7 +19972,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1554
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1566
 namespace stringify {
     /** Convert E_SgAsmGenericSectionList enum constant to a string. */
     const char* E_SgAsmGenericSectionList(long);
@@ -19828,7 +19990,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1557
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
 namespace stringify {
     /** Convert E_SgAsmGenericHeaderList enum constant to a string. */
     const char* E_SgAsmGenericHeaderList(long);
@@ -19846,7 +20008,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1560
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
 namespace stringify {
     /** Convert E_SgAsmElfSymbolList enum constant to a string. */
     const char* E_SgAsmElfSymbolList(long);
@@ -19864,7 +20026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1563
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
 namespace stringify {
     /** Convert E_SgAsmElfRelocEntryList enum constant to a string. */
     const char* E_SgAsmElfRelocEntryList(long);
@@ -19882,7 +20044,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1566
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
 namespace stringify {
     /** Convert E_SgAsmPEExportEntry enum constant to a string. */
     const char* E_SgAsmPEExportEntry(long);
@@ -19900,7 +20062,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
 namespace stringify {
     /** Convert E_SgAsmPEExportEntryList enum constant to a string. */
     const char* E_SgAsmPEExportEntryList(long);
@@ -19918,7 +20080,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1584
 namespace stringify {
     /** Convert E_SgAsmElfDynamicEntry enum constant to a string. */
     const char* E_SgAsmElfDynamicEntry(long);
@@ -19936,7 +20098,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1587
 namespace stringify {
     /** Convert E_SgAsmElfSegmentTableEntryList enum constant to a string. */
     const char* E_SgAsmElfSegmentTableEntryList(long);
@@ -19954,7 +20116,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1590
 namespace stringify {
     /** Convert E_SgAsmElfNoteEntry enum constant to a string. */
     const char* E_SgAsmElfNoteEntry(long);
@@ -19972,7 +20134,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1593
 namespace stringify {
     /** Convert E_SgAsmElfSymverEntryList enum constant to a string. */
     const char* E_SgAsmElfSymverEntryList(long);
@@ -19990,7 +20152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1584
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1596
 namespace stringify {
     /** Convert E_SgAsmElfSymverDefinedEntry enum constant to a string. */
     const char* E_SgAsmElfSymverDefinedEntry(long);
@@ -20008,7 +20170,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1587
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1599
 namespace stringify {
     /** Convert E_SgAsmElfSymverDefinedEntryList enum constant to a string. */
     const char* E_SgAsmElfSymverDefinedEntryList(long);
@@ -20026,7 +20188,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1590
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1602
 namespace stringify {
     /** Convert E_SgAsmElfSymverDefinedAux enum constant to a string. */
     const char* E_SgAsmElfSymverDefinedAux(long);
@@ -20044,7 +20206,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1593
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1605
 namespace stringify {
     /** Convert E_SgAsmElfSymverDefinedAuxList enum constant to a string. */
     const char* E_SgAsmElfSymverDefinedAuxList(long);
@@ -20062,7 +20224,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1596
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1608
 namespace stringify {
     /** Convert E_SgAsmElfSymverNeededEntry enum constant to a string. */
     const char* E_SgAsmElfSymverNeededEntry(long);
@@ -20080,7 +20242,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1599
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1611
 namespace stringify {
     /** Convert E_SgAsmElfSymverNeededEntryList enum constant to a string. */
     const char* E_SgAsmElfSymverNeededEntryList(long);
@@ -20098,7 +20260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1602
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1614
 namespace stringify {
     /** Convert E_SgAsmElfSymverNeededAux enum constant to a string. */
     const char* E_SgAsmElfSymverNeededAux(long);
@@ -20116,7 +20278,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1605
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1617
 namespace stringify {
     /** Convert E_SgAsmElfSymverNeededAuxList enum constant to a string. */
     const char* E_SgAsmElfSymverNeededAuxList(long);
@@ -20134,7 +20296,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1608
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1620
 namespace stringify {
     /** Convert E_SgAsmPEImportDirectory enum constant to a string. */
     const char* E_SgAsmPEImportDirectory(long);
@@ -20152,7 +20314,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1611
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1623
 namespace stringify {
     /** Convert E_SgAsmPEExportDirectory enum constant to a string. */
     const char* E_SgAsmPEExportDirectory(long);
@@ -20170,7 +20332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1614
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1626
 namespace stringify {
     /** Convert E_SgAsmCoffSymbolList enum constant to a string. */
     const char* E_SgAsmCoffSymbolList(long);
@@ -20188,7 +20350,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1617
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1629
 namespace stringify {
     /** Convert E_SgAsmPERVASizePairList enum constant to a string. */
     const char* E_SgAsmPERVASizePairList(long);
@@ -20206,7 +20368,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1620
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1632
 namespace stringify {
     /** Convert E_SgAsmElfEHFrameEntryCI enum constant to a string. */
     const char* E_SgAsmElfEHFrameEntryCI(long);
@@ -20224,7 +20386,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1623
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1635
 namespace stringify {
     /** Convert E_SgAsmPEImportDirectoryList enum constant to a string. */
     const char* E_SgAsmPEImportDirectoryList(long);
@@ -20242,7 +20404,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1626
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1638
 namespace stringify {
     /** Convert E_SgAsmLEEntryPoint enum constant to a string. */
     const char* E_SgAsmLEEntryPoint(long);
@@ -20260,7 +20422,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1629
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1641
 namespace stringify {
     /** Convert E_SgAsmDwarfMacroList enum constant to a string. */
     const char* E_SgAsmDwarfMacroList(long);
@@ -20278,7 +20440,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1632
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1644
 namespace stringify {
     /** Convert E_SgAsmDwarfLineList enum constant to a string. */
     const char* E_SgAsmDwarfLineList(long);
@@ -20296,7 +20458,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1635
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1647
 namespace stringify {
     /** Convert E_SgAsmDwarfCompilationUnitList enum constant to a string. */
     const char* E_SgAsmDwarfCompilationUnitList(long);
@@ -20314,7 +20476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1638
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1650
 namespace stringify {
     /** Convert E_SgAsmDwarfArrayType enum constant to a string. */
     const char* E_SgAsmDwarfArrayType(long);
@@ -20332,7 +20494,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1641
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1653
 namespace stringify {
     /** Convert E_SgAsmDwarfClassType enum constant to a string. */
     const char* E_SgAsmDwarfClassType(long);
@@ -20350,7 +20512,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1644
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1656
 namespace stringify {
     /** Convert E_SgAsmDwarfEnumerationType enum constant to a string. */
     const char* E_SgAsmDwarfEnumerationType(long);
@@ -20368,7 +20530,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1647
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1659
 namespace stringify {
     /** Convert E_SgAsmDwarfLexicalBlock enum constant to a string. */
     const char* E_SgAsmDwarfLexicalBlock(long);
@@ -20386,7 +20548,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1650
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1662
 namespace stringify {
     /** Convert E_SgAsmDwarfCompilationUnit enum constant to a string. */
     const char* E_SgAsmDwarfCompilationUnit(long);
@@ -20404,7 +20566,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1653
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1665
 namespace stringify {
     /** Convert E_SgAsmDwarfStructureType enum constant to a string. */
     const char* E_SgAsmDwarfStructureType(long);
@@ -20422,7 +20584,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1656
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1668
 namespace stringify {
     /** Convert E_SgAsmDwarfSubroutineType enum constant to a string. */
     const char* E_SgAsmDwarfSubroutineType(long);
@@ -20440,7 +20602,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1659
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
 namespace stringify {
     /** Convert E_SgAsmDwarfUnionType enum constant to a string. */
     const char* E_SgAsmDwarfUnionType(long);
@@ -20458,7 +20620,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1662
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
 namespace stringify {
     /** Convert E_SgAsmDwarfCommonBlock enum constant to a string. */
     const char* E_SgAsmDwarfCommonBlock(long);
@@ -20476,7 +20638,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1665
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
 namespace stringify {
     /** Convert E_SgAsmDwarfInlinedSubroutine enum constant to a string. */
     const char* E_SgAsmDwarfInlinedSubroutine(long);
@@ -20494,7 +20656,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1668
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
 namespace stringify {
     /** Convert E_SgAsmDwarfSubprogram enum constant to a string. */
     const char* E_SgAsmDwarfSubprogram(long);
@@ -20512,7 +20674,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
 namespace stringify {
     /** Convert E_SgAsmDwarfNamespace enum constant to a string. */
     const char* E_SgAsmDwarfNamespace(long);
@@ -20530,7 +20692,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
 namespace stringify {
     /** Convert E_SgAsmDwarfConstructList enum constant to a string. */
     const char* E_SgAsmDwarfConstructList(long);
@@ -20548,7 +20710,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1689
 namespace stringify {
     /** Convert E_SgAsmPEImportItem enum constant to a string. */
     const char* E_SgAsmPEImportItem(long);
@@ -20566,7 +20728,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1692
 namespace stringify {
     /** Convert E_SgAsmPEImportItemList enum constant to a string. */
     const char* E_SgAsmPEImportItemList(long);
@@ -20584,7 +20746,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1695
 namespace stringify {
     /** Convert E_SgAsmInterpretationList enum constant to a string. */
     const char* E_SgAsmInterpretationList(long);
@@ -20602,7 +20764,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1698
 namespace stringify {
     /** Convert E_SgAsmGenericFileList enum constant to a string. */
     const char* E_SgAsmGenericFileList(long);
@@ -20773,6 +20935,9 @@ namespace stringify {
                 }
             }
             /** Stringification. */
+            namespace AssemblerX86 {
+            }
+            /** Stringification. */
             namespace BinaryDebugger {
             }
             /** Stringification. */
@@ -20783,6 +20948,15 @@ namespace stringify {
                 /** Stringification. */
                 namespace Mips32 {
                 }
+            }
+            /** Stringification. */
+            namespace RegisterDictionary {
+                /** Stringification. */
+                namespace SortBySize {
+                }
+            }
+            /** Stringification. */
+            namespace Assembler {
             }
         }
         /** Stringification. */
@@ -21009,10 +21183,22 @@ namespace stringify {
         }
     }
     /** Stringification. */
+    namespace LibraryIdentification {
+    }
+    /** Stringification. */
     namespace AstAttribute {
     }
     /** Stringification. */
     namespace MatchStatus {
+    }
+    /** Stringification. */
+    namespace MFB {
+        /** Stringification. */
+        namespace Graph {
+            /** Stringification. */
+            namespace API {
+            }
+        }
     }
     /** Stringification. */
     namespace AstNodeClass {
@@ -21064,6 +21250,12 @@ namespace stringify {
     }
     /** Stringification. */
     namespace Sawyer {
+        /** Stringification. */
+        namespace Tree {
+            /** Stringification. */
+            namespace Node {
+            }
+        }
         /** Stringification. */
         namespace Container {
             /** Stringification. */
@@ -21174,6 +21366,12 @@ namespace stringify {
     namespace ByteOrder {
     }
     /** Stringification. */
+    namespace dot {
+    }
+    /** Stringification. */
+    namespace csharp_translator {
+    }
+    /** Stringification. */
     namespace Ada_ROSE_Translation {
     }
     /** Stringification. */
@@ -21196,18 +21394,6 @@ namespace stringify {
     }
     /** Stringification. */
     namespace ROSE_Fortran_defs {
-    }
-    /** Stringification. */
-    namespace AssemblerX86 {
-    }
-    /** Stringification. */
-    namespace RegisterDictionary {
-        /** Stringification. */
-        namespace SortBySize {
-        }
-    }
-    /** Stringification. */
-    namespace Assembler {
     }
     /** Stringification. */
     namespace Fortran_ROSE_Translation {
@@ -21400,15 +21586,6 @@ namespace stringify {
     }
     /** Stringification. */
     namespace SgTemplateClassDeclaration {
-    }
-    /** Stringification. */
-    namespace SgTemplateInstantiationDecl {
-    }
-    /** Stringification. */
-    namespace SgTemplateInstantiationMemberFunctionDecl {
-    }
-    /** Stringification. */
-    namespace SgTemplateInstantiationFunctionDecl {
     }
     /** Stringification. */
     namespace SgProcedureHeaderStatement {
