@@ -338,7 +338,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg1-estate-properties", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
     ("tg2-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize address.")
-    ("tg2-estate-id", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
+    ("tg2-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
