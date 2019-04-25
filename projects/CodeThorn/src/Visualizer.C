@@ -14,6 +14,7 @@
 #include "Miscellaneous2.h"
 
 #include "rose_config.h"
+
 #ifdef HAVE_SPOT
 // SPOT includes
 #include "tgba/succiter.hh"
