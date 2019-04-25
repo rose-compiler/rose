@@ -16,7 +16,7 @@ EXTRA_DIST =
 # We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
 # ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
-SUBDIRS = libltdl config src python
+SUBDIRS = LicenseInformation libltdl config src python
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
@@ -146,6 +146,7 @@ install-compass: install-core
 # don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
 install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
+	$(MAKE) -C $(top_builddir)/LicenseInformation install
 	cp rosePublicConfig.h $(pkgincludedir)
 	$(MAKE) -C $(top_builddir)/python install
 
