@@ -382,7 +382,7 @@ ConnectionImpl::dec_driver_connection(size_t idx)
         case POSTGRESQL: {
             // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
             // create more transactions on that connection.
-            
+
             // Also, libpqxx3 has a bug in the pqxx::transaction<> destructor: if the transaction commit() method is called,
             // then the d'tor executes a conditional jump or move that depends on unitialized values (according to valgrind).
             // This occurs in:
@@ -661,7 +661,7 @@ TransactionImpl::rollback()
         ss <<"transaction: "; print(ss);
         fprintf(debug, "SqlDatabase: rolling back transaction\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
     }
-    
+
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
@@ -1459,6 +1459,34 @@ Statement::iterator::get_str(size_t idx)
     return retval;
 }
 
+std::string
+Statement::iterator::get_blob(size_t idx)
+{
+    std::string retval;
+    check();
+    switch (stmt->driver()) {
+#ifdef ROSE_HAVE_SQLITE3
+        case SQLITE3: {
+            retval = stmt->impl->sqlite3_cursor->getblob(idx);
+            break;
+        }
+#endif
+
+#ifdef ROSE_HAVE_LIBPQXX
+        case POSTGRESQL: {
+            assert(!"BLOBS (or BYTEA) not yet supported in Postgres interface");
+            abort();
+        }
+#endif
+
+        default:
+            assert(!"database driver not supported");
+            abort();
+    }
+    return retval;
+}
+
+
 template<> NoColumn Statement::iterator::get<NoColumn>(size_t idx) { return NoColumn(); }
 template<> int32_t Statement::iterator::get<int32_t>(size_t idx) { return get_i32(idx); }
 template<> int64_t Statement::iterator::get<int64_t>(size_t idx) { return get_i64(idx); }
@@ -1522,7 +1550,7 @@ escape(const std::string &s, Driver driver, bool quote)
         retval = std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
     return retval;
 }
-    
+
 bool
 is_valid_table_name(const std::string &name)
 {

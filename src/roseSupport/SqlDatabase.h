@@ -62,7 +62,7 @@
  *
  *  For instance, here's how one would run a query that prints file IDs, inode number, file name, and owner name for files
  *  containing N lines, where N is supplied as an argument to the function:
- * 
+ *
  * @code
  *    void show_files(SqlDatabase::TransactionPtr &tx, int nlines, std::ostream &out) {
  *        FormatRestorer fr(out); // so we don't need to restore the original stream flags
@@ -101,7 +101,7 @@
  *        surprises for the caller, including when something we call might throw an exception.  Fortunately ROSE's
  *        FormatRestorer class makes this easy to do.</li>
  *  </ul>
- * 
+ *
  *  We can solve all these problems and improve readability by using the SqlDatabase::Table template class, like this:
  *
  * @code
@@ -364,6 +364,7 @@ public:
         uint64_t get_u64(size_t idx);
         double get_dbl(size_t idx);
         std::string get_str(size_t idx);
+        std::string get_blob(size_t idx);
         iterator& operator++();
         bool at_eof() const;
         bool operator==(const iterator &other) const;
@@ -376,7 +377,7 @@ public:
         size_t execution_seq;                   // statement execution counter
         size_t row_num;                         // row number
     };
-    
+
     /** Bind value to a '?' placeholder in the SQL statement.  Placeholders are counted from zero based on their position
      *  in the text of the SQL command.  Only after all placeholders are bound to values can this statement be executed.
      *  The bind() method returns the statement pointer so that bind calls can be chained together.
@@ -450,7 +451,7 @@ template<> uint32_t Statement::iterator::get<uint32_t>(size_t idx);
 template<> float Statement::iterator::get<float>(size_t idx);
 template<> double Statement::iterator::get<double>(size_t idx);
 template<> std::string Statement::iterator::get<std::string>(size_t idx);
-    
+
 /*******************************************************************************************************************************
  *                                      Miscellaneous functions
  *******************************************************************************************************************************/
@@ -637,7 +638,7 @@ public:
  *      nbytes_sum += table[i].v1; // value from column #1
  *  }
  *  std::cout <<"average number of instructions: " <<(double)ninsns_sum/table.size() <<"\n"
- *            <<"average size in bytes:          " <<(double)nbytes_sum/table.size() <<"\n";    
+ *            <<"average size in bytes:          " <<(double)nbytes_sum/table.size() <<"\n";
  * @endcode
  *
  *  Tables can also accumulate the results from more than one query as long as those queries return the same number of
@@ -668,7 +669,7 @@ public:
  *          return StringUtility::addrToString(value);
  *      }
  *  } addressRenderer;
- *      
+ *
  *  table.renderers().r3 = &addrRenderer;
  * @endcode
  *
@@ -684,7 +685,7 @@ public:
  *  } periodicSeparator;
  *  table.prepost(&periodicSeparator, NULL);
  * @endcode
- * 
+ *
  */
 template<typename T00,          typename T01=NoColumn, typename T02=NoColumn, typename T03=NoColumn,
          typename T04=NoColumn, typename T05=NoColumn, typename T06=NoColumn, typename T07=NoColumn,
@@ -810,7 +811,7 @@ public:
     Tuple& operator[](size_t i) { assert(i<rows_.size()); return rows_[i]; }
     const Tuple& operator[](size_t i) const { assert(i<rows_.size()); return rows_[i]; }
     /** @} */
-        
+
 
     /** Add a new row to the end of the table.
      * @{ */
@@ -850,7 +851,7 @@ public:
             s = s.substr(0, width);
         return s;
     }
-    
+
     /** Compute column widths.  Column widths are computed by internally printing the rows of the table and measuring
      *  the maximum width for each column. The renderers are called with zero for the column widths. */
     std::vector<size_t> colsizes() const {
@@ -964,7 +965,7 @@ public:
             print_headers(out, widths);
             print_rowsep(out, widths);
         }
-        
+
         // Body
         if (rows_.empty()) {
             out <<prefix_ <<"(0 rows)\n\n";

@@ -6,11 +6,14 @@
 #include <rose_isnan.h>
 #include <Partitioner2/BasicTypes.h>
 #include <RoseException.h>
+#include <SqlDatabase.h>
+
 
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/move/unique_ptr.hpp>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
@@ -115,9 +118,13 @@ public:
     typedef Sawyer::SharedPointer<Specimen> Ptr;
 
 private:
+    typedef std::vector<uint8_t> BinaryData;
+
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
-    std::string name_;                                  // name of specimen (e.g., for debugging)
-    std::vector<uint8_t> content_;                     // content of the binary executable file
+    std::string  name_;                                  // name of specimen (e.g., for debugging)
+    BinaryData   content_;                               // content of the binary executable file
+    mutable bool read_only_;                             // safe guards from writing content after it has been shared;
+    bool         empty_;                                 // indicates if this object is empty
 
 private:
     friend class boost::serialization::access;
@@ -127,13 +134,18 @@ private:
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(content_);
     }
-    
+
 protected:
-    Specimen() {}
+    Specimen()
+    : mutex_(), name_(), content_(), read_only_(false), empty_(false)
+    {}
 
 public:
-    /** Allocating constructor. */
+    /** Allocating constructor.
+     * @{ */
     static Ptr instance(const boost::filesystem::path &executableName);
+    static Ptr instance();
+    /** @} */
 
     /** Open an executable file.
      *
@@ -176,10 +188,10 @@ public:
      *  that compose the executable file.  This property is read-only, initialized when the @ref Specimen is created.
      *
      *  Thread safety: This method is thread safe. */
-    const std::vector<uint8_t>& content() const {       // reference return is okay since content never changes
-        return content_;
-    }
-    
+    const std::vector<uint8_t>& content() const;
+
+    void content(const std::string& binary_string);
+
 private:
     // TO BE REMOVED BY PETER: Since mutex_ is not a recursive mutex, none of the thread-safe public API methods can call other
     // thread-safe public API methods. Therefore, if one method needs to call another, you should create a non-synchronized
@@ -193,6 +205,8 @@ private:
 // Test cases
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+typedef std::pair<std::string, std::string> EnvValue;
+
 /** Information about how to run a specimen.
  *
  *  This object points to a specimen and also contains all the information necessary to run the specimen. */
@@ -205,6 +219,9 @@ private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // name for debugging
     Specimen::Ptr specimen_;                            // the thing to run
+
+    std::vector<std::string> args_;                     // command line arguments
+    std::vector<EnvValue>    env_;                      // environment variables
 
 protected:
     TestCase() {}
@@ -239,6 +256,18 @@ public:
      * @{ */
     Specimen::Ptr specimen() const;
     void specimen(const Specimen::Ptr&);
+    /** @} */
+
+    /** Command line arguments.
+     * @{ */
+    std::vector<std::string> args() const;
+    void args(std::vector<std::string> arguments);
+    /** @} */
+
+    /** Environment variables.
+     * @{ */
+    std::vector<EnvValue> env() const;
+    void env(std::vector<EnvValue> envvars);
     /** @} */
 
     // We'll need to add additional information about how to run the specimen:
@@ -303,16 +332,15 @@ public:
 protected:
     // Allocating constructors should be implemente by the non-abstract subclasses.
     ConcreteExecutor() {}
-    
+
 public:
     /** Execute one test case synchronously.
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-#if __cplusplus >= 201103L // needs to be fixed. Commented out for Jenkins testing.
-    // TO BE REMOVED BY PETER: Oops, the return value of "execute" is a C++11 type. We'll need to change that.
-    virtual std::unique_ptr<Result> execute(const TestCase::Ptr&) = 0;
-#endif
+    virtual
+    boost::movelib::unique_ptr<Result>
+    execute(const TestCase::Ptr&) = 0;
 };
 
 
@@ -335,7 +363,7 @@ public:
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutor::Result);
             s & BOOST_SERIALIZATION_NVP(exitStatus_);
         }
-        
+
     public:
         Result(int exitStatus);
 
@@ -376,10 +404,9 @@ public:
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
 
-#if __cplusplus >= 201103L // needs to be fixed; commented out for Jenkins testing
-    // TO BE REMOVED BY PETER: Oops, C++11 return type.
-    virtual std::unique_ptr<ConcreteExecutor::Result> execute(const TestCase::Ptr&) ROSE_OVERRIDE;
-#endif
+    virtual
+    boost::movelib::unique_ptr<ConcreteExecutor::Result>
+    execute(const TestCase::Ptr&) ROSE_OVERRIDE;
 };
 
 
@@ -496,33 +523,67 @@ public:
  *  Objects within a database have an ID number, and these ID numbers are type-specific. When an object is inserted (copied)
  *  into a database a new ID number is returned. The @ref Database object memoizes the association between object IDs and
  *  objects. */
+
+template <class Tag>
+struct ObjectId : Sawyer::Optional<int>
+{
+  typedef Sawyer::Optional<int> Super;
+  typedef int                   Value;
+
+  ObjectId() : Super() {}
+
+  explicit
+  ObjectId(const Value& v)
+  : Super(v)
+  {}
+
+  using Super::operator=;
+
+  template<class _Tag>
+  friend
+  bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
+};
+
+  template<class Tag>
+  inline
+  bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
+  {
+    static const int noid = -1;
+
+    const int lhsid = lhs.orElse(noid);
+    const int rhsid = rhs.orElse(noid);
+
+    return lhsid < rhsid;
+  }
+
+
+typedef ObjectId<TestSuite> TestSuiteId;
+typedef ObjectId<Specimen>  SpecimenId;
+typedef ObjectId<TestCase>  TestCaseId;
+
 class Database: public Sawyer::SharedObject, boost::noncopyable {
 public:
     /** Reference counting pointer to @ref Database. */
     typedef Sawyer::SharedPointer<Database> Ptr;
 
-    /** Base class for object IDs */
-    typedef Sawyer::Optional<int> ObjectId;
-    
-    /** ID numbers for test suites. */
-    struct TestSuiteId: ObjectId {};
-
-    /** ID numbers for specimens. */
-    struct SpecimenId: ObjectId {};
-
-    /** ID numbers for test cases. */
-    struct TestCaseId: ObjectId {};
+    typedef ::Rose::BinaryAnalysis::Concolic::TestSuiteId TestSuiteId;
+    typedef ::Rose::BinaryAnalysis::Concolic::SpecimenId  SpecimenId;
+    typedef ::Rose::BinaryAnalysis::Concolic::TestCaseId  TestCaseId;
 
 private:
+    SqlDatabase::ConnectionPtr                            dbconn_; // holds connection to database
+
     // Memoization of ID to object mappings
-    Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr> specimens_;
-    Sawyer::Container::BiMap<TestCaseId, TestCase::Ptr> testCases_;
+    Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
+    Sawyer::Container::BiMap<TestCaseId, TestCase::Ptr>   testCases_;
     Sawyer::Container::BiMap<TestSuiteId, TestSuite::Ptr> testSuites_;
-    
+
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
-    
+
 protected:
-    Database() {}
+    Database()
+    : dbconn_(), specimens_(), testCases_(), testSuites_(), testSuiteId_()
+    {}
 
 public:
     /** Open an existing database.
@@ -570,7 +631,7 @@ public:
      *  If this database object has a current test suite, then the return value is limited to specimens used by that test
      *  suite, otherwise all specimens are returned. */
     std::vector<SpecimenId> specimens();
-    
+
     //------------------------------------------------------------------------------------------------------------------------
     // Test cases
     //------------------------------------------------------------------------------------------------------------------------
@@ -671,7 +732,7 @@ protected:
         : database_(db) {
         ASSERT_not_null(db);
     }
-    
+
 public:
     virtual ~ExecutionManager() {}
 
@@ -755,7 +816,7 @@ public:
      *  If a test suite name is specified then it must exist in the database. If no test suite name is specified then the
      *  database must contain exactly one test suite which is the one that will be used. The actual run is not commenced until
      *  @ref run is called. */
-    static Ptr instance(const std::string databaseUri, const std::string &testSuiteName = "");
+    static Ptr instance(const std::string& databaseUri, const std::string &testSuiteName = "");
 
     virtual void run() ROSE_OVERRIDE;
 };
