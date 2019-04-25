@@ -347,14 +347,6 @@ typedef long double __float128;
  */
 #undef __BLOCKS__
 
-/* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
- * so we define them to nothing here.  */
-#ifndef ROSE_USE_EDG_VERSION_4
-	#define __attribute__(x)
-	#define __dead2
-	#define __pure2
-#endif
-
 /* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
 #define __builtin_va_arg(v,l) (l)(sizeof(l))
 
