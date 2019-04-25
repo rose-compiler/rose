@@ -2006,6 +2006,7 @@ exampleTranslators/documentedExamples/Makefile
 exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
+LicenseInformation/Makefile
 projects/ArithmeticMeasureTool/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
