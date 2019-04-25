@@ -493,6 +493,48 @@ rose-config.cfg:
 
 MOSTLYCLEANFILES += rose-config.cfg
 
+bin_PROGRAMS += rose-compiler
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  bin_PROGRAMS += rose-cc rose-c++
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+  bin_PROGRAMS += rose-fortran
+endif
+# The -std= option in ROSE only support c, c++, fortran
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+#if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+#if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+
+rose_compiler_SOURCES=rose-compiler.C
+rose_compiler_LDFLAGS = $(ROSE_RPATHS)
+rose_compiler_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_compiler_CPPFLAGS = -DLIBDIR='"$(libdir)"'
+rose_compiler_LDADD = $(ROSE_LIBS)
+
+rose_cc_SOURCES=rose-compiler.C
+rose_cc_LDFLAGS = $(ROSE_RPATHS)
+rose_cc_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_cc_CPPFLAGS = -DLIBDIR='"$(libdir)"' -DROSE_COMPILER_FOR_LANGUAGE="\"c\""
+rose_cc_LDADD = $(ROSE_LIBS)
+
+rose_c___SOURCES=rose-compiler.C
+rose_c___LDFLAGS = $(ROSE_RPATHS)
+rose_c___DEPENDENCIES = $(REQUIRED_LIBS)
+rose_c___CPPFLAGS = -DLIBDIR='"$(libdir)"' -DROSE_COMPILER_FOR_LANGUAGE="\"c++\""
+rose_c___LDADD = $(ROSE_LIBS)
+
+rose_fortran_SOURCES=rose-compiler.C
+rose_fortran_LDFLAGS = $(ROSE_RPATHS)
+rose_fortran_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_fortran_CPPFLAGS = -DLIBDIR='"$(libdir)"' -DROSE_COMPILER_FOR_LANGUAGE="\"fortran\""
+rose_fortran_LDADD = $(ROSE_LIBS)
+
 ########################################################################################################################
 
 # Rasmussen (3/23/2018): Added installing libtool to the bin directory to support
@@ -533,3 +575,4 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
+
