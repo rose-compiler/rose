@@ -2,6 +2,7 @@
 #define ROSE_SqlDatabase_H
 
 #include "FormatRestorer.h"
+#include "RoseException.h"
 #include "StringUtility.h"
 #include "rose_override.h"
 
@@ -158,16 +159,13 @@ class NoColumn {};
  *******************************************************************************************************************************/
 
 /** Exceptions thrown by database operations. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    explicit Exception(const char *mesg): std::runtime_error(mesg) {}
-    explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
-    explicit Exception(const std::runtime_error &e, const ConnectionPtr &conn, const TransactionPtr &tx,
-                       const StatementPtr &stmt)
-        : std::runtime_error(e), connection(conn), transaction(tx), statement(stmt) {}
+    explicit Exception(const char *mesg): Rose::Exception(mesg) {}
+    explicit Exception(const std::string &mesg): Rose::Exception(mesg) {}
     explicit Exception(const std::string &mesg, const ConnectionPtr &conn, const TransactionPtr &tx,
                        const StatementPtr &stmt)
-        : std::runtime_error(mesg), connection(conn), transaction(tx), statement(stmt) {}
+        : Rose::Exception(mesg), connection(conn), transaction(tx), statement(stmt) {}
 
     virtual ~Exception() throw() {}
     virtual const char *what() const throw() ROSE_OVERRIDE;

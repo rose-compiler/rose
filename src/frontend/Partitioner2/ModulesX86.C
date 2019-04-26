@@ -93,278 +93,6 @@ MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     return true;
 }
 
-    
-
-size_t
-isJmpMemThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return 0;
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
-    if (!matchJmpMem(partitioner, jmp))
-        return 0;
-    return 1;
-}
-
-size_t
-isLeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.size() < 2)
-        return 0;
-    
-    // LEA ECX, [EBP + constant]
-    SgAsmX86Instruction *lea = isSgAsmX86Instruction(insns[0]);
-    if (!matchLeaCxMemBpConst(partitioner, lea))
-        return 0;
-
-    // JMP address
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
-    if (!matchJmpConst(partitioner, jmp))
-        return 0;
-
-    return 2;
-}
-
-size_t
-isMovJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.size() < 2)
-        return 0;
-
-    // MOV reg1 [address]
-    SgAsmX86Instruction *mov = isSgAsmX86Instruction(insns[0]);
-    if (!mov || mov->get_kind() != x86_mov)
-        return 0;
-    const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
-    if (movArgs.size() != 2)
-        return 0;
-    SgAsmDirectRegisterExpression *movArg0 = isSgAsmDirectRegisterExpression(movArgs[0]);
-    SgAsmMemoryReferenceExpression *movArg1 = isSgAsmMemoryReferenceExpression(movArgs[1]);
-    if (!movArg0 || !movArg1)
-        return 0;
-    
-    // JMP reg1
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
-    if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
-    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
-    if (jmpArgs.size() != 1)
-        return 0;
-    SgAsmDirectRegisterExpression *jmpArg0 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
-    if (!jmpArg0)
-        return 0;
-    if (jmpArg0->get_descriptor() != movArg0->get_descriptor())
-        return 0;
-
-    return 2;
-}
-
-size_t
-isJmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return 0;
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
-    if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
-    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
-    if (jmpArgs.size() != 1)
-        return 0;
-    SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
-    if (!jmpArg0)
-        return 0;
-    rose_addr_t targetVa = jmpArg0->get_absoluteValue();
-    if (!partitioner.memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
-        return 0;                                       // target must be an executable address
-    if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
-        return 0;                                       // points to middle of some instruction
-    return 1;
-}
-
-size_t
-isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    // Longer patterns must be before shorter patterns if they could both match
-    if (size_t n = isLeaJmpThunk(partitioner, insns))
-        return n;
-    if (size_t n = isMovJmpThunk(partitioner, insns))
-        return n;
-    if (size_t n = isJmpMemThunk(partitioner, insns))
-        return n;
-#if 0 // [Robb P. Matzke 2015-06-23]: disabled for now, but see splitThunkFunctions
-    // This matcher is causing too many false positives. The problem is that when the partitioner fails to find some code of a
-    // function and then starts searching for function prologues it's likely to find a "JMP imm" that just happens to be part
-    // of the control flow in the missed code. It then tries to turn that JMP into its own function right in the middle of some
-    // other function and the CG gets all messed up.
-    if (size_t n = isJmpImmThunk(partitioner, insns))
-        return n;
-#endif
-    return 0;
-}
-
-void
-splitThunkFunctions(Partitioner &partitioner) {
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    debug <<"splitThunkFunctions\n";
-    std::vector<Function::Ptr> workList = partitioner.functions();
-    while (!workList.empty()) {
-        Function::Ptr candidate = workList.back();
-        workList.pop_back();
-        SAWYER_MESG(debug) <<"  considering " <<candidate->printableName() <<"\n";
-
-        // Get the entry vertex in the CFG and the entry basic block.
-        ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(candidate->address());
-        ASSERT_require(partitioner.cfg().isValidVertex(entryVertex));
-        if (entryVertex->value().type() != V_BASIC_BLOCK)
-            continue;
-        BasicBlock::Ptr entryBlock = entryVertex->value().bblock();
-        if (entryBlock == NULL)
-            continue;                                   // can't split a block if we haven't discovered it yet
-
-        // All incoming edges must be function calls, function transfers, etc. We cannot split the thunk from the beginning of
-        // the entry block if the entry block is a successor of some other non-call block in the same function (e.g., the top
-        // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
-        bool hasIntraFunctionEdge = false;
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_NORMAL) {
-                hasIntraFunctionEdge = true;
-                break;
-            }
-        }
-        if (hasIntraFunctionEdge)
-            continue;
-
-        // Does the function appear to start with a thunk pattern of instructions?
-        size_t thunkSize = isThunk(partitioner, entryBlock->instructions());
-#if 1 // [Robb P. Matzke 2015-06-26]: this case is commented out in isThunk(), so handle it here
-        if (0 == thunkSize)
-            thunkSize = isJmpImmThunk(partitioner, entryBlock->instructions());
-#endif
-        if (0 == thunkSize)
-            continue;
-
-        // Is the thunk pattern a proper subsequence of the entry block?
-        bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();
-        if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1) {
-            // Function is only a thunk already, so make sure the FUNC_THUNK bit is set.
-            candidate->insertReasons(SgAsmFunction::FUNC_THUNK);
-            continue;                                   // function is only a thunk already
-        }
-        if (!thunkIsPrefix && entryVertex->nOutEdges() != 1)
-            continue;                                   // thunks have only one outgoing edge
-
-        // FIXME[Robb P. Matzke 2015-07-09]: The basic-block splitting part could be its own function
-        // FIXME[Robb P. Matzke 2015-07-09]: The function splitting part could be its own function
-
-        // By now we've determined that there is indeed a thunk that must be split off from the big candidate function. We
-        // can't just remove the thunk's basic block from the candidate function because the thunk is the candidate function's
-        // entry block. Therefore detach the big function from the CFG to make room for new thunk and target functions.
-        SAWYER_MESG(debug) <<"    " <<candidate->printableName() <<" starts with a thunk\n";
-        partitioner.detachFunction(candidate);
-
-        // If the thunk is a proper prefix of the candidate function's entry block then split the entry block in two.
-        BasicBlock::Ptr origEntryBlock = entryBlock;
-        ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
-        if (thunkIsPrefix) {
-            SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
-            targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[thunkSize]);
-            entryBlock = entryVertex->value().bblock();
-            SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
-            ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
-            ASSERT_require(entryBlock->nInstructions() < origEntryBlock->nInstructions());
-        } else {
-            targetVertex = entryVertex->outEdges().begin()->target();
-            SAWYER_MESG(debug) <<"    eliding entry block; new entry is " <<partitioner.vertexName(targetVertex) <<"\n";
-        }
-        ASSERT_require(partitioner.cfg().isValidVertex(targetVertex));
-
-        // Create the new thunk function.
-        Function::Ptr thunkFunction = Function::instance(candidate->address(), SgAsmFunction::FUNC_THUNK);
-        SAWYER_MESG(debug) <<"    created thunk " <<thunkFunction->printableName() <<"\n";
-        partitioner.attachFunction(thunkFunction);
-
-        // Create the new target function, which has basically the same features as the original candidate function except a
-        // different entry address.  The target might be indeterminate (e.g., "jmp [address]" where address is not mapped or
-        // non-const), in which case we shouldn't create a function there (in fact, we can't since indeterminate has no
-        // concrete address and functions need entry addresses). Since the partitioner supports shared basic blocks (basic
-        // block owned by multiple functions), the target vertex might already be a function, in which case we shouldn't try to
-        // create it.
-        if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner.functionExists(targetVertex->value().address())) {
-            unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_GRAPH;
-            Function::Ptr newFunc = Function::instance(targetVertex->value().address(), candidate->name(), newReasons);
-            newFunc->comment(candidate->comment());
-            BOOST_FOREACH (rose_addr_t va, candidate->basicBlockAddresses()) {
-                if (va != thunkFunction->address())
-                    newFunc->insertBasicBlock(va);
-            }
-            BOOST_FOREACH (const DataBlock::Ptr &db, candidate->dataBlocks())
-                newFunc->insertDataBlock(db);
-            partitioner.attachFunction(newFunc);
-            workList.push_back(newFunc);                // new function might have more thunks to split off yet.
-
-            if (origEntryBlock != entryBlock) {         // original entry block was split
-                // Discover the new function's entry block. This new block is much like the original block since conceptually
-                // the thunk and this new block are really a single basic block.  However, discover thunk might not have been
-                // able to resolve things like opaque predicates and the new block might therefore be shorter.  Consider:
-                //     mov eax, global      ; part of thunk
-                //     jmp [eax]            ; part of thunk
-                //
-                //     cmp eax, global
-                //     jne foo              ; opaque predicate when thunk was attached to this block
-                //     nop                  ; originally part of this block, but now will start a new block
-                BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
-                if (targetBlock->nInstructions() + entryBlock->nInstructions() == origEntryBlock->nInstructions()) {
-                    BOOST_FOREACH (const DataBlock::Ptr &db, origEntryBlock->dataBlocks())
-                        targetBlock->insertDataBlock(db);
-                    targetBlock->copyCache(origEntryBlock);
-                }
-
-                partitioner.attachBasicBlock(targetBlock);
-            }
-        }
-
-        // Fix edge types between the thunk and the target function
-        for (ControlFlowGraph::ConstEdgeIterator ei=entryVertex->outEdges().begin(); ei!=entryVertex->outEdges().end(); ++ei)
-            partitioner.fixInterFunctionEdge(ei);
-    }
-}
-
-bool
-MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    // Disassemble the next few undiscovered instructions
-    static const size_t maxInsns = 2;                   // max length of a thunk
-    std::vector<SgAsmInstruction*> insns;
-    rose_addr_t va = anchor;
-    for (size_t i=0; i<maxInsns; ++i) {
-        if (partitioner.instructionExists(va))
-            break;                                      // look only for undiscovered instructions
-        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
-        if (!insn)
-            break;
-        insns.push_back(insn);
-        va += insn->get_size();
-    }
-    if (insns.empty())
-        return false;
-
-    functions_.clear();
-    size_t thunkSize = isThunk(partitioner, insns);
-    if (0 == thunkSize)
-        return false;
-
-    // This is a thunk
-    functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
-
-    // Do we know the successors?  They would be the function(s) to which the thunk branches.
-    BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
-    for (size_t i=0; i<thunkSize; ++i)
-        bb->append(partitioner, insns[i]);
-    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
-        if (successor.expr()->is_number()) {
-            rose_addr_t targetVa = successor.expr()->get_number();
-            if (!partitioner.functionExists(targetVa))
-                insertUnique(functions_, Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH), sortFunctionsByAddress);
-        }
-    }
-
-    return true;
-}
-
 bool
 MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // RET (prior to anchor) must already exist in the CFG/AUM
@@ -781,8 +509,8 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
-    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSize));
+    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
     AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
 
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
@@ -806,7 +534,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Read the table
     std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                                 targetLimits, wordSize);
+                                                                 targetLimits, wordSizeBytes);
     if (tableEntries.empty())
         return chain;
 
@@ -814,10 +542,13 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     std::set<rose_addr_t> successors(tableEntries.begin(), tableEntries.end());
     args.bblock->successors().clear();
     BOOST_FOREACH (rose_addr_t va, successors)
-        args.bblock->insertSuccessor(va, wordSize*8);
+        args.bblock->insertSuccessor(va, wordSizeBytes*8);
 
     // Create a data block for the offset table and attach it to the basic block
-    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableLimits.size());
+    size_t nTableEntries = tableLimits.size() / wordSizeBytes;
+    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
+    SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
+    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging

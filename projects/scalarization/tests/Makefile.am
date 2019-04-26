@@ -6,8 +6,7 @@ REFERENCE_PATH=$(srcdir)/tests/references
 FORTRAN_TESTCODES_REQUIRED_TO_PASS = \
 	Ftest1.f90 \
 	Ftest2.f90 \
-	Ftest3.f90 \
-	Ftest4.f90 
+	Ftest3.f90 
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	Ctest1.c \
@@ -18,7 +17,6 @@ COMPARE_CODES = \
 	rose_Ftest1.f90 \
 	rose_Ftest2.f90 \
 	rose_Ftest3.f90 \
-	rose_Ftest4.f90 \
 	rose_Ctest1.c \
 	rose_Ctest2.c 
 

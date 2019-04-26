@@ -7,6 +7,8 @@
 #include <boost/algorithm/string.hpp>
 #include "TFHandles.h"
 
+namespace Typeforge {
+
 using namespace std;
 
 //Methods for building transform list
@@ -40,7 +42,8 @@ void TFTransformation::addIncludeTransformation(string includeFile, bool systemH
 //Methods to analyze and execute
 int ADTransformation::run(SgProject* project, RoseAst ast, TFTransformation* tf){
   tf->instrumentADIntermediate(funDef);
-  tf->instrumentADGlobals(project, ast);
+  RoseAst fdef_ast(funDef);
+  tf->instrumentADGlobals(project, fdef_ast);
   return 0;
 }
 
@@ -181,6 +184,7 @@ void TFTransformation::appendNode(SgNode* node, string newCode){
 
 void TFTransformation::transformationAnalyze(SgProject* project){
   RoseAst ast(project);
+
   for(auto spec : _transformationList){
     spec->run(project, ast, this);
   }
@@ -466,7 +470,10 @@ string getVarRefHandle(SgVarRefExp* varRef){
 int TFTransformation::instrumentADDecleration(SgInitializer* init){
   if(SgInitializedName* initName = isSgInitializedName(init->get_parent())){
     SgType* type = initName->get_type();
-    if(SgNodeHelper::isFloatingPointType(type->stripTypedefsAndModifiers())){
+    if(SgNodeHelper::isFloatingPointType(type->stripType(
+//    SgType::STRIP_MODIFIER_TYPE  |
+      SgType::STRIP_TYPEDEF_TYPE
+    ))){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
         SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
         string varName   = SgNodeHelper::symbolToString(varSym); 
@@ -515,7 +522,10 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
       else break;
     }
     if(!varRefExp) continue;
-    if(SgNodeHelper::isFloatingPointType(varType->stripTypedefsAndModifiers())) {
+    if(SgNodeHelper::isFloatingPointType(varType->stripType(
+//    SgType::STRIP_MODIFIER_TYPE  |
+      SgType::STRIP_TYPEDEF_TYPE
+    ))) {
       if(isWithinBlockStmt(assignOp)) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
         string varHandle = getVarRefHandle(varRefExp);
@@ -554,6 +564,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
 //Adds instrumentataion for initalized gobal variables after the pragma adapt begin
 void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
   list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
+
   if(listOfGlobalVars.size() > 0){
     string instString = "";
     for(RoseAst::iterator i = ast.begin(); i != ast.end();i++){
@@ -583,3 +594,6 @@ void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
     }
   }
 }
+
+}
+

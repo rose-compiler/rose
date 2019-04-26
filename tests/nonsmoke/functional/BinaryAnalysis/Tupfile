@@ -525,4 +525,11 @@ endif
 run $(tool_compile_linkexe) testPeekRegister.C
 run $(test) testPeekRegister
 
+########################################################################################################################
+# Test data block ownership rules in Partitioner2
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDataBlockOwnership.C
+run $(test) testDataBlockOwnership ./testDataBlockOwnership $(ROSE)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
 endif

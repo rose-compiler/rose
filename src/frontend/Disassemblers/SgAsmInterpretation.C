@@ -3,6 +3,8 @@
 
 #include "sage3basic.h"
 
+using namespace Rose::BinaryAnalysis;
+
 /* Finish constructing. */
 void SgAsmInterpretation::ctor() {
     ROSE_ASSERT(p_headers==NULL);

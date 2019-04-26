@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <RoseException.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
@@ -55,9 +56,9 @@ enum Flag { NO, YES };
 extern Sawyer::Message::Facility mlog;
 
 /** Base class for exceptions for concolic testing. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    explicit Exception(const std::string &mesg): Rose::Exception(mesg) {}
     ~Exception() throw () {}
 };
 

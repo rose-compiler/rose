@@ -352,6 +352,7 @@ Settings::Settings() {
     insn.stackDelta.showing = true;
     insn.stackDelta.fieldWidth = 2;
     insn.mnemonic.fieldWidth = 8;
+    insn.mnemonic.semanticFailureMarker = "[!]";
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
     insn.comment.showing = true;
@@ -395,6 +396,7 @@ Settings::minimal() {
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 8;
+    s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
@@ -547,6 +549,11 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
                         "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
                         "net effect.");
+
+    sg.insert(Switch("insn-semantic-failure")
+              .argument("string", anyParser(settings.insn.mnemonic.semanticFailureMarker))
+              .doc("String to append to instruction mnemonic when the instruction is the cause of a semantic failure. The default "
+                   "is \"" + StringUtility::cEscape(settings.insn.mnemonic.semanticFailureMarker) + "\"."));
 
     //----- Arrows -----
     sg.insert(Switch("arrow-style")
@@ -1381,6 +1388,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockPrologue(out, db, state);
     } else {
+        if (!db->comment().empty())
+            state.frontUnparser().emitCommentBlock(out, db->comment(), state, "\t;; ");
+
         state.frontUnparser().emitLinePrefix(out, state);
         out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
         if (P2::Function::Ptr function = state.currentFunction()) {
@@ -1393,6 +1403,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
                 }
             }
         }
+
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; block type is " <<db->type()->toString() <<"\n";
     }
 }
 
@@ -1521,7 +1534,6 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
         }
         fieldWidths.push_back(settings().insn.mnemonic.fieldWidth);
 
-
         // Operands
         if (insn) {
             std::ostringstream ss;
@@ -1625,6 +1637,8 @@ Base::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State &
         nextUnparser()->emitInstructionMnemonic(out, insn, state);
     } else {
         out <<insn->get_mnemonic();
+        if (insn->semanticFailure() > 0)
+            out <<settings().insn.mnemonic.semanticFailureMarker;
     }
 }
 

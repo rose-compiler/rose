@@ -1,5 +1,11 @@
+static const char *purpose = "show instructions executed natively";
+static const char *description =
+    "Runs the specimen in a debugger and prints each instruction that is executed.";
+
 #include <rose.h>
+
 #include <BinaryDebugger.h>
+#include <boost/filesystem.hpp>
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
@@ -10,6 +16,7 @@ using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 
 Sawyer::Message::Facility mlog;
+boost::filesystem::path outputFileName;
 
 struct Settings {};
 
@@ -17,8 +24,11 @@ static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    std::string purpose = "show instructions executed natively";
-    std::string description = "Runs the specimen in a debugger and prints each instruction that is executed.";
+    SwitchGroup out("Output switches");
+    out.insert(Switch("output", 'o')
+               .argument("file", anyParser(outputFileName))
+               .doc("Send the trace to the specified file, which is first truncated if it exists or created if it doesn't exist."));
+
     Parser parser;
     parser
         .purpose(purpose)
@@ -26,7 +36,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .chapter(1, "ROSE Command-line Tools")
         .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [@v{args}...]")
         .doc("Description", description)
-        .with(engine.engineSwitches());
+        .with(engine.engineSwitches())
+        .with(out);
 
     return parser.parse(argc, argv).apply().unreachedArgs();
 }
@@ -44,6 +55,12 @@ main(int argc, char *argv[]) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
     }
+
+    // Trace output goes to either std::cout or some file.
+    std::filebuf fb;
+    if (!outputFileName.empty())
+        fb.open(outputFileName.native().c_str(), std::ios::out);
+    std::ostream traceOutput(outputFileName.empty() ? std::cout.rdbuf() : &fb);
 
     // Load specimen into ROSE's simulated memory
     if (!engine.parseContainers(specimen.front())) {
@@ -67,7 +84,7 @@ main(int argc, char *argv[]) {
         if (0 == nBytes) {
             ::mlog[ERROR] <<"cannot read memory at " <<StringUtility::addrToString(ip) <<"\n";
         } else if (SgAsmInstruction *insn = disassembler->disassembleOne(buf, ip, nBytes, ip)) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            traceOutput <<insn->toString() <<"\n";
         } else {
             ::mlog[ERROR] <<"cannot disassemble instruction at " <<StringUtility::addrToString(ip) <<"\n";
         }

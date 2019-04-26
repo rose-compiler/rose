@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace Typeforge {
+
 namespace CppStdUtilities {
 
   // these utilities only use C++11 standard features. There are no other dependences.
@@ -36,6 +38,8 @@ namespace CppStdUtilities {
   // e.g. "bba" is a postfix of "cccbba"
   bool isPostfix(std::string const &postfix, std::string const &s);
   
+}
+
 }
 
 #endif

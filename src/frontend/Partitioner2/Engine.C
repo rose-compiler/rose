@@ -46,6 +46,8 @@ void
 Engine::init() {
     ASSERT_require(map_ == NULL);
     Rose::initialize(NULL);
+    functionMatcherThunks_ = ThunkPredicates::functionMatcherThunks();
+    functionSplittingThunks_ = ThunkPredicates::allThunks();
 #if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     static bool emitted = false;
     if (!emitted) {
@@ -1433,7 +1435,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
+        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
@@ -1462,7 +1464,7 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
         if (settings_.partitioner.findingThunks)
-            p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
+            p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks_));
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -1535,7 +1537,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         }
 
         BOOST_FOREACH (SgAsmStaticData *dataAst, SageInterface::querySubTree<SgAsmStaticData>(funcAst)) {
-            DataBlock::Ptr dblock = DataBlock::instance(dataAst->get_address(), dataAst->get_size());
+            DataBlock::Ptr dblock = DataBlock::instanceBytes(dataAst->get_address(), dataAst->get_size());
             partitioner.attachDataBlock(dblock);
             function->insertDataBlock(dblock);
         }
@@ -1624,7 +1626,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
         // single blocks at a time -- splitting the block may have broken the opaque predicate.
         SAWYER_MESG(where) <<"splitting thunks from functions\n";
-        ModulesX86::splitThunkFunctions(partitioner);
+        splitThunkFunctions(partitioner, functionSplittingThunks_);
         discoverBasicBlocks(partitioner);
     }
 
@@ -1683,15 +1685,7 @@ Engine::partition(const std::vector<std::string> &fileNames) {
                 throw Exception("specifying an RBA file excludes all other inputs");
         }
         if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
-            SerialInput::Ptr archive = SerialInput::instance();
-            archive->open(fileNames[0]);
-            Partitioner partitioner = archive->loadPartitioner();
-            SgNode *ast = archive->loadAst();
-            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
-            if (!interps.empty())
-                interp_ = interps[0];
-            map_ = partitioner.memoryMap();
-            return partitioner;
+            return loadPartitioner(fileNames[0]);
         } else {
             if (!areSpecimensLoaded())
                 loadSpecimens(fileNames);
@@ -1715,6 +1709,51 @@ Engine::partition(const std::string &fileName) {
     return partition(std::vector<std::string>(1, fileName));
 }
 
+void
+Engine::savePartitioner(const Partitioner &partitioner, const boost::filesystem::path &name,
+                        SerialIo::Format fmt) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"writing RBA state file";
+    Sawyer::Stopwatch timer;
+    SerialOutput::Ptr archive = SerialOutput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    archive->savePartitioner(partitioner);
+
+    if (SgProject *project = SageInterface::getProject()) {
+        BOOST_FOREACH (SgBinaryComposite *file, SageInterface::querySubTree<SgBinaryComposite>(project))
+            archive->saveAst(file);
+    }
+
+    info <<"; took " <<timer <<" seconds\n";
+}
+
+Partitioner
+Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fmt) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"reading RBA state file";
+    Sawyer::Stopwatch timer;
+    SerialInput::Ptr archive = SerialInput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    Partitioner partitioner = archive->loadPartitioner();
+
+    interp_ = NULL;
+    while (archive->objectType() == SerialIo::AST) {
+        SgNode *ast = archive->loadAst();
+        if (NULL == interp_) {
+            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
+            if (!interps.empty())
+                interp_ = interps[0];
+        }
+    }
+
+    info <<"; took " <<timer << " seconds\n";
+    map_ = partitioner.memoryMap();
+    return partitioner;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2244,7 +2283,7 @@ DataBlock::Ptr
 Engine::attachPaddingToFunction(Partitioner &partitioner, const Function::Ptr &function) {
     ASSERT_not_null(function);
     if (DataBlock::Ptr padding = partitioner.matchFunctionPadding(function)) {
-        partitioner.attachFunctionDataBlock(function, padding);
+        partitioner.attachDataBlockToFunction(padding, function);
         return padding;
     }
     return DataBlock::Ptr();
@@ -2372,7 +2411,8 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = partitioner.attachFunctionDataBlock(function, interval.least(), interval.size());
+                DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
+                dblock = partitioner.attachDataBlockToFunction(dblock, function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }
         }

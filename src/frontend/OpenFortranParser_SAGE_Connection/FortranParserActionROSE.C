@@ -2199,10 +2199,7 @@ void c_action_label(Token_t * lbl)
      * @param count  Number of procedure binding statements.
      * @param hasBindingPrivateStmt True if has a keyword "private".
      */
-// void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt)
-// void c_action_type_bound_procedure_part(Token_t * containsKeyword, Token_t * eos, int count, ofp_bool hasBindingPrivateStmt) 
-    void c_action_type_bound_procedure_part(int count,
-            ofp_bool hasBindingPrivateStmt)
+    void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt)
     {
         // printf ("In c_action_type_bound_procedure_part(): containsKeyword = %p = %s hasBindingPrivateStmt = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL",hasBindingPrivateStmt ? "true" : "false");
 
@@ -3018,7 +3015,6 @@ void c_action_label(Token_t * lbl)
      * @param type The type of declaration-type-spec {INTRINSIC,TYPE,
      * CLASS,POLYMORPHIC}.
      */
-// void c_action_declaration_type_spec(int type)
     void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
     {
         // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
@@ -3090,10 +3086,15 @@ void c_action_label(Token_t * lbl)
 
             case DeclarationTypeSpec_CLASS:
             {
-                // What is this?
+                // Rasmussen (4/11/2019):
+                // This is a CLASS declaration-type-spec. It is effectively the same as TYPE.
+                // TODO: It would be helpful to mark the derived type as a class declaration rather
+                //       than a struct but I don't think one can get the variable declaration here.
+                //       This is not super critical as it can be handled by token-based unparsing.
+                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
                 printf(
-                        "Sorry, not implemented: c_action_declaration_type_spec(DeclarationTypeSpec_CLASS) \n");
-                ROSE_ASSERT(false);
+                        "In c_action_declaration_type_spec(type = %d = DeclarationTypeSpec_CLASS) \n",
+                        type);
                 break;
             }
 
@@ -3124,13 +3125,11 @@ void c_action_label(Token_t * lbl)
         outputState("Before transfer to astBaseTypeStack in R502 c_action_declaration_type_spec()");
 #endif
 
-        // DQ (12/8/2007): Some types are build directly on the astBaseTypeStack.
+        // DQ (12/8/2007): Some types are built directly on the astBaseTypeStack.
         // When this happens we have nothing to transfer between stacks.
 
-        // ROSE_ASSERT(astTypeStack.empty() == false);
         if (astTypeStack.empty() == false)
         {
-
             // DQ (12/8/2007): Now take the type and put it onto the astBaseTypeStack.
             // ROSE_ASSERT(astBaseTypeStack.empty() == true);
             astBaseTypeStack.push_front(astTypeStack.front());

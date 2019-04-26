@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 $Interpreter ||= "/usr/bin/perl";
 #-------------------------------------------------------------------------------
 #
@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "4";
-$mkinstaller_ver_build = "3";
+$mkinstaller_ver_build = "8";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.4.3";
-$mkinstaller_ver_time  = "12Feb2019 15:39:19z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.3 - 12Feb2019 15:39:19z";
+$mkinstaller_ver_name  = "2.4.8";
+$mkinstaller_ver_time  = " 8Apr2019 15:23:04z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.8 -  8Apr2019 15:23:04z";
 
 #{------------------------------------------------------------------------------
 #
@@ -246,6 +246,7 @@ if ($valueOfDebugVar ne "") {
    my $scriptNameU                     = "";
    my $SCRIPTNAME                      = "";
    my $SCRIPTNAME_TMPDIR               = "";
+   my $slash                           = "";
    my $stdMode                         = 0;
    my $tarIsGNUtar                     = -1;
    my $theCommandLine                  = "";
@@ -267,6 +268,7 @@ if ($valueOfDebugVar ne "") {
    my $use_hasher                      = "";
    my $use_hasherOpt                   = "";
    my $use_hasher                      = "";
+   my $use_ls                          = "";
    my $use_makensis                    = "";
    my $use_pshaw                       = "";
    my $use_shaNNNsum                   = "";
@@ -285,6 +287,18 @@ if ($valueOfDebugVar ne "") {
 
    if ( exists $ENV{"INEFFECTIVE_mkinstaller"}) {
       $withPayload                     = 0;
+   }
+
+   if ($OSclass eq "UNIX-like") {
+      $slash                           = "/";
+   }
+   elsif ($OSclass eq "Windows-like") {
+      $slash                           = "\\";
+   }
+   else {
+      print STDERR "mkinstaller: fatal -- host doesn't appear either UNIX-like nor Windows-like\n";
+      close DBGOUT if $dbgOutToPathname ne "";
+      exit 1;
    }
 
    #---------------------------------------
@@ -2262,16 +2276,16 @@ if ($valueOfDebugVar ne "") {
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
    $TmpDir  = absname($TmpDir);
-   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir).$slash."\"\n" if $debugging;
    $TmpDirT = "$TmpDir/mki.$$";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT).$slash."\"\n" if $debugging;
    $TmpDirA = "$TmpDirT/accumulator";
    $TmpDirF = "$TmpDirT/files";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirA)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirA).$slash."\"\n" if $debugging;
    $TmpDirI = "$TmpDirT/initial";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirI)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirI).$slash."\"\n" if $debugging;
    $TmpDirW = "$TmpDirT/wrapper";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW).$slash."\"\n" if $debugging;
    $TmpFile = "$TmpDirT/script.tmp";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpFile)."\"\n" if $debugging;
 
@@ -2647,7 +2661,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
          #---------------------------------------
          #
          #  On a UNIX-like host the --CC=... and
@@ -2660,14 +2674,14 @@ if ($valueOfDebugVar ne "") {
          if ( defined $CC_options) {
             print DBGOUT "mkinstaller:    C compiler options were specified (=$CC_options)\n" if $debugging;
             if ( ! defined $CC_name) {
-               print DBGOUT "mkinstaller:    but no C compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: warning -- $CC_optionGiven was used but no C compiler was specified\n";
             }
          }
          if ( defined $CXX_options) {
             print DBGOUT "mkinstaller:    C++ compiler options were specified (=$CXX_options)\n" if $debugging;
             if ( ! defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but no C++ compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C++ compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: warning -- $CXX_optionGiven was used but no C++ compiler was specified\n";
             }
          }
@@ -2675,7 +2689,7 @@ if ($valueOfDebugVar ne "") {
             print DBGOUT "mkinstaller: ...a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if $debugging;
             my $told = 0;
             if ( ! defined $CC_name) {
-               print DBGOUT "mkinstaller:    but no C compiler was specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler was specified\n" if $debugging;
                print STDERR "mkinstaller: error - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
                $told = 1;
                print STDERR "mkinstaller: ...but no C compiler was specified\n";
@@ -2683,38 +2697,36 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
             if ( ! defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but no C++ compiler was specified\n" if $debugging;
-               print STDERR "mkinstaller: error - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
+               print DBGOUT "mkinstaller:    ...but no C++ compiler was specified\n" if $debugging;
+               print STDERR "mkinstaller: warning - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
                $told = 1;
                print STDERR "mkinstaller: ...but no C++ compiler was specified\n";
-               close DBGOUT if $dbgOutToPathname ne "";
-               exit 1;
             }
          }
          else {
             print DBGOUT "mkinstaller:    no \"bin\", \"lib\", or \"lib64\" directory was specified\n" if $debugging;
             if ( defined $CC_name) {
-               print DBGOUT "mkinstaller:    but a C compiler was specified (as $CC_name)\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but a C compiler was specified (as $CC_name)\n" if $debugging;
             }
             if ( defined $CXX_name) {
-               print DBGOUT "mkinstaller:    but a C++ compiler was specified (as $CXX_name)\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but a C++ compiler was specified (as $CXX_name)\n" if $debugging;
             }
          }
          if ( defined $CC_name) {
-            print DBGOUT "mkinstaller:    a C compiler was specified\n" if $debugging;
+            print DBGOUT "mkinstaller:    a C compiler was specified (as $CC_name)\n" if $debugging;
             if ( ! defined $CC_options) {
-               print DBGOUT "mkinstaller:    but no C compiler options were specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C compiler options were specified\n" if $debugging;
                $CC_options = "";
             }
          }
          if ( defined $CXX_name) {
-            print DBGOUT "mkinstaller:    a C++ compiler was specified\n" if $debugging;
+            print DBGOUT "mkinstaller:    a C++ compiler was specified (as $CXX_name)\n" if $debugging;
             if ( ! defined $CXX_options) {
-               print DBGOUT "mkinstaller:    but no C++ compiler options were specified\n" if $debugging;
+               print DBGOUT "mkinstaller:    ...but no C++ compiler options were specified\n" if $debugging;
                $CXX_options = "";
             }
          }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
       }
       if ($ProjectVer ne "") {
          if ($ProjectName eq "") {
@@ -2727,7 +2739,7 @@ if ($valueOfDebugVar ne "") {
          print DBGOUT "mkinstaller: ...identify host OS\n" if $debugging;
          if ($OSclass eq "UNIX-like") {
             print DBGOUT "mkinstaller:    is \"UNIX-like\"\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
             my $Sreturn = "";
             my $Rreturn = "";
             my $cmd     = "uname -s";
@@ -2762,7 +2774,7 @@ if ($valueOfDebugVar ne "") {
                   print DBGOUT "mkinstaller:    host OS = \"$OSname\"\n" if $debugging;
                }
             }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
          }
          elsif ($OSclass eq "Windows-like") {
             print DBGOUT "mkinstaller:    is \"Windows-like\"\n" if $debugging;
@@ -2795,7 +2807,8 @@ if ($valueOfDebugVar ne "") {
       $scriptNameU       = $scriptName;
       $scriptNameU       =~ tr/\x20-\x7f//cd;
       $scriptNameU       =~ tr/a-zA-Z0-9_/_/c;
-      print DBGOUT "mkinstaller:    scriptNameU       = \"".nativePathname($scriptName)."\"\n" if $debugging;
+      $scriptNameU       =~ s/__+/_/;
+      print DBGOUT "mkinstaller:    scriptNameU       = \"".nativePathname($scriptNameU)."\"\n" if $debugging;
 
       $SCRIPTNAME        = $scriptNameU;
       $SCRIPTNAME        =~ tr/a-z/A-Z/;
@@ -3107,7 +3120,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
+         print DBGOUT "mkinstaller: ...operating in nonstandard (explicit) mode\n" if $debugging;
       }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
@@ -3286,7 +3299,7 @@ if ($valueOfDebugVar ne "") {
    #============================================================================
 
    if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #-------------------------------------------------------------------------
       #
@@ -3337,6 +3350,20 @@ if ($valueOfDebugVar ne "") {
       #  On a UNIX-like host (Linux in particular) we will want to get version
       #  numbers for the C library, Standard C++ library, and C++ ABI.
       #
+      #  Note that to identify the C library we need to use:
+      #
+      #     C compiler and linker
+      #     fgrep
+      #     ldd
+      #     strings
+      #
+      #  Note that to identify the C++ standard library we need to use:
+      #
+      #     C++ compiler and linker
+      #     fgrep
+      #     ldd
+      #     strings
+      #
       #-------------------------------------------------------------------------
 
       print DBGOUT "mkinstaller: Check library versions\n" if $debugging;
@@ -3348,6 +3375,7 @@ if ($valueOfDebugVar ne "") {
       @CXX_stdcxxlib_libcVerList = ( );
       $CXX_stdcxxlib_libcVersion = "";
       if ( defined $CC_name) {
+         print DBGOUT "mkinstaller: ...for $CC_name\n" if $debugging;
          $CC_libc_XversionX = mki_libc_version();
          if (2 <= $verbosityLevel) {
             print STDERR "mkinstaller: $CC_name reports:\n";
@@ -3365,7 +3393,11 @@ if ($valueOfDebugVar ne "") {
             }
          }
       }
+      else {
+         print DBGOUT "mkinstaller: ...no C compiler, can't identify C library\n" if $debugging;
+      }
       if ( defined $CXX_name) {
+         print DBGOUT "mkinstaller: ...for $CXX_name\n" if $debugging;
          if (mki_stdcxxlib_version()) {
             print DBGOUT "mkinstaller: ...done\n" if $debugging;
             my $Nlibc      = $#CXX_stdcxxlib_libcVerList + 1;
@@ -3428,7 +3460,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller:    ...failed\n" if $debugging;
+         print DBGOUT "mkinstaller: ...no C++ compiler, can't identify C++ standard library\n" if $debugging;
       }
 
       #-------------------------------------------------------------------------
@@ -3436,9 +3468,13 @@ if ($valueOfDebugVar ne "") {
       #  On a UNIX-like host we will want to get version number for the
       #  operating system (aka. kernel on Linux).
       #
+      #  Note that to identify the OS (kernel) version we need to use:
+      #
+      #     uname
+      #
       #-------------------------------------------------------------------------
 
-      print DBGOUT "mkinstaller: Check library versions\n" if $debugging;
+      print DBGOUT "mkinstaller: Check OS version\n" if $debugging;
       {
          my $versionNumber = mki_os_version();
          if ($versionNumber != "") {
@@ -3455,10 +3491,10 @@ if ($valueOfDebugVar ne "") {
             print STDERR "mkinstaller: warning didn't find operating system version number\n";
          }
       }
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    elsif ($OSclass eq "Windows-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
       #-------------------------------------------------------------------------
       #
       #  On a Window-like host there isn't really a need for version numbers
@@ -3467,7 +3503,7 @@ if ($valueOfDebugVar ne "") {
       #-------------------------------------------------------------------------
 
       print DBGOUT "mkinstaller: Don't bother checking library versions\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    else {
       print STDERR "mkinstaller: error -- can't identify the class of host\n";
@@ -3701,7 +3737,7 @@ if ($valueOfDebugVar ne "") {
          }
       }
       else {
-         print DBGOUT "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
+         print DBGOUT "mkinstaller: ...operating in nonstandard (explicit) mode\n" if $debugging;
       }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
@@ -3878,7 +3914,7 @@ if ($valueOfDebugVar ne "") {
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
 
    if ($OSclass eq "UNIX-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #=========================================================================
       #
@@ -4048,6 +4084,7 @@ if ($valueOfDebugVar ne "") {
             exit 1;
          }
          elsif ( -f "$here/$scriptName") {
+            print DBGOUT "mkinstaller: ...\"$here/$scriptName\"\n" if $debugging;
             print STDERR "mkinstaller: ...destroy existing \"".nativePathname($here."/".$scriptName)."\" script\n" if (2 <= $verbosityLevel);
             my $Ndeleted = unlink "$here/$scriptName";
             if ($Ndeleted < 1) {
@@ -4065,6 +4102,7 @@ if ($valueOfDebugVar ne "") {
             print STDERR "mkinstaller:    done\n" if (3 <= $verbosityLevel);
          }
          elsif ( -e "$here/$scriptName") {
+            print DBGOUT "mkinstaller: ...but \"$here/$scriptName\" isn't a file\n" if $debugging;
             print STDERR "mkinstaller: error -- existing \"".nativePathname($here."/".$scriptName)."\" is not a file\n";
             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
@@ -4096,8 +4134,32 @@ if ($valueOfDebugVar ne "") {
       #  individual tarballs into the wrapper
       #  directory TmpDirW.
       #
-      #  Note that these individual tarballs
-      #  are normally compressed (.tar.gz files).
+      #  Steps:
+      #
+      #     1) cd into the directory that contains the
+      #        directory of interest (ie. into prefix
+      #        directory containing "bin").
+      #
+      #     2) tarup the directory of interest (such as
+      #        "bin") forming a tarball in the temporary
+      #        "initial" directory.
+      #
+      #        The "initial" directory contains individual
+      #        tarballs.
+      #
+      #     3) untar the tarball in the temporary "initial"
+      #        directory. "bin") into the temporary
+      #        "accumulator" directory. Note that this
+      #        will overlay and existing directory to
+      #        allow for directory merging (such as when
+      #        multiple "bin" directories were specified).
+      #
+      #        The "accumulator" directory contains individual
+      #        directories.
+      #
+      #  Note that these individual directory
+      #  tarballs are normally compressed
+      #  (.tar.gz files).
       #
       #---------------------------------------
 
@@ -4141,8 +4203,9 @@ if ($valueOfDebugVar ne "") {
                         }
                         #---------------------------------------
                         #
-                        #  First tar it up in to the individual
-                        #  tarball directory TmpDirI
+                        #  First tar up the directory in to the
+                        #  individual ("initial") tarball directory
+                        #  TmpDirI
                         #
                         print DBGOUT "mkinstaller:    tarup \"$dn/$bn\" to form \"$TmpDirI/$bn.tar.gz\"\n" if $debugging;
                         my $cmd;
@@ -4173,6 +4236,27 @@ if ($valueOfDebugVar ne "") {
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
                         }
+                        if ($debugging) {
+                           #
+                           #  Show what the "initial" directory
+                           #  now contains...
+                           #
+                           my $back = `pwd`; chomp $back;
+                           chdir($TmpDirI);
+                              if (opendir(DIR,$TmpDirI)) {
+                                 print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
+                                 while (defined($tmp = readdir(DIR))) {
+                                    if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                       print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                    }
+                                 }
+                                 closedir(DIR);
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirI.$slash."\" contains\n" if $debugging;
+                              }
+                           chdir($back);
+                        }
                      }
                      if ( ! chdir($here)) {
                         print STDERR "mkinstaller: error -- can't cd back to \"$here\"\n";
@@ -4188,8 +4272,9 @@ if ($valueOfDebugVar ne "") {
                            exit 1;
                         }
                         #
-                        #  Then untar the individual tarball over any existing
-                        #  directory in to the accumulator directory TmpDirA
+                        #  Then untar the individual directory tarball over any
+                        #  existing directory in to the accumulator directory
+                        #  TmpDirA
                         #
                         if ($debugging) {
                            my $imInDir = `pwd`; chomp $imInDir;
@@ -4237,6 +4322,27 @@ if ($valueOfDebugVar ne "") {
                               exit 1;
                            }
                         }
+                        if ($debugging) {
+                           #
+                           #  Show what the "accumulator" directory
+                           #  now contains...
+                           #
+                           my $back = `pwd`; chomp $back;
+                           chdir($TmpDirA);
+                              if (opendir(DIR,$TmpDirA)) {
+                                 print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
+                                 while (defined($tmp = readdir(DIR))) {
+                                    if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                       print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                    }
+                                 }
+                                 closedir(DIR);
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirA.$slash."\" contains\n" if $debugging;
+                              }
+                           chdir($back);
+                        }
                      }
                   }
                   if ($debugging) {
@@ -4251,7 +4357,7 @@ if ($valueOfDebugVar ne "") {
                   }
                   if ($debugging) {
                      my $imInDir = `pwd`; chomp $imInDir;
-                     print DBGOUT "mkinstaller: ...now in \"$imInDir\"\n" if $debugging;
+                     print DBGOUT "mkinstaller: ...back in \"$imInDir\"\n" if $debugging;
                   }
                }
                my $Tend = time();
@@ -4354,6 +4460,32 @@ if ($valueOfDebugVar ne "") {
                print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
             }
             {
+               if ($debugging) {
+                  #
+                  #  Show what the "wrapper" directory
+                  #  now contains...
+                  #
+                  my $back = `pwd`; chomp $back;
+                  chdir($TmpDirW);
+                     if (opendir(DIR,$TmpDirW)) {
+                        my $count = 0;
+                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                        while (defined($tmp = readdir(DIR))) {
+                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                              $count += 1;
+                           }
+                        }
+                        closedir(DIR);
+                        if ($count <= 0) {
+                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                        }
+                     }
+                     else {
+                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     }
+                  chdir($back);
+               }
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
                   print DBGOUT "mkinstaller:    \"$bn\"\n" if $debugging;
@@ -4390,6 +4522,32 @@ if ($valueOfDebugVar ne "") {
                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
+                  }
+                  if ($debugging) {
+                     #
+                     #  Show what the "wrapper" directory
+                     #  now contains...
+                     #
+                     my $back = `pwd`; chomp $back;
+                     chdir($TmpDirW);
+                        if (opendir(DIR,$TmpDirW)) {
+                           my $count = 0;
+                           print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                           while (defined($tmp = readdir(DIR))) {
+                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                 print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                                 $count += 1;
+                              }
+                           }
+                           closedir(DIR);
+                           if ($count <= 0) {
+                              print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                           }
+                        }
+                        else {
+                           print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                        }
+                     chdir($back);
                   }
                }
             }
@@ -4601,8 +4759,8 @@ if ($valueOfDebugVar ne "") {
 
          #---------------------------------------
          #
-         #  Finally arup the temporary wrapper
-         #  directory TmpDirW carrying the individual
+         #  Finally tarup the temporary wrapper
+         #  directory TmpDirW (carrying the individual
          #  tarballs).
          #
          #  Note that this wrapper tarball is NOT
@@ -4649,6 +4807,12 @@ if ($valueOfDebugVar ne "") {
                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   close DBGOUT if $dbgOutToPathname ne "";
                   exit 1;
+               }
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the tarball\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$wrapper.tar\"";
+                  system "pwd";
                }
                my $Tend   = time();
                my $dT     = $Tend - $Tstart;
@@ -7076,18 +7240,24 @@ EOF38
          |      bn=`basename \${Target_CC}`
          |      if [ "X\${bn}" != "X" ]
          |      then
-         |         if [ "X\${bn}" = "Xgcc" ]
+         |         if [ "X\${bn}" = "Xbgclang" ]
+         |         then
+         |            cmd="bgclang --version"
+         |         elif [ "X\${bn}" = "Xclang" ]
+         |         then
+         |            cmd="clang --version"
+         |         elif [ "X\${bn}" = "Xgcc" ]
          |         then
          |            cmd="gcc --version"
          |         elif [ "X\${bn}" = "Xicc" ]
          |         then
          |            cmd="icc --version"
-         |         elif [ "X\${bn}" = "Xclang" ]
-         |         then
-         |            cmd="clang --version"
          |         elif [ "X\${bn}" = "Xpgcc" ]
          |         then
          |            cmd="pgcc -V"
+         |         elif [ "X\${bn}" = "Xxlc" ]
+         |         then
+         |            cmd="xlc -qversion"
          |         else
          |            cmd=
          |         fi
@@ -7619,7 +7789,13 @@ EOF39
          |      bn=`basename \${Target_CXX}`
          |      if [ "X\${bn}" != "X" ]
          |      then
-         |         if [ "\${bn}" = "g++" ]
+         |         if [ "\${bn}" = "bgclang++" ]
+         |         then
+         |            cmd="bgclang++ --version"
+         |         elif [ "\${bn}" = "clang++" ]
+         |         then
+         |            cmd="clang++ --version"
+         |         elif [ "\${bn}" = "g++" ]
          |         then
          |            cmd="g++ --version"
          |         elif [ "\${bn}" = "icpc" ]
@@ -7628,6 +7804,9 @@ EOF39
          |         elif [ "\${bn}" = "pgCC" ]
          |         then
          |            cmd="pgCC -V"
+         |         elif [ "\${bn}" = "xlC" ]
+         |         then
+         |            cmd="xlC -qversion"
          |         else
          |            cmd=
          |         fi
@@ -8463,20 +8642,35 @@ EOF50
          |then                                                                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
-         |   echo "$scriptName: ...run [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\" 2>/dev/null]" >&2 # DEBUGGING
+         |   echo "$scriptName: ...run [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\"] " >&2 # DEBUGGING
          |fi                                                                                                                       # DEBUGGING
          |PAYLOAD_LINE=\`\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' "\${commandPathname}"\`
+         |status=\$?
+         |if [ "X\${status}" != "X0" ]
+         |then
+         |   echo "$scriptName: [\${Use_awk} '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\"] failed, exit code \${status}" >&2
+         |   exit 1
+         |fi
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
          |   echo "$scriptName:    gives: [\${PAYLOAD_LINE}]" >&2                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
-         |   echo "$scriptName: ...run [\${Use_tail} +\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2                      # DEBUGGING
+         |   echo "$scriptName: ...run [\${Use_tail} -n +\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2                      # DEBUGGING
          |fi                                                                                                                       # DEBUGGING
-         |\${Use_tail} +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar" 2>/dev/null
+         |\${Use_tail} -n +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar"
+         |status=\$?
+         |if [ "X\${status}" != "X0" ]
+         |then
+         |   echo "$scriptName: [\${Use_tail} +\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar"] failed, exit code \${status}" >&2
+         |   exit 1
+         |fi
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
          |   echo "$scriptName:    done" >&2                                                                                         # DEBUGGING
+         |   pwd                                                                                                                     # DEBUGGING
+         |   /bin/ls -aldF                                                                                                           # DEBUGGING
+         |   pwd                                                                                                                     # DEBUGGING
          |   nowIn="\`pwd\`"                                                                                                         # DEBUGGING
          |   echo "$scriptName: ...in \"\${nowIn}\" " >&2                                                                               # DEBUGGING
          |   if [ "X\${IsGNUtar}" = "Xtrue" ]
@@ -8496,7 +8690,7 @@ EOF50
          |   exit 1                                                                                                                   # DEBUGGING
          |fi
          |
-         |\${Use_tar} -xf "wrapper.tar" >/dev/null 2>&1
+         |\${Use_tar} -xf "wrapper.tar" >tar.output 2>&1
          |status=\$?
          |if [ "X\${debugging}" != "Xfalse" ]                                                                                       # DEBUGGING
          |then                                                                                                                     # DEBUGGING
@@ -8504,10 +8698,28 @@ EOF50
          |fi                                                                                                                       # DEBUGGING
          |if [ "X\${status}" != "X0" ]
          |then
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      echo "$scriptName:    ...failure" >&2                                                                                 # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
          |   echo "$scriptName: error -- problem extracting tarball(=\"wrapper.tar\") from script(=\"\${commandPathname}\")" >&2
-         |   echo "$scriptName: ...[\${Use_tar} -xf \"wrapper.tar\"] returned exit code \${status}" >&2 >&2
-         |   exit 1
+         |   echo "$scriptName: ...[\${Use_tar} -xf \"wrapper.tar\"] returned exit code \${status}" >&2
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      if [ -f "tar.output" ]                                                                                             # DEBUGGING
+         |      then                                                                                                               # DEBUGGING
+         |         cat "tar.output" >&2                                                                                            # DEBUGGING
+         |         rm -f "tar.output"                                                                                              # DEBUGGING
+         |      fi                                                                                                                 # DEBUGGING
+         |      exit 1                                                                                                             # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
+         |else
+         |   if [ "X\${debugging}" != "Xfalse" ]                                                                                    # DEBUGGING
+         |   then                                                                                                                  # DEBUGGING
+         |      echo "$scriptName:    ...success" >&2                                                                                 # DEBUGGING
+         |   fi                                                                                                                    # DEBUGGING
          |fi
+         |rm -f "tar.output"
          |
          |if [ 2 -le \${verbosityLevel} ]
          |then
@@ -8528,7 +8740,7 @@ EOF50
          |   then                                                                                                                  # DEBUGGING
          |      nowIn="`pwd`"                                                                                                      # DEBUGGING
          |      echo "$scriptName: ...in \\"\${nowIn}\\" " >&2                                                                          # DEBUGGING
-         |      echo "$scriptName: ...run [rm -rf \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
+         |      echo "$scriptName: ...run [rm \\"wrapper.tar\\"]" >&2                                                              # DEBUGGING
          |   fi                                                                                                                    # DEBUGGING
          |   rm "wrapper.tar"
          |   status=\$?
@@ -9067,6 +9279,12 @@ EOF65
          |#
          |#-------------------------------------------------------------------------------
          |
+         |if [ 1 -le \${verbosityLevel} ]
+         |then
+         |   echo "$scriptName: back to \"\${here}\" " >&2
+         |fi
+         |cd "\${here}"
+         |
          |exitCode=0
          |if [ "X\${keep}" != "Xtrue" ]
          |then
@@ -9078,20 +9296,22 @@ EOF65
          |   then                                                                                                                  # DEBUGGING
          |      nowIn="`pwd`"                                                                                                      # DEBUGGING
          |      echo "$scriptName: ...in \\"\${nowIn}\\" " >&2                                                                          # DEBUGGING
-         |      echo "$scriptName: ...run [rm -rf \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
+         |      echo "$scriptName: ...run [rm -r \\"\${MyTmpDir}\\"]" >&2                                                              # DEBUGGING
          |   fi                                                                                                                    # DEBUGGING
-         |   rm -rf "\${MyTmpDir}" >/dev/null 2>&1
+         |   rm -r "\${MyTmpDir}" >/dev/null 2>&1
          |   status=\$?
          |   if [ "X\${status}" != "X0" ]
          |   then
          |      echo "$scriptName: error -- can't cleanup the temporary directory(=\\"\${MyTmpDir}\\")" >&2
-         |      echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] returned exit code \${status}" >&2
+         |      echo "$scriptName: ...from \"`pwd`\" " >&2
+         |      echo "$scriptName: ...[rm -r \\"\${MyTmpDir}\\"] returned exit code \${status}" >&2
          |      exitCode=1
          |   else
          |      if [ -d "\${MyTmpDir}" ]
          |      then
          |         echo "$scriptName: error -- didn't cleanup the temporary directory(=\\"\${MyTmpDir}\\")" >&2
-         |         echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] failed" >&2
+         |         echo "$scriptName: ...from \"`pwd`\" " >&2
+         |         echo "$scriptName: ...[rm -r \\"\${MyTmpDir}\\"] failed" >&2
          |         echo "$scriptName:    directory \\"\${MyTmpDir}\\" is still there" >&2
          |         exitCode=1
          |      else
@@ -9156,10 +9376,24 @@ EOF67
             my $cmd;
             my $status;
             if ($withPayload) {
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the script fragment and tarball\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$TmpFile\"";
+                  system "/bin/ls -aldF \"$TmpDirT/wrapper.tar\"";
+                  system "pwd";
+               }
                print STDERR "mkinstaller: ...adding the payload (\"$TmpDirT/wrapper.tar\") to \"$scriptName\" script\n" if (1 <= $verbosityLevel);
                $cmd = "cat \"$TmpFile\" \"$TmpDirT/wrapper.tar\" > \"$scriptName\"";
             }
             else {
+               if ($debugging) {
+                  print DBGOUT "mkinstaller: ...the script fragment (no tarball)\n" if $debugging;
+                  system "pwd";
+                  system "/bin/ls -aldF \"$TmpFile\"";
+                  system "/bin/ls -aldF \"$TmpDirT/wrapper.tar\"";
+                  system "pwd";
+               }
                print STDERR "mkinstaller: ...without payload!\n" if (1 <= $verbosityLevel);
                $cmd = "cat \"$TmpFile\" > \"$scriptName\"";
             }
@@ -9185,6 +9419,12 @@ EOF67
             }
             else {
                print DBGOUT "mkinstaller:       generated \"$scriptName\"\n" if $debugging;
+            }
+            if ($debugging) {
+               print DBGOUT "mkinstaller: ...the generated script\n" if $debugging;
+               system "pwd";
+               system "/bin/ls -aldF \"$scriptName\"";
+               system "pwd";
             }
 
             my $Tend = time();
@@ -9293,10 +9533,10 @@ EOF67
          }
       }
       print DBGOUT "mkinstaller: ...done\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    elsif ($OSclass eq "Windows-like") {
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
 
       #=========================================================================
       #
@@ -9695,7 +9935,7 @@ EOF67
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
       print DBGOUT "mkinstaller: ...done\n" if $debugging;
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
    }
    else {
       print STDERR "mkinstaller: error -- can't identify the class of host\n";
@@ -9822,7 +10062,7 @@ EOF67
       }
    }
 
-#== cut here ========================================================================================================== cut here ===
+#{= cut here ========================================================================================================== cut here ===
    #----------------------------------------------------------------------------
    #
    #  This function is used to figure-out the version number of the given
@@ -9954,6 +10194,10 @@ EOF67
                         $response    =~ tr!\n! !;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                           $result   = "clang++ $2";
+                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^.*\bbgclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
                            $result   = "clang++ $2";
                            print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                         }
@@ -12132,6 +12376,8 @@ EOFc
    #  Get the version numbers for the OS version. This is only done on
    #  UNIX-like hosts.
    #
+   #  Uses: uname
+   #
    #----------------------------------------------------------------------------
 
    sub mki_os_version {
@@ -13435,7 +13681,7 @@ EOFc
       return $result;
    }
 
-#== cut here ========================================================================================================== cut here ===
+#}= cut here ========================================================================================================== cut here ===
 }
 
 # MyUniqueFileId: d1e4e179-f5ab-4da0-a4b3-3904cdc4feb2
@@ -13653,7 +13899,7 @@ sub convertTimeToDateTime {
    return $result;
 }
 
-# MyUniqueFileId: c74b22fd-6ce7-417f-95b3-89ed86a69cbe
+# MyUniqueFileId: 57febf05-5939-4d9f-d57a-0d9531fe0948
 #-------------------------------------------------------------------------------
 #
 #  This subroutine deletes one or more directories and all of the content.
@@ -15908,18 +16154,37 @@ sub help {
    |DESCRIPTION
    |    This script is used to generate an "installer" script implemented as
    |    a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
-   |    as a binary executable on Windows-like systems. This generated installer
-   |    supports a number of options for specifying the where the various
-   |    directories are to be installed (prefix directory pathnames).
+   |    as a binary executable on Windows-like systems. A wide assortment of
+   |    options are provided by mkinstaller to specify what is to be included
+   |    for installation by the generated installer script. This generated
+   |    installer itself supports a number of options for specifying the where
+   |    the various directories are to be installed (prefix directory pathnames).
    |
    |    There are 2 separate computer systems involved in this process:
    |
-   |       1) The "source" system. This is where the software of interest
-   |          is built and where the mkinstaller script (the generator) is
-   |          used.
+   |       1) The "source" system. This is where the software to be installed
+   |          is found and where the mkinstaller script (the generator) is
+   |          used. On Windows-like hosts the NSIS software package must
+   |          have been properly installed.
    |
    |       2) The "target" system. This is where the generated installer
    |          script is run, where the software is to be installed.
+   |
+   |    There are 3 pieces of software involved:
+   |
+   |       1) The software to be installed. This is the software (binaries
+   |          and/or text) located on the "source" system whose components
+   |          have been built and is deemed ready for distribution.
+   |
+   |       2) The mkinstaller script. Note that on a Windows-like host
+   |          the NSIS software must be properly installed. NSIS will not
+   |          be required on the "target" system.
+   |
+   |       3) The generated installer script. On a UNIX-like host this is
+   |          the Bourne-shell script generated by the mkinstaller script.
+   |          On a Windows-like host this is a binary executable (a .exe
+   |          file) that is generated by the mkinstaller script using the
+   |          NSIS package under the covers.
    |
    |    There are 4 distinct phases or times involved in this process:
    |
@@ -15929,7 +16194,7 @@ sub help {
    |
    |       2) "Generation-time". This is the time when mkinstaller is used
    |          to collect the software that was produced in phase 1 and generate
-   |          the installer (script). Like phase 1, this is also done on the
+   |          the installer script. Like phase 1, this is also done on the
    |          "source" system.
    |
    |       3) "Transport". This is the process of taking a copy of the
@@ -15940,186 +16205,53 @@ sub help {
    |          a web site.
    |
    |       4) "Installation-time". this is the time when the installer
-   |          script that was generated in phase 2 is executed on the "target"
-   |          system.
+   |          script that was generated by mkinstaller in phase 2 is executed
+   |          on the "target" system.
    |
    |    UNIX-like host
    |
-   |       On a UNIX-like host (such as Linux or MacOS) the generated installer
-   |       script is implemented as a self-extracting Bourne-shell script
-   |       carrying a tarball as a payload. Note that mkinstaller requires
-   |       tar on UNIX-like hosts. This is normally not a problem as almost
-   |       every UNIX-like system provides tar. On some UNIX-like hosts (most
-   |       noteably Solaris) tar doesn't support compression. On such systems
-   |       gzcat and gzip are required to support compression.
+   |       On a UNIX-like host such as Linux, MacOS, or Solaris the generated
+   |       installer script is implemented as a self-extracting Bourne-shell
+   |       script carrying a tarball as a payload. Note that mkinstaller
+   |       requires tar on UNIX-like hosts. This is normally not a problem
+   |       as almost every UNIX-like system provides tar. On some UNIX-like
+   |       hosts (most notably Solaris) tar doesn't support compression. On
+   |       such systems mkinstaller will require gzcat and gzip to support
+   |       compression.
    |
-   |       The installer script construction process:
+   |       The installation process on a UNIX-like target system is done by
+   |       simply running the generated installer script using the --prefix
+   |       option to supply the installation directory. For example:
    |
-   |          1) Determination of a suitable temp directory. Much of the work
-   |             done by the mkinstaller script is done in a temp directory.
-   |          2) Creation of a top level temporary directory under which all
-   |             other temporaries will be created. Creation of an "accumulator",
-   |             an "intermediate" and a "wrapper" directory in the top level
-   |             temp directory. A tarup/untar process will use both the
-   |             "intermediate" and "accumulator" directories to merge given
-   |             directories with the same basename. The "wrapper" directory
-   |             will be used to carry the individual directory tarballs.
-   |          3) From each of the specified directories to be installed such
-   |             as .../bin, .../lib, specified on the mkinstaller command line
-   |             tarup the individual directory forming tarballs in the wrapper
-   |             directory in the temp directory.
-   |          4) Tarup the temporary wrapper directory for eventual inclusion
-   |             in the generated installer.
-   |          5) Generate the text of the "installer" script in the temporary
-   |             directory customizing it with with options for specifying an
-   |             overall prefix directory and individual prefixes for each of
-   |             the directories specified on the mkinstaller command line.
-   |          6) Add the tarball built in (4) to the end of the script generated
-   |             in (5) forming the distribution self-extracting installation
-   |             script in the directory where mkinstaller was run.
-   |          7) Cleanup.
+   |           ./banana-installer -v --prefix=/opt/banana
    |
-   |          In the end the only product is the desired distribution self-
-   |          extracting installation script in the directory where the
-   |          mkinstaller command was run. Everything else produced along the
-   |          way (directories and files) is considered temporary and is
-   |          destroyed.
-   |
-   |          Note that the name of the installer is specified using the -c <name>
-   |          or --create=<name> option to mkinstaller. However if the -c <name>
-   |          or --create=<name> option is not used then mkinstaller will try
-   |          to come-up with a reasonable name:
-   |
-   |             1) If the --project-name=<name> and --project-version=<version>
-   |                was used then the name of the generated installer will be:
-   |
-   |                   <name>-<version>-installer
-   |
-   |             2) If the --project-name=<name> was used but not the
-   |                --project-version option the name of the generated
-   |                installer will be:
-   |
-   |                   <name>-installer
-   |
-   |             3) If neither the --project-name nor the --project-version
-   |                option the name of the generated installer will be:
-   |
-   |                   installer
-   |
-   |          As is typical for a UNIX-like environment, the generated script
-   |          has no extension.
-   |
-   |       How the generated installer script works on a UNIX-like target:
-   |
-   |          1) The installer script locates itself. This may seem to be an
-   |             obvious and or silly question but the actual location of the
-   |             script file is necessary for the actual extraction (the script
-   |             file must be read by the standard "tail" utility).
-   |          2) Determination of a suitable temp directory. Much of the work
-   |             done by the generated installer script is done in a temp
-   |             directory. Creation of a top level temporary directory under
-   |             which all other temporaries will be created. This temp
-   |             directory is created under the standard temp directory
-   |             determined at the start of this step (see NOTES).
-   |          3) PREFIX and PREFIX_xxx values are established from command
-   |             line options. If appropriate options aren't supplied to
-   |             install all directories then the installer script will propmpt
-   |             for the necessary pathname(s). The installer script will
-   |             create the directories if necessary.
-   |          4) The tarball embedded in the installer script is extracted from
-   |             the installer script into the temp directory created in (2).
-   |          5) The tarball in (4) is unwrapped revealing one or more tarballs
-   |             (one for each installation directory such as bin.tar.gz/
-   |             include.tar.gz/ lib.tar.gz/ ...). If a pre-install script was
-   |             supplied to mkinstaller when the generated installer script
-   |             was produced then it will be revealed at this time. Similarly
-   |             if a post-install script was supplied to mkinstaller when the
-   |             generated installer script was produced then it will also be
-   |             revealed at this time. Note that neither of these scripts if
-   |             supplied and revealed are actually executed in this step. See
-   |             steps (6) and (8).
-   |          6) If (5) revealed a pre-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
-   |             directories will be supplied as an option to this pre-install
-   |             script (such as --prefix_bin=<pathname>). Also note at this time
-   |             the individual tarballs representing the directories to install
-   |             have NOT be unwrapped.
-   |          7) Each individual tarball revealed in (5) is unwrapped into the
-   |             approperiate PREFIX directory overlying anything already
-   |             there.
-   |          8) If (5) revealed a post-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
-   |             directories will be supplied as an option to this post-install
-   |             script (such as --prefix_bin=<pathname>).
-   |          9) Cleanup.
-   |
-   |       Note that generated installer script requires both tar and perl
-   |       on UNIX-like hosts. This is normally not a problem as almost every
-   |       UNIX-like system provides both tar and perl.
+   |       Note that the --prefix=<pathname> option isn't really optional,
+   |       it is required. Also note that use of the -v option (verbose mode)
+   |       is recommended as the generated installer normally produces no
+   |       output other than warnings and/or error messages.
    |
    |    Windows-like host
    |
-   |       On a Windows-like host (such as Windows 7) the generated installer
-   |       is implemented as a binary executable which is actually generated
-   |       under the covers by NSIS (Nullsoft Scripted Install System).
+   |       On a Windows-like host (such as Windows 7 or Windows 10) the
+   |       generated installer is implemented as a binary executable which
+   |       is actually generated under the covers by NSIS (Nullsoft Scripted
+   |       Install System). NSIS is required by mkinstaller on Windows-like
+   |       hosts. Note that NSIS is open source and is freely available at:
    |
-   |       The installer construction process:
+   |           https://sourceforge.net/projects/nsis
    |
-   |          1) Determination of a suitable temp directory. Much of the work
-   |             done by the mkinstaller script is done in a temp directory.
-   |          2) Generation of a .nsi script file.
-   |          3) MakeNSIS is used to "compile" the .nsi script forming a
-   |             .exe binary executable.
+   |       The installation process on a Windows-like target system is done by
+   |       simply running the generated installer binary executable. Unlike the
+   |       installer produced for UNIX-like hosts, an installer for Windows-like
+   |       hosts may perform the installation to a default location; the user's
+   |       desktop:
    |
-   |          The .exe binary executable formed in step (3) is the product of the
-   |          mkinstaller script and may be shipped to customers to perform the
-   |          desired installation on their Windows system.
+   |          banana-installer.exe
    |
-   |          Note that the name of the installer is specified using the -c <name>
-   |          or --create=<name> option to mkinstaller. However if the -c <name>
-   |          or --create=<name> option is not used then mkinstaller will try
-   |          to come-up with a reasonable name:
+   |       To specify an installation prefix the /D=<pathname> option may be
+   |       used:
    |
-   |             1) If the --project-name=<name> and --project-version=<version>
-   |                was used then the name of the generated installer will be:
-   |
-   |                   <name>-<version>-installer.exe
-   |
-   |             2) If the --project-name=<name> was used but not the
-   |                --project-version option the name of the generated
-   |                installer will be:
-   |
-   |                   <name>-installer.exe
-   |
-   |             3) If neither the --project-name nor the --project-version
-   |                option the name of the generated installer will be:
-   |
-   |                   installer.exe
-   |
-   |          If the name is specified using the -c <name> or --create=<name>
-   |          option then the name should NOT included a .exe extension. The
-   |          makensis tool which actually produces the binary executable
-   |          will add the necessary extension.
-   |
-   |       Running the generated installer:
-   |
-   |          -- The default use of the generated installer will produce a
-   |             new directory on the user's desktop.
-   |
-   |                prompt> installer.exe
-   |
-   |          -- A different prefix may be specified using the /D option:
-   |
-   |                prompt> installer.exe /D=E:\bozo\reposit
-   |
-   |             Note that the prefix directory will be creates as necessary
-   |             however the uninstaller will only (recursively delete) the
-   |             final directory component. In the above example only
-   |             E:\bozo\reposit will be (recursivly deleted, but the
-   |             directory E:\bozo will be left intact.
-   |
-   |       Note that the generated installer will pop-up a progress bar dialog
-   |       box to indicate the installation progress.
+   |          banana-installer.exe /D=E:\\opt\\banana
    |
    |OPTIONS
    |    "mkinstaller" supports the following options:
@@ -16455,7 +16587,10 @@ sub help {
    |            how directories to be installed are to be specified. Note that
    |            <name> in the option name is typically something like bin,
    |            include, lib, ... and like <pathname> below, may not contain
-   |            any spaces, tabs, or dashes.
+   |            any spaces, tabs, or dashes. If such an installation directory
+   |            hasen't been specified then the appropriate work will be done
+   |            so that the installer will have such a directory containing
+   |            the specified file.
    |
    |        --without-payload
    |
@@ -16679,6 +16814,193 @@ EOF1
    |
    |    Note that 5, 8, and 9 are only applicable on Windows-like hosts.
    |
+   |DETAILS
+   |    The installer construction process is implemented in a different
+   |    fashion on UNIX-like systems such as Linux, MacOS, and Solaris
+   |    from that on a Windows-like system. The mkinstaller command line
+   |    use is identical between UNIX- and Windows-like hosts.
+   |
+   |    UNIX-like host
+   |
+   |       On a UNIX-like host the generated installer script is implemented
+   |       as a self-extracting Bourne-shell script carrying a tarball as
+   |       a payload.
+   |
+   |       Details of the installer construction process on UNIX:
+   |
+   |          Aside from initalization and command line processing the UNIX
+   |          implementation of mkinstaller goes through the following steps:
+   |
+   |          1) Determination of a suitable temp directory. Much of the work
+   |             done by the mkinstaller script is done in a temp directory.
+   |          2) Creation of a top level temporary directory under which all
+   |             other temporaries will be created. Creation of an "accumulator",
+   |             an "intermediate" and a "wrapper" directory in the top level
+   |             temp directory. A tarup/untar process will use both the
+   |             "intermediate" and "accumulator" directories to merge given
+   |             directories with the same basename. The "wrapper" directory
+   |             will be used to carry the individual directory tarballs.
+   |          3) From each of the specified directories to be installed such
+   |             as .../bin, .../lib, specified on the mkinstaller command line
+   |             tarup the individual directory forming tarballs in the wrapper
+   |             directory in the temp directory.
+   |          4) Tarup the temporary wrapper directory for eventual inclusion
+   |             in the generated installer.
+   |          5) Generate the text of the "installer" script in the temporary
+   |             directory customizing it with with options for specifying an
+   |             overall prefix directory and individual prefixes for each of
+   |             the directories specified on the mkinstaller command line.
+   |          6) Add the tarball built in (4) to the end of the script generated
+   |             in (5) forming the distribution self-extracting installation
+   |             script in the directory where mkinstaller was run.
+   |          7) Cleanup.
+   |
+   |          In the end the only product is the desired distribution self-
+   |          extracting installation script in the directory where the
+   |          mkinstaller command was run. Everything else produced along
+   |          the way (directories and files) is considered temporary and
+   |          is destroyed.
+   |
+   |          Note that the name of the generated installer script is specified
+   |          using the -c <name> or --create=<name> option to mkinstaller.
+   |          However if the -c <name> or --create=<name> option is not used
+   |          then mkinstaller will try to come-up with a reasonable name:
+   |
+   |             1) If the --project-name=<name> and --project-version=<version>
+   |                options were used then the name of the generated installer
+   |                will resemble:
+   |
+   |                   <name>-<version>-installer
+   |
+   |             2) If the --project-name=<name> option was used but not the
+   |                --project-version option the name of the generated
+   |                installer will resemble:
+   |
+   |                   <name>-installer
+   |
+   |             3) If neither the --project-name nor the --project-version
+   |                options were used the name of the generated installer will
+   |                simply be:
+   |
+   |                   installer
+   |
+   |          As is typical for a UNIX-like environment, the generated script
+   |          has no extension.
+   |
+   |       How the generated installer script works on a UNIX-like target:
+   |
+   |          1) The installer script locates itself. This may seem to be an
+   |             obvious and or silly question but the actual location of the
+   |             script file is necessary for the actual extraction (the script
+   |             file must be read by the standard "tail" utility).
+   |          2) Determination of a suitable temp directory. Much of the work
+   |             done by the generated installer script is done in a temp
+   |             directory. Creation of a top level temporary directory under
+   |             which all other temporaries will be created. This temp
+   |             directory is created under the standard temp directory
+   |             determined at the start of this step (see NOTES).
+   |          3) PREFIX and PREFIX_xxx values are established from command
+   |             line options. If appropriate options aren't supplied to
+   |             install all directories then the installer script will propmpt
+   |             for the necessary pathname(s). The installer script will
+   |             create the directories if necessary.
+   |          4) The tarball embedded in the installer script is extracted from
+   |             the installer script into the temp directory created in (2).
+   |          5) The tarball in (4) is unwrapped revealing one or more tarballs
+   |             (one for each installation directory such as bin.tar.gz/
+   |             include.tar.gz/ lib.tar.gz/ ...). If a pre-install script was
+   |             supplied to mkinstaller when the generated installer script
+   |             was produced then it will be revealed at this time. Similarly
+   |             if a post-install script was supplied to mkinstaller when the
+   |             generated installer script was produced then it will also be
+   |             revealed at this time. Note that neither of these scripts if
+   |             supplied and revealed are actually executed in this step. See
+   |             steps (6) and (8).
+   |          6) If (5) revealed a pre-install script then it will be executed
+   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             and/or PREFIX_xxx directories will be supplied as an option to
+   |             this pre-install script (such as --prefix_bin=<pathname>). Also
+   |             note at this time the individual tarballs representing the
+   |             directories to install have NOT be unwrapped.
+   |          7) Each individual tarball revealed in (5) is unwrapped into
+   |             the appropriate PREFIX directory overlying anything already
+   |             there.
+   |          8) If (5) revealed a post-install script then it will be executed
+   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             and/or PREFIX_xxx directories will be supplied as an options
+   |             to this post-install script (such as --prefix_bin=<pathname>).
+   |          9) Cleanup.
+   |
+   |    Windows-like host
+   |
+   |       On a Windows-like host (such as Windows 7 or 10) the generated
+   |       installer is implemented as a binary executable which is actually
+   |       generated under the covers by NSIS (the Nullsoft Scripted Install
+   |       System). NSIS is open source and is freely available at
+   |
+   |           https://sourceforge.net/projects/nsis
+   |
+   |       Details of the installer construction process on Windows:
+   |
+   |          Aside from initalization and command line processing the Windows
+   |          implementation of mkinstaller goes through the following steps:
+   |
+   |          1) Determination of a suitable temp directory. Much of the work
+   |             done by the mkinstaller script is done in a temp directory.
+   |          2) Generation of a .nsi script file.
+   |          3) MakeNSIS is used to "compile" the .nsi script forming a
+   |             .exe binary executable.
+   |
+   |          The .exe binary executable formed in step (3) is the product of the
+   |          mkinstaller script and may be shipped to customers to perform the
+   |          desired installation on their Windows system.
+   |
+   |          Note that the name of the installer is specified using the -c <name>
+   |          or --create=<name> option to mkinstaller. However if the -c <name>
+   |          or --create=<name> option is not used then mkinstaller will try
+   |          to come-up with a reasonable name:
+   |
+   |             1) If the --project-name=<name> and --project-version=<version>
+   |                was used then the name of the generated installer will be:
+   |
+   |                   <name>-<version>-installer.exe
+   |
+   |             2) If the --project-name=<name> was used but not the
+   |                --project-version option the name of the generated
+   |                installer will be:
+   |
+   |                   <name>-installer.exe
+   |
+   |             3) If neither the --project-name nor the --project-version
+   |                option the name of the generated installer will be:
+   |
+   |                   installer.exe
+   |
+   |          If the name is specified using the -c <name> or --create=<name>
+   |          option then the name should NOT included a .exe extension. The
+   |          makensis tool which actually produces the binary executable
+   |          will add the necessary extension.
+   |
+   |       Running the generated installer on a Windows target system:
+   |
+   |          The default use of the generated installer will produce a
+   |          new directory on the user's desktop.
+   |
+   |             prompt> installer.exe
+   |
+   |          A different prefix may be specified using the /D option:
+   |
+   |             prompt> installer.exe /D=E:\\opt\\banana
+   |
+   |          Note that the prefix directory will be creates as necessary
+   |          however the uninstaller will only (recursively delete) the
+   |          final directory component. In the above example only
+   |          E:\\opt\\banana will be (recursivly deleted, but the
+   |          directory E:\\opt will be left intact.
+   |
+   |       Note that the generated installer will pop-up a progress bar dialog
+   |       box to indicate the installation progress.
+   |
    |AUTHOR
    |    Jim Reus (jim.reus\@gmail.com)
    |
@@ -16709,7 +17031,7 @@ EOF2
 
 sub html {
    my $pathname = shift;
-   if (! open(HTML,"> $pathname")) {
+   if ( ! open(HTML,"> $pathname")) {
       print STDERR "mkinstaller: can't create/write \"$pathname\"\n";
       exit 1;
    }
@@ -16772,17 +17094,19 @@ sub html {
    |      <blockquote>
    |         This script is used to generate an "installer" script implemented as
    |         a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
-   |         as a binary executable on Windows-like systems. This generated installer
-   |         supports a number of options for specifying the where the various
-   |         directories are to be installed (prefix directory pathnames).
+   |         as a binary executable on Windows-like systems. A wide assortment of
+   |         options are provided by <i>mkinstaller</i> to specify what is to be included
+   |         for installation by the generated installer script. This generated
+   |         installer itself supports a number of options for specifying the where
+   |         the various directories are to be installed (prefix directory pathnames).
    |      </blockquote>
    |
    |      <blockquote>
    |         There are 2 separate computer systems involved in this process:
    |         <blockquote>
    |            <ol>
-   |               <li>The <b>source</b> system. This is where the software of interest
-   |                   is built and where the <i>mkinstaller</i> script (the generator) is
+   |               <li>The <b>source</b> system. This is where the software to be installed
+   |                   is found and where the <i>mkinstaller</i> script (the generator) is
    |                   used.
    |               </li>
    |               <li>The <b>target</b> system. This is where the generated installer
@@ -16790,29 +17114,48 @@ sub html {
    |               </li>
    |            </ol>
    |         </blockquote>
+   |         There are 3 pieces of software involved:
+   |         <blockquote>
+   |            <ol>
+   |               <li>The software to be installed. This is the software (binaries
+   |                   and/or text) located on the <b>source</b> system whose components
+   |                   have been built and is deemed ready for distribution.
+   |               </li>
+   |               <li>The <i>mkinstaller</i> script. Note that on a Windows-like host
+   |                   the <i>NSIS</i> software must be properly installed. <i>NSIS</i> will not
+   |                   be required on the <b>target</b> system.
+   |               <li>The generated installer script. On a UNIX-like host this is
+   |                   the Bourne-shell script generated by the <i>mkinstaller</i> script.
+   |                   On a Windows-like host this is a binary executable (a <b><big><code>.exe</code></big></b>
+   |                   file) that is generated by the <i>mkinstaller</i> script using the
+   |                   <i>NSIS</i> package under the covers.
+   |               </li>
+   |            </ol>
+   |         </blockquote>
    |         There are 4 distinct phases or times involved in this process:
    |         <blockquote>
    |            <ol>
    |               <li><b>Build-time</b>. This is the time when the software (binaries
-   |                   and/or text files) is built and installed on the "source" system.
+   |                   and/or text files) is built and installed on the <b>source</b system.
    |                   How this software is built and installed is not discussed here.
    |               </li>
    |               <li><b>Generation-time</b>. This is the time when <i>mkinstaller</i> is used
    |                   to collect the software that was produced in phase 1 and generate
-   |                   the installer (script). Like phase 1, this is also done on the
-   |                   <i>source</i> system.
+   |                   the installer script. Like phase 1, this is also done on the
+   |                   <b>source</b> system.
    |               </li>
    |               <li><b>Transport</b>. This is the process of taking a copy of the
    |                   generated installer script that was produced in phase 2 from
-   |                   the <i>source</i> system to the <i>target</i> system. The details of this
+   |                   the <b>source</b> system to the <b>target</b> system. The details of this
    |                   are not discussed here howerver such transport generally
    |                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
    |                   a web site.
    |               </li>
    |               <li><b>Installation-time</b>. This is the time when the installer
-   |                   script that was generated in phase 2 is executed on the <i>target</i>
-   |                   system. Note that mechanism of transport from the <i>source</i> system
-   |                   to the <i>target</i> system is not discussed here.
+   |                   script that was generated in phase 2 is executed on the <b>target</b>
+   |                   system.
+   |                   script that was generated by <i>mkinstaller</i> in phase 2 is executed
+   |                   on the <b>target</b> system.
    |               </li>
    |            </ol>
    |         </blockquote>
@@ -16821,226 +17164,50 @@ sub html {
    |      <blockquote>
    |         <b>UNIX-like Host</b>
    |         <blockquote>
-   |            On a UNIX-like host (such as Linux or MacOS) the generated installer
-   |            script is implemented as a self-extracting Bourne-shell script
-   |            carrying a tarball as a payload. Note that <i>mkinstaller</i> requires
-   |            <i>tar</i> on UNIX-like hosts. This is normally not a problem as almost
-   |            every UNIX-like system provides <i>tar</i>. On some UNIX-like hosts (most
-   |            noteably Solaris) tar doesn't support compression. On such systems
-   |            <i>gzcat</i> and <i>gzip</i> are required to support compression.
+   |            On a UNIX-like host such as Linux, MacOS, or Solaris the generated
+   |            installer script is implemented as a self-extracting Bourne-shell
+   |            script carrying a tarball as a payload. Note that <i>mkinstaller</i>
+   |            requires <i>tar</i> on UNIX-like hosts. This is normally not a problem
+   |            as almost every UNIX-like system provides <i>tar</i>. On some UNIX-like
+   |            hosts (most notably Solaris) <i>tar</i> doesn't support compression. On
+   |            such systems mkinstaller will require <i>gzcat</i> and <i>gzip</i> to support
+   |            compression.
    |         </blockquote>
    |         <blockquote>
-   |            The installer script construction process:
+   |            The installation process on a UNIX-like target system is done by
+   |            simply running the generated installer script using the <b><big><code>--prefix</code></big></b>
+   |            option to supply the installation directory. For example:
    |            <blockquote>
-   |               <ol>
-   |                  <li>Determination of a suitable temp directory. Much of the work
-   |                      done by the <i>mkinstaller</i> script is done in a temp directory.
-   |                  </li>
-   |                  <li>Creation of a top level temporary directory under which all
-   |                      other temporaries will be created. Creation of an "accumulator",
-   |                      an "intermediate" and a "wrapper" directory in the top level
-   |                      temp directory. A tarup/untar process will use both the
-   |                      "intermediate" and "accumulator" directories to merge given
-   |                      directories with the same basename. The "wrapper" directory
-   |                      will be used to carry the individual directory tarballs.
-   |                  </li>
-   |                  <li>From each of the specified directories to be installed such
-   |                      as .../bin, .../lib, specified on the <i>mkinstaller</i> command line
-   |                      tarup the individual directory forming tarballs in the wrapper
-   |                      directory in the temp directory.
-   |                  </li>
-   |                  <li>Tarup the temporary wrapper directory for eventual inclusion
-   |                      in the generated installer.
-   |                  </li>
-   |                  <li>Generate the text of the "installer" script in the temporary
-   |                      directory customizing it with with options for specifying an
-   |                      overall prefix directory and individual prefixes for each of
-   |                      the directories specified on the <i>mkinstaller</i> command line.
-   |                  </li>
-   |                  <li>Add the tarball built in (4) to the end of the script generated
-   |                      in (5) forming the distribution self-extracting installation
-   |                      script in the directory where <i>mkinstaller</i> was run.
-   |                  </li>
-   |                  <li>Cleanup.
-   |                  </li>
-   |               </ol>
-   |               In the end the only product is the desired distribution self-
-   |               extracting installation script in the directory where the
-   |               <i>mkinstaller</i> command was run. Everything else produced along the
-   |               way (directories and files) is considered temporary and is
-   |               destroyed.
+   |                <b><big><code>./banana-installer -v --prefix=/opt/banana</code></big></b>
    |            </blockquote>
-   |            <blockquote>
-   |               Note that the name of the installer is specified using the <b><big><code>-c</code></big></b> <i>name</i>
-   |               or <b><big><code>--create=</code></big></b><i>name</i> option to <i>mkinstaller</i>. However if the <b><big><code>-c</code></big></b> <i>name</i>
-   |               or <b><big><code>--create=</code></big></b><i>name</i> option is not used then <i>mkinstaller</i> will try
-   |               to come-up with a reasonable name:
-   |               <blockquote>
-   |                  <ol>
-   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> and <b><big><code>--project-version=</code></big></b><i>version</i>
-   |                         was used then the name of the generated installer will be:
-   |                         <blockquote>
-   |                            <i>name</i><b><big><code>-</code></big></b><i>version</i><b><big><code>-installer</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> was used but not the
-   |                         <b><big><code>--project-version</code></big></b> option the name of the generated
-   |                         installer will be:
-   |                         <blockquote>
-   |                            <i>name</i><b><big><code>-installer</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                     <li>If neither the <b><big><code>--project-name</code></big></b> nor the <b><big><code>--project-version</code></big></b>
-   |                         option the name of the generated installer will be:
-   |                         <blockquote>
-   |                            <b><big><code>installer</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                  </ol>
-   |               </blockquote>
-   |               As is typical for a UNIX-like environment, the generated script
-   |               has no extension.
-   |            </blockquote>
-   |            How the generated installer script works on a UNIX-like target:
-   |            <blockquote>
-   |               <ol>
-   |                  <li>The installer script locates itself. This may seem to be an
-   |                      obvious and or silly question but the actual location of the
-   |                      script file is necessary for the actual extraction (the script
-   |                      file must be read by the standard "tail" utility).
-   |                  </li>
-   |                  <li>Determination of a suitable temp directory. Much of the work
-   |                      done by the generated installer script is done in a temp
-   |                      directory. Creation of a top level temporary directory under
-   |                      which all other temporaries will be created. This temp
-   |                      directory is created under the standard temp directory
-   |                      determined at the start of this step (see NOTES).
-   |                  </li>
-   |                  <li>PREFIX and PREFIX_<i>xxx</i> values are established from command
-   |                      line options. If appropriate options aren't supplied to
-   |                      install all directories then the installer script will propmpt
-   |                      for the necessary pathname(s). The installer script will
-   |                      create the directories if necessary.
-   |                  </li>
-   |                  <li>The tarball embedded in the installer script is extracted from
-   |                      the installer script into the temp directory created in (2).
-   |                  </li>
-   |                  <li>The tarball in (4) is unwrapped revealing one or more tarballs
-   |                      (one for each installation directory such as <b><big><code>bin.tar.gz</code></big></b>
-   |                      <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a pre-install script was
-   |                      supplied to <i>mkinstaller</i> when the generated installer script
-   |                      was produced then it will be revealed at this time. Similarly
-   |                      if a post-install script was supplied to <i>mkinstaller</i> when the
-   |                      generated installer script was produced then it will also be
-   |                      revealed at this time. Note that neither of these scripts if
-   |                      supplied and revealed are actually executed in this step. See
-   |                      steps (6) and (8).
-   |                  </li>
-   |                  <li>If (5) revealed a pre-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the PREFIX
-   |                      directories will be supplied as an option to this pre-install
-   |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also note at this time
-   |                      the individual tarballs representing the directories to install
-   |                      have NOT be unwrapped.
-   |                  </li>
-   |                  <li>Each individual tarball revealed (5) is unwrapped into the
-   |                      approperiate PREFIX directory overlying anything already
-   |                      there.
-   |                  </li>
-   |                  <li>If (5) revealed a post-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the PREFIX
-   |                      directories will be supplied as an option to this post-install
-   |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
-   |                  </li>
-   |                  <li>Cleanup.
-   |                  </li>
-   |               </ol>
-   |            </blockquote>
-   |            Note that generated installer script requires both <i>tar</i> and <i>perl</i>
-   |            on UNIX-like hosts. This is normally not a problem as almost every
-   |            UNIX-like system provides both <i>tar</i> and <i>perl</i>.
+   |            Note that the <b><big><code>--prefix=</code></big></b><i>pathname</i> option isn't really optional,
+   |            it is required. Also note that use of the <b><big><code>-v</code></big></b> option (verbose mode)
+   |            is recommended as the generated installer normally produces no
+   |            output other than warnings and/or error messages.
    |         </blockquote>
    |         <b>Windows-like Host</b>
    |         <blockquote>
-   |            On a Windows-like host (such as Windows 7) the generated installer
-   |            is implemented as a binary executable which is actually generated
-   |            under the covers by <i>NSIS</i> (Nullsoft Scripted Install System).
-   |            <i>mkinstaller</i> requires <i>makensis</i> on Windows-like hosts.
-   |         </blockquote>
-   |         <blockquote>
-   |            The installer construction process:
+   |            On a Windows-like host (such as Windows 7 or Windows 10) the
+   |            generated installer is implemented as a binary executable which
+   |            is actually generated under the covers by <i>NSIS</i> (Nullsoft Scripted
+   |            Install System). <i>NSIS</i> is required by <i>mkinstaller</i> on Windows-like
+   |            hosts. Note that <i>NSIS</i> is open source and is freely available at:
    |            <blockquote>
-   |               <ol>
-   |                  <li>Determination of a suitable temp directory. Much of the work
-   |                      done by the <i>mkinstaller</i> script is done in a temp directory.
-   |                  </li>
-   |                  <li>Generation of a <b><big><code>.nsi</code></big></b> script file.
-   |                  </li>
-   |                  <li><i>MakeNSIS</i> is used to "compile" the <b><big><code>.nsi</code></big></b> script forming a
-   |                      <b><big><code>.exe</code></big></b> binary executable.
-   |                  </li>
-   |               </ol>
-   |               The <b><big><code>.exe</code></big></b> binary executable formed in step (3) is the product of the
-   |               <i>mkinstaller</i> script and may be shipped to customers to perform the
-   |               desired installation on their Windows system.
-   |            </blockquote>
-   |            <blockquote>
-   |               Note that the name of the installer is specified using the <b><big><code>-c</code></big></b> <i>name</i>
-   |               or <b><big><code>--create=</code></big></b><i>name</i> option to <i>mkinstaller</i>. However if the <b><big><code>-c</code></big></b> <i>name</i>
-   |               or <b><big><code>--create=</code></big></b><i>name</i> option is not used then <i>mkinstaller</i> will try
-   |               to come-up with a reasonable name:
-   |               <blockquote>
-   |                  <ol>
-   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> and <b><big><code>--project-version=</code></big></b><i>version</i>
-   |                         was used then the name of the generated installer will be:
-   |                         <blockquote>
-   |                            <i>name</i><b><big><code>-</code></big></b><i>version</i><b><big><code>-installer.exe</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> was used but not the
-   |                         <b><big><code>--project-version</code></big></b> option the name of the generated
-   |                         installer will be:
-   |                         <blockquote>
-   |                            <i>name</i><b><big><code>-installer.exe</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                     <li>If neither the <b><big><code>--project-name</code></big></b> nor the <b><big><code>--project-version</code></big></b>
-   |                         option the name of the generated installer will be:
-   |                         <blockquote>
-   |                            <b><big><code>installer.exe</code></big></b>
-   |                         </blockquote>
-   |                     </li>
-   |                  </ol>
-   |               </blockquote>
-   |               If the name is specified using the <b><big><code>-c</code></big></b> <i>name</i> or <b><big><code>--create=</code></big></b><i>name</i>
-   |               option then the name should NOT included a <b><big><code>.exe</code></big></b> extension. The
-   |               <i>makensis</i> tool which actually produces the binary executable
-   |               will add the necessary extension.
+   |               <a href="https://sourceforge.net/projects/nsis"><b><big><code>https://sourceforge.net/projects/nsis</code></big></b></a>
    |            </blockquote>
    |         </blockquote>
    |         <blockquote>
-   |            Running the generated installer:
+   |            The installation process on a Windows-like target system is done by
+   |            simply running the generated installer binary executable. Unlike the
+   |            installer produced for UNIX-like hosts, an installer for Windows-like
+   |            hosts may perform the installation to a default location; the user's
+   |            desktop:
    |            <blockquote>
-   |               <ul>
-   |                  <li>The default use of the generated installer will produce a
-   |                      new directory on the user's desktop.
-   |                      <blockquote>
-   |                         <i>prompt</i>&gt; <b><big><code>installer.exe</code></big></b>
-   |                      </blockquote>
-   |                  </li>
-   |                  <li>A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
-   |                      <blockquote>
-   |                         <i>prompt</i>&gt; <b><big><code>installer.exe /D=E:\\bozo\\reposit</code></big></b>
-   |                      </blockquote>
-   |                      Note that the prefix directory will be creates as necessary
-   |                      however the uninstaller will only (recursively) delete the
-   |                      final directory component. In the above example only
-   |                      <b><big><code>E:\\bozo\\reposit</code></big></b> will be (recursivly deleted, but the
-   |                      directory <b><big><code>E:\\bozo</code></big></b> will be left intact.
-   |                  </li>
-   |               </ul>
-   |               Note that the generated installer will pop-up a progress bar dialog
-   |               box to indicate the installation progress.
+   |              <b><big><code>banana-installer.exe</code></big></b>
+   |            </blockquote>
+   |            To specify an installation prefix the <b><big><code>/D=</code></big></b><i>pathname</i> option may be used:
+   |            <blockquote>
+   |              <b><big><code>banana-installer.exe /D=E:\\opt\\banana</code></big></b>
    |            </blockquote>
    |         </blockquote>
    |      </blockquote>
@@ -17438,7 +17605,10 @@ sub html {
    |               how directories to be installed are to be specified. Note that
    |               <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
    |               <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
-   |               any spaces,  tabs, or dashes.
+   |               any spaces, tabs, or dashes. If such an installation directory
+   |               hasen't been specified then the appropriate work will be done
+   |               so that the installer will have such a directory containing
+   |               the specified file.
    |            </blockquote>
    |
    |            <b>--without-payload</b>
@@ -17555,7 +17725,7 @@ sub html {
    |            Used to specify the name of the C++ compiler. Note that this is
    |            just the compiler name, not a pathname. This will be encoded
    |            in the generated installer that indicates how the binaries to be
-   |            installed were built. Not really an option, it is required.
+   |            installed were built.
    |            <blockquote>
    |<pre>
    |/opt/boost/{include,lib} \\
@@ -17744,6 +17914,237 @@ EOF1
    |            </ol>
    |         </blockquote>
    |         Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |      </blockquote>
+   |
+   |      <h3>
+   |         DETAILS
+   |      </h3>
+   |      <blockquote>
+   |         The installer construction process is implemented in a different
+   |         fashion on UNIX-like systems such as Linux, MacOS, and Solaris
+   |         from that on a Windows-like system. The <i>mkinstaller</i> command line
+   |         use is identical between UNIX- and Windows-like hosts.
+   |      </blockquote>
+   |
+   |      <blockquote>
+   |         <b>UNIX-like Host</b>
+   |         <blockquote>
+   |            On a UNIX-like host the generated installer script is implemented
+   |            as a self-extracting Bourne-shell script carrying a tarball as
+   |            a payload.
+   |         </blockquote>
+   |         <blockquote>
+   |            <b>Details of the installer construction process on UNIX:</b>
+   |            <blockquote>
+   |               Aside from initalization and command line processing the UNIX
+   |               implementation of <i>mkinstaller</i> goes through the following steps:
+   |               <ol>
+   |                  <li>Determination of a suitable temp directory. Much of the work
+   |                      done by the <i>mkinstaller</i> script is done in a temp directory.
+   |                  </li>
+   |                  <li>Creation of a top level temporary directory under which all
+   |                      other temporaries will be created. Creation of an "accumulator",
+   |                      an "intermediate" and a "wrapper" directory in the top level
+   |                      temp directory. A tarup/untar process will use both the
+   |                      "intermediate" and "accumulator" directories to merge given
+   |                      directories with the same basename. The "wrapper" directory
+   |                      will be used to carry the individual directory tarballs.
+   |                  </li>
+   |                  <li>From each of the specified directories to be installed such
+   |                      as .../bin, .../lib, specified on the <i>mkinstaller</i> command line
+   |                      tarup the individual directory forming tarballs in the wrapper
+   |                      directory in the temp directory.
+   |                  </li>
+   |                  <li>Tarup the temporary wrapper directory for eventual inclusion
+   |                      in the generated installer.
+   |                  </li>
+   |                  <li>Generate the text of the "installer" script in the temporary
+   |                      directory customizing it with with options for specifying an
+   |                      overall prefix directory and individual prefixes for each of
+   |                      the directories specified on the <i>mkinstaller</i> command line.
+   |                  </li>
+   |                  <li>Add the tarball built in (4) to the end of the script generated
+   |                      in (5) forming the distribution self-extracting installation
+   |                      script in the directory where <i>mkinstaller</i> was run.
+   |                  </li>
+   |                  <li>Cleanup.
+   |                  </li>
+   |               </ol>
+   |               In the end the only product is the desired distribution self-
+   |               extracting installation script in the directory where the
+   |               <i>mkinstaller</i> command was run. Everything else produced along
+   |               the way (directories and files) is considered temporary and
+   |               is destroyed.
+   |            </blockquote>
+   |            <blockquote>
+   |               Note that the name of the generated installer script is specified
+   |               using the <b><big><code>-c</code></big></b> <i>name</i> or <b><big><code>--create=</code></big></b><i>name</i> option to mkinstaller.
+   |               However if the <b><big><code>-c</code></big></b> <i>name</i> or <b><big><code>--create=</code></big></b><i>name</i> option is not used
+   |               then <i>mkinstaller</i> will try to come-up with a reasonable name:
+   |               <blockquote>
+   |                  <ol>
+   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> and <b><big><code>--project-version=</code></big></b><i>version</i>
+   |                         was used then the name of the generated installer will resemble:
+   |                         <blockquote>
+   |                            <i>name</i><b><big><code>-</code></big></b><i>version</i><b><big><code>-installer</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> was used but not the
+   |                         <b><big><code>--project-version</code></big></b> option the name of the generated
+   |                         installer will resemble:
+   |                         <blockquote>
+   |                            <i>name</i><b><big><code>-installer</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                     <li>If neither the <b><big><code>--project-name</code></big></b> nor the <b><big><code>--project-version</code></big></b>
+   |                         option the name of the generated installer will be:
+   |                         <blockquote>
+   |                            <b><big><code>installer</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                  </ol>
+   |               </blockquote>
+   |               As is typical for a UNIX-like environment, the generated script
+   |               has no extension.
+   |            </blockquote>
+   |            <b>How the generated installer script works on a UNIX-like target:</b>
+   |            <blockquote>
+   |               <ol>
+   |                  <li>The installer script locates itself. This may seem to be an
+   |                      obvious and or silly question but the actual location of the
+   |                      script file is necessary for the actual extraction (the script
+   |                      file must be read by the standard <i>tail</i> utility).
+   |                  </li>
+   |                  <li>Determination of a suitable temp directory. Much of the work
+   |                      done by the generated installer script is done in a temp
+   |                      directory. Creation of a top level temporary directory under
+   |                      which all other temporaries will be created. This temp
+   |                      directory is created under the standard temp directory
+   |                      determined at the start of this step (see NOTES).
+   |                  </li>
+   |                  <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
+   |                      line options. If appropriate options aren't supplied to
+   |                      install all directories then the installer script will propmpt
+   |                      for the necessary pathname(s). The installer script will
+   |                      create the directories if necessary.
+   |                  </li>
+   |                  <li>The tarball embedded in the installer script is extracted from
+   |                      the installer script into the temp directory created in (2).
+   |                  </li>
+   |                  <li>The tarball in (4) is unwrapped revealing one or more tarballs
+   |                      (one for each installation directory such as <b><big><code>bin.tar.gz</code></big></b>
+   |                      <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a pre-install script was
+   |                      supplied to <i>mkinstaller</i> when the generated installer script
+   |                      was produced then it will be revealed at this time. Similarly
+   |                      if a post-install script was supplied to <i>mkinstaller</i> when the
+   |                      generated installer script was produced then it will also be
+   |                      revealed at this time. Note that neither of these scripts if
+   |                      supplied and revealed are actually executed in this step. See
+   |                      steps (6) and (8).
+   |                  </li>
+   |                  <li>If (5) revealed a pre-install script then it will be executed
+   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      and/or <b><big><code>PREFIX_</code></big></b><i>xxx</i> directories will be supplied as an option to
+   |                      this pre-install script (such as  <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also
+   |                      note at this time the individual tarballs representing the
+   |                      directories to install have NOT be unwrapped.
+   |                  </li>
+   |                  <li>Each individual tarball revealed (5) is unwrapped into the
+   |                      approperiate <b><big><code>PREFIX</code></big></b> directory overlying anything already
+   |                      there.
+   |                  </li>
+   |                  <li>If (5) revealed a post-install script then it will be executed
+   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      directories will be supplied as an option to this post-install
+   |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
+   |                  </li>
+   |                  <li>Cleanup.
+   |                  </li>
+   |               </ol>
+   |            </blockquote>
+   |         </blockquote>
+   |         <b>Windows-like host</b>
+   |         <blockquote>
+   |            On a Windows-like host (such as Windows 7 or 10) the generated
+   |            installer is implemented as a binary executable which is actually
+   |            generated under the covers by <i>NSIS</i> (the Nullsoft Scripted Install).
+   |            System). <i>NSIS</i> is open source and is freely available at:
+   |            <blockquote>
+   |               <a href="https://sourceforge.net/projects/nsis"><b><big><code>https://sourceforge.net/projects/nsis</code></big></b></a>
+   |            </blockquote>
+   |            <b>Details of the installer construction process on Windows:</b>
+   |            <blockquote>
+   |               Aside from initalization and command line processing the Windows
+   |               implementation of <i>mkinstaller</i> goes through the following steps:
+   |               <ol>
+   |                  <li>Determination of a suitable temp directory. Much of the work
+   |                      done by the <i>mkinstaller</i> script is done in a temp directory.
+   |                  </li>
+   |                  <li>Generation of a <b><big><code>.nsi</code></big></b> script file.
+   |                  </li>
+   |                  <li><i>MakeNSIS</i> is used to "compile" the <b><big><code>.nsi</code></big></b> script forming a
+   |                      <b><big><code>.exe</code></big></b> binary executable.
+   |                  </li>
+   |               </ol>
+   |               The <b><big><code>.exe</code></big></b> binary executable formed in step (3) is the product of the
+   |               <i>mkinstaller</i> script and may be shipped to customers to perform the
+   |               desired installation on their Windows system.
+   |            </blockquote>
+   |            <blockquote>
+   |               Note that the name of the installer is specified using the <b><big><code>-c</code></big></b> <i>name</i>
+   |               or <b><big><code>--create=</code></big></b><i>name</i> option to <i>mkinstaller</i>. However if the <b><big><code>-c</code></big></b> <i>name</i>
+   |               or <b><big><code>--create=</code></big></b><i>name</i> option is not used then <i>mkinstaller</i> will try
+   |               to come-up with a reasonable name:
+   |               <blockquote>
+   |                  <ol>
+   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> and <b><big><code>--project-version=</code></big></b><i>version</i>
+   |                         was used then the name of the generated installer will resemble:
+   |                         <blockquote>
+   |                            <i>name</i><b><big><code>-</code></big></b><i>version</i><b><big><code>-installer.exe</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                     <li>If the <b><big><code>--project-name=</code></big></b><i>name</i> was used but not the
+   |                         <b><big><code>--project-version</code></big></b> option the name of the generated
+   |                         installer will resemble:
+   |                         <blockquote>
+   |                            <i>name</i><b><big><code>-installer.exe</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                     <li>If neither the <b><big><code>--project-name</code></big></b> nor the <b><big><code>--project-version</code></big></b>
+   |                         option the name of the generated installer will be:
+   |                         <blockquote>
+   |                            <b><big><code>installer.exe</code></big></b>
+   |                         </blockquote>
+   |                     </li>
+   |                  </ol>
+   |               </blockquote>
+   |               If the name is specified using the <b><big><code>-c</code></big></b> <i>name</i> or <b><big><code>--create=</code></big></b><i>name</i>
+   |               option then the name should NOT included a <b><big><code>.exe</code></big></b> extension. The
+   |               <i>makensis</i> tool which actually produces the binary executable
+   |               will add the necessary extension.
+   |            </blockquote>
+   |            <b>Running the generated installer on a Windows target system:</b>
+   |            <blockquote>
+   |               The default use of the generated installer will produce a
+   |               new directory on the user's desktop.
+   |               <blockquote>
+   |                  <i>prompt</i>&gt; <b><big><code>installer.exe</code></big></b>
+   |               </blockquote>
+   |               A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
+   |               <blockquote>
+   |                  <i>prompt</i>&gt; <b><big><code>installer.exe /D=E:\\opt\\banana</code></big></b>
+   |               </blockquote>
+   |               Note that the prefix directory will be creates as necessary
+   |               however the uninstaller will only (recursively) delete the
+   |               final directory component. In the above example only
+   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursivly deleted, but the
+   |               directory <b><big><code>E:\\opt</code></big></b> will be left intact.
+   |            </blockquote>
+   |            <blockquote>
+   |               Note that the generated installer will pop-up a progress bar dialog
+   |               box to indicate the installation progress.
+   |            </blockquote>
+   |         </blockquote>
    |      </blockquote>
    |
    |      <h3>

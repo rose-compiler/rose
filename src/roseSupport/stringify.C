@@ -380,7 +380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/asmUnparser/AsmUnparser_compat.h line 44
+// /src/backend/asmUnparser/AsmUnparser_compat.h line 46
 namespace stringify {
     const char* ArmSignForExpressionUnparsing(long i) {
         switch (i) {
@@ -728,7 +728,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 522
+// /src/backend/unparser/CxxCodeGeneration/unparseCxx.h line 531
 namespace stringify { namespace Unparse_ExprStmt {
     const char* token_sequence_position_enum_type(long i) {
         switch (i) {
@@ -4032,7 +4032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/abstractLayer/SgNodeHelper.h line 443
+// /src/midend/abstractLayer/SgNodeHelper.h line 446
 namespace stringify { namespace SgNodeHelper { namespace Pattern { namespace OutputTarget {
     const char* OType(long i) {
         switch (i) {
@@ -7188,7 +7188,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinarySymbolicExprParser.h line 43
+// /src/midend/BinaryAnalysis/BinarySymbolicExprParser.h line 55
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExprParser { namespace Token {
     const char* Type(long i) {
         switch (i) {
@@ -7294,7 +7294,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryReachability.h line 21
+// /src/midend/BinaryAnalysis/BinaryReachability.h line 23
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Reachability {
     const char* Reason(long i) {
         switch (i) {
@@ -7622,7 +7622,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinarySymbolicExpr.h line 944
+// /src/midend/BinaryAnalysis/BinarySymbolicExpr.h line 845
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Leaf {
     const char* LeafType(long i) {
         switch (i) {
@@ -7776,7 +7776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 23
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 24
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     const char* SearchMode(long i) {
         switch (i) {
@@ -7828,7 +7828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 26
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 31
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     const char* SemanticMemoryParadigm(long i) {
         switch (i) {
@@ -7878,7 +7878,59 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 32
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 37
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
+    const char* EdgeVisitOrder(long i) {
+        switch (i) {
+            case 0L: return "VISIT_NATURAL";
+            case 1L: return "VISIT_REVERSE";
+            case 2L: return "VISIT_RANDOM";
+            default: return "";
+        }
+    }
+
+    std::string EdgeVisitOrder(long i, const std::string &strip) {
+        std::string s = EdgeVisitOrder(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& EdgeVisitOrder() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 3);
+        return retval;
+    }
+
+}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisFeasiblePathEdgeVisitOrder(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisFeasiblePathEdgeVisitOrder() {
+        return stringify::Rose::BinaryAnalysis::FeasiblePath::EdgeVisitOrder();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 44
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     const char* IoMode(long i) {
         switch (i) {
@@ -7928,7 +7980,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 35
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 47
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath {
     const char* MayOrMust(long i) {
         switch (i) {
@@ -7978,7 +8030,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 106
+// /src/midend/BinaryAnalysis/BinaryFeasiblePath.h line 146
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace FeasiblePath { namespace PathProcessor {
     const char* Action(long i) {
         switch (i) {
@@ -8668,6 +8720,60 @@ namespace Rose {
 
     const std::vector<long>& stringifyBinaryAnalysisCodeInserterRelocType() {
         return stringify::Rose::BinaryAnalysis::CodeInserter::RelocType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/BinaryAnalysis/libraryIdentification/FunctionIdDatabaseInterface.h line 28
+namespace stringify { namespace LibraryIdentification {
+    const char* DUPLICATE_OPTION(long i) {
+        switch (i) {
+            case 0L: return "UNKNOWN";
+            case 1L: return "COMBINE";
+            case 2L: return "REPLACE";
+            case 3L: return "NO_ADD";
+            default: return "";
+        }
+    }
+
+    std::string DUPLICATE_OPTION(long i, const std::string &strip) {
+        std::string s = DUPLICATE_OPTION(i);
+        if (s.empty())
+            s = "(LibraryIdentification::DUPLICATE_OPTION)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& DUPLICATE_OPTION() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L,
+            3L
+        };
+        static const std::vector<long> retval(values, values + 4);
+        return retval;
+    }
+
+}}
+
+namespace Rose {
+    std::string stringifyLibraryIdentificationDUPLICATE_OPTION(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::LibraryIdentification::DUPLICATE_OPTION(i);
+        if (retval.empty()) {
+            retval = "(LibraryIdentification::DUPLICATE_OPTION)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "LibraryIdentification::DUPLICATE_OPTION::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyLibraryIdentificationDUPLICATE_OPTION() {
+        return stringify::LibraryIdentification::DUPLICATE_OPTION();
     }
 }
 
@@ -9404,6 +9510,70 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/midend/MFB/include/MFB/Sage/graph.hpp line 35
+namespace stringify { namespace MFB { namespace Graph { namespace API {
+    const char* link_kind_e(long i) {
+        switch (i) {
+            case 0L: return "e_link_kind_unknown";
+            case 1L: return "e_link_kind_defines";
+            case 2L: return "e_link_kind_extends";
+            case 3L: return "e_link_kind_specializes";
+            case 4L: return "e_link_kind_represents";
+            case 5L: return "e_link_kind_param";
+            case 6L: return "e_link_kind_arg";
+            case 7L: return "e_link_kind_type_base";
+            case 8L: return "e_link_kind_last";
+            default: return "";
+        }
+    }
+
+    std::string link_kind_e(long i, const std::string &strip) {
+        std::string s = link_kind_e(i);
+        if (s.empty())
+            s = "(MFB::Graph::API::link_kind_e)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& link_kind_e() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L,
+            3L,
+            4L,
+            5L,
+            6L,
+            7L,
+            8L
+        };
+        static const std::vector<long> retval(values, values + 9);
+        return retval;
+    }
+
+}}}}
+
+namespace Rose {
+    std::string stringifyMFB_GraphAPIlink_kind_e(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::MFB::Graph::API::link_kind_e(i);
+        if (retval.empty()) {
+            retval = "(MFB::Graph::API::link_kind_e)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "MFB::Graph::API::link_kind_e::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyMFB_GraphAPIlink_kind_e() {
+        return stringify::MFB::Graph::API::link_kind_e();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/ROSETTA/src/AstNodeClass.h line 100
 namespace stringify { namespace AstNodeClass {
     const char* locationInTree(long i) {
@@ -9876,7 +10046,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 2593
+// /src/ROSETTA/src/binaryInstruction.C line 2617
 namespace stringify { namespace SgAsmRiscOperation {
     const char* RiscOperator(long i) {
         switch (i) {
@@ -10032,7 +10202,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3421
+// /src/ROSETTA/src/binaryInstruction.C line 3433
 namespace stringify { namespace SgAsmFunction {
     const char* MayReturn(long i) {
         switch (i) {
@@ -10086,7 +10256,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3431
+// /src/ROSETTA/src/binaryInstruction.C line 3443
 namespace stringify { namespace SgAsmFunction {
     const char* FunctionReason(long i) {
         switch (i) {
@@ -10184,7 +10354,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3586
+// /src/ROSETTA/src/binaryInstruction.C line 3598
 namespace stringify { namespace SgAsmFunction {
     const char* function_kind_enum(long i) {
         switch (i) {
@@ -10242,7 +10412,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 3823
+// /src/ROSETTA/src/binaryInstruction.C line 3830
 namespace stringify { namespace SgAsmBlock {
     const char* Reason(long i) {
         switch (i) {
@@ -10316,7 +10486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 4674
+// /src/ROSETTA/src/binaryInstruction.C line 4681
 namespace stringify { namespace SgAsmElfFileHeader {
     const char* ObjectType(long i) {
         switch (i) {
@@ -10380,7 +10550,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5094
+// /src/ROSETTA/src/binaryInstruction.C line 5101
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     const char* SectionType(long i) {
         switch (i) {
@@ -10466,7 +10636,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5121
+// /src/ROSETTA/src/binaryInstruction.C line 5128
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     const char* SectionFlags(long i) {
         switch (i) {
@@ -10538,7 +10708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5523
+// /src/ROSETTA/src/binaryInstruction.C line 5530
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     const char* SegmentType(long i) {
         switch (i) {
@@ -10620,7 +10790,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5551
+// /src/ROSETTA/src/binaryInstruction.C line 5558
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     const char* SegmentFlags(long i) {
         switch (i) {
@@ -10680,7 +10850,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5897
+// /src/ROSETTA/src/binaryInstruction.C line 5904
 namespace stringify { namespace SgAsmElfSymbol {
     const char* ElfSymBinding(long i) {
         switch (i) {
@@ -10732,7 +10902,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5903
+// /src/ROSETTA/src/binaryInstruction.C line 5910
 namespace stringify { namespace SgAsmElfSymbol {
     const char* ElfSymType(long i) {
         switch (i) {
@@ -10794,7 +10964,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7305
+// /src/ROSETTA/src/binaryInstruction.C line 7312
 namespace stringify { namespace SgAsmElfRelocEntry {
     const char* RelocType(long i) {
         switch (i) {
@@ -10960,7 +11130,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7662
+// /src/ROSETTA/src/binaryInstruction.C line 7669
 namespace stringify { namespace SgAsmElfDynamicEntry {
     const char* EntryType(long i) {
         switch (i) {
@@ -11138,7 +11308,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10161
+// /src/ROSETTA/src/binaryInstruction.C line 10168
 namespace stringify { namespace SgAsmPEFileHeader {
     const char* HeaderFlags(long i) {
         switch (i) {
@@ -11194,7 +11364,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10170
+// /src/ROSETTA/src/binaryInstruction.C line 10177
 namespace stringify { namespace SgAsmPEFileHeader {
     const char* Subsystem(long i) {
         switch (i) {
@@ -11252,7 +11422,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10180
+// /src/ROSETTA/src/binaryInstruction.C line 10187
 namespace stringify { namespace SgAsmPEFileHeader {
     const char* DLLFlags(long i) {
         switch (i) {
@@ -11308,7 +11478,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 10189
+// /src/ROSETTA/src/binaryInstruction.C line 10196
 namespace stringify { namespace SgAsmPEFileHeader {
     const char* PairPurpose(long i) {
         switch (i) {
@@ -11386,7 +11556,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 11970
+// /src/ROSETTA/src/binaryInstruction.C line 11977
 namespace stringify { namespace SgAsmPESectionTableEntry {
     const char* PESectionFlags(long i) {
         switch (i) {
@@ -11494,7 +11664,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 13998
+// /src/ROSETTA/src/binaryInstruction.C line 14005
 namespace stringify { namespace SgAsmGenericSymbol {
     const char* SymbolDefState(long i) {
         switch (i) {
@@ -11546,7 +11716,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14005
+// /src/ROSETTA/src/binaryInstruction.C line 14012
 namespace stringify { namespace SgAsmGenericSymbol {
     const char* SymbolType(long i) {
         switch (i) {
@@ -11612,7 +11782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14019
+// /src/ROSETTA/src/binaryInstruction.C line 14026
 namespace stringify { namespace SgAsmGenericSymbol {
     const char* SymbolBinding(long i) {
         switch (i) {
@@ -11666,7 +11836,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 14552
+// /src/ROSETTA/src/binaryInstruction.C line 14559
 namespace stringify { namespace SgAsmGenericSection {
     const char* SectionPurpose(long i) {
         switch (i) {
@@ -11722,7 +11892,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15389
+// /src/ROSETTA/src/binaryInstruction.C line 15396
 namespace stringify { namespace SgAsmGenericFile {
     const char* AddressSpace(long i) {
         switch (i) {
@@ -11774,7 +11944,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15396
+// /src/ROSETTA/src/binaryInstruction.C line 15403
 namespace stringify { namespace SgAsmGenericFile {
     const char* Elasticity(long i) {
         switch (i) {
@@ -11826,7 +11996,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15802
+// /src/ROSETTA/src/binaryInstruction.C line 15803
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecFamily(long i) {
         switch (i) {
@@ -11886,7 +12056,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15813
+// /src/ROSETTA/src/binaryInstruction.C line 15814
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecABI(long i) {
         switch (i) {
@@ -11972,7 +12142,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 15837
+// /src/ROSETTA/src/binaryInstruction.C line 15838
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* InsSetArchitecture(long i) {
         switch (i) {
@@ -12336,7 +12506,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 16016
+// /src/ROSETTA/src/binaryInstruction.C line 16017
 namespace stringify { namespace SgAsmExecutableFileFormat {
     const char* ExecPurpose(long i) {
         switch (i) {
@@ -12392,6 +12562,158 @@ namespace Rose {
 
     const std::vector<long>& stringifySgAsmExecutableFileFormatExecPurpose() {
         return stringify::SgAsmExecutableFileFormat::ExecPurpose();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 119
+namespace stringify { namespace Sawyer { namespace Tree {
+    const char* TraversalEvent(long i) {
+        switch (i) {
+            case 1L: return "ENTER";
+            case 2L: return "LEAVE";
+            default: return "";
+        }
+    }
+
+    std::string TraversalEvent(long i, const std::string &strip) {
+        std::string s = TraversalEvent(i);
+        if (s.empty())
+            s = "(Sawyer::Tree::TraversalEvent)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& TraversalEvent() {
+        static const long values[] = {
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeTraversalEvent(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Sawyer::Tree::TraversalEvent(i);
+        if (retval.empty()) {
+            retval = "(Sawyer::Tree::TraversalEvent)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Sawyer::Tree::TraversalEvent::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifySawyerTreeTraversalEvent() {
+        return stringify::Sawyer::Tree::TraversalEvent();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 125
+namespace stringify { namespace Sawyer { namespace Tree {
+    const char* TraversalAction(long i) {
+        switch (i) {
+            case 0L: return "CONTINUE";
+            case 1L: return "SKIP_CHILDREN";
+            case 2L: return "ABORT";
+            default: return "";
+        }
+    }
+
+    std::string TraversalAction(long i, const std::string &strip) {
+        std::string s = TraversalAction(i);
+        if (s.empty())
+            s = "(Sawyer::Tree::TraversalAction)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& TraversalAction() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 3);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeTraversalAction(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Sawyer::Tree::TraversalAction(i);
+        if (retval.empty()) {
+            retval = "(Sawyer::Tree::TraversalAction)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Sawyer::Tree::TraversalAction::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifySawyerTreeTraversalAction() {
+        return stringify::Sawyer::Tree::TraversalAction();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/util/Sawyer/Tree.h line 481
+namespace stringify { namespace Sawyer { namespace Tree { namespace Node {
+    const char* TraversalDirection(long i) {
+        switch (i) {
+            case 0L: return "TRAVERSE_UPWARD";
+            case 1L: return "TRAVERSE_DOWNWARD";
+            default: return "";
+        }
+    }
+
+    std::string TraversalDirection(long i, const std::string &strip) {
+        std::string s = TraversalDirection(i);
+        if (s.empty())
+            s = "(Sawyer::Tree::Node::TraversalDirection)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& TraversalDirection() {
+        static const long values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}}}}
+
+namespace Rose {
+    std::string stringifySawyerTreeNodeTraversalDirection(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Sawyer::Tree::Node::TraversalDirection(i);
+        if (retval.empty()) {
+            retval = "(Sawyer::Tree::Node::TraversalDirection)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Sawyer::Tree::Node::TraversalDirection::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifySawyerTreeNodeTraversalDirection() {
+        return stringify::Sawyer::Tree::Node::TraversalDirection();
     }
 }
 
@@ -12782,7 +13104,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 2959
+// /src/util/Sawyer/CommandLine.h line 2986
 namespace stringify { namespace Sawyer { namespace CommandLine { namespace Parser {
     const char* GroupingFlags(long i) {
         switch (i) {
@@ -14386,7 +14708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/SageIII/rose_attributes_list.h line 511
+// /src/frontend/SageIII/rose_attributes_list.h line 515
 namespace stringify { namespace ROSEAttributesList {
     const char* languageTypeEnum(long i) {
         switch (i) {
@@ -25058,7 +25380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/CxxFrontend/EDG/edgRose/edgRose.C line 6365
+// /src/frontend/CxxFrontend/EDG/edgRose/edgRose.C line 6263
 namespace stringify {
     const char* kinds_of_type_references(long i) {
         switch (i) {
@@ -30522,6 +30844,130 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Experimental_Csharp_ROSE_Connection/ast2dot.hpp line 11
+namespace stringify { namespace dot {
+    const char* attr_set(long i) {
+        switch (i) {
+            case 0L: return "simple";
+            case 1L: return "types";
+            case 3L: return "moretypes";
+            case 4L: return "decllinks";
+            case 5L: return "balanced";
+            case 8L: return "symbols";
+            case 16L: return "builtins";
+            case 31L: return "full";
+            default: return "";
+        }
+    }
+
+    std::string attr_set(long i, const std::string &strip) {
+        std::string s = attr_set(i);
+        if (s.empty())
+            s = "(dot::attr_set)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& attr_set() {
+        static const long values[] = {
+            0L,
+            1L,
+            3L,
+            4L,
+            5L,
+            8L,
+            16L,
+            31L
+        };
+        static const std::vector<long> retval(values, values + 8);
+        return retval;
+    }
+
+}}
+
+namespace Rose {
+    std::string stringify_dot_attr_set(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::dot::attr_set(i);
+        if (retval.empty()) {
+            retval = "(dot::attr_set)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "dot::attr_set::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringify_dot_attr_set() {
+        return stringify::dot::attr_set();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Experimental_Csharp_ROSE_Connection/csharpBuilder.h line 10
+namespace stringify { namespace csharp_translator {
+    const char* SeqKind(long i) {
+        switch (i) {
+            case 2L: return "GLOBALSCOPESEQ";
+            case 3L: return "CLASSMEMBERSEQ";
+            case 4L: return "PARAMETERSEQ";
+            case 5L: return "METHODBODYSEQ";
+            case 6L: return "EXPRLISTSEQ";
+            case 7L: return "IFSTMT";
+            case 8L: return "FORSTMT";
+            case 9L: return "WHILESTMT";
+            default: return "";
+        }
+    }
+
+    std::string SeqKind(long i, const std::string &strip) {
+        std::string s = SeqKind(i);
+        if (s.empty())
+            s = "(csharp_translator::SeqKind)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& SeqKind() {
+        static const long values[] = {
+            2L,
+            3L,
+            4L,
+            5L,
+            6L,
+            7L,
+            8L,
+            9L
+        };
+        static const std::vector<long> retval(values, values + 8);
+        return retval;
+    }
+
+}}
+
+namespace Rose {
+    std::string stringify_csharp_translatorSeqKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::csharp_translator::SeqKind(i);
+        if (retval.empty()) {
+            retval = "(csharp_translator::SeqKind)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "csharp_translator::SeqKind::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringify_csharp_translatorSeqKind() {
+        return stringify::csharp_translator::SeqKind();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Experimental_Ada_ROSE_Connection/Ada_to_ROSE_translation.C line 7222
 namespace stringify {
     const char* Definition_Kinds(long i) {
@@ -33118,42 +33564,43 @@ namespace stringify { namespace General_Language_Translation {
             case 79L: return "e_case_default_option_stmt";
             case 80L: return "e_end_proc_ref_stmt";
             case 81L: return "e_end_proc_def_stmt";
-            case 82L: return "e_fortran_dimension_stmt";
-            case 83L: return "e_fortran_import_stmt";
-            case 84L: return "e_fortran_if_stmt";
-            case 85L: return "e_fortran_if_then_stmt";
-            case 86L: return "e_fortran_else_if_stmt";
-            case 87L: return "e_fortran_else_stmt";
-            case 88L: return "e_fortran_end_do_stmt";
-            case 89L: return "e_fortran_do_concurrent_stmt";
-            case 90L: return "e_fortran_concurrent_header";
-            case 91L: return "e_fortran_concurrent_control";
-            case 92L: return "e_fortran_concurrent_locality";
-            case 93L: return "e_fortran_forall_stmt";
-            case 94L: return "e_fortran_end_forall_stmt";
-            case 95L: return "e_fortran_sync_all_stmt";
-            case 96L: return "e_fortran_sync_images_stmt";
-            case 97L: return "e_fortran_sync_memory_stmt";
-            case 98L: return "e_fortran_sync_team_stmt";
-            case 99L: return "e_fortran_lock_stmt";
-            case 100L: return "e_fortran_unlock_stmt";
-            case 101L: return "e_fortran_sync_stat_list";
-            case 102L: return "e_fortran_sync_stat_stat";
-            case 103L: return "e_fortran_sync_stat_errmsg";
-            case 104L: return "e_fortran_stat_acquired_lock";
-            case 105L: return "e_jovial_compool_stmt";
-            case 106L: return "e_cuda_host";
-            case 107L: return "e_cuda_device";
-            case 108L: return "e_cuda_global_function";
-            case 109L: return "e_cuda_grid_global";
-            case 110L: return "e_cuda_global";
-            case 111L: return "e_cuda_device_memory";
-            case 112L: return "e_cuda_managed";
-            case 113L: return "e_cuda_constant";
-            case 114L: return "e_cuda_shared";
-            case 115L: return "e_cuda_pinned";
-            case 116L: return "e_cuda_texture";
-            case 117L: return "e_last";
+            case 82L: return "e_define_directive_stmt";
+            case 83L: return "e_fortran_dimension_stmt";
+            case 84L: return "e_fortran_import_stmt";
+            case 85L: return "e_fortran_if_stmt";
+            case 86L: return "e_fortran_if_then_stmt";
+            case 87L: return "e_fortran_else_if_stmt";
+            case 88L: return "e_fortran_else_stmt";
+            case 89L: return "e_fortran_end_do_stmt";
+            case 90L: return "e_fortran_do_concurrent_stmt";
+            case 91L: return "e_fortran_concurrent_header";
+            case 92L: return "e_fortran_concurrent_control";
+            case 93L: return "e_fortran_concurrent_locality";
+            case 94L: return "e_fortran_forall_stmt";
+            case 95L: return "e_fortran_end_forall_stmt";
+            case 96L: return "e_fortran_sync_all_stmt";
+            case 97L: return "e_fortran_sync_images_stmt";
+            case 98L: return "e_fortran_sync_memory_stmt";
+            case 99L: return "e_fortran_sync_team_stmt";
+            case 100L: return "e_fortran_lock_stmt";
+            case 101L: return "e_fortran_unlock_stmt";
+            case 102L: return "e_fortran_sync_stat_list";
+            case 103L: return "e_fortran_sync_stat_stat";
+            case 104L: return "e_fortran_sync_stat_errmsg";
+            case 105L: return "e_fortran_stat_acquired_lock";
+            case 106L: return "e_jovial_compool_stmt";
+            case 107L: return "e_cuda_host";
+            case 108L: return "e_cuda_device";
+            case 109L: return "e_cuda_global_function";
+            case 110L: return "e_cuda_grid_global";
+            case 111L: return "e_cuda_global";
+            case 112L: return "e_cuda_device_memory";
+            case 113L: return "e_cuda_managed";
+            case 114L: return "e_cuda_constant";
+            case 115L: return "e_cuda_shared";
+            case 116L: return "e_cuda_pinned";
+            case 117L: return "e_cuda_texture";
+            case 118L: return "e_last";
             default: return "";
         }
     }
@@ -33286,9 +33733,10 @@ namespace stringify { namespace General_Language_Translation {
             114L,
             115L,
             116L,
-            117L
+            117L,
+            118L
         };
-        static const std::vector<long> retval(values, values + 118);
+        static const std::vector<long> retval(values, values + 119);
         return retval;
     }
 
@@ -34318,7 +34766,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Partitioner2/CfgPath.h line 363
+// /src/frontend/Partitioner2/CfgPath.h line 388
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace Inliner {
     const char* HowInline(long i) {
         switch (i) {
@@ -35624,8 +36072,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86.h line 141
-namespace stringify { namespace AssemblerX86 {
+// /src/frontend/Disassemblers/AssemblerX86.h line 142
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AssemblerX86 {
     const char* OperandDefn(long i) {
         switch (i) {
             case 0L: return "od_none";
@@ -35725,7 +36173,7 @@ namespace stringify { namespace AssemblerX86 {
     std::string OperandDefn(long i, const std::string &strip) {
         std::string s = OperandDefn(i);
         if (s.empty())
-            s = "(AssemblerX86::OperandDefn)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::AssemblerX86::OperandDefn)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -35828,30 +36276,30 @@ namespace stringify { namespace AssemblerX86 {
         return retval;
     }
 
-}}
+}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerX86OperandDefn(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::AssemblerX86::OperandDefn(i);
+    std::string stringifyBinaryAnalysisAssemblerX86OperandDefn(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::AssemblerX86::OperandDefn(i);
         if (retval.empty()) {
-            retval = "(AssemblerX86::OperandDefn)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::AssemblerX86::OperandDefn)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "AssemblerX86::OperandDefn::" + retval;
+                retval = "Rose::BinaryAnalysis::AssemblerX86::OperandDefn::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyAssemblerX86OperandDefn() {
-        return stringify::AssemblerX86::OperandDefn();
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerX86OperandDefn() {
+        return stringify::Rose::BinaryAnalysis::AssemblerX86::OperandDefn();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86.h line 382
-namespace stringify { namespace AssemblerX86 {
+// /src/frontend/Disassemblers/AssemblerX86.h line 383
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AssemblerX86 {
     const char* MemoryReferencePattern(long i) {
         switch (i) {
             case 0L: return "mrp_unknown";
@@ -35869,7 +36317,7 @@ namespace stringify { namespace AssemblerX86 {
     std::string MemoryReferencePattern(long i, const std::string &strip) {
         std::string s = MemoryReferencePattern(i);
         if (s.empty())
-            s = "(AssemblerX86::MemoryReferencePattern)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -35890,24 +36338,24 @@ namespace stringify { namespace AssemblerX86 {
         return retval;
     }
 
-}}
+}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerX86MemoryReferencePattern(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::AssemblerX86::MemoryReferencePattern(i);
+    std::string stringifyBinaryAnalysisAssemblerX86MemoryReferencePattern(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern(i);
         if (retval.empty()) {
-            retval = "(AssemblerX86::MemoryReferencePattern)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "AssemblerX86::MemoryReferencePattern::" + retval;
+                retval = "Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyAssemblerX86MemoryReferencePattern() {
-        return stringify::AssemblerX86::MemoryReferencePattern();
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerX86MemoryReferencePattern() {
+        return stringify::Rose::BinaryAnalysis::AssemblerX86::MemoryReferencePattern();
     }
 }
 
@@ -36076,8 +36524,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 12
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 15
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kFamily(long i) {
         switch (i) {
             case 1L: return "m68k_68000_only";
@@ -36117,7 +36565,7 @@ namespace stringify {
     std::string M68kFamily(long i, const std::string &strip) {
         std::string s = M68kFamily(i);
         if (s.empty())
-            s = "(M68kFamily)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kFamily)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36160,30 +36608,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kFamily(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kFamily(i);
+    std::string stringifyBinaryAnalysisM68kFamily(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kFamily(i);
         if (retval.empty()) {
-            retval = "(M68kFamily)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kFamily)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kFamily::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kFamily::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kFamily() {
-        return stringify::M68kFamily();
+    const std::vector<long>& stringifyBinaryAnalysisM68kFamily() {
+        return stringify::Rose::BinaryAnalysis::M68kFamily();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 49
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 53
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kRegisterClass(long i) {
         switch (i) {
             case 0L: return "m68k_regclass_data";
@@ -36199,7 +36647,7 @@ namespace stringify {
     std::string M68kRegisterClass(long i, const std::string &strip) {
         std::string s = M68kRegisterClass(i);
         if (s.empty())
-            s = "(M68kRegisterClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kRegisterClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36218,30 +36666,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kRegisterClass(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kRegisterClass(i);
+    std::string stringifyBinaryAnalysisM68kRegisterClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kRegisterClass(i);
         if (retval.empty()) {
-            retval = "(M68kRegisterClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kRegisterClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kRegisterClass::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kRegisterClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kRegisterClass() {
-        return stringify::M68kRegisterClass();
+    const std::vector<long>& stringifyBinaryAnalysisM68kRegisterClass() {
+        return stringify::Rose::BinaryAnalysis::M68kRegisterClass();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 58
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 63
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kSpecialPurposeRegister(long i) {
         switch (i) {
             case 0L: return "m68k_spr_pc";
@@ -36256,7 +36704,7 @@ namespace stringify {
     std::string M68kSpecialPurposeRegister(long i, const std::string &strip) {
         std::string s = M68kSpecialPurposeRegister(i);
         if (s.empty())
-            s = "(M68kSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36274,30 +36722,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kSpecialPurposeRegister(i);
+    std::string stringifyBinaryAnalysisM68kSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kSpecialPurposeRegister(i);
         if (retval.empty()) {
-            retval = "(M68kSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kSpecialPurposeRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kSpecialPurposeRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kSpecialPurposeRegister() {
-        return stringify::M68kSpecialPurposeRegister();
+    const std::vector<long>& stringifyBinaryAnalysisM68kSpecialPurposeRegister() {
+        return stringify::Rose::BinaryAnalysis::M68kSpecialPurposeRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 66
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 72
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kMacRegister(long i) {
         switch (i) {
             case 0L: return "m68k_mac_macsr";
@@ -36319,7 +36767,7 @@ namespace stringify {
     std::string M68kMacRegister(long i, const std::string &strip) {
         std::string s = M68kMacRegister(i);
         if (s.empty())
-            s = "(M68kMacRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kMacRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36344,30 +36792,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kMacRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kMacRegister(i);
+    std::string stringifyBinaryAnalysisM68kMacRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kMacRegister(i);
         if (retval.empty()) {
-            retval = "(M68kMacRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kMacRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kMacRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kMacRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kMacRegister() {
-        return stringify::M68kMacRegister();
+    const std::vector<long>& stringifyBinaryAnalysisM68kMacRegister() {
+        return stringify::Rose::BinaryAnalysis::M68kMacRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 81
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 88
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kEmacRegister(long i) {
         switch (i) {
             case 0L: return "m68k_emac_macsr";
@@ -36383,7 +36831,7 @@ namespace stringify {
     std::string M68kEmacRegister(long i, const std::string &strip) {
         std::string s = M68kEmacRegister(i);
         if (s.empty())
-            s = "(M68kEmacRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kEmacRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36402,30 +36850,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kEmacRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kEmacRegister(i);
+    std::string stringifyBinaryAnalysisM68kEmacRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kEmacRegister(i);
         if (retval.empty()) {
-            retval = "(M68kEmacRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kEmacRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kEmacRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kEmacRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kEmacRegister() {
-        return stringify::M68kEmacRegister();
+    const std::vector<long>& stringifyBinaryAnalysisM68kEmacRegister() {
+        return stringify::Rose::BinaryAnalysis::M68kEmacRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 90
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 98
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kSupervisorRegister(long i) {
         switch (i) {
             case 0L: return "m68k_sup_vbr";
@@ -36460,7 +36908,7 @@ namespace stringify {
     std::string M68kSupervisorRegister(long i, const std::string &strip) {
         std::string s = M68kSupervisorRegister(i);
         if (s.empty())
-            s = "(M68kSupervisorRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kSupervisorRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36498,30 +36946,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kSupervisorRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kSupervisorRegister(i);
+    std::string stringifyBinaryAnalysisM68kSupervisorRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kSupervisorRegister(i);
         if (retval.empty()) {
-            retval = "(M68kSupervisorRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kSupervisorRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kSupervisorRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kSupervisorRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kSupervisorRegister() {
-        return stringify::M68kSupervisorRegister();
+    const std::vector<long>& stringifyBinaryAnalysisM68kSupervisorRegister() {
+        return stringify::Rose::BinaryAnalysis::M68kSupervisorRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 177
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 185
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kEffectiveAddressMode(long i) {
         switch (i) {
             case 0L: return "m68k_eam_unknown";
@@ -36564,7 +37012,7 @@ namespace stringify {
     std::string M68kEffectiveAddressMode(long i, const std::string &strip) {
         std::string s = M68kEffectiveAddressMode(i);
         if (s.empty())
-            s = "(M68kEffectiveAddressMode)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kEffectiveAddressMode)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36610,30 +37058,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kEffectiveAddressMode(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kEffectiveAddressMode(i);
+    std::string stringifyBinaryAnalysisM68kEffectiveAddressMode(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kEffectiveAddressMode(i);
         if (retval.empty()) {
-            retval = "(M68kEffectiveAddressMode)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kEffectiveAddressMode)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kEffectiveAddressMode::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kEffectiveAddressMode::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kEffectiveAddressMode() {
-        return stringify::M68kEffectiveAddressMode();
+    const std::vector<long>& stringifyBinaryAnalysisM68kEffectiveAddressMode() {
+        return stringify::Rose::BinaryAnalysis::M68kEffectiveAddressMode();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 231
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 239
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kDataFormat(long i) {
         switch (i) {
             case 0L: return "m68k_fmt_i32";
@@ -36651,7 +37099,7 @@ namespace stringify {
     std::string M68kDataFormat(long i, const std::string &strip) {
         std::string s = M68kDataFormat(i);
         if (s.empty())
-            s = "(M68kDataFormat)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kDataFormat)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -36672,30 +37120,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kDataFormat(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kDataFormat(i);
+    std::string stringifyBinaryAnalysisM68kDataFormat(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kDataFormat(i);
         if (retval.empty()) {
-            retval = "(M68kDataFormat)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kDataFormat)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kDataFormat::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kDataFormat::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kDataFormat() {
-        return stringify::M68kDataFormat();
+    const std::vector<long>& stringifyBinaryAnalysisM68kDataFormat() {
+        return stringify::Rose::BinaryAnalysis::M68kDataFormat();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 242
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsM68k.h line 251
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* M68kInstructionKind(long i) {
         switch (i) {
             case 0L: return "m68k_unknown_instruction";
@@ -36936,7 +37384,7 @@ namespace stringify {
     std::string M68kInstructionKind(long i, const std::string &strip) {
         std::string s = M68kInstructionKind(i);
         if (s.empty())
-            s = "(M68kInstructionKind)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::M68kInstructionKind)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -37180,24 +37628,450 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyM68kInstructionKind(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::M68kInstructionKind(i);
+    std::string stringifyBinaryAnalysisM68kInstructionKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::M68kInstructionKind(i);
         if (retval.empty()) {
-            retval = "(M68kInstructionKind)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::M68kInstructionKind)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "M68kInstructionKind::" + retval;
+                retval = "Rose::BinaryAnalysis::M68kInstructionKind::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyM68kInstructionKind() {
-        return stringify::M68kInstructionKind();
+    const std::vector<long>& stringifyBinaryAnalysisM68kInstructionKind() {
+        return stringify::Rose::BinaryAnalysis::M68kInstructionKind();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 10
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    const char* ArmRegisterClass(long i) {
+        switch (i) {
+            case 0L: return "arm_regclass_gpr";
+            case 1L: return "arm_regclass_psr";
+            default: return "";
+        }
+    }
+
+    std::string ArmRegisterClass(long i, const std::string &strip) {
+        std::string s = ArmRegisterClass(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::ArmRegisterClass)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& ArmRegisterClass() {
+        static const long values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmRegisterClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::ArmRegisterClass(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::ArmRegisterClass)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::ArmRegisterClass::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisArmRegisterClass() {
+        return stringify::Rose::BinaryAnalysis::ArmRegisterClass();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 16
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    const char* ArmProgramStatusRegister(long i) {
+        switch (i) {
+            case 0L: return "arm_psr_current";
+            case 1L: return "arm_psr_saved";
+            default: return "";
+        }
+    }
+
+    std::string ArmProgramStatusRegister(long i, const std::string &strip) {
+        std::string s = ArmProgramStatusRegister(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::ArmProgramStatusRegister)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& ArmProgramStatusRegister() {
+        static const long values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmProgramStatusRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::ArmProgramStatusRegister(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::ArmProgramStatusRegister)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::ArmProgramStatusRegister::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisArmProgramStatusRegister() {
+        return stringify::Rose::BinaryAnalysis::ArmProgramStatusRegister();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 22
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    const char* ArmInstructionKind(long i) {
+        switch (i) {
+            case 0L: return "arm_unknown_instruction";
+            case 1L: return "arm_adc";
+            case 2L: return "arm_adcs";
+            case 3L: return "arm_add";
+            case 4L: return "arm_adds";
+            case 5L: return "arm_and";
+            case 6L: return "arm_ands";
+            case 7L: return "arm_b";
+            case 8L: return "arm_bic";
+            case 9L: return "arm_bics";
+            case 10L: return "arm_bkpt";
+            case 11L: return "arm_bl";
+            case 12L: return "arm_blx";
+            case 13L: return "arm_bx";
+            case 14L: return "arm_bxj";
+            case 15L: return "arm_clz";
+            case 16L: return "arm_cmn";
+            case 17L: return "arm_cmp";
+            case 18L: return "arm_eor";
+            case 19L: return "arm_eors";
+            case 20L: return "arm_ldm";
+            case 21L: return "arm_ldmda";
+            case 22L: return "arm_ldmdb";
+            case 23L: return "arm_ldmia";
+            case 24L: return "arm_ldmib";
+            case 25L: return "arm_ldr";
+            case 26L: return "arm_ldrb";
+            case 27L: return "arm_ldrbt";
+            case 28L: return "arm_ldrd";
+            case 29L: return "arm_ldrsb";
+            case 30L: return "arm_ldrsh";
+            case 31L: return "arm_ldrt";
+            case 32L: return "arm_ldruh";
+            case 33L: return "arm_mla";
+            case 34L: return "arm_mlas";
+            case 35L: return "arm_mov";
+            case 36L: return "arm_movs";
+            case 37L: return "arm_mrs";
+            case 38L: return "arm_msr";
+            case 39L: return "arm_mul";
+            case 40L: return "arm_muls";
+            case 41L: return "arm_mvn";
+            case 42L: return "arm_mvns";
+            case 43L: return "arm_orr";
+            case 44L: return "arm_orrs";
+            case 45L: return "arm_qadd";
+            case 46L: return "arm_qdadd";
+            case 47L: return "arm_qdsub";
+            case 48L: return "arm_qsub";
+            case 49L: return "arm_rsb";
+            case 50L: return "arm_rsbs";
+            case 51L: return "arm_rsc";
+            case 52L: return "arm_rscs";
+            case 53L: return "arm_sbc";
+            case 54L: return "arm_sbcs";
+            case 55L: return "arm_setend";
+            case 56L: return "arm_smlabb";
+            case 57L: return "arm_smlabt";
+            case 58L: return "arm_smlal";
+            case 59L: return "arm_smlalbb";
+            case 60L: return "arm_smlalbt";
+            case 61L: return "arm_smlals";
+            case 62L: return "arm_smlaltb";
+            case 63L: return "arm_smlaltt";
+            case 64L: return "arm_smlatb";
+            case 65L: return "arm_smlatt";
+            case 66L: return "arm_smlawb";
+            case 67L: return "arm_smlawt";
+            case 68L: return "arm_smluwb";
+            case 69L: return "arm_smluwt";
+            case 70L: return "arm_smulbb";
+            case 71L: return "arm_smulbt";
+            case 72L: return "arm_smull";
+            case 73L: return "arm_smulls";
+            case 74L: return "arm_smultb";
+            case 75L: return "arm_smultt";
+            case 76L: return "arm_stm";
+            case 77L: return "arm_stmda";
+            case 78L: return "arm_stmdb";
+            case 79L: return "arm_stmia";
+            case 80L: return "arm_stmib";
+            case 81L: return "arm_str";
+            case 82L: return "arm_strb";
+            case 83L: return "arm_strbt";
+            case 84L: return "arm_strd";
+            case 85L: return "arm_strh";
+            case 86L: return "arm_strt";
+            case 87L: return "arm_sub";
+            case 88L: return "arm_subs";
+            case 89L: return "arm_swi";
+            case 90L: return "arm_swp";
+            case 91L: return "arm_teq";
+            case 92L: return "arm_tst";
+            case 93L: return "arm_umaal";
+            case 94L: return "arm_umlal";
+            case 95L: return "arm_umlals";
+            case 96L: return "arm_umull";
+            case 97L: return "arm_umulls";
+            case 98L: return "arm_undefined";
+            case 99L: return "arm_last_instruction";
+            default: return "";
+        }
+    }
+
+    std::string ArmInstructionKind(long i, const std::string &strip) {
+        std::string s = ArmInstructionKind(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::ArmInstructionKind)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& ArmInstructionKind() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L,
+            3L,
+            4L,
+            5L,
+            6L,
+            7L,
+            8L,
+            9L,
+            10L,
+            11L,
+            12L,
+            13L,
+            14L,
+            15L,
+            16L,
+            17L,
+            18L,
+            19L,
+            20L,
+            21L,
+            22L,
+            23L,
+            24L,
+            25L,
+            26L,
+            27L,
+            28L,
+            29L,
+            30L,
+            31L,
+            32L,
+            33L,
+            34L,
+            35L,
+            36L,
+            37L,
+            38L,
+            39L,
+            40L,
+            41L,
+            42L,
+            43L,
+            44L,
+            45L,
+            46L,
+            47L,
+            48L,
+            49L,
+            50L,
+            51L,
+            52L,
+            53L,
+            54L,
+            55L,
+            56L,
+            57L,
+            58L,
+            59L,
+            60L,
+            61L,
+            62L,
+            63L,
+            64L,
+            65L,
+            66L,
+            67L,
+            68L,
+            69L,
+            70L,
+            71L,
+            72L,
+            73L,
+            74L,
+            75L,
+            76L,
+            77L,
+            78L,
+            79L,
+            80L,
+            81L,
+            82L,
+            83L,
+            84L,
+            85L,
+            86L,
+            87L,
+            88L,
+            89L,
+            90L,
+            91L,
+            92L,
+            93L,
+            94L,
+            95L,
+            96L,
+            97L,
+            98L,
+            99L
+        };
+        static const std::vector<long> retval(values, values + 100);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmInstructionKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::ArmInstructionKind(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::ArmInstructionKind)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::ArmInstructionKind::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisArmInstructionKind() {
+        return stringify::Rose::BinaryAnalysis::ArmInstructionKind();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/InstructionEnumsArm.h line 127
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
+    const char* ArmInstructionCondition(long i) {
+        switch (i) {
+            case 0L: return "arm_cond_unknown";
+            case 1L: return "arm_cond_eq";
+            case 2L: return "arm_cond_ne";
+            case 3L: return "arm_cond_hs";
+            case 4L: return "arm_cond_lo";
+            case 5L: return "arm_cond_mi";
+            case 6L: return "arm_cond_pl";
+            case 7L: return "arm_cond_vs";
+            case 8L: return "arm_cond_vc";
+            case 9L: return "arm_cond_hi";
+            case 10L: return "arm_cond_ls";
+            case 11L: return "arm_cond_ge";
+            case 12L: return "arm_cond_lt";
+            case 13L: return "arm_cond_gt";
+            case 14L: return "arm_cond_le";
+            case 15L: return "arm_cond_al";
+            case 16L: return "arm_cond_nv";
+            default: return "";
+        }
+    }
+
+    std::string ArmInstructionCondition(long i, const std::string &strip) {
+        std::string s = ArmInstructionCondition(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::ArmInstructionCondition)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& ArmInstructionCondition() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L,
+            3L,
+            4L,
+            5L,
+            6L,
+            7L,
+            8L,
+            9L,
+            10L,
+            11L,
+            12L,
+            13L,
+            14L,
+            15L,
+            16L
+        };
+        static const std::vector<long> retval(values, values + 17);
+        return retval;
+    }
+
+}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisArmInstructionCondition(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::ArmInstructionCondition(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::ArmInstructionCondition)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::ArmInstructionCondition::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisArmInstructionCondition() {
+        return stringify::Rose::BinaryAnalysis::ArmInstructionCondition();
     }
 }
 
@@ -37380,8 +38254,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 6
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 9
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* MipsRegisterClass(long i) {
         switch (i) {
             case 0L: return "mips_regclass_gpr";
@@ -37399,7 +38273,7 @@ namespace stringify {
     std::string MipsRegisterClass(long i, const std::string &strip) {
         std::string s = MipsRegisterClass(i);
         if (s.empty())
-            s = "(MipsRegisterClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::MipsRegisterClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -37420,30 +38294,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsRegisterClass(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::MipsRegisterClass(i);
+    std::string stringifyBinaryAnalysisMipsRegisterClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::MipsRegisterClass(i);
         if (retval.empty()) {
-            retval = "(MipsRegisterClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::MipsRegisterClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "MipsRegisterClass::" + retval;
+                retval = "Rose::BinaryAnalysis::MipsRegisterClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyMipsRegisterClass() {
-        return stringify::MipsRegisterClass();
+    const std::vector<long>& stringifyBinaryAnalysisMipsRegisterClass() {
+        return stringify::Rose::BinaryAnalysis::MipsRegisterClass();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 18
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 21
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* MipsFcsrMinors(long i) {
         switch (i) {
             case 0L: return "mips_fcsr_all";
@@ -37457,7 +38331,7 @@ namespace stringify {
     std::string MipsFcsrMinors(long i, const std::string &strip) {
         std::string s = MipsFcsrMinors(i);
         if (s.empty())
-            s = "(MipsFcsrMinors)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::MipsFcsrMinors)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -37474,30 +38348,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsFcsrMinors(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::MipsFcsrMinors(i);
+    std::string stringifyBinaryAnalysisMipsFcsrMinors(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::MipsFcsrMinors(i);
         if (retval.empty()) {
-            retval = "(MipsFcsrMinors)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::MipsFcsrMinors)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "MipsFcsrMinors::" + retval;
+                retval = "Rose::BinaryAnalysis::MipsFcsrMinors::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyMipsFcsrMinors() {
-        return stringify::MipsFcsrMinors();
+    const std::vector<long>& stringifyBinaryAnalysisMipsFcsrMinors() {
+        return stringify::Rose::BinaryAnalysis::MipsFcsrMinors();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 26
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 29
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* MipsSpecialPurposeRegister(long i) {
         switch (i) {
             case 0L: return "mips_spr_hi";
@@ -37512,7 +38386,7 @@ namespace stringify {
     std::string MipsSpecialPurposeRegister(long i, const std::string &strip) {
         std::string s = MipsSpecialPurposeRegister(i);
         if (s.empty())
-            s = "(MipsSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::MipsSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -37530,30 +38404,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::MipsSpecialPurposeRegister(i);
+    std::string stringifyBinaryAnalysisMipsSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::MipsSpecialPurposeRegister(i);
         if (retval.empty()) {
-            retval = "(MipsSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::MipsSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "MipsSpecialPurposeRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::MipsSpecialPurposeRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyMipsSpecialPurposeRegister() {
-        return stringify::MipsSpecialPurposeRegister();
+    const std::vector<long>& stringifyBinaryAnalysisMipsSpecialPurposeRegister() {
+        return stringify::Rose::BinaryAnalysis::MipsSpecialPurposeRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsMips.h line 35
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsMips.h line 38
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* MipsInstructionKind(long i) {
         switch (i) {
             case 0L: return "mips_unknown_instruction";
@@ -37873,7 +38747,7 @@ namespace stringify {
     std::string MipsInstructionKind(long i, const std::string &strip) {
         std::string s = MipsInstructionKind(i);
         if (s.empty())
-            s = "(MipsInstructionKind)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::MipsInstructionKind)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -38196,450 +39070,24 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyMipsInstructionKind(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::MipsInstructionKind(i);
+    std::string stringifyBinaryAnalysisMipsInstructionKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::MipsInstructionKind(i);
         if (retval.empty()) {
-            retval = "(MipsInstructionKind)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::MipsInstructionKind)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "MipsInstructionKind::" + retval;
+                retval = "Rose::BinaryAnalysis::MipsInstructionKind::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyMipsInstructionKind() {
-        return stringify::MipsInstructionKind();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 6
-namespace stringify {
-    const char* ArmRegisterClass(long i) {
-        switch (i) {
-            case 0L: return "arm_regclass_gpr";
-            case 1L: return "arm_regclass_psr";
-            default: return "";
-        }
-    }
-
-    std::string ArmRegisterClass(long i, const std::string &strip) {
-        std::string s = ArmRegisterClass(i);
-        if (s.empty())
-            s = "(ArmRegisterClass)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& ArmRegisterClass() {
-        static const long values[] = {
-            0L,
-            1L
-        };
-        static const std::vector<long> retval(values, values + 2);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyArmRegisterClass(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::ArmRegisterClass(i);
-        if (retval.empty()) {
-            retval = "(ArmRegisterClass)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "ArmRegisterClass::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyArmRegisterClass() {
-        return stringify::ArmRegisterClass();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 12
-namespace stringify {
-    const char* ArmProgramStatusRegister(long i) {
-        switch (i) {
-            case 0L: return "arm_psr_current";
-            case 1L: return "arm_psr_saved";
-            default: return "";
-        }
-    }
-
-    std::string ArmProgramStatusRegister(long i, const std::string &strip) {
-        std::string s = ArmProgramStatusRegister(i);
-        if (s.empty())
-            s = "(ArmProgramStatusRegister)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& ArmProgramStatusRegister() {
-        static const long values[] = {
-            0L,
-            1L
-        };
-        static const std::vector<long> retval(values, values + 2);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyArmProgramStatusRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::ArmProgramStatusRegister(i);
-        if (retval.empty()) {
-            retval = "(ArmProgramStatusRegister)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "ArmProgramStatusRegister::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyArmProgramStatusRegister() {
-        return stringify::ArmProgramStatusRegister();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 18
-namespace stringify {
-    const char* ArmInstructionKind(long i) {
-        switch (i) {
-            case 0L: return "arm_unknown_instruction";
-            case 1L: return "arm_adc";
-            case 2L: return "arm_adcs";
-            case 3L: return "arm_add";
-            case 4L: return "arm_adds";
-            case 5L: return "arm_and";
-            case 6L: return "arm_ands";
-            case 7L: return "arm_b";
-            case 8L: return "arm_bic";
-            case 9L: return "arm_bics";
-            case 10L: return "arm_bkpt";
-            case 11L: return "arm_bl";
-            case 12L: return "arm_blx";
-            case 13L: return "arm_bx";
-            case 14L: return "arm_bxj";
-            case 15L: return "arm_clz";
-            case 16L: return "arm_cmn";
-            case 17L: return "arm_cmp";
-            case 18L: return "arm_eor";
-            case 19L: return "arm_eors";
-            case 20L: return "arm_ldm";
-            case 21L: return "arm_ldmda";
-            case 22L: return "arm_ldmdb";
-            case 23L: return "arm_ldmia";
-            case 24L: return "arm_ldmib";
-            case 25L: return "arm_ldr";
-            case 26L: return "arm_ldrb";
-            case 27L: return "arm_ldrbt";
-            case 28L: return "arm_ldrd";
-            case 29L: return "arm_ldrsb";
-            case 30L: return "arm_ldrsh";
-            case 31L: return "arm_ldrt";
-            case 32L: return "arm_ldruh";
-            case 33L: return "arm_mla";
-            case 34L: return "arm_mlas";
-            case 35L: return "arm_mov";
-            case 36L: return "arm_movs";
-            case 37L: return "arm_mrs";
-            case 38L: return "arm_msr";
-            case 39L: return "arm_mul";
-            case 40L: return "arm_muls";
-            case 41L: return "arm_mvn";
-            case 42L: return "arm_mvns";
-            case 43L: return "arm_orr";
-            case 44L: return "arm_orrs";
-            case 45L: return "arm_qadd";
-            case 46L: return "arm_qdadd";
-            case 47L: return "arm_qdsub";
-            case 48L: return "arm_qsub";
-            case 49L: return "arm_rsb";
-            case 50L: return "arm_rsbs";
-            case 51L: return "arm_rsc";
-            case 52L: return "arm_rscs";
-            case 53L: return "arm_sbc";
-            case 54L: return "arm_sbcs";
-            case 55L: return "arm_setend";
-            case 56L: return "arm_smlabb";
-            case 57L: return "arm_smlabt";
-            case 58L: return "arm_smlal";
-            case 59L: return "arm_smlalbb";
-            case 60L: return "arm_smlalbt";
-            case 61L: return "arm_smlals";
-            case 62L: return "arm_smlaltb";
-            case 63L: return "arm_smlaltt";
-            case 64L: return "arm_smlatb";
-            case 65L: return "arm_smlatt";
-            case 66L: return "arm_smlawb";
-            case 67L: return "arm_smlawt";
-            case 68L: return "arm_smluwb";
-            case 69L: return "arm_smluwt";
-            case 70L: return "arm_smulbb";
-            case 71L: return "arm_smulbt";
-            case 72L: return "arm_smull";
-            case 73L: return "arm_smulls";
-            case 74L: return "arm_smultb";
-            case 75L: return "arm_smultt";
-            case 76L: return "arm_stm";
-            case 77L: return "arm_stmda";
-            case 78L: return "arm_stmdb";
-            case 79L: return "arm_stmia";
-            case 80L: return "arm_stmib";
-            case 81L: return "arm_str";
-            case 82L: return "arm_strb";
-            case 83L: return "arm_strbt";
-            case 84L: return "arm_strd";
-            case 85L: return "arm_strh";
-            case 86L: return "arm_strt";
-            case 87L: return "arm_sub";
-            case 88L: return "arm_subs";
-            case 89L: return "arm_swi";
-            case 90L: return "arm_swp";
-            case 91L: return "arm_teq";
-            case 92L: return "arm_tst";
-            case 93L: return "arm_umaal";
-            case 94L: return "arm_umlal";
-            case 95L: return "arm_umlals";
-            case 96L: return "arm_umull";
-            case 97L: return "arm_umulls";
-            case 98L: return "arm_undefined";
-            case 99L: return "arm_last_instruction";
-            default: return "";
-        }
-    }
-
-    std::string ArmInstructionKind(long i, const std::string &strip) {
-        std::string s = ArmInstructionKind(i);
-        if (s.empty())
-            s = "(ArmInstructionKind)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& ArmInstructionKind() {
-        static const long values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L,
-            9L,
-            10L,
-            11L,
-            12L,
-            13L,
-            14L,
-            15L,
-            16L,
-            17L,
-            18L,
-            19L,
-            20L,
-            21L,
-            22L,
-            23L,
-            24L,
-            25L,
-            26L,
-            27L,
-            28L,
-            29L,
-            30L,
-            31L,
-            32L,
-            33L,
-            34L,
-            35L,
-            36L,
-            37L,
-            38L,
-            39L,
-            40L,
-            41L,
-            42L,
-            43L,
-            44L,
-            45L,
-            46L,
-            47L,
-            48L,
-            49L,
-            50L,
-            51L,
-            52L,
-            53L,
-            54L,
-            55L,
-            56L,
-            57L,
-            58L,
-            59L,
-            60L,
-            61L,
-            62L,
-            63L,
-            64L,
-            65L,
-            66L,
-            67L,
-            68L,
-            69L,
-            70L,
-            71L,
-            72L,
-            73L,
-            74L,
-            75L,
-            76L,
-            77L,
-            78L,
-            79L,
-            80L,
-            81L,
-            82L,
-            83L,
-            84L,
-            85L,
-            86L,
-            87L,
-            88L,
-            89L,
-            90L,
-            91L,
-            92L,
-            93L,
-            94L,
-            95L,
-            96L,
-            97L,
-            98L,
-            99L
-        };
-        static const std::vector<long> retval(values, values + 100);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyArmInstructionKind(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::ArmInstructionKind(i);
-        if (retval.empty()) {
-            retval = "(ArmInstructionKind)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "ArmInstructionKind::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyArmInstructionKind() {
-        return stringify::ArmInstructionKind();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/armInstructionEnum.h line 123
-namespace stringify {
-    const char* ArmInstructionCondition(long i) {
-        switch (i) {
-            case 0L: return "arm_cond_unknown";
-            case 1L: return "arm_cond_eq";
-            case 2L: return "arm_cond_ne";
-            case 3L: return "arm_cond_hs";
-            case 4L: return "arm_cond_lo";
-            case 5L: return "arm_cond_mi";
-            case 6L: return "arm_cond_pl";
-            case 7L: return "arm_cond_vs";
-            case 8L: return "arm_cond_vc";
-            case 9L: return "arm_cond_hi";
-            case 10L: return "arm_cond_ls";
-            case 11L: return "arm_cond_ge";
-            case 12L: return "arm_cond_lt";
-            case 13L: return "arm_cond_gt";
-            case 14L: return "arm_cond_le";
-            case 15L: return "arm_cond_al";
-            case 16L: return "arm_cond_nv";
-            default: return "";
-        }
-    }
-
-    std::string ArmInstructionCondition(long i, const std::string &strip) {
-        std::string s = ArmInstructionCondition(i);
-        if (s.empty())
-            s = "(ArmInstructionCondition)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& ArmInstructionCondition() {
-        static const long values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L,
-            9L,
-            10L,
-            11L,
-            12L,
-            13L,
-            14L,
-            15L,
-            16L
-        };
-        static const std::vector<long> retval(values, values + 17);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyArmInstructionCondition(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::ArmInstructionCondition(i);
-        if (retval.empty()) {
-            retval = "(ArmInstructionCondition)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "ArmInstructionCondition::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyArmInstructionCondition() {
-        return stringify::ArmInstructionCondition();
+    const std::vector<long>& stringifyBinaryAnalysisMipsInstructionKind() {
+        return stringify::Rose::BinaryAnalysis::MipsInstructionKind();
     }
 }
 
@@ -38710,8 +39158,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 9
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 12
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86InstructionSize(long i) {
         switch (i) {
             case 0L: return "x86_insnsize_none";
@@ -38725,7 +39173,7 @@ namespace stringify {
     std::string X86InstructionSize(long i, const std::string &strip) {
         std::string s = X86InstructionSize(i);
         if (s.empty())
-            s = "(X86InstructionSize)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86InstructionSize)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -38742,30 +39190,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86InstructionSize(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86InstructionSize(i);
+    std::string stringifyBinaryAnalysisX86InstructionSize(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86InstructionSize(i);
         if (retval.empty()) {
-            retval = "(X86InstructionSize)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86InstructionSize)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86InstructionSize::" + retval;
+                retval = "Rose::BinaryAnalysis::X86InstructionSize::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86InstructionSize() {
-        return stringify::X86InstructionSize();
+    const std::vector<long>& stringifyBinaryAnalysisX86InstructionSize() {
+        return stringify::Rose::BinaryAnalysis::X86InstructionSize();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 17
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 20
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86RegisterClass(long i) {
         switch (i) {
             case 0L: return "x86_regclass_gpr";
@@ -38783,7 +39231,7 @@ namespace stringify {
     std::string X86RegisterClass(long i, const std::string &strip) {
         std::string s = X86RegisterClass(i);
         if (s.empty())
-            s = "(X86RegisterClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86RegisterClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -38804,30 +39252,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86RegisterClass(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86RegisterClass(i);
+    std::string stringifyBinaryAnalysisX86RegisterClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86RegisterClass(i);
         if (retval.empty()) {
-            retval = "(X86RegisterClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86RegisterClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86RegisterClass::" + retval;
+                retval = "Rose::BinaryAnalysis::X86RegisterClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86RegisterClass() {
-        return stringify::X86RegisterClass();
+    const std::vector<long>& stringifyBinaryAnalysisX86RegisterClass() {
+        return stringify::Rose::BinaryAnalysis::X86RegisterClass();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 30
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 33
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86SegmentRegister(long i) {
         switch (i) {
             case 0L: return "x86_segreg_es";
@@ -38844,7 +39292,7 @@ namespace stringify {
     std::string X86SegmentRegister(long i, const std::string &strip) {
         std::string s = X86SegmentRegister(i);
         if (s.empty())
-            s = "(X86SegmentRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86SegmentRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -38864,30 +39312,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86SegmentRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86SegmentRegister(i);
+    std::string stringifyBinaryAnalysisX86SegmentRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86SegmentRegister(i);
         if (retval.empty()) {
-            retval = "(X86SegmentRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86SegmentRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86SegmentRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::X86SegmentRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86SegmentRegister() {
-        return stringify::X86SegmentRegister();
+    const std::vector<long>& stringifyBinaryAnalysisX86SegmentRegister() {
+        return stringify::Rose::BinaryAnalysis::X86SegmentRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 41
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 44
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86GeneralPurposeRegister(long i) {
         switch (i) {
             case 0L: return "x86_gpr_ax";
@@ -38913,7 +39361,7 @@ namespace stringify {
     std::string X86GeneralPurposeRegister(long i, const std::string &strip) {
         std::string s = X86GeneralPurposeRegister(i);
         if (s.empty())
-            s = "(X86GeneralPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86GeneralPurposeRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -38942,30 +39390,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86GeneralPurposeRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86GeneralPurposeRegister(i);
+    std::string stringifyBinaryAnalysisX86GeneralPurposeRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86GeneralPurposeRegister(i);
         if (retval.empty()) {
-            retval = "(X86GeneralPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86GeneralPurposeRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86GeneralPurposeRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::X86GeneralPurposeRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86GeneralPurposeRegister() {
-        return stringify::X86GeneralPurposeRegister();
+    const std::vector<long>& stringifyBinaryAnalysisX86GeneralPurposeRegister() {
+        return stringify::Rose::BinaryAnalysis::X86GeneralPurposeRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 61
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 64
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86StRegister(long i) {
         switch (i) {
             case 0L: return "x86_st_0";
@@ -38984,7 +39432,7 @@ namespace stringify {
     std::string X86StRegister(long i, const std::string &strip) {
         std::string s = X86StRegister(i);
         if (s.empty())
-            s = "(X86StRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86StRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39006,30 +39454,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86StRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86StRegister(i);
+    std::string stringifyBinaryAnalysisX86StRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86StRegister(i);
         if (retval.empty()) {
-            retval = "(X86StRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86StRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86StRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::X86StRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86StRegister() {
-        return stringify::X86StRegister();
+    const std::vector<long>& stringifyBinaryAnalysisX86StRegister() {
+        return stringify::Rose::BinaryAnalysis::X86StRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 74
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 77
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86Flags(long i) {
         switch (i) {
             case 0L: return "x86_flags_status";
@@ -39044,7 +39492,7 @@ namespace stringify {
     std::string X86Flags(long i, const std::string &strip) {
         std::string s = X86Flags(i);
         if (s.empty())
-            s = "(X86Flags)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86Flags)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39062,30 +39510,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86Flags(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86Flags(i);
+    std::string stringifyBinaryAnalysisX86Flags(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86Flags(i);
         if (retval.empty()) {
-            retval = "(X86Flags)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86Flags)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86Flags::" + retval;
+                retval = "Rose::BinaryAnalysis::X86Flags::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86Flags() {
-        return stringify::X86Flags();
+    const std::vector<long>& stringifyBinaryAnalysisX86Flags() {
+        return stringify::Rose::BinaryAnalysis::X86Flags();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 83
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 86
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86Flag(long i) {
         switch (i) {
             case 0L: return "x86_flag_cf";
@@ -39112,7 +39560,7 @@ namespace stringify {
     std::string X86Flag(long i, const std::string &strip) {
         std::string s = X86Flag(i);
         if (s.empty())
-            s = "(X86Flag)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86Flag)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39142,30 +39590,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86Flag(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86Flag(i);
+    std::string stringifyBinaryAnalysisX86Flag(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86Flag(i);
         if (retval.empty()) {
-            retval = "(X86Flag)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86Flag)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86Flag::" + retval;
+                retval = "Rose::BinaryAnalysis::X86Flag::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86Flag() {
-        return stringify::X86Flag();
+    const std::vector<long>& stringifyBinaryAnalysisX86Flag() {
+        return stringify::Rose::BinaryAnalysis::X86Flag();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 104
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 107
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86BranchPrediction(long i) {
         switch (i) {
             case 0L: return "x86_branch_prediction_none";
@@ -39178,7 +39626,7 @@ namespace stringify {
     std::string X86BranchPrediction(long i, const std::string &strip) {
         std::string s = X86BranchPrediction(i);
         if (s.empty())
-            s = "(X86BranchPrediction)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86BranchPrediction)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39194,30 +39642,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86BranchPrediction(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86BranchPrediction(i);
+    std::string stringifyBinaryAnalysisX86BranchPrediction(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86BranchPrediction(i);
         if (retval.empty()) {
-            retval = "(X86BranchPrediction)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86BranchPrediction)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86BranchPrediction::" + retval;
+                retval = "Rose::BinaryAnalysis::X86BranchPrediction::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86BranchPrediction() {
-        return stringify::X86BranchPrediction();
+    const std::vector<long>& stringifyBinaryAnalysisX86BranchPrediction() {
+        return stringify::Rose::BinaryAnalysis::X86BranchPrediction();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 112
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 115
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86RepeatPrefix(long i) {
         switch (i) {
             case 0L: return "x86_repeat_none";
@@ -39230,7 +39678,7 @@ namespace stringify {
     std::string X86RepeatPrefix(long i, const std::string &strip) {
         std::string s = X86RepeatPrefix(i);
         if (s.empty())
-            s = "(X86RepeatPrefix)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86RepeatPrefix)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39246,30 +39694,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86RepeatPrefix(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86RepeatPrefix(i);
+    std::string stringifyBinaryAnalysisX86RepeatPrefix(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86RepeatPrefix(i);
         if (retval.empty()) {
-            retval = "(X86RepeatPrefix)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86RepeatPrefix)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86RepeatPrefix::" + retval;
+                retval = "Rose::BinaryAnalysis::X86RepeatPrefix::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86RepeatPrefix() {
-        return stringify::X86RepeatPrefix();
+    const std::vector<long>& stringifyBinaryAnalysisX86RepeatPrefix() {
+        return stringify::Rose::BinaryAnalysis::X86RepeatPrefix();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsX86.h line 121
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsX86.h line 124
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86Exception(long i) {
         switch (i) {
             case 0L: return "x86_exception_int";
@@ -39299,7 +39747,7 @@ namespace stringify {
     std::string X86Exception(long i, const std::string &strip) {
         std::string s = X86Exception(i);
         if (s.empty())
-            s = "(X86Exception)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86Exception)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -39332,30 +39780,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyX86Exception(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86Exception(i);
+    std::string stringifyBinaryAnalysisX86Exception(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86Exception(i);
         if (retval.empty()) {
-            retval = "(X86Exception)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86Exception)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "X86Exception::" + retval;
+                retval = "Rose::BinaryAnalysis::X86Exception::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyX86Exception() {
-        return stringify::X86Exception();
+    const std::vector<long>& stringifyBinaryAnalysisX86Exception() {
+        return stringify::Rose::BinaryAnalysis::X86Exception();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/AssemblerX86Init.h line 21
-namespace stringify {
+// /src/frontend/Disassemblers/AssemblerX86Init.h line 24
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* X86InstructionKind(long i) {
         switch (i) {
             case 0L: return "x86_unknown_instruction";
@@ -40030,7 +40478,7 @@ namespace stringify {
     std::string X86InstructionKind(long i, const std::string &strip) {
         std::string s = X86InstructionKind(i);
         if (s.empty())
-            s = "(X86InstructionKind)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::X86InstructionKind)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -40708,80 +41156,30 @@ namespace stringify {
         return retval;
     }
 
-}
-
-namespace Rose {
-    std::string stringifyX86InstructionKind(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::X86InstructionKind(i);
-        if (retval.empty()) {
-            retval = "(X86InstructionKind)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "X86InstructionKind::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyX86InstructionKind() {
-        return stringify::X86InstructionKind();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/Registers.h line 275
-namespace stringify { namespace RegisterDictionary { namespace SortBySize {
-    const char* Direction(long i) {
-        switch (i) {
-            case 0L: return "ASCENDING";
-            case 1L: return "DESCENDING";
-            default: return "";
-        }
-    }
-
-    std::string Direction(long i, const std::string &strip) {
-        std::string s = Direction(i);
-        if (s.empty())
-            s = "(RegisterDictionary::SortBySize::Direction)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& Direction() {
-        static const long values[] = {
-            0L,
-            1L
-        };
-        static const std::vector<long> retval(values, values + 2);
-        return retval;
-    }
-
 }}}
 
 namespace Rose {
-    std::string stringifyRegisterDictionarySortBySizeDirection(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::RegisterDictionary::SortBySize::Direction(i);
+    std::string stringifyBinaryAnalysisX86InstructionKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::X86InstructionKind(i);
         if (retval.empty()) {
-            retval = "(RegisterDictionary::SortBySize::Direction)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::X86InstructionKind)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "RegisterDictionary::SortBySize::Direction::" + retval;
+                retval = "Rose::BinaryAnalysis::X86InstructionKind::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyRegisterDictionarySortBySizeDirection() {
-        return stringify::RegisterDictionary::SortBySize::Direction();
+    const std::vector<long>& stringifyBinaryAnalysisX86InstructionKind() {
+        return stringify::Rose::BinaryAnalysis::X86InstructionKind();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 8
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 10
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcInstructionKind(long i) {
         switch (i) {
             case 0L: return "powerpc_unknown_instruction";
@@ -41233,7 +41631,7 @@ namespace stringify {
     std::string PowerpcInstructionKind(long i, const std::string &strip) {
         std::string s = PowerpcInstructionKind(i);
         if (s.empty())
-            s = "(PowerpcInstructionKind)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::PowerpcInstructionKind)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41688,30 +42086,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcInstructionKind(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::PowerpcInstructionKind(i);
+    std::string stringifyBinaryAnalysisPowerpcInstructionKind(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::PowerpcInstructionKind(i);
         if (retval.empty()) {
-            retval = "(PowerpcInstructionKind)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::PowerpcInstructionKind)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "PowerpcInstructionKind::" + retval;
+                retval = "Rose::BinaryAnalysis::PowerpcInstructionKind::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyPowerpcInstructionKind() {
-        return stringify::PowerpcInstructionKind();
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcInstructionKind() {
+        return stringify::Rose::BinaryAnalysis::PowerpcInstructionKind();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 454
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 456
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcRegisterClass(long i) {
         switch (i) {
             case 0L: return "powerpc_regclass_unknown";
@@ -41724,8 +42122,9 @@ namespace stringify {
             case 7L: return "powerpc_regclass_msr";
             case 8L: return "powerpc_regclass_sr";
             case 9L: return "powerpc_regclass_iar";
-            case 10L: return "powerpc_regclass_pvr";
-            case 11L: return "powerpc_last_register_class";
+            case 10L: return "powerpc_regclass_vector";
+            case 11L: return "powerpc_regclass_vscr";
+            case 12L: return "powerpc_last_register_class";
             default: return "";
         }
     }
@@ -41733,7 +42132,7 @@ namespace stringify {
     std::string PowerpcRegisterClass(long i, const std::string &strip) {
         std::string s = PowerpcRegisterClass(i);
         if (s.empty())
-            s = "(PowerpcRegisterClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::PowerpcRegisterClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41752,36 +42151,37 @@ namespace stringify {
             8L,
             9L,
             10L,
-            11L
+            11L,
+            12L
         };
-        static const std::vector<long> retval(values, values + 12);
+        static const std::vector<long> retval(values, values + 13);
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcRegisterClass(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::PowerpcRegisterClass(i);
+    std::string stringifyBinaryAnalysisPowerpcRegisterClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::PowerpcRegisterClass(i);
         if (retval.empty()) {
-            retval = "(PowerpcRegisterClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::PowerpcRegisterClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "PowerpcRegisterClass::" + retval;
+                retval = "Rose::BinaryAnalysis::PowerpcRegisterClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyPowerpcRegisterClass() {
-        return stringify::PowerpcRegisterClass();
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcRegisterClass() {
+        return stringify::Rose::BinaryAnalysis::PowerpcRegisterClass();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 470
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 473
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcConditionRegisterAccessGranularity(long i) {
         switch (i) {
             case 0L: return "powerpc_condreggranularity_whole";
@@ -41794,7 +42194,7 @@ namespace stringify {
     std::string PowerpcConditionRegisterAccessGranularity(long i, const std::string &strip) {
         std::string s = PowerpcConditionRegisterAccessGranularity(i);
         if (s.empty())
-            s = "(PowerpcConditionRegisterAccessGranularity)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41810,30 +42210,30 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcConditionRegisterAccessGranularity(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::PowerpcConditionRegisterAccessGranularity(i);
+    std::string stringifyBinaryAnalysisPowerpcConditionRegisterAccessGranularity(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity(i);
         if (retval.empty()) {
-            retval = "(PowerpcConditionRegisterAccessGranularity)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "PowerpcConditionRegisterAccessGranularity::" + retval;
+                retval = "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyPowerpcConditionRegisterAccessGranularity() {
-        return stringify::PowerpcConditionRegisterAccessGranularity();
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcConditionRegisterAccessGranularity() {
+        return stringify::Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 477
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 480
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcSpecialPurposeRegister(long i) {
         switch (i) {
             case 1L: return "powerpc_spr_xer";
@@ -41842,6 +42242,9 @@ namespace stringify {
             case 18L: return "powerpc_spr_dsisr";
             case 19L: return "powerpc_spr_dar";
             case 22L: return "powerpc_spr_dec";
+            case 25L: return "powerpc_spr_sdr1";
+            case 280L: return "powerpc_spr_asr";
+            case 287L: return "powerpc_spr_pvr";
             default: return "";
         }
     }
@@ -41849,7 +42252,7 @@ namespace stringify {
     std::string PowerpcSpecialPurposeRegister(long i, const std::string &strip) {
         std::string s = PowerpcSpecialPurposeRegister(i);
         if (s.empty())
-            s = "(PowerpcSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41862,36 +42265,39 @@ namespace stringify {
             9L,
             18L,
             19L,
-            22L
+            22L,
+            25L,
+            280L,
+            287L
         };
-        static const std::vector<long> retval(values, values + 6);
+        static const std::vector<long> retval(values, values + 9);
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::PowerpcSpecialPurposeRegister(i);
+    std::string stringifyBinaryAnalysisPowerpcSpecialPurposeRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister(i);
         if (retval.empty()) {
-            retval = "(PowerpcSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "PowerpcSpecialPurposeRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyPowerpcSpecialPurposeRegister() {
-        return stringify::PowerpcSpecialPurposeRegister();
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcSpecialPurposeRegister() {
+        return stringify::Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/powerpcInstructionEnum.h line 487
-namespace stringify {
+// /src/frontend/Disassemblers/InstructionEnumsPowerpc.h line 494
+namespace stringify { namespace Rose { namespace BinaryAnalysis {
     const char* PowerpcTimeBaseRegister(long i) {
         switch (i) {
             case 268L: return "powerpc_tbr_tbl";
@@ -41903,7 +42309,7 @@ namespace stringify {
     std::string PowerpcTimeBaseRegister(long i, const std::string &strip) {
         std::string s = PowerpcTimeBaseRegister(i);
         if (s.empty())
-            s = "(PowerpcTimeBaseRegister)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::PowerpcTimeBaseRegister)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41918,30 +42324,80 @@ namespace stringify {
         return retval;
     }
 
-}
+}}}
 
 namespace Rose {
-    std::string stringifyPowerpcTimeBaseRegister(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::PowerpcTimeBaseRegister(i);
+    std::string stringifyBinaryAnalysisPowerpcTimeBaseRegister(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::PowerpcTimeBaseRegister(i);
         if (retval.empty()) {
-            retval = "(PowerpcTimeBaseRegister)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::PowerpcTimeBaseRegister)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "PowerpcTimeBaseRegister::" + retval;
+                retval = "Rose::BinaryAnalysis::PowerpcTimeBaseRegister::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyPowerpcTimeBaseRegister() {
-        return stringify::PowerpcTimeBaseRegister();
+    const std::vector<long>& stringifyBinaryAnalysisPowerpcTimeBaseRegister() {
+        return stringify::Rose::BinaryAnalysis::PowerpcTimeBaseRegister();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/Assembler.h line 71
-namespace stringify { namespace Assembler {
+// /src/frontend/Disassemblers/Registers.h line 285
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace RegisterDictionary { namespace SortBySize {
+    const char* Direction(long i) {
+        switch (i) {
+            case 0L: return "ASCENDING";
+            case 1L: return "DESCENDING";
+            default: return "";
+        }
+    }
+
+    std::string Direction(long i, const std::string &strip) {
+        std::string s = Direction(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& Direction() {
+        static const long values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisRegisterDictionarySortBySizeDirection(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyBinaryAnalysisRegisterDictionarySortBySizeDirection() {
+        return stringify::Rose::BinaryAnalysis::RegisterDictionary::SortBySize::Direction();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/frontend/Disassemblers/Assembler.h line 74
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Assembler {
     const char* EncodingType(long i) {
         switch (i) {
             case 0L: return "ET_SHORTEST";
@@ -41954,7 +42410,7 @@ namespace stringify { namespace Assembler {
     std::string EncodingType(long i, const std::string &strip) {
         std::string s = EncodingType(i);
         if (s.empty())
-            s = "(Assembler::EncodingType)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Assembler::EncodingType)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41970,24 +42426,24 @@ namespace stringify { namespace Assembler {
         return retval;
     }
 
-}}
+}}}}
 
 namespace Rose {
-    std::string stringifyAssemblerEncodingType(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::Assembler::EncodingType(i);
+    std::string stringifyBinaryAnalysisAssemblerEncodingType(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Assembler::EncodingType(i);
         if (retval.empty()) {
-            retval = "(Assembler::EncodingType)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Assembler::EncodingType)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Assembler::EncodingType::" + retval;
+                retval = "Rose::BinaryAnalysis::Assembler::EncodingType::" + retval;
         }
         return retval;
     }
 
-    const std::vector<long>& stringifyAssemblerEncodingType() {
-        return stringify::Assembler::EncodingType();
+    const std::vector<long>& stringifyBinaryAnalysisAssemblerEncodingType() {
+        return stringify::Rose::BinaryAnalysis::Assembler::EncodingType();
     }
 }
 
@@ -44172,7 +44628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/roseSupport/utility_functions.C line 795
+// /src/roseSupport/utility_functions.C line 797
 namespace stringify {
     const char* language_enum(long i) {
         switch (i) {
@@ -44718,647 +45174,658 @@ namespace stringify {
             case 252L: return "ATERM";
             case 253L: return "AttributeTag";
             case 254L: return "TEMP_Attribute_Specification_Statement";
-            case 255L: return "BACKSPACE_STATEMENT";
-            case 256L: return "BaseClassTag";
-            case 257L: return "ExpBaseClassTag";
-            case 258L: return "BaseClassModifierTag";
-            case 259L: return "BASIC_BLOCK_STMT";
-            case 260L: return "BidirectionalGraphTag";
-            case 261L: return "BinaryCompositeTag";
-            case 262L: return "BINARY_EXPRESSION";
-            case 263L: return "BITAND_OP";
-            case 264L: return "BitAttributeTag";
-            case 265L: return "BIT_COMPLEMENT_OP";
-            case 266L: return "BITOR_OP";
-            case 267L: return "BITXOR_OP";
-            case 268L: return "TEMP_Block_Data_Statement";
-            case 269L: return "BOOL_VAL";
-            case 270L: return "BREAK_STMT";
-            case 271L: return "BRACED_INIT";
-            case 272L: return "CPP_DIRECTIVE_STMT";
-            case 273L: return "CASE_STMT";
-            case 274L: return "CAST_OP";
-            case 275L: return "CATCH_STMT";
-            case 276L: return "CATCH_STATEMENT_SEQ";
-            case 277L: return "CHAR_VAL";
-            case 278L: return "CHAR16_VAL";
-            case 279L: return "CHAR32_VAL";
-            case 280L: return "ClassDecl_attrTag";
-            case 281L: return "CLASS_DECL_STMT";
-            case 282L: return "CLASS_DEFN_STMT";
-            case 283L: return "CLASSNAME_REF";
-            case 284L: return "CLASS_NAME";
-            case 285L: return "T_CLASS";
-            case 286L: return "C_LINKAGE_DECLARATION_STMT";
-            case 287L: return "C_LINKAGE_END_STMT";
-            case 288L: return "C_LINKAGE_START_STMT";
-            case 289L: return "CLOSE_STATEMENT";
-            case 290L: return "TEMP_ColonShapeExp";
-            case 291L: return "COMMA_OP";
-            case 292L: return "COMMON_BLOCK";
-            case 293L: return "TEMP_CommonBlockObject";
-            case 294L: return "COMMON_SYMBOL";
-            case 295L: return "COMPLEX_VAL";
-            case 296L: return "COMPREHENSION";
-            case 298L: return "COMPOUND_ASSIGN_OP";
-            case 299L: return "COMPOUND_INIT";
-            case 300L: return "COMPOUND_LITERAL";
-            case 301L: return "TEMP_Computed_Goto_Statement";
-            case 302L: return "CONCATENATION_OP";
-            case 303L: return "EXPR_CONDITIONAL";
-            case 304L: return "CONJUGATE_OP";
-            case 305L: return "ConstVolatileModifierTag";
-            case 306L: return "CONSTRUCTOR_INIT";
-            case 307L: return "TEMP_Contains_Statement";
-            case 308L: return "CONTINUE_STMT";
-            case 309L: return "CTOR_INITIALIZER_LIST";
-            case 310L: return "TEMP_DataStatementGroup";
-            case 311L: return "TEMP_DataStatementObject";
-            case 312L: return "TEMP_DataStatementValue";
-            case 313L: return "DEAD_IF_DIRECTIVE_STMT";
-            case 314L: return "TEMP_Deallocate_Statement";
-            case 315L: return "DeclarationModifierTag";
-            case 316L: return "DECLARATION_SCOPE";
-            case 317L: return "DECL_STMT";
-            case 318L: return "T_DECLTYPE";
-            case 319L: return "DEFAULT_STMT";
-            case 320L: return "DEFAULT_NAME";
-            case 321L: return "DEFINE_DIRECTIVE_STMT";
-            case 322L: return "DELETE_OP";
-            case 323L: return "TEMP_Derived_Type_Statement";
-            case 324L: return "DESIGNATED_INITIALIZER";
-            case 325L: return "DICTIONARY_COMPREHENSION";
-            case 326L: return "DICT_EXP";
-            case 327L: return "TEMP_DimensionObject";
-            case 329L: return "DirectedGraphEdgeTag";
-            case 331L: return "DirectoryTag";
-            case 332L: return "DirectoryListTag";
-            case 333L: return "DIV_ASSIGN_OP";
-            case 334L: return "DIV_OP";
-            case 335L: return "DO_WHILE_STMT";
-            case 336L: return "RECORD_REF";
-            case 337L: return "DOTSTAR_OP";
-            case 338L: return "DOUBLE_VAL";
-            case 339L: return "ElaboratedTypeModifierTag";
-            case 340L: return "ELEMENT_WISE_OP";
-            case 341L: return "ELEMENT_ADD_OP";
-            case 342L: return "ELEMENT_DIVIDE_OP";
-            case 343L: return "ELEMENT_LEFT_DIVIDE_OP";
-            case 344L: return "ELEMENT_MULT_OP";
-            case 345L: return "ELEMENT_POWER_OP";
-            case 346L: return "ELEMENT_SUBTRACT_OP";
-            case 347L: return "ELSE_DIRECTIVE_STMT";
-            case 348L: return "TEMP_Else_Where_Statement";
-            case 349L: return "ELSEIF_DIRECTIVE_STMT";
-            case 350L: return "EMPTY_DIRECTIVE_STMT";
-            case 351L: return "ENDFILE_STATEMENT";
-            case 352L: return "ENDIF_DIRECTIVE_STMT";
-            case 353L: return "ENTRY_STMT";
-            case 354L: return "ENUM_DECL_STMT";
-            case 355L: return "FIELD_NAME";
-            case 356L: return "ENUM_NAME";
-            case 357L: return "T_ENUM";
-            case 358L: return "ENUM_VAL";
-            case 359L: return "EQ_OP";
-            case 360L: return "TEMP_Equivalence_Statement";
-            case 361L: return "ERROR_DIRECTIVE_STMT";
-            case 362L: return "EXEC_STMT";
-            case 363L: return "EXPONENTIATION_OP";
-            case 364L: return "EXP_ASSIGN_OP";
-            case 365L: return "EXPR_LIST";
-            case 366L: return "EXPR_STMT";
-            case 367L: return "ExpressionTag";
-            case 368L: return "EXPRESSION_ROOT";
-            case 369L: return "FileTag";
-            case 370L: return "FileListTag";
-            case 371L: return "FLOAT_VAL";
-            case 372L: return "FLUSH_STATEMENT";
-            case 373L: return "FOR_ALL_STMT";
-            case 374L: return "FOR_INIT_STMT";
-            case 375L: return "FOR_STMT";
-            case 376L: return "TEMP_FormatItem";
-            case 377L: return "TEMP_FormatItemList";
-            case 378L: return "FORMAT_STATEMENT";
-            case 379L: return "FORTRAN_DO";
-            case 380L: return "TEMP_Fortran_Include_Line";
-            case 381L: return "FORTRAN_NONBLOCKED_DO";
-            case 382L: return "FuncDecl_attrTag";
-            case 383L: return "FUNC_CALL";
-            case 384L: return "FUNC_DECL_STMT";
-            case 385L: return "FUNC_DEFN_STMT";
-            case 386L: return "FUNCTION_PARAMETER_SCOPE";
-            case 387L: return "FunctionModifierTag";
-            case 388L: return "FUNCTION_PARAMETER_LIST";
-            case 389L: return "FUNCTION_PARAMETER_REF_EXP";
-            case 390L: return "T_FUNCTION_PARAMETER_TYPE_LIST";
-            case 391L: return "FUNCTION_REF";
-            case 392L: return "FUNCTION_NAME";
-            case 393L: return "T_FUNCTION";
-            case 394L: return "FUNCTYPE_NAME";
-            case 395L: return "FUNC_TBL_STMT";
-            case 396L: return "TYPE_TABLE";
-            case 397L: return "GLOBAL_STMT";
-            case 398L: return "GOTO_STMT";
-            case 399L: return "GraphTag";
-            case 400L: return "GraphEdgeTag";
-            case 401L: return "GraphEdgeListTag";
-            case 402L: return "GraphNodeTag";
-            case 403L: return "GraphNodeListTag";
-            case 404L: return "GE_OP";
-            case 405L: return "GT_OP";
-            case 406L: return "IO_ITEM_EXPR";
-            case 407L: return "IO_STATEMENT";
-            case 408L: return "IDENT_DIRECTIVE_STMT";
-            case 409L: return "IF_DIRECTIVE_STMT";
-            case 410L: return "IF_STMT";
-            case 411L: return "IFDEF_DIRECTIVE_STMT";
-            case 412L: return "IFNDEF_DIRECTIVE_STMT";
-            case 413L: return "IMAGE_CONTROL_STATEMENT";
-            case 414L: return "IMAG_PART_OP";
-            case 415L: return "TEMP_Implicit_Statement";
-            case 416L: return "IMPLIED_DO";
-            case 417L: return "TEMP_Import_Statement";
-            case 418L: return "IncidenceDirectedGraphTag";
-            case 419L: return "IncidenceUndirectedGraphTag";
-            case 420L: return "INCLUDE_DIRECTIVE_STMT";
-            case 421L: return "IncludeFileTag";
-            case 422L: return "INCLUDE_NEXT_DIRECTIVE_STMT";
-            case 423L: return "InitializedNameTag";
-            case 424L: return "EXPR_INIT";
-            case 425L: return "INQUIRE_STATEMENT";
-            case 426L: return "IntKeyedBidirectionalGraphTag";
-            case 427L: return "INT_VAL";
-            case 428L: return "INTEGER_DIV_OP";
-            case 429L: return "IDIV_ASSIGN_OP";
-            case 430L: return "TEMP_Interface_Body";
-            case 431L: return "TEMP_Header_File_Body";
-            case 432L: return "HeaderFileReportTag";
-            case 433L: return "INTERFACE_STATEMENT";
-            case 434L: return "INTERFACE_SYMBOL";
-            case 435L: return "INTRINSIC_SYMBOL";
-            case 436L: return "IS_OP";
-            case 437L: return "IS_NOT_OP";
-            case 438L: return "IOR_ASSIGN_OP";
-            case 439L: return "JOVIAL_COMPOOL_STATEMENT";
-            case 440L: return "JOVIAL_FOR_THEN_STATEMENT";
-            case 441L: return "KEY_DATUM_PAIR";
-            case 442L: return "EXEC_CONF";
-            case 443L: return "KERN_CALL";
-            case 444L: return "LABEL_REF";
-            case 445L: return "LABEL_STMT";
-            case 446L: return "JAVA_LABEL_STMT";
-            case 447L: return "LABEL_NAME";
-            case 448L: return "JAVA_LABEL_NAME";
-            case 449L: return "LambdaCaptureTag";
-            case 450L: return "LambdaCaptureListTag";
-            case 451L: return "LAMBDA_EXP";
-            case 452L: return "LAMBDA_REF_EXP";
-            case 453L: return "LEFT_DIVIDE_OP";
-            case 454L: return "LE_OP";
-            case 455L: return "LT_OP";
-            case 456L: return "LINE_DIRECTIVE_STMT";
-            case 457L: return "LINEMARKER_DIRECTIVE_STMT";
-            case 458L: return "LinkageModifierTag";
-            case 459L: return "LIST_COMPREHENSION";
-            case 460L: return "LIST_EXP";
-            case 461L: return "LocatedNodeTag";
-            case 462L: return "LocatedNodeSupportTag";
-            case 463L: return "LONG_DOUBLE_VAL";
-            case 464L: return "LONG_INT_VAL";
-            case 465L: return "LONG_LONG_INT_VAL";
-            case 466L: return "LSHIFT_ASSIGN_OP";
-            case 467L: return "LSHIFT_OP";
-            case 468L: return "MAGIC_COLON_EXP";
-            case 469L: return "MATRIX_EXP";
-            case 470L: return "MATRIX_TRANSPOSE_OP";
-            case 471L: return "MATLAB_FOR_STATEMENT";
-            case 472L: return "MFUNC_DECL_STMT";
-            case 473L: return "MEMBER_FUNCTION_REF";
-            case 474L: return "MEMBER_FUNC_NAME";
-            case 475L: return "T_MEMBERFUNCTION";
-            case 476L: return "MEMBERSHIP_OP";
-            case 477L: return "MS_ATTRIBUTE_DECL_STMT";
-            case 478L: return "MINUS_ASSIGN_OP";
-            case 479L: return "MINUSMINUS_OP";
-            case 480L: return "UNARY_MINUS_OP";
-            case 481L: return "MOD_ASSIGN_OP";
-            case 482L: return "MOD_OP";
-            case 483L: return "ModifierTag";
-            case 484L: return "ModifierNodesTag";
-            case 485L: return "T_MODIFIER";
-            case 486L: return "MODULE_STATEMENT";
-            case 487L: return "MODULE_SYMBOL";
-            case 488L: return "MULT_ASSIGN_OP";
-            case 489L: return "MULT_OP";
-            case 490L: return "NameTag";
-            case 491L: return "TEMP_Name_Group";
-            case 492L: return "T_NAME";
-            case 493L: return "TEMP_Namelist_Statement";
-            case 494L: return "NAMESPACE_ALIAS_DECLARATION_STMT";
-            case 495L: return "NAMESPACE_DECLARATION_STMT";
-            case 496L: return "NAMESPACE_DEFINITION_STMT";
-            case 497L: return "NAMESPACE_NAME";
-            case 498L: return "NARY_EXPRESSION";
-            case 499L: return "NARY_BOOLEAN_OP";
-            case 500L: return "NARY_COMPARISON_OP";
-            case 501L: return "NEW_OP";
-            case 502L: return "NodeTag";
-            case 503L: return "NOEXCEPT_OP";
-            case 504L: return "NE_OP";
-            case 505L: return "NOT_OP";
-            case 506L: return "NON_MEMBERSHIP_OP";
-            case 507L: return "NULL_EXPR";
-            case 508L: return "NULLPTR_VAL";
-            case 509L: return "NULL_STMT";
-            case 510L: return "TEMP_Nullify_Statement";
-            case 511L: return "OMP_ATOMIC_STMT";
-            case 512L: return "OMP_BARRIER_STMT";
-            case 513L: return "OMP_CRITICAL_STMT";
-            case 514L: return "OMP_CLAUSEBODY_STMT";
-            case 515L: return "OMP_BODY_STMT";
-            case 516L: return "OMP_DO_STMT";
-            case 517L: return "OMP_FLUSH_STMT";
-            case 518L: return "OMP_DECLARE_SIMD_STMT";
-            case 519L: return "OMP_FOR_STMT";
-            case 520L: return "OMP_FOR_SIMD_STMT";
-            case 521L: return "OMP_MASTER_STMT";
-            case 522L: return "OMP_ORDERED_STMT";
-            case 523L: return "OMP_PARALLEL_STMT";
-            case 524L: return "OMP_SECTION_STMT";
-            case 525L: return "OMP_SECTIONS_STMT";
-            case 526L: return "OMP_SINGLE_STMT";
-            case 527L: return "OMP_TASK_STMT";
-            case 528L: return "OMP_TASKWAIT_STMT";
-            case 529L: return "OMP_THREADPRIVATE_STMT";
-            case 530L: return "OMP_WORKSHARE_STMT";
-            case 531L: return "OMP_TARGET_STMT";
-            case 532L: return "OMP_TARGET_DATA_STMT";
-            case 533L: return "OMP_SIMD_STMT";
-            case 534L: return "OmpClauseTag";
-            case 535L: return "OmpBeginClauseTag";
-            case 536L: return "OmpCollapseClauseTag";
-            case 537L: return "OmpCopyinClauseTag";
-            case 538L: return "OmpCopyprivateClauseTag";
-            case 539L: return "OmpDefaultClauseTag";
-            case 540L: return "OmpEndClauseTag";
-            case 541L: return "OmpExpressionClauseTag";
-            case 542L: return "OmpFirstprivateClauseTag";
-            case 543L: return "OmpIfClauseTag";
-            case 544L: return "OmpFinalClauseTag";
-            case 545L: return "OmpPriorityClauseTag";
-            case 546L: return "OmpIfDeviceTag";
-            case 547L: return "OmpLastprivateClauseTag";
-            case 548L: return "OmpNowaitClauseTag";
-            case 549L: return "OmpNumThreadsClauseTag";
-            case 550L: return "OmpOrderedClauseTag";
-            case 551L: return "OmpPrivateClauseTag";
-            case 552L: return "OmpReductionClauseTag";
-            case 553L: return "OmpScheduleClauseTag";
-            case 554L: return "OmpSharedClauseTag";
-            case 555L: return "OmpUntiedClauseTag";
-            case 556L: return "OmpMergeableClauseTag";
-            case 557L: return "OmpVariablesClauseTag";
-            case 558L: return "OmpMapClauseTag";
-            case 559L: return "OmpSafelenTag";
-            case 560L: return "OmpSimdlenTag";
-            case 561L: return "OmpLinearClauseTag";
-            case 562L: return "OmpUniformClauseTag";
-            case 563L: return "OmpAlignedClauseTag";
-            case 564L: return "OmpProcBindClauseTag";
-            case 565L: return "OmpAtomicClauseTag";
-            case 566L: return "OmpInbranchClauseTag";
-            case 567L: return "OmpNotinbranchClauseTag";
-            case 568L: return "OmpDependClauseTag";
-            case 569L: return "OPENCL_ACCESS_MODE";
-            case 570L: return "OPEN_STATEMENT";
-            case 571L: return "OptionsTag";
-            case 572L: return "OR_OP";
-            case 573L: return "PARAMETER_STATEMENT";
-            case 574L: return "T_PARTIAL_FUNCTION_MODIFIER";
-            case 575L: return "T_PARTIAL_FUNCTION";
-            case 576L: return "PASS_STATEMENT";
-            case 577L: return "PLUS_ASSIGN_OP";
-            case 578L: return "PLUSPLUS_OP";
-            case 579L: return "ARRAY_OP";
-            case 580L: return "POINTER_ASSIGN_OP";
-            case 581L: return "DEREF_OP";
-            case 582L: return "T_MEMBER_POINTER";
-            case 583L: return "T_POINTER";
-            case 584L: return "POWER_OP";
-            case 585L: return "PragmaTag";
-            case 586L: return "PRAGMA_DECL";
-            case 587L: return "PRINT_STATEMENT";
-            case 588L: return "PROCEDURE_HEADER_STMT";
-            case 589L: return "PROGRAM_HEADER_STMT";
-            case 590L: return "ProjectTag";
-            case 591L: return "PSEUDO_DESTRUCTOR_REF";
-            case 592L: return "PYTHON_GLOBAL_STMT";
-            case 593L: return "PYTHON_PRINT_STMT";
-            case 594L: return "QualifiedNameTag";
-            case 595L: return "T_QUALIFIED_NAME";
-            case 596L: return "RANGE_EXP";
-            case 597L: return "RANGE_BASED_FOR_STMT";
-            case 598L: return "READ_STATEMENT";
-            case 599L: return "REAL_PART_OP";
-            case 600L: return "TYPE_REF";
-            case 601L: return "T_REFERENCE";
-            case 602L: return "TEMP_Rename_Pair";
-            case 603L: return "RENAME_SYMBOL";
-            case 604L: return "RETURN_STMT";
-            case 605L: return "REWIND_STATEMENT";
-            case 606L: return "RSHIFT_ASSIGN_OP";
-            case 607L: return "RSHIFT_OP";
-            case 608L: return "T_RVALUE_REFERENCE";
-            case 609L: return "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP";
-            case 610L: return "JAVA_UNSIGNED_RSHIFT_OP";
-            case 611L: return "SCOPE_OP";
-            case 612L: return "SCOPE_STMT";
-            case 613L: return "TEMP_Sequence_Statement";
-            case 614L: return "SET_COMPREHENSION";
-            case 615L: return "SHORT_VAL";
-            case 616L: return "SIZEOF_OP";
-            case 617L: return "ALIGNOF_OP";
-            case 618L: return "JAVA_INSTANCEOF_OP";
-            case 619L: return "SourceFileTag";
-            case 620L: return "SPAWN_STMT";
-            case 621L: return "SYNC_ALL_STATEMENT";
-            case 622L: return "SYNC_IMAGES_STATEMENT";
-            case 623L: return "SYNC_MEMORY_STATEMENT";
-            case 624L: return "SYNC_TEAM_STATEMENT";
-            case 625L: return "LOCK_STATEMENT";
-            case 626L: return "UNLOCK_STATEMENT";
-            case 627L: return "JAVE_THROW_STMT";
-            case 628L: return "JAVA_FOREACH_STMT";
-            case 629L: return "JAVA_SYNC_STMT";
-            case 630L: return "T_JAVA_PARAM";
-            case 631L: return "T_JAVA_WILD";
-            case 632L: return "SpecialFunctionModifierTag";
-            case 633L: return "StatementTag";
-            case 634L: return "STATIC_ASSERTION_DECLARATION";
-            case 635L: return "STMT_DECL_STMT";
-            case 636L: return "STMT_EXPR";
-            case 637L: return "TEMP_Statement_Function_Statement";
-            case 638L: return "STOP_OR_PAUSE_STATEMENT";
-            case 639L: return "StorageModifierTag";
-            case 640L: return "STR_CONV";
-            case 641L: return "StringKeyedBidirectionalGraphTag";
-            case 642L: return "STRING_VAL";
-            case 643L: return "SUBSCRIPT_EXPR";
-            case 644L: return "SUBT_OP";
-            case 645L: return "SupportTag";
-            case 646L: return "SWITCH_STMT";
-            case 647L: return "SymbolTag";
-            case 648L: return "SymbolTableTag";
-            case 649L: return "TemplateArgumentTag";
-            case 650L: return "TemplateArgumentListTag";
-            case 651L: return "TEMPLATE_DECL_STMT";
-            case 652L: return "TEMPLATE_CLASS_DECL_STMT";
-            case 653L: return "TEMPLATE_CLASS_NAME";
-            case 654L: return "TEMPLATE_FUNCTION_DECL_STMT";
-            case 655L: return "TEMPLATE_FUNCTION_REF";
-            case 656L: return "TEMPLATE_FUNC_NAME";
-            case 657L: return "TEMPLATE_MEMBER_FUNCTION_DECL_STMT";
-            case 658L: return "TEMPLATE_MEMBER_FUNCTION_REF";
-            case 659L: return "TEMPLATE_MEMBER_FUNC_NAME";
-            case 660L: return "TEMPLATE_TYPEDEF_DECL_STMT";
-            case 661L: return "TEMPLATE_TYPEDEF_NAME";
-            case 662L: return "TEMPLATE_VARIABLE_DECL_STMT";
-            case 663L: return "TEMPLATE_VARIABLE_NAME";
-            case 664L: return "TEMPLATE_CLASS_DEF_STMT";
-            case 665L: return "TEMPLATE_FUNCTION_DEF_STMT";
-            case 666L: return "TEMPLATE_INST_DECL_STMT";
-            case 667L: return "TEMPLATE_INST_DEFN_STMT";
-            case 668L: return "TEMPLATE_INST_DIRECTIVE_STMT";
-            case 669L: return "TEMPLATE_INST_FUNCTION_DECL_STMT";
-            case 670L: return "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT";
-            case 671L: return "TEMPLATE_INST_TYPEDEF_DECL_STMT";
-            case 672L: return "TemplateParameterTag";
-            case 673L: return "TEMPLATE_PARAMETER_VAL";
-            case 674L: return "TemplateParameterListTag";
-            case 675L: return "TEMPLATE_NAME";
-            case 676L: return "T_TEMPLATE";
-            case 677L: return "THIS_NODE";
-            case 678L: return "TYPE_TRAIT_BUILTIN_OPERATOR";
-            case 679L: return "SUPER_NODE";
-            case 680L: return "THROW_OP";
-            case 681L: return "TOKEN";
-            case 682L: return "TRY_STMT";
-            case 683L: return "TUPLE_EXP";
-            case 684L: return "TypeTag";
-            case 685L: return "T_BOOL";
-            case 686L: return "T_CHAR";
-            case 687L: return "T_CHAR16";
-            case 688L: return "T_CHAR32";
-            case 689L: return "T_COMPLEX";
-            case 690L: return "T_DEFAULT";
-            case 691L: return "TYPE_EXPRESSION";
-            case 692L: return "T_LABEL";
-            case 693L: return "T_DOUBLE";
-            case 694L: return "T_ELLIPSE";
-            case 695L: return "T_FLOAT";
-            case 696L: return "T_FLOAT128";
-            case 697L: return "T_FLOAT80";
-            case 698L: return "T_GLOBAL_VOID";
-            case 699L: return "TYPEID_OP";
-            case 700L: return "T_IMAGINARY";
-            case 701L: return "T_INT";
-            case 702L: return "T_LONG";
-            case 703L: return "T_LONG_DOUBLE";
-            case 704L: return "T_LONG_LONG";
-            case 705L: return "TypeModifierTag";
-            case 706L: return "T_MATRIX";
-            case 707L: return "T_TUPLE";
-            case 708L: return "T_NULLPTR";
-            case 709L: return "T_TYPEOF_TYPE";
-            case 710L: return "T_SHORT";
-            case 711L: return "T_SIGNED_128BIT_INTEGER";
-            case 712L: return "T_SIGNED_CHAR";
-            case 713L: return "T_SIGNED_INT";
-            case 714L: return "T_SIGNED_LONG";
-            case 715L: return "T_SIGNED_LONG_LONG";
-            case 716L: return "T_SIGNED_SHORT";
-            case 717L: return "T_STRING";
-            case 718L: return "T_UNKNOWN";
-            case 719L: return "T_UNSIGNED_128BIT_INTEGER";
-            case 720L: return "T_UNSIGNED_CHAR";
-            case 721L: return "T_UNSIGNED_INT";
-            case 722L: return "T_UNSIGNED_LONG";
-            case 723L: return "T_UNSIGNED_LONG_LONG";
-            case 724L: return "T_UNSIGNED_SHORT";
-            case 725L: return "T_VOID";
-            case 726L: return "T_WCHAR";
-            case 727L: return "TYPEDEF_STMT";
-            case 728L: return "T_TYPEDEF_SEQ";
-            case 729L: return "TYPEDEF_NAME";
-            case 730L: return "T_TYPEDEF";
-            case 731L: return "UPC_AccessModifierTag";
-            case 732L: return "UNARY_ADD_OP";
-            case 733L: return "UNARY_EXPRESSION";
-            case 734L: return "UNDEF_DIRECTIVE_STMT";
-            case 735L: return "UndirectedGraphEdgeTag";
-            case 736L: return "TEMP_UnknownArrayOrFunctionReference";
-            case 737L: return "UnknownFileTag";
-            case 739L: return "Unparse_InfoTag";
-            case 740L: return "UNSIGNED_CHAR_VAL";
-            case 741L: return "UNSIGNED_INT_VAL";
-            case 742L: return "UNSIGNED_LONG_LONG_INT_VAL";
-            case 743L: return "UNSIGNED_LONG_INT_VAL";
-            case 744L: return "UNSIGNED_SHORT_VAL";
-            case 745L: return "UntypedNodeTag";
-            case 746L: return "UntypedExpressionTag";
-            case 747L: return "TEMP_UntypedUnaryOperator";
-            case 748L: return "TEMP_UntypedBinaryOperator";
-            case 749L: return "TEMP_UntypedValueExpression";
-            case 750L: return "TEMP_UntypedArrayReferenceExpression";
-            case 751L: return "TEMP_UntypedSubscriptExpression";
-            case 752L: return "TEMP_UntypedOtherExpression";
-            case 753L: return "TEMP_UntypedNamedExpression";
-            case 754L: return "TEMP_UntypedNullExpression";
-            case 755L: return "TEMP_UntypedExprListExpression";
-            case 756L: return "TEMP_UntypedFunctionCallOrArrayReferenceExpression";
-            case 757L: return "UntypedStatementTag";
-            case 758L: return "TEMP_UntypedLabelStatement";
-            case 759L: return "TEMP_UntypedNamedStatement";
-            case 760L: return "TEMP_UntypedAssignmentStatement";
-            case 761L: return "TEMP_UntypedBlockStatement";
-            case 762L: return "TEMP_UntypedExpressionStatement";
-            case 763L: return "TEMP_UntypedForAllStatement";
-            case 764L: return "TEMP_UntypedFunctionCallStatement";
-            case 765L: return "TEMP_UntypedImageControlStatement";
-            case 766L: return "TEMP_UntypedOtherStatement";
-            case 767L: return "TEMP_UntypedUseStatement";
-            case 768L: return "UntypedDeclarationStatementTag";
-            case 769L: return "TEMP_UntypedInitializedName";
-            case 770L: return "TEMP_UntypedName";
-            case 771L: return "TEMP_UntypedNameListDeclaration";
-            case 772L: return "TEMP_UntypedInitializedNameListDeclaration";
-            case 773L: return "TEMP_UntypedImplicitDeclaration";
-            case 774L: return "TEMP_UntypedVariableDeclaration";
-            case 775L: return "TEMP_UntypedProgramHeaderDeclaration";
-            case 776L: return "UntypedFunctionDeclarationTag";
-            case 777L: return "TEMP_UntypedSubroutineDeclaration";
-            case 778L: return "TEMP_UntypedInterfaceDeclaration";
-            case 779L: return "TEMP_UntypedNullDeclaration";
-            case 780L: return "TEMP_UntypedNullStatement";
-            case 781L: return "TEMP_UntypedIfStatement";
-            case 782L: return "TEMP_UntypedCaseStatement";
-            case 783L: return "TEMP_UntypedLoopStatement";
-            case 784L: return "TEMP_UntypedWhileStatement";
-            case 785L: return "TEMP_UntypedForStatement";
-            case 786L: return "TEMP_UntypedExitStatement";
-            case 787L: return "TEMP_UntypedGotoStatement";
-            case 788L: return "TEMP_UntypedProcedureCallStatement";
-            case 789L: return "TEMP_UntypedReturnStatement";
-            case 790L: return "TEMP_UntypedExtendedReturnStatement";
-            case 791L: return "TEMP_UntypedStopStatement";
-            case 792L: return "TEMP_UntypedAcceptStatement";
-            case 793L: return "TEMP_UntypedEntryCallStatement";
-            case 794L: return "TEMP_UntypedRequeueStatement";
-            case 795L: return "TEMP_UntypedDelayUntilStatement";
-            case 796L: return "TEMP_UntypedDelayRelativeStatement";
-            case 797L: return "TEMP_UntypedTerminateAlternativeStatement";
-            case 798L: return "TEMP_UntypedSelectiveAcceptStatement";
-            case 799L: return "TEMP_UntypedTimedEntryCallStatement";
-            case 800L: return "TEMP_UntypedConditionalEntryCallStatement";
-            case 801L: return "TEMP_UntypedAsynchronousSelectStatement";
-            case 802L: return "TEMP_UntypedAbortStatement";
-            case 803L: return "TEMP_UntypedRaiseStatement";
-            case 804L: return "TEMP_UntypedCodeStatement";
-            case 805L: return "TEMP_UntypedReferenceExpression";
-            case 806L: return "TEMP_UntypedToken";
-            case 807L: return "TEMP_UntypedTokenPair";
-            case 808L: return "UntypedTypeTag";
-            case 809L: return "TEMP_UntypedArrayType";
-            case 810L: return "TEMP_UntypedAttribute";
-            case 811L: return "TEMP_UntypedFile";
-            case 812L: return "UntypedScopeTag";
-            case 813L: return "TEMP_UntypedFunctionScope";
-            case 814L: return "TEMP_UntypedModuleScope";
-            case 815L: return "TEMP_UntypedGlobalScope";
-            case 816L: return "TEMP_UntypedModuleDeclaration";
-            case 817L: return "TEMP_UntypedSubmoduleDeclaration";
-            case 818L: return "TEMP_UntypedBlockDataDeclaration";
-            case 819L: return "TEMP_UntypedStructureDeclaration";
-            case 820L: return "TEMP_UntypedPackageDeclaration";
-            case 821L: return "TEMP_UntypedExceptionDeclaration";
-            case 822L: return "TEMP_UntypedExceptionHandlerDeclaration";
-            case 823L: return "TEMP_UntypedTaskDeclaration";
-            case 824L: return "TEMP_UntypedUnitDeclaration";
-            case 825L: return "TEMP_UntypedStatementList";
-            case 826L: return "TEMP_UntypedDeclarationStatementList";
-            case 827L: return "TEMP_UntypedFunctionDeclarationList";
-            case 828L: return "TEMP_UntypedInitializedNameList";
-            case 829L: return "TEMP_UntypedNameList";
-            case 830L: return "TEMP_UntypedTokenList";
-            case 831L: return "TEMP_UntypedTokenPairList";
-            case 832L: return "UPC_BARRIER_STMT";
-            case 833L: return "UPC_BLOCK_SIZEOF_EXPR";
-            case 834L: return "UPC_ELEM_SIZEOF_EXPR";
-            case 835L: return "UPC_FENCE_STMT";
-            case 836L: return "UPC_FORALL_STMT";
-            case 837L: return "UPC_LOCAL_SIZEOF_EXPR";
-            case 838L: return "UPC_MYTHREAD";
-            case 839L: return "UPC_NOTIFY_STMT";
-            case 840L: return "UPC_THREADS";
-            case 841L: return "UPC_WAIT_STMT";
-            case 842L: return "USE_STATEMENT";
-            case 843L: return "USER_DEFINED_BINARY_OP";
-            case 844L: return "USER_DEFINED_UNARY_OP";
-            case 845L: return "USING_DECLARATION_STMT";
-            case 846L: return "USING_DIRECTIVE_STMT";
-            case 847L: return "ValueExpTag";
-            case 848L: return "VA_COPY_OP";
-            case 849L: return "VA_END_OP";
-            case 850L: return "VA_OP";
-            case 851L: return "VA_START_ONE_OPERAND_OP";
-            case 852L: return "VA_START_OP";
-            case 853L: return "VAR_REF";
-            case 854L: return "VAR_DECL_STMT";
-            case 855L: return "VAR_DEFN_STMT";
-            case 856L: return "VARIABLE_NAME";
-            case 857L: return "VARIANT_EXPR";
-            case 858L: return "VARIANT_STMT";
-            case 859L: return "WAIT_STATEMENT";
-            case 860L: return "WARNING_DIRECTIVE_STMT";
-            case 861L: return "WITH_STATEMENT";
-            case 862L: return "WCHAR_VAL";
-            case 863L: return "TEMP_Where_Statement";
-            case 864L: return "WHILE_STMT";
-            case 865L: return "WRITE_STATEMENT";
-            case 866L: return "XOR_ASSIGN_OP";
-            case 867L: return "YIELD_EXP";
-            case 868L: return "_File_InfoTag";
-            case 869L: return "T_CAFTEAM";
-            case 870L: return "WITHTEAM_STMT";
-            case 871L: return "COARRAY_REF_EXPR";
-            case 872L: return "CALL_EXPRESSION";
-            case 873L: return "T_CRAY_POINTER";
-            case 874L: return "TEMP_JavaImportStatement";
-            case 875L: return "TEMP_JavaPackageDeclaration";
-            case 876L: return "TEMP_JavaPackageStatement";
-            case 877L: return "JavaImportStatementListTag";
-            case 878L: return "JavaClassDeclarationListTag";
-            case 879L: return "JavaMemberValuePairTag";
-            case 880L: return "JAVA_ANNOTATION";
-            case 881L: return "JAVA_MARKER_ANNOTATION";
-            case 882L: return "JAVA_SINGLE_MEMBER_ANNOTATION";
-            case 883L: return "JAVA_NORMAL_ANNOTATION";
-            case 884L: return "JAVA_TYPE_EXPRESSION";
-            case 885L: return "T_JAVA_QUALIFIED";
-            case 886L: return "CLASS_NODE";
-            case 887L: return "T_JAVA_UNION";
-            case 888L: return "T_JAVA_PARAMETER";
-            case 889L: return "ASYNC_STMT";
-            case 890L: return "FINISH_STMT";
-            case 891L: return "AT_STMT";
-            case 892L: return "ATOMIC_STMT";
-            case 894L: return "WHEN_STMT";
-            case 895L: return "ATEXP_NODE";
-            case 896L: return "FINISHEXP_NODE";
-            case 897L: return "HERE_NODE";
-            case 898L: return "DOTDOT_NODE";
-            case 900L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
-            case 901L: return "Cxx_Grammar_LAST_TAG";
+            case 255L: return "T_AUTO";
+            case 256L: return "BACKSPACE_STATEMENT";
+            case 257L: return "BaseClassTag";
+            case 258L: return "ExpBaseClassTag";
+            case 259L: return "BaseClassModifierTag";
+            case 260L: return "BASIC_BLOCK_STMT";
+            case 261L: return "BidirectionalGraphTag";
+            case 262L: return "BinaryCompositeTag";
+            case 263L: return "BINARY_EXPRESSION";
+            case 264L: return "BITAND_OP";
+            case 265L: return "BitAttributeTag";
+            case 266L: return "BIT_COMPLEMENT_OP";
+            case 267L: return "BITOR_OP";
+            case 268L: return "BITXOR_OP";
+            case 269L: return "TEMP_Block_Data_Statement";
+            case 270L: return "BOOL_VAL";
+            case 271L: return "BREAK_STMT";
+            case 272L: return "BRACED_INIT";
+            case 273L: return "CPP_DIRECTIVE_STMT";
+            case 274L: return "CASE_STMT";
+            case 275L: return "CAST_OP";
+            case 276L: return "CATCH_STMT";
+            case 277L: return "CATCH_STATEMENT_SEQ";
+            case 278L: return "CHAR_VAL";
+            case 279L: return "CHAR16_VAL";
+            case 280L: return "CHAR32_VAL";
+            case 281L: return "ClassDecl_attrTag";
+            case 282L: return "CLASS_DECL_STMT";
+            case 283L: return "CLASS_DEFN_STMT";
+            case 284L: return "CLASSNAME_REF";
+            case 285L: return "CLASS_NAME";
+            case 286L: return "T_CLASS";
+            case 287L: return "C_LINKAGE_DECLARATION_STMT";
+            case 288L: return "C_LINKAGE_END_STMT";
+            case 289L: return "C_LINKAGE_START_STMT";
+            case 290L: return "CLOSE_STATEMENT";
+            case 291L: return "TEMP_ColonShapeExp";
+            case 292L: return "COMMA_OP";
+            case 293L: return "COMMON_BLOCK";
+            case 294L: return "TEMP_CommonBlockObject";
+            case 295L: return "COMMON_SYMBOL";
+            case 296L: return "COMPLEX_VAL";
+            case 297L: return "COMPREHENSION";
+            case 299L: return "COMPOUND_ASSIGN_OP";
+            case 300L: return "COMPOUND_INIT";
+            case 301L: return "COMPOUND_LITERAL";
+            case 302L: return "TEMP_Computed_Goto_Statement";
+            case 303L: return "CONCATENATION_OP";
+            case 304L: return "EXPR_CONDITIONAL";
+            case 305L: return "CONJUGATE_OP";
+            case 306L: return "ConstVolatileModifierTag";
+            case 307L: return "CONSTRUCTOR_INIT";
+            case 308L: return "TEMP_Contains_Statement";
+            case 309L: return "CONTINUE_STMT";
+            case 310L: return "CTOR_INITIALIZER_LIST";
+            case 311L: return "TEMP_DataStatementGroup";
+            case 312L: return "TEMP_DataStatementObject";
+            case 313L: return "TEMP_DataStatementValue";
+            case 314L: return "DEAD_IF_DIRECTIVE_STMT";
+            case 315L: return "TEMP_Deallocate_Statement";
+            case 316L: return "DeclarationModifierTag";
+            case 317L: return "DECLARATION_SCOPE";
+            case 318L: return "DECL_STMT";
+            case 319L: return "T_DECLTYPE";
+            case 320L: return "DEFAULT_STMT";
+            case 321L: return "DEFAULT_NAME";
+            case 322L: return "DEFINE_DIRECTIVE_STMT";
+            case 323L: return "DELETE_OP";
+            case 324L: return "TEMP_Derived_Type_Statement";
+            case 325L: return "DESIGNATED_INITIALIZER";
+            case 326L: return "DICTIONARY_COMPREHENSION";
+            case 327L: return "DICT_EXP";
+            case 328L: return "TEMP_DimensionObject";
+            case 330L: return "DirectedGraphEdgeTag";
+            case 332L: return "DirectoryTag";
+            case 333L: return "DirectoryListTag";
+            case 334L: return "DIV_ASSIGN_OP";
+            case 335L: return "DIV_OP";
+            case 336L: return "DO_WHILE_STMT";
+            case 337L: return "RECORD_REF";
+            case 338L: return "DOTSTAR_OP";
+            case 339L: return "DOUBLE_VAL";
+            case 340L: return "ElaboratedTypeModifierTag";
+            case 341L: return "ELEMENT_WISE_OP";
+            case 342L: return "ELEMENT_ADD_OP";
+            case 343L: return "ELEMENT_DIVIDE_OP";
+            case 344L: return "ELEMENT_LEFT_DIVIDE_OP";
+            case 345L: return "ELEMENT_MULT_OP";
+            case 346L: return "ELEMENT_POWER_OP";
+            case 347L: return "ELEMENT_SUBTRACT_OP";
+            case 348L: return "ELSE_DIRECTIVE_STMT";
+            case 349L: return "TEMP_Else_Where_Statement";
+            case 350L: return "ELSEIF_DIRECTIVE_STMT";
+            case 351L: return "EMPTY_DECLARATION_STMT";
+            case 352L: return "EMPTY_DIRECTIVE_STMT";
+            case 353L: return "ENDFILE_STATEMENT";
+            case 354L: return "ENDIF_DIRECTIVE_STMT";
+            case 355L: return "ENTRY_STMT";
+            case 356L: return "ENUM_DECL_STMT";
+            case 357L: return "FIELD_NAME";
+            case 358L: return "ENUM_NAME";
+            case 359L: return "T_ENUM";
+            case 360L: return "ENUM_VAL";
+            case 361L: return "EQ_OP";
+            case 362L: return "TEMP_Equivalence_Statement";
+            case 363L: return "ERROR_DIRECTIVE_STMT";
+            case 364L: return "EXEC_STMT";
+            case 365L: return "EXPONENTIATION_OP";
+            case 366L: return "EXP_ASSIGN_OP";
+            case 367L: return "EXPR_LIST";
+            case 368L: return "EXPR_STMT";
+            case 369L: return "ExpressionTag";
+            case 370L: return "EXPRESSION_ROOT";
+            case 371L: return "FileTag";
+            case 372L: return "FileListTag";
+            case 373L: return "FLOAT_VAL";
+            case 374L: return "FLOAT_128_VAL";
+            case 375L: return "FLOAT_80_VAL";
+            case 376L: return "FLUSH_STATEMENT";
+            case 377L: return "FOR_ALL_STMT";
+            case 378L: return "FOR_INIT_STMT";
+            case 379L: return "FOR_STMT";
+            case 380L: return "TEMP_FormatItem";
+            case 381L: return "TEMP_FormatItemList";
+            case 382L: return "FORMAT_STATEMENT";
+            case 383L: return "FORTRAN_DO";
+            case 384L: return "TEMP_Fortran_Include_Line";
+            case 385L: return "FORTRAN_NONBLOCKED_DO";
+            case 386L: return "FuncDecl_attrTag";
+            case 387L: return "FUNC_CALL";
+            case 388L: return "FUNC_DECL_STMT";
+            case 389L: return "FUNC_DEFN_STMT";
+            case 390L: return "FUNCTION_PARAMETER_SCOPE";
+            case 391L: return "FunctionModifierTag";
+            case 392L: return "FUNCTION_PARAMETER_LIST";
+            case 393L: return "FUNCTION_PARAMETER_REF_EXP";
+            case 394L: return "T_FUNCTION_PARAMETER_TYPE_LIST";
+            case 395L: return "FUNCTION_REF";
+            case 396L: return "FUNCTION_NAME";
+            case 397L: return "T_FUNCTION";
+            case 398L: return "FUNCTYPE_NAME";
+            case 399L: return "FUNC_TBL_STMT";
+            case 400L: return "TYPE_TABLE";
+            case 401L: return "GLOBAL_STMT";
+            case 402L: return "GOTO_STMT";
+            case 403L: return "GraphTag";
+            case 404L: return "GraphEdgeTag";
+            case 405L: return "GraphEdgeListTag";
+            case 406L: return "GraphNodeTag";
+            case 407L: return "GraphNodeListTag";
+            case 408L: return "GE_OP";
+            case 409L: return "GT_OP";
+            case 410L: return "IO_ITEM_EXPR";
+            case 411L: return "IO_STATEMENT";
+            case 412L: return "IDENT_DIRECTIVE_STMT";
+            case 413L: return "IF_DIRECTIVE_STMT";
+            case 414L: return "IF_STMT";
+            case 415L: return "IFDEF_DIRECTIVE_STMT";
+            case 416L: return "IFNDEF_DIRECTIVE_STMT";
+            case 417L: return "IMAGE_CONTROL_STATEMENT";
+            case 418L: return "IMAG_PART_OP";
+            case 419L: return "TEMP_Implicit_Statement";
+            case 420L: return "IMPLIED_DO";
+            case 421L: return "TEMP_Import_Statement";
+            case 422L: return "IncidenceDirectedGraphTag";
+            case 423L: return "IncidenceUndirectedGraphTag";
+            case 424L: return "INCLUDE_DIRECTIVE_STMT";
+            case 425L: return "IncludeFileTag";
+            case 426L: return "INCLUDE_NEXT_DIRECTIVE_STMT";
+            case 427L: return "InitializedNameTag";
+            case 428L: return "EXPR_INIT";
+            case 429L: return "INQUIRE_STATEMENT";
+            case 430L: return "IntKeyedBidirectionalGraphTag";
+            case 431L: return "INT_VAL";
+            case 432L: return "INTEGER_DIV_OP";
+            case 433L: return "IDIV_ASSIGN_OP";
+            case 434L: return "TEMP_Interface_Body";
+            case 435L: return "TEMP_Header_File_Body";
+            case 436L: return "HeaderFileReportTag";
+            case 437L: return "INTERFACE_STATEMENT";
+            case 438L: return "INTERFACE_SYMBOL";
+            case 439L: return "INTRINSIC_SYMBOL";
+            case 440L: return "IS_OP";
+            case 441L: return "IS_NOT_OP";
+            case 442L: return "IOR_ASSIGN_OP";
+            case 443L: return "JOVIAL_COMPOOL_STATEMENT";
+            case 444L: return "JOVIAL_FOR_THEN_STATEMENT";
+            case 445L: return "KEY_DATUM_PAIR";
+            case 446L: return "EXEC_CONF";
+            case 447L: return "KERN_CALL";
+            case 448L: return "LABEL_REF";
+            case 449L: return "LABEL_STMT";
+            case 450L: return "JAVA_LABEL_STMT";
+            case 451L: return "LABEL_NAME";
+            case 452L: return "JAVA_LABEL_NAME";
+            case 453L: return "LambdaCaptureTag";
+            case 454L: return "LambdaCaptureListTag";
+            case 455L: return "LAMBDA_EXP";
+            case 456L: return "LAMBDA_REF_EXP";
+            case 457L: return "LEFT_DIVIDE_OP";
+            case 458L: return "LE_OP";
+            case 459L: return "LT_OP";
+            case 460L: return "LINE_DIRECTIVE_STMT";
+            case 461L: return "LINEMARKER_DIRECTIVE_STMT";
+            case 462L: return "LinkageModifierTag";
+            case 463L: return "LIST_COMPREHENSION";
+            case 464L: return "LIST_EXP";
+            case 465L: return "LocatedNodeTag";
+            case 466L: return "LocatedNodeSupportTag";
+            case 467L: return "LONG_DOUBLE_VAL";
+            case 468L: return "LONG_INT_VAL";
+            case 469L: return "LONG_LONG_INT_VAL";
+            case 470L: return "LSHIFT_ASSIGN_OP";
+            case 471L: return "LSHIFT_OP";
+            case 472L: return "MAGIC_COLON_EXP";
+            case 473L: return "MATRIX_EXP";
+            case 474L: return "MATRIX_TRANSPOSE_OP";
+            case 475L: return "MATLAB_FOR_STATEMENT";
+            case 476L: return "MFUNC_DECL_STMT";
+            case 477L: return "MEMBER_FUNCTION_REF";
+            case 478L: return "MEMBER_FUNC_NAME";
+            case 479L: return "T_MEMBERFUNCTION";
+            case 480L: return "MEMBERSHIP_OP";
+            case 481L: return "MS_ATTRIBUTE_DECL_STMT";
+            case 482L: return "MINUS_ASSIGN_OP";
+            case 483L: return "MINUSMINUS_OP";
+            case 484L: return "UNARY_MINUS_OP";
+            case 485L: return "MOD_ASSIGN_OP";
+            case 486L: return "MOD_OP";
+            case 487L: return "ModifierTag";
+            case 488L: return "ModifierNodesTag";
+            case 489L: return "T_MODIFIER";
+            case 490L: return "MODULE_STATEMENT";
+            case 491L: return "MODULE_SYMBOL";
+            case 492L: return "MULT_ASSIGN_OP";
+            case 493L: return "MULT_OP";
+            case 494L: return "NameTag";
+            case 495L: return "TEMP_Name_Group";
+            case 496L: return "T_NAME";
+            case 497L: return "TEMP_Namelist_Statement";
+            case 498L: return "NAMESPACE_ALIAS_DECLARATION_STMT";
+            case 499L: return "NAMESPACE_DECLARATION_STMT";
+            case 500L: return "NAMESPACE_DEFINITION_STMT";
+            case 501L: return "NAMESPACE_NAME";
+            case 502L: return "NARY_EXPRESSION";
+            case 503L: return "NARY_BOOLEAN_OP";
+            case 504L: return "NARY_COMPARISON_OP";
+            case 505L: return "NEW_OP";
+            case 506L: return "NodeTag";
+            case 507L: return "NOEXCEPT_OP";
+            case 508L: return "NE_OP";
+            case 509L: return "NOT_OP";
+            case 510L: return "NON_MEMBERSHIP_OP";
+            case 511L: return "NONREAL_DECL";
+            case 512L: return "NONREAL_REF";
+            case 513L: return "NONREAL_SYMBOL";
+            case 514L: return "T_NONREAL";
+            case 515L: return "NonrealBaseClassTag";
+            case 516L: return "NULL_EXPR";
+            case 517L: return "NULLPTR_VAL";
+            case 518L: return "NULL_STMT";
+            case 519L: return "TEMP_Nullify_Statement";
+            case 520L: return "OMP_ATOMIC_STMT";
+            case 521L: return "OMP_BARRIER_STMT";
+            case 522L: return "OMP_CRITICAL_STMT";
+            case 523L: return "OMP_CLAUSEBODY_STMT";
+            case 524L: return "OMP_BODY_STMT";
+            case 525L: return "OMP_DO_STMT";
+            case 526L: return "OMP_FLUSH_STMT";
+            case 527L: return "OMP_DECLARE_SIMD_STMT";
+            case 528L: return "OMP_FOR_STMT";
+            case 529L: return "OMP_FOR_SIMD_STMT";
+            case 530L: return "OMP_MASTER_STMT";
+            case 531L: return "OMP_ORDERED_STMT";
+            case 532L: return "OMP_PARALLEL_STMT";
+            case 533L: return "OMP_SECTION_STMT";
+            case 534L: return "OMP_SECTIONS_STMT";
+            case 535L: return "OMP_SINGLE_STMT";
+            case 536L: return "OMP_TASK_STMT";
+            case 537L: return "OMP_TASKWAIT_STMT";
+            case 538L: return "OMP_THREADPRIVATE_STMT";
+            case 539L: return "OMP_WORKSHARE_STMT";
+            case 540L: return "OMP_TARGET_STMT";
+            case 541L: return "OMP_TARGET_DATA_STMT";
+            case 542L: return "OMP_SIMD_STMT";
+            case 543L: return "OmpClauseTag";
+            case 544L: return "OmpBeginClauseTag";
+            case 545L: return "OmpCollapseClauseTag";
+            case 546L: return "OmpCopyinClauseTag";
+            case 547L: return "OmpCopyprivateClauseTag";
+            case 548L: return "OmpDefaultClauseTag";
+            case 549L: return "OmpEndClauseTag";
+            case 550L: return "OmpExpressionClauseTag";
+            case 551L: return "OmpFirstprivateClauseTag";
+            case 552L: return "OmpIfClauseTag";
+            case 553L: return "OmpFinalClauseTag";
+            case 554L: return "OmpPriorityClauseTag";
+            case 555L: return "OmpIfDeviceTag";
+            case 556L: return "OmpLastprivateClauseTag";
+            case 557L: return "OmpNowaitClauseTag";
+            case 558L: return "OmpNumThreadsClauseTag";
+            case 559L: return "OmpOrderedClauseTag";
+            case 560L: return "OmpPrivateClauseTag";
+            case 561L: return "OmpReductionClauseTag";
+            case 562L: return "OmpScheduleClauseTag";
+            case 563L: return "OmpSharedClauseTag";
+            case 564L: return "OmpUntiedClauseTag";
+            case 565L: return "OmpMergeableClauseTag";
+            case 566L: return "OmpVariablesClauseTag";
+            case 567L: return "OmpMapClauseTag";
+            case 568L: return "OmpSafelenTag";
+            case 569L: return "OmpSimdlenTag";
+            case 570L: return "OmpLinearClauseTag";
+            case 571L: return "OmpUniformClauseTag";
+            case 572L: return "OmpAlignedClauseTag";
+            case 573L: return "OmpProcBindClauseTag";
+            case 574L: return "OmpAtomicClauseTag";
+            case 575L: return "OmpInbranchClauseTag";
+            case 576L: return "OmpNotinbranchClauseTag";
+            case 577L: return "OmpDependClauseTag";
+            case 578L: return "OPENCL_ACCESS_MODE";
+            case 579L: return "OPEN_STATEMENT";
+            case 580L: return "OptionsTag";
+            case 581L: return "OR_OP";
+            case 582L: return "PARAMETER_STATEMENT";
+            case 583L: return "T_PARTIAL_FUNCTION_MODIFIER";
+            case 584L: return "T_PARTIAL_FUNCTION";
+            case 585L: return "PASS_STATEMENT";
+            case 586L: return "PLUS_ASSIGN_OP";
+            case 587L: return "PLUSPLUS_OP";
+            case 588L: return "ARRAY_OP";
+            case 589L: return "POINTER_ASSIGN_OP";
+            case 590L: return "DEREF_OP";
+            case 591L: return "T_MEMBER_POINTER";
+            case 592L: return "T_POINTER";
+            case 593L: return "POWER_OP";
+            case 594L: return "PragmaTag";
+            case 595L: return "PRAGMA_DECL";
+            case 596L: return "PRINT_STATEMENT";
+            case 597L: return "PROCEDURE_HEADER_STMT";
+            case 598L: return "PROGRAM_HEADER_STMT";
+            case 599L: return "ProjectTag";
+            case 600L: return "PSEUDO_DESTRUCTOR_REF";
+            case 601L: return "PYTHON_GLOBAL_STMT";
+            case 602L: return "PYTHON_PRINT_STMT";
+            case 603L: return "QualifiedNameTag";
+            case 604L: return "T_QUALIFIED_NAME";
+            case 605L: return "RANGE_EXP";
+            case 606L: return "RANGE_BASED_FOR_STMT";
+            case 607L: return "READ_STATEMENT";
+            case 608L: return "REAL_PART_OP";
+            case 609L: return "TYPE_REF";
+            case 610L: return "T_REFERENCE";
+            case 611L: return "TEMP_Rename_Pair";
+            case 612L: return "RENAME_SYMBOL";
+            case 613L: return "RETURN_STMT";
+            case 614L: return "REWIND_STATEMENT";
+            case 615L: return "RSHIFT_ASSIGN_OP";
+            case 616L: return "RSHIFT_OP";
+            case 617L: return "T_RVALUE_REFERENCE";
+            case 618L: return "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP";
+            case 619L: return "JAVA_UNSIGNED_RSHIFT_OP";
+            case 620L: return "SCOPE_OP";
+            case 621L: return "SCOPE_STMT";
+            case 622L: return "TEMP_Sequence_Statement";
+            case 623L: return "SET_COMPREHENSION";
+            case 624L: return "SHORT_VAL";
+            case 625L: return "SIZEOF_OP";
+            case 626L: return "ALIGNOF_OP";
+            case 627L: return "JAVA_INSTANCEOF_OP";
+            case 628L: return "SourceFileTag";
+            case 629L: return "SPAWN_STMT";
+            case 630L: return "SYNC_ALL_STATEMENT";
+            case 631L: return "SYNC_IMAGES_STATEMENT";
+            case 632L: return "SYNC_MEMORY_STATEMENT";
+            case 633L: return "SYNC_TEAM_STATEMENT";
+            case 634L: return "LOCK_STATEMENT";
+            case 635L: return "UNLOCK_STATEMENT";
+            case 636L: return "JAVE_THROW_STMT";
+            case 637L: return "JAVA_FOREACH_STMT";
+            case 638L: return "JAVA_SYNC_STMT";
+            case 639L: return "T_JAVA_PARAM";
+            case 640L: return "T_JAVA_WILD";
+            case 641L: return "SpecialFunctionModifierTag";
+            case 642L: return "StatementTag";
+            case 643L: return "STATIC_ASSERTION_DECLARATION";
+            case 644L: return "STMT_DECL_STMT";
+            case 645L: return "STMT_EXPR";
+            case 646L: return "TEMP_Statement_Function_Statement";
+            case 647L: return "STOP_OR_PAUSE_STATEMENT";
+            case 648L: return "StorageModifierTag";
+            case 649L: return "STR_CONV";
+            case 650L: return "StringKeyedBidirectionalGraphTag";
+            case 651L: return "STRING_VAL";
+            case 652L: return "SUBSCRIPT_EXPR";
+            case 653L: return "SUBT_OP";
+            case 654L: return "SupportTag";
+            case 655L: return "SWITCH_STMT";
+            case 656L: return "SymbolTag";
+            case 657L: return "SymbolTableTag";
+            case 658L: return "TemplateArgumentTag";
+            case 659L: return "TemplateArgumentListTag";
+            case 660L: return "TEMPLATE_DECL_STMT";
+            case 661L: return "TEMPLATE_CLASS_DECL_STMT";
+            case 662L: return "TEMPLATE_CLASS_NAME";
+            case 663L: return "TEMPLATE_FUNCTION_DECL_STMT";
+            case 664L: return "TEMPLATE_FUNCTION_REF";
+            case 665L: return "TEMPLATE_FUNC_NAME";
+            case 666L: return "TEMPLATE_MEMBER_FUNCTION_DECL_STMT";
+            case 667L: return "TEMPLATE_MEMBER_FUNCTION_REF";
+            case 668L: return "TEMPLATE_MEMBER_FUNC_NAME";
+            case 669L: return "TEMPLATE_TYPEDEF_DECL_STMT";
+            case 670L: return "TEMPLATE_TYPEDEF_NAME";
+            case 671L: return "TEMPLATE_VARIABLE_DECL_STMT";
+            case 672L: return "TEMPLATE_VARIABLE_NAME";
+            case 673L: return "TEMPLATE_CLASS_DEF_STMT";
+            case 674L: return "TEMPLATE_FUNCTION_DEF_STMT";
+            case 675L: return "TEMPLATE_INST_DECL_STMT";
+            case 676L: return "TEMPLATE_INST_DEFN_STMT";
+            case 677L: return "TEMPLATE_INST_DIRECTIVE_STMT";
+            case 678L: return "TEMPLATE_INST_FUNCTION_DECL_STMT";
+            case 679L: return "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT";
+            case 680L: return "TEMPLATE_INST_TYPEDEF_DECL_STMT";
+            case 681L: return "TemplateParameterTag";
+            case 682L: return "TEMPLATE_PARAMETER_VAL";
+            case 683L: return "TemplateParameterListTag";
+            case 684L: return "TEMPLATE_NAME";
+            case 685L: return "T_TEMPLATE";
+            case 686L: return "THIS_NODE";
+            case 687L: return "TYPE_TRAIT_BUILTIN_OPERATOR";
+            case 688L: return "SUPER_NODE";
+            case 689L: return "THROW_OP";
+            case 690L: return "TOKEN";
+            case 691L: return "TRY_STMT";
+            case 692L: return "TUPLE_EXP";
+            case 693L: return "TypeTag";
+            case 694L: return "T_BOOL";
+            case 695L: return "T_CHAR";
+            case 696L: return "T_CHAR16";
+            case 697L: return "T_CHAR32";
+            case 698L: return "T_COMPLEX";
+            case 699L: return "T_DEFAULT";
+            case 700L: return "TYPE_EXPRESSION";
+            case 701L: return "T_LABEL";
+            case 702L: return "T_DOUBLE";
+            case 703L: return "T_ELLIPSE";
+            case 704L: return "T_FLOAT";
+            case 705L: return "T_FLOAT128";
+            case 706L: return "T_FLOAT80";
+            case 707L: return "T_GLOBAL_VOID";
+            case 708L: return "TYPEID_OP";
+            case 709L: return "T_IMAGINARY";
+            case 710L: return "T_INT";
+            case 711L: return "T_LONG";
+            case 712L: return "T_LONG_DOUBLE";
+            case 713L: return "T_LONG_LONG";
+            case 714L: return "TypeModifierTag";
+            case 715L: return "T_MATRIX";
+            case 716L: return "T_TUPLE";
+            case 717L: return "T_NULLPTR";
+            case 718L: return "T_TYPEOF_TYPE";
+            case 719L: return "T_SHORT";
+            case 720L: return "T_SIGNED_128BIT_INTEGER";
+            case 721L: return "T_SIGNED_CHAR";
+            case 722L: return "T_SIGNED_INT";
+            case 723L: return "T_SIGNED_LONG";
+            case 724L: return "T_SIGNED_LONG_LONG";
+            case 725L: return "T_SIGNED_SHORT";
+            case 726L: return "T_STRING";
+            case 727L: return "T_UNKNOWN";
+            case 728L: return "T_UNSIGNED_128BIT_INTEGER";
+            case 729L: return "T_UNSIGNED_CHAR";
+            case 730L: return "T_UNSIGNED_INT";
+            case 731L: return "T_UNSIGNED_LONG";
+            case 732L: return "T_UNSIGNED_LONG_LONG";
+            case 733L: return "T_UNSIGNED_SHORT";
+            case 734L: return "T_VOID";
+            case 735L: return "T_WCHAR";
+            case 736L: return "TYPEDEF_STMT";
+            case 737L: return "T_TYPEDEF_SEQ";
+            case 738L: return "TYPEDEF_NAME";
+            case 739L: return "T_TYPEDEF";
+            case 740L: return "UPC_AccessModifierTag";
+            case 741L: return "UNARY_ADD_OP";
+            case 742L: return "UNARY_EXPRESSION";
+            case 743L: return "UNDEF_DIRECTIVE_STMT";
+            case 744L: return "UndirectedGraphEdgeTag";
+            case 745L: return "TEMP_UnknownArrayOrFunctionReference";
+            case 746L: return "UnknownFileTag";
+            case 748L: return "Unparse_InfoTag";
+            case 749L: return "UNSIGNED_CHAR_VAL";
+            case 750L: return "UNSIGNED_INT_VAL";
+            case 751L: return "UNSIGNED_LONG_LONG_INT_VAL";
+            case 752L: return "UNSIGNED_LONG_INT_VAL";
+            case 753L: return "UNSIGNED_SHORT_VAL";
+            case 754L: return "UntypedNodeTag";
+            case 755L: return "UntypedExpressionTag";
+            case 756L: return "TEMP_UntypedUnaryOperator";
+            case 757L: return "TEMP_UntypedBinaryOperator";
+            case 758L: return "TEMP_UntypedValueExpression";
+            case 759L: return "TEMP_UntypedArrayReferenceExpression";
+            case 760L: return "TEMP_UntypedSubscriptExpression";
+            case 761L: return "TEMP_UntypedOtherExpression";
+            case 762L: return "TEMP_UntypedNamedExpression";
+            case 763L: return "TEMP_UntypedNullExpression";
+            case 764L: return "TEMP_UntypedExprListExpression";
+            case 765L: return "TEMP_UntypedFunctionCallOrArrayReferenceExpression";
+            case 766L: return "UntypedStatementTag";
+            case 767L: return "TEMP_UntypedLabelStatement";
+            case 768L: return "TEMP_UntypedNamedStatement";
+            case 769L: return "TEMP_UntypedAssignmentStatement";
+            case 770L: return "TEMP_UntypedBlockStatement";
+            case 771L: return "TEMP_UntypedExpressionStatement";
+            case 772L: return "TEMP_UntypedForAllStatement";
+            case 773L: return "TEMP_UntypedFunctionCallStatement";
+            case 774L: return "TEMP_UntypedImageControlStatement";
+            case 775L: return "TEMP_UntypedOtherStatement";
+            case 776L: return "TEMP_UntypedUseStatement";
+            case 777L: return "UntypedDeclarationStatementTag";
+            case 778L: return "TEMP_UntypedDirectiveDeclaration";
+            case 779L: return "TEMP_UntypedInitializedName";
+            case 780L: return "TEMP_UntypedName";
+            case 781L: return "TEMP_UntypedNameListDeclaration";
+            case 782L: return "TEMP_UntypedInitializedNameListDeclaration";
+            case 783L: return "TEMP_UntypedImplicitDeclaration";
+            case 784L: return "TEMP_UntypedVariableDeclaration";
+            case 785L: return "TEMP_UntypedProgramHeaderDeclaration";
+            case 786L: return "UntypedFunctionDeclarationTag";
+            case 787L: return "TEMP_UntypedSubroutineDeclaration";
+            case 788L: return "TEMP_UntypedInterfaceDeclaration";
+            case 789L: return "TEMP_UntypedNullDeclaration";
+            case 790L: return "TEMP_UntypedNullStatement";
+            case 791L: return "TEMP_UntypedIfStatement";
+            case 792L: return "TEMP_UntypedCaseStatement";
+            case 793L: return "TEMP_UntypedLoopStatement";
+            case 794L: return "TEMP_UntypedWhileStatement";
+            case 795L: return "TEMP_UntypedForStatement";
+            case 796L: return "TEMP_UntypedExitStatement";
+            case 797L: return "TEMP_UntypedGotoStatement";
+            case 798L: return "TEMP_UntypedProcedureCallStatement";
+            case 799L: return "TEMP_UntypedReturnStatement";
+            case 800L: return "TEMP_UntypedExtendedReturnStatement";
+            case 801L: return "TEMP_UntypedStopStatement";
+            case 802L: return "TEMP_UntypedAcceptStatement";
+            case 803L: return "TEMP_UntypedEntryCallStatement";
+            case 804L: return "TEMP_UntypedRequeueStatement";
+            case 805L: return "TEMP_UntypedDelayUntilStatement";
+            case 806L: return "TEMP_UntypedDelayRelativeStatement";
+            case 807L: return "TEMP_UntypedTerminateAlternativeStatement";
+            case 808L: return "TEMP_UntypedSelectiveAcceptStatement";
+            case 809L: return "TEMP_UntypedTimedEntryCallStatement";
+            case 810L: return "TEMP_UntypedConditionalEntryCallStatement";
+            case 811L: return "TEMP_UntypedAsynchronousSelectStatement";
+            case 812L: return "TEMP_UntypedAbortStatement";
+            case 813L: return "TEMP_UntypedRaiseStatement";
+            case 814L: return "TEMP_UntypedCodeStatement";
+            case 815L: return "TEMP_UntypedReferenceExpression";
+            case 816L: return "TEMP_UntypedToken";
+            case 817L: return "TEMP_UntypedTokenPair";
+            case 818L: return "UntypedTypeTag";
+            case 819L: return "TEMP_UntypedArrayType";
+            case 820L: return "TEMP_UntypedAttribute";
+            case 821L: return "TEMP_UntypedFile";
+            case 822L: return "UntypedScopeTag";
+            case 823L: return "TEMP_UntypedFunctionScope";
+            case 824L: return "TEMP_UntypedModuleScope";
+            case 825L: return "TEMP_UntypedGlobalScope";
+            case 826L: return "TEMP_UntypedModuleDeclaration";
+            case 827L: return "TEMP_UntypedSubmoduleDeclaration";
+            case 828L: return "TEMP_UntypedBlockDataDeclaration";
+            case 829L: return "TEMP_UntypedStructureDeclaration";
+            case 830L: return "TEMP_UntypedPackageDeclaration";
+            case 831L: return "TEMP_UntypedExceptionDeclaration";
+            case 832L: return "TEMP_UntypedExceptionHandlerDeclaration";
+            case 833L: return "TEMP_UntypedTaskDeclaration";
+            case 834L: return "TEMP_UntypedUnitDeclaration";
+            case 835L: return "TEMP_UntypedStatementList";
+            case 836L: return "TEMP_UntypedDeclarationStatementList";
+            case 837L: return "TEMP_UntypedFunctionDeclarationList";
+            case 838L: return "TEMP_UntypedInitializedNameList";
+            case 839L: return "TEMP_UntypedNameList";
+            case 840L: return "TEMP_UntypedTokenList";
+            case 841L: return "TEMP_UntypedTokenPairList";
+            case 842L: return "UPC_BARRIER_STMT";
+            case 843L: return "UPC_BLOCK_SIZEOF_EXPR";
+            case 844L: return "UPC_ELEM_SIZEOF_EXPR";
+            case 845L: return "UPC_FENCE_STMT";
+            case 846L: return "UPC_FORALL_STMT";
+            case 847L: return "UPC_LOCAL_SIZEOF_EXPR";
+            case 848L: return "UPC_MYTHREAD";
+            case 849L: return "UPC_NOTIFY_STMT";
+            case 850L: return "UPC_THREADS";
+            case 851L: return "UPC_WAIT_STMT";
+            case 852L: return "USE_STATEMENT";
+            case 853L: return "USER_DEFINED_BINARY_OP";
+            case 854L: return "USER_DEFINED_UNARY_OP";
+            case 855L: return "USING_DECLARATION_STMT";
+            case 856L: return "USING_DIRECTIVE_STMT";
+            case 857L: return "ValueExpTag";
+            case 858L: return "VA_COPY_OP";
+            case 859L: return "VA_END_OP";
+            case 860L: return "VA_OP";
+            case 861L: return "VA_START_ONE_OPERAND_OP";
+            case 862L: return "VA_START_OP";
+            case 863L: return "VAR_REF";
+            case 864L: return "VAR_DECL_STMT";
+            case 865L: return "VAR_DEFN_STMT";
+            case 866L: return "VARIABLE_NAME";
+            case 867L: return "VARIANT_EXPR";
+            case 868L: return "VARIANT_STMT";
+            case 869L: return "VOID_VAL";
+            case 870L: return "WAIT_STATEMENT";
+            case 871L: return "WARNING_DIRECTIVE_STMT";
+            case 872L: return "WITH_STATEMENT";
+            case 873L: return "WCHAR_VAL";
+            case 874L: return "TEMP_Where_Statement";
+            case 875L: return "WHILE_STMT";
+            case 876L: return "WRITE_STATEMENT";
+            case 877L: return "XOR_ASSIGN_OP";
+            case 878L: return "YIELD_EXP";
+            case 879L: return "_File_InfoTag";
+            case 880L: return "T_CAFTEAM";
+            case 881L: return "WITHTEAM_STMT";
+            case 882L: return "COARRAY_REF_EXPR";
+            case 883L: return "CALL_EXPRESSION";
+            case 884L: return "T_CRAY_POINTER";
+            case 885L: return "TEMP_JavaImportStatement";
+            case 886L: return "TEMP_JavaPackageDeclaration";
+            case 887L: return "TEMP_JavaPackageStatement";
+            case 888L: return "JavaImportStatementListTag";
+            case 889L: return "JavaClassDeclarationListTag";
+            case 890L: return "JavaMemberValuePairTag";
+            case 891L: return "JAVA_ANNOTATION";
+            case 892L: return "JAVA_MARKER_ANNOTATION";
+            case 893L: return "JAVA_SINGLE_MEMBER_ANNOTATION";
+            case 894L: return "JAVA_NORMAL_ANNOTATION";
+            case 895L: return "JAVA_TYPE_EXPRESSION";
+            case 896L: return "T_JAVA_QUALIFIED";
+            case 897L: return "CLASS_NODE";
+            case 898L: return "T_JAVA_UNION";
+            case 899L: return "T_JAVA_PARAMETER";
+            case 900L: return "ASYNC_STMT";
+            case 901L: return "FINISH_STMT";
+            case 902L: return "AT_STMT";
+            case 903L: return "ATOMIC_STMT";
+            case 905L: return "WHEN_STMT";
+            case 906L: return "ATEXP_NODE";
+            case 907L: return "FINISHEXP_NODE";
+            case 908L: return "HERE_NODE";
+            case 909L: return "DOTDOT_NODE";
+            case 911L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
+            case 912L: return "Cxx_Grammar_LAST_TAG";
             default: return "";
         }
     }
@@ -45670,7 +46137,7 @@ namespace stringify {
             294L,
             295L,
             296L,
-            298L,
+            297L,
             299L,
             300L,
             301L,
@@ -45700,8 +46167,8 @@ namespace stringify {
             325L,
             326L,
             327L,
-            329L,
-            331L,
+            328L,
+            330L,
             332L,
             333L,
             334L,
@@ -46108,6 +46575,7 @@ namespace stringify {
             735L,
             736L,
             737L,
+            738L,
             739L,
             740L,
             741L,
@@ -46116,7 +46584,6 @@ namespace stringify {
             744L,
             745L,
             746L,
-            747L,
             748L,
             749L,
             750L,
@@ -46262,15 +46729,26 @@ namespace stringify {
             890L,
             891L,
             892L,
+            893L,
             894L,
             895L,
             896L,
             897L,
             898L,
+            899L,
             900L,
-            901L
+            901L,
+            902L,
+            903L,
+            905L,
+            906L,
+            907L,
+            908L,
+            909L,
+            911L,
+            912L
         };
-        static const std::vector<long> retval(values, values + 895);
+        static const std::vector<long> retval(values, values + 906);
         return retval;
     }
 
@@ -46296,7 +46774,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 916
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 927
 namespace stringify {
     const char* VariantT(long i) {
         switch (i) {
@@ -46554,646 +47032,657 @@ namespace stringify {
             case 252L: return "V_SgAterm";
             case 253L: return "V_SgAttribute";
             case 254L: return "V_SgAttributeSpecificationStatement";
-            case 255L: return "V_SgBackspaceStatement";
-            case 256L: return "V_SgBaseClass";
-            case 257L: return "V_SgExpBaseClass";
-            case 258L: return "V_SgBaseClassModifier";
-            case 259L: return "V_SgBasicBlock";
-            case 260L: return "V_SgBidirectionalGraph";
-            case 261L: return "V_SgBinaryComposite";
-            case 262L: return "V_SgBinaryOp";
-            case 263L: return "V_SgBitAndOp";
-            case 264L: return "V_SgBitAttribute";
-            case 265L: return "V_SgBitComplementOp";
-            case 266L: return "V_SgBitOrOp";
-            case 267L: return "V_SgBitXorOp";
-            case 268L: return "V_SgBlockDataStatement";
-            case 269L: return "V_SgBoolValExp";
-            case 270L: return "V_SgBreakStmt";
-            case 271L: return "V_SgBracedInitializer";
-            case 272L: return "V_SgC_PreprocessorDirectiveStatement";
-            case 273L: return "V_SgCaseOptionStmt";
-            case 274L: return "V_SgCastExp";
-            case 275L: return "V_SgCatchOptionStmt";
-            case 276L: return "V_SgCatchStatementSeq";
-            case 277L: return "V_SgCharVal";
-            case 278L: return "V_SgChar16Val";
-            case 279L: return "V_SgChar32Val";
-            case 280L: return "V_SgClassDecl_attr";
-            case 281L: return "V_SgClassDeclaration";
-            case 282L: return "V_SgClassDefinition";
-            case 283L: return "V_SgClassNameRefExp";
-            case 284L: return "V_SgClassSymbol";
-            case 285L: return "V_SgClassType";
-            case 286L: return "V_SgClinkageDeclarationStatement";
-            case 287L: return "V_SgClinkageEndStatement";
-            case 288L: return "V_SgClinkageStartStatement";
-            case 289L: return "V_SgCloseStatement";
-            case 290L: return "V_SgColonShapeExp";
-            case 291L: return "V_SgCommaOpExp";
-            case 292L: return "V_SgCommonBlock";
-            case 293L: return "V_SgCommonBlockObject";
-            case 294L: return "V_SgCommonSymbol";
-            case 295L: return "V_SgComplexVal";
-            case 296L: return "V_SgComprehension";
-            case 298L: return "V_SgCompoundAssignOp";
-            case 299L: return "V_SgCompoundInitializer";
-            case 300L: return "V_SgCompoundLiteralExp";
-            case 301L: return "V_SgComputedGotoStatement";
-            case 302L: return "V_SgConcatenationOp";
-            case 303L: return "V_SgConditionalExp";
-            case 304L: return "V_SgConjugateOp";
-            case 305L: return "V_SgConstVolatileModifier";
-            case 306L: return "V_SgConstructorInitializer";
-            case 307L: return "V_SgContainsStatement";
-            case 308L: return "V_SgContinueStmt";
-            case 309L: return "V_SgCtorInitializerList";
-            case 310L: return "V_SgDataStatementGroup";
-            case 311L: return "V_SgDataStatementObject";
-            case 312L: return "V_SgDataStatementValue";
-            case 313L: return "V_SgDeadIfDirectiveStatement";
-            case 314L: return "V_SgDeallocateStatement";
-            case 315L: return "V_SgDeclarationModifier";
-            case 316L: return "V_SgDeclarationScope";
-            case 317L: return "V_SgDeclarationStatement";
-            case 318L: return "V_SgDeclType";
-            case 319L: return "V_SgDefaultOptionStmt";
-            case 320L: return "V_SgDefaultSymbol";
-            case 321L: return "V_SgDefineDirectiveStatement";
-            case 322L: return "V_SgDeleteExp";
-            case 323L: return "V_SgDerivedTypeStatement";
-            case 324L: return "V_SgDesignatedInitializer";
-            case 325L: return "V_SgDictionaryComprehension";
-            case 326L: return "V_SgDictionaryExp";
-            case 327L: return "V_SgDimensionObject";
-            case 329L: return "V_SgDirectedGraphEdge";
-            case 331L: return "V_SgDirectory";
-            case 332L: return "V_SgDirectoryList";
-            case 333L: return "V_SgDivAssignOp";
-            case 334L: return "V_SgDivideOp";
-            case 335L: return "V_SgDoWhileStmt";
-            case 336L: return "V_SgDotExp";
-            case 337L: return "V_SgDotStarOp";
-            case 338L: return "V_SgDoubleVal";
-            case 339L: return "V_SgElaboratedTypeModifier";
-            case 340L: return "V_SgElementwiseOp";
-            case 341L: return "V_SgElementwiseAddOp";
-            case 342L: return "V_SgElementwiseDivideOp";
-            case 343L: return "V_SgElementwiseLeftDivideOp";
-            case 344L: return "V_SgElementwiseMultiplyOp";
-            case 345L: return "V_SgElementwisePowerOp";
-            case 346L: return "V_SgElementwiseSubtractOp";
-            case 347L: return "V_SgElseDirectiveStatement";
-            case 348L: return "V_SgElseWhereStatement";
-            case 349L: return "V_SgElseifDirectiveStatement";
-            case 350L: return "V_SgEmptyDirectiveStatement";
-            case 351L: return "V_SgEndfileStatement";
-            case 352L: return "V_SgEndifDirectiveStatement";
-            case 353L: return "V_SgEntryStatement";
-            case 354L: return "V_SgEnumDeclaration";
-            case 355L: return "V_SgEnumFieldSymbol";
-            case 356L: return "V_SgEnumSymbol";
-            case 357L: return "V_SgEnumType";
-            case 358L: return "V_SgEnumVal";
-            case 359L: return "V_SgEqualityOp";
-            case 360L: return "V_SgEquivalenceStatement";
-            case 361L: return "V_SgErrorDirectiveStatement";
-            case 362L: return "V_SgExecStatement";
-            case 363L: return "V_SgExponentiationOp";
-            case 364L: return "V_SgExponentiationAssignOp";
-            case 365L: return "V_SgExprListExp";
-            case 366L: return "V_SgExprStatement";
-            case 367L: return "V_SgExpression";
-            case 368L: return "V_SgExpressionRoot";
-            case 369L: return "V_SgFile";
-            case 370L: return "V_SgFileList";
-            case 371L: return "V_SgFloatVal";
-            case 372L: return "V_SgFlushStatement";
-            case 373L: return "V_SgForAllStatement";
-            case 374L: return "V_SgForInitStatement";
-            case 375L: return "V_SgForStatement";
-            case 376L: return "V_SgFormatItem";
-            case 377L: return "V_SgFormatItemList";
-            case 378L: return "V_SgFormatStatement";
-            case 379L: return "V_SgFortranDo";
-            case 380L: return "V_SgFortranIncludeLine";
-            case 381L: return "V_SgFortranNonblockedDo";
-            case 382L: return "V_SgFuncDecl_attr";
-            case 383L: return "V_SgFunctionCallExp";
-            case 384L: return "V_SgFunctionDeclaration";
-            case 385L: return "V_SgFunctionDefinition";
-            case 386L: return "V_SgFunctionParameterScope";
-            case 387L: return "V_SgFunctionModifier";
-            case 388L: return "V_SgFunctionParameterList";
-            case 389L: return "V_SgFunctionParameterRefExp";
-            case 390L: return "V_SgFunctionParameterTypeList";
-            case 391L: return "V_SgFunctionRefExp";
-            case 392L: return "V_SgFunctionSymbol";
-            case 393L: return "V_SgFunctionType";
-            case 394L: return "V_SgFunctionTypeSymbol";
-            case 395L: return "V_SgFunctionTypeTable";
-            case 396L: return "V_SgTypeTable";
-            case 397L: return "V_SgGlobal";
-            case 398L: return "V_SgGotoStatement";
-            case 399L: return "V_SgGraph";
-            case 400L: return "V_SgGraphEdge";
-            case 401L: return "V_SgGraphEdgeList";
-            case 402L: return "V_SgGraphNode";
-            case 403L: return "V_SgGraphNodeList";
-            case 404L: return "V_SgGreaterOrEqualOp";
-            case 405L: return "V_SgGreaterThanOp";
-            case 406L: return "V_SgIOItemExpression";
-            case 407L: return "V_SgIOStatement";
-            case 408L: return "V_SgIdentDirectiveStatement";
-            case 409L: return "V_SgIfDirectiveStatement";
-            case 410L: return "V_SgIfStmt";
-            case 411L: return "V_SgIfdefDirectiveStatement";
-            case 412L: return "V_SgIfndefDirectiveStatement";
-            case 413L: return "V_SgImageControlStatement";
-            case 414L: return "V_SgImagPartOp";
-            case 415L: return "V_SgImplicitStatement";
-            case 416L: return "V_SgImpliedDo";
-            case 417L: return "V_SgImportStatement";
-            case 418L: return "V_SgIncidenceDirectedGraph";
-            case 419L: return "V_SgIncidenceUndirectedGraph";
-            case 420L: return "V_SgIncludeDirectiveStatement";
-            case 421L: return "V_SgIncludeFile";
-            case 422L: return "V_SgIncludeNextDirectiveStatement";
-            case 423L: return "V_SgInitializedName";
-            case 424L: return "V_SgInitializer";
-            case 425L: return "V_SgInquireStatement";
-            case 426L: return "V_SgIntKeyedBidirectionalGraph";
-            case 427L: return "V_SgIntVal";
-            case 428L: return "V_SgIntegerDivideOp";
-            case 429L: return "V_SgIntegerDivideAssignOp";
-            case 430L: return "V_SgInterfaceBody";
-            case 431L: return "V_SgHeaderFileBody";
-            case 432L: return "V_SgHeaderFileReport";
-            case 433L: return "V_SgInterfaceStatement";
-            case 434L: return "V_SgInterfaceSymbol";
-            case 435L: return "V_SgIntrinsicSymbol";
-            case 436L: return "V_SgIsOp";
-            case 437L: return "V_SgIsNotOp";
-            case 438L: return "V_SgIorAssignOp";
-            case 439L: return "V_SgJovialCompoolStatement";
-            case 440L: return "V_SgJovialForThenStatement";
-            case 441L: return "V_SgKeyDatumPair";
-            case 442L: return "V_SgCudaKernelExecConfig";
-            case 443L: return "V_SgCudaKernelCallExp";
-            case 444L: return "V_SgLabelRefExp";
-            case 445L: return "V_SgLabelStatement";
-            case 446L: return "V_SgJavaLabelStatement";
-            case 447L: return "V_SgLabelSymbol";
-            case 448L: return "V_SgJavaLabelSymbol";
-            case 449L: return "V_SgLambdaCapture";
-            case 450L: return "V_SgLambdaCaptureList";
-            case 451L: return "V_SgLambdaExp";
-            case 452L: return "V_SgLambdaRefExp";
-            case 453L: return "V_SgLeftDivideOp";
-            case 454L: return "V_SgLessOrEqualOp";
-            case 455L: return "V_SgLessThanOp";
-            case 456L: return "V_SgLineDirectiveStatement";
-            case 457L: return "V_SgLinemarkerDirectiveStatement";
-            case 458L: return "V_SgLinkageModifier";
-            case 459L: return "V_SgListComprehension";
-            case 460L: return "V_SgListExp";
-            case 461L: return "V_SgLocatedNode";
-            case 462L: return "V_SgLocatedNodeSupport";
-            case 463L: return "V_SgLongDoubleVal";
-            case 464L: return "V_SgLongIntVal";
-            case 465L: return "V_SgLongLongIntVal";
-            case 466L: return "V_SgLshiftAssignOp";
-            case 467L: return "V_SgLshiftOp";
-            case 468L: return "V_SgMagicColonExp";
-            case 469L: return "V_SgMatrixExp";
-            case 470L: return "V_SgMatrixTransposeOp";
-            case 471L: return "V_SgMatlabForStatement";
-            case 472L: return "V_SgMemberFunctionDeclaration";
-            case 473L: return "V_SgMemberFunctionRefExp";
-            case 474L: return "V_SgMemberFunctionSymbol";
-            case 475L: return "V_SgMemberFunctionType";
-            case 476L: return "V_SgMembershipOp";
-            case 477L: return "V_SgMicrosoftAttributeDeclaration";
-            case 478L: return "V_SgMinusAssignOp";
-            case 479L: return "V_SgMinusMinusOp";
-            case 480L: return "V_SgMinusOp";
-            case 481L: return "V_SgModAssignOp";
-            case 482L: return "V_SgModOp";
-            case 483L: return "V_SgModifier";
-            case 484L: return "V_SgModifierNodes";
-            case 485L: return "V_SgModifierType";
-            case 486L: return "V_SgModuleStatement";
-            case 487L: return "V_SgModuleSymbol";
-            case 488L: return "V_SgMultAssignOp";
-            case 489L: return "V_SgMultiplyOp";
-            case 490L: return "V_SgName";
-            case 491L: return "V_SgNameGroup";
-            case 492L: return "V_SgNamedType";
-            case 493L: return "V_SgNamelistStatement";
-            case 494L: return "V_SgNamespaceAliasDeclarationStatement";
-            case 495L: return "V_SgNamespaceDeclarationStatement";
-            case 496L: return "V_SgNamespaceDefinitionStatement";
-            case 497L: return "V_SgNamespaceSymbol";
-            case 498L: return "V_SgNaryOp";
-            case 499L: return "V_SgNaryBooleanOp";
-            case 500L: return "V_SgNaryComparisonOp";
-            case 501L: return "V_SgNewExp";
-            case 502L: return "V_SgNode";
-            case 503L: return "V_SgNoexceptOp";
-            case 504L: return "V_SgNotEqualOp";
-            case 505L: return "V_SgNotOp";
-            case 506L: return "V_SgNonMembershipOp";
-            case 507L: return "V_SgNullExpression";
-            case 508L: return "V_SgNullptrValExp";
-            case 509L: return "V_SgNullStatement";
-            case 510L: return "V_SgNullifyStatement";
-            case 511L: return "V_SgOmpAtomicStatement";
-            case 512L: return "V_SgOmpBarrierStatement";
-            case 513L: return "V_SgOmpCriticalStatement";
-            case 514L: return "V_SgOmpClauseBodyStatement";
-            case 515L: return "V_SgOmpBodyStatement";
-            case 516L: return "V_SgOmpDoStatement";
-            case 517L: return "V_SgOmpFlushStatement";
-            case 518L: return "V_SgOmpDeclareSimdStatement";
-            case 519L: return "V_SgOmpForStatement";
-            case 520L: return "V_SgOmpForSimdStatement";
-            case 521L: return "V_SgOmpMasterStatement";
-            case 522L: return "V_SgOmpOrderedStatement";
-            case 523L: return "V_SgOmpParallelStatement";
-            case 524L: return "V_SgOmpSectionStatement";
-            case 525L: return "V_SgOmpSectionsStatement";
-            case 526L: return "V_SgOmpSingleStatement";
-            case 527L: return "V_SgOmpTaskStatement";
-            case 528L: return "V_SgOmpTaskwaitStatement";
-            case 529L: return "V_SgOmpThreadprivateStatement";
-            case 530L: return "V_SgOmpWorkshareStatement";
-            case 531L: return "V_SgOmpTargetStatement";
-            case 532L: return "V_SgOmpTargetDataStatement";
-            case 533L: return "V_SgOmpSimdStatement";
-            case 534L: return "V_SgOmpClause";
-            case 535L: return "V_SgOmpBeginClause";
-            case 536L: return "V_SgOmpCollapseClause";
-            case 537L: return "V_SgOmpCopyinClause";
-            case 538L: return "V_SgOmpCopyprivateClause";
-            case 539L: return "V_SgOmpDefaultClause";
-            case 540L: return "V_SgOmpEndClause";
-            case 541L: return "V_SgOmpExpressionClause";
-            case 542L: return "V_SgOmpFirstprivateClause";
-            case 543L: return "V_SgOmpIfClause";
-            case 544L: return "V_SgOmpFinalClause";
-            case 545L: return "V_SgOmpPriorityClause";
-            case 546L: return "V_SgOmpDeviceClause";
-            case 547L: return "V_SgOmpLastprivateClause";
-            case 548L: return "V_SgOmpNowaitClause";
-            case 549L: return "V_SgOmpNumThreadsClause";
-            case 550L: return "V_SgOmpOrderedClause";
-            case 551L: return "V_SgOmpPrivateClause";
-            case 552L: return "V_SgOmpReductionClause";
-            case 553L: return "V_SgOmpScheduleClause";
-            case 554L: return "V_SgOmpSharedClause";
-            case 555L: return "V_SgOmpUntiedClause";
-            case 556L: return "V_SgOmpMergeableClause";
-            case 557L: return "V_SgOmpVariablesClause";
-            case 558L: return "V_SgOmpMapClause";
-            case 559L: return "V_SgOmpSafelenClause";
-            case 560L: return "V_SgOmpSimdlenClause";
-            case 561L: return "V_SgOmpLinearClause";
-            case 562L: return "V_SgOmpUniformClause";
-            case 563L: return "V_SgOmpAlignedClause";
-            case 564L: return "V_SgOmpProcBindClause";
-            case 565L: return "V_SgOmpAtomicClause";
-            case 566L: return "V_SgOmpInbranchClause";
-            case 567L: return "V_SgOmpNotinbranchClause";
-            case 568L: return "V_SgOmpDependClause";
-            case 569L: return "V_SgOpenclAccessModeModifier";
-            case 570L: return "V_SgOpenStatement";
-            case 571L: return "V_SgOptions";
-            case 572L: return "V_SgOrOp";
-            case 573L: return "V_SgParameterStatement";
-            case 574L: return "V_SgPartialFunctionModifierType";
-            case 575L: return "V_SgPartialFunctionType";
-            case 576L: return "V_SgPassStatement";
-            case 577L: return "V_SgPlusAssignOp";
-            case 578L: return "V_SgPlusPlusOp";
-            case 579L: return "V_SgPntrArrRefExp";
-            case 580L: return "V_SgPointerAssignOp";
-            case 581L: return "V_SgPointerDerefExp";
-            case 582L: return "V_SgPointerMemberType";
-            case 583L: return "V_SgPointerType";
-            case 584L: return "V_SgPowerOp";
-            case 585L: return "V_SgPragma";
-            case 586L: return "V_SgPragmaDeclaration";
-            case 587L: return "V_SgPrintStatement";
-            case 588L: return "V_SgProcedureHeaderStatement";
-            case 589L: return "V_SgProgramHeaderStatement";
-            case 590L: return "V_SgProject";
-            case 591L: return "V_SgPseudoDestructorRefExp";
-            case 592L: return "V_SgPythonGlobalStmt";
-            case 593L: return "V_SgPythonPrintStmt";
-            case 594L: return "V_SgQualifiedName";
-            case 595L: return "V_SgQualifiedNameType";
-            case 596L: return "V_SgRangeExp";
-            case 597L: return "V_SgRangeBasedForStatement";
-            case 598L: return "V_SgReadStatement";
-            case 599L: return "V_SgRealPartOp";
-            case 600L: return "V_SgRefExp";
-            case 601L: return "V_SgReferenceType";
-            case 602L: return "V_SgRenamePair";
-            case 603L: return "V_SgRenameSymbol";
-            case 604L: return "V_SgReturnStmt";
-            case 605L: return "V_SgRewindStatement";
-            case 606L: return "V_SgRshiftAssignOp";
-            case 607L: return "V_SgRshiftOp";
-            case 608L: return "V_SgRvalueReferenceType";
-            case 609L: return "V_SgJavaUnsignedRshiftAssignOp";
-            case 610L: return "V_SgJavaUnsignedRshiftOp";
-            case 611L: return "V_SgScopeOp";
-            case 612L: return "V_SgScopeStatement";
-            case 613L: return "V_SgSequenceStatement";
-            case 614L: return "V_SgSetComprehension";
-            case 615L: return "V_SgShortVal";
-            case 616L: return "V_SgSizeOfOp";
-            case 617L: return "V_SgAlignOfOp";
-            case 618L: return "V_SgJavaInstanceOfOp";
-            case 619L: return "V_SgSourceFile";
-            case 620L: return "V_SgSpawnStmt";
-            case 621L: return "V_SgSyncAllStatement";
-            case 622L: return "V_SgSyncImagesStatement";
-            case 623L: return "V_SgSyncMemoryStatement";
-            case 624L: return "V_SgSyncTeamStatement";
-            case 625L: return "V_SgLockStatement";
-            case 626L: return "V_SgUnlockStatement";
-            case 627L: return "V_SgJavaThrowStatement";
-            case 628L: return "V_SgJavaForEachStatement";
-            case 629L: return "V_SgJavaSynchronizedStatement";
-            case 630L: return "V_SgJavaParameterizedType";
-            case 631L: return "V_SgJavaWildcardType";
-            case 632L: return "V_SgSpecialFunctionModifier";
-            case 633L: return "V_SgStatement";
-            case 634L: return "V_SgStaticAssertionDeclaration";
-            case 635L: return "V_SgStmtDeclarationStatement";
-            case 636L: return "V_SgStatementExpression";
-            case 637L: return "V_SgStatementFunctionStatement";
-            case 638L: return "V_SgStopOrPauseStatement";
-            case 639L: return "V_SgStorageModifier";
-            case 640L: return "V_SgStringConversion";
-            case 641L: return "V_SgStringKeyedBidirectionalGraph";
-            case 642L: return "V_SgStringVal";
-            case 643L: return "V_SgSubscriptExpression";
-            case 644L: return "V_SgSubtractOp";
-            case 645L: return "V_SgSupport";
-            case 646L: return "V_SgSwitchStatement";
-            case 647L: return "V_SgSymbol";
-            case 648L: return "V_SgSymbolTable";
-            case 649L: return "V_SgTemplateArgument";
-            case 650L: return "V_SgTemplateArgumentList";
-            case 651L: return "V_SgTemplateDeclaration";
-            case 652L: return "V_SgTemplateClassDeclaration";
-            case 653L: return "V_SgTemplateClassSymbol";
-            case 654L: return "V_SgTemplateFunctionDeclaration";
-            case 655L: return "V_SgTemplateFunctionRefExp";
-            case 656L: return "V_SgTemplateFunctionSymbol";
-            case 657L: return "V_SgTemplateMemberFunctionDeclaration";
-            case 658L: return "V_SgTemplateMemberFunctionRefExp";
-            case 659L: return "V_SgTemplateMemberFunctionSymbol";
-            case 660L: return "V_SgTemplateTypedefDeclaration";
-            case 661L: return "V_SgTemplateTypedefSymbol";
-            case 662L: return "V_SgTemplateVariableDeclaration";
-            case 663L: return "V_SgTemplateVariableSymbol";
-            case 664L: return "V_SgTemplateClassDefinition";
-            case 665L: return "V_SgTemplateFunctionDefinition";
-            case 666L: return "V_SgTemplateInstantiationDecl";
-            case 667L: return "V_SgTemplateInstantiationDefn";
-            case 668L: return "V_SgTemplateInstantiationDirectiveStatement";
-            case 669L: return "V_SgTemplateInstantiationFunctionDecl";
-            case 670L: return "V_SgTemplateInstantiationMemberFunctionDecl";
-            case 671L: return "V_SgTemplateInstantiationTypedefDeclaration";
-            case 672L: return "V_SgTemplateParameter";
-            case 673L: return "V_SgTemplateParameterVal";
-            case 674L: return "V_SgTemplateParameterList";
-            case 675L: return "V_SgTemplateSymbol";
-            case 676L: return "V_SgTemplateType";
-            case 677L: return "V_SgThisExp";
-            case 678L: return "V_SgTypeTraitBuiltinOperator";
-            case 679L: return "V_SgSuperExp";
-            case 680L: return "V_SgThrowOp";
-            case 681L: return "V_SgToken";
-            case 682L: return "V_SgTryStmt";
-            case 683L: return "V_SgTupleExp";
-            case 684L: return "V_SgType";
-            case 685L: return "V_SgTypeBool";
-            case 686L: return "V_SgTypeChar";
-            case 687L: return "V_SgTypeChar16";
-            case 688L: return "V_SgTypeChar32";
-            case 689L: return "V_SgTypeComplex";
-            case 690L: return "V_SgTypeDefault";
-            case 691L: return "V_SgTypeExpression";
-            case 692L: return "V_SgTypeLabel";
-            case 693L: return "V_SgTypeDouble";
-            case 694L: return "V_SgTypeEllipse";
-            case 695L: return "V_SgTypeFloat";
-            case 696L: return "V_SgTypeFloat128";
-            case 697L: return "V_SgTypeFloat80";
-            case 698L: return "V_SgTypeGlobalVoid";
-            case 699L: return "V_SgTypeIdOp";
-            case 700L: return "V_SgTypeImaginary";
-            case 701L: return "V_SgTypeInt";
-            case 702L: return "V_SgTypeLong";
-            case 703L: return "V_SgTypeLongDouble";
-            case 704L: return "V_SgTypeLongLong";
-            case 705L: return "V_SgTypeModifier";
-            case 706L: return "V_SgTypeMatrix";
-            case 707L: return "V_SgTypeTuple";
-            case 708L: return "V_SgTypeNullptr";
-            case 709L: return "V_SgTypeOfType";
-            case 710L: return "V_SgTypeShort";
-            case 711L: return "V_SgTypeSigned128bitInteger";
-            case 712L: return "V_SgTypeSignedChar";
-            case 713L: return "V_SgTypeSignedInt";
-            case 714L: return "V_SgTypeSignedLong";
-            case 715L: return "V_SgTypeSignedLongLong";
-            case 716L: return "V_SgTypeSignedShort";
-            case 717L: return "V_SgTypeString";
-            case 718L: return "V_SgTypeUnknown";
-            case 719L: return "V_SgTypeUnsigned128bitInteger";
-            case 720L: return "V_SgTypeUnsignedChar";
-            case 721L: return "V_SgTypeUnsignedInt";
-            case 722L: return "V_SgTypeUnsignedLong";
-            case 723L: return "V_SgTypeUnsignedLongLong";
-            case 724L: return "V_SgTypeUnsignedShort";
-            case 725L: return "V_SgTypeVoid";
-            case 726L: return "V_SgTypeWchar";
-            case 727L: return "V_SgTypedefDeclaration";
-            case 728L: return "V_SgTypedefSeq";
-            case 729L: return "V_SgTypedefSymbol";
-            case 730L: return "V_SgTypedefType";
-            case 731L: return "V_SgUPC_AccessModifier";
-            case 732L: return "V_SgUnaryAddOp";
-            case 733L: return "V_SgUnaryOp";
-            case 734L: return "V_SgUndefDirectiveStatement";
-            case 735L: return "V_SgUndirectedGraphEdge";
-            case 736L: return "V_SgUnknownArrayOrFunctionReference";
-            case 737L: return "V_SgUnknownFile";
-            case 739L: return "V_SgUnparse_Info";
-            case 740L: return "V_SgUnsignedCharVal";
-            case 741L: return "V_SgUnsignedIntVal";
-            case 742L: return "V_SgUnsignedLongLongIntVal";
-            case 743L: return "V_SgUnsignedLongVal";
-            case 744L: return "V_SgUnsignedShortVal";
-            case 745L: return "V_SgUntypedNode";
-            case 746L: return "V_SgUntypedExpression";
-            case 747L: return "V_SgUntypedUnaryOperator";
-            case 748L: return "V_SgUntypedBinaryOperator";
-            case 749L: return "V_SgUntypedValueExpression";
-            case 750L: return "V_SgUntypedArrayReferenceExpression";
-            case 751L: return "V_SgUntypedSubscriptExpression";
-            case 752L: return "V_SgUntypedOtherExpression";
-            case 753L: return "V_SgUntypedNamedExpression";
-            case 754L: return "V_SgUntypedNullExpression";
-            case 755L: return "V_SgUntypedExprListExpression";
-            case 756L: return "V_SgUntypedFunctionCallOrArrayReferenceExpression";
-            case 757L: return "V_SgUntypedStatement";
-            case 758L: return "V_SgUntypedLabelStatement";
-            case 759L: return "V_SgUntypedNamedStatement";
-            case 760L: return "V_SgUntypedAssignmentStatement";
-            case 761L: return "V_SgUntypedBlockStatement";
-            case 762L: return "V_SgUntypedExpressionStatement";
-            case 763L: return "V_SgUntypedForAllStatement";
-            case 764L: return "V_SgUntypedFunctionCallStatement";
-            case 765L: return "V_SgUntypedImageControlStatement";
-            case 766L: return "V_SgUntypedOtherStatement";
-            case 767L: return "V_SgUntypedUseStatement";
-            case 768L: return "V_SgUntypedDeclarationStatement";
-            case 769L: return "V_SgUntypedInitializedName";
-            case 770L: return "V_SgUntypedName";
-            case 771L: return "V_SgUntypedNameListDeclaration";
-            case 772L: return "V_SgUntypedInitializedNameListDeclaration";
-            case 773L: return "V_SgUntypedImplicitDeclaration";
-            case 774L: return "V_SgUntypedVariableDeclaration";
-            case 775L: return "V_SgUntypedProgramHeaderDeclaration";
-            case 776L: return "V_SgUntypedFunctionDeclaration";
-            case 777L: return "V_SgUntypedSubroutineDeclaration";
-            case 778L: return "V_SgUntypedInterfaceDeclaration";
-            case 779L: return "V_SgUntypedNullDeclaration";
-            case 780L: return "V_SgUntypedNullStatement";
-            case 781L: return "V_SgUntypedIfStatement";
-            case 782L: return "V_SgUntypedCaseStatement";
-            case 783L: return "V_SgUntypedLoopStatement";
-            case 784L: return "V_SgUntypedWhileStatement";
-            case 785L: return "V_SgUntypedForStatement";
-            case 786L: return "V_SgUntypedExitStatement";
-            case 787L: return "V_SgUntypedGotoStatement";
-            case 788L: return "V_SgUntypedProcedureCallStatement";
-            case 789L: return "V_SgUntypedReturnStatement";
-            case 790L: return "V_SgUntypedExtendedReturnStatement";
-            case 791L: return "V_SgUntypedStopStatement";
-            case 792L: return "V_SgUntypedAcceptStatement";
-            case 793L: return "V_SgUntypedEntryCallStatement";
-            case 794L: return "V_SgUntypedRequeueStatement";
-            case 795L: return "V_SgUntypedDelayUntilStatement";
-            case 796L: return "V_SgUntypedDelayRelativeStatement";
-            case 797L: return "V_SgUntypedTerminateAlternativeStatement";
-            case 798L: return "V_SgUntypedSelectiveAcceptStatement";
-            case 799L: return "V_SgUntypedTimedEntryCallStatement";
-            case 800L: return "V_SgUntypedConditionalEntryCallStatement";
-            case 801L: return "V_SgUntypedAsynchronousSelectStatement";
-            case 802L: return "V_SgUntypedAbortStatement";
-            case 803L: return "V_SgUntypedRaiseStatement";
-            case 804L: return "V_SgUntypedCodeStatement";
-            case 805L: return "V_SgUntypedReferenceExpression";
-            case 806L: return "V_SgUntypedToken";
-            case 807L: return "V_SgUntypedTokenPair";
-            case 808L: return "V_SgUntypedType";
-            case 809L: return "V_SgUntypedArrayType";
-            case 810L: return "V_SgUntypedAttribute";
-            case 811L: return "V_SgUntypedFile";
-            case 812L: return "V_SgUntypedScope";
-            case 813L: return "V_SgUntypedFunctionScope";
-            case 814L: return "V_SgUntypedModuleScope";
-            case 815L: return "V_SgUntypedGlobalScope";
-            case 816L: return "V_SgUntypedModuleDeclaration";
-            case 817L: return "V_SgUntypedSubmoduleDeclaration";
-            case 818L: return "V_SgUntypedBlockDataDeclaration";
-            case 819L: return "V_SgUntypedStructureDeclaration";
-            case 820L: return "V_SgUntypedPackageDeclaration";
-            case 821L: return "V_SgUntypedExceptionDeclaration";
-            case 822L: return "V_SgUntypedExceptionHandlerDeclaration";
-            case 823L: return "V_SgUntypedTaskDeclaration";
-            case 824L: return "V_SgUntypedUnitDeclaration";
-            case 825L: return "V_SgUntypedStatementList";
-            case 826L: return "V_SgUntypedDeclarationStatementList";
-            case 827L: return "V_SgUntypedFunctionDeclarationList";
-            case 828L: return "V_SgUntypedInitializedNameList";
-            case 829L: return "V_SgUntypedNameList";
-            case 830L: return "V_SgUntypedTokenList";
-            case 831L: return "V_SgUntypedTokenPairList";
-            case 832L: return "V_SgUpcBarrierStatement";
-            case 833L: return "V_SgUpcBlocksizeofExpression";
-            case 834L: return "V_SgUpcElemsizeofExpression";
-            case 835L: return "V_SgUpcFenceStatement";
-            case 836L: return "V_SgUpcForAllStatement";
-            case 837L: return "V_SgUpcLocalsizeofExpression";
-            case 838L: return "V_SgUpcMythread";
-            case 839L: return "V_SgUpcNotifyStatement";
-            case 840L: return "V_SgUpcThreads";
-            case 841L: return "V_SgUpcWaitStatement";
-            case 842L: return "V_SgUseStatement";
-            case 843L: return "V_SgUserDefinedBinaryOp";
-            case 844L: return "V_SgUserDefinedUnaryOp";
-            case 845L: return "V_SgUsingDeclarationStatement";
-            case 846L: return "V_SgUsingDirectiveStatement";
-            case 847L: return "V_SgValueExp";
-            case 848L: return "V_SgVarArgCopyOp";
-            case 849L: return "V_SgVarArgEndOp";
-            case 850L: return "V_SgVarArgOp";
-            case 851L: return "V_SgVarArgStartOneOperandOp";
-            case 852L: return "V_SgVarArgStartOp";
-            case 853L: return "V_SgVarRefExp";
-            case 854L: return "V_SgVariableDeclaration";
-            case 855L: return "V_SgVariableDefinition";
-            case 856L: return "V_SgVariableSymbol";
-            case 857L: return "V_SgVariantExpression";
-            case 858L: return "V_SgVariantStatement";
-            case 859L: return "V_SgWaitStatement";
-            case 860L: return "V_SgWarningDirectiveStatement";
-            case 861L: return "V_SgWithStatement";
-            case 862L: return "V_SgWcharVal";
-            case 863L: return "V_SgWhereStatement";
-            case 864L: return "V_SgWhileStmt";
-            case 865L: return "V_SgWriteStatement";
-            case 866L: return "V_SgXorAssignOp";
-            case 867L: return "V_SgYieldExpression";
-            case 868L: return "V_Sg_File_Info";
-            case 869L: return "V_SgTypeCAFTeam";
-            case 870L: return "V_SgCAFWithTeamStatement";
-            case 871L: return "V_SgCAFCoExpression";
-            case 872L: return "V_SgCallExpression";
-            case 873L: return "V_SgTypeCrayPointer";
-            case 874L: return "V_SgJavaImportStatement";
-            case 875L: return "V_SgJavaPackageDeclaration";
-            case 876L: return "V_SgJavaPackageStatement";
-            case 877L: return "V_SgJavaImportStatementList";
-            case 878L: return "V_SgJavaClassDeclarationList";
-            case 879L: return "V_SgJavaMemberValuePair";
-            case 880L: return "V_SgJavaAnnotation";
-            case 881L: return "V_SgJavaMarkerAnnotation";
-            case 882L: return "V_SgJavaSingleMemberAnnotation";
-            case 883L: return "V_SgJavaNormalAnnotation";
-            case 884L: return "V_SgJavaTypeExpression";
-            case 885L: return "V_SgJavaQualifiedType";
-            case 886L: return "V_SgClassExp";
-            case 887L: return "V_SgJavaUnionType";
-            case 888L: return "V_SgJavaParameterType";
-            case 889L: return "V_SgAsyncStmt";
-            case 890L: return "V_SgFinishStmt";
-            case 891L: return "V_SgAtStmt";
-            case 892L: return "V_SgAtomicStmt";
-            case 894L: return "V_SgWhenStmt";
-            case 895L: return "V_SgAtExp";
-            case 896L: return "V_SgFinishExp";
-            case 897L: return "V_SgHereExp";
-            case 898L: return "V_SgDotDotExp";
-            case 900L: return "V_SgNumVariants";
+            case 255L: return "V_SgAutoType";
+            case 256L: return "V_SgBackspaceStatement";
+            case 257L: return "V_SgBaseClass";
+            case 258L: return "V_SgExpBaseClass";
+            case 259L: return "V_SgBaseClassModifier";
+            case 260L: return "V_SgBasicBlock";
+            case 261L: return "V_SgBidirectionalGraph";
+            case 262L: return "V_SgBinaryComposite";
+            case 263L: return "V_SgBinaryOp";
+            case 264L: return "V_SgBitAndOp";
+            case 265L: return "V_SgBitAttribute";
+            case 266L: return "V_SgBitComplementOp";
+            case 267L: return "V_SgBitOrOp";
+            case 268L: return "V_SgBitXorOp";
+            case 269L: return "V_SgBlockDataStatement";
+            case 270L: return "V_SgBoolValExp";
+            case 271L: return "V_SgBreakStmt";
+            case 272L: return "V_SgBracedInitializer";
+            case 273L: return "V_SgC_PreprocessorDirectiveStatement";
+            case 274L: return "V_SgCaseOptionStmt";
+            case 275L: return "V_SgCastExp";
+            case 276L: return "V_SgCatchOptionStmt";
+            case 277L: return "V_SgCatchStatementSeq";
+            case 278L: return "V_SgCharVal";
+            case 279L: return "V_SgChar16Val";
+            case 280L: return "V_SgChar32Val";
+            case 281L: return "V_SgClassDecl_attr";
+            case 282L: return "V_SgClassDeclaration";
+            case 283L: return "V_SgClassDefinition";
+            case 284L: return "V_SgClassNameRefExp";
+            case 285L: return "V_SgClassSymbol";
+            case 286L: return "V_SgClassType";
+            case 287L: return "V_SgClinkageDeclarationStatement";
+            case 288L: return "V_SgClinkageEndStatement";
+            case 289L: return "V_SgClinkageStartStatement";
+            case 290L: return "V_SgCloseStatement";
+            case 291L: return "V_SgColonShapeExp";
+            case 292L: return "V_SgCommaOpExp";
+            case 293L: return "V_SgCommonBlock";
+            case 294L: return "V_SgCommonBlockObject";
+            case 295L: return "V_SgCommonSymbol";
+            case 296L: return "V_SgComplexVal";
+            case 297L: return "V_SgComprehension";
+            case 299L: return "V_SgCompoundAssignOp";
+            case 300L: return "V_SgCompoundInitializer";
+            case 301L: return "V_SgCompoundLiteralExp";
+            case 302L: return "V_SgComputedGotoStatement";
+            case 303L: return "V_SgConcatenationOp";
+            case 304L: return "V_SgConditionalExp";
+            case 305L: return "V_SgConjugateOp";
+            case 306L: return "V_SgConstVolatileModifier";
+            case 307L: return "V_SgConstructorInitializer";
+            case 308L: return "V_SgContainsStatement";
+            case 309L: return "V_SgContinueStmt";
+            case 310L: return "V_SgCtorInitializerList";
+            case 311L: return "V_SgDataStatementGroup";
+            case 312L: return "V_SgDataStatementObject";
+            case 313L: return "V_SgDataStatementValue";
+            case 314L: return "V_SgDeadIfDirectiveStatement";
+            case 315L: return "V_SgDeallocateStatement";
+            case 316L: return "V_SgDeclarationModifier";
+            case 317L: return "V_SgDeclarationScope";
+            case 318L: return "V_SgDeclarationStatement";
+            case 319L: return "V_SgDeclType";
+            case 320L: return "V_SgDefaultOptionStmt";
+            case 321L: return "V_SgDefaultSymbol";
+            case 322L: return "V_SgDefineDirectiveStatement";
+            case 323L: return "V_SgDeleteExp";
+            case 324L: return "V_SgDerivedTypeStatement";
+            case 325L: return "V_SgDesignatedInitializer";
+            case 326L: return "V_SgDictionaryComprehension";
+            case 327L: return "V_SgDictionaryExp";
+            case 328L: return "V_SgDimensionObject";
+            case 330L: return "V_SgDirectedGraphEdge";
+            case 332L: return "V_SgDirectory";
+            case 333L: return "V_SgDirectoryList";
+            case 334L: return "V_SgDivAssignOp";
+            case 335L: return "V_SgDivideOp";
+            case 336L: return "V_SgDoWhileStmt";
+            case 337L: return "V_SgDotExp";
+            case 338L: return "V_SgDotStarOp";
+            case 339L: return "V_SgDoubleVal";
+            case 340L: return "V_SgElaboratedTypeModifier";
+            case 341L: return "V_SgElementwiseOp";
+            case 342L: return "V_SgElementwiseAddOp";
+            case 343L: return "V_SgElementwiseDivideOp";
+            case 344L: return "V_SgElementwiseLeftDivideOp";
+            case 345L: return "V_SgElementwiseMultiplyOp";
+            case 346L: return "V_SgElementwisePowerOp";
+            case 347L: return "V_SgElementwiseSubtractOp";
+            case 348L: return "V_SgElseDirectiveStatement";
+            case 349L: return "V_SgElseWhereStatement";
+            case 350L: return "V_SgElseifDirectiveStatement";
+            case 351L: return "V_SgEmptyDeclaration";
+            case 352L: return "V_SgEmptyDirectiveStatement";
+            case 353L: return "V_SgEndfileStatement";
+            case 354L: return "V_SgEndifDirectiveStatement";
+            case 355L: return "V_SgEntryStatement";
+            case 356L: return "V_SgEnumDeclaration";
+            case 357L: return "V_SgEnumFieldSymbol";
+            case 358L: return "V_SgEnumSymbol";
+            case 359L: return "V_SgEnumType";
+            case 360L: return "V_SgEnumVal";
+            case 361L: return "V_SgEqualityOp";
+            case 362L: return "V_SgEquivalenceStatement";
+            case 363L: return "V_SgErrorDirectiveStatement";
+            case 364L: return "V_SgExecStatement";
+            case 365L: return "V_SgExponentiationOp";
+            case 366L: return "V_SgExponentiationAssignOp";
+            case 367L: return "V_SgExprListExp";
+            case 368L: return "V_SgExprStatement";
+            case 369L: return "V_SgExpression";
+            case 370L: return "V_SgExpressionRoot";
+            case 371L: return "V_SgFile";
+            case 372L: return "V_SgFileList";
+            case 373L: return "V_SgFloatVal";
+            case 374L: return "V_SgFloat128Val";
+            case 375L: return "V_SgFloat80Val";
+            case 376L: return "V_SgFlushStatement";
+            case 377L: return "V_SgForAllStatement";
+            case 378L: return "V_SgForInitStatement";
+            case 379L: return "V_SgForStatement";
+            case 380L: return "V_SgFormatItem";
+            case 381L: return "V_SgFormatItemList";
+            case 382L: return "V_SgFormatStatement";
+            case 383L: return "V_SgFortranDo";
+            case 384L: return "V_SgFortranIncludeLine";
+            case 385L: return "V_SgFortranNonblockedDo";
+            case 386L: return "V_SgFuncDecl_attr";
+            case 387L: return "V_SgFunctionCallExp";
+            case 388L: return "V_SgFunctionDeclaration";
+            case 389L: return "V_SgFunctionDefinition";
+            case 390L: return "V_SgFunctionParameterScope";
+            case 391L: return "V_SgFunctionModifier";
+            case 392L: return "V_SgFunctionParameterList";
+            case 393L: return "V_SgFunctionParameterRefExp";
+            case 394L: return "V_SgFunctionParameterTypeList";
+            case 395L: return "V_SgFunctionRefExp";
+            case 396L: return "V_SgFunctionSymbol";
+            case 397L: return "V_SgFunctionType";
+            case 398L: return "V_SgFunctionTypeSymbol";
+            case 399L: return "V_SgFunctionTypeTable";
+            case 400L: return "V_SgTypeTable";
+            case 401L: return "V_SgGlobal";
+            case 402L: return "V_SgGotoStatement";
+            case 403L: return "V_SgGraph";
+            case 404L: return "V_SgGraphEdge";
+            case 405L: return "V_SgGraphEdgeList";
+            case 406L: return "V_SgGraphNode";
+            case 407L: return "V_SgGraphNodeList";
+            case 408L: return "V_SgGreaterOrEqualOp";
+            case 409L: return "V_SgGreaterThanOp";
+            case 410L: return "V_SgIOItemExpression";
+            case 411L: return "V_SgIOStatement";
+            case 412L: return "V_SgIdentDirectiveStatement";
+            case 413L: return "V_SgIfDirectiveStatement";
+            case 414L: return "V_SgIfStmt";
+            case 415L: return "V_SgIfdefDirectiveStatement";
+            case 416L: return "V_SgIfndefDirectiveStatement";
+            case 417L: return "V_SgImageControlStatement";
+            case 418L: return "V_SgImagPartOp";
+            case 419L: return "V_SgImplicitStatement";
+            case 420L: return "V_SgImpliedDo";
+            case 421L: return "V_SgImportStatement";
+            case 422L: return "V_SgIncidenceDirectedGraph";
+            case 423L: return "V_SgIncidenceUndirectedGraph";
+            case 424L: return "V_SgIncludeDirectiveStatement";
+            case 425L: return "V_SgIncludeFile";
+            case 426L: return "V_SgIncludeNextDirectiveStatement";
+            case 427L: return "V_SgInitializedName";
+            case 428L: return "V_SgInitializer";
+            case 429L: return "V_SgInquireStatement";
+            case 430L: return "V_SgIntKeyedBidirectionalGraph";
+            case 431L: return "V_SgIntVal";
+            case 432L: return "V_SgIntegerDivideOp";
+            case 433L: return "V_SgIntegerDivideAssignOp";
+            case 434L: return "V_SgInterfaceBody";
+            case 435L: return "V_SgHeaderFileBody";
+            case 436L: return "V_SgHeaderFileReport";
+            case 437L: return "V_SgInterfaceStatement";
+            case 438L: return "V_SgInterfaceSymbol";
+            case 439L: return "V_SgIntrinsicSymbol";
+            case 440L: return "V_SgIsOp";
+            case 441L: return "V_SgIsNotOp";
+            case 442L: return "V_SgIorAssignOp";
+            case 443L: return "V_SgJovialCompoolStatement";
+            case 444L: return "V_SgJovialForThenStatement";
+            case 445L: return "V_SgKeyDatumPair";
+            case 446L: return "V_SgCudaKernelExecConfig";
+            case 447L: return "V_SgCudaKernelCallExp";
+            case 448L: return "V_SgLabelRefExp";
+            case 449L: return "V_SgLabelStatement";
+            case 450L: return "V_SgJavaLabelStatement";
+            case 451L: return "V_SgLabelSymbol";
+            case 452L: return "V_SgJavaLabelSymbol";
+            case 453L: return "V_SgLambdaCapture";
+            case 454L: return "V_SgLambdaCaptureList";
+            case 455L: return "V_SgLambdaExp";
+            case 456L: return "V_SgLambdaRefExp";
+            case 457L: return "V_SgLeftDivideOp";
+            case 458L: return "V_SgLessOrEqualOp";
+            case 459L: return "V_SgLessThanOp";
+            case 460L: return "V_SgLineDirectiveStatement";
+            case 461L: return "V_SgLinemarkerDirectiveStatement";
+            case 462L: return "V_SgLinkageModifier";
+            case 463L: return "V_SgListComprehension";
+            case 464L: return "V_SgListExp";
+            case 465L: return "V_SgLocatedNode";
+            case 466L: return "V_SgLocatedNodeSupport";
+            case 467L: return "V_SgLongDoubleVal";
+            case 468L: return "V_SgLongIntVal";
+            case 469L: return "V_SgLongLongIntVal";
+            case 470L: return "V_SgLshiftAssignOp";
+            case 471L: return "V_SgLshiftOp";
+            case 472L: return "V_SgMagicColonExp";
+            case 473L: return "V_SgMatrixExp";
+            case 474L: return "V_SgMatrixTransposeOp";
+            case 475L: return "V_SgMatlabForStatement";
+            case 476L: return "V_SgMemberFunctionDeclaration";
+            case 477L: return "V_SgMemberFunctionRefExp";
+            case 478L: return "V_SgMemberFunctionSymbol";
+            case 479L: return "V_SgMemberFunctionType";
+            case 480L: return "V_SgMembershipOp";
+            case 481L: return "V_SgMicrosoftAttributeDeclaration";
+            case 482L: return "V_SgMinusAssignOp";
+            case 483L: return "V_SgMinusMinusOp";
+            case 484L: return "V_SgMinusOp";
+            case 485L: return "V_SgModAssignOp";
+            case 486L: return "V_SgModOp";
+            case 487L: return "V_SgModifier";
+            case 488L: return "V_SgModifierNodes";
+            case 489L: return "V_SgModifierType";
+            case 490L: return "V_SgModuleStatement";
+            case 491L: return "V_SgModuleSymbol";
+            case 492L: return "V_SgMultAssignOp";
+            case 493L: return "V_SgMultiplyOp";
+            case 494L: return "V_SgName";
+            case 495L: return "V_SgNameGroup";
+            case 496L: return "V_SgNamedType";
+            case 497L: return "V_SgNamelistStatement";
+            case 498L: return "V_SgNamespaceAliasDeclarationStatement";
+            case 499L: return "V_SgNamespaceDeclarationStatement";
+            case 500L: return "V_SgNamespaceDefinitionStatement";
+            case 501L: return "V_SgNamespaceSymbol";
+            case 502L: return "V_SgNaryOp";
+            case 503L: return "V_SgNaryBooleanOp";
+            case 504L: return "V_SgNaryComparisonOp";
+            case 505L: return "V_SgNewExp";
+            case 506L: return "V_SgNode";
+            case 507L: return "V_SgNoexceptOp";
+            case 508L: return "V_SgNotEqualOp";
+            case 509L: return "V_SgNotOp";
+            case 510L: return "V_SgNonMembershipOp";
+            case 511L: return "V_SgNonrealDecl";
+            case 512L: return "V_SgNonrealRefExp";
+            case 513L: return "V_SgNonrealSymbol";
+            case 514L: return "V_SgNonrealType";
+            case 515L: return "V_SgNonrealBaseClass";
+            case 516L: return "V_SgNullExpression";
+            case 517L: return "V_SgNullptrValExp";
+            case 518L: return "V_SgNullStatement";
+            case 519L: return "V_SgNullifyStatement";
+            case 520L: return "V_SgOmpAtomicStatement";
+            case 521L: return "V_SgOmpBarrierStatement";
+            case 522L: return "V_SgOmpCriticalStatement";
+            case 523L: return "V_SgOmpClauseBodyStatement";
+            case 524L: return "V_SgOmpBodyStatement";
+            case 525L: return "V_SgOmpDoStatement";
+            case 526L: return "V_SgOmpFlushStatement";
+            case 527L: return "V_SgOmpDeclareSimdStatement";
+            case 528L: return "V_SgOmpForStatement";
+            case 529L: return "V_SgOmpForSimdStatement";
+            case 530L: return "V_SgOmpMasterStatement";
+            case 531L: return "V_SgOmpOrderedStatement";
+            case 532L: return "V_SgOmpParallelStatement";
+            case 533L: return "V_SgOmpSectionStatement";
+            case 534L: return "V_SgOmpSectionsStatement";
+            case 535L: return "V_SgOmpSingleStatement";
+            case 536L: return "V_SgOmpTaskStatement";
+            case 537L: return "V_SgOmpTaskwaitStatement";
+            case 538L: return "V_SgOmpThreadprivateStatement";
+            case 539L: return "V_SgOmpWorkshareStatement";
+            case 540L: return "V_SgOmpTargetStatement";
+            case 541L: return "V_SgOmpTargetDataStatement";
+            case 542L: return "V_SgOmpSimdStatement";
+            case 543L: return "V_SgOmpClause";
+            case 544L: return "V_SgOmpBeginClause";
+            case 545L: return "V_SgOmpCollapseClause";
+            case 546L: return "V_SgOmpCopyinClause";
+            case 547L: return "V_SgOmpCopyprivateClause";
+            case 548L: return "V_SgOmpDefaultClause";
+            case 549L: return "V_SgOmpEndClause";
+            case 550L: return "V_SgOmpExpressionClause";
+            case 551L: return "V_SgOmpFirstprivateClause";
+            case 552L: return "V_SgOmpIfClause";
+            case 553L: return "V_SgOmpFinalClause";
+            case 554L: return "V_SgOmpPriorityClause";
+            case 555L: return "V_SgOmpDeviceClause";
+            case 556L: return "V_SgOmpLastprivateClause";
+            case 557L: return "V_SgOmpNowaitClause";
+            case 558L: return "V_SgOmpNumThreadsClause";
+            case 559L: return "V_SgOmpOrderedClause";
+            case 560L: return "V_SgOmpPrivateClause";
+            case 561L: return "V_SgOmpReductionClause";
+            case 562L: return "V_SgOmpScheduleClause";
+            case 563L: return "V_SgOmpSharedClause";
+            case 564L: return "V_SgOmpUntiedClause";
+            case 565L: return "V_SgOmpMergeableClause";
+            case 566L: return "V_SgOmpVariablesClause";
+            case 567L: return "V_SgOmpMapClause";
+            case 568L: return "V_SgOmpSafelenClause";
+            case 569L: return "V_SgOmpSimdlenClause";
+            case 570L: return "V_SgOmpLinearClause";
+            case 571L: return "V_SgOmpUniformClause";
+            case 572L: return "V_SgOmpAlignedClause";
+            case 573L: return "V_SgOmpProcBindClause";
+            case 574L: return "V_SgOmpAtomicClause";
+            case 575L: return "V_SgOmpInbranchClause";
+            case 576L: return "V_SgOmpNotinbranchClause";
+            case 577L: return "V_SgOmpDependClause";
+            case 578L: return "V_SgOpenclAccessModeModifier";
+            case 579L: return "V_SgOpenStatement";
+            case 580L: return "V_SgOptions";
+            case 581L: return "V_SgOrOp";
+            case 582L: return "V_SgParameterStatement";
+            case 583L: return "V_SgPartialFunctionModifierType";
+            case 584L: return "V_SgPartialFunctionType";
+            case 585L: return "V_SgPassStatement";
+            case 586L: return "V_SgPlusAssignOp";
+            case 587L: return "V_SgPlusPlusOp";
+            case 588L: return "V_SgPntrArrRefExp";
+            case 589L: return "V_SgPointerAssignOp";
+            case 590L: return "V_SgPointerDerefExp";
+            case 591L: return "V_SgPointerMemberType";
+            case 592L: return "V_SgPointerType";
+            case 593L: return "V_SgPowerOp";
+            case 594L: return "V_SgPragma";
+            case 595L: return "V_SgPragmaDeclaration";
+            case 596L: return "V_SgPrintStatement";
+            case 597L: return "V_SgProcedureHeaderStatement";
+            case 598L: return "V_SgProgramHeaderStatement";
+            case 599L: return "V_SgProject";
+            case 600L: return "V_SgPseudoDestructorRefExp";
+            case 601L: return "V_SgPythonGlobalStmt";
+            case 602L: return "V_SgPythonPrintStmt";
+            case 603L: return "V_SgQualifiedName";
+            case 604L: return "V_SgQualifiedNameType";
+            case 605L: return "V_SgRangeExp";
+            case 606L: return "V_SgRangeBasedForStatement";
+            case 607L: return "V_SgReadStatement";
+            case 608L: return "V_SgRealPartOp";
+            case 609L: return "V_SgRefExp";
+            case 610L: return "V_SgReferenceType";
+            case 611L: return "V_SgRenamePair";
+            case 612L: return "V_SgRenameSymbol";
+            case 613L: return "V_SgReturnStmt";
+            case 614L: return "V_SgRewindStatement";
+            case 615L: return "V_SgRshiftAssignOp";
+            case 616L: return "V_SgRshiftOp";
+            case 617L: return "V_SgRvalueReferenceType";
+            case 618L: return "V_SgJavaUnsignedRshiftAssignOp";
+            case 619L: return "V_SgJavaUnsignedRshiftOp";
+            case 620L: return "V_SgScopeOp";
+            case 621L: return "V_SgScopeStatement";
+            case 622L: return "V_SgSequenceStatement";
+            case 623L: return "V_SgSetComprehension";
+            case 624L: return "V_SgShortVal";
+            case 625L: return "V_SgSizeOfOp";
+            case 626L: return "V_SgAlignOfOp";
+            case 627L: return "V_SgJavaInstanceOfOp";
+            case 628L: return "V_SgSourceFile";
+            case 629L: return "V_SgSpawnStmt";
+            case 630L: return "V_SgSyncAllStatement";
+            case 631L: return "V_SgSyncImagesStatement";
+            case 632L: return "V_SgSyncMemoryStatement";
+            case 633L: return "V_SgSyncTeamStatement";
+            case 634L: return "V_SgLockStatement";
+            case 635L: return "V_SgUnlockStatement";
+            case 636L: return "V_SgJavaThrowStatement";
+            case 637L: return "V_SgJavaForEachStatement";
+            case 638L: return "V_SgJavaSynchronizedStatement";
+            case 639L: return "V_SgJavaParameterizedType";
+            case 640L: return "V_SgJavaWildcardType";
+            case 641L: return "V_SgSpecialFunctionModifier";
+            case 642L: return "V_SgStatement";
+            case 643L: return "V_SgStaticAssertionDeclaration";
+            case 644L: return "V_SgStmtDeclarationStatement";
+            case 645L: return "V_SgStatementExpression";
+            case 646L: return "V_SgStatementFunctionStatement";
+            case 647L: return "V_SgStopOrPauseStatement";
+            case 648L: return "V_SgStorageModifier";
+            case 649L: return "V_SgStringConversion";
+            case 650L: return "V_SgStringKeyedBidirectionalGraph";
+            case 651L: return "V_SgStringVal";
+            case 652L: return "V_SgSubscriptExpression";
+            case 653L: return "V_SgSubtractOp";
+            case 654L: return "V_SgSupport";
+            case 655L: return "V_SgSwitchStatement";
+            case 656L: return "V_SgSymbol";
+            case 657L: return "V_SgSymbolTable";
+            case 658L: return "V_SgTemplateArgument";
+            case 659L: return "V_SgTemplateArgumentList";
+            case 660L: return "V_SgTemplateDeclaration";
+            case 661L: return "V_SgTemplateClassDeclaration";
+            case 662L: return "V_SgTemplateClassSymbol";
+            case 663L: return "V_SgTemplateFunctionDeclaration";
+            case 664L: return "V_SgTemplateFunctionRefExp";
+            case 665L: return "V_SgTemplateFunctionSymbol";
+            case 666L: return "V_SgTemplateMemberFunctionDeclaration";
+            case 667L: return "V_SgTemplateMemberFunctionRefExp";
+            case 668L: return "V_SgTemplateMemberFunctionSymbol";
+            case 669L: return "V_SgTemplateTypedefDeclaration";
+            case 670L: return "V_SgTemplateTypedefSymbol";
+            case 671L: return "V_SgTemplateVariableDeclaration";
+            case 672L: return "V_SgTemplateVariableSymbol";
+            case 673L: return "V_SgTemplateClassDefinition";
+            case 674L: return "V_SgTemplateFunctionDefinition";
+            case 675L: return "V_SgTemplateInstantiationDecl";
+            case 676L: return "V_SgTemplateInstantiationDefn";
+            case 677L: return "V_SgTemplateInstantiationDirectiveStatement";
+            case 678L: return "V_SgTemplateInstantiationFunctionDecl";
+            case 679L: return "V_SgTemplateInstantiationMemberFunctionDecl";
+            case 680L: return "V_SgTemplateInstantiationTypedefDeclaration";
+            case 681L: return "V_SgTemplateParameter";
+            case 682L: return "V_SgTemplateParameterVal";
+            case 683L: return "V_SgTemplateParameterList";
+            case 684L: return "V_SgTemplateSymbol";
+            case 685L: return "V_SgTemplateType";
+            case 686L: return "V_SgThisExp";
+            case 687L: return "V_SgTypeTraitBuiltinOperator";
+            case 688L: return "V_SgSuperExp";
+            case 689L: return "V_SgThrowOp";
+            case 690L: return "V_SgToken";
+            case 691L: return "V_SgTryStmt";
+            case 692L: return "V_SgTupleExp";
+            case 693L: return "V_SgType";
+            case 694L: return "V_SgTypeBool";
+            case 695L: return "V_SgTypeChar";
+            case 696L: return "V_SgTypeChar16";
+            case 697L: return "V_SgTypeChar32";
+            case 698L: return "V_SgTypeComplex";
+            case 699L: return "V_SgTypeDefault";
+            case 700L: return "V_SgTypeExpression";
+            case 701L: return "V_SgTypeLabel";
+            case 702L: return "V_SgTypeDouble";
+            case 703L: return "V_SgTypeEllipse";
+            case 704L: return "V_SgTypeFloat";
+            case 705L: return "V_SgTypeFloat128";
+            case 706L: return "V_SgTypeFloat80";
+            case 707L: return "V_SgTypeGlobalVoid";
+            case 708L: return "V_SgTypeIdOp";
+            case 709L: return "V_SgTypeImaginary";
+            case 710L: return "V_SgTypeInt";
+            case 711L: return "V_SgTypeLong";
+            case 712L: return "V_SgTypeLongDouble";
+            case 713L: return "V_SgTypeLongLong";
+            case 714L: return "V_SgTypeModifier";
+            case 715L: return "V_SgTypeMatrix";
+            case 716L: return "V_SgTypeTuple";
+            case 717L: return "V_SgTypeNullptr";
+            case 718L: return "V_SgTypeOfType";
+            case 719L: return "V_SgTypeShort";
+            case 720L: return "V_SgTypeSigned128bitInteger";
+            case 721L: return "V_SgTypeSignedChar";
+            case 722L: return "V_SgTypeSignedInt";
+            case 723L: return "V_SgTypeSignedLong";
+            case 724L: return "V_SgTypeSignedLongLong";
+            case 725L: return "V_SgTypeSignedShort";
+            case 726L: return "V_SgTypeString";
+            case 727L: return "V_SgTypeUnknown";
+            case 728L: return "V_SgTypeUnsigned128bitInteger";
+            case 729L: return "V_SgTypeUnsignedChar";
+            case 730L: return "V_SgTypeUnsignedInt";
+            case 731L: return "V_SgTypeUnsignedLong";
+            case 732L: return "V_SgTypeUnsignedLongLong";
+            case 733L: return "V_SgTypeUnsignedShort";
+            case 734L: return "V_SgTypeVoid";
+            case 735L: return "V_SgTypeWchar";
+            case 736L: return "V_SgTypedefDeclaration";
+            case 737L: return "V_SgTypedefSeq";
+            case 738L: return "V_SgTypedefSymbol";
+            case 739L: return "V_SgTypedefType";
+            case 740L: return "V_SgUPC_AccessModifier";
+            case 741L: return "V_SgUnaryAddOp";
+            case 742L: return "V_SgUnaryOp";
+            case 743L: return "V_SgUndefDirectiveStatement";
+            case 744L: return "V_SgUndirectedGraphEdge";
+            case 745L: return "V_SgUnknownArrayOrFunctionReference";
+            case 746L: return "V_SgUnknownFile";
+            case 748L: return "V_SgUnparse_Info";
+            case 749L: return "V_SgUnsignedCharVal";
+            case 750L: return "V_SgUnsignedIntVal";
+            case 751L: return "V_SgUnsignedLongLongIntVal";
+            case 752L: return "V_SgUnsignedLongVal";
+            case 753L: return "V_SgUnsignedShortVal";
+            case 754L: return "V_SgUntypedNode";
+            case 755L: return "V_SgUntypedExpression";
+            case 756L: return "V_SgUntypedUnaryOperator";
+            case 757L: return "V_SgUntypedBinaryOperator";
+            case 758L: return "V_SgUntypedValueExpression";
+            case 759L: return "V_SgUntypedArrayReferenceExpression";
+            case 760L: return "V_SgUntypedSubscriptExpression";
+            case 761L: return "V_SgUntypedOtherExpression";
+            case 762L: return "V_SgUntypedNamedExpression";
+            case 763L: return "V_SgUntypedNullExpression";
+            case 764L: return "V_SgUntypedExprListExpression";
+            case 765L: return "V_SgUntypedFunctionCallOrArrayReferenceExpression";
+            case 766L: return "V_SgUntypedStatement";
+            case 767L: return "V_SgUntypedLabelStatement";
+            case 768L: return "V_SgUntypedNamedStatement";
+            case 769L: return "V_SgUntypedAssignmentStatement";
+            case 770L: return "V_SgUntypedBlockStatement";
+            case 771L: return "V_SgUntypedExpressionStatement";
+            case 772L: return "V_SgUntypedForAllStatement";
+            case 773L: return "V_SgUntypedFunctionCallStatement";
+            case 774L: return "V_SgUntypedImageControlStatement";
+            case 775L: return "V_SgUntypedOtherStatement";
+            case 776L: return "V_SgUntypedUseStatement";
+            case 777L: return "V_SgUntypedDeclarationStatement";
+            case 778L: return "V_SgUntypedDirectiveDeclaration";
+            case 779L: return "V_SgUntypedInitializedName";
+            case 780L: return "V_SgUntypedName";
+            case 781L: return "V_SgUntypedNameListDeclaration";
+            case 782L: return "V_SgUntypedInitializedNameListDeclaration";
+            case 783L: return "V_SgUntypedImplicitDeclaration";
+            case 784L: return "V_SgUntypedVariableDeclaration";
+            case 785L: return "V_SgUntypedProgramHeaderDeclaration";
+            case 786L: return "V_SgUntypedFunctionDeclaration";
+            case 787L: return "V_SgUntypedSubroutineDeclaration";
+            case 788L: return "V_SgUntypedInterfaceDeclaration";
+            case 789L: return "V_SgUntypedNullDeclaration";
+            case 790L: return "V_SgUntypedNullStatement";
+            case 791L: return "V_SgUntypedIfStatement";
+            case 792L: return "V_SgUntypedCaseStatement";
+            case 793L: return "V_SgUntypedLoopStatement";
+            case 794L: return "V_SgUntypedWhileStatement";
+            case 795L: return "V_SgUntypedForStatement";
+            case 796L: return "V_SgUntypedExitStatement";
+            case 797L: return "V_SgUntypedGotoStatement";
+            case 798L: return "V_SgUntypedProcedureCallStatement";
+            case 799L: return "V_SgUntypedReturnStatement";
+            case 800L: return "V_SgUntypedExtendedReturnStatement";
+            case 801L: return "V_SgUntypedStopStatement";
+            case 802L: return "V_SgUntypedAcceptStatement";
+            case 803L: return "V_SgUntypedEntryCallStatement";
+            case 804L: return "V_SgUntypedRequeueStatement";
+            case 805L: return "V_SgUntypedDelayUntilStatement";
+            case 806L: return "V_SgUntypedDelayRelativeStatement";
+            case 807L: return "V_SgUntypedTerminateAlternativeStatement";
+            case 808L: return "V_SgUntypedSelectiveAcceptStatement";
+            case 809L: return "V_SgUntypedTimedEntryCallStatement";
+            case 810L: return "V_SgUntypedConditionalEntryCallStatement";
+            case 811L: return "V_SgUntypedAsynchronousSelectStatement";
+            case 812L: return "V_SgUntypedAbortStatement";
+            case 813L: return "V_SgUntypedRaiseStatement";
+            case 814L: return "V_SgUntypedCodeStatement";
+            case 815L: return "V_SgUntypedReferenceExpression";
+            case 816L: return "V_SgUntypedToken";
+            case 817L: return "V_SgUntypedTokenPair";
+            case 818L: return "V_SgUntypedType";
+            case 819L: return "V_SgUntypedArrayType";
+            case 820L: return "V_SgUntypedAttribute";
+            case 821L: return "V_SgUntypedFile";
+            case 822L: return "V_SgUntypedScope";
+            case 823L: return "V_SgUntypedFunctionScope";
+            case 824L: return "V_SgUntypedModuleScope";
+            case 825L: return "V_SgUntypedGlobalScope";
+            case 826L: return "V_SgUntypedModuleDeclaration";
+            case 827L: return "V_SgUntypedSubmoduleDeclaration";
+            case 828L: return "V_SgUntypedBlockDataDeclaration";
+            case 829L: return "V_SgUntypedStructureDeclaration";
+            case 830L: return "V_SgUntypedPackageDeclaration";
+            case 831L: return "V_SgUntypedExceptionDeclaration";
+            case 832L: return "V_SgUntypedExceptionHandlerDeclaration";
+            case 833L: return "V_SgUntypedTaskDeclaration";
+            case 834L: return "V_SgUntypedUnitDeclaration";
+            case 835L: return "V_SgUntypedStatementList";
+            case 836L: return "V_SgUntypedDeclarationStatementList";
+            case 837L: return "V_SgUntypedFunctionDeclarationList";
+            case 838L: return "V_SgUntypedInitializedNameList";
+            case 839L: return "V_SgUntypedNameList";
+            case 840L: return "V_SgUntypedTokenList";
+            case 841L: return "V_SgUntypedTokenPairList";
+            case 842L: return "V_SgUpcBarrierStatement";
+            case 843L: return "V_SgUpcBlocksizeofExpression";
+            case 844L: return "V_SgUpcElemsizeofExpression";
+            case 845L: return "V_SgUpcFenceStatement";
+            case 846L: return "V_SgUpcForAllStatement";
+            case 847L: return "V_SgUpcLocalsizeofExpression";
+            case 848L: return "V_SgUpcMythread";
+            case 849L: return "V_SgUpcNotifyStatement";
+            case 850L: return "V_SgUpcThreads";
+            case 851L: return "V_SgUpcWaitStatement";
+            case 852L: return "V_SgUseStatement";
+            case 853L: return "V_SgUserDefinedBinaryOp";
+            case 854L: return "V_SgUserDefinedUnaryOp";
+            case 855L: return "V_SgUsingDeclarationStatement";
+            case 856L: return "V_SgUsingDirectiveStatement";
+            case 857L: return "V_SgValueExp";
+            case 858L: return "V_SgVarArgCopyOp";
+            case 859L: return "V_SgVarArgEndOp";
+            case 860L: return "V_SgVarArgOp";
+            case 861L: return "V_SgVarArgStartOneOperandOp";
+            case 862L: return "V_SgVarArgStartOp";
+            case 863L: return "V_SgVarRefExp";
+            case 864L: return "V_SgVariableDeclaration";
+            case 865L: return "V_SgVariableDefinition";
+            case 866L: return "V_SgVariableSymbol";
+            case 867L: return "V_SgVariantExpression";
+            case 868L: return "V_SgVariantStatement";
+            case 869L: return "V_SgVoidVal";
+            case 870L: return "V_SgWaitStatement";
+            case 871L: return "V_SgWarningDirectiveStatement";
+            case 872L: return "V_SgWithStatement";
+            case 873L: return "V_SgWcharVal";
+            case 874L: return "V_SgWhereStatement";
+            case 875L: return "V_SgWhileStmt";
+            case 876L: return "V_SgWriteStatement";
+            case 877L: return "V_SgXorAssignOp";
+            case 878L: return "V_SgYieldExpression";
+            case 879L: return "V_Sg_File_Info";
+            case 880L: return "V_SgTypeCAFTeam";
+            case 881L: return "V_SgCAFWithTeamStatement";
+            case 882L: return "V_SgCAFCoExpression";
+            case 883L: return "V_SgCallExpression";
+            case 884L: return "V_SgTypeCrayPointer";
+            case 885L: return "V_SgJavaImportStatement";
+            case 886L: return "V_SgJavaPackageDeclaration";
+            case 887L: return "V_SgJavaPackageStatement";
+            case 888L: return "V_SgJavaImportStatementList";
+            case 889L: return "V_SgJavaClassDeclarationList";
+            case 890L: return "V_SgJavaMemberValuePair";
+            case 891L: return "V_SgJavaAnnotation";
+            case 892L: return "V_SgJavaMarkerAnnotation";
+            case 893L: return "V_SgJavaSingleMemberAnnotation";
+            case 894L: return "V_SgJavaNormalAnnotation";
+            case 895L: return "V_SgJavaTypeExpression";
+            case 896L: return "V_SgJavaQualifiedType";
+            case 897L: return "V_SgClassExp";
+            case 898L: return "V_SgJavaUnionType";
+            case 899L: return "V_SgJavaParameterType";
+            case 900L: return "V_SgAsyncStmt";
+            case 901L: return "V_SgFinishStmt";
+            case 902L: return "V_SgAtStmt";
+            case 903L: return "V_SgAtomicStmt";
+            case 905L: return "V_SgWhenStmt";
+            case 906L: return "V_SgAtExp";
+            case 907L: return "V_SgFinishExp";
+            case 908L: return "V_SgHereExp";
+            case 909L: return "V_SgDotDotExp";
+            case 911L: return "V_SgNumVariants";
             default: return "";
         }
     }
@@ -47505,7 +47994,7 @@ namespace stringify {
             294L,
             295L,
             296L,
-            298L,
+            297L,
             299L,
             300L,
             301L,
@@ -47535,8 +48024,8 @@ namespace stringify {
             325L,
             326L,
             327L,
-            329L,
-            331L,
+            328L,
+            330L,
             332L,
             333L,
             334L,
@@ -47943,6 +48432,7 @@ namespace stringify {
             735L,
             736L,
             737L,
+            738L,
             739L,
             740L,
             741L,
@@ -47951,7 +48441,6 @@ namespace stringify {
             744L,
             745L,
             746L,
-            747L,
             748L,
             749L,
             750L,
@@ -48097,14 +48586,25 @@ namespace stringify {
             890L,
             891L,
             892L,
+            893L,
             894L,
             895L,
             896L,
             897L,
             898L,
-            900L
+            899L,
+            900L,
+            901L,
+            902L,
+            903L,
+            905L,
+            906L,
+            907L,
+            908L,
+            909L,
+            911L
         };
-        static const std::vector<long> retval(values, values + 894);
+        static const std::vector<long> retval(values, values + 905);
         return retval;
     }
 
@@ -48130,7 +48630,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11244
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11364
 namespace stringify { namespace SgConstVolatileModifier {
     const char* cv_modifier_enum(long i) {
         switch (i) {
@@ -48190,7 +48690,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11795
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11911
 namespace stringify { namespace SgStorageModifier {
     const char* storage_modifier_enum(long i) {
         switch (i) {
@@ -48286,7 +48786,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12429
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12546
 namespace stringify { namespace SgAccessModifier {
     const char* access_modifier_enum(long i) {
         switch (i) {
@@ -48344,7 +48844,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12958
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13076
 namespace stringify { namespace SgFunctionModifier {
     const char* function_modifier_enum(long i) {
         switch (i) {
@@ -48466,7 +48966,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13845
 namespace stringify { namespace SgUPC_AccessModifier {
     const char* upc_access_modifier_enum(long i) {
         switch (i) {
@@ -48522,7 +49022,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14270
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14390
 namespace stringify { namespace SgSpecialFunctionModifier {
     const char* special_function_modifier_enum(long i) {
         switch (i) {
@@ -48586,7 +49086,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14821
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14942
 namespace stringify { namespace SgElaboratedTypeModifier {
     const char* elaborated_type_modifier_enum(long i) {
         switch (i) {
@@ -48648,7 +49148,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15357
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15479
 namespace stringify { namespace SgLinkageModifier {
     const char* linkage_modifier_enum(long i) {
         switch (i) {
@@ -48708,7 +49208,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15884
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16007
 namespace stringify { namespace SgBaseClassModifier {
     const char* baseclass_modifier_enum(long i) {
         switch (i) {
@@ -48762,7 +49262,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16415
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16539
 namespace stringify { namespace SgTypeModifier {
     const char* type_modifier_enum(long i) {
         switch (i) {
@@ -48880,7 +49380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16499
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16623
 namespace stringify { namespace SgTypeModifier {
     const char* gnu_extension_machine_mode_enum(long i) {
         switch (i) {
@@ -49036,7 +49536,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17282
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17407
 namespace stringify { namespace SgDeclarationModifier {
     const char* declaration_modifier_enum(long i) {
         switch (i) {
@@ -49146,7 +49646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17329
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17454
 namespace stringify { namespace SgDeclarationModifier {
     const char* gnu_declaration_visability_enum(long i) {
         switch (i) {
@@ -49208,7 +49708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18048
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18174
 namespace stringify { namespace SgOpenclAccessModeModifier {
     const char* access_mode_modifier_enum(long i) {
         switch (i) {
@@ -49266,7 +49766,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22667
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22804
 namespace stringify { namespace Sg_File_Info {
     const char* classifier(long i) {
         switch (i) {
@@ -49332,7 +49832,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 22921
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23069
 namespace stringify { namespace Sg_File_Info {
     const char* p_fileflags(long i) {
         switch (i) {
@@ -49390,7 +49890,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23491
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23656
 namespace stringify { namespace SgFile {
     const char* outputFormatOption_enum(long i) {
         switch (i) {
@@ -49442,7 +49942,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23506
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23671
 namespace stringify { namespace SgFile {
     const char* languageOption_enum(long i) {
         switch (i) {
@@ -49520,7 +50020,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23527
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 23692
 namespace stringify { namespace SgFile {
     const char* standard_enum(long i) {
         switch (i) {
@@ -49608,7 +50108,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 27077
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 27254
 namespace stringify { namespace SgProject {
     const char* template_instantiation_enum(long i) {
         switch (i) {
@@ -49668,7 +50168,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29044
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29223
 namespace stringify { namespace SgUnparse_Info {
     const char* unparse_type_num(long i) {
         switch (i) {
@@ -49724,7 +50224,8 @@ namespace stringify { namespace SgUnparse_Info {
             case 49L: return "b_skipCompilerGeneratedSubExpressions";
             case 50L: return "b_parentStatementListBeingUnparsedUsingPartialTokenSequence";
             case 51L: return "b_cxx11_initialization_list";
-            case 52L: return "UNPARSE_TYPE_LAST";
+            case 52L: return "b_inTypedefDecl";
+            case 53L: return "UNPARSE_TYPE_LAST";
             default: return "";
         }
     }
@@ -49792,9 +50293,10 @@ namespace stringify { namespace SgUnparse_Info {
             49L,
             50L,
             51L,
-            52L
+            52L,
+            53L
         };
-        static const std::vector<long> retval(values, values + 53);
+        static const std::vector<long> retval(values, values + 54);
         return retval;
     }
 
@@ -49820,7 +50322,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29205
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 29388
 namespace stringify { namespace SgUnparse_Info {
     const char* access_attr_enum(long i) {
         switch (i) {
@@ -49874,7 +50376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 31726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32406
 namespace stringify { namespace SgTemplateParameter {
     const char* template_parameter_enum(long i) {
         switch (i) {
@@ -49928,7 +50430,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32286
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 32969
 namespace stringify { namespace SgTemplateArgument {
     const char* template_argument_enum(long i) {
         switch (i) {
@@ -49984,7 +50486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 36488
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 37198
 namespace stringify { namespace SgGraph {
     const char* GraphEdgeType(long i) {
         switch (i) {
@@ -50040,7 +50542,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 36502
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 37212
 namespace stringify { namespace SgGraph {
     const char* GraphProperties(long i) {
         switch (i) {
@@ -50126,7 +50628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 46731
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 47461
 namespace stringify { namespace SgDataStatementValue {
     const char* data_statement_value_enum(long i) {
         switch (i) {
@@ -50184,7 +50686,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 48829
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49563
 namespace stringify { namespace SgType {
     const char* useWithinDeclarationEnum(long i) {
         switch (i) {
@@ -50234,7 +50736,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 48847
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49581
 namespace stringify { namespace SgType {
     const char* fortran_attribute_specifiers_enum(long i) {
         switch (i) {
@@ -50316,7 +50818,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69074
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70364
 namespace stringify { namespace SgModifierType {
     const char* modifiers(long i) {
         switch (i) {
@@ -50378,7 +50880,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69128
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70418
 namespace stringify { namespace SgModifierType {
     const char* type_modifier_enum(long i) {
         switch (i) {
@@ -50446,7 +50948,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69145
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70435
 namespace stringify { namespace SgModifierType {
     const char* storage_modifier_enum(long i) {
         switch (i) {
@@ -50520,7 +51022,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69167
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70457
 namespace stringify { namespace SgModifierType {
     const char* access_modifier_enum(long i) {
         switch (i) {
@@ -50578,7 +51080,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 70406
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 71698
 namespace stringify { namespace SgMemberFunctionType {
     const char* mfunc_specifier_enum(long i) {
         switch (i) {
@@ -50630,7 +51132,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 82255
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84131
 namespace stringify { namespace SgLocatedNode {
     const char* PositionOfPreprocessingInfoInListType(long i) {
         switch (i) {
@@ -50682,7 +51184,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83017
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84894
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Keywords(long i) {
         switch (i) {
@@ -51034,7 +51536,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83184
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85061
 namespace stringify { namespace SgToken {
     const char* ROSE_C_CXX_keywords(long i) {
         switch (i) {
@@ -51208,7 +51710,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83253
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85130
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Operators(long i) {
         switch (i) {
@@ -51300,7 +51802,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83280
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85157
 namespace stringify { namespace SgToken {
     const char* ROSE_C_CXX_Operators(long i) {
         switch (i) {
@@ -51496,7 +51998,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 83360
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 85237
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Additional_Info(long i) {
         switch (i) {
@@ -51552,7 +52054,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84824
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86704
 namespace stringify { namespace SgInitializedName {
     const char* preinitialization_enum(long i) {
         switch (i) {
@@ -51610,7 +52112,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84839
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86719
 namespace stringify { namespace SgInitializedName {
     const char* asm_register_name_enum(long i) {
         switch (i) {
@@ -51766,7 +52268,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84901
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86781
 namespace stringify { namespace SgInitializedName {
     const char* gnu_variable_attribute_enum(long i) {
         switch (i) {
@@ -51854,7 +52356,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 84935
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 86815
 namespace stringify { namespace SgInitializedName {
     const char* excess_specifier_enum(long i) {
         switch (i) {
@@ -51908,7 +52410,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87924
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89833
 namespace stringify { namespace SgOmpClause {
     const char* omp_default_option_enum(long i) {
         switch (i) {
@@ -51966,7 +52468,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87936
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89845
 namespace stringify { namespace SgOmpClause {
     const char* omp_schedule_kind_enum(long i) {
         switch (i) {
@@ -52026,7 +52528,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87946
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89855
 namespace stringify { namespace SgOmpClause {
     const char* omp_reduction_operator_enum(long i) {
         switch (i) {
@@ -52110,7 +52612,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87974
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89883
 namespace stringify { namespace SgOmpClause {
     const char* omp_dependence_type_enum(long i) {
         switch (i) {
@@ -52166,7 +52668,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87984
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89893
 namespace stringify { namespace SgOmpClause {
     const char* omp_map_operator_enum(long i) {
         switch (i) {
@@ -52224,7 +52726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 87995
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89904
 namespace stringify { namespace SgOmpClause {
     const char* omp_map_dist_data_enum(long i) {
         switch (i) {
@@ -52280,7 +52782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 88005
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89914
 namespace stringify { namespace SgOmpClause {
     const char* omp_proc_bind_policy_enum(long i) {
         switch (i) {
@@ -52336,7 +52838,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 88014
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 89923
 namespace stringify { namespace SgOmpClause {
     const char* omp_atomic_clause_enum(long i) {
         switch (i) {
@@ -52392,7 +52894,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 140530
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 143037
 namespace stringify { namespace SgUntypedType {
     const char* type_enum(long i) {
         switch (i) {
@@ -52472,7 +52974,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 158737
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 161285
 namespace stringify { namespace SgForAllStatement {
     const char* forall_statement_kind_enum(long i) {
         switch (i) {
@@ -52526,7 +53028,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 164426
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 166985
 namespace stringify { namespace SgDeclarationStatement {
     const char* template_specialization_enum(long i) {
         switch (i) {
@@ -52582,7 +53084,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 164441
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 167000
 namespace stringify { namespace SgDeclarationStatement {
     const char* gnu_extension_visability_attribute_enum(long i) {
         switch (i) {
@@ -52640,7 +53142,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 165894
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 168455
 namespace stringify { namespace SgVariableDeclaration {
     const char* gnu_extension_declaration_attributes_enum(long i) {
         switch (i) {
@@ -52702,7 +53204,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 170320
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 172926
 namespace stringify { namespace SgAttributeSpecificationStatement {
     const char* attribute_spec_enum(long i) {
         switch (i) {
@@ -52788,7 +53290,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 171382
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 173990
 namespace stringify { namespace SgTemplateDeclaration {
     const char* template_type_enum(long i) {
         switch (i) {
@@ -52846,7 +53348,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 174466
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 177088
 namespace stringify { namespace SgInterfaceStatement {
     const char* generic_spec_enum(long i) {
         switch (i) {
@@ -52906,7 +53408,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 179726
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 182370
 namespace stringify { namespace SgClassDeclaration {
     const char* class_types(long i) {
         switch (i) {
@@ -52966,7 +53468,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 180420
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 183067
 namespace stringify { namespace SgTemplateClassDeclaration {
     const char* class_types(long i) {
         switch (i) {
@@ -53020,151 +53522,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 180957
-namespace stringify { namespace SgTemplateInstantiationDecl {
-    const char* template_type_enum(long i) {
-        switch (i) {
-            case 0L: return "e_template_none";
-            default: return "";
-        }
-    }
-
-    std::string template_type_enum(long i, const std::string &strip) {
-        std::string s = template_type_enum(i);
-        if (s.empty())
-            s = "(SgTemplateInstantiationDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& template_type_enum() {
-        static const long values[] = {
-            0L
-        };
-        static const std::vector<long> retval(values, values + 1);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationDecl_template_type_enum(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::SgTemplateInstantiationDecl::template_type_enum(i);
-        if (retval.empty()) {
-            retval = "(SgTemplateInstantiationDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "SgTemplateInstantiationDecl::template_type_enum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifySgTemplateInstantiationDecl_template_type_enum() {
-        return stringify::SgTemplateInstantiationDecl::template_type_enum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 187460
-namespace stringify { namespace SgTemplateInstantiationMemberFunctionDecl {
-    const char* template_type_enum(long i) {
-        switch (i) {
-            case 0L: return "e_template_none";
-            default: return "";
-        }
-    }
-
-    std::string template_type_enum(long i, const std::string &strip) {
-        std::string s = template_type_enum(i);
-        if (s.empty())
-            s = "(SgTemplateInstantiationMemberFunctionDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& template_type_enum() {
-        static const long values[] = {
-            0L
-        };
-        static const std::vector<long> retval(values, values + 1);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationMemberFunctionDecl_template_type_enum(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::SgTemplateInstantiationMemberFunctionDecl::template_type_enum(i);
-        if (retval.empty()) {
-            retval = "(SgTemplateInstantiationMemberFunctionDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "SgTemplateInstantiationMemberFunctionDecl::template_type_enum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifySgTemplateInstantiationMemberFunctionDecl_template_type_enum() {
-        return stringify::SgTemplateInstantiationMemberFunctionDecl::template_type_enum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 188029
-namespace stringify { namespace SgTemplateInstantiationFunctionDecl {
-    const char* template_type_enum(long i) {
-        switch (i) {
-            case 0L: return "e_template_none";
-            default: return "";
-        }
-    }
-
-    std::string template_type_enum(long i, const std::string &strip) {
-        std::string s = template_type_enum(i);
-        if (s.empty())
-            s = "(SgTemplateInstantiationFunctionDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& template_type_enum() {
-        static const long values[] = {
-            0L
-        };
-        static const std::vector<long> retval(values, values + 1);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifySgTemplateInstantiationFunctionDecl_template_type_enum(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::SgTemplateInstantiationFunctionDecl::template_type_enum(i);
-        if (retval.empty()) {
-            retval = "(SgTemplateInstantiationFunctionDecl::template_type_enum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "SgTemplateInstantiationFunctionDecl::template_type_enum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifySgTemplateInstantiationFunctionDecl_template_type_enum() {
-        return stringify::SgTemplateInstantiationFunctionDecl::template_type_enum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 189116
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 191744
 namespace stringify { namespace SgProcedureHeaderStatement {
     const char* subprogram_kind_enum(long i) {
         switch (i) {
@@ -53220,7 +53578,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 210728
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 214474
 namespace stringify { namespace SgStopOrPauseStatement {
     const char* stop_or_pause_enum(long i) {
         switch (i) {
@@ -53278,7 +53636,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 211241
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 214988
 namespace stringify { namespace SgIOStatement {
     const char* io_statement_enum(long i) {
         switch (i) {
@@ -53346,7 +53704,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 240764
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 244571
 namespace stringify { namespace SgImageControlStatement {
     const char* image_control_statement_enum(long i) {
         switch (i) {
@@ -53418,7 +53776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 244877
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248692
 namespace stringify { namespace SgUnaryOp {
     const char* Sgop_mode(long i) {
         switch (i) {
@@ -53468,7 +53826,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 249774
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 253599
 namespace stringify { namespace SgCastExp {
     const char* cast_type_enum(long i) {
         switch (i) {
@@ -53532,7 +53890,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 250351
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 254177
 namespace stringify { namespace SgThrowOp {
     const char* e_throw_kind(long i) {
         switch (i) {
@@ -53584,7 +53942,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 317604
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 323057
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_modifier_enum(long i) {
         switch (i) {
@@ -53650,7 +54008,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 317623
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 323076
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_constraint_enum(long i) {
         switch (i) {
@@ -53794,7 +54152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 345208
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 351725
 namespace stringify { namespace SgLabelSymbol {
     const char* label_type_enum(long i) {
         switch (i) {
@@ -53854,7 +54212,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 385010
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 391590
 namespace stringify { namespace SgAsmLEFileHeader {
     const char* LEFileHeaderFlags(long i) {
         switch (i) {
@@ -53930,7 +54288,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 385994
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 392575
 namespace stringify { namespace SgAsmNEFileHeader {
     const char* HeaderFlags1(long i) {
         switch (i) {
@@ -53990,7 +54348,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 386005
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 392586
 namespace stringify { namespace SgAsmNEFileHeader {
     const char* HeaderFlags2(long i) {
         switch (i) {
@@ -54044,7 +54402,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 427811
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 434470
 namespace stringify { namespace SgAsmNEEntryPoint {
     const char* NEEntryFlags(long i) {
         switch (i) {
@@ -54098,7 +54456,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428333
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 434993
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocSrcType(long i) {
         switch (i) {
@@ -54162,7 +54520,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428345
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435005
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocTgtType(long i) {
         switch (i) {
@@ -54216,7 +54574,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428352
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435012
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocModifiers(long i) {
         switch (i) {
@@ -54266,7 +54624,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428357
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435017
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocFlags(long i) {
         switch (i) {
@@ -54324,7 +54682,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 428991
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 435652
 namespace stringify { namespace SgAsmNESectionTableEntry {
     const char* NESectionFlags(long i) {
         switch (i) {
@@ -54396,7 +54754,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 431115
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 437780
 namespace stringify { namespace SgAsmLESectionTableEntry {
     const char* LESectionFlags(long i) {
         switch (i) {
@@ -54730,6 +55088,56 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 18
 namespace stringify {
+    const char* E_SgNonrealBaseClass(long i) {
+        switch (i) {
+            case 0L: return "SgNonrealBaseClass_base_class";
+            case 1L: return "SgNonrealBaseClass_base_class_nonreal";
+            default: return "";
+        }
+    }
+
+    std::string E_SgNonrealBaseClass(long i, const std::string &strip) {
+        std::string s = E_SgNonrealBaseClass(i);
+        if (s.empty())
+            s = "(E_SgNonrealBaseClass)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgNonrealBaseClass() {
+        static const long values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<long> retval(values, values + 2);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealBaseClass(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgNonrealBaseClass(i);
+        if (retval.empty()) {
+            retval = "(E_SgNonrealBaseClass)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgNonrealBaseClass::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgNonrealBaseClass() {
+        return stringify::E_SgNonrealBaseClass();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 21
+namespace stringify {
     const char* E_SgBaseClass(long i) {
         switch (i) {
             case 0L: return "SgBaseClass_base_class";
@@ -54776,7 +55184,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 21
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 24
 namespace stringify {
     const char* E_SgTemplateParameter(long i) {
         switch (i) {
@@ -54832,7 +55240,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 24
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 27
 namespace stringify {
     const char* E_SgTemplateArgument(long i) {
         switch (i) {
@@ -54884,7 +55292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 27
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 30
 namespace stringify {
     const char* E_SgDirectory(long i) {
         switch (i) {
@@ -54934,7 +55342,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 30
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 33
 namespace stringify {
     const char* E_SgFileList(long i) {
         switch (i) {
@@ -54982,7 +55390,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 33
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 36
 namespace stringify {
     const char* E_SgDirectoryList(long i) {
         switch (i) {
@@ -55030,7 +55438,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 36
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 39
 namespace stringify {
     const char* E_SgTemplateArgumentList(long i) {
         switch (i) {
@@ -55078,7 +55486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 39
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 42
 namespace stringify {
     const char* E_SgTemplateParameterList(long i) {
         switch (i) {
@@ -55126,7 +55534,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 42
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 45
 namespace stringify {
     const char* E_SgIncludeFile(long i) {
         switch (i) {
@@ -55174,7 +55582,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 45
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 48
 namespace stringify {
     const char* E_SgJavaImportStatementList(long i) {
         switch (i) {
@@ -55222,7 +55630,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 48
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 51
 namespace stringify {
     const char* E_SgJavaClassDeclarationList(long i) {
         switch (i) {
@@ -55270,7 +55678,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 51
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 54
 namespace stringify {
     const char* E_SgTypeUnknown(long i) {
         switch (i) {
@@ -55320,7 +55728,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 54
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 57
 namespace stringify {
     const char* E_SgTypeChar(long i) {
         switch (i) {
@@ -55370,7 +55778,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 57
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 60
 namespace stringify {
     const char* E_SgTypeSignedChar(long i) {
         switch (i) {
@@ -55420,7 +55828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 60
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 63
 namespace stringify {
     const char* E_SgTypeUnsignedChar(long i) {
         switch (i) {
@@ -55470,7 +55878,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 63
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 66
 namespace stringify {
     const char* E_SgTypeShort(long i) {
         switch (i) {
@@ -55520,7 +55928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 66
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 69
 namespace stringify {
     const char* E_SgTypeSignedShort(long i) {
         switch (i) {
@@ -55570,7 +55978,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 69
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 72
 namespace stringify {
     const char* E_SgTypeUnsignedShort(long i) {
         switch (i) {
@@ -55620,7 +56028,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 72
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 75
 namespace stringify {
     const char* E_SgTypeInt(long i) {
         switch (i) {
@@ -55670,7 +56078,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 75
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 78
 namespace stringify {
     const char* E_SgTypeSignedInt(long i) {
         switch (i) {
@@ -55720,7 +56128,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 78
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 81
 namespace stringify {
     const char* E_SgTypeUnsignedInt(long i) {
         switch (i) {
@@ -55770,7 +56178,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 81
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 84
 namespace stringify {
     const char* E_SgTypeLong(long i) {
         switch (i) {
@@ -55820,7 +56228,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 84
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 87
 namespace stringify {
     const char* E_SgTypeSignedLong(long i) {
         switch (i) {
@@ -55870,7 +56278,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 87
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 90
 namespace stringify {
     const char* E_SgTypeUnsignedLong(long i) {
         switch (i) {
@@ -55920,7 +56328,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 90
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 93
 namespace stringify {
     const char* E_SgTypeVoid(long i) {
         switch (i) {
@@ -55970,7 +56378,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 93
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 96
 namespace stringify {
     const char* E_SgTypeGlobalVoid(long i) {
         switch (i) {
@@ -56020,7 +56428,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 96
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 99
 namespace stringify {
     const char* E_SgTypeWchar(long i) {
         switch (i) {
@@ -56070,7 +56478,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 99
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 102
 namespace stringify {
     const char* E_SgTypeFloat(long i) {
         switch (i) {
@@ -56120,7 +56528,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 102
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 105
 namespace stringify {
     const char* E_SgTypeDouble(long i) {
         switch (i) {
@@ -56170,7 +56578,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 105
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 108
 namespace stringify {
     const char* E_SgTypeLongLong(long i) {
         switch (i) {
@@ -56220,7 +56628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 108
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 111
 namespace stringify {
     const char* E_SgTypeSignedLongLong(long i) {
         switch (i) {
@@ -56270,7 +56678,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 111
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 114
 namespace stringify {
     const char* E_SgTypeUnsignedLongLong(long i) {
         switch (i) {
@@ -56320,7 +56728,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 114
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 117
 namespace stringify {
     const char* E_SgTypeSigned128bitInteger(long i) {
         switch (i) {
@@ -56370,7 +56778,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 117
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 120
 namespace stringify {
     const char* E_SgTypeUnsigned128bitInteger(long i) {
         switch (i) {
@@ -56420,7 +56828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 120
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 123
 namespace stringify {
     const char* E_SgTypeFloat80(long i) {
         switch (i) {
@@ -56470,7 +56878,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 123
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 126
 namespace stringify {
     const char* E_SgTypeLongDouble(long i) {
         switch (i) {
@@ -56520,7 +56928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 126
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 129
 namespace stringify {
     const char* E_SgTypeString(long i) {
         switch (i) {
@@ -56570,7 +56978,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 129
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 132
 namespace stringify {
     const char* E_SgTypeBool(long i) {
         switch (i) {
@@ -56620,7 +57028,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 132
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 135
 namespace stringify {
     const char* E_SgPointerMemberType(long i) {
         switch (i) {
@@ -56670,7 +57078,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 135
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 138
 namespace stringify {
     const char* E_SgPointerType(long i) {
         switch (i) {
@@ -56720,7 +57128,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 138
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 141
 namespace stringify {
     const char* E_SgReferenceType(long i) {
         switch (i) {
@@ -56768,7 +57176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 141
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 144
 namespace stringify {
     const char* E_SgJavaParameterType(long i) {
         switch (i) {
@@ -56820,7 +57228,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 144
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 147
 namespace stringify {
     const char* E_SgClassType(long i) {
         switch (i) {
@@ -56872,111 +57280,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 147
-namespace stringify {
-    const char* E_SgJavaParameterizedType(long i) {
-        switch (i) {
-            case 0L: return "SgJavaParameterizedType_type_kind";
-            case 1L: return "SgJavaParameterizedType_builtin_type";
-            case 2L: return "SgJavaParameterizedType_declaration";
-            default: return "";
-        }
-    }
-
-    std::string E_SgJavaParameterizedType(long i, const std::string &strip) {
-        std::string s = E_SgJavaParameterizedType(i);
-        if (s.empty())
-            s = "(E_SgJavaParameterizedType)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& E_SgJavaParameterizedType() {
-        static const long values[] = {
-            0L,
-            1L,
-            2L
-        };
-        static const std::vector<long> retval(values, values + 3);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyE_SgJavaParameterizedType(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgJavaParameterizedType(i);
-        if (retval.empty()) {
-            retval = "(E_SgJavaParameterizedType)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "E_SgJavaParameterizedType::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyE_SgJavaParameterizedType() {
-        return stringify::E_SgJavaParameterizedType();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 150
-namespace stringify {
-    const char* E_SgJavaQualifiedType(long i) {
-        switch (i) {
-            case 0L: return "SgJavaQualifiedType_type_kind";
-            case 1L: return "SgJavaQualifiedType_builtin_type";
-            case 2L: return "SgJavaQualifiedType_declaration";
-            default: return "";
-        }
-    }
-
-    std::string E_SgJavaQualifiedType(long i, const std::string &strip) {
-        std::string s = E_SgJavaQualifiedType(i);
-        if (s.empty())
-            s = "(E_SgJavaQualifiedType)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<long>& E_SgJavaQualifiedType() {
-        static const long values[] = {
-            0L,
-            1L,
-            2L
-        };
-        static const std::vector<long> retval(values, values + 3);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyE_SgJavaQualifiedType(long int i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgJavaQualifiedType(i);
-        if (retval.empty()) {
-            retval = "(E_SgJavaQualifiedType)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "E_SgJavaQualifiedType::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<long>& stringifyE_SgJavaQualifiedType() {
-        return stringify::E_SgJavaQualifiedType();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 153
 namespace stringify {
     const char* E_SgEnumType(long i) {
         switch (i) {
@@ -57028,7 +57332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 156
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 153
 namespace stringify {
     const char* E_SgTypedefType(long i) {
         switch (i) {
@@ -57080,7 +57384,163 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 156
+namespace stringify {
+    const char* E_SgNonrealType(long i) {
+        switch (i) {
+            case 0L: return "SgNonrealType_type_kind";
+            case 1L: return "SgNonrealType_builtin_type";
+            case 2L: return "SgNonrealType_declaration";
+            default: return "";
+        }
+    }
+
+    std::string E_SgNonrealType(long i, const std::string &strip) {
+        std::string s = E_SgNonrealType(i);
+        if (s.empty())
+            s = "(E_SgNonrealType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgNonrealType() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 3);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealType(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgNonrealType(i);
+        if (retval.empty()) {
+            retval = "(E_SgNonrealType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgNonrealType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgNonrealType() {
+        return stringify::E_SgNonrealType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 159
+namespace stringify {
+    const char* E_SgJavaParameterizedType(long i) {
+        switch (i) {
+            case 0L: return "SgJavaParameterizedType_type_kind";
+            case 1L: return "SgJavaParameterizedType_builtin_type";
+            case 2L: return "SgJavaParameterizedType_declaration";
+            default: return "";
+        }
+    }
+
+    std::string E_SgJavaParameterizedType(long i, const std::string &strip) {
+        std::string s = E_SgJavaParameterizedType(i);
+        if (s.empty())
+            s = "(E_SgJavaParameterizedType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgJavaParameterizedType() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 3);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgJavaParameterizedType(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgJavaParameterizedType(i);
+        if (retval.empty()) {
+            retval = "(E_SgJavaParameterizedType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgJavaParameterizedType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgJavaParameterizedType() {
+        return stringify::E_SgJavaParameterizedType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 162
+namespace stringify {
+    const char* E_SgJavaQualifiedType(long i) {
+        switch (i) {
+            case 0L: return "SgJavaQualifiedType_type_kind";
+            case 1L: return "SgJavaQualifiedType_builtin_type";
+            case 2L: return "SgJavaQualifiedType_declaration";
+            default: return "";
+        }
+    }
+
+    std::string E_SgJavaQualifiedType(long i, const std::string &strip) {
+        std::string s = E_SgJavaQualifiedType(i);
+        if (s.empty())
+            s = "(E_SgJavaQualifiedType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgJavaQualifiedType() {
+        static const long values[] = {
+            0L,
+            1L,
+            2L
+        };
+        static const std::vector<long> retval(values, values + 3);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgJavaQualifiedType(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgJavaQualifiedType(i);
+        if (retval.empty()) {
+            retval = "(E_SgJavaQualifiedType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgJavaQualifiedType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgJavaQualifiedType() {
+        return stringify::E_SgJavaQualifiedType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 165
 namespace stringify {
     const char* E_SgJavaWildcardType(long i) {
         switch (i) {
@@ -57132,7 +57592,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 162
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 168
 namespace stringify {
     const char* E_SgNamedType(long i) {
         switch (i) {
@@ -57184,7 +57644,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 165
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 171
 namespace stringify {
     const char* E_SgModifierType(long i) {
         switch (i) {
@@ -57234,7 +57694,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 168
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 174
 namespace stringify {
     const char* E_SgPartialFunctionModifierType(long i) {
         switch (i) {
@@ -57288,7 +57748,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 171
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 177
 namespace stringify {
     const char* E_SgPartialFunctionType(long i) {
         switch (i) {
@@ -57340,7 +57800,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 174
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 180
 namespace stringify {
     const char* E_SgMemberFunctionType(long i) {
         switch (i) {
@@ -57392,7 +57852,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 177
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 183
 namespace stringify {
     const char* E_SgFunctionType(long i) {
         switch (i) {
@@ -57444,7 +57904,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 180
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 186
 namespace stringify {
     const char* E_SgArrayType(long i) {
         switch (i) {
@@ -57496,7 +57956,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 183
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 189
 namespace stringify {
     const char* E_SgTypeEllipse(long i) {
         switch (i) {
@@ -57546,11 +58006,14 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 186
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 192
 namespace stringify {
     const char* E_SgTemplateType(long i) {
         switch (i) {
             case 0L: return "SgTemplateType_type_kind";
+            case 1L: return "SgTemplateType_class_type";
+            case 2L: return "SgTemplateType_parent_class_type";
+            case 3L: return "SgTemplateType_template_parameter";
             default: return "";
         }
     }
@@ -57566,9 +58029,12 @@ namespace stringify {
 
     const std::vector<long>& E_SgTemplateType() {
         static const long values[] = {
-            0L
+            0L,
+            1L,
+            2L,
+            3L
         };
-        static const std::vector<long> retval(values, values + 1);
+        static const std::vector<long> retval(values, values + 4);
         return retval;
     }
 
@@ -57594,7 +58060,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 189
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 195
 namespace stringify {
     const char* E_SgQualifiedNameType(long i) {
         switch (i) {
@@ -57642,7 +58108,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 192
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 198
 namespace stringify {
     const char* E_SgTypeComplex(long i) {
         switch (i) {
@@ -57690,7 +58156,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 195
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 201
 namespace stringify {
     const char* E_SgTypeImaginary(long i) {
         switch (i) {
@@ -57738,7 +58204,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 198
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 204
 namespace stringify {
     const char* E_SgTypeDefault(long i) {
         switch (i) {
@@ -57788,7 +58254,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 201
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 207
 namespace stringify {
     const char* E_SgTypeCAFTeam(long i) {
         switch (i) {
@@ -57838,7 +58304,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 204
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 210
 namespace stringify {
     const char* E_SgTypeCrayPointer(long i) {
         switch (i) {
@@ -57888,7 +58354,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 207
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 213
 namespace stringify {
     const char* E_SgTypeLabel(long i) {
         switch (i) {
@@ -57938,7 +58404,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 210
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 216
 namespace stringify {
     const char* E_SgJavaUnionType(long i) {
         switch (i) {
@@ -57986,7 +58452,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 213
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 219
 namespace stringify {
     const char* E_SgRvalueReferenceType(long i) {
         switch (i) {
@@ -58034,7 +58500,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 216
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 222
 namespace stringify {
     const char* E_SgTypeNullptr(long i) {
         switch (i) {
@@ -58084,7 +58550,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 219
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 225
 namespace stringify {
     const char* E_SgDeclType(long i) {
         switch (i) {
@@ -58132,7 +58598,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 222
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 228
 namespace stringify {
     const char* E_SgTypeOfType(long i) {
         switch (i) {
@@ -58180,7 +58646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 225
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 231
 namespace stringify {
     const char* E_SgTypeMatrix(long i) {
         switch (i) {
@@ -58230,7 +58696,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 228
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 234
 namespace stringify {
     const char* E_SgTypeTuple(long i) {
         switch (i) {
@@ -58280,7 +58746,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 231
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 237
 namespace stringify {
     const char* E_SgTypeChar16(long i) {
         switch (i) {
@@ -58330,7 +58796,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 234
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 240
 namespace stringify {
     const char* E_SgTypeChar32(long i) {
         switch (i) {
@@ -58380,7 +58846,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 237
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 243
 namespace stringify {
     const char* E_SgTypeFloat128(long i) {
         switch (i) {
@@ -58430,7 +58896,55 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 240
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 246
+namespace stringify {
+    const char* E_SgAutoType(long i) {
+        switch (i) {
+            case 0L: return "SgAutoType_type_kind";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAutoType(long i, const std::string &strip) {
+        std::string s = E_SgAutoType(i);
+        if (s.empty())
+            s = "(E_SgAutoType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgAutoType() {
+        static const long values[] = {
+            0L
+        };
+        static const std::vector<long> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAutoType(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAutoType(i);
+        if (retval.empty()) {
+            retval = "(E_SgAutoType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAutoType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgAutoType() {
+        return stringify::E_SgAutoType();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 249
 namespace stringify {
     const char* E_SgType(long i) {
         switch (i) {
@@ -58478,7 +58992,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 243
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 252
 namespace stringify {
     const char* E_SgCommonBlockObject(long i) {
         switch (i) {
@@ -58526,7 +59040,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 246
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 255
 namespace stringify {
     const char* E_SgInitializedName(long i) {
         switch (i) {
@@ -58574,7 +59088,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 249
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 258
 namespace stringify {
     const char* E_SgJavaMemberValuePair(long i) {
         switch (i) {
@@ -58622,7 +59136,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 252
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 261
 namespace stringify {
     const char* E_SgOmpOrderedClause(long i) {
         switch (i) {
@@ -58670,7 +59184,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 255
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 264
 namespace stringify {
     const char* E_SgOmpCollapseClause(long i) {
         switch (i) {
@@ -58718,7 +59232,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 258
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 267
 namespace stringify {
     const char* E_SgOmpIfClause(long i) {
         switch (i) {
@@ -58766,7 +59280,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 261
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 270
 namespace stringify {
     const char* E_SgOmpNumThreadsClause(long i) {
         switch (i) {
@@ -58814,7 +59328,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 264
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 273
 namespace stringify {
     const char* E_SgOmpDeviceClause(long i) {
         switch (i) {
@@ -58862,7 +59376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 267
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 276
 namespace stringify {
     const char* E_SgOmpSafelenClause(long i) {
         switch (i) {
@@ -58910,7 +59424,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 270
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 279
 namespace stringify {
     const char* E_SgOmpSimdlenClause(long i) {
         switch (i) {
@@ -58958,7 +59472,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 273
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 282
 namespace stringify {
     const char* E_SgOmpFinalClause(long i) {
         switch (i) {
@@ -59006,7 +59520,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 276
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 285
 namespace stringify {
     const char* E_SgOmpPriorityClause(long i) {
         switch (i) {
@@ -59054,7 +59568,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 279
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 288
 namespace stringify {
     const char* E_SgOmpExpressionClause(long i) {
         switch (i) {
@@ -59102,7 +59616,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 282
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 291
 namespace stringify {
     const char* E_SgOmpCopyprivateClause(long i) {
         switch (i) {
@@ -59150,7 +59664,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 285
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 294
 namespace stringify {
     const char* E_SgOmpPrivateClause(long i) {
         switch (i) {
@@ -59198,7 +59712,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 288
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 297
 namespace stringify {
     const char* E_SgOmpFirstprivateClause(long i) {
         switch (i) {
@@ -59246,7 +59760,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 291
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 300
 namespace stringify {
     const char* E_SgOmpSharedClause(long i) {
         switch (i) {
@@ -59294,7 +59808,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 294
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 303
 namespace stringify {
     const char* E_SgOmpCopyinClause(long i) {
         switch (i) {
@@ -59342,7 +59856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 297
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 306
 namespace stringify {
     const char* E_SgOmpLastprivateClause(long i) {
         switch (i) {
@@ -59390,7 +59904,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 300
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 309
 namespace stringify {
     const char* E_SgOmpReductionClause(long i) {
         switch (i) {
@@ -59438,7 +59952,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 303
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 312
 namespace stringify {
     const char* E_SgOmpMapClause(long i) {
         switch (i) {
@@ -59486,7 +60000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 306
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 315
 namespace stringify {
     const char* E_SgOmpUniformClause(long i) {
         switch (i) {
@@ -59534,7 +60048,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 309
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 318
 namespace stringify {
     const char* E_SgOmpAlignedClause(long i) {
         switch (i) {
@@ -59584,7 +60098,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 312
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 321
 namespace stringify {
     const char* E_SgOmpLinearClause(long i) {
         switch (i) {
@@ -59634,7 +60148,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 315
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 324
 namespace stringify {
     const char* E_SgOmpDependClause(long i) {
         switch (i) {
@@ -59682,7 +60196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 318
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 327
 namespace stringify {
     const char* E_SgOmpVariablesClause(long i) {
         switch (i) {
@@ -59730,7 +60244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 321
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 330
 namespace stringify {
     const char* E_SgOmpScheduleClause(long i) {
         switch (i) {
@@ -59778,7 +60292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 324
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 333
 namespace stringify {
     const char* E_SgUntypedUnaryOperator(long i) {
         switch (i) {
@@ -59826,7 +60340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 327
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 336
 namespace stringify {
     const char* E_SgUntypedBinaryOperator(long i) {
         switch (i) {
@@ -59876,7 +60390,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 330
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 339
 namespace stringify {
     const char* E_SgUntypedExprListExpression(long i) {
         switch (i) {
@@ -59924,7 +60438,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 333
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 342
 namespace stringify {
     const char* E_SgUntypedArrayReferenceExpression(long i) {
         switch (i) {
@@ -59974,7 +60488,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 336
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 345
 namespace stringify {
     const char* E_SgUntypedSubscriptExpression(long i) {
         switch (i) {
@@ -60026,7 +60540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 339
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 348
 namespace stringify {
     const char* E_SgUntypedNamedExpression(long i) {
         switch (i) {
@@ -60074,7 +60588,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 342
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 351
 namespace stringify {
     const char* E_SgUntypedNameListDeclaration(long i) {
         switch (i) {
@@ -60122,7 +60636,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 345
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 354
 namespace stringify {
     const char* E_SgUntypedUseStatement(long i) {
         switch (i) {
@@ -60170,7 +60684,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 348
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 357
 namespace stringify {
     const char* E_SgUntypedVariableDeclaration(long i) {
         switch (i) {
@@ -60220,7 +60734,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 351
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 360
 namespace stringify {
     const char* E_SgUntypedProgramHeaderDeclaration(long i) {
         switch (i) {
@@ -60274,7 +60788,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 354
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 363
 namespace stringify {
     const char* E_SgUntypedSubroutineDeclaration(long i) {
         switch (i) {
@@ -60328,7 +60842,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 357
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 366
 namespace stringify {
     const char* E_SgUntypedInterfaceDeclaration(long i) {
         switch (i) {
@@ -60382,7 +60896,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 360
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 369
 namespace stringify {
     const char* E_SgUntypedFunctionDeclaration(long i) {
         switch (i) {
@@ -60436,7 +60950,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 363
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 372
 namespace stringify {
     const char* E_SgUntypedModuleDeclaration(long i) {
         switch (i) {
@@ -60486,7 +61000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 366
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 375
 namespace stringify {
     const char* E_SgUntypedSubmoduleDeclaration(long i) {
         switch (i) {
@@ -60536,7 +61050,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 369
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 378
 namespace stringify {
     const char* E_SgUntypedBlockDataDeclaration(long i) {
         switch (i) {
@@ -60586,7 +61100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 372
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 381
 namespace stringify {
     const char* E_SgUntypedPackageDeclaration(long i) {
         switch (i) {
@@ -60634,7 +61148,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 375
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 384
 namespace stringify {
     const char* E_SgUntypedStructureDeclaration(long i) {
         switch (i) {
@@ -60682,7 +61196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 378
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 387
 namespace stringify {
     const char* E_SgUntypedExceptionHandlerDeclaration(long i) {
         switch (i) {
@@ -60730,7 +61244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 381
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 390
 namespace stringify {
     const char* E_SgUntypedExceptionDeclaration(long i) {
         switch (i) {
@@ -60778,7 +61292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 384
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 393
 namespace stringify {
     const char* E_SgUntypedTaskDeclaration(long i) {
         switch (i) {
@@ -60826,7 +61340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 387
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 396
 namespace stringify {
     const char* E_SgUntypedUnitDeclaration(long i) {
         switch (i) {
@@ -60874,7 +61388,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 390
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 399
 namespace stringify {
     const char* E_SgUntypedInitializedNameListDeclaration(long i) {
         switch (i) {
@@ -60922,7 +61436,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 393
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 402
 namespace stringify {
     const char* E_SgUntypedAssignmentStatement(long i) {
         switch (i) {
@@ -60972,7 +61486,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 396
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 405
 namespace stringify {
     const char* E_SgUntypedBlockStatement(long i) {
         switch (i) {
@@ -61020,7 +61534,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 399
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 408
 namespace stringify {
     const char* E_SgUntypedExpressionStatement(long i) {
         switch (i) {
@@ -61068,7 +61582,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 402
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 411
 namespace stringify {
     const char* E_SgUntypedFunctionCallStatement(long i) {
         switch (i) {
@@ -61118,7 +61632,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 405
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 414
 namespace stringify {
     const char* E_SgUntypedImageControlStatement(long i) {
         switch (i) {
@@ -61170,7 +61684,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 408
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 417
 namespace stringify {
     const char* E_SgUntypedFunctionScope(long i) {
         switch (i) {
@@ -61222,7 +61736,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 411
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 420
 namespace stringify {
     const char* E_SgUntypedModuleScope(long i) {
         switch (i) {
@@ -61274,7 +61788,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 414
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 423
 namespace stringify {
     const char* E_SgUntypedGlobalScope(long i) {
         switch (i) {
@@ -61326,7 +61840,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 417
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 426
 namespace stringify {
     const char* E_SgUntypedScope(long i) {
         switch (i) {
@@ -61378,7 +61892,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 420
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 429
 namespace stringify {
     const char* E_SgUntypedIfStatement(long i) {
         switch (i) {
@@ -61430,7 +61944,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 423
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 432
 namespace stringify {
     const char* E_SgUntypedCaseStatement(long i) {
         switch (i) {
@@ -61480,7 +61994,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 426
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 435
 namespace stringify {
     const char* E_SgUntypedLabelStatement(long i) {
         switch (i) {
@@ -61528,7 +62042,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 429
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 438
 namespace stringify {
     const char* E_SgUntypedWhileStatement(long i) {
         switch (i) {
@@ -61578,7 +62092,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 432
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 441
 namespace stringify {
     const char* E_SgUntypedForStatement(long i) {
         switch (i) {
@@ -61632,7 +62146,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 435
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 444
 namespace stringify {
     const char* E_SgUntypedReturnStatement(long i) {
         switch (i) {
@@ -61680,7 +62194,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 438
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 447
 namespace stringify {
     const char* E_SgUntypedStopStatement(long i) {
         switch (i) {
@@ -61728,7 +62242,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 441
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 450
 namespace stringify {
     const char* E_SgUntypedForAllStatement(long i) {
         switch (i) {
@@ -61780,7 +62294,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 444
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 453
 namespace stringify {
     const char* E_SgUntypedArrayType(long i) {
         switch (i) {
@@ -61832,7 +62346,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 447
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 456
 namespace stringify {
     const char* E_SgUntypedType(long i) {
         switch (i) {
@@ -61882,7 +62396,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 450
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 459
 namespace stringify {
     const char* E_SgUntypedFile(long i) {
         switch (i) {
@@ -61930,7 +62444,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 453
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 462
 namespace stringify {
     const char* E_SgUntypedStatementList(long i) {
         switch (i) {
@@ -61978,7 +62492,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 456
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 465
 namespace stringify {
     const char* E_SgUntypedDeclarationStatementList(long i) {
         switch (i) {
@@ -62026,7 +62540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 459
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 468
 namespace stringify {
     const char* E_SgUntypedFunctionDeclarationList(long i) {
         switch (i) {
@@ -62074,7 +62588,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 462
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 471
 namespace stringify {
     const char* E_SgUntypedInitializedNameList(long i) {
         switch (i) {
@@ -62122,7 +62636,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 465
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 474
 namespace stringify {
     const char* E_SgUntypedNameList(long i) {
         switch (i) {
@@ -62170,7 +62684,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 468
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 477
 namespace stringify {
     const char* E_SgUntypedTokenList(long i) {
         switch (i) {
@@ -62218,7 +62732,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 471
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 480
 namespace stringify {
     const char* E_SgUntypedTokenPairList(long i) {
         switch (i) {
@@ -62266,7 +62780,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 474
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 483
 namespace stringify {
     const char* E_SgLambdaCapture(long i) {
         switch (i) {
@@ -62318,7 +62832,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 477
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 486
 namespace stringify {
     const char* E_SgLambdaCaptureList(long i) {
         switch (i) {
@@ -62366,7 +62880,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 480
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 489
 namespace stringify {
     const char* E_SgGlobal(long i) {
         switch (i) {
@@ -62414,7 +62928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 483
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 492
 namespace stringify {
     const char* E_SgBasicBlock(long i) {
         switch (i) {
@@ -62462,7 +62976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 486
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 495
 namespace stringify {
     const char* E_SgIfStmt(long i) {
         switch (i) {
@@ -62514,7 +63028,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 489
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 498
 namespace stringify {
     const char* E_SgForStatement(long i) {
         switch (i) {
@@ -62570,7 +63084,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 492
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 501
 namespace stringify {
     const char* E_SgTemplateFunctionDefinition(long i) {
         switch (i) {
@@ -62618,7 +63132,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 495
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 504
 namespace stringify {
     const char* E_SgFunctionDefinition(long i) {
         switch (i) {
@@ -62666,7 +63180,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 498
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 507
 namespace stringify {
     const char* E_SgTemplateInstantiationDefn(long i) {
         switch (i) {
@@ -62714,7 +63228,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 501
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 510
 namespace stringify {
     const char* E_SgTemplateClassDefinition(long i) {
         switch (i) {
@@ -62762,7 +63276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 504
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 513
 namespace stringify {
     const char* E_SgClassDefinition(long i) {
         switch (i) {
@@ -62810,7 +63324,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 507
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 516
 namespace stringify {
     const char* E_SgWhileStmt(long i) {
         switch (i) {
@@ -62862,7 +63376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 510
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 519
 namespace stringify {
     const char* E_SgDoWhileStmt(long i) {
         switch (i) {
@@ -62912,7 +63426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 513
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 522
 namespace stringify {
     const char* E_SgSwitchStatement(long i) {
         switch (i) {
@@ -62962,7 +63476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 516
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 525
 namespace stringify {
     const char* E_SgCatchOptionStmt(long i) {
         switch (i) {
@@ -63012,7 +63526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 519
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 528
 namespace stringify {
     const char* E_SgNamespaceDefinitionStatement(long i) {
         switch (i) {
@@ -63060,7 +63574,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 522
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 531
 namespace stringify {
     const char* E_SgAssociateStatement(long i) {
         switch (i) {
@@ -63110,7 +63624,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 525
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 534
 namespace stringify {
     const char* E_SgFortranNonblockedDo(long i) {
         switch (i) {
@@ -63164,7 +63678,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 528
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 537
 namespace stringify {
     const char* E_SgFortranDo(long i) {
         switch (i) {
@@ -63218,7 +63732,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 531
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 540
 namespace stringify {
     const char* E_SgForAllStatement(long i) {
         switch (i) {
@@ -63268,7 +63782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 534
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 543
 namespace stringify {
     const char* E_SgUpcForAllStatement(long i) {
         switch (i) {
@@ -63324,7 +63838,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 537
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 546
 namespace stringify {
     const char* E_SgCAFWithTeamStatement(long i) {
         switch (i) {
@@ -63372,7 +63886,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 540
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 549
 namespace stringify {
     const char* E_SgJavaForEachStatement(long i) {
         switch (i) {
@@ -63424,7 +63938,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 543
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 552
 namespace stringify {
     const char* E_SgJavaLabelStatement(long i) {
         switch (i) {
@@ -63472,7 +63986,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 546
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 555
 namespace stringify {
     const char* E_SgMatlabForStatement(long i) {
         switch (i) {
@@ -63524,7 +64038,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 549
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 558
 namespace stringify {
     const char* E_SgRangeBasedForStatement(long i) {
         switch (i) {
@@ -63584,7 +64098,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 552
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 561
 namespace stringify {
     const char* E_SgJovialForThenStatement(long i) {
         switch (i) {
@@ -63638,7 +64152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 555
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 564
 namespace stringify {
     const char* E_SgFunctionParameterList(long i) {
         switch (i) {
@@ -63686,7 +64200,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 558
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 567
 namespace stringify {
     const char* E_SgTemplateVariableDeclaration(long i) {
         switch (i) {
@@ -63736,7 +64250,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 561
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 570
 namespace stringify {
     const char* E_SgVariableDeclaration(long i) {
         switch (i) {
@@ -63786,7 +64300,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 564
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 573
 namespace stringify {
     const char* E_SgVariableDefinition(long i) {
         switch (i) {
@@ -63836,7 +64350,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 567
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 576
 namespace stringify {
     const char* E_SgEnumDeclaration(long i) {
         switch (i) {
@@ -63884,7 +64398,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 570
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 579
 namespace stringify {
     const char* E_SgAsmStmt(long i) {
         switch (i) {
@@ -63932,7 +64446,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 573
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 582
 namespace stringify {
     const char* E_SgTemplateInstantiationDirectiveStatement(long i) {
         switch (i) {
@@ -63980,7 +64494,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 576
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 585
 namespace stringify {
     const char* E_SgUseStatement(long i) {
         switch (i) {
@@ -64028,7 +64542,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 579
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 588
 namespace stringify {
     const char* E_SgNamespaceDeclarationStatement(long i) {
         switch (i) {
@@ -64076,7 +64590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 582
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 591
 namespace stringify {
     const char* E_SgInterfaceStatement(long i) {
         switch (i) {
@@ -64124,7 +64638,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 585
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 594
 namespace stringify {
     const char* E_SgCommonBlock(long i) {
         switch (i) {
@@ -64172,7 +64686,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 588
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 597
 namespace stringify {
     const char* E_SgTemplateTypedefDeclaration(long i) {
         switch (i) {
@@ -64220,7 +64734,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 591
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 600
 namespace stringify {
     const char* E_SgTemplateInstantiationTypedefDeclaration(long i) {
         switch (i) {
@@ -64268,7 +64782,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 594
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 603
 namespace stringify {
     const char* E_SgTypedefDeclaration(long i) {
         switch (i) {
@@ -64316,7 +64830,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 597
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 606
 namespace stringify {
     const char* E_SgStatementFunctionStatement(long i) {
         switch (i) {
@@ -64366,7 +64880,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 600
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 609
 namespace stringify {
     const char* E_SgCtorInitializerList(long i) {
         switch (i) {
@@ -64414,7 +64928,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 603
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 612
 namespace stringify {
     const char* E_SgPragmaDeclaration(long i) {
         switch (i) {
@@ -64462,7 +64976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 606
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 615
 namespace stringify {
     const char* E_SgTemplateClassDeclaration(long i) {
         switch (i) {
@@ -64512,7 +65026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 609
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 618
 namespace stringify {
     const char* E_SgTemplateInstantiationDecl(long i) {
         switch (i) {
@@ -64562,7 +65076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 612
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 621
 namespace stringify {
     const char* E_SgDerivedTypeStatement(long i) {
         switch (i) {
@@ -64612,7 +65126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 615
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 624
 namespace stringify {
     const char* E_SgModuleStatement(long i) {
         switch (i) {
@@ -64662,7 +65176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 618
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 627
 namespace stringify {
     const char* E_SgJavaPackageDeclaration(long i) {
         switch (i) {
@@ -64712,7 +65226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 621
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 630
 namespace stringify {
     const char* E_SgClassDeclaration(long i) {
         switch (i) {
@@ -64762,7 +65276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 624
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 633
 namespace stringify {
     const char* E_SgImplicitStatement(long i) {
         switch (i) {
@@ -64810,7 +65324,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 627
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 636
 namespace stringify {
     const char* E_SgTemplateFunctionDeclaration(long i) {
         switch (i) {
@@ -64862,7 +65376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 630
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 639
 namespace stringify {
     const char* E_SgTemplateMemberFunctionDeclaration(long i) {
         switch (i) {
@@ -64916,7 +65430,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 633
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 642
 namespace stringify {
     const char* E_SgTemplateInstantiationMemberFunctionDecl(long i) {
         switch (i) {
@@ -64970,7 +65484,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 636
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 645
 namespace stringify {
     const char* E_SgMemberFunctionDeclaration(long i) {
         switch (i) {
@@ -65024,7 +65538,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 639
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 648
 namespace stringify {
     const char* E_SgTemplateInstantiationFunctionDecl(long i) {
         switch (i) {
@@ -65076,7 +65590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 642
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 651
 namespace stringify {
     const char* E_SgProgramHeaderStatement(long i) {
         switch (i) {
@@ -65128,7 +65642,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 645
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 654
 namespace stringify {
     const char* E_SgProcedureHeaderStatement(long i) {
         switch (i) {
@@ -65182,7 +65696,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 648
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 657
 namespace stringify {
     const char* E_SgEntryStatement(long i) {
         switch (i) {
@@ -65236,7 +65750,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 651
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 660
 namespace stringify {
     const char* E_SgFunctionDeclaration(long i) {
         switch (i) {
@@ -65288,7 +65802,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 654
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 663
 namespace stringify {
     const char* E_SgIncludeDirectiveStatement(long i) {
         switch (i) {
@@ -65336,7 +65850,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 657
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 666
 namespace stringify {
     const char* E_SgOmpThreadprivateStatement(long i) {
         switch (i) {
@@ -65384,7 +65898,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 660
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 669
 namespace stringify {
     const char* E_SgStmtDeclarationStatement(long i) {
         switch (i) {
@@ -65432,7 +65946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 663
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 672
 namespace stringify {
     const char* E_SgStaticAssertionDeclaration(long i) {
         switch (i) {
@@ -65480,7 +65994,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 666
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 675
 namespace stringify {
     const char* E_SgOmpDeclareSimdStatement(long i) {
         switch (i) {
@@ -65528,7 +66042,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 669
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 678
 namespace stringify {
     const char* E_SgExprStatement(long i) {
         switch (i) {
@@ -65576,7 +66090,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 672
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 681
 namespace stringify {
     const char* E_SgLabelStatement(long i) {
         switch (i) {
@@ -65624,7 +66138,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 675
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 684
 namespace stringify {
     const char* E_SgCaseOptionStmt(long i) {
         switch (i) {
@@ -65676,7 +66190,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 678
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 687
 namespace stringify {
     const char* E_SgTryStmt(long i) {
         switch (i) {
@@ -65730,7 +66244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 681
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 690
 namespace stringify {
     const char* E_SgDefaultOptionStmt(long i) {
         switch (i) {
@@ -65778,7 +66292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 684
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 693
 namespace stringify {
     const char* E_SgReturnStmt(long i) {
         switch (i) {
@@ -65826,7 +66340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 687
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 696
 namespace stringify {
     const char* E_SgSpawnStmt(long i) {
         switch (i) {
@@ -65874,7 +66388,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 690
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 699
 namespace stringify {
     const char* E_SgForInitStatement(long i) {
         switch (i) {
@@ -65922,7 +66436,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 693
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 702
 namespace stringify {
     const char* E_SgCatchStatementSeq(long i) {
         switch (i) {
@@ -65970,7 +66484,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 696
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 705
 namespace stringify {
     const char* E_SgPrintStatement(long i) {
         switch (i) {
@@ -66028,7 +66542,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 699
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 708
 namespace stringify {
     const char* E_SgReadStatement(long i) {
         switch (i) {
@@ -66100,7 +66614,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 702
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 711
 namespace stringify {
     const char* E_SgWriteStatement(long i) {
         switch (i) {
@@ -66166,7 +66680,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 705
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 714
 namespace stringify {
     const char* E_SgOpenStatement(long i) {
         switch (i) {
@@ -66248,7 +66762,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 708
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 717
 namespace stringify {
     const char* E_SgCloseStatement(long i) {
         switch (i) {
@@ -66306,7 +66820,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 711
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 720
 namespace stringify {
     const char* E_SgInquireStatement(long i) {
         switch (i) {
@@ -66362,7 +66876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 714
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 723
 namespace stringify {
     const char* E_SgFlushStatement(long i) {
         switch (i) {
@@ -66418,7 +66932,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 717
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 726
 namespace stringify {
     const char* E_SgBackspaceStatement(long i) {
         switch (i) {
@@ -66474,7 +66988,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 720
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 729
 namespace stringify {
     const char* E_SgRewindStatement(long i) {
         switch (i) {
@@ -66530,7 +67044,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 723
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 732
 namespace stringify {
     const char* E_SgEndfileStatement(long i) {
         switch (i) {
@@ -66586,7 +67100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 726
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 735
 namespace stringify {
     const char* E_SgWaitStatement(long i) {
         switch (i) {
@@ -66642,7 +67156,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 729
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 738
 namespace stringify {
     const char* E_SgIOStatement(long i) {
         switch (i) {
@@ -66698,7 +67212,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 732
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 741
 namespace stringify {
     const char* E_SgWhereStatement(long i) {
         switch (i) {
@@ -66750,7 +67264,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 735
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 744
 namespace stringify {
     const char* E_SgElseWhereStatement(long i) {
         switch (i) {
@@ -66802,7 +67316,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 738
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 747
 namespace stringify {
     const char* E_SgNullifyStatement(long i) {
         switch (i) {
@@ -66850,7 +67364,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 741
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 750
 namespace stringify {
     const char* E_SgArithmeticIfStatement(long i) {
         switch (i) {
@@ -66898,7 +67412,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 744
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 753
 namespace stringify {
     const char* E_SgAssignStatement(long i) {
         switch (i) {
@@ -66946,7 +67460,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 747
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 756
 namespace stringify {
     const char* E_SgComputedGotoStatement(long i) {
         switch (i) {
@@ -66996,7 +67510,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 750
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 759
 namespace stringify {
     const char* E_SgAssignedGotoStatement(long i) {
         switch (i) {
@@ -67044,7 +67558,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 753
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 762
 namespace stringify {
     const char* E_SgAllocateStatement(long i) {
         switch (i) {
@@ -67098,7 +67612,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 756
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 765
 namespace stringify {
     const char* E_SgDeallocateStatement(long i) {
         switch (i) {
@@ -67150,7 +67664,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 759
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 768
 namespace stringify {
     const char* E_SgUpcNotifyStatement(long i) {
         switch (i) {
@@ -67198,7 +67712,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 762
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 771
 namespace stringify {
     const char* E_SgUpcWaitStatement(long i) {
         switch (i) {
@@ -67246,7 +67760,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 765
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 774
 namespace stringify {
     const char* E_SgUpcBarrierStatement(long i) {
         switch (i) {
@@ -67294,7 +67808,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 768
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 777
 namespace stringify {
     const char* E_SgOmpFlushStatement(long i) {
         switch (i) {
@@ -67342,7 +67856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 771
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 780
 namespace stringify {
     const char* E_SgOmpMasterStatement(long i) {
         switch (i) {
@@ -67390,7 +67904,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 774
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 783
 namespace stringify {
     const char* E_SgOmpOrderedStatement(long i) {
         switch (i) {
@@ -67438,7 +67952,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 777
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 786
 namespace stringify {
     const char* E_SgOmpCriticalStatement(long i) {
         switch (i) {
@@ -67486,7 +68000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 780
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 789
 namespace stringify {
     const char* E_SgOmpSectionStatement(long i) {
         switch (i) {
@@ -67534,7 +68048,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 783
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 792
 namespace stringify {
     const char* E_SgOmpWorkshareStatement(long i) {
         switch (i) {
@@ -67582,7 +68096,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 786
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 795
 namespace stringify {
     const char* E_SgOmpParallelStatement(long i) {
         switch (i) {
@@ -67632,7 +68146,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 789
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 798
 namespace stringify {
     const char* E_SgOmpSingleStatement(long i) {
         switch (i) {
@@ -67682,7 +68196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 792
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 801
 namespace stringify {
     const char* E_SgOmpAtomicStatement(long i) {
         switch (i) {
@@ -67732,7 +68246,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 795
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 804
 namespace stringify {
     const char* E_SgOmpTaskStatement(long i) {
         switch (i) {
@@ -67782,7 +68296,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 798
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 807
 namespace stringify {
     const char* E_SgOmpForStatement(long i) {
         switch (i) {
@@ -67832,7 +68346,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 801
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 810
 namespace stringify {
     const char* E_SgOmpDoStatement(long i) {
         switch (i) {
@@ -67882,7 +68396,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 804
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 813
 namespace stringify {
     const char* E_SgOmpSectionsStatement(long i) {
         switch (i) {
@@ -67932,7 +68446,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 807
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 816
 namespace stringify {
     const char* E_SgOmpTargetStatement(long i) {
         switch (i) {
@@ -67982,7 +68496,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 810
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 819
 namespace stringify {
     const char* E_SgOmpTargetDataStatement(long i) {
         switch (i) {
@@ -68032,7 +68546,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 813
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 822
 namespace stringify {
     const char* E_SgOmpSimdStatement(long i) {
         switch (i) {
@@ -68082,7 +68596,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 816
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 825
 namespace stringify {
     const char* E_SgOmpForSimdStatement(long i) {
         switch (i) {
@@ -68132,7 +68646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 819
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 828
 namespace stringify {
     const char* E_SgOmpClauseBodyStatement(long i) {
         switch (i) {
@@ -68182,7 +68696,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 822
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 831
 namespace stringify {
     const char* E_SgOmpBodyStatement(long i) {
         switch (i) {
@@ -68230,7 +68744,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 825
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 834
 namespace stringify {
     const char* E_SgWithStatement(long i) {
         switch (i) {
@@ -68280,7 +68794,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 828
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 837
 namespace stringify {
     const char* E_SgPythonPrintStmt(long i) {
         switch (i) {
@@ -68330,7 +68844,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 831
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 840
 namespace stringify {
     const char* E_SgAssertStmt(long i) {
         switch (i) {
@@ -68380,7 +68894,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 834
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 843
 namespace stringify {
     const char* E_SgExecStatement(long i) {
         switch (i) {
@@ -68432,7 +68946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 837
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 846
 namespace stringify {
     const char* E_SgPythonGlobalStmt(long i) {
         switch (i) {
@@ -68480,7 +68994,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 840
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 849
 namespace stringify {
     const char* E_SgJavaSynchronizedStatement(long i) {
         switch (i) {
@@ -68530,7 +69044,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 843
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 852
 namespace stringify {
     const char* E_SgAsyncStmt(long i) {
         switch (i) {
@@ -68578,7 +69092,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 846
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 855
 namespace stringify {
     const char* E_SgFinishStmt(long i) {
         switch (i) {
@@ -68626,7 +69140,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 849
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 858
 namespace stringify {
     const char* E_SgAtStmt(long i) {
         switch (i) {
@@ -68676,7 +69190,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 852
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 861
 namespace stringify {
     const char* E_SgAtomicStmt(long i) {
         switch (i) {
@@ -68724,7 +69238,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 855
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 864
 namespace stringify {
     const char* E_SgWhenStmt(long i) {
         switch (i) {
@@ -68774,7 +69288,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 858
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 867
 namespace stringify {
     const char* E_SgSyncAllStatement(long i) {
         switch (i) {
@@ -68826,7 +69340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 861
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 870
 namespace stringify {
     const char* E_SgSyncImagesStatement(long i) {
         switch (i) {
@@ -68880,7 +69394,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 864
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 873
 namespace stringify {
     const char* E_SgSyncMemoryStatement(long i) {
         switch (i) {
@@ -68932,7 +69446,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 867
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 876
 namespace stringify {
     const char* E_SgSyncTeamStatement(long i) {
         switch (i) {
@@ -68986,7 +69500,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 870
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 879
 namespace stringify {
     const char* E_SgLockStatement(long i) {
         switch (i) {
@@ -69040,7 +69554,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 873
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 882
 namespace stringify {
     const char* E_SgUnlockStatement(long i) {
         switch (i) {
@@ -69094,7 +69608,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 876
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 885
 namespace stringify {
     const char* E_SgImageControlStatement(long i) {
         switch (i) {
@@ -69146,7 +69660,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 879
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 888
 namespace stringify {
     const char* E_SgExpressionRoot(long i) {
         switch (i) {
@@ -69194,7 +69708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 882
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 891
 namespace stringify {
     const char* E_SgMinusOp(long i) {
         switch (i) {
@@ -69242,7 +69756,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 885
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 894
 namespace stringify {
     const char* E_SgUnaryAddOp(long i) {
         switch (i) {
@@ -69290,7 +69804,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 888
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 897
 namespace stringify {
     const char* E_SgNotOp(long i) {
         switch (i) {
@@ -69338,7 +69852,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 891
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 900
 namespace stringify {
     const char* E_SgPointerDerefExp(long i) {
         switch (i) {
@@ -69386,7 +69900,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 894
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 903
 namespace stringify {
     const char* E_SgAddressOfOp(long i) {
         switch (i) {
@@ -69434,7 +69948,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 897
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 906
 namespace stringify {
     const char* E_SgMinusMinusOp(long i) {
         switch (i) {
@@ -69482,7 +69996,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 900
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 909
 namespace stringify {
     const char* E_SgPlusPlusOp(long i) {
         switch (i) {
@@ -69530,7 +70044,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 903
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 912
 namespace stringify {
     const char* E_SgBitComplementOp(long i) {
         switch (i) {
@@ -69578,7 +70092,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 906
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 915
 namespace stringify {
     const char* E_SgCastExp(long i) {
         switch (i) {
@@ -69626,7 +70140,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 909
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 918
 namespace stringify {
     const char* E_SgThrowOp(long i) {
         switch (i) {
@@ -69674,7 +70188,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 912
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 921
 namespace stringify {
     const char* E_SgRealPartOp(long i) {
         switch (i) {
@@ -69722,7 +70236,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 915
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 924
 namespace stringify {
     const char* E_SgImagPartOp(long i) {
         switch (i) {
@@ -69770,7 +70284,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 918
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 927
 namespace stringify {
     const char* E_SgConjugateOp(long i) {
         switch (i) {
@@ -69818,7 +70332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 921
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 930
 namespace stringify {
     const char* E_SgUserDefinedUnaryOp(long i) {
         switch (i) {
@@ -69866,7 +70380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 924
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 933
 namespace stringify {
     const char* E_SgMatrixTransposeOp(long i) {
         switch (i) {
@@ -69914,7 +70428,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 927
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 936
 namespace stringify {
     const char* E_SgUnaryOp(long i) {
         switch (i) {
@@ -69962,7 +70476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 930
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 939
 namespace stringify {
     const char* E_SgArrowExp(long i) {
         switch (i) {
@@ -70012,7 +70526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 933
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 942
 namespace stringify {
     const char* E_SgDotExp(long i) {
         switch (i) {
@@ -70062,7 +70576,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 936
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 945
 namespace stringify {
     const char* E_SgDotStarOp(long i) {
         switch (i) {
@@ -70112,7 +70626,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 939
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 948
 namespace stringify {
     const char* E_SgArrowStarOp(long i) {
         switch (i) {
@@ -70162,7 +70676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 942
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 951
 namespace stringify {
     const char* E_SgEqualityOp(long i) {
         switch (i) {
@@ -70212,7 +70726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 945
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 954
 namespace stringify {
     const char* E_SgLessThanOp(long i) {
         switch (i) {
@@ -70262,7 +70776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 948
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 957
 namespace stringify {
     const char* E_SgGreaterThanOp(long i) {
         switch (i) {
@@ -70312,7 +70826,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 951
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 960
 namespace stringify {
     const char* E_SgNotEqualOp(long i) {
         switch (i) {
@@ -70362,7 +70876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 954
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 963
 namespace stringify {
     const char* E_SgLessOrEqualOp(long i) {
         switch (i) {
@@ -70412,7 +70926,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 957
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 966
 namespace stringify {
     const char* E_SgGreaterOrEqualOp(long i) {
         switch (i) {
@@ -70462,7 +70976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 960
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 969
 namespace stringify {
     const char* E_SgAddOp(long i) {
         switch (i) {
@@ -70512,7 +71026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 963
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 972
 namespace stringify {
     const char* E_SgSubtractOp(long i) {
         switch (i) {
@@ -70562,7 +71076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 966
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 975
 namespace stringify {
     const char* E_SgMultiplyOp(long i) {
         switch (i) {
@@ -70612,7 +71126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 969
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 978
 namespace stringify {
     const char* E_SgDivideOp(long i) {
         switch (i) {
@@ -70662,7 +71176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 972
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 981
 namespace stringify {
     const char* E_SgIntegerDivideOp(long i) {
         switch (i) {
@@ -70712,7 +71226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 975
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 984
 namespace stringify {
     const char* E_SgModOp(long i) {
         switch (i) {
@@ -70762,7 +71276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 978
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 987
 namespace stringify {
     const char* E_SgAndOp(long i) {
         switch (i) {
@@ -70812,7 +71326,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 981
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 990
 namespace stringify {
     const char* E_SgOrOp(long i) {
         switch (i) {
@@ -70862,7 +71376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 984
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 993
 namespace stringify {
     const char* E_SgBitXorOp(long i) {
         switch (i) {
@@ -70912,7 +71426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 987
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 996
 namespace stringify {
     const char* E_SgBitAndOp(long i) {
         switch (i) {
@@ -70962,7 +71476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 990
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 999
 namespace stringify {
     const char* E_SgBitOrOp(long i) {
         switch (i) {
@@ -71012,7 +71526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 993
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1002
 namespace stringify {
     const char* E_SgCommaOpExp(long i) {
         switch (i) {
@@ -71062,7 +71576,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 996
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1005
 namespace stringify {
     const char* E_SgLshiftOp(long i) {
         switch (i) {
@@ -71112,7 +71626,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 999
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1008
 namespace stringify {
     const char* E_SgRshiftOp(long i) {
         switch (i) {
@@ -71162,7 +71676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1002
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1011
 namespace stringify {
     const char* E_SgPntrArrRefExp(long i) {
         switch (i) {
@@ -71212,7 +71726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1005
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1014
 namespace stringify {
     const char* E_SgScopeOp(long i) {
         switch (i) {
@@ -71262,7 +71776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1008
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1017
 namespace stringify {
     const char* E_SgAssignOp(long i) {
         switch (i) {
@@ -71312,7 +71826,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1011
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1020
 namespace stringify {
     const char* E_SgExponentiationOp(long i) {
         switch (i) {
@@ -71362,7 +71876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1014
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1023
 namespace stringify {
     const char* E_SgJavaUnsignedRshiftOp(long i) {
         switch (i) {
@@ -71412,7 +71926,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1017
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1026
 namespace stringify {
     const char* E_SgConcatenationOp(long i) {
         switch (i) {
@@ -71462,7 +71976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1020
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1029
 namespace stringify {
     const char* E_SgPointerAssignOp(long i) {
         switch (i) {
@@ -71512,7 +72026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1023
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1032
 namespace stringify {
     const char* E_SgUserDefinedBinaryOp(long i) {
         switch (i) {
@@ -71562,7 +72076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1026
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1035
 namespace stringify {
     const char* E_SgPlusAssignOp(long i) {
         switch (i) {
@@ -71612,7 +72126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1029
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1038
 namespace stringify {
     const char* E_SgMinusAssignOp(long i) {
         switch (i) {
@@ -71662,7 +72176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1032
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1041
 namespace stringify {
     const char* E_SgAndAssignOp(long i) {
         switch (i) {
@@ -71712,7 +72226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1035
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1044
 namespace stringify {
     const char* E_SgIorAssignOp(long i) {
         switch (i) {
@@ -71762,7 +72276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1038
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1047
 namespace stringify {
     const char* E_SgMultAssignOp(long i) {
         switch (i) {
@@ -71812,7 +72326,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1041
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1050
 namespace stringify {
     const char* E_SgDivAssignOp(long i) {
         switch (i) {
@@ -71862,7 +72376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1044
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1053
 namespace stringify {
     const char* E_SgModAssignOp(long i) {
         switch (i) {
@@ -71912,7 +72426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1047
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1056
 namespace stringify {
     const char* E_SgXorAssignOp(long i) {
         switch (i) {
@@ -71962,7 +72476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1050
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1059
 namespace stringify {
     const char* E_SgLshiftAssignOp(long i) {
         switch (i) {
@@ -72012,7 +72526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1053
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1062
 namespace stringify {
     const char* E_SgRshiftAssignOp(long i) {
         switch (i) {
@@ -72062,7 +72576,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1056
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1065
 namespace stringify {
     const char* E_SgJavaUnsignedRshiftAssignOp(long i) {
         switch (i) {
@@ -72112,7 +72626,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1059
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1068
 namespace stringify {
     const char* E_SgIntegerDivideAssignOp(long i) {
         switch (i) {
@@ -72162,7 +72676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1062
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1071
 namespace stringify {
     const char* E_SgExponentiationAssignOp(long i) {
         switch (i) {
@@ -72212,7 +72726,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1065
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1074
 namespace stringify {
     const char* E_SgCompoundAssignOp(long i) {
         switch (i) {
@@ -72262,7 +72776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1068
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1077
 namespace stringify {
     const char* E_SgMembershipOp(long i) {
         switch (i) {
@@ -72312,7 +72826,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1071
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1080
 namespace stringify {
     const char* E_SgNonMembershipOp(long i) {
         switch (i) {
@@ -72362,7 +72876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1074
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1083
 namespace stringify {
     const char* E_SgIsOp(long i) {
         switch (i) {
@@ -72412,7 +72926,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1077
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1086
 namespace stringify {
     const char* E_SgIsNotOp(long i) {
         switch (i) {
@@ -72462,7 +72976,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1080
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1089
 namespace stringify {
     const char* E_SgDotDotExp(long i) {
         switch (i) {
@@ -72512,7 +73026,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1083
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1092
 namespace stringify {
     const char* E_SgElementwiseMultiplyOp(long i) {
         switch (i) {
@@ -72562,7 +73076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1086
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1095
 namespace stringify {
     const char* E_SgElementwisePowerOp(long i) {
         switch (i) {
@@ -72612,7 +73126,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1089
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1098
 namespace stringify {
     const char* E_SgElementwiseLeftDivideOp(long i) {
         switch (i) {
@@ -72662,7 +73176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1092
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1101
 namespace stringify {
     const char* E_SgElementwiseDivideOp(long i) {
         switch (i) {
@@ -72712,7 +73226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1095
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1104
 namespace stringify {
     const char* E_SgElementwiseAddOp(long i) {
         switch (i) {
@@ -72762,7 +73276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1098
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1107
 namespace stringify {
     const char* E_SgElementwiseSubtractOp(long i) {
         switch (i) {
@@ -72812,7 +73326,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1101
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1110
 namespace stringify {
     const char* E_SgElementwiseOp(long i) {
         switch (i) {
@@ -72862,7 +73376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1104
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1113
 namespace stringify {
     const char* E_SgPowerOp(long i) {
         switch (i) {
@@ -72912,7 +73426,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1107
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1116
 namespace stringify {
     const char* E_SgLeftDivideOp(long i) {
         switch (i) {
@@ -72962,7 +73476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1110
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1119
 namespace stringify {
     const char* E_SgBinaryOp(long i) {
         switch (i) {
@@ -73012,7 +73526,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1113
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1122
 namespace stringify {
     const char* E_SgListExp(long i) {
         switch (i) {
@@ -73060,7 +73574,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1116
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1125
 namespace stringify {
     const char* E_SgTupleExp(long i) {
         switch (i) {
@@ -73108,7 +73622,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1119
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1128
 namespace stringify {
     const char* E_SgMatrixExp(long i) {
         switch (i) {
@@ -73156,7 +73670,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1122
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1131
 namespace stringify {
     const char* E_SgExprListExp(long i) {
         switch (i) {
@@ -73204,7 +73718,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1125
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1134
 namespace stringify {
     const char* E_SgComplexVal(long i) {
         switch (i) {
@@ -73254,7 +73768,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1128
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1137
 namespace stringify {
     const char* E_SgCudaKernelCallExp(long i) {
         switch (i) {
@@ -73306,7 +73820,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1131
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1140
 namespace stringify {
     const char* E_SgFunctionCallExp(long i) {
         switch (i) {
@@ -73356,7 +73870,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1134
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1143
 namespace stringify {
     const char* E_SgCallExpression(long i) {
         switch (i) {
@@ -73406,7 +73920,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1137
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1146
 namespace stringify {
     const char* E_SgSizeOfOp(long i) {
         switch (i) {
@@ -73454,7 +73968,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1140
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1149
 namespace stringify {
     const char* E_SgUpcLocalsizeofExpression(long i) {
         switch (i) {
@@ -73502,7 +74016,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1143
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1152
 namespace stringify {
     const char* E_SgUpcBlocksizeofExpression(long i) {
         switch (i) {
@@ -73550,7 +74064,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1146
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1155
 namespace stringify {
     const char* E_SgUpcElemsizeofExpression(long i) {
         switch (i) {
@@ -73598,7 +74112,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1149
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1158
 namespace stringify {
     const char* E_SgJavaInstanceOfOp(long i) {
         switch (i) {
@@ -73646,7 +74160,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1152
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1161
 namespace stringify {
     const char* E_SgTypeIdOp(long i) {
         switch (i) {
@@ -73694,7 +74208,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1155
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1164
 namespace stringify {
     const char* E_SgConditionalExp(long i) {
         switch (i) {
@@ -73746,7 +74260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1158
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1167
 namespace stringify {
     const char* E_SgNewExp(long i) {
         switch (i) {
@@ -73798,7 +74312,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1161
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1170
 namespace stringify {
     const char* E_SgDeleteExp(long i) {
         switch (i) {
@@ -73846,7 +74360,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1164
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1173
 namespace stringify {
     const char* E_SgAggregateInitializer(long i) {
         switch (i) {
@@ -73894,7 +74408,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1167
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1176
 namespace stringify {
     const char* E_SgCompoundInitializer(long i) {
         switch (i) {
@@ -73942,7 +74456,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1170
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1179
 namespace stringify {
     const char* E_SgConstructorInitializer(long i) {
         switch (i) {
@@ -73990,7 +74504,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1173
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1182
 namespace stringify {
     const char* E_SgAssignInitializer(long i) {
         switch (i) {
@@ -74038,7 +74552,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1176
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1185
 namespace stringify {
     const char* E_SgDesignatedInitializer(long i) {
         switch (i) {
@@ -74088,7 +74602,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1179
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1188
 namespace stringify {
     const char* E_SgBracedInitializer(long i) {
         switch (i) {
@@ -74136,7 +74650,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1182
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1191
 namespace stringify {
     const char* E_SgVarArgStartOp(long i) {
         switch (i) {
@@ -74186,7 +74700,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1185
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1194
 namespace stringify {
     const char* E_SgVarArgOp(long i) {
         switch (i) {
@@ -74234,7 +74748,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1188
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1197
 namespace stringify {
     const char* E_SgVarArgEndOp(long i) {
         switch (i) {
@@ -74282,7 +74796,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1191
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1200
 namespace stringify {
     const char* E_SgVarArgCopyOp(long i) {
         switch (i) {
@@ -74332,7 +74846,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1194
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1203
 namespace stringify {
     const char* E_SgVarArgStartOneOperandOp(long i) {
         switch (i) {
@@ -74380,7 +74894,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1197
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1206
 namespace stringify {
     const char* E_SgSubscriptExpression(long i) {
         switch (i) {
@@ -74432,7 +74946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1200
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1209
 namespace stringify {
     const char* E_SgImpliedDo(long i) {
         switch (i) {
@@ -74486,7 +75000,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1203
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1212
 namespace stringify {
     const char* E_SgIOItemExpression(long i) {
         switch (i) {
@@ -74534,7 +75048,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1206
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1215
 namespace stringify {
     const char* E_SgStatementExpression(long i) {
         switch (i) {
@@ -74582,7 +75096,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1209
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1218
 namespace stringify {
     const char* E_SgAsmOp(long i) {
         switch (i) {
@@ -74630,7 +75144,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1212
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1221
 namespace stringify {
     const char* E_SgActualArgumentExpression(long i) {
         switch (i) {
@@ -74678,7 +75192,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1215
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1224
 namespace stringify {
     const char* E_SgUnknownArrayOrFunctionReference(long i) {
         switch (i) {
@@ -74728,7 +75242,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1218
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1227
 namespace stringify {
     const char* E_SgCAFCoExpression(long i) {
         switch (i) {
@@ -74776,7 +75290,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1221
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1230
 namespace stringify {
     const char* E_SgCudaKernelExecConfig(long i) {
         switch (i) {
@@ -74830,7 +75344,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1224
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1233
 namespace stringify {
     const char* E_SgLambdaRefExp(long i) {
         switch (i) {
@@ -74878,7 +75392,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1227
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1236
 namespace stringify {
     const char* E_SgDictionaryExp(long i) {
         switch (i) {
@@ -74926,7 +75440,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1230
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1239
 namespace stringify {
     const char* E_SgKeyDatumPair(long i) {
         switch (i) {
@@ -74976,7 +75490,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1233
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1242
 namespace stringify {
     const char* E_SgComprehension(long i) {
         switch (i) {
@@ -75028,7 +75542,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1236
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1245
 namespace stringify {
     const char* E_SgListComprehension(long i) {
         switch (i) {
@@ -75078,7 +75592,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1239
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1248
 namespace stringify {
     const char* E_SgSetComprehension(long i) {
         switch (i) {
@@ -75128,7 +75642,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1242
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1251
 namespace stringify {
     const char* E_SgDictionaryComprehension(long i) {
         switch (i) {
@@ -75178,7 +75692,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1245
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1254
 namespace stringify {
     const char* E_SgNaryBooleanOp(long i) {
         switch (i) {
@@ -75226,7 +75740,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1248
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1257
 namespace stringify {
     const char* E_SgNaryComparisonOp(long i) {
         switch (i) {
@@ -75274,7 +75788,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1251
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1260
 namespace stringify {
     const char* E_SgNaryOp(long i) {
         switch (i) {
@@ -75322,7 +75836,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1254
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1263
 namespace stringify {
     const char* E_SgStringConversion(long i) {
         switch (i) {
@@ -75370,7 +75884,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1257
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1266
 namespace stringify {
     const char* E_SgYieldExpression(long i) {
         switch (i) {
@@ -75418,7 +75932,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1260
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1269
 namespace stringify {
     const char* E_SgAlignOfOp(long i) {
         switch (i) {
@@ -75466,7 +75980,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1263
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1272
 namespace stringify {
     const char* E_SgRangeExp(long i) {
         switch (i) {
@@ -75518,7 +76032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1266
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1275
 namespace stringify {
     const char* E_SgJavaSingleMemberAnnotation(long i) {
         switch (i) {
@@ -75566,7 +76080,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1269
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1278
 namespace stringify {
     const char* E_SgJavaNormalAnnotation(long i) {
         switch (i) {
@@ -75614,7 +76128,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1272
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1281
 namespace stringify {
     const char* E_SgFunctionParameterRefExp(long i) {
         switch (i) {
@@ -75662,7 +76176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1275
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1284
 namespace stringify {
     const char* E_SgLambdaExp(long i) {
         switch (i) {
@@ -75714,7 +76228,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1278
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1287
 namespace stringify {
     const char* E_SgHereExp(long i) {
         switch (i) {
@@ -75762,7 +76276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1281
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1290
 namespace stringify {
     const char* E_SgAtExp(long i) {
         switch (i) {
@@ -75812,7 +76326,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1284
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1293
 namespace stringify {
     const char* E_SgFinishExp(long i) {
         switch (i) {
@@ -75862,7 +76376,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1287
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1296
 namespace stringify {
     const char* E_SgNoexceptOp(long i) {
         switch (i) {
@@ -75910,7 +76424,55 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1290
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1299
+namespace stringify {
+    const char* E_SgNonrealSymbol(long i) {
+        switch (i) {
+            case 0L: return "SgNonrealSymbol_declaration";
+            default: return "";
+        }
+    }
+
+    std::string E_SgNonrealSymbol(long i, const std::string &strip) {
+        std::string s = E_SgNonrealSymbol(i);
+        if (s.empty())
+            s = "(E_SgNonrealSymbol)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<long>& E_SgNonrealSymbol() {
+        static const long values[] = {
+            0L
+        };
+        static const std::vector<long> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgNonrealSymbol(long int i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgNonrealSymbol(i);
+        if (retval.empty()) {
+            retval = "(E_SgNonrealSymbol)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgNonrealSymbol::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<long>& stringifyE_SgNonrealSymbol() {
+        return stringify::E_SgNonrealSymbol();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1302
 namespace stringify {
     const char* E_SgTemplateMemberFunctionSymbol(long i) {
         switch (i) {
@@ -75958,7 +76520,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1293
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1305
 namespace stringify {
     const char* E_SgMemberFunctionSymbol(long i) {
         switch (i) {
@@ -76006,7 +76568,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1296
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1308
 namespace stringify {
     const char* E_SgTemplateFunctionSymbol(long i) {
         switch (i) {
@@ -76054,7 +76616,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1299
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1311
 namespace stringify {
     const char* E_SgRenameSymbol(long i) {
         switch (i) {
@@ -76104,7 +76666,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1302
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1314
 namespace stringify {
     const char* E_SgFunctionSymbol(long i) {
         switch (i) {
@@ -76152,7 +76714,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1305
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1317
 namespace stringify {
     const char* E_SgTemplateClassSymbol(long i) {
         switch (i) {
@@ -76200,7 +76762,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1308
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1320
 namespace stringify {
     const char* E_SgClassSymbol(long i) {
         switch (i) {
@@ -76248,7 +76810,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1311
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1323
 namespace stringify {
     const char* E_SgTemplateSymbol(long i) {
         switch (i) {
@@ -76296,7 +76858,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1314
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1326
 namespace stringify {
     const char* E_SgEnumSymbol(long i) {
         switch (i) {
@@ -76344,7 +76906,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1317
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1329
 namespace stringify {
     const char* E_SgTemplateTypedefSymbol(long i) {
         switch (i) {
@@ -76392,7 +76954,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1320
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1332
 namespace stringify {
     const char* E_SgTypedefSymbol(long i) {
         switch (i) {
@@ -76440,7 +77002,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1323
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1335
 namespace stringify {
     const char* E_SgLabelSymbol(long i) {
         switch (i) {
@@ -76488,7 +77050,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1326
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1338
 namespace stringify {
     const char* E_SgNamespaceSymbol(long i) {
         switch (i) {
@@ -76538,7 +77100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1329
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1341
 namespace stringify {
     const char* E_SgModuleSymbol(long i) {
         switch (i) {
@@ -76586,7 +77148,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1332
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1344
 namespace stringify {
     const char* E_SgAliasSymbol(long i) {
         switch (i) {
@@ -76634,7 +77196,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1335
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1347
 namespace stringify {
     const char* E_SgJavaLabelSymbol(long i) {
         switch (i) {
@@ -76682,7 +77244,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1338
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1350
 namespace stringify {
     const char* E_SgAsmFunction(long i) {
         switch (i) {
@@ -76730,7 +77292,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1341
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1353
 namespace stringify {
     const char* E_SgAsmBlock(long i) {
         switch (i) {
@@ -76778,7 +77340,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1344
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1356
 namespace stringify {
     const char* E_SgAsmX86Instruction(long i) {
         switch (i) {
@@ -76828,7 +77390,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1347
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1359
 namespace stringify {
     const char* E_SgAsmArmInstruction(long i) {
         switch (i) {
@@ -76878,7 +77440,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1350
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1362
 namespace stringify {
     const char* E_SgAsmPowerpcInstruction(long i) {
         switch (i) {
@@ -76928,7 +77490,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1353
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1365
 namespace stringify {
     const char* E_SgAsmMipsInstruction(long i) {
         switch (i) {
@@ -76978,7 +77540,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1356
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1368
 namespace stringify {
     const char* E_SgAsmM68kInstruction(long i) {
         switch (i) {
@@ -77028,7 +77590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1359
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1371
 namespace stringify {
     const char* E_SgAsmInstruction(long i) {
         switch (i) {
@@ -77078,7 +77640,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1362
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
 namespace stringify {
     const char* E_SgAsmIntegerValueExpression(long i) {
         switch (i) {
@@ -77126,7 +77688,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1365
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1377
 namespace stringify {
     const char* E_SgAsmFloatValueExpression(long i) {
         switch (i) {
@@ -77174,7 +77736,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1368
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1380
 namespace stringify {
     const char* E_SgAsmConstantExpression(long i) {
         switch (i) {
@@ -77222,7 +77784,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1371
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1383
 namespace stringify {
     const char* E_SgAsmValueExpression(long i) {
         switch (i) {
@@ -77270,7 +77832,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1374
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1386
 namespace stringify {
     const char* E_SgAsmBinaryAdd(long i) {
         switch (i) {
@@ -77320,7 +77882,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1377
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1389
 namespace stringify {
     const char* E_SgAsmBinarySubtract(long i) {
         switch (i) {
@@ -77370,7 +77932,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1380
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1392
 namespace stringify {
     const char* E_SgAsmBinaryMultiply(long i) {
         switch (i) {
@@ -77420,7 +77982,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1383
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1395
 namespace stringify {
     const char* E_SgAsmBinaryDivide(long i) {
         switch (i) {
@@ -77470,7 +78032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1386
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1398
 namespace stringify {
     const char* E_SgAsmBinaryMod(long i) {
         switch (i) {
@@ -77520,7 +78082,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1389
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1401
 namespace stringify {
     const char* E_SgAsmBinaryAddPreupdate(long i) {
         switch (i) {
@@ -77570,7 +78132,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1392
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1404
 namespace stringify {
     const char* E_SgAsmBinarySubtractPreupdate(long i) {
         switch (i) {
@@ -77620,7 +78182,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1395
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1407
 namespace stringify {
     const char* E_SgAsmBinaryAddPostupdate(long i) {
         switch (i) {
@@ -77670,7 +78232,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1398
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1410
 namespace stringify {
     const char* E_SgAsmBinarySubtractPostupdate(long i) {
         switch (i) {
@@ -77720,7 +78282,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1401
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1413
 namespace stringify {
     const char* E_SgAsmBinaryLsl(long i) {
         switch (i) {
@@ -77770,7 +78332,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1404
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1416
 namespace stringify {
     const char* E_SgAsmBinaryLsr(long i) {
         switch (i) {
@@ -77820,7 +78382,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1407
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1419
 namespace stringify {
     const char* E_SgAsmBinaryAsr(long i) {
         switch (i) {
@@ -77870,7 +78432,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1410
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1422
 namespace stringify {
     const char* E_SgAsmBinaryRor(long i) {
         switch (i) {
@@ -77920,7 +78482,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1413
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1425
 namespace stringify {
     const char* E_SgAsmBinaryExpression(long i) {
         switch (i) {
@@ -77970,7 +78532,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1416
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1428
 namespace stringify {
     const char* E_SgAsmUnaryPlus(long i) {
         switch (i) {
@@ -78018,7 +78580,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1419
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1431
 namespace stringify {
     const char* E_SgAsmUnaryMinus(long i) {
         switch (i) {
@@ -78066,7 +78628,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1422
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1434
 namespace stringify {
     const char* E_SgAsmUnaryRrx(long i) {
         switch (i) {
@@ -78114,7 +78676,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1425
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1437
 namespace stringify {
     const char* E_SgAsmUnaryArmSpecialRegisterList(long i) {
         switch (i) {
@@ -78162,7 +78724,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1428
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1440
 namespace stringify {
     const char* E_SgAsmUnaryExpression(long i) {
         switch (i) {
@@ -78210,7 +78772,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1431
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1443
 namespace stringify {
     const char* E_SgAsmMemoryReferenceExpression(long i) {
         switch (i) {
@@ -78260,7 +78822,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1434
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1446
 namespace stringify {
     const char* E_SgAsmCommonSubExpression(long i) {
         switch (i) {
@@ -78308,7 +78870,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1437
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1449
 namespace stringify {
     const char* E_SgAsmExprListExp(long i) {
         switch (i) {
@@ -78356,7 +78918,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1440
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1452
 namespace stringify {
     const char* E_SgAsmRegisterNames(long i) {
         switch (i) {
@@ -78404,7 +78966,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1443
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1455
 namespace stringify {
     const char* E_SgAsmRiscOperation(long i) {
         switch (i) {
@@ -78452,7 +79014,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1446
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1458
 namespace stringify {
     const char* E_SgAsmInterpretation(long i) {
         switch (i) {
@@ -78500,7 +79062,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1449
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1461
 namespace stringify {
     const char* E_SgAsmOperandList(long i) {
         switch (i) {
@@ -78548,7 +79110,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1452
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1464
 namespace stringify {
     const char* E_SgAsmGenericDLL(long i) {
         switch (i) {
@@ -78596,7 +79158,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1455
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1467
 namespace stringify {
     const char* E_SgAsmGenericFile(long i) {
         switch (i) {
@@ -78648,7 +79210,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1458
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1470
 namespace stringify {
     const char* E_SgAsmPEFileHeader(long i) {
         switch (i) {
@@ -78702,7 +79264,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1461
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1473
 namespace stringify {
     const char* E_SgAsmLEFileHeader(long i) {
         switch (i) {
@@ -78766,7 +79328,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1464
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
 namespace stringify {
     const char* E_SgAsmNEFileHeader(long i) {
         switch (i) {
@@ -78828,7 +79390,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1467
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1479
 namespace stringify {
     const char* E_SgAsmDOSFileHeader(long i) {
         switch (i) {
@@ -78882,7 +79444,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1470
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1482
 namespace stringify {
     const char* E_SgAsmElfFileHeader(long i) {
         switch (i) {
@@ -78934,7 +79496,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1473
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1485
 namespace stringify {
     const char* E_SgAsmGenericHeader(long i) {
         switch (i) {
@@ -78986,7 +79548,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1488
 namespace stringify {
     const char* E_SgAsmElfSymbolSection(long i) {
         switch (i) {
@@ -79038,7 +79600,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1479
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1491
 namespace stringify {
     const char* E_SgAsmElfRelocSection(long i) {
         switch (i) {
@@ -79090,7 +79652,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1482
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1494
 namespace stringify {
     const char* E_SgAsmElfDynamicSection(long i) {
         switch (i) {
@@ -79142,7 +79704,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1485
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1497
 namespace stringify {
     const char* E_SgAsmElfStringSection(long i) {
         switch (i) {
@@ -79192,7 +79754,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1488
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1500
 namespace stringify {
     const char* E_SgAsmElfNoteSection(long i) {
         switch (i) {
@@ -79244,7 +79806,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1491
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1503
 namespace stringify {
     const char* E_SgAsmElfEHFrameSection(long i) {
         switch (i) {
@@ -79296,7 +79858,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1494
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1506
 namespace stringify {
     const char* E_SgAsmElfSymverSection(long i) {
         switch (i) {
@@ -79348,7 +79910,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1497
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1509
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedSection(long i) {
         switch (i) {
@@ -79400,7 +79962,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1500
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1512
 namespace stringify {
     const char* E_SgAsmElfSymverNeededSection(long i) {
         switch (i) {
@@ -79452,7 +80014,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1503
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1515
 namespace stringify {
     const char* E_SgAsmElfSection(long i) {
         switch (i) {
@@ -79502,7 +80064,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1506
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1518
 namespace stringify {
     const char* E_SgAsmPEImportSection(long i) {
         switch (i) {
@@ -79552,7 +80114,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1509
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1521
 namespace stringify {
     const char* E_SgAsmPEExportSection(long i) {
         switch (i) {
@@ -79604,7 +80166,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1512
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1524
 namespace stringify {
     const char* E_SgAsmPEStringSection(long i) {
         switch (i) {
@@ -79652,7 +80214,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1515
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1527
 namespace stringify {
     const char* E_SgAsmPESection(long i) {
         switch (i) {
@@ -79700,7 +80262,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1518
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1530
 namespace stringify {
     const char* E_SgAsmCoffSymbolTable(long i) {
         switch (i) {
@@ -79748,7 +80310,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1521
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1533
 namespace stringify {
     const char* E_SgAsmNESection(long i) {
         switch (i) {
@@ -79798,7 +80360,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1524
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1536
 namespace stringify {
     const char* E_SgAsmNEModuleTable(long i) {
         switch (i) {
@@ -79846,7 +80408,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1527
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1539
 namespace stringify {
     const char* E_SgAsmNEEntryTable(long i) {
         switch (i) {
@@ -79894,7 +80456,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1530
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1542
 namespace stringify {
     const char* E_SgAsmNERelocTable(long i) {
         switch (i) {
@@ -79942,7 +80504,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1533
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1545
 namespace stringify {
     const char* E_SgAsmLESection(long i) {
         switch (i) {
@@ -79990,7 +80552,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1536
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1548
 namespace stringify {
     const char* E_SgAsmLEPageTable(long i) {
         switch (i) {
@@ -80038,7 +80600,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1539
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1551
 namespace stringify {
     const char* E_SgAsmLEEntryTable(long i) {
         switch (i) {
@@ -80086,7 +80648,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1542
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1554
 namespace stringify {
     const char* E_SgAsmLERelocTable(long i) {
         switch (i) {
@@ -80134,7 +80696,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1545
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1557
 namespace stringify {
     const char* E_SgAsmCoffSymbol(long i) {
         switch (i) {
@@ -80182,7 +80744,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1548
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1560
 namespace stringify {
     const char* E_SgAsmElfSymbol(long i) {
         switch (i) {
@@ -80230,7 +80792,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1551
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1563
 namespace stringify {
     const char* E_SgAsmGenericSymbol(long i) {
         switch (i) {
@@ -80278,7 +80840,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1554
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1566
 namespace stringify {
     const char* E_SgAsmGenericSectionList(long i) {
         switch (i) {
@@ -80326,7 +80888,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1557
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
 namespace stringify {
     const char* E_SgAsmGenericHeaderList(long i) {
         switch (i) {
@@ -80374,7 +80936,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1560
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
 namespace stringify {
     const char* E_SgAsmElfSymbolList(long i) {
         switch (i) {
@@ -80422,7 +80984,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1563
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
 namespace stringify {
     const char* E_SgAsmElfRelocEntryList(long i) {
         switch (i) {
@@ -80470,7 +81032,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1566
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
 namespace stringify {
     const char* E_SgAsmPEExportEntry(long i) {
         switch (i) {
@@ -80520,7 +81082,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
 namespace stringify {
     const char* E_SgAsmPEExportEntryList(long i) {
         switch (i) {
@@ -80568,7 +81130,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1584
 namespace stringify {
     const char* E_SgAsmElfDynamicEntry(long i) {
         switch (i) {
@@ -80616,7 +81178,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1587
 namespace stringify {
     const char* E_SgAsmElfSegmentTableEntryList(long i) {
         switch (i) {
@@ -80664,7 +81226,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1590
 namespace stringify {
     const char* E_SgAsmElfNoteEntry(long i) {
         switch (i) {
@@ -80712,7 +81274,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1593
 namespace stringify {
     const char* E_SgAsmElfSymverEntryList(long i) {
         switch (i) {
@@ -80760,7 +81322,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1584
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1596
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedEntry(long i) {
         switch (i) {
@@ -80808,7 +81370,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1587
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1599
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedEntryList(long i) {
         switch (i) {
@@ -80856,7 +81418,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1590
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1602
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedAux(long i) {
         switch (i) {
@@ -80904,7 +81466,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1593
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1605
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedAuxList(long i) {
         switch (i) {
@@ -80952,7 +81514,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1596
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1608
 namespace stringify {
     const char* E_SgAsmElfSymverNeededEntry(long i) {
         switch (i) {
@@ -81002,7 +81564,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1599
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1611
 namespace stringify {
     const char* E_SgAsmElfSymverNeededEntryList(long i) {
         switch (i) {
@@ -81050,7 +81612,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1602
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1614
 namespace stringify {
     const char* E_SgAsmElfSymverNeededAux(long i) {
         switch (i) {
@@ -81098,7 +81660,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1605
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1617
 namespace stringify {
     const char* E_SgAsmElfSymverNeededAuxList(long i) {
         switch (i) {
@@ -81146,7 +81708,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1608
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1620
 namespace stringify {
     const char* E_SgAsmPEImportDirectory(long i) {
         switch (i) {
@@ -81196,7 +81758,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1611
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1623
 namespace stringify {
     const char* E_SgAsmPEExportDirectory(long i) {
         switch (i) {
@@ -81244,7 +81806,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1614
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1626
 namespace stringify {
     const char* E_SgAsmCoffSymbolList(long i) {
         switch (i) {
@@ -81292,7 +81854,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1617
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1629
 namespace stringify {
     const char* E_SgAsmPERVASizePairList(long i) {
         switch (i) {
@@ -81340,7 +81902,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1620
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1632
 namespace stringify {
     const char* E_SgAsmElfEHFrameEntryCI(long i) {
         switch (i) {
@@ -81388,7 +81950,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1623
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1635
 namespace stringify {
     const char* E_SgAsmPEImportDirectoryList(long i) {
         switch (i) {
@@ -81436,7 +81998,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1626
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1638
 namespace stringify {
     const char* E_SgAsmLEEntryPoint(long i) {
         switch (i) {
@@ -81484,7 +82046,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1629
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1641
 namespace stringify {
     const char* E_SgAsmDwarfMacroList(long i) {
         switch (i) {
@@ -81532,7 +82094,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1632
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1644
 namespace stringify {
     const char* E_SgAsmDwarfLineList(long i) {
         switch (i) {
@@ -81580,7 +82142,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1635
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1647
 namespace stringify {
     const char* E_SgAsmDwarfCompilationUnitList(long i) {
         switch (i) {
@@ -81628,7 +82190,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1638
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1650
 namespace stringify {
     const char* E_SgAsmDwarfArrayType(long i) {
         switch (i) {
@@ -81676,7 +82238,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1641
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1653
 namespace stringify {
     const char* E_SgAsmDwarfClassType(long i) {
         switch (i) {
@@ -81724,7 +82286,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1644
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1656
 namespace stringify {
     const char* E_SgAsmDwarfEnumerationType(long i) {
         switch (i) {
@@ -81772,7 +82334,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1647
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1659
 namespace stringify {
     const char* E_SgAsmDwarfLexicalBlock(long i) {
         switch (i) {
@@ -81820,7 +82382,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1650
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1662
 namespace stringify {
     const char* E_SgAsmDwarfCompilationUnit(long i) {
         switch (i) {
@@ -81872,7 +82434,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1653
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1665
 namespace stringify {
     const char* E_SgAsmDwarfStructureType(long i) {
         switch (i) {
@@ -81920,7 +82482,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1656
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1668
 namespace stringify {
     const char* E_SgAsmDwarfSubroutineType(long i) {
         switch (i) {
@@ -81968,7 +82530,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1659
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
 namespace stringify {
     const char* E_SgAsmDwarfUnionType(long i) {
         switch (i) {
@@ -82016,7 +82578,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1662
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
 namespace stringify {
     const char* E_SgAsmDwarfCommonBlock(long i) {
         switch (i) {
@@ -82064,7 +82626,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1665
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
 namespace stringify {
     const char* E_SgAsmDwarfInlinedSubroutine(long i) {
         switch (i) {
@@ -82112,7 +82674,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1668
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
 namespace stringify {
     const char* E_SgAsmDwarfSubprogram(long i) {
         switch (i) {
@@ -82160,7 +82722,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
 namespace stringify {
     const char* E_SgAsmDwarfNamespace(long i) {
         switch (i) {
@@ -82208,7 +82770,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
 namespace stringify {
     const char* E_SgAsmDwarfConstructList(long i) {
         switch (i) {
@@ -82256,7 +82818,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1689
 namespace stringify {
     const char* E_SgAsmPEImportItem(long i) {
         switch (i) {
@@ -82304,7 +82866,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1692
 namespace stringify {
     const char* E_SgAsmPEImportItemList(long i) {
         switch (i) {
@@ -82352,7 +82914,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1695
 namespace stringify {
     const char* E_SgAsmInterpretationList(long i) {
         switch (i) {
@@ -82400,7 +82962,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1698
 namespace stringify {
     const char* E_SgAsmGenericFileList(long i) {
         switch (i) {

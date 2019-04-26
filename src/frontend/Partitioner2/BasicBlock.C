@@ -264,7 +264,10 @@ BasicBlock::printableName() const {
 
 DataBlock::Ptr
 BasicBlock::dataBlockExists(const DataBlock::Ptr &dblock) const {
-    return dblock!=NULL && existsUnique(dblocks_, dblock, sortDataBlocks) ? dblock : DataBlock::Ptr();
+    Sawyer::Optional<DataBlock::Ptr> found;
+    if (dblock)
+        found = getUnique(dblocks_, dblock, sortDataBlocks);
+    return found ? *found : DataBlock::Ptr();
 }
 
 bool

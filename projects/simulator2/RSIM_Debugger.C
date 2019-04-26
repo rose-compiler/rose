@@ -698,7 +698,7 @@ public:
                 out_ <<"instruction types:\n";
                 BOOST_FOREACH (unsigned kind, breakPointKinds_) {
                     // FIXME[Robb P. Matzke 2015-07-31]: handle other than x86 instructions
-                    out_ <<"  " <<stringifyX86InstructionKind(kind, "x86_") <<"\n";
+                    out_ <<"  " <<stringifyBinaryAnalysisX86InstructionKind(kind, "x86_") <<"\n";
                 }
             }
             if (!breakPointSyscalls_.isEmpty()) {
@@ -739,7 +739,7 @@ public:
                 if (cmd.size() < 2)
                     throw std::runtime_error("expected instruction <kind>");
                 for (int i=0; i<x86_last_instruction; ++i) {
-                    if (stringifyX86InstructionKind(i, "x86_") == cmd[1]) {
+                    if (stringifyBinaryAnalysisX86InstructionKind(i, "x86_") == cmd[1]) {
                         if (insert) {
                             breakPointKinds_.insert(X86InstructionKind(i));
                         } else {

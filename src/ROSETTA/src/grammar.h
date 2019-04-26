@@ -528,6 +528,9 @@ class Grammar
           void buildTreeTraversalFunctions(AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile);
 
        // DQ (10/4/2014): Adding ATerm support to be automatically generated via ROSETTA.
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+#define BUILD_ATERM_SUPPORT 0
+#if BUILD_ATERM_SUPPORT
           void buildAtermSupportFunctions(AstNodeClass& node, Rose::StringUtility::FileWithLineNumbers& outputFile);
           void buildAtermGenerationSupportFunctions(AstNodeClass& node, Rose::StringUtility::FileWithLineNumbers& outputFile);
           void buildAtermConsumerSupportFunctions(AstNodeClass& node, Rose::StringUtility::FileWithLineNumbers& outputFile);
@@ -539,7 +542,7 @@ class Grammar
           void buildAtermBuildFunctionsSourceFile( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
           bool isIntegerKind(const std::string & typenameString);
        // void generateAtermSupport(GrammarString* gs, StringUtility::FileWithLineNumbers & outputFile);
-
+#endif // BUILD_ATERM_SUPPORT
 
        // MS: create source code for enums used in traversal functions to access synthesized attribute values
           void buildEnumForNode(AstNodeClass& node, std::string& enumString);

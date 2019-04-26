@@ -1,5 +1,5 @@
-#ifndef ROSE_BINARY_REGISTERS_H
-#define ROSE_BINARY_REGISTERS_H
+#ifndef ROSE_BinaryAnalysis_Registers_H
+#define ROSE_BinaryAnalysis_Registers_H
 
 #include "RegisterParts.h"
 
@@ -8,6 +8,9 @@
 #include <boost/serialization/string.hpp>
 
 #include <queue>
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Defines registers available for a particular architecture.
  *
@@ -412,5 +415,8 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
     }
     return retval;
 }
-    
-#endif /*!ROSE_BINARY_REGISTERRS_H*/
+
+} // namespace
+} // namespace
+
+#endif

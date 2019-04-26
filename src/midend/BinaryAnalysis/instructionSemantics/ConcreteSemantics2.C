@@ -2,7 +2,7 @@
 #include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
