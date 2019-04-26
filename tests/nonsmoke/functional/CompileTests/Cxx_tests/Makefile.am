@@ -1141,10 +1141,16 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
      test2017_44.C \
      test2017_46.C \
      test2017_47.C \
-     test2017_69.C \
      test2016_96.C \
      test2015_135.C \
      test2015_136.C
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += test2017_69.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2017_69.C
+endif
+
 else
   TESTCODE_CURRENTLY_FAILING += \
      test2017_31.C \
