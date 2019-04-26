@@ -712,7 +712,7 @@ UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclarat
    {
       SgName name = ut_struct->get_name();
 
-#if 0
+#if 1
       cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
       cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
       cout << "..........\n\n";
