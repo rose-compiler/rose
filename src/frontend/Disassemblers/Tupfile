@@ -20,4 +20,4 @@ run $(librose_compile) $(SOURCES)
 run $(public_header) BinaryDebugger.h Registers.h RegisterDescriptor.h BitPattern.h Disassembler.h DisassemblerArm.h \
     DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h Assembler.h AssemblerX86.h \
     AssemblerX86Init.h InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h \
-    armInstructionEnum.h powerpcInstructionEnum.h RegisterParts.h
+    InstructionEnumsArm.h InstructionEnumsPowerpc.h RegisterParts.h

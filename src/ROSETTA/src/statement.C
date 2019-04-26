@@ -550,7 +550,7 @@ Grammar::setUpStatements ()
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
   // token-based unparsing to work with greater precision. For example, used to add an include directive with 
-  // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+  // greater precission to the global scope and permit the unparsing via the token stream to be used as well.
      NEW_TERMINAL_MACRO (EmptyDeclaration,"EmptyDeclaration","EMPTY_DECLARATION_STMT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
@@ -568,8 +568,7 @@ Grammar::setUpStatements ()
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          NonrealDecl                             | EmptyDeclaration
-        /*| ClassPropertyList |*/,
+          NonrealDecl                             | EmptyDeclaration        /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 

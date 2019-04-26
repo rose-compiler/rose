@@ -307,7 +307,7 @@ Grammar::buildAtermGenerationSupportFunctions(AstNodeClass & node, StringUtility
                       // atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<str>\", uniqueId(this->get_" + grammarString->getVariableNameString() + "()).c_str())); \n";
                          bool processDataMember = true;
                          processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgFunctionModifier::opencl_work_group_size_t");
-                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "RegisterDescriptor");
+                         processDataMember = processDataMember && (grammarString->getTypeNameString() != "Rose::BinaryAnalysis::RegisterDescriptor");
                          processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iref_type");
                          processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iord_type");
                          processDataMember = processDataMember && (grammarString->getTypeNameString() != "SgAsmNERelocEntry::iname_type");
@@ -1405,7 +1405,7 @@ Grammar::buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool
           if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
              {
                bool processDataMember = true;
-               processDataMember = processDataMember && (grammarString->getTypeNameString() != "RegisterDescriptor");
+               processDataMember = processDataMember && (grammarString->getTypeNameString() != "Rose::BinaryAnalysis::RegisterDescriptor");
 
                if (processDataMember == true)
                   {
@@ -1633,7 +1633,7 @@ bool Grammar::isIntegerKind(const string & typenameString)
 void
 Grammar::buildAtermSupportFunctions(AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile)
    {
-  // This function calls the two seperate function to write and read the aterm.
+  // This function calls the two separate function to write and read the aterm.
 
      outputFile << "\n";
      outputFile << "// Conditional compilation of ATerm support in ROSE (see ROSE configure options).\n";
