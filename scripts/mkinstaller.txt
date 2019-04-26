@@ -15,12 +15,13 @@ USAGE
 
 DESCRIPTION
     This script is used to generate an "installer" script implemented as
-    a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
-    as a binary executable on Windows-like systems. A wide assortment of
-    options are provided by mkinstaller to specify what is to be included
-    for installation by the generated installer script. This generated
-    installer itself supports a number of options for specifying the where
-    the various directories are to be installed (prefix directory pathnames).
+    a Bourne-shell script on UNIX-like systems (such as Linux, MacOS, or
+    Solaris) or as a binary executable on Windows-like systems. A wide
+    assortment of options are provided by mkinstaller to specify what is
+    to be included for installation by the generated installer script.
+    This generated installer itself supports a number of options for
+    specifying the where the various directories are to be installed
+    (prefix directory pathnames).
 
     There are 2 separate computer systems involved in this process:
 
