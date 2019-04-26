@@ -531,7 +531,7 @@ _insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
   SqlStatementPtr stmt = tx->statement(QY_NEW_SPECIMEN);
 
   stmt->bind(0, obj->name());
-  stmt->bind(1, "" /*obj->content()*/);
+  stmt->bind(1, obj->content());
   stmt->execute();
 
   return SpecimenId(sqlLastRowId(tx));
@@ -696,7 +696,7 @@ _updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj)
   SpecimenId      id   = db.id(obj);
 
   stmt->bind(0, obj->name());
-  stmt->bind(1, "" /*obj->content()*/);
+  stmt->bind(1, obj->content());
   stmt->bind(2, id.get());
   stmt->execute();
 }

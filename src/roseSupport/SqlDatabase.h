@@ -388,6 +388,7 @@ public:
     StatementPtr bind(size_t idx, uint64_t val);
     StatementPtr bind(size_t idx, double val);
     StatementPtr bind(size_t idx, const std::string &val);
+    StatementPtr bind(size_t idx, const std::vector<uint8_t> &val);
     /** @} */
 
     /** Execute this statement.  Returns the iterator pointing to the first row of the result. */
@@ -464,6 +465,9 @@ std::vector<std::string> split_sql(const std::string &sql);
 
 /** Produce an SQL string literal from a C++ string. If do_quote is false then don't add the surrounding quote characters. */
 std::string escape(const std::string&, Driver, bool do_quote=true);
+
+/** Produce an SQL hexadecimal sequence from an uint8_t vector. */
+std::string hexSequence(const std::vector<uint8_t> &v, Driver driver);
 
 /** Returns true if @p name is a valid table name. */
 bool is_valid_table_name(const std::string &name);

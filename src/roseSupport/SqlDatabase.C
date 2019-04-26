@@ -869,6 +869,7 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t>&);
     std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
@@ -994,6 +995,15 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val
     placeholders[idx].second = escape(val, tranx->driver());
     return stmt;
 }
+
+StatementPtr
+StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t> &val)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = hexSequence(val, tranx->driver());
+    return stmt;
+}
+
 
 // Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
 std::string
@@ -1193,6 +1203,7 @@ StatementPtr Statement::bind(size_t idx, uint32_t val) { return impl->bind(share
 StatementPtr Statement::bind(size_t idx, uint64_t val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, double val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, const std::string &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, const std::vector<uint8_t> &val) { return impl->bind(shared_from_this(), idx, val); }
 
 /*******************************************************************************************************************************
  *                                      Statement iterators
@@ -1548,6 +1559,47 @@ escape(const std::string &s, Driver driver, bool quote)
 
     if (quote)
         retval = std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
+    return retval;
+}
+
+struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+    explicit
+    hex_appender(std::string& res)
+    : sink(res)
+    {}
+
+    hex_appender& operator=(uint8_t value)
+    {
+      std::ostringstream strstream;
+
+      strstream << std::hex << value;
+      sink.append(strstream.str());
+      return *this;
+    }
+
+    hex_appender& operator*()     { return *this; }
+    hex_appender& operator++()    { return *this; }
+    hex_appender& operator++(int) { return *this; }
+
+  private:
+    std::string& sink;
+};
+
+
+std::string
+hexSequence(const std::vector<uint8_t> &v, Driver driver)
+{
+    static const std::string HEXPRE  = "X(";
+    static const std::string HEXPOST = ")";
+
+    size_t      len = HEXPRE.size() + v.size() + HEXPOST.size();
+    std::string retval;
+
+    retval.reserve(len);
+    retval.append(HEXPRE);
+    std::copy(v.begin(), v.end(), hex_appender(retval));
+    retval.append(HEXPOST);
     return retval;
 }
 
