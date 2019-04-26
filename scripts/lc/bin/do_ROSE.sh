@@ -22,7 +22,7 @@ object_path=${source_path_no_suffix}.o
 
 # Sets ROSE_HOME:
 # Sets BACKEND_COMPILER_PATH:
-source ${script_dir}/set_ROSE_HOME
+source set_ROSE_HOME
 # /bin/ is executable in ROSE install dir:
 # /tutorial/ is libtool script in ROSE build dir:
 export ROSE_TOOL_PATH=${ROSE_HOME}/bin/identityTranslator

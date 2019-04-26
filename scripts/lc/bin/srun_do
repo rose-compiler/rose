@@ -120,10 +120,11 @@ esac
 # Use all cores in one node from the command line thus:
 # $ srun_do -c [cores/node] [mycommand]
 
-echo "${HOSTNAME} - ${max_srun_time}"
+unset_strict
 log_then_run srun -n 1 -p pdebug -t ${max_srun_time} "$@"
 #log_then_run srun -N 1 -n 1 -p pdebug -t ${max_srun_time} "$@"
+srun_status=$?
+set_strict
 
-
-log_end
+log_end ${srun_status}
 

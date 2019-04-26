@@ -38,13 +38,15 @@ set_strict () {
   # Changes behavior of commands chained together with || or &&.
   # Makes script exit if grep fails:
   set -euo pipefail
+  trap finish EXIT
 }
 
 unset_strict () {
   set +euo pipefail
+  # Turn trap off:
+  trap "" EXIT
 }
 
-trap finish EXIT
 set_strict
 # END bash strict mode setup
 ###############################################################################
@@ -219,10 +221,19 @@ log_invocation () {
   log "host:         \"`hostname`\""
 }
 
+# prints the exit code if supplied and exits with it:
 log_end () {
-  log_separator_0
-  log_w_date "== END =="
-  log_separator_2
+  if [ $# -eq 1 ]
+  then
+    log_w_date "== END == (exiting with status $1)"
+    log_separator_2
+    # Turn off trap:
+    trap "" EXIT
+    exit $1
+  else
+    log_w_date "== END =="
+    log_separator_2
+  fi
 }
 
 log_then_run () {
@@ -237,9 +248,13 @@ log_then_run () {
   _log_w_line_w_time_internal "Running: \"$*\""
 #  _log_w_line_internal "Running: ${command_line}"
   log_blank_no_prefix
+  # Temporarily turn off error exit so the exit status can be logged:
+  unset_strict
   "$@"
 #  ${command_line}
   log_then_run_status=$?
+  # Turn err exit and trap again:
+#  set_strict
   log_blank_no_prefix
   _log_w_line_w_time_internal "Done. (status ${log_then_run_status})"
   log_separator_1

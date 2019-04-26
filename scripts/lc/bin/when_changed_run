@@ -36,6 +36,8 @@ get_file_time
 last_file_time=${file_time}
 log_waiting
 
+# Want to keep looping even if the command fails:
+set +o errexit
 while true; do
   get_file_time
   if [[ "${file_time}" != "$last_file_time" ]]; then
