@@ -1573,7 +1573,10 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
     {
       std::ostringstream strstream;
 
-      strstream << std::hex << value;
+      strstream << std::hex << std::noshowbase << std::setfill('0')
+                << std::setw(2) 
+                << value;
+
       sink.append(strstream.str());
       return *this;
     }
