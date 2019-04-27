@@ -20,8 +20,7 @@
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
-#include <pqxx/connection>
-#include <pqxx/transaction>
+#include <pqxx/pqxx>
 #include <pqxx/tablewriter>
 #endif
 
@@ -347,6 +346,7 @@ ConnectionImpl::conn_for_transaction()
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: PostgreSQL open spec: %s\n", specs.c_str());
                 dconn.postgres_connection = new pqxx::connection(specs);
+                dconn.postgres_connection->set_client_encoding("UTF8");
             }
             break;
         }
@@ -613,6 +613,7 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
 #endif
 #ifdef ROSE_HAVE_LIBPQXX
         case POSTGRESQL: {
+#if 1 // [Robb Matzke 2019-04-19]: marked as deprecated, but alternative doesn't work yet
             pqxx::tablewriter twriter(*postgres_tranx, tablename);
             char buf[4096];
             while (file.getline(buf, sizeof buf).good()) {
@@ -621,6 +622,16 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
                 twriter.insert(tuple);
             }
             twriter.complete();
+#else // this should for libpqxx-6.4.3 and probably some earlier versions also, but doesn't
+            pqxx::stream_to stream(*postgres_tranx, tablename);
+            char buf[4096];
+            while (file.getline(buf, sizeof buf).good()) {
+                std::vector<std::string> elmts;
+                StringUtility::splitStringIntoStrings(buf, ',', elmts);
+                stream <<elmts; // compile-time errors in libpqxx header files
+            }
+            stream.complete();
+#endif
             break;
         }
 #endif
