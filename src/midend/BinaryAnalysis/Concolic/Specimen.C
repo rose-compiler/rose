@@ -1,20 +1,23 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
-template <class ExceptionType = std::runtime_error>
-static inline
-void
-throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
-{
-  arg1.append(arg2);
-  arg1.append(arg3);
-
-  throw ExceptionType(arg1);
-}
-
-
 namespace Rose {
 namespace BinaryAnalysis {
+
+namespace
+{
+  template <class ExceptionType>
+  static inline
+  void
+  throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
+  {
+    arg1.append(arg2);
+    arg1.append(arg3);
+
+    throw ExceptionType(arg1);
+  }
+}  
+  
 namespace Concolic {
 
 // class method
@@ -36,11 +39,11 @@ void
 Specimen::open(const boost::filesystem::path &executableName) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
-    std::ifstream stream(executableName.string(), std::ios::in | std::ios::binary);
+    std::ifstream stream(executableName.string().c_str(), std::ios::in | std::ios::binary);
 
     if (!stream.good())
     {
-      throw_ex<>("Unable to open ", executableName.string(), ".");
+      throw_ex<std::runtime_error>("Unable to open ", executableName.string(), ".");
     }
 
     std::copy( std::istreambuf_iterator<char>(stream),

@@ -15,7 +15,7 @@ namespace BinaryAnalysis {
 
   namespace
   {
-    template <class ExceptionType = std::runtime_error>
+    template <class ExceptionType>
     static inline
     void
     throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
@@ -355,7 +355,7 @@ struct DBTxGuard
 
     SqlTransactionPtr tx() { return tx_; }
 
-    void commit() { tx_->commit(); tx_ = NULL; }
+    void commit() { tx_->commit(); tx_.reset(); }
 
     SqlDatabase::Transaction& operator->() { return *tx_; }
     SqlDatabase::Transaction& operator*()  { return *tx_; }
