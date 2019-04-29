@@ -413,13 +413,14 @@ ifneq (@(WITH_WT),no)
 	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
 	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
+
+    # The -lwthttp and -lwtfcgi libraries are intentionallly absent because its up to the application
+    # as to which one it should use.
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbopostgres
 
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbopostgres
 endif
