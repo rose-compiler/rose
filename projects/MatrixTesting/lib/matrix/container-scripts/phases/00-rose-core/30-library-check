@@ -1,0 +1,4 @@
+#!/bin/bash
+set -ex
+rmc -C ~/rose/_build/tests make check
+

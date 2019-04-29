@@ -12,9 +12,9 @@ run $(test) testFileNameClassifier --disabled="access denied [CH 2010-02-02]"
 run $(tool_compile_linkexe) filenameSupport.C
 run $(test) filenameSupport
 
-run $(tool_compile_linkexe) directorySupport.C
-run $(test) directorySupport \
-    ./directorySupport -c -rose:verbose 0 $(minimal_input_code)
+#run $(tool_compile_linkexe) directorySupport.C
+#run $(test) directorySupport \
+#    ./directorySupport -c -rose:verbose 0 $(minimal_input_code)
 
 run $(tool_compile_linkexe) graphPerformance.C
 run $(test) graphPerformance

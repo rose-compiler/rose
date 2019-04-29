@@ -42,8 +42,7 @@ testprojdir = ${datarootdir}/test-project
 testproj_DATA =						\
 	projects/MatrixTestingProject/Makefile		\
 	projects/MatrixTestingProject/README		\
-	projects/MatrixTestingProject/binary_specimen	\
-	projects/MatrixTestingProject/disassemble.C
+	projects/MatrixTestingProject/test-rose.C
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
@@ -167,35 +166,34 @@ rose-installer-rmc2: install-rose-library
 	rm -rf $@.tmp
 	mkdir  $@.tmp
 	$(top_srcdir)/scripts/mkinstaller --version
-	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
-		--create="$@"								\
-		--cc="$(C_VENDOR) $(C_VERSION)"						\
-		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
-		--contact="http://rosecompiler.org"					\
-		--os="$(RMC_OS_NAME)"							\
-		--prjnam=ROSE								\
-		--prjver=$(PACKAGE_VERSION)						\
-		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
-		$(prefix)/*								\
-		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
-		    $(BOOST_ROOT)							\
-		    $(CMAKE_ROOT)							\
-		    $(DLIB_ROOT)							\
-		    $(GNU_COMPILERS_ROOT)						\
-		    $(LIBBZ2_ROOT)							\
-		    $(LIBGCRYPT_ROOT)							\
-		    $(LIBGPG_ERROR_ROOT)						\
-		    $(LIBGRAPHICSMAGICK_ROOT)						\
-		    $(LIBJPEG_ROOT)							\
-		    $(LIBLCMS_ROOT)							\
-		    $(LIBLZMA_ROOT)							\
-		    $(LIBPNG_ROOT)							\
-		    $(LIBTIFF_ROOT)							\
-		    $(PYTHON_ROOT)							\
-		    $(SPOT_ROOT)							\
-		    $(WT_ROOT)								\
-		    $(YAMLCPP_ROOT)							\
-		    $(ZLIB_ROOT)							\
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
+		--create="$@"												\
+		--CC="$(CC) \
+		--CXX="$(CXX) \
+		--contact="http://rosecompiler.org"									\
+		--prjnam=ROSE												\
+		--prjver=$(PACKAGE_VERSION)										\
+		--postinstall-bin=$(top_srcdir)/projects/MatrixTesting/lib/matrix/container-scripts/post-install-script	\
+		$(prefix)/*												\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,								\
+		    $(BOOST_ROOT)											\
+		    $(CMAKE_ROOT)											\
+		    $(DLIB_ROOT)											\
+		    $(GNU_COMPILERS_ROOT)										\
+		    $(LIBBZ2_ROOT)											\
+		    $(LIBGCRYPT_ROOT)											\
+		    $(LIBGPG_ERROR_ROOT)										\
+		    $(LIBGRAPHICSMAGICK_ROOT)										\
+		    $(LIBJPEG_ROOT)											\
+		    $(LIBLCMS_ROOT)											\
+		    $(LIBLZMA_ROOT)											\
+		    $(LIBPNG_ROOT)											\
+		    $(LIBTIFF_ROOT)											\
+		    $(PYTHON_ROOT)											\
+		    $(SPOT_ROOT)											\
+		    $(WT_ROOT)												\
+		    $(YAMLCPP_ROOT)											\
+		    $(ZLIB_ROOT)											\
 		))
 	rm -rf $@.tmp
 

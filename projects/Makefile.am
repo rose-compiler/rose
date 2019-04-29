@@ -192,49 +192,10 @@ SUBDIRS += CompilationDB
 # Associate projects with developers
 ########################################################################################################################
 
-# List the projects you want to be tested after your name. By doing so, you are sponsoring the project and will
-# be responsible for fixing bugs (either yourself or by delegation).  The names listed here should be the same as the names
-# listed here will be intersected with the $(SUBDIRS) value before tests are run, which means you can safely list
-# subdirectories that might not be present or might not be configured.
+# The developer-specific project lists used for portability testing have been moved to
+# project/MatrixTesting/lib/matrix/docker-scripts/steps so they can be used by all
+# supported build systems. [Matzke, 2019-04-24]
 
-PROJECTS_ROBB    = BinaryAnalysisTools
-PROJECTS_JUSTIN  = compass2
-PROJECTS_DAN     =
-PROJECTS_MARKUS  =
-PROJECTS_PEIHUNG =
-PROJECTS_LEO     =
-
-
-########################################################################################################################
-# Rules for testing projects having particular core developer sponsors
-########################################################################################################################
-
-developer_projects = $(foreach subdir, $(1), $(if $(findstring $(subdir), $(SUBDIRS)), $(subdir)))
-
-check-projects-robb:
-	@for project in $(call developer_projects, $(PROJECTS_ROBB)); do	\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
-check-projects-justin:
-	@for project in $(call developer_projects, $(PROJECTS_JUSTIN)); do	\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
-check-projects-dan:
-	@for project in $(call developer_projects, $(PROJECTS_DAN)); do	\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
-check-projects-markus:
-	@for project in $(call developer_projects, $(PROJECTS_MARKUS)); do	\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
-check-projects-peihung:
-	@for project in $(call developer_projects, $(PROJECTS_PEIHUNG)); do	\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
-check-projects-leo:
-	@for project in $(call developer_projects, $(PROJECTS_LEO)); do		\
-		$(MAKE) -C $$project check || exit 1;				\
-	done
 
 
 
