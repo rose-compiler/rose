@@ -115,12 +115,6 @@
 
 #endif
 
-#ifdef __sun
-// \pp This may not be correct
-#warning Is long long 128 bits?
-typedef long long __int128_t;
-#endif
-
 #if __cplusplus >= 201103L
 /* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
 /* DQ (10/8/2015): Added support for Intel compiler to handle fenv.h header file. 
@@ -538,6 +532,10 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 #endif
 
 
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+#ifndef __STRICT_ANSI__
+
 // DQ (3/12/2017): Re-comment these out for EDG 4.9 (required for Clang C++ but not C tests).
 // DQ (12/16/2016): Comment these out for EDG 4.9.
 // #if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
@@ -548,6 +546,11 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
 
 // DQ (12/16/2016): Comment these out for EDG 4.9.
+#endif
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+// endif for __STRICT_ANSI__
 #endif
 
 
@@ -570,6 +573,10 @@ void               __builtin_ia32_fxrstor64(void *__P);
 // int __builtin_signbitf(float) __attribute__((nothrow, const));
 // int __builtin_signbitl(long double) __attribute__((nothrow, const));
 #endif
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+#ifndef __STRICT_ANSI__
 
 // DQ (12/16/2016): This is incorrect for EDG 4.9, but required for later versions of EDG.
 #if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 411
@@ -797,6 +804,12 @@ ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothro
 
 ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
 ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+// endif for __STRICT_ANSI__
+#endif
+
 #endif
 
 
@@ -1731,6 +1744,10 @@ DQ (6/19/2007): These might required math.h to be included.
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
 #endif
 
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+#ifndef __STRICT_ANSI__
+
 /* DQ (2/22/2017): Added to support GNU 4.8 in C++11 mode using EDG 4.9. */
 #ifdef __cplusplus
 // DQ (2/21/2017): These functions are not defined for C language support.
@@ -1743,6 +1760,12 @@ ROSE_CONSTEXPR int __builtin_isunordered(...) __attribute__((nothrow, const));
 ROSE_CONSTEXPR int __builtin_fpclassify(int, int, int, int, ...) __attribute__((nothrow, const));
 int __builtin_isinf_sign(...) __attribute__((nothrow, const));
 #endif
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+// endif for __STRICT_ANSI__
+#endif
+
 
 /* DQ (9/2/2016): Comment out to use new automated generation of builtin functions. */
 #if 0
@@ -3326,6 +3349,10 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 
 
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+#ifndef __STRICT_ANSI__
 
 /* DQ (11/20/2016): This should be implemented only for EDG 4.11. */
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
@@ -8064,6 +8091,11 @@ int __builtin_ia32_psrlqi(long long,int);
 
 
 /* DQ (9/12/2016): Comment out to use new automated generation of builtin functions. */
+#endif
+
+// DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
+// need to combine this with turning off the optimization flag that triggers use of builtins.
+// endif for __STRICT_ANSI__
 #endif
 
 /* DQ (12/17/2016): Not clear why I don't appear to need this now. it could be that at least 

@@ -5956,6 +5956,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("In SgFile::build_EDG_CommandLine(): emulate_backend_compiler_version_number = %d \n",emulate_backend_compiler_version_number);
         }
 
+  // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
+     if (get_strict_language_handling() == false)
+        {
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
      commandLine.push_back("--gnu_version");
 #endif
@@ -6002,7 +6005,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // commandLine.push_back("--c++11");
 #endif
      commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+        }
+
+// #endif for ROSE_USE_MICROSOFT_EXTENSIONS
 #endif
+// #endif for _MSC_VER
 #endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
@@ -6564,6 +6571,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_strict_language_handling() == true)
         {
+       // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
           inputCommandLine.push_back("--strict");
         }
 
