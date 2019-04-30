@@ -25,7 +25,70 @@ namespace BinaryAnalysis {
 
       throw ExceptionType(arg1);
     }
-
+    
+    static const 
+    std::string QY_DB_INITIALIZED     = "SELECT count(*)"
+                                        "  FROM TestSuites";
+                                        
+    static const 
+    std::string QY_MK_TEST_SUITES     = "CREATE TABLE \"TestSuites\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"name\" varchar(256) UNIQUE NOT NULL"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_SPECIMENS       = "CREATE TABLE \"Specimens\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"name\" varchar(256) UNIQUE NOT NULL,"
+                                        "  \"binary\" Blob NOT NULL"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"testsuite_id\" int NOT NULL,"
+                                        "  \"specimen_id\" int,"
+                                        "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
+                                        "  \"result\" int,"
+                                        "  \"stdout\" text,"
+                                        "  \"stderr\" text,"
+                                        " CONSTRAINT \"fk_testsuite_testcase\" FOREIGN KEY (\"testsuite_id\") REFERENCES \"TestSuites\" (\"id\"),"
+                                        " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_CMDLINEARGS     = "CREATE TABLE \"CmdLineArgs\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"arg\" varchar(128) UNIQUE NOT NULL"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_ENVVARS         = "CREATE TABLE \"EnvironmentVariables\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"name\" varchar(128) NOT NULL,"
+                                        "  \"value\" varchar(256) NOT NULL,"
+                                        " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
+                                        "  \"testcase_id\" int NOT NULL,"
+                                        "  \"order\" int NOT NULL,"
+                                        "  \"comdlinearg_id\" int NOT NULL,"
+                                        " CONSTRAINT \"fk_testcase_argument\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                                        " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"comdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
+                                        " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"order\")"
+                                        ");";
+                                        
+    static const 
+    std::string QY_MK_TESTCASE_EVAR   = "CREATE TABLE \"TestCaseVariables\" ("
+                                        "  \"testcase_id\" int NOT NULL,"
+                                        "  \"envvar_id\" int NOT NULL,"
+                                        " CONSTRAINT \"fk_testcase_testcasevar\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                                        " CONSTRAINT \"fk_envvar_testcasevar\" FOREIGN KEY (\"envvar_id\") REFERENCES \"EnvironmentVariables\" (\"id\"),"
+                                        " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"  
+                                        ");";                                                                               
+    
     static const
     std::string QY_ALL_TEST_SUITES    = "SELECT id FROM TestSuites ORDER BY id;";
 
@@ -121,7 +184,8 @@ namespace BinaryAnalysis {
                                        "   AND value = ?;";
 
     static const
-    std::string QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables"                                   "  (name, value)"
+    std::string QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables" 
+                                       "  (name, value)"
                                        "  VALUES(?,?);";
 
     static const
@@ -144,7 +208,7 @@ namespace BinaryAnalysis {
                                         "  VALUES(?);";
 
     static const
-    std::string QY_LAST_ROW_SQLITE3  = "SELECT last_insert_row_id();";
+    std::string QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
 
     SqlStatementPtr
     prepareIdQuery(SqlTransactionPtr tx, TestSuiteId id, TestSuiteId)
@@ -464,6 +528,46 @@ queryDBObject( Concolic::Database& db,
   return obj;
 }
 
+bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
+{ 
+  int res = -1;
+  
+  try
+  { 
+    DBTxGuard       dbtx(dbconn);
+    SqlStatementPtr stmt = dbtx.tx()->statement(QY_DB_INITIALIZED);  
+    
+    res  = stmt->execute_int();    
+    dbtx.commit();
+  }
+  catch (SqlDatabase::Exception& ex)
+  {
+  }
+  
+  return res >= 0;
+}
+
+
+static
+void initializeDB(SqlConnectionPtr dbconn)
+{
+  DBTxGuard         dbtx(dbconn);
+  SqlTransactionPtr tx = dbtx.tx();
+  
+  tx->execute(QY_MK_TEST_SUITES);
+  tx->execute(QY_MK_SPECIMENS);
+  tx->execute(QY_MK_TESTCASES);
+  tx->execute(QY_MK_CMDLINEARGS);
+  tx->execute(QY_MK_ENVVARS);
+  tx->execute(QY_MK_TESTCASE_ARGS);
+  tx->execute(QY_MK_TESTCASE_EVAR);
+    
+  dbtx.commit();
+  
+  std::cerr << "initialized DB" << std::endl;
+}
+
+
 template <class IdTag, class BidirectionalMap>
 static
 typename BidirectionalMap::Forward::Value
@@ -741,8 +845,11 @@ _id( Concolic::Database& db,
   if (pos == map.nodes().end())
   {
     if (Update::NO == update) return ObjIdType();
-
-    return insertDBObject(db, dbconn, obj);
+    
+    ObjIdType objid = insertDBObject(db, dbconn, obj);
+    
+    objmap.insert(objid, obj);
+    return objid;
   }
 
   if (Update::NO != update) updateDBObject(db, dbconn, obj);
@@ -778,6 +885,10 @@ Database::instance(const std::string &url)
     Ptr                 db(new Database);
 
     db->dbconn_ = dbconn;
+    
+    if (!isDbInitialized(dbconn)) 
+      initializeDB(dbconn);
+    
     db->testSuites();
     return db;
 }

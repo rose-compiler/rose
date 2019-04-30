@@ -24,8 +24,11 @@ namespace Concolic {
 Specimen::Ptr
 Specimen::instance(const boost::filesystem::path &executableName) {
     Ptr self = Ptr(new Specimen);
+
     if (!executableName.empty())
         self->open(executableName);
+        
+    self->name(executableName.string());
     return self;
 }
 

@@ -1568,16 +1568,23 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
     hex_appender(std::string& res)
     : sink(res)
     {}
+    
+    static
+    char hexDigit(uint8_t digit)
+    {
+      ROSE_ASSERT(digit < 16);
+      
+      if (digit < 10) return '0' + digit;
+      
+      return 'A' + (digit - 10);
+    }
 
     hex_appender& operator=(uint8_t value)
     {
-      std::ostringstream strstream;
-
-      strstream << std::hex << std::noshowbase << std::setfill('0')
-                << std::setw(2) 
-                << value;
-
-      sink.append(strstream.str());
+      char hexval[] = { hexDigit(value/16), hexDigit(value%16), 0 };
+      
+      //~ std::cout << ": " << hexval << "." << std::endl;
+      sink.append(hexval);
       return *this;
     }
 
@@ -1593,10 +1600,10 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
 std::string
 hexSequence(const std::vector<uint8_t> &v, Driver driver)
 {
-    static const std::string HEXPRE  = "X(";
-    static const std::string HEXPOST = ")";
+    static const std::string HEXPRE  = "X'";
+    static const std::string HEXPOST = "'";
 
-    size_t      len = HEXPRE.size() + v.size() + HEXPOST.size();
+    size_t      len = HEXPRE.size() + 2*v.size() + HEXPOST.size();
     std::string retval;
 
     retval.reserve(len);
