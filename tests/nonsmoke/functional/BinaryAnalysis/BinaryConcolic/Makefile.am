@@ -46,9 +46,9 @@ testBinaryConcolic_SOURCES = testBinaryConcolic.C
 testBinaryConcolic_LDADD = 
 
 
-#~ noinst_PROGRAMS += testConcolicDB
-#~ testConcolicDB_SOURCES = testConcolicDB.C
-#~ testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+noinst_PROGRAMS += testConcolicDB
+testConcolicDB_SOURCES = testConcolicDB.C
+testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 #~ TEST_TARGETS += testConcolicDB.passed
 

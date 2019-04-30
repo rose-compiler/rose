@@ -46,14 +46,14 @@ namespace BinaryAnalysis {
     static const 
     std::string QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
                                         "  \"id\" int PRIMARY KEY,"
-                                        "  \"testsuite_id\" int NOT NULL,"
-                                        "  \"specimen_id\" int,"
+                                        "  \"specimen_id\" int NOT NULL,"
+                                        "  \"name\" varchar(128),"
                                         "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
                                         "  \"result\" int,"
                                         "  \"stdout\" text,"
                                         "  \"stderr\" text,"
-                                        " CONSTRAINT \"fk_testsuite_testcase\" FOREIGN KEY (\"testsuite_id\") REFERENCES \"TestSuites\" (\"id\"),"
-                                        " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
+                                        " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
+                                        " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
                                         ");";
                                         
     static const 
@@ -73,11 +73,11 @@ namespace BinaryAnalysis {
     static const 
     std::string QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
                                         "  \"testcase_id\" int NOT NULL,"
-                                        "  \"order\" int NOT NULL,"
-                                        "  \"comdlinearg_id\" int NOT NULL,"
+                                        "  \"seqnum\" int NOT NULL,"
+                                        "  \"cmdlinearg_id\" int NOT NULL,"
                                         " CONSTRAINT \"fk_testcase_argument\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
-                                        " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"comdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
-                                        " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"order\")"
+                                        " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"cmdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
+                                        " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"seqnum\")"
                                         ");";
                                         
     static const 
@@ -90,13 +90,13 @@ namespace BinaryAnalysis {
                                         ");";                                                                               
     
     static const
-    std::string QY_ALL_TEST_SUITES    = "SELECT id FROM TestSuites ORDER BY id;";
+    std::string QY_ALL_TEST_SUITES    = "SELECT rowid FROM TestSuites ORDER BY rowid;";
 
     static const
-    std::string QY_TEST_SUITE         = "SELECT name FROM TestSuites WHERE id = ?;";
+    std::string QY_TEST_SUITE         = "SELECT name FROM TestSuites WHERE rowid = ?;";
 
     static const
-    std::string QY_ALL_SPECIMENS      = "SELECT id FROM Specimens ORDER BY id;";
+    std::string QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
 
     static const
     std::string QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
@@ -105,38 +105,38 @@ namespace BinaryAnalysis {
 
     static const
     std::string QY_SPECIMEN           = "SELECT name, binary FROM Specimens "
-                                        " WHERE id = ?;";
+                                        " WHERE rowid = ?;";
 
     static const
-    std::string QY_ALL_TESTCASES      = "SELECT id FROM TestCases ORDER BY id;";
+    std::string QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY id;";
 
     static const
-    std::string QY_TESTCASES_IN_SUITE = "SELECT id"
+    std::string QY_TESTCASES_IN_SUITE = "SELECT rowid"
                                         "  FROM TestCases"
                                         " WHERE testsuite_id = ?;";
 
     static const
     std::string QY_TESTCASE           = "SELECT executor"
                                         "  FROM TestCases"
-                                        " WHERE id = ?;";
+                                        " WHERE rowid = ?;";
 
     static const
     std::string QY_TESTCASE_ARGS      = "SELECT c.arg"
                                         "  FROM CmdLineArgs c, TestCaseArguments t"
-                                        " WHERE c.id = t.comdlinearg_id"
+                                        " WHERE c.rowid = t.cmdlinearg_id"
                                         "   AND t.testcase_id = ?"
-                                        " ORDER BY order;";
+                                        " ORDER BY seqnum;";
 
     static const
     std::string QY_TESTCASE_ENV       = "SELECT e.name, e.value"
                                         "  FROM EnvironmentVariables e, TestCaseVariables t"
-                                        " WHERE e.id = t.envvar_id"
+                                        " WHERE e.rowid = t.envvar_id"
                                         "   AND t.testcase_id = ?;";
 
     static const
     std::string QY_TESTCASE_SPECIMEN  = "SELECT specimen_id"
                                         "  FROM TestCases"
-                                        " WHERE id = ?;";
+                                        " WHERE rowid = ?;";
 
     static const
     std::string QY_NEW_TESTSUITE      = "INSERT INTO TestSuites"
@@ -146,7 +146,7 @@ namespace BinaryAnalysis {
     static const
     std::string QY_UPD_TESTSUITE      = "UPDATE TestSuites"
                                         "   SET name = ?"
-                                        " WHERE id = ?;";
+                                        " WHERE rowid = ?;";
 
     static const
     std::string QY_NEW_SPECIMEN      = "INSERT INTO Specimens"
@@ -156,17 +156,17 @@ namespace BinaryAnalysis {
     static const
     std::string QY_UPD_SPECIMEN      = "UPDATE Specimens"
                                         "   SET name = ?, binary = ?"
-                                        " WHERE id = ?;";
+                                        " WHERE rowid = ?;";
 
     static const
     std::string QY_NEW_TESTCASE      = "INSERT INTO TestCases"
-                                       "  (testsuite_id, specimen_id, executor)"
+                                       "  (specimen_id, name, executor)"
                                        "  VALUES(?,?,?);";
 
     static const
     std::string QY_UPD_TESTCASE      = "UPDATE TestCases"
-                                       "   SET testsuite_id = ?, specimen_id = ?, executor = ?"
-                                       " WHERE id = ?;";
+                                       "   SET specimen_id = ?, name = ?, executor = ?"
+                                       " WHERE rowid = ?;";
 
     static const
     std::string QY_RM_TESTCASE_EVAR   = "DELETE FROM TestCaseVariables"
@@ -178,7 +178,7 @@ namespace BinaryAnalysis {
                                        "  VALUES(?,?)";
 
     static const
-    std::string QY_ENVVAR_ID         = "SELECT id"
+    std::string QY_ENVVAR_ID         = "SELECT rowid"
                                        "  FROM EnvironmentVariables"
                                        " WHERE name = ?"
                                        "   AND value = ?;";
@@ -194,11 +194,11 @@ namespace BinaryAnalysis {
 
     static const
     std::string QY_NEW_TESTCASE_CARG = "INSERT INTO TestCaseArguments"
-                                       "  (testcase_id, order, cmdlinearg_id)"
+                                       "  (testcase_id, seqnum, cmdlinearg_id)"
                                        "  VALUES(?,?,?)";
 
     static const
-    std::string QY_CMDLINEARG_ID     = "SELECT id"
+    std::string QY_CMDLINEARG_ID     = "SELECT rowid"
                                        "  FROM CmdLineArgs"
                                        " WHERE arg = ?;";
 
@@ -282,6 +282,7 @@ namespace BinaryAnalysis {
     void executeObjQuery(SqlStatementPtr stmt, Concolic::TestCase& tmp)
     {
       tmp.name(stmt->execute_string());
+      std::cout << "dbtest: q tc" << tmp.name() << std::endl;
     }
 
     void dependentObjQuery(Concolic::Database&, SqlTransactionPtr, TestSuiteId, Concolic::TestSuite&)
@@ -394,8 +395,10 @@ namespace BinaryAnalysis {
         stmt->bind(0, id.get());
 
         SpecimenId               specimenid(stmt->execute_int());
+        Concolic::Specimen::Ptr  specimen = db.object(specimenid, Concolic::Update::NO);
 
-        tmp.specimen(db.object(specimenid, Concolic::Update::NO));
+        assert(specimen.getRawPointer());
+        tmp.specimen(specimen);
       }
     }
   }
@@ -511,7 +514,6 @@ queryDBObject( Concolic::Database& db,
   typedef typename BiMap::Forward::Value Ptr;
   typedef typename Ptr::Pointee          ObjType;
 
-  // \pp \todo how to make this code exception safe?
   Ptr obj = ObjType::instance();
 
   {
@@ -582,15 +584,20 @@ _object( Concolic::Database& db,
   typedef typename ForwardMap::Value         ResultType;
 
   // \pp \todo id is node defined
-  if (id) return ResultType();
-  if (Update::YES == update) return queryDBObject(db, dbconn, id, objmap);
+  if (!id) 
+    return ResultType();
+    
+  if (Update::YES == update) 
+    return queryDBObject(db, dbconn, id, objmap);
+  
   const ForwardMap&                      map = objmap.forward();
-
   typename ForwardMap::ConstNodeIterator pos = map.find(id);
 
-  //~if (pos == map.nodes().end()) return queryDBObject(db, dbconn, id, objmap);
-
-  return pos.base()->second;
+  if (pos == map.nodes().end()) 
+    return queryDBObject(db, dbconn, id, objmap);
+  
+  ResultType res = pos.base()->second;
+  return res;
 }
 
 int sqlLastRowId(SqlTransactionPtr tx)
@@ -690,6 +697,7 @@ struct CmdLineArgInserter
     stmt->bind(1, num);
     stmt->bind(2, cmdlineargId);
     stmt->execute();
+    std::cout << "dbtest: inserted cmdlarg " << arg << std::endl;
   }
 };
 
@@ -736,8 +744,14 @@ struct EnvVarInserter
 
 void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
 {
-  std::for_each(obj->args().begin(), obj->args().end(), CmdLineArgInserter(tx, tcid));
-  std::for_each(obj->env().begin(),  obj->env().end(),  EnvVarInserter(tx, tcid));
+  std::vector<std::string> args = obj->args();
+  std::vector<EnvValue>    envv = obj->env();
+  
+  if (args.size() == 0) std::cout << "dbtest: 0 args" << std::endl;
+  if (envv.size() == 0) std::cout << "dbtest: 0 envv" << std::endl;
+  
+  std::for_each(args.begin(), args.end(), CmdLineArgInserter(tx, tcid));
+  std::for_each(envv.begin(), envv.end(), EnvVarInserter(tx, tcid));
 }
 
 void dependentObjUpdate(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
@@ -752,14 +766,10 @@ TestCaseId
 _insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
   SqlStatementPtr stmt = tx->statement(QY_NEW_TESTCASE);
-
-  // \pp \todo does every testcase belong to the current testsuite?
-  TestSuite::Ptr  suite = db.testSuite();
-  const int       testsuiteId = db.id(suite, Concolic::Update::NO).get();
   const int       specimenId  = db.id(obj->specimen(), Concolic::Update::NO).get();
 
-  stmt->bind(0, testsuiteId);
-  stmt->bind(1, specimenId);
+  stmt->bind(0, specimenId);
+  stmt->bind(1, obj->name());
   stmt->bind(2, "linux");
   stmt->execute();
 
@@ -852,7 +862,7 @@ _id( Concolic::Database& db,
     return objid;
   }
 
-  if (Update::NO != update) updateDBObject(db, dbconn, obj);
+  if (Update::YES == update) updateDBObject(db, dbconn, obj);
 
   return pos.base()->second;
 }

@@ -536,8 +536,24 @@ struct ObjectId : Sawyer::Optional<int>
   ObjectId(const Value& v)
   : Super(v)
   {}
+  
+  ObjectId(const ObjectId& rhs)
+  : Super(rhs)
+  {}
 
-  using Super::operator=;
+  ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs)
+  {
+    this->Super::operator=(lhs);    
+    
+    return *this;
+  }
+  
+  ObjectId<Tag>& operator=(const Value& v)
+  {
+    this->Super::operator=(v);    
+    
+    return *this;
+  }
 
   template<class _Tag>
   friend
