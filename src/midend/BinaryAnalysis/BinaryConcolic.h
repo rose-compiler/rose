@@ -109,8 +109,6 @@ typedef Sawyer::SharedPointer<LinuxExitStatus> LinuxExitStatusPtr;
  *
  *  The speciment represents the thing that is to be tested, but not how to test it.  In other words, a specimen might be an
  *  executable, but not any specifics about how to run the executable such as which arguments to give it. */
-// TO BE REMOVED BY PETER: Although ROSE contains documentation for Sawyer, the real (and more complete) Sawyer documentation
-// is at https://hoosierfocus.com/sawyer
 class Specimen: public Sawyer::SharedObject {
 public:
     /** Referenc-counting pointer to a @ref Specimen. */
@@ -119,7 +117,7 @@ public:
 private:
     typedef std::vector<uint8_t> BinaryData;
 
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;          // protects the following data members
     std::string  name_;                                  // name of specimen (e.g., for debugging)
     BinaryData   content_;                               // content of the binary executable file
     mutable bool read_only_;                             // safe guards from writing content after it has been shared;
@@ -132,6 +130,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(content_);
+        s & BOOST_SERIALIZATION_NVP(empty_);
     }
 
 protected:
@@ -189,15 +188,7 @@ public:
      *  Thread safety: This method is thread safe. */
     const std::vector<uint8_t>& content() const;
 
-    void content(const std::string& binary_string);
-
-private:
-    // TO BE REMOVED BY PETER: Since mutex_ is not a recursive mutex, none of the thread-safe public API methods can call other
-    // thread-safe public API methods. Therefore, if one method needs to call another, you should create a non-synchronized
-    // version by appending "NS" to the name. E.g., if you want the "name" method to call "isEmpty", then you should create an
-    // isEmptyNS which is called from both "name" and "isEmpty".  The only thing that "isEmpty" does is lock the mutex and then
-    // call "isEmptyNS". The same applies for all the other thread-safe classes.  Also, remember not to return references; only
-    // return copies.
+    void content(std::vector<uint8_t> binary_data);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,6 +212,7 @@ private:
 
     std::vector<std::string> args_;                     // command line arguments
     std::vector<EnvValue>    env_;                      // environment variables
+    Sawyer::Optional<int>    exitstatus_;               // exit status after testing
 
 protected:
     TestCase() {}
@@ -588,7 +580,10 @@ public:
 private:    
     SqlDatabase::ConnectionPtr                            dbconn_; // holds connection to database
 
-    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;         // protects the following data members
+    // The lock protects the following concurrent accesses
+    //   - memoized data
+    //   - testSuiteId_
+    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;         
 
     // Memoization of ID to object mappings
     Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
@@ -862,6 +857,19 @@ public:
 
     virtual void run() ROSE_OVERRIDE;
 };
+
+/** Loads a binary file 
+ * 
+ * Throws a std::runtime_error if the file cannot be opened.
+ */
+std::vector<uint8_t> loadBinaryFile(const boost::filesystem::path& path);
+
+/** Stores a binary file 
+ * 
+ * Throws a std::runtime_error if the file cannot be opened.
+ */
+void storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& path);
+
 
 } // namespace
 } // namespace

@@ -1176,6 +1176,16 @@ Statement::execute_string()
     return i.get<std::string>(0);
 }
 
+std::vector<uint8_t> 
+Statement::execute_blob()
+{
+    iterator i = begin();
+    if (i==end())
+        throw Exception("statement did not return any rows\n" + StringUtility::prefixLines(impl->sql, "  sql: ") + "\n",
+                        impl->tranx->impl->conn, impl->tranx, shared_from_this());
+    return i.get_blob(0);
+}
+
 void
 Statement::set_debug(FILE *debug)
 {
@@ -1470,15 +1480,18 @@ Statement::iterator::get_str(size_t idx)
     return retval;
 }
 
-std::string
+std::vector<uint8_t>
 Statement::iterator::get_blob(size_t idx)
 {
-    std::string retval;
+    std::vector<uint8_t> retval;
     check();
     switch (stmt->driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
-            retval = stmt->impl->sqlite3_cursor->getblob(idx);
+            std::string data = stmt->impl->sqlite3_cursor->getblob(idx);
+            
+            retval.reserve(data.size());
+            std::copy(data.begin(), data.end(), std::back_inserter(retval));
             break;
         }
 #endif

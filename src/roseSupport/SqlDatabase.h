@@ -364,7 +364,7 @@ public:
         uint64_t get_u64(size_t idx);
         double get_dbl(size_t idx);
         std::string get_str(size_t idx);
-        std::string get_blob(size_t idx);
+        std::vector<uint8_t> get_blob(size_t idx);
         iterator& operator++();
         bool at_eof() const;
         bool operator==(const iterator &other) const;
@@ -409,8 +409,9 @@ public:
 
     /** Execute a statement that returns a single std::string. */
     std::string execute_string();
-
-
+    
+    /** Execute a statement that returns a single blob. */
+    std::vector<uint8_t> execute_blob();
 
     /** Returns the low-level driver name for this statement. */
     Driver driver() const;

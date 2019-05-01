@@ -41,19 +41,8 @@ Specimen::instance() {
 void
 Specimen::open(const boost::filesystem::path &executableName) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
-    std::ifstream stream(executableName.string().c_str(), std::ios::in | std::ios::binary);
-
-    if (!stream.good())
-    {
-      throw_ex<std::runtime_error>("Unable to open ", executableName.string(), ".");
-    }
-
-    std::copy( std::istreambuf_iterator<char>(stream),
-               std::istreambuf_iterator<char>(),
-               std::back_inserter(content_)
-             );
-
+    
+    content_ = loadBinaryFile(executableName);
     empty_ = false;
 }
 
@@ -83,16 +72,9 @@ Specimen::name(const std::string &s) {
     name_ = s;
 }
 
-void
-Specimen::content(const std::string& binary_string)
+void Specimen::content(std::vector<uint8_t> binary_data)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
-  if (read_only_) throw_ex<std::logic_error>("write after read observed on specimen::content_");
-
-  content_.clear();
-  content_.reserve(binary_string.size());
-  std::copy(binary_string.begin(), binary_string.end(), std::back_inserter(content_));
+  content_ = binary_data;
 }
 
 const std::vector<uint8_t>&

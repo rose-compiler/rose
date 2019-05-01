@@ -115,7 +115,14 @@ namespace BinaryAnalysis {
                                        " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
                                        " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
                                        ");";
-
+                                       
+    static const
+    std::string QY_MK_RBA_FILES       = "CREATE TABLE \"RBAFiles\" ("
+                                        "  \"id\" int PRIMARY KEY,"
+                                        "  \"specimen_id\" int UNIQUE NOT NULL,"
+                                        "  \"data\" Blob NOT NULL,"
+                                        " CONSTRAINT \"fk_specimen_rba\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
+                                        ");";
 
     //
     // db queries
@@ -125,6 +132,9 @@ namespace BinaryAnalysis {
 
     static const
     std::string QY_TEST_SUITE         = "SELECT name FROM TestSuites WHERE rowid = ?;";
+    
+    static const
+    std::string QY_TEST_SUITE_BY_NAME = "SELECT rowid FROM TestSuites WHERE name = ?;";    
 
     static const
     std::string QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
@@ -244,7 +254,23 @@ namespace BinaryAnalysis {
     std::string QY_NEW_CMDLINEARG    = "INSERT INTO CmdLineArgs"
                                         "  (arg)"
                                         "  VALUES(?);";
-
+                                        
+    std::string QY_COUNT_RBAFILES    = "SELECT count(*) FROM RBAFiles"
+                                       "  WHERE specimen_id = ?;";
+                                        
+    static const
+    std::string QY_NEW_RBAFILE       = "INSERT INTO RBAFiles"
+                                        "  (specimen_id, data)"
+                                        "  VALUES(?,?);";
+    
+    static const
+    std::string QY_RBAFILE           = "SELECT data FROM RBAFiles"
+                                       "  WHERE specimen_id = ?;";
+                                       
+    static const
+    std::string QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
+                                       "  WHERE specimen_id = ?;";
+                                       
     static const
     std::string QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
 
@@ -302,25 +328,24 @@ namespace BinaryAnalysis {
       return stmt;
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestSuite& tmp)
+    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestSuite& obj)
     {
-      tmp.name(stmt->execute_string());
+      obj.name(stmt->execute_string());
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::Specimen& tmp)
+    void executeObjQuery(SqlStatementPtr stmt, Concolic::Specimen& obj)
     {
       SqlIterator it = stmt->begin();
 
-      tmp.name(it.get_str(0));
-      tmp.content(it.get_blob(1));
+      obj.name(it.get_str(0));
+      obj.content(it.get_blob(1));
 
       ROSE_ASSERT((++it).at_eof());
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestCase& tmp)
+    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestCase& obj)
     {
-      tmp.name(stmt->execute_string());
-      std::cout << "dbtest: q tc" << tmp.name() << std::endl;
+      obj.name(stmt->execute_string());
     }
 
     void dependentObjQuery(Concolic::Database&, SqlTransactionPtr, TestSuiteId, Concolic::TestSuite&)
@@ -601,6 +626,7 @@ void initializeDB(SqlConnectionPtr dbconn)
   tx->execute(QY_MK_TESTCASE_ARGS);
   tx->execute(QY_MK_TESTCASE_EVAR);
   tx->execute(QY_MK_TESTSUITE_TESTCASE);
+  tx->execute(QY_MK_RBA_FILES);
   dbtx.commit();
 
   std::cerr << "initialized DB" << std::endl;
@@ -998,16 +1024,22 @@ Database::instance(const std::string &url)
 Database::Ptr
 Database::create(const std::string& url, const std::string& testSuiteName)
 {
-    Ptr db = instance("sqlite:" + url);
+    Ptr             db = instance("sqlite:" + url);  
+    DBTxGuard       dbtx(db->dbconn_);  
+    SqlStatementPtr stmt = dbtx.tx()->statement(QY_TEST_SUITE_BY_NAME);
 
-    // db->testSuiteId_ = queryId(testSuiteName);
+    stmt->bind(0, testSuiteName);
+    TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
+    dbtx.commit();
+    
+    db->testSuiteId_ = testSuiteid;
     return db;
 }
 
 void
 Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
-{
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+{  
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   DBTxGuard       dbtx(dbconn_);
   SqlStatementPtr stmt = dbtx.tx()->statement(QY_NEW_TESTSUITE_TESTCASE);
@@ -1020,24 +1052,139 @@ Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
 }
 
 bool
-Database::rbaExists(Database::SpecimenId) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+Database::rbaExists(Database::SpecimenId id) 
+{
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_COUNT_RBAFILES);
+
+  stmt->bind(0, id.get());
+  int res = stmt->execute_int();
+
+  dbtx.commit();  
+  ROSE_ASSERT(res == 0 || res == 1);
+  return res == 1;
 }
 
 void
-Database::saveRbaFile(const boost::filesystem::path&, Database::SpecimenId) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) 
+{
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard            dbtx(dbconn_);
+  SqlStatementPtr      stmt = dbtx.tx()->statement(QY_NEW_RBAFILE);
+  std::vector<uint8_t> content = loadBinaryFile(path);
+
+  stmt->bind(0, id.get());
+  stmt->bind(1, content);
+  stmt->execute();
+  dbtx.commit();  
 }
 
 void
-Database::extractRbaFile(const boost::filesystem::path&, Database::SpecimenId) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+Database::extractRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RBAFILE);    
+  
+  stmt->bind(0, id.get());
+  storeBinaryFile(stmt->execute_blob(), path);
+  dbtx.commit();    
 }
 
 void
-Database::eraseRba(Database::SpecimenId) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+Database::eraseRba(Database::SpecimenId id) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RM_RBAFILE);    
+  
+  stmt->bind(0, id.get());
+  stmt->execute();
+  dbtx.commit();    
 }
+
+std::vector<uint8_t> 
+loadBinaryFile(const boost::filesystem::path& path)
+{
+  typedef std::istreambuf_iterator<char> stream_iterator;
+  
+  std::vector<uint8_t> res;
+  std::ifstream        stream(path.string().c_str(), std::ios::in | std::ios::binary);
+
+  if (!stream.good())
+  {
+    throw_ex<std::runtime_error>("Unable to open ", path.string(), ".");
+  }
+
+  std::copy(stream_iterator(stream), stream_iterator(), std::back_inserter(res));
+  return res;
+}
+
+
+// https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
+template <class T, class CharT = char, class Traits = std::char_traits<CharT> >
+struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+  typedef std::basic_ostream<CharT, Traits> ostream_type;
+  typedef Traits                            traits_type;
+  typedef CharT                             char_type;
+
+  ostreambin_iterator(ostream_type& s) : stream(s) { }
+
+  ostreambin_iterator& operator=(const T& value)
+  {
+    stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
+    return *this;
+  }
+
+  ostreambin_iterator& operator*()     { return *this; }
+  ostreambin_iterator& operator++()    { return *this; }
+  ostreambin_iterator& operator++(int) { return *this; }
+
+  ostream_type& stream;
+};
+
+template <class T>
+struct FileSink
+{
+  typedef ostreambin_iterator<T> insert_iterator;
+
+  std::ostream& datastream;
+
+  FileSink(std::ostream& stream)
+  : datastream(stream)
+  {}
+
+  void reserve(size_t) {}
+
+  insert_iterator
+  inserter()
+  {
+    return insert_iterator(datastream);
+  }
+};
+
+void
+storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& binary)
+{
+  {
+    std::ofstream outfile(binary.string().c_str(), std::ofstream::binary);
+  
+    if (!outfile.good())
+    {
+      throw_ex<std::runtime_error>("Unable to open ", binary.string(), ".");
+    }
+
+    FileSink<char>              sink(outfile);
+  
+    sink.reserve(data.size());
+    std::copy(data.begin(), data.end(), sink.inserter());
+  }
+}
+
 
 } // namespace
 } // namespace
