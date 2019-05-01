@@ -70,7 +70,7 @@ void
 place_binary(Specimen::Ptr specimen, const boost::filesystem::path& binary)
 {
   {
-    std::ofstream outfile(binary.string(), std::ofstream::binary);
+    std::ofstream outfile(binary.string().c_str(), std::ofstream::binary);
   
     assert(outfile.good());
   
