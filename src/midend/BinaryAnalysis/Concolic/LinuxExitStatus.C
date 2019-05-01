@@ -41,7 +41,7 @@ LinuxExitStatus::run() {
         // Run as many test cases concretely as possible.
         while (Database::TestCaseId testCaseId = pendingConcreteResult()) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            boost::movelib::unique_ptr<ConcreteExecutor::Result> concreteResult = concreteExecutor->execute(testCase);
+            std::auto_ptr<ConcreteExecutor::Result> concreteResult(concreteExecutor->execute(testCase));
             insertConcreteResults(testCase, *concreteResult);
         }
 

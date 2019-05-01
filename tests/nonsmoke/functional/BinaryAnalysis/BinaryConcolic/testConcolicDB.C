@@ -136,16 +136,72 @@ createTestCase( concolic::Database::Ptr db,
 }
 
 
+void addTestToSuite( concolic::Database::Ptr db, 
+                     concolic::TestCaseId tc, 
+                     concolic::TestSuiteId ts
+                   )
+{
+  try
+  {
+    db->assocTestCaseWithTestSuite(tc, ts);
+    
+    std::cout << "dbtest: assoc'd test w/ suite " 
+              << std::endl;
+
+  }
+  catch (const SqlDatabase::Exception& e)
+  {
+    std::cout << "dbtest: assoc test w/ suite " 
+              << " failed with: " << e.what()
+              << std::endl;
+  }    
+  catch (const std::logic_error& e)
+  {
+    std::cout << "dbtest: assoc test w/ suite " 
+              << " failed with: " << e.what()
+              << std::endl;        
+  }
+  catch (const std::runtime_error& e)
+  {
+    std::cout << "dbtest: assoc test w/ suite " 
+              << " failed with: " << e.what()
+              << std::endl;    
+  }
+}                    
+
+
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
-  typedef boost::movelib::unique_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
+  typedef std::auto_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
   
   concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance();
   concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);  
   
   assert(testcase.getRawPointer());  
   std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
-  ExecutionResult            result   = exec->execute(testcase);
+  ExecutionResult            result(exec->execute(testcase));
+}
+
+struct TestCaseStarter
+{
+  concolic::Database::Ptr db;
+  
+  explicit
+  TestCaseStarter(concolic::Database::Ptr database)
+  : db(database)
+  {}
+  
+  void operator()(concolic::TestCaseId id)
+  {
+    runTestcase(db, id);
+  }   
+};
+
+void testAllTestCases(concolic::Database::Ptr db)
+{
+  std::vector<concolic::TestCaseId> tests = db->testCases();
+  
+  std::for_each(tests.begin(), tests.end(), TestCaseStarter(db));
 }
 
 
@@ -163,16 +219,43 @@ int main()
   
   concolic::SpecimenId              ls2_bin   = copyBinaryToDB(db, "/usr/bin/ls",        concolic::Update::YES);
   concolic::SpecimenId              grep_bin  = copyBinaryToDB(db, "/usr/bin/grep",      concolic::Update::NO );    
-  concolic::SpecimenId              grep2_bin = copyBinaryToDB(db, "/usr/bin/grep",      concolic::Update::YES);
-  concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz",       concolic::Update::YES);
+  concolic::SpecimenId              more_bin  = copyBinaryToDB(db, "/usr/bin/more",      concolic::Update::YES);
   
+  //~ std::cout << "more** " << more_bin.get() << std::endl;
+  if (!more_bin) more_bin = concolic::SpecimenId(3); // in case the db alreay existed
+  
+  concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz",       concolic::Update::YES);
+
+  // define test cases  
   concolic::TestCaseId              ls_tst    = createTestCase(db, ls_bin, "ls");  
-  if (!ls_tst) ls_tst = concolic::TestCaseId(1); // in case the db alreay existed
+  if (!ls_tst) ls_tst = concolic::TestCaseId(1); // in case the db already existed
   
   concolic::TestCaseId              ls_la_tst = createTestCase(db, ls_bin, "ls -la", "-la");
-  if (!ls_la_tst) ls_la_tst = concolic::TestCaseId(2); // in case the db alreay existed
+  if (!ls_la_tst) ls_la_tst = concolic::TestCaseId(2); // in case the db already existed
   
-  runTestcase(db, ls_tst);
-  runTestcase(db, ls_la_tst);  
+  concolic::TestCaseId              more_tst = createTestCase(db, ls_bin, "more", "y.txt");
+  if (!more_tst) more_tst = concolic::TestCaseId(3); // in case the db already existed
+    
+  runTestcase(db, ls_tst);  
+  runTestcase(db, ls_la_tst);
+  runTestcase(db, more_tst);
+  
+  // define test suites  
+  concolic::TestSuiteId             ls_suite  = createTestSuite(db, "ls family");
+  if (!ls_suite) ls_suite = concolic::TestSuiteId(1);
+  
+  addTestToSuite(db, ls_la_tst, ls_suite);
+  addTestToSuite(db, ls_tst, ls_suite);  
+  
+  addTestToSuite(db, concolic::TestCaseId(), ls_suite);
+
+  concolic::TestSuiteId             more_suite = createTestSuite(db, "more family");
+  if (!more_suite) more_suite = concolic::TestSuiteId(2);
+    
+  addTestToSuite(db, more_tst, more_suite);  
+  testAllTestCases(db); // w/o test suite set
+  
+  db->testSuite(db->object(more_suite)); 
+  testAllTestCases(db); // w/ test suite set
 }
 

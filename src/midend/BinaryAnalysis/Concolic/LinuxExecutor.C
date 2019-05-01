@@ -1,3 +1,4 @@
+#include <sage3basic.h>
 
 #if 0 /* __cplusplus >= 201103L */
 #include <boost/process.hpp>
@@ -7,7 +8,6 @@
 
 #include <boost/atomic.hpp>
 #include <boost/lexical_cast.hpp>
-#include <sage3basic.h>
 #include <BinaryConcolic.h>
 
 namespace Rose {
@@ -69,15 +69,19 @@ struct FileSink
 void
 place_binary(Specimen::Ptr specimen, const boost::filesystem::path& binary)
 {
-  std::ofstream outfile(binary.string(), std::ofstream::binary);
-
-  assert(outfile.good());
-
-  const std::vector<uint8_t>& executable = specimen->content();
-  FileSink<char>              sink(outfile);
-
-  sink.reserve(executable.size());
-  std::copy(executable.begin(), executable.end(), sink.inserter());
+  {
+    std::ofstream outfile(binary.string(), std::ofstream::binary);
+  
+    assert(outfile.good());
+  
+    const std::vector<uint8_t>& executable = specimen->content();
+    FileSink<char>              sink(outfile);
+  
+    sink.reserve(executable.size());
+    std::copy(executable.begin(), executable.end(), sink.inserter());
+  }
+  
+  assert (boost::filesystem::exists(binary));  
 }
 
 char* as_c_str(std::string& s)
@@ -115,6 +119,7 @@ int execute_binary( const boost::filesystem::path& binary,
     int status = 0;
 
     waitpid(pid, &status, 0); // wait for the child to exit
+    std::cout << "dbtest: got " << status << std::endl;
     return status;
   }
 
@@ -130,17 +135,17 @@ int execute_binary( const boost::filesystem::path& binary,
   
   // execute the code
   const int   err = execvp(args[0], &args[0]);
-
-  return err;
+  std::cout << "dbtest: done " << args[0] << std::endl;
+  exit(0);
 }
 #endif /* after boost 1.65 and C++11 */
 
 static boost::atomic<int> versioning(0);
 
-boost::movelib::unique_ptr<ConcreteExecutor::Result>
+ConcreteExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
-  typedef boost::movelib::unique_ptr<ConcreteExecutor::Result> ResultType;
+  typedef ConcreteExecutor::Result* ResultType;
 
   namespace bstfs = boost::filesystem;
 
@@ -153,7 +158,7 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::path logout(basename + "_out.log");
   bstfs::path logerr(basename + "_err.log");
 
-  place_binary(tc->specimen(), binary);
+  place_binary(tc->specimen(), binary);    
   bstfs::permissions(binary, bstfs::owner_exe);
 
   const int   errcode = execute_binary(binary, logout, logerr, tc);

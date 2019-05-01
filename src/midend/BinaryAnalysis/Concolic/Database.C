@@ -13,6 +13,20 @@ namespace BinaryAnalysis {
   typedef Concolic::Database::SpecimenId   SpecimenId;
   typedef Concolic::Database::TestCaseId   TestCaseId;
 
+  namespace Concolic
+  {
+    template <class IdTag, class BidirectionalMap>
+    static
+    typename BidirectionalMap::Forward::Value
+    _object(Database&, SqlDatabase::ConnectionPtr, ObjectId<IdTag>, Update::Flag, BidirectionalMap&);
+    
+    template <class IdTag, class BidirectionalMap>
+    static
+    typename BidirectionalMap::Forward::Value
+    _object(Database&, SqlTransactionPtr, ObjectId<IdTag>, Update::Flag, BidirectionalMap&);    
+  }    
+
+
   namespace
   {
     template <class ExceptionType>
@@ -25,25 +39,28 @@ namespace BinaryAnalysis {
 
       throw ExceptionType(arg1);
     }
-    
-    static const 
+
+    static const
     std::string QY_DB_INITIALIZED     = "SELECT count(*)"
                                         "  FROM TestSuites";
-                                        
-    static const 
+
+    //
+    // make tables
+
+    static const
     std::string QY_MK_TEST_SUITES     = "CREATE TABLE \"TestSuites\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"name\" varchar(256) UNIQUE NOT NULL"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_SPECIMENS       = "CREATE TABLE \"Specimens\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"name\" varchar(256) UNIQUE NOT NULL,"
                                         "  \"binary\" Blob NOT NULL"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"specimen_id\" int NOT NULL,"
@@ -55,22 +72,22 @@ namespace BinaryAnalysis {
                                         " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
                                         " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_CMDLINEARGS     = "CREATE TABLE \"CmdLineArgs\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"arg\" varchar(128) UNIQUE NOT NULL"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_ENVVARS         = "CREATE TABLE \"EnvironmentVariables\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"name\" varchar(128) NOT NULL,"
                                         "  \"value\" varchar(256) NOT NULL,"
                                         " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
                                         "  \"testcase_id\" int NOT NULL,"
                                         "  \"seqnum\" int NOT NULL,"
@@ -79,16 +96,30 @@ namespace BinaryAnalysis {
                                         " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"cmdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
                                         " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"seqnum\")"
                                         ");";
-                                        
-    static const 
+
+    static const
     std::string QY_MK_TESTCASE_EVAR   = "CREATE TABLE \"TestCaseVariables\" ("
                                         "  \"testcase_id\" int NOT NULL,"
                                         "  \"envvar_id\" int NOT NULL,"
                                         " CONSTRAINT \"fk_testcase_testcasevar\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
                                         " CONSTRAINT \"fk_envvar_testcasevar\" FOREIGN KEY (\"envvar_id\") REFERENCES \"EnvironmentVariables\" (\"id\"),"
-                                        " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"  
-                                        ");";                                                                               
-    
+                                        " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"
+                                        ");";
+
+    static const
+    std::string QY_MK_TESTSUITE_TESTCASE =
+                                       "CREATE TABLE \"TestSuiteTestCases\" ("
+                                       "  \"testsuite_id\" int NOT NULL,"
+                                       "  \"testcase_id\" int NOT NULL,"
+                                       " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestSuites\" (\"id\"),"
+                                       " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                                       " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
+                                       ");";
+
+
+    //
+    // db queries
+
     static const
     std::string QY_ALL_TEST_SUITES    = "SELECT rowid FROM TestSuites ORDER BY rowid;";
 
@@ -111,9 +142,10 @@ namespace BinaryAnalysis {
     std::string QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY id;";
 
     static const
-    std::string QY_TESTCASES_IN_SUITE = "SELECT rowid"
-                                        "  FROM TestCases"
-                                        " WHERE testsuite_id = ?;";
+    std::string QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
+                                        "  FROM TestCases tc, TestSuiteTestCases tt"
+                                        " WHERE tc.rowid = tt.testcase_id"
+                                        "   AND tt.testsuite_id = ?;";
 
     static const
     std::string QY_TESTCASE           = "SELECT executor"
@@ -184,7 +216,7 @@ namespace BinaryAnalysis {
                                        "   AND value = ?;";
 
     static const
-    std::string QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables" 
+    std::string QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables"
                                        "  (name, value)"
                                        "  VALUES(?,?);";
 
@@ -196,6 +228,12 @@ namespace BinaryAnalysis {
     std::string QY_NEW_TESTCASE_CARG = "INSERT INTO TestCaseArguments"
                                        "  (testcase_id, seqnum, cmdlinearg_id)"
                                        "  VALUES(?,?,?)";
+
+    static const
+    std::string QY_NEW_TESTSUITE_TESTCASE =
+                                      "INSERT INTO TestSuiteTestCases"
+                                       "  (testsuite_id, testcase_id)"
+                                       "  VALUES(?,?)";
 
     static const
     std::string QY_CMDLINEARG_ID     = "SELECT rowid"
@@ -348,7 +386,7 @@ namespace BinaryAnalysis {
       private:
         SqlIterator iter;
     };
-
+    
     void dependentObjQuery( Concolic::Database& db,
                             SqlTransactionPtr tx,
                             TestCaseId id,
@@ -395,7 +433,7 @@ namespace BinaryAnalysis {
         stmt->bind(0, id.get());
 
         SpecimenId               specimenid(stmt->execute_int());
-        Concolic::Specimen::Ptr  specimen = db.object(specimenid, Concolic::Update::NO);
+        Concolic::Specimen::Ptr  specimen = db.object_ns(tx, specimenid);
 
         assert(specimen.getRawPointer());
         tmp.specimen(specimen);
@@ -454,30 +492,31 @@ queryIds(SqlDatabase::ConnectionPtr dbconn, TestSuiteId tsid)
 std::vector<TestSuiteId>
 Database::testSuites()
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return queryIds<TestSuite>(dbconn_, testSuiteId_);
 }
 
 TestSuite::Ptr
 Database::testSuite()
 {
-  // \todo \pp what to do if the testsuite is not set?
-  // if (!testSuites_) return TestSuite::Ptr(NULL);
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  if (!testSuiteId_) return TestSuite::Ptr();
 
   return testSuites_.forward()[testSuiteId_];
 }
 
 
 Database::TestSuiteId
-Database::testSuite(const TestSuite::Ptr& pts)
+Database::testSuite(const TestSuite::Ptr& obj)
 {
-  typedef Sawyer::Container::BiMap<TestSuiteId, TestSuite::Ptr> BiMap;
+  Database::TestSuiteId res = id(obj);
+  
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
-  const BiMap::Reverse&             map = testSuites_.reverse();
-  BiMap::Reverse::ConstNodeIterator pos = map.find(pts);
-
-  if (pos == map.nodes().end()) return TestSuiteId();
-
-  return pos.base()->second;
+  testSuiteId_ = res;
+  return testSuiteId_;
 }
 
 
@@ -486,6 +525,8 @@ Database::testSuite(const TestSuite::Ptr& pts)
 std::vector<SpecimenId>
 Database::specimens()
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return queryIds<Specimen>(dbconn_, testSuiteId_);
 }
 
@@ -495,6 +536,8 @@ Database::specimens()
 std::vector<TestCaseId>
 Database::testCases()
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return queryIds<TestCase>(dbconn_, testSuiteId_);
 }
 
@@ -506,7 +549,7 @@ template <class IdTag, class BiMap>
 static
 typename BiMap::Forward::Value
 queryDBObject( Concolic::Database& db,
-               SqlDatabase::ConnectionPtr dbconn,
+               SqlTransactionPtr tx,
                ObjectId<IdTag> id,
                BiMap& objmap
              )
@@ -514,38 +557,32 @@ queryDBObject( Concolic::Database& db,
   typedef typename BiMap::Forward::Value Ptr;
   typedef typename Ptr::Pointee          ObjType;
 
-  Ptr obj = ObjType::instance();
+  Ptr             obj = ObjType::instance();
+  SqlStatementPtr stmt = prepareObjQuery(tx, id);
 
-  {
-    DBTxGuard       dbtx(dbconn);
-    SqlStatementPtr stmt = prepareObjQuery(dbtx.tx(), id);
-
-    executeObjQuery(stmt, *obj);
-    dependentObjQuery(db, dbtx.tx(), id, *obj);
-    dbtx.commit();
-  }
+  executeObjQuery(stmt, *obj);
+  dependentObjQuery(db, tx, id, *obj);
 
   objmap.insert(id, obj);
-
   return obj;
 }
 
 bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
-{ 
+{
   int res = -1;
-  
+
   try
-  { 
+  {
     DBTxGuard       dbtx(dbconn);
-    SqlStatementPtr stmt = dbtx.tx()->statement(QY_DB_INITIALIZED);  
-    
-    res  = stmt->execute_int();    
+    SqlStatementPtr stmt = dbtx.tx()->statement(QY_DB_INITIALIZED);
+
+    res  = stmt->execute_int();
     dbtx.commit();
   }
   catch (SqlDatabase::Exception& ex)
   {
   }
-  
+
   return res >= 0;
 }
 
@@ -555,7 +592,7 @@ void initializeDB(SqlConnectionPtr dbconn)
 {
   DBTxGuard         dbtx(dbconn);
   SqlTransactionPtr tx = dbtx.tx();
-  
+
   tx->execute(QY_MK_TEST_SUITES);
   tx->execute(QY_MK_SPECIMENS);
   tx->execute(QY_MK_TESTCASES);
@@ -563,9 +600,9 @@ void initializeDB(SqlConnectionPtr dbconn)
   tx->execute(QY_MK_ENVVARS);
   tx->execute(QY_MK_TESTCASE_ARGS);
   tx->execute(QY_MK_TESTCASE_EVAR);
-    
+  tx->execute(QY_MK_TESTSUITE_TESTCASE);
   dbtx.commit();
-  
+
   std::cerr << "initialized DB" << std::endl;
 }
 
@@ -573,8 +610,8 @@ void initializeDB(SqlConnectionPtr dbconn)
 template <class IdTag, class BidirectionalMap>
 static
 typename BidirectionalMap::Forward::Value
-_object( Concolic::Database& db,
-         SqlDatabase::ConnectionPtr dbconn,
+_object( Database& db,
+         SqlTransactionPtr tx,
          ObjectId<IdTag> id,
          Update::Flag update,
          BidirectionalMap& objmap
@@ -584,22 +621,42 @@ _object( Concolic::Database& db,
   typedef typename ForwardMap::Value         ResultType;
 
   // \pp \todo id is node defined
-  if (!id) 
+  if (!id)
     return ResultType();
-    
-  if (Update::YES == update) 
-    return queryDBObject(db, dbconn, id, objmap);
-  
+
+  if (Update::YES == update)
+    return queryDBObject(db, tx, id, objmap);
+
   const ForwardMap&                      map = objmap.forward();
   typename ForwardMap::ConstNodeIterator pos = map.find(id);
 
-  if (pos == map.nodes().end()) 
-    return queryDBObject(db, dbconn, id, objmap);
-  
+  if (pos == map.nodes().end())
+    return queryDBObject(db, tx, id, objmap);
+
   ResultType res = pos.base()->second;
   return res;
 }
 
+
+template <class IdTag, class BidirectionalMap>
+static
+typename BidirectionalMap::Forward::Value
+_object( Database& db,
+         SqlDatabase::ConnectionPtr dbconn,
+         ObjectId<IdTag> id,
+         Update::Flag update,
+         BidirectionalMap& objmap
+       )
+{
+  typedef typename BidirectionalMap::Forward::Value ResultType;
+  
+  DBTxGuard  dbtx(dbconn);
+  ResultType res = _object(db, dbtx.tx(), id, update, objmap);
+  
+  dbtx.commit();
+  return res;
+}
+  
 int sqlLastRowId(SqlTransactionPtr tx)
 {
   SqlStatementPtr qyid = tx->statement(QY_LAST_ROW_SQLITE3);
@@ -610,23 +667,36 @@ int sqlLastRowId(SqlTransactionPtr tx)
 TestSuite::Ptr
 Database::object(TestSuiteId id, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _object(*this, dbconn_, id, update, testSuites_);
 }
 
 Specimen::Ptr
 Database::object(SpecimenId id, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _object(*this, dbconn_, id, update, specimens_);
 }
 
 TestCase::Ptr
 Database::object(TestCaseId id, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _object(*this, dbconn_, id, update, testCases_);
 }
 
+Specimen::Ptr
+Database::object_ns(SqlTransactionPtr tx, SpecimenId id)
+{
+  return _object(*this, tx, id, Concolic::Update::NO, specimens_);
+}
+
+
 TestSuiteId
-_insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
+insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
 {
   SqlStatementPtr stmt = tx->statement(QY_NEW_TESTSUITE);
 
@@ -637,7 +707,7 @@ _insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
 }
 
 SpecimenId
-_insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
+insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 {
   SqlStatementPtr stmt = tx->statement(QY_NEW_SPECIMEN);
 
@@ -746,10 +816,10 @@ void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
 {
   std::vector<std::string> args = obj->args();
   std::vector<EnvValue>    envv = obj->env();
-  
+
   if (args.size() == 0) std::cout << "dbtest: 0 args" << std::endl;
   if (envv.size() == 0) std::cout << "dbtest: 0 envv" << std::endl;
-  
+
   std::for_each(args.begin(), args.end(), CmdLineArgInserter(tx, tcid));
   std::for_each(envv.begin(), envv.end(), EnvVarInserter(tx, tcid));
 }
@@ -762,11 +832,16 @@ void dependentObjUpdate(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
   dependentObjInsert(tx, tcid, obj);
 }
 
+template <class ObjPtr, class BidirectionalMap>
+typename BidirectionalMap::Reverse::Value
+_id(Concolic::Database&, SqlConnectionPtr, ObjPtr, Update::Flag, BidirectionalMap&);
+
+
 TestCaseId
-_insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
+insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
   SqlStatementPtr stmt = tx->statement(QY_NEW_TESTCASE);
-  const int       specimenId  = db.id(obj->specimen(), Concolic::Update::NO).get();
+  const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
 
   stmt->bind(0, specimenId);
   stmt->bind(1, obj->name());
@@ -779,24 +854,10 @@ _insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
   return TestCaseId(testcaseId);
 }
 
-template <class ObjPtr>
-Concolic::ObjectId< typename ObjPtr::Pointee >
-insertDBObject(Concolic::Database& db, SqlConnectionPtr dbconn, ObjPtr obj)
-{
-  typedef Concolic::ObjectId< typename ObjPtr::Pointee > ResultType;
-
-  DBTxGuard  dbtx(dbconn);
-  ResultType res = _insertDBObject(db, dbtx.tx(), obj);
-
-  dbtx.commit();
-  return res;
-}
-
 void
-_updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestSuite::Ptr obj)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestSuite::Ptr obj, TestSuiteId id)
 {
   SqlStatementPtr stmt = tx->statement(QY_UPD_TESTSUITE);
-  TestSuiteId     id   = db.id(obj);
 
   stmt->bind(0, obj->name());
   stmt->bind(1, id.get());
@@ -804,10 +865,9 @@ _updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestSuite::Ptr obj
 }
 
 void
-_updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj, SpecimenId id)
 {
   SqlStatementPtr stmt = tx->statement(QY_UPD_SPECIMEN);
-  SpecimenId      id   = db.id(obj);
 
   stmt->bind(0, obj->name());
   stmt->bind(1, obj->content());
@@ -816,20 +876,9 @@ _updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj)
 }
 
 void
-_updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId)
 {
   throw_ex<std::runtime_error>("NOT IMPLEMENTED YET");
-}
-
-
-template <class ObjPtr>
-void
-updateDBObject(Concolic::Database& db, SqlConnectionPtr dbconn, ObjPtr obj)
-{
-  DBTxGuard dbtx(dbconn);
-
-  _updateDBObject(db, dbtx.tx(), obj);
-  dbtx.commit();
 }
 
 
@@ -837,10 +886,9 @@ updateDBObject(Concolic::Database& db, SqlConnectionPtr dbconn, ObjPtr obj)
 // Returns an ID number for an object, optionally writing to the database.
 
 template <class ObjPtr, class BidirectionalMap>
-static
 typename BidirectionalMap::Reverse::Value
 _id( Concolic::Database& db,
-     SqlConnectionPtr dbconn,
+     SqlTransactionPtr tx,
      ObjPtr obj,
      Update::Flag update,
      BidirectionalMap& objmap
@@ -855,62 +903,120 @@ _id( Concolic::Database& db,
   if (pos == map.nodes().end())
   {
     if (Update::NO == update) return ObjIdType();
-    
-    ObjIdType objid = insertDBObject(db, dbconn, obj);
-    
+
+    ObjIdType objid = insertDBObject(db, tx, obj);
+
     objmap.insert(objid, obj);
     return objid;
   }
 
-  if (Update::YES == update) updateDBObject(db, dbconn, obj);
+  if (Update::YES == update) updateDBObject(db, tx, obj, pos.base()->second);
 
   return pos.base()->second;
+}
+
+
+template <class ObjPtr, class BidirectionalMap>
+typename BidirectionalMap::Reverse::Value
+_id( Concolic::Database& db,
+     SqlConnectionPtr dbconn,
+     ObjPtr obj,
+     Update::Flag update,
+     BidirectionalMap& objmap
+   )
+{
+  typedef typename BidirectionalMap::Reverse::Value ResultType;
+  
+  DBTxGuard  dbtx(dbconn);
+  ResultType res = _id(db, dbtx.tx(), obj, update, objmap);
+  
+  dbtx.commit();
+  return res;
 }
 
 
 TestSuiteId
 Database::id(const TestSuite::Ptr& pts, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _id(*this, dbconn_, pts, update, testSuites_);
 }
 
 SpecimenId
 Database::id(const Specimen::Ptr& psp, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _id(*this, dbconn_, psp, update, specimens_);
 }
 
 TestCaseId
 Database::id(const TestCase::Ptr& ptc, Update::Flag update)
 {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   return _id(*this, dbconn_, ptc, update, testCases_);
 }
+
+TestSuiteId 
+Database::id_ns(SqlTransactionPtr tx, const TestSuite::Ptr& obj)
+{
+  return _id(*this, tx, obj, Update::YES, testSuites_);
+}
+
+TestCaseId 
+Database::id_ns(SqlTransactionPtr tx, const TestCase::Ptr& obj)
+{
+  return _id(*this, tx, obj, Update::YES, testCases_);
+}
+
+SpecimenId 
+Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj)
+{
+  return _id(*this, tx, obj, Update::YES, specimens_);
+}
+
 
 
 Database::Ptr
 Database::instance(const std::string &url)
 {
     SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
-    SqlConnectionPtr    dbconn = SqlDatabase::Connection::create(url, dbdriver);
+    SqlConnectionPtr    dbconn   = SqlDatabase::Connection::create(url, dbdriver);
     Ptr                 db(new Database);
 
     db->dbconn_ = dbconn;
-    
-    if (!isDbInitialized(dbconn)) 
+
+    if (!isDbInitialized(dbconn))
       initializeDB(dbconn);
-    
+
     db->testSuites();
     return db;
 }
 
 Database::Ptr
-Database::create(const std::string &url, const std::string& testSuiteName)
+Database::create(const std::string& url, const std::string& testSuiteName)
 {
-    Ptr db = instance(url);
+    Ptr db = instance("sqlite:" + url);
 
-    // \pp \todo
     // db->testSuiteId_ = queryId(testSuiteName);
     return db;
+}
+
+void
+Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
+{
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_NEW_TESTSUITE_TESTCASE);
+
+  stmt->bind(0, testsuite.get());
+  stmt->bind(1, testcase.get());
+  stmt->execute();
+
+  dbtx.commit();
 }
 
 bool
