@@ -94,7 +94,7 @@ if USING_INTEL_COMPILER
      test2018_03.C \
      test2018_12.C
 else
-   TESTCODES_REQUIRED_TO_PASS += \
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2018_03.C \
      test2018_12.C
 endif

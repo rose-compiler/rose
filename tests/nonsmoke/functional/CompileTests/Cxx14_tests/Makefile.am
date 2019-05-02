@@ -55,7 +55,7 @@ if USING_INTEL_COMPILER
      test2016_19.C \
      test2016_24.C
 else
-   TESTCODES_REQUIRED_TO_PASS += \
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2016_02.C \
      test2016_04.C \
      test2016_05.C \
