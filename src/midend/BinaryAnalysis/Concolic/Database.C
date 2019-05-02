@@ -1,11 +1,14 @@
 #include <sage3basic.h>
+#include <rosePublicConfig.h>
 #include <BinaryConcolic.h>
 
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#ifdef ROSE_HAVE_SQLITE3
 // bypass intermediate layers for very large files (RBA)
 #define WITH_DIRECT_SQLITE3 1 
+#endif
 
 #if WITH_DIRECT_SQLITE3
 #include <sqlite3.h>
