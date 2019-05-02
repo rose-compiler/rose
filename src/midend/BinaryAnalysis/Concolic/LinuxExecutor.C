@@ -2,18 +2,25 @@
 
 #if 0 /* __cplusplus >= 201103L */
 #include <boost/process.hpp>
-#else
+#elif defined(__linux__)
 #include <sys/wait.h>
 #include <sys/personality.h>
+#else
+// nothing
 #endif
 
-#include <boost/atomic.hpp>
-#include <boost/lexical_cast.hpp>
 #include <BinaryConcolic.h>
+#include <boost/lexical_cast.hpp>
+
+#if BOOST_VERSION >= 105300
+#include <boost/atomic.hpp>
+#endif /* BOOST_VERSION */
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+
+#if defined(__linux__)
   
 typedef Sawyer::Optional<unsigned long> Persona;
 
@@ -103,7 +110,10 @@ int execute_binary( const boost::filesystem::path& binary,
 }
 #endif /* after boost 1.65 and C++11 */
 
-/*
+#if 0 // BOOST_VERSION >= 105300
+typedef boost::atomic<int> atomic_counter_t;
+#else
+
 // when boost does not have atomic
 template <class T>
 struct atomic_counter
@@ -127,10 +137,13 @@ struct atomic_counter
     T val;
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 };
-*/
+
+typedef atomic_counter<int> atomic_counter_t;
+
+#endif /* BOOST_VERSION */
 
 //~ static atomic_counter<int> versioning(0);
-static boost::atomic<int> versioning(0);
+static atomic_counter_t versioning(0);
 
 ConcreteExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
@@ -149,7 +162,10 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::path logerr(basename + "_err.log");
 
   storeBinaryFile(tc->specimen()->content(), binary);
+  
+#if BOOST_VERSION >= 105300  
   bstfs::permissions(binary, bstfs::owner_exe);
+#endif /* BOOST_VERSION */
   
   Persona persona;
   
@@ -164,6 +180,23 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 
   return ResultType(new LinuxExecutor::Result(errcode));
 }
+
+#else // !defined (__linux__)
+
+typedef Sawyer::Optional<unsigned long> Persona;
+
+LinuxExecutor::Result::Result(int exitStatus)
+    : ConcreteExecutor::Result(0.0), exitStatus_(exitStatus) {
+    ROSE_ASSERT(!"NOT_LINUX");
+}
+
+ConcreteExecutor::Result*
+LinuxExecutor::execute(const TestCase::Ptr& tc)
+{
+  ROSE_ASSERT(!"NOT_LINUX");
+}
+
+#endif
 
 } // namespace
 } // namespace

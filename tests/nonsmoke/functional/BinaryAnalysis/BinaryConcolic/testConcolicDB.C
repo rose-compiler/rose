@@ -205,7 +205,20 @@ void testAllTestCases(concolic::Database::Ptr db)
 }
 
 
-int main()
+// copied from Database.C
+std::string extract_filename(std::string url)
+{
+  static const std::string locator = "sqlite3://";
+  
+  if (!boost::starts_with(url, locator)) return url;
+  
+  size_t limit = url.find_first_of('?', locator.size());
+  
+  return url.substr(locator.size(), limit);
+}
+
+
+void testAll()
 {
   std::string             dburi = "sqlite3://tmp/test.db";
   //~ std::string             dburl = SqlDatabase::Connection::connectionSpecification(dburi, SqlDatabase::SQLITE3);
@@ -257,5 +270,41 @@ int main()
   
   db->testSuite(db->object(more_suite)); 
   testAllTestCases(db); // w/ test suite set
+  
+  std::cout << "dbtest: ** rba tests" << std::endl;
+  
+  if (db->rbaExists(more_bin))
+  {
+    std::cout << "dbtest: has rba" << std::endl;
+    
+    db->extractRbaFile("./old.rba", more_bin);
+    std::cout << "dbtest: extracted rba" << std::endl;
+    
+    db->eraseRba(more_bin);
+    std::cout << "dbtest: erased rba" << std::endl;
+  }
+  
+  db->saveRbaFile("/usr/bin/more", more_bin); 
+  std::cout << "dbtest: stored rba" << std::endl;
+}
+
+void cleanup()
+{
+  boost::filesystem::remove("./old.rba");
+}
+
+int main()
+{
+  static const std::string dbFileURL = "sqlite3://tmp/test.db";
+  
+  boost::filesystem::remove(extract_filename(dbFileURL));
+  
+  // test everything w/ an fresh DB
+  testAll();
+  
+  // rerun with existing DB
+  testAll();  
+  
+  // cleanup();
 }
 

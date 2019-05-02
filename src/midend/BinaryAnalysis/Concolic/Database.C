@@ -1,6 +1,16 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
+#include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+// bypass intermediate layers for very large files (RBA)
+#define WITH_DIRECT_SQLITE3 1 
+
+#if WITH_DIRECT_SQLITE3
+#include <sqlite3.h>
+#endif /* WITH_DIRECT_SQLITE3 */
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -508,7 +518,9 @@ queryIds(SqlDatabase::ConnectionPtr dbconn, TestSuiteId tsid)
   SqlStatementPtr      stmt = prepareIdQuery(dbtx.tx(), tsid, IdClass());
   ResultIterator       start(stmt->begin());
   const ResultIterator limit(stmt->end());
-  ResultVec            result(start, limit);
+  ResultVec            result;
+  
+  std::copy(start, limit, std::back_inserter(result));
 
   dbtx.commit();
   return result;
@@ -1051,60 +1063,6 @@ Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
   dbtx.commit();
 }
 
-bool
-Database::rbaExists(Database::SpecimenId id) 
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_COUNT_RBAFILES);
-
-  stmt->bind(0, id.get());
-  int res = stmt->execute_int();
-
-  dbtx.commit();  
-  ROSE_ASSERT(res == 0 || res == 1);
-  return res == 1;
-}
-
-void
-Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) 
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  DBTxGuard            dbtx(dbconn_);
-  SqlStatementPtr      stmt = dbtx.tx()->statement(QY_NEW_RBAFILE);
-  std::vector<uint8_t> content = loadBinaryFile(path);
-
-  stmt->bind(0, id.get());
-  stmt->bind(1, content);
-  stmt->execute();
-  dbtx.commit();  
-}
-
-void
-Database::extractRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) {
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RBAFILE);    
-  
-  stmt->bind(0, id.get());
-  storeBinaryFile(stmt->execute_blob(), path);
-  dbtx.commit();    
-}
-
-void
-Database::eraseRba(Database::SpecimenId id) {
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RM_RBAFILE);    
-  
-  stmt->bind(0, id.get());
-  stmt->execute();
-  dbtx.commit();    
-}
 
 std::vector<uint8_t> 
 loadBinaryFile(const boost::filesystem::path& path)
@@ -1183,6 +1141,225 @@ storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path&
     sink.reserve(data.size());
     std::copy(data.begin(), data.end(), sink.inserter());
   }
+}
+
+#if WITH_DIRECT_SQLITE3  
+
+std::pair<std::string, bool>
+dbProperties(const std::string& url)
+{
+  static const std::string locator  = "sqlite3://";
+  static const std::string debugopt = "?debug";
+  
+  if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
+  
+  size_t limit = url.find_first_of('?', locator.size());
+  bool   with_debug = (  (limit != std::string::npos)
+                      && debugopt == url.substr(limit, limit + debugopt.size())
+                      );
+  
+  return std::make_pair(url.substr(locator.size(), limit), with_debug);
+}
+
+
+struct GuardedStmt;
+
+struct GuardedDB
+{
+    explicit  
+    GuardedDB(const std::string& url) 
+    : db_(NULL), dbg_(false)
+    {
+      std::pair<std::string, bool> properties = dbProperties(url);
+      
+      sqlite3_open(properties.first.c_str(), &db_);
+      dbg_ = properties.second;
+    }
+    
+    ~GuardedDB()
+    {
+      if (db_)
+        sqlite3_close(db_);
+    }
+    
+    operator sqlite3* () { return db_; }
+    
+    void debug(GuardedStmt&);
+  
+  private:
+    sqlite3* db_;
+    bool     dbg_;
+};
+
+struct GuardedStmt
+{
+    explicit  
+    GuardedStmt(const std::string& sql) 
+    : sql_(sql), stmt_(NULL) 
+    {}
+    
+    ~GuardedStmt()
+    {
+      if (stmt_)
+        sqlite3_finalize(stmt_);
+    }
+    
+    sqlite3_stmt*& stmt()        { return stmt_; } 
+    const char*    c_str() const { return sql_.c_str(); } 
+      
+  private:
+    std::string     sql_;
+    sqlite3_stmt*   stmt_;
+};
+
+struct SqlLiteStringGuard
+{
+  explicit
+  SqlLiteStringGuard(const char* s)
+  : str(s)
+  {}
+  
+  ~SqlLiteStringGuard() { sqlite3_free(const_cast<char*>(str)); }
+  
+  const char* str;  
+};
+
+std::ostream& operator<<(std::ostream& os, const SqlLiteStringGuard& g)
+{
+  if (g.str) os << g.str << std::endl;
+  
+  return os;
+}
+
+void GuardedDB::debug(GuardedStmt& sql)
+{
+  if (!dbg_) return;
+  
+  //~ SqlLiteStringGuard sqlstmt(sqlite3_expanded_sql(sql.stmt()));
+  SqlLiteStringGuard sqlstmt(NULL);
+  
+  std::cerr << sqlstmt << std::endl;  
+}
+
+
+void checkSql(GuardedDB& db, int sql3code, int expected = SQLITE_OK)
+{
+  if (sql3code != expected)
+    throw_ex<std::runtime_error>(sqlite3_errmsg(db));
+}
+
+template <class Iterator>
+void storeRBAFile(GuardedDB& db, SpecimenId id, Iterator start, Iterator limit)
+{
+  typedef typename std::iterator_traits<Iterator>::value_type value_type;
+  
+  GuardedStmt  sql(QY_NEW_RBAFILE);
+  const size_t sz = sizeof(value_type)*std::distance(start, limit);
+  
+  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );  
+  checkSql( db, sqlite3_bind_int(sql.stmt(), 1, id.get()) );
+  checkSql( db, sqlite3_bind_blob(sql.stmt(), 2, &*start, sz, SQLITE_STATIC) );
+  
+  db.debug(sql);
+  
+  checkSql( db, sqlite3_step(sql.stmt()), SQLITE_DONE );
+}
+
+template <class Sink>
+void retrieveRBAFile(GuardedDB& db, SpecimenId id, Sink sink)
+{
+  GuardedStmt  sql(QY_RBAFILE);
+  
+  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );  
+  checkSql( db, sqlite3_bind_int(sql.stmt(), 1, id.get()) );
+  checkSql( db, sqlite3_step(sql.stmt()), SQLITE_ROW );
+  
+  size_t      bytes = sqlite3_column_bytes(sql.stmt(), 0);
+  const char* data  = reinterpret_cast<const char*>(sqlite3_column_blob(sql.stmt(), 0));
+  
+  sink.reserve(bytes);    
+  std::copy(data, data+bytes, sink.inserter());
+  
+  checkSql( db, sqlite3_step(sql.stmt()), SQLITE_DONE );
+}
+
+#endif /* WITH_DIRECT_SQLITE3 */
+
+
+bool
+Database::rbaExists(Database::SpecimenId id) 
+{
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_COUNT_RBAFILES);
+  
+  stmt->bind(0, id.get());  
+  int res = stmt->execute_int();
+  
+  dbtx.commit();  
+  ROSE_ASSERT(res == 0 || res == 1);
+  return res == 1;
+}
+
+void
+Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) 
+{
+#if WITH_DIRECT_SQLITE3
+  namespace bstio = boost::iostreams;
+
+  GuardedDB                 db(dbconn_->openspec());
+  bstio::mapped_file_source binary(path);
+  
+  storeRBAFile(db, id, binary.begin(), binary.end()); 
+#else
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard            dbtx(dbconn_);
+  SqlStatementPtr      stmt = dbtx.tx()->statement(QY_NEW_RBAFILE);
+  std::vector<uint8_t> content = loadBinaryFile(path);
+
+  stmt->bind(0, id.get());
+  stmt->bind(1, content);
+  stmt->execute();
+  dbtx.commit();  
+#endif /* WITH_DIRECT_SQLITE3 */
+}
+
+void
+Database::extractRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) {
+
+#if WITH_DIRECT_SQLITE3
+  GuardedDB     db(dbconn_->openspec());
+  // \todo consider using mapped_file_sink
+  std::ofstream outfile(path.string().c_str(), std::ofstream::binary);
+  
+  if (!outfile.good()) 
+    throw_ex<std::runtime_error>("unable to open file: ", path.string());
+    
+  retrieveRBAFile(db, id, FileSink<char>(outfile));  
+#else
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RBAFILE);    
+  
+  stmt->bind(0, id.get());
+  storeBinaryFile(stmt->execute_blob(), path);
+  dbtx.commit();
+#endif /* WITH_DIRECT_SQLITE3 */
+}
+
+void
+Database::eraseRba(Database::SpecimenId id) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RM_RBAFILE);    
+  
+  stmt->bind(0, id.get());
+  stmt->execute();
+  dbtx.commit();    
 }
 
 

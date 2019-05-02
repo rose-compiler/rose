@@ -1579,7 +1579,7 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
 {
     explicit
     hex_appender(std::string& res)
-    : sink(res)
+    : sink(&res)
     {}
     
     static
@@ -1592,12 +1592,12 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
       return 'A' + (digit - 10);
     }
 
-    hex_appender& operator=(uint8_t value)
+    hex_appender& operator=(const uint8_t& value)
     {
       char hexval[] = { hexDigit(value/16), hexDigit(value%16), 0 };
       
       //~ std::cout << ": " << hexval << "." << std::endl;
-      sink.append(hexval);
+      sink->append(hexval);
       return *this;
     }
 
@@ -1606,7 +1606,7 @@ struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, 
     hex_appender& operator++(int) { return *this; }
 
   private:
-    std::string& sink;
+    std::string* sink;
 };
 
 
