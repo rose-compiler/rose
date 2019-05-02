@@ -543,11 +543,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@echo "  TEST     ROSE Fortran compiler [rose-fortran]"
-	${AM_V_at}echo "program hello"                            >  hello-world.f
-	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f
-	${AM_V_at}echo "end program hello"                        >> hello-world.f
-	${AM_V_at}./rose-fortran hello-world.f -o hello-world-f
-	${AM_V_at}./hello-world-f
+	${AM_V_at}echo "program hello"                            >  hello-world.f90
+	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
+	${AM_V_at}echo "end program hello"                        >> hello-world.f90
+	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
+	${AM_V_at}./hello-world-f90
 endif
 
 ########################################################################################################################
