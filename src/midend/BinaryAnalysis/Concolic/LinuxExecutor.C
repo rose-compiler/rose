@@ -21,6 +21,10 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 #if defined(__linux__)
+
+/*****
+ **  LinuxExecutors work best on Linux
+ *****/
   
 typedef Sawyer::Optional<unsigned long> Persona;
 
@@ -110,7 +114,7 @@ int execute_binary( const boost::filesystem::path& binary,
 }
 #endif /* after boost 1.65 and C++11 */
 
-#if 0 // BOOST_VERSION >= 105300
+#if BOOST_VERSION >= 105300
 typedef boost::atomic<int> atomic_counter_t;
 #else
 
