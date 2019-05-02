@@ -4794,15 +4794,7 @@ SgDotStarOp::get_type() const
              }
           default:
              {
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-            // DQ (12/31/2008): This appears to be the correct fix for EDG version 4.0, 
-            // but it is unclear why this is not an issue for EDG 3.x previously.
-            // printf ("Using default case in SgDotStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
                returnType = someType;
-#else
-               printf ("Error: default reached in In SgDotStarOp::get_type() someType = %s \n",someType->class_name().c_str());
-               ROSE_ASSERT(false);
-#endif
              }
         }
 
