@@ -1,5 +1,5 @@
 
-#include "rose.h"
+#include "sage3basic.h"
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
