@@ -4,6 +4,7 @@
 
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include "boost/tuple/tuple.hpp"
 
 #ifdef ROSE_HAVE_SQLITE3
 // bypass intermediate layers for very large files (RBA)
@@ -13,6 +14,8 @@
 #if WITH_DIRECT_SQLITE3
 #include <sqlite3.h>
 #endif /* WITH_DIRECT_SQLITE3 */
+
+namespace bt = boost::tuples;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -55,13 +58,13 @@ namespace BinaryAnalysis {
 
     static const
     std::string QY_DB_INITIALIZED     = "SELECT count(*)"
-                                        "  FROM TestSuites";
+                                        "  FROM TestSuites;";
 
     //
     // make tables
 
     static const
-    std::string QY_MK_TEST_SUITES     = "CREATE TABLE \"TestSuites\" ("
+    std::string QY_MK_TESTSUITES     = "CREATE TABLE \"TestSuites\" ("
                                         "  \"id\" int PRIMARY KEY,"
                                         "  \"name\" varchar(256) UNIQUE NOT NULL"
                                         ");";
@@ -79,9 +82,8 @@ namespace BinaryAnalysis {
                                         "  \"specimen_id\" int NOT NULL,"
                                         "  \"name\" varchar(128),"
                                         "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
-                                        "  \"result\" int,"
-                                        "  \"stdout\" text,"
-                                        "  \"stderr\" text,"
+                                        "  \"concrete_result\" float,"
+                                        "  \"concolic_result\" int,"
                                         " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
                                         " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
                                         ");";
@@ -99,6 +101,14 @@ namespace BinaryAnalysis {
                                         "  \"value\" varchar(256) NOT NULL,"
                                         " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
                                         ");";
+                                        
+    static const
+    std::string QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
+                                       "  \"testcase_id\" int UNIQUE NOT NULL,"
+                                       "  \"result\" Text,"
+                                       "  \"concolic_run\" boolean NOT NULL,"
+                                       " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
+                                       ");";
 
     static const
     std::string QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
@@ -141,13 +151,13 @@ namespace BinaryAnalysis {
     // db queries
 
     static const
-    std::string QY_ALL_TEST_SUITES    = "SELECT rowid FROM TestSuites ORDER BY rowid;";
+    std::string QY_ALL_TESTSUITES    = "SELECT rowid FROM TestSuites ORDER BY rowid;";
 
     static const
-    std::string QY_TEST_SUITE         = "SELECT name FROM TestSuites WHERE rowid = ?;";
+    std::string QY_TESTSUITE         = "SELECT name FROM TestSuites WHERE rowid = ?;";
     
     static const
-    std::string QY_TEST_SUITE_BY_NAME = "SELECT rowid FROM TestSuites WHERE name = ?;";    
+    std::string QY_TESTSUITE_BY_NAME = "SELECT rowid FROM TestSuites WHERE name = ?;";    
 
     static const
     std::string QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
@@ -162,16 +172,49 @@ namespace BinaryAnalysis {
                                         " WHERE rowid = ?;";
 
     static const
-    std::string QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY id;";
+    std::string QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY rowid;";
 
     static const
     std::string QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
                                         "  FROM TestCases tc, TestSuiteTestCases tt"
                                         " WHERE tc.rowid = tt.testcase_id"
                                         "   AND tt.testsuite_id = ?;";
+                                        
+    static const                    
+    std::string QY_NEED_CONCOLIC      = "SELECT tc.rowid"
+                                        "  FROM TestCases tc, TestSuiteTestCases tt"
+                                        " WHERE tc.concolic_result = 0"
+                                        "   AND tc.rowid = tt.testcase_id"
+                                        "   AND tt.testsuite_id = ?"
+                                        " LIMIT ?;";  
+    
+    static const 
+    std::string QY_ALL_NEED_CONCOLIC  = "SELECT rowid"
+                                        "  FROM TestCases"
+                                        " WHERE concolic_result = 0"
+                                        " LIMIT ?;";  
+
+    static const 
+    std::string QY_NEED_CONCRETE      = "SELECT tc.rowid"
+                                        "  FROM TestCases tc, TestSuiteTestCases tt"
+                                        " WHERE tc.rowid = tt.testcase_id"
+                                        "   AND tt.testsuite_id = ?"
+                                        " ORDER BY tc.concrete_result ASC"
+                                        " LIMIT ?;";   
+    
+    static const 
+    std::string QY_NEED_TESTING       = "SELECT count(*) FROM TestCases"
+                                        " WHERE tc.concrete_result < 0"
+                                        "    OR tc.concolic_result = 0;";
+    
+    static const 
+    std::string QY_ALL_NEED_CONCRETE  = "SELECT rowid"
+                                        "  FROM TestCases"
+                                        " ORDER BY tc.concrete_result ASC"
+                                        " LIMIT ?;";   
 
     static const
-    std::string QY_TESTCASE           = "SELECT executor"
+    std::string QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
                                         "  FROM TestCases"
                                         " WHERE rowid = ?;";
 
@@ -220,7 +263,8 @@ namespace BinaryAnalysis {
 
     static const
     std::string QY_UPD_TESTCASE      = "UPDATE TestCases"
-                                       "   SET specimen_id = ?, name = ?, executor = ?"
+                                       "   SET specimen_id = ?, name = ?, executor = ?,"
+                                       "       concrete_result = ?, concolic_result = ?"
                                        " WHERE rowid = ?;";
 
     static const
@@ -287,41 +331,8 @@ namespace BinaryAnalysis {
     static const
     std::string QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
 
-    SqlStatementPtr
-    prepareIdQuery(SqlTransactionPtr tx, TestSuiteId id, TestSuiteId)
-    {
-      return tx->statement(QY_ALL_TEST_SUITES);
-    }
-
-    SqlStatementPtr
-    _prepareIdQuery( SqlTransactionPtr tx,
-                     TestSuiteId id,
-                     const std::string& all,
-                     const std::string& selected
-                   )
-    {
-      if (!id) return tx->statement(all);
-
-      SqlStatementPtr stmt = tx->statement(selected);
-
-      stmt->bind(0, id.get());
-      return stmt;
-    }
-
-    SqlStatementPtr
-    prepareIdQuery(SqlTransactionPtr tx, TestSuiteId id, SpecimenId)
-    {
-      return _prepareIdQuery(tx, id, QY_ALL_SPECIMENS, QY_SPECIMENS_IN_SUITE);
-    }
-
-    SqlStatementPtr
-    prepareIdQuery(SqlTransactionPtr tx, TestSuiteId id, TestCaseId)
-    {
-      return _prepareIdQuery(tx, id, QY_ALL_TESTCASES, QY_TESTCASES_IN_SUITE);
-    }
-
     static
-    const std::string& objQueryString(const TestSuiteId&) { return QY_TEST_SUITE; }
+    const std::string& objQueryString(const TestSuiteId&) { return QY_TESTSUITE; }
 
     static
     const std::string& objQueryString(const TestCaseId&)  { return QY_TESTCASE; }
@@ -341,12 +352,12 @@ namespace BinaryAnalysis {
       return stmt;
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestSuite& obj)
+    void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestSuite& obj)
     {
       obj.name(stmt->execute_string());
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::Specimen& obj)
+    void executeObjQuery(SqlStatementPtr& stmt, Concolic::Specimen& obj)
     {
       SqlIterator it = stmt->begin();
 
@@ -356,17 +367,32 @@ namespace BinaryAnalysis {
       ROSE_ASSERT((++it).at_eof());
     }
 
-    void executeObjQuery(SqlStatementPtr stmt, Concolic::TestCase& obj)
+    void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestCase& obj)
     {
-      obj.name(stmt->execute_string());
+      SqlIterator              it = stmt->begin();
+            
+      obj.name(it.get_str(0));
+      // obj.executor(it.get_str(1)));
+      /* std::string exec = */ it.get_str(1);
+      
+      // the SQLlite interface does not allow to test for NULL values
+      double                   concreteTest = it.get_dbl(2);
+      Sawyer::Optional<double> concreteTest_opt = ( concreteTest >= 0 
+                                                     ? Sawyer::Optional<double>(concreteTest)
+                                                     : Sawyer::Optional<double>()
+                                                  );  
+      obj.concreteRank(concreteTest_opt);
+      obj.concolicTest(it.get_i32(3));
+                  
+      ROSE_ASSERT((++it).at_eof());
     }
 
-    void dependentObjQuery(Concolic::Database&, SqlTransactionPtr, TestSuiteId, Concolic::TestSuite&)
+    void dependentObjQuery(Concolic::Database&, SqlTransactionPtr&, TestSuiteId, Concolic::TestSuite&)
     {
       // no dependent objects for test suites
     }
 
-    void dependentObjQuery(Concolic::Database&, SqlTransactionPtr, SpecimenId, Concolic::Specimen&)
+    void dependentObjQuery(Concolic::Database&, SqlTransactionPtr&, SpecimenId, Concolic::Specimen&)
     {
       // no dependent objects for specimen
     }
@@ -379,7 +405,6 @@ namespace BinaryAnalysis {
     {
       return std::make_pair(iter.get_str(0), iter.get_str(1));
     }
-
 
     template <class Tag>
     Concolic::ObjectId<Tag>
@@ -426,7 +451,7 @@ namespace BinaryAnalysis {
     };
     
     void dependentObjQuery( Concolic::Database& db,
-                            SqlTransactionPtr tx,
+                            SqlTransactionPtr& tx,
                             TestCaseId id,
                             Concolic::TestCase& tmp
                           )
@@ -507,18 +532,74 @@ struct DBTxGuard
     SqlTransactionPtr tx_;
 };
 
+typedef void* SqlNullType;
 
-template <class IdTag>
 static inline
+void sqlElemBind(SqlStatementPtr& stmt, int pos, SqlNullType)
+{
+  stmt->bind_null(pos);
+}
+
+template <class T>
+static inline
+void sqlElemBind(SqlStatementPtr& stmt, int pos, T& val)
+{
+  stmt->bind(pos, val);
+}
+
+void sqlBind(SqlStatementPtr&, const bt::null_type&, int = 0) {}
+
+template<class H, class T>
+void sqlBind(SqlStatementPtr& stmt, const bt::cons<H, T>& args, int pos = 0)
+{
+  sqlElemBind(stmt, pos, args.get_head());
+  
+  sqlBind(stmt, args.get_tail(), pos+1);  
+}
+
+template <class BoostTupleType>
+struct SqlQuery
+{
+    SqlQuery(const std::string& sql, const BoostTupleType& args)
+    : query(sql), vars(args)
+    {}
+    
+    SqlStatementPtr operator()(SqlTransactionPtr tx)
+    {
+      SqlStatementPtr stmt = tx->statement(query);
+      
+      sqlBind(stmt, vars);
+      return stmt;
+    }  
+  
+  private:
+    std::string          query;
+    const BoostTupleType vars;
+};
+
+template <class BoostTupleType>
+SqlQuery<BoostTupleType>
+sqlQuery(const std::string& sql, const BoostTupleType& args)
+{
+  return SqlQuery<BoostTupleType>(sql, args);
+}
+
+SqlQuery<bt::null_type>
+sqlQuery(const std::string& sql)
+{
+  return SqlQuery<bt::null_type>(sql, bt::make_tuple());
+}
+
+template <class IdTag, class SqlGen>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds(SqlDatabase::ConnectionPtr dbconn, TestSuiteId tsid)
+queryIds( SqlDatabase::ConnectionPtr& dbconn, SqlGen sqlGen )
 {
   typedef Concolic::ObjectId<IdTag>     IdClass;
   typedef std::vector<IdClass>          ResultVec;
   typedef TransformingIterator<IdClass> ResultIterator;
 
   DBTxGuard            dbtx(dbconn);
-  SqlStatementPtr      stmt = prepareIdQuery(dbtx.tx(), tsid, IdClass());
+  SqlStatementPtr      stmt = sqlGen(dbtx.tx());
   ResultIterator       start(stmt->begin());
   const ResultIterator limit(stmt->end());
   ResultVec            result;
@@ -529,12 +610,45 @@ queryIds(SqlDatabase::ConnectionPtr dbconn, TestSuiteId tsid)
   return result;
 }
 
+template <class IdTag>
+std::vector<Concolic::ObjectId<IdTag> >
+queryIds( SqlDatabase::ConnectionPtr& dbconn, std::string sql )
+{
+  return queryIds<IdTag>(dbconn, sqlQuery(sql));
+}
+
+template <class IdTag>
+std::vector<Concolic::ObjectId<IdTag> >
+queryIds( SqlDatabase::ConnectionPtr& dbconn, 
+          TestSuiteId id, 
+          const std::string& full, 
+          const std::string& restricted
+        )
+{
+  if (!id) return queryIds<IdTag>(dbconn, full);
+  
+  return queryIds<IdTag>(dbconn, sqlQuery(restricted, bt::make_tuple(id.get())));
+}
+
+template <class IdTag>
+std::vector<Concolic::ObjectId<IdTag> >
+queryIds( SqlDatabase::ConnectionPtr& dbconn, 
+          TestSuiteId id, 
+          const std::string& full, 
+          const std::string& restricted,
+          int limit
+        )
+{
+  if (!id) queryIds<IdTag>(dbconn, sqlQuery(full, bt::make_tuple(limit)));
+  
+  return queryIds<IdTag>(dbconn, sqlQuery(restricted, bt::make_tuple(id.get(), limit)));
+}
+
+
 std::vector<TestSuiteId>
 Database::testSuites()
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
-  return queryIds<TestSuite>(dbconn_, testSuiteId_);
+  return queryIds<TestSuite>(dbconn_, QY_ALL_TESTSUITES);
 }
 
 TestSuite::Ptr
@@ -565,9 +679,11 @@ Database::testSuite(const TestSuite::Ptr& obj)
 std::vector<SpecimenId>
 Database::specimens()
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
-  return queryIds<Specimen>(dbconn_, testSuiteId_);
+  return queryIds<Specimen>( dbconn_, 
+                             testSuiteId_, 
+                             QY_ALL_SPECIMENS,     /* full */
+                             QY_SPECIMENS_IN_SUITE /* restricted */
+                           );
 }
 
 //
@@ -576,9 +692,11 @@ Database::specimens()
 std::vector<TestCaseId>
 Database::testCases()
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
-  return queryIds<TestCase>(dbconn_, testSuiteId_);
+  return queryIds<TestCase>( dbconn_, 
+                             testSuiteId_, 
+                             QY_ALL_TESTCASES,     /* full */
+                             QY_TESTCASES_IN_SUITE /* restricted */
+                           );
 }
 
 
@@ -633,7 +751,7 @@ void initializeDB(SqlConnectionPtr dbconn)
   DBTxGuard         dbtx(dbconn);
   SqlTransactionPtr tx = dbtx.tx();
 
-  tx->execute(QY_MK_TEST_SUITES);
+  tx->execute(QY_MK_TESTSUITES);
   tx->execute(QY_MK_SPECIMENS);
   tx->execute(QY_MK_TESTCASES);
   tx->execute(QY_MK_CMDLINEARGS);
@@ -642,9 +760,8 @@ void initializeDB(SqlConnectionPtr dbconn)
   tx->execute(QY_MK_TESTCASE_EVAR);
   tx->execute(QY_MK_TESTSUITE_TESTCASE);
   tx->execute(QY_MK_RBA_FILES);
+  tx->execute(QY_MK_CONCRETE_RES);
   dbtx.commit();
-
-  std::cerr << "initialized DB" << std::endl;
 }
 
 
@@ -858,9 +975,6 @@ void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
   std::vector<std::string> args = obj->args();
   std::vector<EnvValue>    envv = obj->env();
 
-  if (args.size() == 0) std::cout << "dbtest: 0 args" << std::endl;
-  if (envv.size() == 0) std::cout << "dbtest: 0 envv" << std::endl;
-
   std::for_each(args.begin(), args.end(), CmdLineArgInserter(tx, tcid));
   std::for_each(envv.begin(), envv.end(), EnvVarInserter(tx, tcid));
 }
@@ -917,9 +1031,23 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj, 
 }
 
 void
-updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId id)
 {
-  throw_ex<std::runtime_error>("NOT IMPLEMENTED YET");
+  const int                specimenId   = db.id_ns(tx, obj->specimen()).get();
+  Sawyer::Optional<double> concreteRank = obj->concreteRank();
+  /* use some negative number, since queries cannot test for nuln*/
+  double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */; 
+  SqlStatementPtr          stmt         = tx->statement(QY_UPD_TESTCASE);
+    
+  stmt->bind(0, specimenId);
+  stmt->bind(1, obj->name());
+  stmt->bind(2, "linux" /* obj->executor() */);
+  stmt->bind(3, rank); 
+  stmt->bind(4, obj->hasConcolicTest());    
+  stmt->bind(5, id.get());
+  stmt->execute();
+  
+  dependentObjUpdate(tx, id.get(), obj);
 }
 
 
@@ -1041,7 +1169,7 @@ Database::create(const std::string& url, const std::string& testSuiteName)
 {
     Ptr             db = instance("sqlite:" + url);  
     DBTxGuard       dbtx(db->dbconn_);  
-    SqlStatementPtr stmt = dbtx.tx()->statement(QY_TEST_SUITE_BY_NAME);
+    SqlStatementPtr stmt = dbtx.tx()->statement(QY_TESTSUITE_BY_NAME);
 
     stmt->bind(0, testSuiteName);
     TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
@@ -1222,22 +1350,22 @@ struct SqlLiteStringGuard
   : str(s)
   {}
   
-  ~SqlLiteStringGuard() { sqlite3_free(const_cast<char*>(str)); }
+  ~SqlLiteStringGuard() 
+  { 
+    if (str) sqlite3_free(const_cast<char*>(str)); 
+  }
   
-  const char* str;  
+  operator const char*() { return str; }
+  
+  const char* const str;  
 };
 
-std::ostream& operator<<(std::ostream& os, const SqlLiteStringGuard& g)
-{
-  if (g.str) os << g.str << std::endl;
-  
-  return os;
-}
 
 void GuardedDB::debug(GuardedStmt& sql)
 {
   if (!dbg_) return;
-  
+
+  //~ Available since the pi release ( >= 3.14 )
   //~ SqlLiteStringGuard sqlstmt(sqlite3_expanded_sql(sql.stmt()));
   SqlLiteStringGuard sqlstmt(NULL);
   
@@ -1365,6 +1493,37 @@ Database::eraseRba(Database::SpecimenId id) {
   dbtx.commit();    
 }
 
+
+std::vector<Database::TestCaseId>
+Database::needConcreteTesting(size_t num)
+{
+  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, num);
+}
+
+std::vector<Database::TestCaseId>
+Database::needConcolicTesting(size_t num)
+{
+  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCOLIC, QY_NEED_CONCOLIC, num);
+}
+
+bool
+Database::hasUntested() const
+{
+  DBTxGuard       dbtx(dbconn_);
+  SqlStatementPtr stmt = dbtx.tx()->statement(QY_NEED_TESTING);      
+  const int       num = stmt->execute_int();
+  
+  dbtx.commit();      
+  return num > 0;
+}
+
+
+void
+Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
+{
+  id(testCase, Update::YES);
+  // \todo store results
+}
 
 } // namespace
 } // namespace

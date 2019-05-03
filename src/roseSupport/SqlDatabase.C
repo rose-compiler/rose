@@ -870,6 +870,7 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t>&);
+    StatementPtr bind_null(const StatementPtr &stmt, size_t idx);
     std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
@@ -1003,6 +1004,15 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::vector<uint
     placeholders[idx].second = hexSequence(val, tranx->driver());
     return stmt;
 }
+
+StatementPtr
+StatementImpl::bind_null(const StatementPtr &stmt, size_t idx)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = "NULL";
+    return stmt;
+}
+
 
 
 // Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
@@ -1214,6 +1224,7 @@ StatementPtr Statement::bind(size_t idx, uint64_t val) { return impl->bind(share
 StatementPtr Statement::bind(size_t idx, double val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, const std::string &val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, const std::vector<uint8_t> &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind_null(size_t idx) { return impl->bind_null(shared_from_this(), idx); }
 
 /*******************************************************************************************************************************
  *                                      Statement iterators

@@ -389,6 +389,7 @@ public:
     StatementPtr bind(size_t idx, double val);
     StatementPtr bind(size_t idx, const std::string &val);
     StatementPtr bind(size_t idx, const std::vector<uint8_t> &val);
+    StatementPtr bind_null(size_t idx);
     /** @} */
 
     /** Execute this statement.  Returns the iterator pointing to the first row of the result. */

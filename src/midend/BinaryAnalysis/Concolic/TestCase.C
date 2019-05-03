@@ -69,6 +69,45 @@ TestCase::args(std::vector<std::string> cmdlineargs) {
   cmdlineargs.swap(args_);
 }
 
+bool 
+TestCase::hasConcolicTest() const 
+{ 
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  return concolically_tested; 
+}
+
+    
+void 
+TestCase::concolicTest(bool hastest)
+{
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  concolically_tested = hastest;
+}
+
+bool 
+TestCase::hasConcreteTest() const
+{
+  return concreteRank();
+}
+
+Sawyer::Optional<double> 
+TestCase::concreteRank() const
+{
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  return concrete_rank_;
+}
+
+void
+TestCase::concreteRank(Sawyer::Optional<double> val) 
+{
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  
+  concrete_rank_ = val;
+}
+
 
 } // namespace
 } // namespace

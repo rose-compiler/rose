@@ -208,11 +208,13 @@ public:
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // name for debugging
+    std::string executor_;                              // name of execution environment
     Specimen::Ptr specimen_;                            // the thing to run
 
     std::vector<std::string> args_;                     // command line arguments
     std::vector<EnvValue>    env_;                      // environment variables
-    Sawyer::Optional<int>    exitstatus_;               // exit status after testing
+    Sawyer::Optional<double> concrete_rank_;            // rank after testing
+    bool                     concolically_tested;       // true if test was run concolically
 
 protected:
     TestCase() {}
@@ -260,6 +262,21 @@ public:
     std::vector<EnvValue> env() const;
     void env(std::vector<EnvValue> envvars);
     /** @} */
+    
+    /** returns if the test has been run concollically. */
+    bool hasConcolicTest() const;
+    
+    /** sets the status of the concolic test to true. */
+    void concolicTest(bool);
+    
+    /** returns if the test has been run concretely. */
+    bool hasConcreteTest() const;
+    
+    /** returns the concrete rank. */
+    Sawyer::Optional<double> concreteRank() const;
+    
+    /** sets the concrete rank. */
+    void concreteRank(Sawyer::Optional<double> val);
 
     // We'll need to add additional information about how to run the specimen:
     //   1. Command-line arguments (argc, argv)
@@ -310,6 +327,8 @@ public:
             ASSERT_forbid(rose_isnan(rank));
         }
         virtual ~Result() {}
+        
+        double rank() const { return rank_; }
 
     private:
         friend class boost::serialization::access;
@@ -744,6 +763,30 @@ public:
      * Thread safety: thread safe
      */ 
    void assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite);
+   
+   /** returns @ref n testcases without concrete results. 
+    * 
+    * Thread safety: thread safe
+    */
+   std::vector<Database::TestCaseId> needConcreteTesting(size_t);
+   
+   /** returns @ref n testcases without concolic results. 
+    * 
+    * Thread safety: thread safe
+    */
+   std::vector<Database::TestCaseId> needConcolicTesting(size_t);
+
+   /** updates a testcase and its results.
+    * 
+    * Thread safety: thread safe
+    */
+   void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
+   
+   /** tests if there are more test cases that require testing.
+    * 
+    * Thread safety: thread safe
+    */   
+   bool hasUntested() const;
 };
 
 
