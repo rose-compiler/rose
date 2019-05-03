@@ -31,7 +31,7 @@ MYDATE = $(shell date +%Y_%m_%d)
 lib_LTLIBRARIES = libspray.la libcodethorn.la
 
 libspray_la_LDFLAGS= -no-undefined
-libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+libspray_la_CXXFLAGS = -Wall -O3
 libspray_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
