@@ -1,4 +1,0 @@
-t before_exec after_exec { function_call { identifier "execv___Fb_i_Gb___Pb__Cc__Pe____sep___Ab_C__Pb__c__Pe___Ae__Fe_" } { ellipsis } }
-t before_exec before_exec { other }
-t after_exec after_exec { function_call { identifier "execv___Fb_i_Gb___Pb__Cc__Pe____sep___Ab_C__Pb__c__Pe___Ae__Fe_" } { ellipsis } }
-t after_exec before_exec { other }
