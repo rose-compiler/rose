@@ -82,15 +82,6 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(ACLOCAL_INCLUDE)
 
 all: remove_sage3basic_h_pch
 
-# Commmented out some very old projects, Liao, 2019 March
-#	$(MAKE) install -C $(top_builddir)/projects/LineDeleter
-#	$(MAKE) install -C $(top_builddir)/projects/mint
-#	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
-#	$(MAKE) install -C $(top_builddir)/projects/OpenMP_Translator
-#	$(MAKE) install -C $(top_builddir)/projects/vectorization
-#	$(MAKE) -C $(top_builddir)/projects/mint
-#	$(MAKE) -C $(top_builddir)/projects/LineDeleter
-#	$(MAKE) install -C $(top_builddir)/projects/vulnerabilitySeeding
 core:
 	$(MAKE) -C $(top_builddir)/src
 	$(MAKE) -C $(top_builddir)/tools
@@ -434,8 +425,6 @@ FORCE_DOCS_TO_BE_MADE:
 
 # DQ (7/25/2008): Running "make docs" introduces dependences that are inappropriate
 # for a distribution.
-# Liao (9/26/2013) We no longer support haskellport as part of the migration to EDG 4.x based ROSE
-#	   $(MAKE) -Cprojects/haskellport docs && 
 docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
