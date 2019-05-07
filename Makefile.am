@@ -92,7 +92,6 @@ tools:
 	$(MAKE) -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) -C $(top_builddir)/projects/autoTuning
-	$(MAKE) -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
@@ -116,7 +115,6 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) install -C $(top_builddir)/projects/autoTuning
-	$(MAKE) install -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
@@ -138,7 +136,6 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) check -C $(top_builddir)/projects/autoTuning
-	$(MAKE) check -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
