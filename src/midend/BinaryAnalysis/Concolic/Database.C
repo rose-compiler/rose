@@ -8,7 +8,9 @@
 
 #ifdef ROSE_HAVE_SQLITE3
 // bypass intermediate layers for very large files (RBA)
-#define WITH_DIRECT_SQLITE3 1 
+  #ifndef WITH_DIRECT_SQLITE3
+  #define WITH_DIRECT_SQLITE3 1 
+  #endif
 #endif
 
 #if WITH_DIRECT_SQLITE3
@@ -16,6 +18,7 @@
 #endif /* WITH_DIRECT_SQLITE3 */
 
 namespace bt = boost::tuples;
+
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -45,6 +48,7 @@ namespace BinaryAnalysis {
 
   namespace
   {
+    // convenience function for throwing exceptions
     template <class ExceptionType>
     static inline
     void
@@ -55,303 +59,639 @@ namespace BinaryAnalysis {
 
       throw ExceptionType(arg1);
     }
-
-    static const
-    std::string QY_DB_INITIALIZED     = "SELECT count(*)"
-                                        "  FROM TestSuites;";
-
+    
     //
-    // make tables
-
-    static const
-    std::string QY_MK_TESTSUITES     = "CREATE TABLE \"TestSuites\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"name\" varchar(256) UNIQUE NOT NULL"
-                                        ");";
-
-    static const
-    std::string QY_MK_SPECIMENS       = "CREATE TABLE \"Specimens\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"name\" varchar(256) UNIQUE NOT NULL,"
-                                        "  \"binary\" Blob NOT NULL"
-                                        ");";
-
-    static const
-    std::string QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"specimen_id\" int NOT NULL,"
-                                        "  \"name\" varchar(128),"
-                                        "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
-                                        "  \"concrete_result\" float,"
-                                        "  \"concolic_result\" int,"
-                                        " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
-                                        " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
-                                        ");";
-
-    static const
-    std::string QY_MK_CMDLINEARGS     = "CREATE TABLE \"CmdLineArgs\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"arg\" varchar(128) UNIQUE NOT NULL"
-                                        ");";
-
-    static const
-    std::string QY_MK_ENVVARS         = "CREATE TABLE \"EnvironmentVariables\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"name\" varchar(128) NOT NULL,"
-                                        "  \"value\" varchar(256) NOT NULL,"
-                                        " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
-                                        ");";
-                                        
-    static const
-    std::string QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
-                                       "  \"testcase_id\" int UNIQUE NOT NULL,"
-                                       "  \"result\" Text,"
-                                       "  \"concolic_run\" boolean NOT NULL,"
-                                       " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
-                                       ");";
-
-    static const
-    std::string QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
-                                        "  \"testcase_id\" int NOT NULL,"
-                                        "  \"seqnum\" int NOT NULL,"
-                                        "  \"cmdlinearg_id\" int NOT NULL,"
-                                        " CONSTRAINT \"fk_testcase_argument\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
-                                        " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"cmdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
-                                        " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"seqnum\")"
-                                        ");";
-
-    static const
-    std::string QY_MK_TESTCASE_EVAR   = "CREATE TABLE \"TestCaseVariables\" ("
-                                        "  \"testcase_id\" int NOT NULL,"
-                                        "  \"envvar_id\" int NOT NULL,"
-                                        " CONSTRAINT \"fk_testcase_testcasevar\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
-                                        " CONSTRAINT \"fk_envvar_testcasevar\" FOREIGN KEY (\"envvar_id\") REFERENCES \"EnvironmentVariables\" (\"id\"),"
-                                        " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"
-                                        ");";
-
-    static const
-    std::string QY_MK_TESTSUITE_TESTCASE =
-                                       "CREATE TABLE \"TestSuiteTestCases\" ("
-                                       "  \"testsuite_id\" int NOT NULL,"
-                                       "  \"testcase_id\" int NOT NULL,"
-                                       " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestSuites\" (\"id\"),"
-                                       " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
-                                       " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
-                                       ");";
-                                       
-    static const
-    std::string QY_MK_RBA_FILES       = "CREATE TABLE \"RBAFiles\" ("
-                                        "  \"id\" int PRIMARY KEY,"
-                                        "  \"specimen_id\" int UNIQUE NOT NULL,"
-                                        "  \"data\" Blob NOT NULL,"
-                                        " CONSTRAINT \"fk_specimen_rba\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
-                                        ");";
-
-    //
-    // db queries
-
-    static const
-    std::string QY_ALL_TESTSUITES    = "SELECT rowid FROM TestSuites ORDER BY rowid;";
-
-    static const
-    std::string QY_TESTSUITE         = "SELECT name FROM TestSuites WHERE rowid = ?;";
+    // Type-safe SQL queries
+    // 
+    // Queries check for type agreements in their placeholder and bindings
     
-    static const
-    std::string QY_TESTSUITE_BY_NAME = "SELECT rowid FROM TestSuites WHERE name = ?;";    
-
-    static const
-    std::string QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
-
-    static const
-    std::string QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
-                                        "  FROM TestCases"
-                                        " WHERE testsuite_id = ?;";
-
-    static const
-    std::string QY_SPECIMEN           = "SELECT name, binary FROM Specimens "
-                                        " WHERE rowid = ?;";
-
-    static const
-    std::string QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY rowid;";
-
-    static const
-    std::string QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
-                                        "  FROM TestCases tc, TestSuiteTestCases tt"
-                                        " WHERE tc.rowid = tt.testcase_id"
-                                        "   AND tt.testsuite_id = ?;";
-                                        
-    static const                    
-    std::string QY_NEED_CONCOLIC      = "SELECT tc.rowid"
-                                        "  FROM TestCases tc, TestSuiteTestCases tt"
-                                        " WHERE tc.concolic_result = 0"
-                                        "   AND tc.rowid = tt.testcase_id"
-                                        "   AND tt.testsuite_id = ?"
-                                        " LIMIT ?;";  
+    // null value
+    typedef void* SqlNullType;
     
-    static const 
-    std::string QY_ALL_NEED_CONCOLIC  = "SELECT rowid"
-                                        "  FROM TestCases"
-                                        " WHERE concolic_result = 0"
-                                        " LIMIT ?;";  
-
-    static const 
-    std::string QY_NEED_CONCRETE      = "SELECT tc.rowid"
-                                        "  FROM TestCases tc, TestSuiteTestCases tt"
-                                        " WHERE tc.rowid = tt.testcase_id"
-                                        "   AND tt.testsuite_id = ?"
-                                        " ORDER BY tc.concrete_result ASC"
-                                        " LIMIT ?;";   
+    // SQL placeholder types
+    template <class V>
+    struct SqlVar {};
     
-    static const 
-    std::string QY_NEED_TESTING       = "SELECT count(*) FROM TestCases"
-                                        " WHERE tc.concrete_result < 0"
-                                        "    OR tc.concolic_result = 0;";
+    typedef SqlVar<int>                   SqlInt;
+    typedef SqlVar<std::string>           SqlString;
+    typedef SqlVar<std::vector<uint8_t> > SqlBlob;
+    typedef SqlVar<double>                SqlReal;
+    typedef SqlVar<bool>                  SqlBool;   
     
-    static const 
-    std::string QY_ALL_NEED_CONCRETE  = "SELECT rowid"
-                                        "  FROM TestCases"
-                                        " ORDER BY tc.concrete_result ASC"
-                                        " LIMIT ?;";   
 
-    static const
-    std::string QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
-                                        "  FROM TestCases"
-                                        " WHERE rowid = ?;";
-
-    static const
-    std::string QY_TESTCASE_ARGS      = "SELECT c.arg"
-                                        "  FROM CmdLineArgs c, TestCaseArguments t"
-                                        " WHERE c.rowid = t.cmdlinearg_id"
-                                        "   AND t.testcase_id = ?"
-                                        " ORDER BY seqnum;";
-
-    static const
-    std::string QY_TESTCASE_ENV       = "SELECT e.name, e.value"
-                                        "  FROM EnvironmentVariables e, TestCaseVariables t"
-                                        " WHERE e.rowid = t.envvar_id"
-                                        "   AND t.testcase_id = ?;";
-
-    static const
-    std::string QY_TESTCASE_SPECIMEN  = "SELECT specimen_id"
-                                        "  FROM TestCases"
-                                        " WHERE rowid = ?;";
-
-    static const
-    std::string QY_NEW_TESTSUITE      = "INSERT INTO TestSuites"
-                                        "  (name)"
-                                        "  VALUES(?);";
-
-    static const
-    std::string QY_UPD_TESTSUITE      = "UPDATE TestSuites"
-                                        "   SET name = ?"
-                                        " WHERE rowid = ?;";
-
-    static const
-    std::string QY_NEW_SPECIMEN      = "INSERT INTO Specimens"
-                                       "  (name, binary)"
-                                       "  VALUES(?,?);";
-
-    static const
-    std::string QY_UPD_SPECIMEN      = "UPDATE Specimens"
-                                        "   SET name = ?, binary = ?"
-                                        " WHERE rowid = ?;";
-
-    static const
-    std::string QY_NEW_TESTCASE      = "INSERT INTO TestCases"
-                                       "  (specimen_id, name, executor)"
-                                       "  VALUES(?,?,?);";
-
-    static const
-    std::string QY_UPD_TESTCASE      = "UPDATE TestCases"
-                                       "   SET specimen_id = ?, name = ?, executor = ?,"
-                                       "       concrete_result = ?, concolic_result = ?"
-                                       " WHERE rowid = ?;";
-
-    static const
-    std::string QY_RM_TESTCASE_EVAR   = "DELETE FROM TestCaseVariables"
-                                        " WHERE testcase_id = ?";
-
-    static const
-    std::string QY_NEW_TESTCASE_EVAR = "INSERT INTO TestCaseVariables"
-                                       "  (testcase_id, envvar_id)"
-                                       "  VALUES(?,?)";
-
-    static const
-    std::string QY_ENVVAR_ID         = "SELECT rowid"
-                                       "  FROM EnvironmentVariables"
-                                       " WHERE name = ?"
-                                       "   AND value = ?;";
-
-    static const
-    std::string QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables"
-                                       "  (name, value)"
-                                       "  VALUES(?,?);";
-
-    static const
-    std::string QY_RM_TESTCASE_CARG   = "DELETE FROM TestCaseArguments"
-                                        " WHERE testcase_id = ?";
-
-    static const
-    std::string QY_NEW_TESTCASE_CARG = "INSERT INTO TestCaseArguments"
-                                       "  (testcase_id, seqnum, cmdlinearg_id)"
-                                       "  VALUES(?,?,?)";
-
-    static const
-    std::string QY_NEW_TESTSUITE_TESTCASE =
-                                      "INSERT INTO TestSuiteTestCases"
-                                       "  (testsuite_id, testcase_id)"
-                                       "  VALUES(?,?)";
-
-    static const
-    std::string QY_CMDLINEARG_ID     = "SELECT rowid"
-                                       "  FROM CmdLineArgs"
-                                       " WHERE arg = ?;";
-
-    static const
-    std::string QY_NEW_CMDLINEARG    = "INSERT INTO CmdLineArgs"
-                                        "  (arg)"
-                                        "  VALUES(?);";
-                                        
-    std::string QY_COUNT_RBAFILES    = "SELECT count(*) FROM RBAFiles"
-                                       "  WHERE specimen_id = ?;";
-                                        
-    static const
-    std::string QY_NEW_RBAFILE       = "INSERT INTO RBAFiles"
-                                        "  (specimen_id, data)"
-                                        "  VALUES(?,?);";
-    
-    static const
-    std::string QY_RBAFILE           = "SELECT data FROM RBAFiles"
-                                       "  WHERE specimen_id = ?;";
-                                       
-    static const
-    std::string QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
-                                       "  WHERE specimen_id = ?;";
-                                       
-    static const
-    std::string QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
-
-    static
-    const std::string& objQueryString(const TestSuiteId&) { return QY_TESTSUITE; }
-
-    static
-    const std::string& objQueryString(const TestCaseId&)  { return QY_TESTCASE; }
-
-    static
-    const std::string& objQueryString(const SpecimenId&)  { return QY_SPECIMEN; }
-
-    template <class IdTag>
-    SqlStatementPtr
-    prepareObjQuery(SqlDatabase::TransactionPtr tx, Concolic::ObjectId<IdTag> id)
+    // a query holding a string containing |L| SQL placeholders       
+    //   note, instead of directly using tuple<X,Y,Z>
+    //         its representation is used cons<X, cons<Y, cons<Z, null_type> > >.
+    //         the base can be obtained using tuple<X,Y,Z>::inherited .
+    template <class L = bt::null_type >
+    struct SqlQuery
     {
-      if (!id) throw_ex<std::logic_error>("ID not set");
+      template <class PopBackTypeL, class V >
+      SqlQuery( const SqlQuery< PopBackTypeL >& p, 
+                const SqlVar< V >&
+              )
+      : sql(p.sql + '?')
+      {}
+      
+      SqlQuery(const SqlQuery<L>& p, const std::string& cont )
+      : sql(p.sql + cont)
+      {}
+      
+      SqlQuery(const SqlQuery<L>& p, const char* cont)
+      : sql(p.sql + std::string(cont))
+      {}
+            
+      std::string sql;
+    };
+    
+    // a query holding w/o SQL placeholders
+    template <> 
+    struct SqlQuery<bt::null_type>
+    {      
+      SqlQuery(const std::string& query)
+      : sql(query)
+      {}
+      
+      SqlQuery(const char* query)
+      : sql(query)
+      {}
+      
+      std::string sql;
+    };
+    
+    
+    // a prepared query holding with |L| unbound SQL placeholders 
+    template <class L>
+    struct SqlQueryPrepared
+    {
+      typedef SqlQueryPrepared< typename L::tail_type > SqlQueryParentType;
+      
+      explicit
+      SqlQueryPrepared(const SqlStatementPtr& stmt)
+      : sql(stmt)
+      {}
+      
+      SqlQueryParentType
+      tail() const { return SqlQueryParentType(sql); }
+            
+      SqlStatementPtr sql;
+    };
+    
+    // a prepared query w/o any unbound SQL placeholders
+    template <>
+    struct SqlQueryPrepared<bt::null_type>
+    {
+      explicit
+      SqlQueryPrepared(const SqlStatementPtr& stmt)
+      : sql(stmt)
+      {}
+                  
+      SqlStatementPtr sql;
+    };
+    
+    // type function to add types to the end of a boost::tuple
+    //   generic case
+    template <class L, class V>
+    struct bt_append
+    {
+      typedef typename L::head_type                       head_type;
+      typedef typename L::tail_type                       tail_type;
+            
+      typedef typename bt_append<tail_type, V>::type      new_tail_type;      
+      typedef typename bt::cons<head_type, new_tail_type> type;      
+    };
+    
+    //   base case
+    template <class V>
+    struct bt_append<bt::null_type, V>
+    {
+      typedef typename bt::tuple<V>::inherited type;
+    };
 
-      SqlStatementPtr stmt = tx->statement(objQueryString(id));
+    // concatenates a query of type L with a placeholder V
+    // the resulting query has type L + V
+    template <class L, class V>
+    SqlQuery<typename bt_append<L, V>::type>
+    operator+(const SqlQuery<L>& lhs, const SqlVar<V>& rhs)
+    {
+      typedef SqlQuery<typename bt_append<L, V>::type > ResultType;
+      
+      return ResultType(lhs, rhs);
+    }
+    
+    // concatenates a query of with a string
+    //   does not change the queries type
+    template <class L>
+    SqlQuery<L> 
+    operator+(const SqlQuery<L>& lhs, const char* rhs)
+    {
+      return SqlQuery<L>(lhs, rhs);
+    } 
 
-      stmt->bind(0, id.get());
-      return stmt;
+    // concatenates a query of with a string
+    //   does not change the queries type    
+    template <class L>
+    SqlQuery<L> 
+    operator+(const SqlQuery<L>& lhs, const std::string& rhs)
+    {
+      return SqlQuery<L>(lhs, rhs);
+    }    
+
+    // concatenates a string with a SQL variable of type V.
+    // the result type is an SqlQuery object with a single placeholder.
+    template <class V>
+    SqlQuery<typename bt::tuple<V>::inherited>
+    operator+(const std::string& lhs, const SqlVar<V>& rhs)
+    {
+      typedef SqlQuery<typename bt::tuple<V>::inherited> ResultType;
+      
+      return ResultType(SqlQuery<>(lhs), rhs);
     }
 
+    // concatenates a string with a SQL variable of type V.
+    // the result type is an SqlQuery object with a single placeholder.    
+    template <class V>
+    SqlQuery<typename bt::tuple<V>::inherited>
+    operator+(const char* lhs, const SqlVar<V>& rhs)
+    {
+      typedef SqlQuery<typename bt::tuple<V>::inherited> ResultType;
+      
+      return ResultType(SqlQuery<>(lhs), rhs);
+    }
+
+    // binds NULL to an SQL placeholder at position @ref pos
+    template <class L>    
+    static inline
+    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const SqlNullType&)
+    {
+      stmt.sql->bind_null(pos);
+    }
+    
+    // binds a value to an SQL placeholder at position @ref pos
+    template <class L>
+    static inline
+    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const typename L::head_type& val)
+    {
+      stmt.sql->bind(pos, val);
+    }
+    
+    // base case --> all palceholders are bound
+    void sqlBind(SqlQueryPrepared<bt::null_type>, const bt::null_type&, int = 0) {}
+
+    // recursively binds all placeholders to values (or NULLs)
+    template<class L, class H, class T>
+    void sqlBind(SqlQueryPrepared<L> stmt, const bt::cons<H,T>& args, int pos = 0)
+    {
+      sqlElemBind(stmt, pos, args.get_head());
+      
+      sqlBind(stmt.tail(), args.get_tail(), pos+1);  
+    }
+    
+    // convenience function to bind all placeholders and return a prepared statement
+    template <class BoostTypeList, class BoostTypeTuple>
+    SqlStatementPtr
+    sqlPrepareTuple(SqlQueryPrepared<BoostTypeList> stmt, const BoostTypeTuple& args)
+    {
+      sqlBind(stmt, args);
+      
+      return stmt.sql;
+    }
+    
+    // function to create and return a statement and bind all its placeholders to values
+    //   in @ref args
+    template <class BoostTypeList, class BoostTypeTuple>
+    SqlStatementPtr
+    sqlPrepareTuple(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const BoostTypeTuple& args)
+    {
+      return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), args);
+    }
+    
+    // prepares a statement binds N variables to its paceholders.
+    // @{
+    SqlStatementPtr
+    sqlPrepare(SqlTransactionPtr tx, const SqlQuery<>& stmt)
+    {
+      return sqlPrepareTuple(SqlQueryPrepared<bt::null_type>(tx->statement(stmt.sql)), bt::make_tuple());
+    }
+    
+    template <class BoostTypeList, class V>
+    SqlStatementPtr
+    sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V& arg1)
+    {
+      return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1));
+    }
+    
+    template <class BoostTypeList, class V1, class V2>
+    SqlStatementPtr
+    sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V1& arg1, const V2& arg2)
+    {
+      return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1, arg2));
+    }
+    
+    template <class BoostTypeList, class V1, class V2, class V3>
+    SqlStatementPtr
+    sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V1& arg1, const V2& arg2, const V3& arg3)
+    {
+      return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1, arg2, arg3));
+    }
+    
+    template <class BoostTypeList, class V1, class V2, class V3, class V4>
+    SqlStatementPtr
+    sqlPrepare( SqlTransactionPtr tx, 
+                const SqlQuery<BoostTypeList>& stmt, 
+                const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4
+              )
+    {
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+                              bt::make_tuple(arg1, arg2, arg3, arg4)
+                            );
+    }
+    
+    template <class BoostTypeList, class V1, class V2, class V3, class V4, class V5>
+    SqlStatementPtr
+    sqlPrepare( SqlTransactionPtr tx, 
+                const SqlQuery<BoostTypeList>& stmt, 
+                const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4, const V5& arg5
+              )
+    {
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+                              bt::make_tuple(arg1, arg2, arg3, arg4, arg5)
+                            );
+    }
+    
+    template <class BoostTypeList, class V1, class V2, class V3, class V4, class V5, class V6>
+    SqlStatementPtr
+    sqlPrepare( SqlTransactionPtr tx, 
+                const SqlQuery<BoostTypeList>& stmt, 
+                const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4, const V5& arg5, const V6& arg6
+              )
+    {
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+                              bt::make_tuple(arg1, arg2, arg3, arg4, arg5, arg6)
+                            );
+    }    
+    
+    // @}
+    
+    
+    //
+    // SQL Queries
+    // 
+    
+    // table makers
+
+    static const
+    SqlQuery<>
+    QY_MK_TESTSUITES     = "CREATE TABLE \"TestSuites\" ("
+                           "  \"id\" int PRIMARY KEY,"
+                           "  \"name\" varchar(256) UNIQUE NOT NULL"
+                           ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_SPECIMENS       = "CREATE TABLE \"Specimens\" ("
+                            "  \"id\" int PRIMARY KEY,"
+                            "  \"name\" varchar(256) UNIQUE NOT NULL,"
+                            "  \"binary\" Blob NOT NULL"
+                            ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
+                            "  \"id\" int PRIMARY KEY,"
+                            "  \"specimen_id\" int NOT NULL,"
+                            "  \"name\" varchar(128),"
+                            "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
+                            "  \"concrete_result\" float,"
+                            "  \"concolic_result\" int,"
+                            " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
+                            " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
+                            ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_CMDLINEARGS     = "CREATE TABLE \"CmdLineArgs\" ("
+                            "  \"id\" int PRIMARY KEY,"
+                            "  \"arg\" varchar(128) UNIQUE NOT NULL"
+                            ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_ENVVARS         = "CREATE TABLE \"EnvironmentVariables\" ("
+                            "  \"id\" int PRIMARY KEY,"
+                            "  \"name\" varchar(128) NOT NULL,"
+                            "  \"value\" varchar(256) NOT NULL,"
+                            " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
+                            ");";
+                                        
+    static const
+    SqlQuery<>
+    QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
+                           "  \"testcase_id\" int UNIQUE NOT NULL,"
+                           "  \"result\" Text,"
+                           "  \"concolic_run\" boolean NOT NULL,"
+                           " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
+                           ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_TESTCASE_ARGS   = "CREATE TABLE \"TestCaseArguments\" ("
+                            "  \"testcase_id\" int NOT NULL,"
+                            "  \"seqnum\" int NOT NULL,"
+                            "  \"cmdlinearg_id\" int NOT NULL,"
+                            " CONSTRAINT \"fk_testcase_argument\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                            " CONSTRAINT \"fk_cmdlineargs_argument\" FOREIGN KEY (\"cmdlinearg_id\") REFERENCES \"CmdLineArgs\" (\"id\"),"
+                            " CONSTRAINT \"pk_argument\" PRIMARY KEY (\"testcase_id\", \"seqnum\")"
+                            ");";
+
+    static const
+    SqlQuery<>
+    QY_MK_TESTCASE_EVAR   = "CREATE TABLE \"TestCaseVariables\" ("
+                            "  \"testcase_id\" int NOT NULL,"
+                            "  \"envvar_id\" int NOT NULL,"
+                            " CONSTRAINT \"fk_testcase_testcasevar\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                            " CONSTRAINT \"fk_envvar_testcasevar\" FOREIGN KEY (\"envvar_id\") REFERENCES \"EnvironmentVariables\" (\"id\"),"
+                            " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"
+                            ");";
+
+    static const
+    SqlQuery<> QY_MK_TESTSUITE_TESTCASE =
+                            "CREATE TABLE \"TestSuiteTestCases\" ("
+                            "  \"testsuite_id\" int NOT NULL,"
+                            "  \"testcase_id\" int NOT NULL,"
+                            " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestSuites\" (\"id\"),"
+                            " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
+                            " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
+                            ");";
+                                       
+    static const
+    SqlQuery<>
+    QY_MK_RBA_FILES       = "CREATE TABLE \"RBAFiles\" ("
+                            "  \"id\" int PRIMARY KEY,"
+                            "  \"specimen_id\" int UNIQUE NOT NULL,"
+                            "  \"data\" Blob NOT NULL,"
+                            " CONSTRAINT \"fk_specimen_rba\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
+                            ");";
+  
+    //
+    // db queries
+  
+    static const
+    SqlQuery<>
+    QY_DB_INITIALIZED     = "SELECT count(*) FROM TestSuites;";  
+   
+    static const
+    SqlQuery<>
+    QY_ALL_TESTSUITES     = "SELECT rowid FROM TestSuites ORDER BY rowid;";
+    
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_TESTSUITE          = "SELECT name FROM TestSuites WHERE rowid = " + SqlInt() + ";";
+    
+    
+    static const
+    SqlQuery<bt::tuple<std::string>::inherited >     
+    QY_TESTSUITE_BY_NAME  = "SELECT rowid FROM TestSuites WHERE name = " + SqlString() + ";";    
+
+    static const
+    SqlQuery<>
+    QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited > 
+    QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
+                            "  FROM TestCases"
+                            " WHERE testsuite_id = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited> 
+    QY_SPECIMEN           = "SELECT name, binary FROM Specimens "
+                            " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<>
+    QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY rowid;";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited> 
+    QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
+                             "  FROM TestCases tc, TestSuiteTestCases tt"
+                             " WHERE tc.rowid = tt.testcase_id"
+                             "   AND tt.testsuite_id = " + SqlInt() + ";";
+                                        
+    static const                    
+    SqlQuery<bt::tuple<int, int>::inherited> 
+    QY_NEED_CONCOLIC      = ("SELECT tc.rowid"
+                            "  FROM TestCases tc, TestSuiteTestCases tt"
+                            " WHERE tc.concolic_result = 0"
+                            "   AND tc.rowid = tt.testcase_id"
+                            "   AND tt.testsuite_id = " + SqlInt() + 
+                            " LIMIT ") + SqlInt() + ";";  
+    
+    static const 
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_ALL_NEED_CONCOLIC  = "SELECT rowid"
+                            "  FROM TestCases"
+                            " WHERE concolic_result = 0"
+                            " LIMIT " + SqlInt() + ";";  
+
+    static const 
+    SqlQuery<bt::tuple<int, int>::inherited>
+    QY_NEED_CONCRETE      = ("SELECT tc.rowid"
+                            "  FROM TestCases tc, TestSuiteTestCases tt"
+                            " WHERE tc.rowid = tt.testcase_id"
+                            "   AND tt.testsuite_id = " + SqlInt() + 
+                            " ORDER BY tc.concrete_result ASC"
+                            " LIMIT ") + SqlInt() + ";";  
+    
+    
+    static const 
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_ALL_NEED_CONCRETE  = "SELECT rowid"
+                            "  FROM TestCases"
+                            " ORDER BY tc.concrete_result ASC"
+                            " LIMIT " + SqlInt() + ";";  
+
+    static const 
+    SqlQuery<>
+    QY_NEED_TESTING       = "SELECT count(*) FROM TestCases"
+                            " WHERE tc.concrete_result < 0"
+                            "    OR tc.concolic_result = 0;";
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
+                            "  FROM TestCases"
+                            " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_TESTCASE_ARGS      = "SELECT c.arg"
+                            "  FROM CmdLineArgs c, TestCaseArguments t"
+                            " WHERE c.rowid = t.cmdlinearg_id"
+                            "   AND t.testcase_id = " + SqlInt() +
+                            " ORDER BY seqnum;";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_TESTCASE_ENV       = "SELECT e.name, e.value"
+                            "  FROM EnvironmentVariables e, TestCaseVariables t"
+                            " WHERE e.rowid = t.envvar_id"
+                            "   AND t.testcase_id = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_TESTCASE_SPECIMEN  = "SELECT specimen_id"
+                            "  FROM TestCases"
+                            " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<std::string>::inherited>
+    QY_NEW_TESTSUITE      = "INSERT INTO TestSuites"
+                            "  (name)"
+                            "  VALUES(" + SqlString() + ");";
+
+    static const
+    SqlQuery<bt::tuple<std::string, int>::inherited>
+    QY_UPD_TESTSUITE      = "UPDATE TestSuites"
+                            "   SET name = "  + SqlString() +
+                            " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<std::string, std::vector<uint8_t> >::inherited>
+    QY_NEW_SPECIMEN      = "INSERT INTO Specimens"
+                           "  (name, binary)"
+                           "  VALUES(" + SqlString() + "," + SqlBlob() + ");";
+
+    static const
+    SqlQuery<bt::tuple<std::string, std::vector<uint8_t>, int>::inherited>
+    QY_UPD_SPECIMEN      = "UPDATE Specimens"
+                           "   SET name = " + SqlString() + ", binary = " + SqlBlob() +
+                           " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int, std::string, std::string>::inherited>
+    QY_NEW_TESTCASE      = "INSERT INTO TestCases"
+                           "  (specimen_id, name, executor)"
+                           "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString() + ");";
+
+    static const
+    SqlQuery<bt::tuple<int, std::string, std::string, double, bool, int>::inherited>  
+    QY_UPD_TESTCASE      = "UPDATE TestCases"
+                           "   SET specimen_id = " + SqlInt() + ", name = " + SqlString() + ","
+                           "       executor = " + SqlString() + ", concrete_result = " + SqlReal() + ","
+                           "       concolic_result = " + SqlBool() +
+                           " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_RM_TESTCASE_EVAR   = "DELETE FROM TestCaseVariables"
+                            " WHERE testcase_id = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int, int>::inherited>
+    QY_NEW_TESTCASE_EVAR = "INSERT INTO TestCaseVariables"
+                           "  (testcase_id, envvar_id)"
+                           "  VALUES(" + SqlInt() + "," + SqlInt() + ");";
+
+    static const
+    SqlQuery<bt::tuple<std::string, std::string>::inherited>
+    QY_ENVVAR_ID         = "SELECT rowid"
+                           "  FROM EnvironmentVariables"
+                           " WHERE name = " + SqlString() + " AND value = " + SqlString() + ";";
+
+    static const
+    SqlQuery<bt::tuple<std::string, std::string>::inherited>
+    QY_NEW_ENVVAR        = "INSERT INTO EnvironmentVariables"
+                           "  (name, value)"
+                           "  VALUES(" + SqlString() + "," + SqlString() + ");";
+
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_RM_TESTCASE_CARG   = "DELETE FROM TestCaseArguments"
+                            " WHERE testcase_id = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int, int, int>::inherited>
+    QY_NEW_TESTCASE_CARG = "INSERT INTO TestCaseArguments"
+                           "  (testcase_id, seqnum, cmdlinearg_id)"
+                           "  VALUES(" + SqlInt() + "," + SqlInt() + "," + SqlInt() + ");";
+
+    static const
+    SqlQuery<bt::tuple<int, int>::inherited>
+    QY_NEW_TESTSUITE_TESTCASE = "INSERT INTO TestSuiteTestCases"
+                                "  (testsuite_id, testcase_id)"
+                                "  VALUES(" + SqlInt() + "," + SqlInt() + ");";
+
+    static const
+    SqlQuery<bt::tuple<std::string>::inherited>
+    QY_CMDLINEARG_ID     = "SELECT rowid"
+                           "  FROM CmdLineArgs"
+                           " WHERE arg = " + SqlString() + ";";
+
+    static const
+    SqlQuery<bt::tuple<std::string>::inherited>
+    QY_NEW_CMDLINEARG    = "INSERT INTO CmdLineArgs"
+                           "  (arg)"
+                           "  VALUES(" + SqlString() + ");";
+    
+    static const                                    
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_COUNT_RBAFILES    = "SELECT count(*) FROM RBAFiles"
+                           "  WHERE specimen_id = " + SqlInt() + ";";
+                                        
+    static const
+    SqlQuery<bt::tuple<int, std::vector<uint8_t> >::inherited>
+    QY_NEW_RBAFILE       = "INSERT INTO RBAFiles"
+                           "  (specimen_id, data)"
+                           "  VALUES(" + SqlInt() + "," + SqlBlob() + ");";
+    
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_RBAFILE           = "SELECT data FROM RBAFiles"
+                           "  WHERE specimen_id = " + SqlInt() + ";";
+                                       
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
+                           "  WHERE specimen_id = " + SqlInt() + ";";
+                                       
+    static const
+    SqlQuery<>
+    QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
+    
+    
+    // returns the query associated with an object type
+    // @{
+
+    static
+    const SqlQuery<bt::tuple<int>::inherited >&
+    objQueryString(const TestSuiteId&) { return QY_TESTSUITE; }
+
+    static
+    const SqlQuery<bt::tuple<int>::inherited >&
+    objQueryString(const TestCaseId&)  { return QY_TESTCASE; }
+
+    static
+    const SqlQuery<bt::tuple<int>::inherited >&
+    objQueryString(const SpecimenId&)  { return QY_SPECIMEN; }
+    
+    // @}
+
+
+    // prepares and binds a query for a given object type (@ref id)
+    template <class IdTag>
+    SqlStatementPtr
+    prepareObjQuery( const SqlDatabase::TransactionPtr& tx, 
+                     const Concolic::ObjectId<IdTag>& id
+                   )
+    {
+      if (!id) throw_ex<std::logic_error>("ID not set");
+      
+      return sqlPrepare(tx, objQueryString(id), id.get());
+    }
+
+    // executes a bound query and sets the obj's data
+    // @{
     void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestSuite& obj)
     {
       obj.name(stmt->execute_string());
@@ -386,7 +726,11 @@ namespace BinaryAnalysis {
                   
       ROSE_ASSERT((++it).at_eof());
     }
+    // @}
 
+    // family of functions that query dependent objects.
+    //   (e.g., lists of associated objects)
+    
     void dependentObjQuery(Concolic::Database&, SqlTransactionPtr&, TestSuiteId, Concolic::TestSuite&)
     {
       // no dependent objects for test suites
@@ -397,15 +741,18 @@ namespace BinaryAnalysis {
       // no dependent objects for specimen
     }
 
+    // converts a row to a string object
     std::string
     retrieve_row(SqlIterator& iter, const std::string&) { return iter.get_str(0); }
 
+    // converts a row to a name value pair (pair of strings)
     std::pair<std::string, std::string>
     retrieve_row(SqlIterator& iter, const std::pair<std::string, std::string>&)
     {
       return std::make_pair(iter.get_str(0), iter.get_str(1));
     }
 
+    // converts a row to an id
     template <class Tag>
     Concolic::ObjectId<Tag>
     retrieve_row(SqlIterator& iter, const Concolic::ObjectId<Tag>&)
@@ -413,6 +760,8 @@ namespace BinaryAnalysis {
       return Concolic::ObjectId<Tag>(iter.get_i32(0));
     }
 
+    // iterator over result set that converts a single row into a single object
+    //   using the retrieve_row function family.
     template <class T>
     struct TransformingIterator : std::iterator<std::input_iterator_tag, T, void, void, void>
     {
@@ -450,53 +799,41 @@ namespace BinaryAnalysis {
         SqlIterator iter;
     };
     
+    // queries a sequence of dependent objects of type T
+    //   by executing query @ref sql.
+    template <class T>
+    std::vector<T>
+    depObjQuery(SqlTransactionPtr& tx, const SqlQuery< bt::tuple<int>::inherited >& sql, TestCaseId id)
+    {
+      typedef TransformingIterator<T> ResultIterator;
+      
+      SqlStatementPtr stmt = sqlPrepare(tx, sql, id.get());
+      ResultIterator  start(stmt->begin());
+      ResultIterator  limit(stmt->end());
+      std::vector<T>  res;
+      
+      std::copy(start, limit, std::back_inserter(res));
+      return res;
+    }
+    
+    // queries dependencies of a TestCase object
     void dependentObjQuery( Concolic::Database& db,
                             SqlTransactionPtr& tx,
                             TestCaseId id,
                             Concolic::TestCase& tmp
                           )
     {
-      // read command line arguments
-      {
-        typedef TransformingIterator<std::string> ResultIterator;
-
-        std::vector<std::string> args;
-        SqlStatementPtr          stmt = tx->statement(QY_TESTCASE_ARGS);
-
-        stmt->bind(0, id.get());
-
-        ResultIterator           start(stmt->begin());
-        ResultIterator           limit(stmt->end());
-
-        std::copy(start, limit, std::back_inserter(args));
-        tmp.args(args);
-      }
-
-      // read environment arguments
-      {
-        typedef Concolic::EnvValue             EnvValue;
-        typedef TransformingIterator<EnvValue> ResultIterator;
-
-        std::vector<EnvValue>    env;
-        SqlStatementPtr          stmt = tx->statement(QY_TESTCASE_ENV);
-
-        stmt->bind(0, id.get());
-
-        ResultIterator           start(stmt->begin());
-        ResultIterator           limit(stmt->end());
-
-        std::copy(start, limit, std::back_inserter(env));
-        tmp.env(env);
-      }
-
+      typedef Concolic::EnvValue             EnvValue;
+      
+      // read command line arguments and environment settings
+      tmp.args(depObjQuery<std::string>(tx, QY_TESTCASE_ARGS, id));
+      tmp.env (depObjQuery<EnvValue>   (tx, QY_TESTCASE_ENV,  id));
+    
       // read specimen
       {
-        SqlStatementPtr          stmt = tx->statement(QY_TESTCASE_SPECIMEN);
-
-        stmt->bind(0, id.get());
-
-        SpecimenId               specimenid(stmt->execute_int());
-        Concolic::Specimen::Ptr  specimen = db.object_ns(tx, specimenid);
+        SqlStatementPtr         stmt = sqlPrepare(tx, QY_TESTCASE_SPECIMEN, id.get());
+        SpecimenId              specimenid(stmt->execute_int());
+        Concolic::Specimen::Ptr specimen = db.object_ns(tx, specimenid);
 
         assert(specimen.getRawPointer());
         tmp.specimen(specimen);
@@ -532,74 +869,21 @@ struct DBTxGuard
     SqlTransactionPtr tx_;
 };
 
-typedef void* SqlNullType;
 
-static inline
-void sqlElemBind(SqlStatementPtr& stmt, int pos, SqlNullType)
-{
-  stmt->bind_null(pos);
-}
-
-template <class T>
-static inline
-void sqlElemBind(SqlStatementPtr& stmt, int pos, T& val)
-{
-  stmt->bind(pos, val);
-}
-
-void sqlBind(SqlStatementPtr&, const bt::null_type&, int = 0) {}
-
-template<class H, class T>
-void sqlBind(SqlStatementPtr& stmt, const bt::cons<H, T>& args, int pos = 0)
-{
-  sqlElemBind(stmt, pos, args.get_head());
-  
-  sqlBind(stmt, args.get_tail(), pos+1);  
-}
-
-template <class BoostTupleType>
-struct SqlQuery
-{
-    SqlQuery(const std::string& sql, const BoostTupleType& args)
-    : query(sql), vars(args)
-    {}
-    
-    SqlStatementPtr operator()(SqlTransactionPtr tx)
-    {
-      SqlStatementPtr stmt = tx->statement(query);
-      
-      sqlBind(stmt, vars);
-      return stmt;
-    }  
-  
-  private:
-    std::string          query;
-    const BoostTupleType vars;
-};
-
-template <class BoostTupleType>
-SqlQuery<BoostTupleType>
-sqlQuery(const std::string& sql, const BoostTupleType& args)
-{
-  return SqlQuery<BoostTupleType>(sql, args);
-}
-
-SqlQuery<bt::null_type>
-sqlQuery(const std::string& sql)
-{
-  return SqlQuery<bt::null_type>(sql, bt::make_tuple());
-}
-
-template <class IdTag, class SqlGen>
+// queries a vector of object IDs using @args to constrain the query
+template <class IdTag, class BoostTypeList, class BoostTypeTuple = bt::null_type>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, SqlGen sqlGen )
+queryIds( SqlDatabase::ConnectionPtr& dbconn, 
+          const SqlQuery<BoostTypeList>& sql, 
+          const BoostTypeTuple& args = bt::null_type()
+        )
 {
   typedef Concolic::ObjectId<IdTag>     IdClass;
   typedef std::vector<IdClass>          ResultVec;
   typedef TransformingIterator<IdClass> ResultIterator;
 
   DBTxGuard            dbtx(dbconn);
-  SqlStatementPtr      stmt = sqlGen(dbtx.tx());
+  SqlStatementPtr      stmt = sqlPrepareTuple(dbtx.tx(), sql, args);
   ResultIterator       start(stmt->begin());
   const ResultIterator limit(stmt->end());
   ResultVec            result;
@@ -610,38 +894,35 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn, SqlGen sqlGen )
   return result;
 }
 
-template <class IdTag>
-std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, std::string sql )
-{
-  return queryIds<IdTag>(dbconn, sqlQuery(sql));
-}
-
-template <class IdTag>
+// queries all objects associated with test-suite @ref id (@ref restricted)
+// if @ref id is not set, all objects are queried (@ref full)
+template <class IdTag, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
 queryIds( SqlDatabase::ConnectionPtr& dbconn, 
           TestSuiteId id, 
-          const std::string& full, 
-          const std::string& restricted
+          const SqlQuery<>& full,
+          const SqlQuery<BoostTypeList2>& restricted
         )
 {
   if (!id) return queryIds<IdTag>(dbconn, full);
   
-  return queryIds<IdTag>(dbconn, sqlQuery(restricted, bt::make_tuple(id.get())));
+  return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get()));
 }
 
-template <class IdTag>
+// in addition to the preceding function, this adds a limit to the
+//   maximum number of rows returned
+template <class IdTag, class BoostTypeList1, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
 queryIds( SqlDatabase::ConnectionPtr& dbconn, 
           TestSuiteId id, 
-          const std::string& full, 
-          const std::string& restricted,
+          const SqlQuery<BoostTypeList1>& full,
+          const SqlQuery<BoostTypeList2>& restricted,
           int limit
         )
 {
-  if (!id) queryIds<IdTag>(dbconn, sqlQuery(full, bt::make_tuple(limit)));
+  if (!id) queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
   
-  return queryIds<IdTag>(dbconn, sqlQuery(restricted, bt::make_tuple(id.get(), limit)));
+  return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get(), limit));
 }
 
 
@@ -699,10 +980,52 @@ Database::testCases()
                            );
 }
 
+//
+// start up functionality to query state and initialize DB
+
+bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
+{
+  int res = -1;
+
+  try
+  {
+    DBTxGuard       dbtx(dbconn);
+
+    res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)->execute_int();
+    dbtx.commit();
+  }
+  catch (SqlDatabase::Exception& ex)
+  {
+  }
+
+  return res >= 0;
+}
+
+
+static
+void initializeDB(SqlConnectionPtr dbconn)
+{
+  DBTxGuard         dbtx(dbconn);
+  SqlTransactionPtr tx = dbtx.tx();
+  
+  sqlPrepare(tx, QY_MK_TESTSUITES)->execute();
+  sqlPrepare(tx, QY_MK_SPECIMENS)->execute();
+  sqlPrepare(tx, QY_MK_TESTCASES)->execute();
+  sqlPrepare(tx, QY_MK_CMDLINEARGS)->execute();
+  sqlPrepare(tx, QY_MK_ENVVARS)->execute();
+  sqlPrepare(tx, QY_MK_TESTCASE_ARGS)->execute();
+  sqlPrepare(tx, QY_MK_TESTCASE_EVAR)->execute();
+  sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
+  sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
+  sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
+  dbtx.commit();
+}
+
 
 //
-// Reconstitute an object from a database ID.
+// Object Queries
 
+// Reconstitutes an object from a database ID.
 template <class IdTag, class BiMap>
 static
 typename BiMap::Forward::Value
@@ -723,45 +1046,6 @@ queryDBObject( Concolic::Database& db,
 
   objmap.insert(id, obj);
   return obj;
-}
-
-bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
-{
-  int res = -1;
-
-  try
-  {
-    DBTxGuard       dbtx(dbconn);
-    SqlStatementPtr stmt = dbtx.tx()->statement(QY_DB_INITIALIZED);
-
-    res  = stmt->execute_int();
-    dbtx.commit();
-  }
-  catch (SqlDatabase::Exception& ex)
-  {
-  }
-
-  return res >= 0;
-}
-
-
-static
-void initializeDB(SqlConnectionPtr dbconn)
-{
-  DBTxGuard         dbtx(dbconn);
-  SqlTransactionPtr tx = dbtx.tx();
-
-  tx->execute(QY_MK_TESTSUITES);
-  tx->execute(QY_MK_SPECIMENS);
-  tx->execute(QY_MK_TESTCASES);
-  tx->execute(QY_MK_CMDLINEARGS);
-  tx->execute(QY_MK_ENVVARS);
-  tx->execute(QY_MK_TESTCASE_ARGS);
-  tx->execute(QY_MK_TESTCASE_EVAR);
-  tx->execute(QY_MK_TESTSUITE_TESTCASE);
-  tx->execute(QY_MK_RBA_FILES);
-  tx->execute(QY_MK_CONCRETE_RES);
-  dbtx.commit();
 }
 
 
@@ -817,14 +1101,13 @@ _object( Database& db,
   
 int sqlLastRowId(SqlTransactionPtr tx)
 {
-  SqlStatementPtr qyid = tx->statement(QY_LAST_ROW_SQLITE3);
-
-  return qyid->execute_int();
+  return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)->execute_int();
 }
 
 TestSuite::Ptr
 Database::object(TestSuiteId id, Update::Flag update)
 {
+  // lock to protect this object's BiMap
   SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _object(*this, dbconn_, id, update, testSuites_);
@@ -853,35 +1136,35 @@ Database::object_ns(SqlTransactionPtr tx, SpecimenId id)
 }
 
 
+//
+// methods to insert new objects into the DB
+
 TestSuiteId
 insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
 {
-  SqlStatementPtr stmt = tx->statement(QY_NEW_TESTSUITE);
-
-  stmt->bind(0, obj->name());
+  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_TESTSUITE, obj->name());
+  
   stmt->execute();
-
   return TestSuiteId(sqlLastRowId(tx));
 }
 
 SpecimenId
 insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 {
-  SqlStatementPtr stmt = tx->statement(QY_NEW_SPECIMEN);
+  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_SPECIMEN, obj->name(), obj->content());
 
-  stmt->bind(0, obj->name());
-  stmt->bind(1, obj->content());
   stmt->execute();
-
   return SpecimenId(sqlLastRowId(tx));
 }
 
-void deleteTestCaseElems(SqlTransactionPtr tx, int tcid, const std::string& sqlcmd)
-{
-  SqlStatementPtr stmt = tx->statement(QY_RM_TESTCASE_CARG);
 
-  stmt->bind(0, tcid);
-  stmt->execute();
+//
+// methods to insert/update new objects into the DB
+
+void deleteTestCaseElems(SqlTransactionPtr tx, const SqlQuery<bt::tuple<int>::inherited>& query, int tcid)
+{
+  sqlPrepare(tx, query, tcid)
+    ->execute();
 }
 
 struct CmdLineArgInserter
@@ -896,19 +1179,14 @@ struct CmdLineArgInserter
 
   int queryCmdLineArgId(const std::string& arg)
   {
-    SqlStatementPtr stmt = tx->statement(QY_CMDLINEARG_ID);
-
-    stmt->bind(0, arg);
-
+    SqlStatementPtr stmt = sqlPrepare(tx, QY_CMDLINEARG_ID, arg);
     SqlIterator     iter = stmt->begin();
 
     if (iter != stmt->end())
       return iter.get_i32(0);
 
-    SqlStatementPtr ins  = tx->statement(QY_NEW_CMDLINEARG);
-
-    ins->bind(0, arg);
-    ins->execute();
+    sqlPrepare(tx, QY_NEW_CMDLINEARG, arg)
+      ->execute();
 
     return sqlLastRowId(tx);
   }
@@ -919,13 +1197,8 @@ struct CmdLineArgInserter
 
     ++num;
 
-    SqlStatementPtr stmt = tx->statement(QY_NEW_TESTCASE_CARG);
-
-    stmt->bind(0, testcaseId);
-    stmt->bind(1, num);
-    stmt->bind(2, cmdlineargId);
-    stmt->execute();
-    std::cout << "dbtest: inserted cmdlarg " << arg << std::endl;
+    sqlPrepare(tx, QY_NEW_TESTCASE_CARG, testcaseId, num, cmdlineargId)
+      ->execute();
   }
 };
 
@@ -940,21 +1213,14 @@ struct EnvVarInserter
 
   int queryEnvVarId(const EnvValue& envvar)
   {
-    SqlStatementPtr stmt = tx->statement(QY_ENVVAR_ID);
-
-    stmt->bind(0, envvar.first);
-    stmt->bind(1, envvar.second);
-
+    SqlStatementPtr stmt = sqlPrepare(tx, QY_ENVVAR_ID, envvar.first, envvar.second);
     SqlIterator     iter = stmt->begin();
 
     if (iter != stmt->end())
       return iter.get_i32(0);
 
-    SqlStatementPtr ins  = tx->statement(QY_NEW_ENVVAR);
-
-    ins->bind(0, envvar.first);
-    ins->bind(1, envvar.second);
-    ins->execute();
+    sqlPrepare(tx, QY_NEW_ENVVAR, envvar.first, envvar.second)
+      ->execute();
 
     return sqlLastRowId(tx);
   }
@@ -962,11 +1228,9 @@ struct EnvVarInserter
   void operator()(const EnvValue& envvar)
   {
     int             envvarId = queryEnvVarId(envvar);
-    SqlStatementPtr stmt = tx->statement(QY_NEW_TESTCASE_EVAR);
-
-    stmt->bind(0, testcaseId);
-    stmt->bind(1, envvarId);
-    stmt->execute();
+    
+    sqlPrepare(tx, QY_NEW_TESTCASE_EVAR, testcaseId, envvarId)
+      ->execute();
   }
 };
 
@@ -981,8 +1245,8 @@ void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
 
 void dependentObjUpdate(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
 {
-  deleteTestCaseElems(tx, tcid, QY_RM_TESTCASE_CARG);
-  deleteTestCaseElems(tx, tcid, QY_RM_TESTCASE_EVAR);
+  deleteTestCaseElems(tx, QY_RM_TESTCASE_CARG, tcid);
+  deleteTestCaseElems(tx, QY_RM_TESTCASE_EVAR, tcid);
 
   dependentObjInsert(tx, tcid, obj);
 }
@@ -995,14 +1259,12 @@ _id(Concolic::Database&, SqlConnectionPtr, ObjPtr, Update::Flag, BidirectionalMa
 TestCaseId
 insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
-  SqlStatementPtr stmt = tx->statement(QY_NEW_TESTCASE);
+  static const std::string exec = "linux";
+  
   const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
-
-  stmt->bind(0, specimenId);
-  stmt->bind(1, obj->name());
-  stmt->bind(2, "linux");
+  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec);
+  
   stmt->execute();
-
   const int       testcaseId  = sqlLastRowId(tx);
 
   dependentObjInsert(tx, testcaseId, obj);
@@ -1010,42 +1272,32 @@ insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 }
 
 void
-updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestSuite::Ptr obj, TestSuiteId id)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, TestSuite::Ptr obj, TestSuiteId id)
 {
-  SqlStatementPtr stmt = tx->statement(QY_UPD_TESTSUITE);
+  SqlStatementPtr stmt = sqlPrepare(tx, QY_UPD_TESTSUITE, obj->name(), id.get());
 
-  stmt->bind(0, obj->name());
-  stmt->bind(1, id.get());
   stmt->execute();
 }
 
 void
-updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, Specimen::Ptr obj, SpecimenId id)
+updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, Specimen::Ptr obj, SpecimenId id)
 {
-  SqlStatementPtr stmt = tx->statement(QY_UPD_SPECIMEN);
-
-  stmt->bind(0, obj->name());
-  stmt->bind(1, obj->content());
-  stmt->bind(2, id.get());
+  SqlStatementPtr stmt = sqlPrepare(tx, QY_UPD_SPECIMEN, obj->name(), obj->content(), id.get());
+  
   stmt->execute();
 }
 
 void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId id)
 {
-  const int                specimenId   = db.id_ns(tx, obj->specimen()).get();
+  const int                specId       = db.id_ns(tx, obj->specimen()).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
   /* use some negative number, since queries cannot test for nuln*/
   double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */; 
-  SqlStatementPtr          stmt         = tx->statement(QY_UPD_TESTCASE);
+  bool                     hasConc      = obj->hasConcolicTest();
     
-  stmt->bind(0, specimenId);
-  stmt->bind(1, obj->name());
-  stmt->bind(2, "linux" /* obj->executor() */);
-  stmt->bind(3, rank); 
-  stmt->bind(4, obj->hasConcolicTest());    
-  stmt->bind(5, id.get());
-  stmt->execute();
+  sqlPrepare(tx, QY_UPD_TESTCASE, specId, obj->name(), "linux", rank, hasConc, id.get())
+     ->execute();
   
   dependentObjUpdate(tx, id.get(), obj);
 }
@@ -1169,9 +1421,7 @@ Database::create(const std::string& url, const std::string& testSuiteName)
 {
     Ptr             db = instance("sqlite:" + url);  
     DBTxGuard       dbtx(db->dbconn_);  
-    SqlStatementPtr stmt = dbtx.tx()->statement(QY_TESTSUITE_BY_NAME);
-
-    stmt->bind(0, testSuiteName);
+    SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName);
     TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
     dbtx.commit();
     
@@ -1185,11 +1435,9 @@ Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_NEW_TESTSUITE_TESTCASE);
-
-  stmt->bind(0, testsuite.get());
-  stmt->bind(1, testcase.get());
-  stmt->execute();
+  
+  sqlPrepare(dbtx.tx(), QY_NEW_TESTSUITE_TESTCASE, testsuite.get(), testcase.get())
+    ->execute();
 
   dbtx.commit();
 }
@@ -1324,9 +1572,10 @@ struct GuardedDB
 
 struct GuardedStmt
 {
+    template <class T>
     explicit  
-    GuardedStmt(const std::string& sql) 
-    : sql_(sql), stmt_(NULL) 
+    GuardedStmt(const SqlQuery<T>& query) 
+    : sql_(query.sql), stmt_(NULL) 
     {}
     
     ~GuardedStmt()
@@ -1422,11 +1671,9 @@ Database::rbaExists(Database::SpecimenId id)
 {
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
   
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_COUNT_RBAFILES);
-  
-  stmt->bind(0, id.get());  
-  int res = stmt->execute_int();
+  DBTxGuard dbtx(dbconn_);
+  int       res = sqlPrepare(dbtx.tx(), QY_COUNT_RBAFILES, id.get())
+                    ->execute_int();
   
   dbtx.commit();  
   ROSE_ASSERT(res == 0 || res == 1);
@@ -1447,12 +1694,11 @@ Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId 
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
   
   DBTxGuard            dbtx(dbconn_);
-  SqlStatementPtr      stmt = dbtx.tx()->statement(QY_NEW_RBAFILE);
   std::vector<uint8_t> content = loadBinaryFile(path);
+  
+  sqlPrepare(dbtx.tx(), QY_NEW_RBAFILE, id.get(), content)
+    ->execute();
 
-  stmt->bind(0, id.get());
-  stmt->bind(1, content);
-  stmt->execute();
   dbtx.commit();  
 #endif /* WITH_DIRECT_SQLITE3 */
 }
@@ -1473,9 +1719,8 @@ Database::extractRbaFile(const boost::filesystem::path& path, Database::Specimen
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
   
   DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RBAFILE);    
+  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_RBAFILE, id.get());
   
-  stmt->bind(0, id.get());
   storeBinaryFile(stmt->execute_blob(), path);
   dbtx.commit();
 #endif /* WITH_DIRECT_SQLITE3 */
@@ -1486,10 +1731,10 @@ Database::eraseRba(Database::SpecimenId id) {
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
   
   DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_RM_RBAFILE);    
   
-  stmt->bind(0, id.get());
-  stmt->execute();
+  sqlPrepare(dbtx.tx(), QY_RM_RBAFILE, id.get())
+    ->execute();
+    
   dbtx.commit();    
 }
 
@@ -1510,7 +1755,7 @@ bool
 Database::hasUntested() const
 {
   DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = dbtx.tx()->statement(QY_NEED_TESTING);      
+  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_NEED_TESTING);
   const int       num = stmt->execute_int();
   
   dbtx.commit();      
