@@ -60,6 +60,43 @@ namespace BinaryAnalysis {
       throw ExceptionType(arg1);
     }
     
+    // type function to add types to the end of a boost::tuple
+    //   generic case
+    template <class L, class V>
+    struct bt_append
+    {
+      typedef typename L::head_type                       head_type;
+      typedef typename L::tail_type                       tail_type;
+            
+      typedef typename bt_append<tail_type, V>::type      new_tail_type;      
+      typedef typename bt::cons<head_type, new_tail_type> type;      
+    };
+    
+    //   base case
+    template <class V>
+    struct bt_append<bt::null_type, V>
+    {
+      typedef typename bt::tuple<V>::inherited type;
+    };
+    
+    template <class L>
+    struct bt_remove
+    {};
+    
+    template <class H, class T>
+    struct bt_remove<bt::cons<H, T> >
+    {
+      typedef bt::cons<H, typename bt_remove<T>::tuple_type> tuple_type;      
+      typedef typename bt_remove<T>::elem_type               elem_type;
+    };
+    
+    template <class H>
+    struct bt_remove<bt::cons<H, bt::null_type> >
+    {
+      typedef bt::null_type tuple_type;
+      typedef H             elem_type;
+    };
+    
     //
     // Type-safe SQL queries
     // 
@@ -86,10 +123,10 @@ namespace BinaryAnalysis {
     template <class L = bt::null_type >
     struct SqlQuery
     {
-      template <class PopBackTypeL, class V >
-      SqlQuery( const SqlQuery< PopBackTypeL >& p, 
-                const SqlVar< V >&
-              )
+      typedef typename bt_remove<L>::tuple_type ParentTuple;
+      typedef typename bt_remove<L>::elem_type  VarType;
+      
+      SqlQuery(const SqlQuery< ParentTuple >& p, const SqlVar< VarType >&)
       : sql(p.sql + '?')
       {}
       
@@ -104,7 +141,7 @@ namespace BinaryAnalysis {
       std::string sql;
     };
     
-    // a query holding w/o SQL placeholders
+    // a query w/o SQL placeholders
     template <> 
     struct SqlQuery<bt::null_type>
     {      
@@ -120,7 +157,7 @@ namespace BinaryAnalysis {
     };
     
     
-    // a prepared query holding with |L| unbound SQL placeholders 
+    // a prepared query with |L| unbound SQL placeholders 
     template <class L>
     struct SqlQueryPrepared
     {
@@ -149,24 +186,6 @@ namespace BinaryAnalysis {
       SqlStatementPtr sql;
     };
     
-    // type function to add types to the end of a boost::tuple
-    //   generic case
-    template <class L, class V>
-    struct bt_append
-    {
-      typedef typename L::head_type                       head_type;
-      typedef typename L::tail_type                       tail_type;
-            
-      typedef typename bt_append<tail_type, V>::type      new_tail_type;      
-      typedef typename bt::cons<head_type, new_tail_type> type;      
-    };
-    
-    //   base case
-    template <class V>
-    struct bt_append<bt::null_type, V>
-    {
-      typedef typename bt::tuple<V>::inherited type;
-    };
 
     // concatenates a query of type L with a placeholder V
     // the resulting query has type L + V
