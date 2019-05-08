@@ -500,12 +500,12 @@ namespace BinaryAnalysis {
                                         
     static const                    
     SqlQuery<bt::tuple<int, int>::inherited> 
-    QY_NEED_CONCOLIC      = ("SELECT tc.rowid"
+    QY_NEED_CONCOLIC      = "SELECT tc.rowid"
                             "  FROM TestCases tc, TestSuiteTestCases tt"
                             " WHERE tc.concolic_result = 0"
                             "   AND tc.rowid = tt.testcase_id"
                             "   AND tt.testsuite_id = " + SqlInt() + 
-                            " LIMIT ") + SqlInt() + ";";  
+                            " LIMIT " + SqlInt() + ";";  
     
     static const 
     SqlQuery<bt::tuple<int>::inherited>
@@ -516,12 +516,12 @@ namespace BinaryAnalysis {
 
     static const 
     SqlQuery<bt::tuple<int, int>::inherited>
-    QY_NEED_CONCRETE      = ("SELECT tc.rowid"
+    QY_NEED_CONCRETE      = "SELECT tc.rowid"
                             "  FROM TestCases tc, TestSuiteTestCases tt"
                             " WHERE tc.rowid = tt.testcase_id"
                             "   AND tt.testsuite_id = " + SqlInt() + 
                             " ORDER BY tc.concrete_result ASC"
-                            " LIMIT ") + SqlInt() + ";";  
+                            " LIMIT " + SqlInt() + ";";  
     
     
     static const 
