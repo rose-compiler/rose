@@ -19316,7 +19316,7 @@ void c_action_label(Token_t * lbl)
 
         SgContainsStatement* containsStatement = new SgContainsStatement();
      // Added keyword for position information (from hirotaki, pull request #8) [Rasmussen 2019.05.08]
-        SageInterface::setSourcePosition(containsStatement, keyword);
+        setSourcePosition(containsStatement, keyword);
         containsStatement->set_definingDeclaration(containsStatement);
 
         astScopeStack.front()->append_statement(containsStatement);
