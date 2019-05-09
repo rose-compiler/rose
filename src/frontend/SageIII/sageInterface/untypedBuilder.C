@@ -34,7 +34,7 @@ SgUntypedScope* buildUntypedScope(const std::string & label)
    }
 
 
-SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
+SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
 {
    SgUntypedExpression* type_kind = NULL;
    bool has_kind = false;
@@ -107,6 +107,14 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
+             case SgUntypedType::e_user_defined:
+               {
+                 is_user_defined = true;
+                 is_intrinsic = false;
+                 type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+                 break;
+               }
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Fortran type_enum %d \n", type_enum);
@@ -165,6 +173,14 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
              case SgUntypedType::e_string:
                {
                  type = new SgUntypedType("C",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+                 break;
+               }
+             case SgUntypedType::e_user_defined:
+               {
+                 is_user_defined = true;
+                 is_intrinsic = false;
+                 type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }

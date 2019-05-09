@@ -381,6 +381,10 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
 
 #if 0
    cout << "--- convertUntypedType: ut_type is " << ut_type << endl;
+   cout << "--- convertUntypedType: is_intrinsic is " << ut_type->get_is_intrinsic() << endl;
+   cout << "--- convertUntypedType: user_defined is " << ut_type->get_is_user_defined() << endl;
+   if (ut_type->get_is_user_defined())
+      cout << "                                name is " << ut_type->get_type_name() << endl;
 #endif
 
 // Temporary assertions as this conversion is completed
@@ -388,19 +392,23 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
    ROSE_ASSERT(ut_type->get_is_class() == false);
    ROSE_ASSERT(ut_type->get_is_constant() == false);
 
-// If a nonintrinsic type we only need the name
-// TODO - Fortran needs type-attr-spec-list
-   if (ut_type->get_is_intrinsic() == false) {
-      ROSE_ASSERT(ut_type->get_is_user_defined() == true);
-  //  TODO: sg_type = SgClassType::createType(ut_type->get_type_name());
-      ROSE_ASSERT(sg_type != NULL);
+   if (ut_type->get_is_user_defined() == true) {
 
-      cout << "convert SgUntypedType NAMED TYPE ..................... " << sg_type->class_name() << endl;
+   // This type should have already been created by a type declaration statement
+   //
+      SgName name = ut_type->get_type_name();
+      SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(name, scope);
+
+      if (class_symbol != NULL)
+         {
+            sg_type = class_symbol->get_type();
+         }
+      ROSE_ASSERT(sg_type != NULL);
 
       return sg_type;
    }
 
-   ROSE_ASSERT(ut_type->get_is_user_defined() == false);
+// TODO - Fortran needs type-attr-spec-list?
 
    SgExpression* kindExpression = NULL;
 
@@ -416,7 +424,6 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
          delete ut_kind;
       }
 
-// TODO - determine if SageBuilder can be used (or perhaps should be updated)
    switch(ut_type->get_type_enum_id())
       {
      // Unknown type commonly used for function parameters before actual type is declared
@@ -713,6 +720,7 @@ UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclarat
       SgName name = ut_struct->get_name();
 
 #if 1
+      cout << "\n-x- TODO: convertUntypedStructureDeclaration: specialize for Jovial (see Fortran) \n\n";
       cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
       cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
       cout << "..........\n\n";
@@ -2359,6 +2367,7 @@ UntypedConverter::convertUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt
         default:
            {
               cout << "Warning: UntypedNamedStatement stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
+              cout << "       : Could be one of the Fortran end statements (for example): ut_stmt is " << ut_stmt << endl;
            }
         }
 
@@ -2843,7 +2852,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_unknown:
          {
             cerr << "WARNING: convertSgUntypedExprListExpression: has children and enum is unknown: "
-                 << ut_expr_list->get_expression_enum() << endl;
+                 << ut_expr_list->get_expression_enum() << ": list is " << ut_expr_list <<endl;
             ROSE_ASSERT(children.size() == 0);
             ROSE_ASSERT(ut_expr_list->get_expressions().size() == 0);
             break;
@@ -2852,7 +2861,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        default:
          {
             cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is "
-                 << ut_expr_list->get_expression_enum() << endl;
+                 << ut_expr_list->get_expression_enum() << ": list is " << ut_expr_list <<endl;
          }
      }
 

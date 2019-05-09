@@ -9,7 +9,7 @@ void set_language(SgFile::languageOption_enum language);
 SgUntypedScope* buildUntypedScope(const std::string & label);
 
 //! Build an untyped type
-SgUntypedType* buildType (SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown);
+SgUntypedType* buildType (SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown, std::string name = "");
 
 //! Build an untyped array type
 SgUntypedArrayType* buildArrayType (SgUntypedType::type_enum type_enum, SgUntypedExprListExpression* shape, int rank);
