@@ -889,12 +889,12 @@ struct DBTxGuard
 };
 
 
-// queries a vector of object IDs using @args to constrain the query
-template <class IdTag, class BoostTypeList, class BoostTypeTuple = bt::null_type>
+// queries a vector of object IDs using @args to constrain the query.
+template <class IdTag, class BoostTypeList, class BoostTypeTuple> 
 std::vector<Concolic::ObjectId<IdTag> >
 queryIds( SqlDatabase::ConnectionPtr& dbconn, 
           const SqlQuery<BoostTypeList>& sql, 
-          const BoostTypeTuple& args = bt::null_type()
+          const BoostTypeTuple& args           
         )
 {
   typedef Concolic::ObjectId<IdTag>     IdClass;
@@ -912,6 +912,15 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
   dbtx.commit();
   return result;
 }
+
+// workaround for lack of function default template arguments in C++03.
+template <class IdTag, class BoostTypeList> 
+std::vector<Concolic::ObjectId<IdTag> >
+queryIds( SqlDatabase::ConnectionPtr& dbconn, const SqlQuery<BoostTypeList>& sql)
+{  
+  return queryIds<IdTag>(dbconn, sql, bt::null_type());
+}
+
 
 // queries all objects associated with test-suite @ref id (@ref restricted)
 // if @ref id is not set, all objects are queried (@ref full)
@@ -1010,7 +1019,9 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
   {
     DBTxGuard       dbtx(dbconn);
 
-    res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)->execute_int();
+    res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
+             ->execute_int();
+             
     dbtx.commit();
   }
   catch (SqlDatabase::Exception& ex)
@@ -1081,7 +1092,6 @@ _object( Database& db,
   typedef typename BidirectionalMap::Forward ForwardMap;
   typedef typename ForwardMap::Value         ResultType;
 
-  // \pp \todo id is node defined
   if (!id)
     return ResultType();
 
@@ -1120,7 +1130,8 @@ _object( Database& db,
   
 int sqlLastRowId(SqlTransactionPtr tx)
 {
-  return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)->execute_int();
+  return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)
+           ->execute_int();
 }
 
 TestSuite::Ptr
@@ -1161,18 +1172,18 @@ Database::object_ns(SqlTransactionPtr tx, SpecimenId id)
 TestSuiteId
 insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
 {
-  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_TESTSUITE, obj->name());
-  
-  stmt->execute();
+  sqlPrepare(tx, QY_NEW_TESTSUITE, obj->name())
+    ->execute();
+    
   return TestSuiteId(sqlLastRowId(tx));
 }
 
 SpecimenId
 insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 {
-  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_SPECIMEN, obj->name(), obj->content());
-
-  stmt->execute();
+  sqlPrepare(tx, QY_NEW_SPECIMEN, obj->name(), obj->content())
+    ->execute();
+    
   return SpecimenId(sqlLastRowId(tx));
 }
 
