@@ -55,7 +55,7 @@ namespace CodeThorn {
     string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
     AbstractValueSet getVariableIds() const;
     void writeTopToAllMemoryLocations();
-    void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);
+    void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void writeToMemoryLocation(AbstractValue abstractMemLoc,

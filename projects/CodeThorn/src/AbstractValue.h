@@ -73,6 +73,8 @@ class AbstractValue {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
+  // currently identical to isPtr() but already used where one unique value is required
+  bool isConstPtr() const;
   bool isPtr() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
