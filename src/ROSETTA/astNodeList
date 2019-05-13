@@ -900,6 +900,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgJovialTableType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt
