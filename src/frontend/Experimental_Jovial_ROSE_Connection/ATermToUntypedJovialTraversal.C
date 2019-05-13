@@ -1379,7 +1379,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
       SgUntypedDeclarationStatementList* decl_list = table_scope->get_declaration_list();
       ROSE_ASSERT(decl_list);
 
-      cout << ".x. traverse_TableDescription table_scope is " << table_scope << " : decl_list is " << decl_list << endl;
+      cout << "\n.x. traverse_TableDescription table_scope is " << table_scope << " : decl_list is " << decl_list << endl;
 
       if (traverse_OptStructureSpecifier(t_struc_spec, /*FIXME*/NULL)) {
          // MATCHED OptStructureSpecifier
@@ -1540,40 +1540,51 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
 
    ATerm t_pack_spec, t_item_desc, t_preset, t_body;
 
-#if 0
    SgUntypedType* declared_type;
-   SgUntypedExprListExpression* attr_list = NULL;
+
+// NO LONGER NEEDED
+// SgUntypedExprListExpression* attr_list = NULL;
 
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec,&t_item_desc,&t_preset)) {
+
+ std::cout << ".x. first branch OrdinaryEntrySpecifier \n";
 
       if (traverse_OptPackingSpecifier(t_pack_spec, /*FIXME*/NULL)) {
          // MATCHED OptPackingSpecifier
       } else return ATfalse;
 
-      attr_list = new SgUntypedExprListExpression();
-      ROSE_ASSERT(attr_list);
-      setSourcePosition(attr_list, t_item_desc);
+      //      attr_list = new SgUntypedExprListExpression();
+      //      ROSE_ASSERT(attr_list);
+      //      setSourcePosition(attr_list, t_item_desc);
 
       if (traverse_ItemTypeDescription(t_item_desc, declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
       } else return ATfalse;
 
-      cout << "FIXME: implement OrdinaryEntrySpecifier \n";
+      cout << "FIXME: implement OrdinaryEntrySpecifier: need to use declared type \n";
       ROSE_ASSERT(false);
    }
 
    else if (ATmatch(term, "OrdinaryEntrySpecifierT(<term>,<term>,<term>)", &t_pack_spec,&t_preset,&t_body)) {
 
+ std::cout << ".x. second branch OrdinaryEntrySpecifier \n";
+
       if (traverse_OptPackingSpecifier(t_pack_spec, /*FIXME*/NULL)) {
          // MATCHED OptPackingSpecifier
       } else return ATfalse;
 
-      if (traverse_OptTablePreset(t_preset, /*FIXME*/NULL)) {
-         // MATCHED OptPackingSpecifier
+      // FIXME
+      SgUntypedExpression* preset = NULL;
+
+      if (ATmatch(t_preset, "no-table-preset()")) {
+         // MATCHED no-table-preset
+      }
+      else if (traverse_TablePreset(t_preset, /*FIXME*/preset)) {
+         // MATCHED TablePreset
       } else return ATfalse;
 
-      if (traverse_OrdinaryTableBody(t_item_desc, declared_type, attr_list)) {
-         // MATCHED ItemTypeDescription
+      if (traverse_OrdinaryTableBody(t_body, decl_list)) {
+         // MATCHED OrdinaryTableBody
       } else return ATfalse;
 
       cout << "FIXME: implement OrdinaryEntrySpecifierT \n";
@@ -1581,9 +1592,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
    }
    else return ATfalse;
 
-   return ATtrue;
-#endif
    return ATfalse;
+   return ATtrue;
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableBody(ATerm term, SgUntypedDeclarationStatementList* decl_list)
