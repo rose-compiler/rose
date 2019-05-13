@@ -1,9 +1,20 @@
-
 #include "rose.h"
 #include "BinaryConcolic.h"
 
+#if defined(ROSE_HAVE_SQLITE3) && defined(__linux)
+#define TEST_CONCOLICDB 1
+#else
+#define TEST_CONCOLICDB 0
+#endif /* w/ sqlite && linux */
+
+
+#if TEST_CONCOLICDB
+
 namespace concolic = Rose::BinaryAnalysis::Concolic;
 
+/** creates a new Specimen object from the (binary) file @ref executableName
+ *  and copies it over to the DB.
+ */
 concolic::SpecimenId 
 copyBinaryToDB( concolic::Database::Ptr db, 
                 const boost::filesystem::path& executableName, 
@@ -42,6 +53,9 @@ copyBinaryToDB( concolic::Database::Ptr db,
   return concolic::SpecimenId();
 }
 
+/** creates a new TestSuite object with name @ref n
+ *  and stores it in the database @ref db.
+ */
 concolic::TestSuiteId 
 createTestSuite(concolic::Database::Ptr db, const std::string& n)
 {
@@ -78,6 +92,11 @@ createTestSuite(concolic::Database::Ptr db, const std::string& n)
   return concolic::TestSuiteId();
 }
 
+
+/** creates a new TestCase object for specimen @ref specimenId,
+ *  name @ref n, and command line arguments @ref args.
+ *  The testcase object is also stored in the database @ref db.
+ */
 concolic::TestCaseId 
 createTestCase( concolic::Database::Ptr db, 
                 concolic::SpecimenId specimenId, 
@@ -122,6 +141,10 @@ createTestCase( concolic::Database::Ptr db,
   return concolic::TestCaseId();
 }
 
+/** creates a new TestCase object for specimen @ref specimenId,
+ *  name @ref n, and command line argument @ref arg.
+ *  The testcase object is also stored in the database @ref db.
+ */
 concolic::TestCaseId 
 createTestCase( concolic::Database::Ptr db, 
                 concolic::SpecimenId specimenId, 
@@ -136,6 +159,9 @@ createTestCase( concolic::Database::Ptr db,
 }
 
 
+/** Makes testcase @ref tc a member of the testsuite @ref tc.
+ *  The relationship is stored in the database @ref db.
+ */
 void addTestToSuite( concolic::Database::Ptr db, 
                      concolic::TestCaseId tc, 
                      concolic::TestSuiteId ts
@@ -169,7 +195,8 @@ void addTestToSuite( concolic::Database::Ptr db,
   }
 }                    
 
-
+/** Runs the testcase @ref testcaseId.
+ */
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
   typedef std::auto_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
@@ -182,6 +209,8 @@ void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
   ExecutionResult            result(exec->execute(testcase));
 }
 
+/** Functor to run a new testcase.
+ */
 struct TestCaseStarter
 {
   concolic::Database::Ptr db;
@@ -196,6 +225,11 @@ struct TestCaseStarter
     runTestcase(db, id);
   }   
 };
+
+/** Runs all testcases in the database @ref db.
+ *  If set in @ref db, the testcases are limited to the current
+ *  testsuite.
+ */
 
 void testAllTestCases(concolic::Database::Ptr db)
 {
@@ -218,11 +252,10 @@ std::string extract_filename(std::string url)
 }
 
 
-void testAll()
+/** runs through a number of tests.
+ */
+void testAll(std::string dburi)
 {
-  std::string             dburi = "sqlite3://tmp/test.db";
-  //~ std::string             dburl = SqlDatabase::Connection::connectionSpecification(dburi, SqlDatabase::SQLITE3);
-  
   concolic::Database::Ptr db  = concolic::Database::instance(dburi);
   
   // add new file(s)
@@ -233,10 +266,8 @@ void testAll()
   concolic::SpecimenId              ls2_bin   = copyBinaryToDB(db, "/usr/bin/ls",        concolic::Update::YES);
   concolic::SpecimenId              grep_bin  = copyBinaryToDB(db, "/usr/bin/grep",      concolic::Update::NO );    
   concolic::SpecimenId              more_bin  = copyBinaryToDB(db, "/usr/bin/more",      concolic::Update::YES);
-  
-  //~ std::cout << "more** " << more_bin.get() << std::endl;
   if (!more_bin) more_bin = concolic::SpecimenId(3); // in case the db alreay existed
-  
+
   concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz",       concolic::Update::YES);
 
   // define test cases  
@@ -288,23 +319,36 @@ void testAll()
   std::cout << "dbtest: stored rba" << std::endl;
 }
 
-void cleanup()
+void cleanup(std::string fileUri)
 {
   boost::filesystem::remove("./old.rba");
+  boost::filesystem::remove(extract_filename(fileUri));
 }
 
-int main()
+#endif /* TEST_CONCOLICDB */
+
+
+int main(int argc, char** argv)
 {
-  static const std::string dbFileURL = "sqlite3://tmp/test.db";
+#if TEST_CONCOLICDB 
+  static const std::string defaultDBUri = "sqlite3://./test.db";
   
-  boost::filesystem::remove(extract_filename(dbFileURL));
+  std::string dbUri = (argc > 1 ? std::string(argv[1]) : defaultDBUri);
   
-  // test everything w/ an fresh DB
-  testAll();
+  // prepare a new test environment by removing any stale
+  //  database file.
+  cleanup(dbUri);
+  
+  // we  w/ a fresh DB
+  testAll(dbUri);
   
   // rerun with existing DB
-  testAll();  
+  testAll(dbUri);  
   
-  // cleanup();
+  // cleanup all files that were generated in the process.
+  cleanup(dbUri);  
+#endif /* TEST_CONCOLICDB */
+  
+  return 0;
 }
 

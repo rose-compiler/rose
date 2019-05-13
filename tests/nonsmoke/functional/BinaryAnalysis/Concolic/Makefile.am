@@ -21,7 +21,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #~ SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/BinaryAnalysis/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) #-I$(top_srcdir)/src/midend/BinaryAnalysis/libraryIdentification
 AM_LDFLAGS = $(ROSE_RPATHS)
 
 #~ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
@@ -41,23 +41,23 @@ endif
 # Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
 
-noinst_PROGRAMS += testBinaryConcolic
-testBinaryConcolic_SOURCES = testBinaryConcolic.C
-testBinaryConcolic_LDADD = 
+#~ noinst_PROGRAMS += sampleExecutable
+#~ testBinaryConcolic_SOURCES = sampleExecutable.C
+#~ testBinaryConcolic_LDADD = 
 
 
 noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-#~ TEST_TARGETS += testConcolicDB.passed
+TEST_TARGETS += testConcolicDB.passed
 
-#~ testConcolicDB.passed: testConcolicDB testBinaryConcolic
-#~ 	@$(RTH_RUN)	\
-#~ 		TITLE="t[$@]"	\
-#~ 		CMD="./testConcolicDB"	\
-#~ 		ANS="no"	\
-#~ 		$< $@
+testConcolicDB.passed: $(top_srcdir)/tests/nonsmoke/functional/BinaryAnalysis/Concolic/concolicDB.conf testConcolicDB # sampleExecutable
+	@$(RTH_RUN) \
+		TITLE="t[$@]" \
+		CMD="./testConcolicDB" \
+		ANS="no" \
+		$< $@
 
 
 ###############################################################################################################################
