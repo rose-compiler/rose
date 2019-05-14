@@ -11897,12 +11897,19 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                bool previousTemplateArgumentOutput = false;
                while (i != templateArgumentList.end())
                   {
-                    bool filterTemplateArgument = ((*i)->outputTemplateArgument() == false);
+                    bool skipTemplateArgument = false;
+                    bool stopTemplateArgument = false;
+                    (*i)->outputTemplateArgument(skipTemplateArgument, stopTemplateArgument);
+
+                    if (stopTemplateArgument) {
+                      break;
+                    }
+
 #if 0
                     printf ("filterTemplateArgument = %s \n",filterTemplateArgument ? "true" : "false");
 #endif
                  // if ((*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) 
-                    if (filterTemplateArgument == false)
+                    if (skipTemplateArgument == false)
                        {
                       // if (i != templateArgumentList.begin())
                          if (previousTemplateArgumentOutput == true)
