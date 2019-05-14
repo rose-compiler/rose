@@ -1341,8 +1341,18 @@ ROSE_DLL_API SgClassDeclaration* buildClassDeclaration_nfi(const SgName& name, S
 ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
                                                                            SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
 
+//! Build an SgDerivedTypeStatement Fortran derived type declaration with a
+//! class declaration and definition (creating both the defining and nondefining declarations as required).
+ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& name, SgScopeStatement* scope=NULL);
+
 //! Build a Jovial table declaration statement
-ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement    (const SgName& name, SgScopeStatement* scope=NULL);
+ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name, SgScopeStatement* scope=NULL);
+
+//! Build a generic class declaration statement (SgClassDeclaration or subclass) with a
+//! class declaration and definition (creating both the defining and nondefining declarations as required.
+template <class DeclClass> ROSE_DLL_API
+DeclClass * buildClassDeclarationStatement_nfi(const SgName& name, SgClassDeclaration::class_types kind,
+                                               SgScopeStatement* scope=NULL, SgClassDeclaration* nonDefiningDecl=NULL);
 
 //! Build a Jovial table declaration statement
 ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement_nfi(const SgName& name, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);

@@ -424,6 +424,11 @@ HEADER_JAVA_PARAMETER_TYPE_START
 HEADER_JAVA_PARAMETER_TYPE_END
 
 
+HEADER_JOVIAL_TABLE_TYPE_START
+          SgJovialTableType ( const SgJovialTableType & X );
+HEADER_JOVIAL_TABLE_TYPE_END
+
+
 HEADER_ENUM_TYPE_START
           SgEnumType ( const SgEnumType & X );
 HEADER_ENUM_TYPE_END
@@ -3932,6 +3937,49 @@ $CLASSNAME::get_mangled(void) const
 SOURCE_JAVA_PARAMETER_TYPE_END
 
 
+SOURCE_JOVIAL_TABLE_TYPE_START
+SgJovialTableType::SgJovialTableType ( const SgJovialTableType & X )
+   : SgClassType(X)
+   {
+   }
+
+SgName
+SgJovialTableType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+SgName
+SgJovialTableType::get_qualified_name() const
+   {
+       return this -> get_name();
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // DQ (2/10/2014): We want to iterate over the list of types and output a name from the concatination of the type names.
+     SgClassDeclaration *class_declaration = isSgClassDeclaration(get_declaration() -> get_definingDeclaration());
+     ROSE_ASSERT(class_declaration);
+     SgName mangled_name = class_declaration -> get_mangled_name();
+     SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
+     for (size_t i = 0; i < bases.size(); i++) {
+         mangled_name += "_";
+         SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
+         mangled_name += super_type -> get_mangled_name();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JOVIAL_TABLE_TYPE_END
+
+
 SOURCE_TEMPLATE_TYPE_START
 
 SgName
@@ -7338,6 +7386,27 @@ SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_
    }
 
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+// Rasmussen - why is optional_fortran_type_kind a parameter?
+SgJovialTableType*
+SgJovialTableType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     if (! cd -> get_type()) {
+         $CLASSNAME *newType = new $CLASSNAME(cd);
+         cd -> set_type(newType);
+     }
+     return ($CLASSNAME *) cd -> get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START
