@@ -4,7 +4,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 AnalysisAstAnnotator::AnalysisAstAnnotator(Labeler* labeler):AstAnnotator(labeler) {
 }

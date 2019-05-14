@@ -6,7 +6,7 @@ using namespace std;
 #include "RDTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 #if 0
 bool hasDereferenceOperation(SgExpression* exp) {

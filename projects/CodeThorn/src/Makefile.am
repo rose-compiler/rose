@@ -67,7 +67,6 @@ libspray_la_SOURCES=\
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
- SprayException.h \
  WorkListSeq.h \
  TypeSizeMapping.h \
  SgTypeSizeMapping.h \
@@ -120,7 +119,7 @@ libspray_la_SOURCES=\
  Timer.cpp
 
 libcodethorn_la_LDFLAGS= -no-undefined
-libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 libcodethorn_la_SOURCES=\
   AnalysisParameters.h             \
   Analyzer.C                       \
@@ -131,7 +130,6 @@ libcodethorn_la_SOURCES=\
   AstNodeInfo.C \
   CallString.h \
   CallString.C \
-  CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
   ParProExplorer.C                 \
@@ -363,7 +361,6 @@ analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
-  CodeThornException.h \
   CppStdUtilities.C \
   CppStdUtilities.h \
   DeadCodeAnalysis.C \

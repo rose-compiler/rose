@@ -7,12 +7,12 @@
 class ProgramInfo {
  public:
   ProgramInfo(SgProject* root);
-  ProgramInfo(SPRAY::ProgramAbstractionLayer* pal);
+  ProgramInfo(CodeThorn::ProgramAbstractionLayer* pal);
   void compute();
   std::string toStringDetailed();
   void printDetailed();
  private:
-  SPRAY::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
+  CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   SgNode* root;
   uint32_t numFunCall=0;
   uint32_t numWhileLoop=0;

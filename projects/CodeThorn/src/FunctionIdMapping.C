@@ -3,10 +3,10 @@
 #include "FunctionIdMapping.h"
 #include "RoseAst.h"
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 FunctionIdMapping::FunctionIdMapping() {
 
@@ -214,7 +214,7 @@ void FunctionIdMapping::deleteUniqueTemporaryFunctionId(FunctionId varFunctionId
     delete getSymbolFromFunctionId(varFunctionId);
   }
   else
-    throw SPRAY::Exception("FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.");
+    throw CodeThorn::Exception("FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.");
 }
 
 
@@ -270,24 +270,24 @@ void FunctionId::setIdCode(int code) {
   }
 }
 
-bool SPRAY::operator<(FunctionId id1, FunctionId id2) {
+bool CodeThorn::operator<(FunctionId id1, FunctionId id2) {
   return id1._id<id2._id;
 }
-bool SPRAY::operator==(FunctionId id1, FunctionId id2) {
+bool CodeThorn::operator==(FunctionId id1, FunctionId id2) {
   return id1._id==id2._id;
 }
-bool SPRAY::operator!=(FunctionId id1, FunctionId id2) {
+bool CodeThorn::operator!=(FunctionId id1, FunctionId id2) {
   return !(id1==id2);
 }
 
-FunctionIdSet& SPRAY::operator+=(FunctionIdSet& s1, const FunctionIdSet& s2) {
+FunctionIdSet& CodeThorn::operator+=(FunctionIdSet& s1, const FunctionIdSet& s2) {
   for(FunctionIdSet::const_iterator i=s2.begin();i!=s2.end();++i) {
     s1.insert(*i);
   }
   return s1;
 }
 
-size_t SPRAY::hash_value(const FunctionId& id) {
+size_t CodeThorn::hash_value(const FunctionId& id) {
   return id.getIdCode();
 }
 

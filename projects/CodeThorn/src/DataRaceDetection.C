@@ -8,7 +8,7 @@
 #include "OmpSupport.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
 using namespace OmpSupport;

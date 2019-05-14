@@ -7,7 +7,7 @@ using std::string;
 
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan

@@ -10,7 +10,7 @@
 #include "Miscellaneous.h"
 #include "AnalysisAbstractionLayer.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 enum CompInfoType {CIT_TOTAL=1, CIT_INT, CIT_FLOAT, CIT_NUM};
 class ComputationInfo {
@@ -123,6 +123,6 @@ class ProgramStatistics {
   bool _withSource;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

@@ -2,7 +2,7 @@
 
 #include "PromelaCodeGenerator.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 string PromelaCodeGenerator::generateCode(CfgsAndAnnotationMap& parallelComponents) {

@@ -18,7 +18,7 @@
 #include "VariableIdUtils.h"
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // VariableId is short hand for named memory
 // locations

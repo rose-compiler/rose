@@ -12,7 +12,7 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 

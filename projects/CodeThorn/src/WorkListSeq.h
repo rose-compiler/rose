@@ -12,7 +12,7 @@
 
 #include "WorkList.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   template <typename Element>
     class WorkListSeq  {

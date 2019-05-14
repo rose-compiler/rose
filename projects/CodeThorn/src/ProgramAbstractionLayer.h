@@ -7,7 +7,7 @@
 
 class SgProject;
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class ProgramAbstractionLayer {
   public:
@@ -34,6 +34,6 @@ namespace SPRAY {
     SgProject* _root=nullptr;
   };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

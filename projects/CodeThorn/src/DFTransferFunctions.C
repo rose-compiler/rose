@@ -8,7 +8,7 @@ using namespace std;
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 

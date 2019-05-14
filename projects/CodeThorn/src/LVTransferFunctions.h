@@ -4,7 +4,7 @@
 #include "DFTransferFunctions.h"
 #include "LVLattice.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class LVTransferFunctions : public DFTransferFunctions {
 public:
@@ -17,6 +17,6 @@ public:
   void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
 };
 
-} // end namespace SPRAY
+} // end namespace CodeThorn
 
 #endif

@@ -12,9 +12,9 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
-#include "SprayException.h"
+#include "CodeThornException.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
@@ -151,7 +151,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw SPRAY::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
+      throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
     SgFunctionDefinition* funDef=nullptr;
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
@@ -293,7 +293,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
     if(stmtPtrList.size()==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
-      throw SPRAY::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
+      throw CodeThorn::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
     }
     ROSE_ASSERT(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
@@ -877,7 +877,7 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
                                          EdgeType edgeTypeParam1,
                                          EdgeType edgeTypeParam2) {
   if(!(isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
-    throw SPRAY::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
+    throw CodeThorn::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
   }
   SgNode* condNode=SgNodeHelper::getCond(node);
   Label condLabel=getLabel(condNode);
@@ -1123,13 +1123,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       // target is increment expr
       SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
       if(!incExp)
-        throw SPRAY::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
+        throw CodeThorn::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
       SgNode* targetNode=incExp;
       ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else {
-      throw SPRAY::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
+      throw CodeThorn::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
     }
     return edgeSet;
   }
@@ -1274,7 +1274,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw SPRAY::Exception("Error: for-loop: empty condition not supported. Normalization required.");
+      throw CodeThorn::Exception("Error: for-loop: empty condition not supported. Normalization required.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
@@ -1289,7 +1289,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Increment Expression:
     SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
     if(!incExp)
-      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
+      throw CodeThorn::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
     ROSE_ASSERT(incExp);
     Label incExpLabel=getLabel(incExp);
     ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
@@ -1310,7 +1310,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
+    throw CodeThorn::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
   }
 }
 
