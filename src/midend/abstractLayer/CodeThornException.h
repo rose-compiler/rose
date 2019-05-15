@@ -23,4 +23,8 @@ namespace CodeThorn {
     ~NormalizationRequiredException() throw();
   };
 } // end of namespace CodeThorn
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
+
 #endif

@@ -23,4 +23,7 @@ class DFAstAttribute : public AstAttribute {
 
 }
 
+// backward compatibility
+namespace SPRAY = CodeThorn;
+
 #endif

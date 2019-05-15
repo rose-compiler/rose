@@ -32,4 +32,7 @@ class AstAnnotator {
 
 } // end of namespace CodeThorn
 
+// backward compatibility
+namespace SPRAY = CodeThorn;
+
 #endif

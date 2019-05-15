@@ -205,4 +205,7 @@ VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
 
 }
 
+// backward compatibility
+namespace SPRAY = CodeThorn;
+
 #endif
