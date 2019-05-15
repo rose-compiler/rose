@@ -228,4 +228,7 @@ class IOLabeler : public Labeler {
 
 } // end of namespace CodeThorn
 
+// backward compatibility
+namespace SPRAY = CodeThorn;
+
 #endif
