@@ -15,7 +15,7 @@
 #define NO_ESTATE -4
 #define NO_LABEL_ID std::numeric_limits<size_t>::max()
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -226,6 +226,9 @@ class IOLabeler : public Labeler {
   VariableIdMapping* _variableIdMapping;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif
