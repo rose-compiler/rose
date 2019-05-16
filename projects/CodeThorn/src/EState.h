@@ -46,7 +46,7 @@ namespace CodeThorn {
     EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
     
     std::string toString() const;
-    std::string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+    std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
     long memorySize() const;
     
@@ -63,9 +63,9 @@ namespace CodeThorn {
     /* Predicate that determines whether all variables can be determined to be bound to a constant value.
        This function uses the entire PState and all available constraints to determine constness.
     */
-    bool isConst(SPRAY::VariableIdMapping* vid) const;
-    bool isRersTopified(SPRAY::VariableIdMapping* vid) const;
-    std::string predicateToString(SPRAY::VariableIdMapping* vid) const;
+    bool isConst(CodeThorn::VariableIdMapping* vid) const;
+    bool isRersTopified(CodeThorn::VariableIdMapping* vid) const;
+    std::string predicateToString(CodeThorn::VariableIdMapping* vid) const;
     std::string programPosToString(Labeler* labeler) const;
   private:
     Label _label;
@@ -118,12 +118,12 @@ class EStateHashFun {
  EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(),_constraintSetMaintainer(0){}
  public:
    typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
-   std::string toString(SPRAY::VariableIdMapping* variableIdMapping=0) const;
+   std::string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
    EStateId estateId(const EState* estate) const;
    EStateId estateId(const EState estate) const;
    std::string estateIdString(const EState* estate) const;
    int numberOfIoTypeEStates(CodeThorn::InputOutput::OpType) const;
-   int numberOfConstEStates(SPRAY::VariableIdMapping* vid) const;
+   int numberOfConstEStates(CodeThorn::VariableIdMapping* vid) const;
  private:
    CodeThorn::ConstraintSetMaintainer* _constraintSetMaintainer; 
  };

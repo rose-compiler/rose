@@ -9,7 +9,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler),_variableIdMapping(0) {
 }

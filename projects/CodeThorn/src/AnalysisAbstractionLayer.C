@@ -6,16 +6,16 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 #include "Miscellaneous2.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace AnalysisAbstractionLayer;
 using namespace std;
 
-SPRAY::VariableIdSet
+CodeThorn::VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-  SPRAY::VariableIdMapping::VariableIdSet globalVarsIdSet;
+  CodeThorn::VariableIdMapping::VariableIdSet globalVarsIdSet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     VariableId globalVarId=variableIdMapping->variableId(*i);
     globalVarsIdSet.insert(globalVarId);
@@ -23,13 +23,13 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
   return globalVarsIdSet;
 }
 
-SPRAY::VariableIdSet
+CodeThorn::VariableIdSet
 AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-  SPRAY::VariableIdMapping::VariableIdSet usedVarsInInitializersIdSet;
+  CodeThorn::VariableIdMapping::VariableIdSet usedVarsInInitializersIdSet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(*i);
-    SPRAY::VariableIdSet usedVarsInInitializer;
+    CodeThorn::VariableIdSet usedVarsInInitializer;
     usedVarsInInitializer=AnalysisAbstractionLayer::astSubTreeVariables(initExp, *variableIdMapping);
     usedVarsInInitializersIdSet.insert(usedVarsInInitializer.begin(),usedVarsInInitializer.end());
   }
@@ -37,11 +37,11 @@ AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* p
 }
 
 
-SPRAY::VariableIdSet 
+CodeThorn::VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
   //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
-  SPRAY::VariableIdSet setOfUsedVars;
+  CodeThorn::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
     //cout<<"DEBUG: checking variable "<<(*i)->unparseToString();
     VariableId id = variableIdMapping->variableId(*i);
@@ -51,7 +51,7 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
                    << (*i)->unparseToString() << ", Symbol: " << (*i)->get_symbol() << endl;
       cerr<<exceptionMsg.str();
       //exit(1);
-      //throw SPRAY::Exception(exceptionMsg.str());
+      //throw CodeThorn::Exception(exceptionMsg.str());
     }
     setOfUsedVars.insert(id);
   }
@@ -59,7 +59,7 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
 }
 
 // TODO: this function ignores all reported memory access to unnamed memory cells
-void extractVariableIdSetFromVarsInfo(SPRAY::VariableIdSet& varIdSet, VarsInfo& varsInfo) {
+void extractVariableIdSetFromVarsInfo(CodeThorn::VariableIdSet& varIdSet, VarsInfo& varsInfo) {
     VariableIdInfoMap& vim=varsInfo.first;
     for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
       varIdSet.insert((*i).first);
@@ -108,8 +108,8 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   return resultSet;
 }
 
-SPRAY::VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
-  SPRAY::VariableIdSet vset;
+CodeThorn::VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
+  CodeThorn::VariableIdSet vset;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     VariableId vid; // default creates intentionally an invalid id.

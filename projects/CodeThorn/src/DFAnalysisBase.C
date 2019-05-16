@@ -11,7 +11,7 @@
 #include "FunctionNormalization.h"
 #include "Normalization.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 DFAnalysisBase::DFAnalysisBase()
@@ -32,7 +32,7 @@ void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(&_flow);
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new SPRAY::PASolver1(_workList,
+  _solver=new CodeThorn::PASolver1(_workList,
                       _analyzerDataPreInfo,
                       _analyzerDataPostInfo,
                       *_initialElementFactory,
@@ -208,7 +208,7 @@ void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
 }
 
-SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
+CodeThorn::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
   return _pointerAnalysisInterface;
 }
 

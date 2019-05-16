@@ -10,7 +10,7 @@
 #include "Analyzer.h" // dependency on process-functions
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility ExprAnalyzer::logger;
@@ -921,7 +921,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
                                                               EState estate, EvalMode mode) {
   SgType* operandType=node->get_operand_type();
   if(operandType) {
-    SPRAY::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
+    CodeThorn::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
     if(typeSize==0) {
       logger[ERROR]<<"sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
       exit(1);
@@ -1767,7 +1767,7 @@ void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
   cout<<"Error detected: potential out of bounds access at "<<label.toString()<<endl;
 }
 
-bool ExprAnalyzer::isStructMember(SPRAY::VariableId varId) {
+bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
   return structureAccessLookup.isStructMember(varId);
 }
 

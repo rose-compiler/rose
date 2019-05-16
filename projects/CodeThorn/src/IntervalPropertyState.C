@@ -1,13 +1,13 @@
 #include "sage3basic.h"
 #include "IntervalPropertyState.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
-SPRAY::IntervalPropertyState::IntervalPropertyState() {
+CodeThorn::IntervalPropertyState::IntervalPropertyState() {
   setBot();
 }
 
-void SPRAY::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
+void CodeThorn::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
     os<<"bot";
   } else {
@@ -16,7 +16,7 @@ void SPRAY::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim)
       if(i!=intervals.begin())
         os<<", ";
       VariableId varId=(*i).first;
-      SPRAY::NumberIntervalLattice niElem=(*i).second;
+      CodeThorn::NumberIntervalLattice niElem=(*i).second;
       if(vim)
         os<<vim->variableName(varId)<<"->"<<niElem.toString();
       else
@@ -26,7 +26,7 @@ void SPRAY::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim)
   }
 }
 
-bool SPRAY::IntervalPropertyState::approximatedBy(Lattice& other0) {
+bool CodeThorn::IntervalPropertyState::approximatedBy(Lattice& other0) {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other);
   if(isBot())
@@ -35,20 +35,20 @@ bool SPRAY::IntervalPropertyState::approximatedBy(Lattice& other0) {
     return false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    if(!SPRAY::NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
+    if(!CodeThorn::NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
       return false;
   }
   return true;
 }
 
-bool SPRAY::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) {
+bool CodeThorn::IntervalPropertyState::approximatedByAsymmetric(Lattice& other) {
   return approximatedBy(other);
 }
 
 // schroder3 (2016-08-05): Merges the "other0" IntervalPropertyState into this IntervalPropertyState.
 //  The interval of each variable in this state is joined with the interval of the corresponding
 //  variable in the "other0" state.
-void SPRAY::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joinMode) {
+void CodeThorn::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joinMode) {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other!=0);
   if(isBot()&&other->isBot())
@@ -81,33 +81,33 @@ void SPRAY::IntervalPropertyState::combineInternal(Lattice& other0, JoinMode joi
   }
 }
 
-void SPRAY::IntervalPropertyState::combine(Lattice& other0){
+void CodeThorn::IntervalPropertyState::combine(Lattice& other0){
   // schroder3 (2016-08-05): Use the exact join:
   combineInternal(other0, JM_Exact);
 }
 
-void SPRAY::IntervalPropertyState::combineAsymmetric(Lattice& other0){
+void CodeThorn::IntervalPropertyState::combineAsymmetric(Lattice& other0){
   // schroder3 (2016-08-05): Use the asymmetric join:
   combineInternal(other0, JM_InfinityAsymmetric);
 }
 
 // adds integer variable
-void SPRAY::IntervalPropertyState::addVariable(VariableId varId) {
+void CodeThorn::IntervalPropertyState::addVariable(VariableId varId) {
   setVariable(varId,NumberIntervalLattice());
 }
 
 // assign integer variable
-void SPRAY::IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
+void CodeThorn::IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
   _bot=false;
   intervals[varId]=num;
 }
 
 // assign integer variable
-NumberIntervalLattice SPRAY::IntervalPropertyState::getVariable(VariableId varId) {
+NumberIntervalLattice CodeThorn::IntervalPropertyState::getVariable(VariableId varId) {
   return intervals[varId];
 }
 
-void SPRAY::IntervalPropertyState::setEmptyState() {
+void CodeThorn::IntervalPropertyState::setEmptyState() {
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     intervals[(*i).first]=NumberIntervalLattice();
   }
@@ -116,12 +116,12 @@ void SPRAY::IntervalPropertyState::setEmptyState() {
 
 #if 0
   // adds pointer variable
-  void SPRAY::IntervalPropertyState::addPointerVariable(VariableId);
+  void CodeThorn::IntervalPropertyState::addPointerVariable(VariableId);
   // adds array elements for indices 0 to number-1
-  void SPRAY::IntervalPropertyState::addArrayElements(VariableId,int number);
+  void CodeThorn::IntervalPropertyState::addArrayElements(VariableId,int number);
 #endif
 
-VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
+VariableIdSet CodeThorn::IntervalPropertyState::allVariableIds() {
   VariableIdSet set;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     set.insert((*i).first);
@@ -129,22 +129,22 @@ VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
   return set;
 }
 
-void SPRAY::IntervalPropertyState::topifyVariableSet(VariableIdSet varIdSet) {
+void CodeThorn::IntervalPropertyState::topifyVariableSet(VariableIdSet varIdSet) {
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
-    intervals[*i]=SPRAY::NumberIntervalLattice::top();
+    intervals[*i]=CodeThorn::NumberIntervalLattice::top();
   }
 }
-void SPRAY::IntervalPropertyState::topifyAllVariables() {
+void CodeThorn::IntervalPropertyState::topifyAllVariables() {
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
-    intervals[(*i).first]=SPRAY::NumberIntervalLattice::top();
+    intervals[(*i).first]=CodeThorn::NumberIntervalLattice::top();
   }
 }
 
-bool SPRAY::IntervalPropertyState::variableExists(VariableId varId) {
+bool CodeThorn::IntervalPropertyState::variableExists(VariableId varId) {
   return intervals.find(varId)!=intervals.end();
 }
 
-bool SPRAY::IntervalPropertyState::removeVariable(VariableId varId) {
+bool CodeThorn::IntervalPropertyState::removeVariable(VariableId varId) {
   // for STL map numErased can only be 0 or 1.
   size_t numErased=intervals.erase(varId);
   return numErased==1;

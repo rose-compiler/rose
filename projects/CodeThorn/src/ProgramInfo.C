@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 ProgramInfo::ProgramInfo(ProgramAbstractionLayer* pal) {

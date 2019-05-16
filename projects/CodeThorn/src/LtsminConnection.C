@@ -10,7 +10,7 @@
 //#include "boost/unordered_set.hpp"
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 

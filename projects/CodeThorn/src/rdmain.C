@@ -25,7 +25,7 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 int main(int argc, char* argv[]) {
   bool option_rd_analysis=true;
@@ -43,11 +43,11 @@ int main(int argc, char* argv[]) {
       variableIdMapping.computeVariableSymbolMapping(root);
 
       FunctionIdMapping functionIdMapping;
-      SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
+      CodeThorn::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
       fipa.initialize();
       fipa.run();
       VariableIdSet vidset=fipa.getModByPointer();
-      cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
+      cout<<"mod-set: "<<CodeThorn::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
     }
     
     if(option_interval_analysis)
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     if(option_lv_analysis)
     {
       cout << "STATUS: creating LV analysis."<<endl;
-      SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
+      CodeThorn::LVAnalysis* lvAnalysis=new CodeThorn::LVAnalysis();
       cout << "STATUS: initializing LV analysis."<<endl;
       lvAnalysis->setBackwardAnalysis();
       lvAnalysis->initialize(root);
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
     if(option_rd_analysis)
     {
       cout << "STATUS: creating RD analyzer."<<endl;
-      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
+      CodeThorn::RDAnalysis* rdAnalysis=new CodeThorn::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;

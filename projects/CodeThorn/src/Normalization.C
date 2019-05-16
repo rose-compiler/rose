@@ -1139,7 +1139,7 @@ add
             breakTransformationList.push_back(stmt);
           } 
         } else {
-          if(options.transformBreakToGotoInLoopStmts && SPRAY::CFAnalysis::isLoopConstructRootNode(stmt)) {
+          if(options.transformBreakToGotoInLoopStmts && CodeThorn::CFAnalysis::isLoopConstructRootNode(stmt)) {
             breakTransformationList.push_back(stmt);
           }
           if(options.transformContinueToGotoInWhileStmts) {
