@@ -352,7 +352,6 @@ debugging.}
 \input{abstractHandle}
 \input{roseHPCT}
 \input{tauInstrumentation}
-\input{haskell}
 
 %-----------------------------------------------------------
 %          Parallelism
