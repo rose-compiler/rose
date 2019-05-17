@@ -570,12 +570,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_157.C \
    rose-1540-0.C \
    rose-1541-0.C \
+   rose-1701-0.C \
+   rose-1766.C \
    rose-1789-001.C \
    rose-1814.C \
    rose-1834.C \
    rose-1839.C \
    rose-1846.C \
    rose-1860.C \
+   rose-1998.C \
+   rose-2000-01.C \
+   rose-2000-02.C \
+   rose-2007-01.C \
+   rose-2007-02.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -599,9 +606,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C \
-   rose-1701-0.C \
-   rose-1766.C
+   test2019_24.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
