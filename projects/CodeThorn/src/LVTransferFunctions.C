@@ -92,13 +92,13 @@ void CodeThorn::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunction
   * \author Markus Schordan
   * \date 2014.
  */
-void CodeThorn::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
+
+void CodeThorn::LVTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   // kill
-  if(lhsVar) {
-    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
-    element.removeVariableId(varId);
+  if(lhsVarId.isValid()) {
+    element.removeVariableId(lhsVarId);
   }
   // gen return variable
   VariableId resVarId=getResultVariableId();
@@ -120,6 +120,7 @@ void CodeThorn::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunction
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
+    ROSE_ASSERT(formalParameterVarId.isValid());
     element.removeVariableId(formalParameterVarId);
 
     // generate live function-call passing parameter var

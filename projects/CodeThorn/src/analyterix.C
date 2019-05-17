@@ -543,6 +543,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     lvAnalysis->initializeTransferFunctions();
     cout << "STATUS: initializing LV global variables."<<endl;
     lvAnalysis->initializeGlobalVariables(root);
+    lvAnalysis->setSolverTrace(option_trace);
     std::string funtofind=option_start_function;
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
@@ -586,6 +587,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       rdAnalysis->initializeTransferFunctions();
       cout << "STATUS: initializing RD global variables."<<endl;
       rdAnalysis->initializeGlobalVariables(root);
+      rdAnalysis->setSolverTrace(option_trace);
       
       cout << "generating icfg_forward.dot."<<endl;
       write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
