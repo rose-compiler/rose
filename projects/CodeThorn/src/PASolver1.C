@@ -76,8 +76,8 @@ CodeThorn::PASolver1::runSolver() {
       approximatedByMemFunc = &Lattice::approximatedBy;
     }
 
-    //if(_trace)
-    //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
+    if(_trace)
+      cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
     ROSE_ASSERT(info);
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
