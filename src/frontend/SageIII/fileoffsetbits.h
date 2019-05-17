@@ -20,9 +20,13 @@
 // header includes the STL string header which will include sys/stat.h first.
 // Force 64-bit file offsets in struct stat
 #if __sun
-#ifndef _FILE_OFFSET_BITS 
-#define _FILE_OFFSET_BITS 32
-#endif /* ifndef */
+  #ifndef _FILE_OFFSET_BITS 
+    #ifdef __arch64__
+    #define _FILE_OFFSET_BITS 64
+    #else
+    #define _FILE_OFFSET_BITS 32
+    #endif /* __arch64__ */
+  #endif /* _FILE_OFFSET_BITS */
 #else
 #define _FILE_OFFSET_BITS 64
 #endif /* __sun */
