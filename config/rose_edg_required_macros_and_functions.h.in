@@ -115,6 +115,11 @@
 
 #endif
 
+#if __sun
+// PP (16/05/19): This is most likely WRONG, however some __int128_t is required on Solaris
+typedef long long int __int128_t;
+#endif /* __sun */
+
 #if __cplusplus >= 201103L
 /* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
 /* DQ (10/8/2015): Added support for Intel compiler to handle fenv.h header file. 
