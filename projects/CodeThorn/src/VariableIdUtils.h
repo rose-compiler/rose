@@ -10,7 +10,7 @@
 #include "VariableIdMapping.h"
 #include <set>
 
-namespace SPRAY {
+namespace CodeThorn {
 
 // some utility functions for sets of VariableId
 // 

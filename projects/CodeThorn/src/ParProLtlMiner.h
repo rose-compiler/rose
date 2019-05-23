@@ -4,7 +4,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "ParProEState.h"
 
 // CodeThorn includes

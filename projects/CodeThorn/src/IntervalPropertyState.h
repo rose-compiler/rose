@@ -6,7 +6,7 @@
 #include "NumberIntervalLattice.h"
 #include "PropertyState.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
@@ -22,8 +22,8 @@ public:
   // adds integer variable
   void addVariable(VariableId varId);
   void setVariable(VariableId varId,NumberIntervalLattice num);
-  NumberIntervalLattice getVariable(SPRAY::VariableId varId);
-  SPRAY::VariableIdSet allVariableIds();
+  NumberIntervalLattice getVariable(CodeThorn::VariableId varId);
+  CodeThorn::VariableIdSet allVariableIds();
   // removes variable from state. Returns true if variable existed in state, otherwise false.
   bool variableExists(VariableId varId);
   bool removeVariable(VariableId varId);
@@ -44,6 +44,6 @@ public:
   bool _bot;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

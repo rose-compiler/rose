@@ -6,26 +6,26 @@
 
 using namespace std;
 
-SPRAY::ProgramAbstractionLayer::ProgramAbstractionLayer()
+CodeThorn::ProgramAbstractionLayer::ProgramAbstractionLayer()
   :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
 }
 
-SPRAY::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
+CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
 }
 
-void SPRAY::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
+void CodeThorn::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
   _modeArrayElementVariableId=val; 
 }
 
-bool SPRAY::ProgramAbstractionLayer::getModeArrayElementVariableId() {
+bool CodeThorn::ProgramAbstractionLayer::getModeArrayElementVariableId() {
   return _modeArrayElementVariableId;; 
 }
 
-SgProject* SPRAY::ProgramAbstractionLayer::getRoot() {
+SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }
 
-void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
+void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
   CodeThorn::Normalization lowering;
   lowering.setInliningOption(getInliningOption());
@@ -38,33 +38,33 @@ void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
   getFunctionIdMapping()->computeFunctionSymbolMapping(root);
 }
 
-SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
+CodeThorn::Labeler* CodeThorn::ProgramAbstractionLayer::getLabeler(){
   ROSE_ASSERT(_labeler!=0);
   return _labeler;
 }
 
-SPRAY::VariableIdMapping* SPRAY::ProgramAbstractionLayer::getVariableIdMapping(){
+CodeThorn::VariableIdMapping* CodeThorn::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
 }
 
-SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping(){
+CodeThorn::FunctionIdMapping* CodeThorn::ProgramAbstractionLayer::getFunctionIdMapping(){
   ROSE_ASSERT(_functionIdMapping!=0);
   return _functionIdMapping;
 }
 
-void SPRAY::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {
+void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {
   _normalizationLevel=level;
 }
 
-bool SPRAY::ProgramAbstractionLayer::getNormalizationLevel() {
+bool CodeThorn::ProgramAbstractionLayer::getNormalizationLevel() {
   return _normalizationLevel;
 }
 
-void SPRAY::ProgramAbstractionLayer::setInliningOption(bool flag) {
+void CodeThorn::ProgramAbstractionLayer::setInliningOption(bool flag) {
   _inliningOption=flag;
 }
 
-bool SPRAY::ProgramAbstractionLayer::getInliningOption() {
+bool CodeThorn::ProgramAbstractionLayer::getInliningOption() {
   return _inliningOption;
 }

@@ -7,7 +7,7 @@
 #include "Miscellaneous2.h"
 #include <cctype>
 #include <cstdlib>
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-string SPRAY::replace_string(string toModify, string toReplace, string with) {
+string CodeThorn::replace_string(string toModify, string toReplace, string with) {
   size_t index = 0;
   while (true) {
     /* Locate the substring to replace. */
@@ -39,7 +39,7 @@ string SPRAY::replace_string(string toModify, string toReplace, string with) {
    istream remains unmodified if string s cannot be parsed.
  */
 bool
-SPRAY::Parse::checkWord(string w,istream& is) {
+CodeThorn::Parse::checkWord(string w,istream& is) {
   size_t i;
   for(i=0;i<w.size();i++) {
     if(is.peek()==w[i]) {
@@ -67,7 +67,7 @@ SPRAY::Parse::checkWord(string w,istream& is) {
    Returns without performing any action for an empty string w.
 */
 void
-SPRAY::Parse::parseString(string w,istream& is) {
+CodeThorn::Parse::parseString(string w,istream& is) {
   size_t i;
   char c;
   for(i=0;i<w.size();i++) {
@@ -85,12 +85,12 @@ SPRAY::Parse::parseString(string w,istream& is) {
     string s;
     is>>s;
     cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
-    throw SPRAY::Exception("Parser Error.");
+    throw CodeThorn::Exception("Parser Error.");
   }
 }
 
 bool
-SPRAY::Parse::integer(istream& is, int& num) {
+CodeThorn::Parse::integer(istream& is, int& num) {
   if(std::isdigit(is.peek())) {
     is>>num;
     return true;
@@ -100,7 +100,7 @@ SPRAY::Parse::integer(istream& is, int& num) {
 }
 
 int
-SPRAY::Parse::spaces(istream& is) {
+CodeThorn::Parse::spaces(istream& is) {
   int num=0;
   while(is.peek()==' ') {
     is.get();
@@ -110,7 +110,7 @@ SPRAY::Parse::spaces(istream& is) {
 }
 
 int
-SPRAY::Parse::whitespaces(istream& is) {
+CodeThorn::Parse::whitespaces(istream& is) {
   int num=0;
   while(std::isspace(is.peek())) {
     is.get();
@@ -120,13 +120,13 @@ SPRAY::Parse::whitespaces(istream& is) {
 }
 
 list<int>
-SPRAY::Parse::integerList(string liststring) {
+CodeThorn::Parse::integerList(string liststring) {
   list<int> intList;
       stringstream ss(liststring);
     if(ss.peek()=='[')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -138,19 +138,19 @@ SPRAY::Parse::integerList(string liststring) {
     if(ss.peek()==']')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intList;
 }
 
 list<set<int> >
-SPRAY::Parse::integerSetList(string liststring) {
+CodeThorn::Parse::integerSetList(string liststring) {
   list<set<int> > intList;
       stringstream ss(liststring);
     if(ss.peek()=='[')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at start).");
     string set;
     while(ss>>set) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -162,19 +162,19 @@ SPRAY::Parse::integerSetList(string liststring) {
     if(ss.peek()==']')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intList;
 }
 
 set<int>
-SPRAY::Parse::integerSet(string setstring) {
+CodeThorn::Parse::integerSet(string setstring) {
   set<int> intSet;
       stringstream ss(setstring);
     if(ss.peek()=='{')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at start).");
     int i;
     while(ss>>i) {
       //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
@@ -186,17 +186,17 @@ SPRAY::Parse::integerSet(string setstring) {
     if(ss.peek()=='}')
       ss.ignore();
     else
-      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+      throw CodeThorn::Exception("Error: parse integer-values: wrong input format (at end).");
 #endif
     return intSet;
 }
 
-int SPRAY::randomIntInRange(pair<int,int> range) {
+int CodeThorn::randomIntInRange(pair<int,int> range) {
   int rangeLength = range.second - range.first + 1;
   return range.first + (rand() % rangeLength);
 }
 
-list<int> SPRAY::nDifferentRandomIntsInSet(int n, set<int> values) {
+list<int> CodeThorn::nDifferentRandomIntsInSet(int n, set<int> values) {
   list<int> result;
   list<int> indices = nDifferentRandomIntsInRange(n, pair<int,int>(0, values.size() - 1));
   indices.sort();
@@ -216,7 +216,7 @@ list<int> SPRAY::nDifferentRandomIntsInSet(int n, set<int> values) {
   return result;
 }
 
-list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
+list<int> CodeThorn::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
   list<int> result;
   for (int i = 0; i < n; ++i) {
     int chosen_intermediate = randomIntInRange( pair<int,int>(range.first, (range.second - i)) );
@@ -231,7 +231,7 @@ list<int> SPRAY::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
   return result;
 }
 
-std::vector<std::string> SPRAY::Parse::commandLineArgs(std::string commandLine) {
+std::vector<std::string> CodeThorn::Parse::commandLineArgs(std::string commandLine) {
   vector<std::string> v; 		
   boost::split_regex(v, commandLine, boost::regex("( )+"));
   cout<<"Parsing command line: found "<<v.size()<<" arguments."<<endl;

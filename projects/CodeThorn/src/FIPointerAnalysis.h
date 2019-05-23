@@ -7,7 +7,7 @@
 #include "FunctionIdMapping.h"
 #include "PointerAnalysisInterface.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class FIPointerAnalysis : public PointerAnalysisInterface {
  public:
@@ -20,15 +20,15 @@ namespace SPRAY {
   VariableIdSet getModByPointer();
   VariableIdSet getAddressTakenVariables();
   FunctionIdSet getAddressTakenFunctions();
-  SPRAY::FlowInsensitivePointerInfo* getFIPointerInfo();
+  CodeThorn::FlowInsensitivePointerInfo* getFIPointerInfo();
  private:
   VariableIdMapping* _variableIdMapping;
   FunctionIdMapping* _functionIdMapping;
   SgProject* _astRoot;
-  SPRAY::FlowInsensitivePointerInfo* _fipi;
+  CodeThorn::FlowInsensitivePointerInfo* _fipi;
   VariableIdSet _modVariableIds;
   FunctionIdSet _modFunctionIds;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 #endif

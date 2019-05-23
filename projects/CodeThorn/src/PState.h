@@ -17,9 +17,9 @@ typedef int PStateId;
 
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
-using SPRAY::Edge;
+using CodeThorn::Edge;
 
-//using namespace SPRAY;
+//using namespace CodeThorn;
 
 namespace CodeThorn {
 
@@ -52,7 +52,7 @@ namespace CodeThorn {
     long memorySize() const;
     void toStream(std::ostream& os) const;
     string toString() const;
-    string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     AbstractValueSet getVariableIds() const;
     void writeTopToAllMemoryLocations();
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  

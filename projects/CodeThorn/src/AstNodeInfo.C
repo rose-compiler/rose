@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "AstNodeInfo.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 
@@ -33,15 +33,15 @@ namespace CodeThorn {
   }
 
 
-  void AstNodeInfo::setLabel(SPRAY::Label l) { 
+  void AstNodeInfo::setLabel(CodeThorn::Label l) { 
     label=l;
   }
 
-  void AstNodeInfo::setInitialLabel(SPRAY::Label l) {
+  void AstNodeInfo::setInitialLabel(CodeThorn::Label l) {
     initialLabel=l;
   }
 
-  void AstNodeInfo::setFinalLabels(SPRAY::LabelSet lset) {
+  void AstNodeInfo::setFinalLabels(CodeThorn::LabelSet lset) {
     finalLabelsSet=lset;
   }
 

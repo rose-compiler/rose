@@ -3,7 +3,7 @@
 
 #include "PropertyState.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class IntervalPropertyStateFactory : public PropertyStateFactory {
  public:

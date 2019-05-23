@@ -3,7 +3,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 #include "Labeler.h"
 #include "SgNodeHelper.h"
@@ -11,7 +11,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 Label Labeler::NO_LABEL;
 
@@ -84,7 +84,7 @@ std::string Label::toString() const {
 }
 
 // friend function
-ostream& SPRAY::operator<<(ostream& os, const Label& label) {
+ostream& CodeThorn::operator<<(ostream& os, const Label& label) {
   os<<label.toString();
   return os;
 }
@@ -170,7 +170,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_BLOCKEND: return "blockend";
   case LABEL_EMPTY_STMT: return "emptystmt";
   default:
-    throw SPRAY::Exception("Error: unknown label type.");
+    throw CodeThorn::Exception("Error: unknown label type.");
   }
 }
 
@@ -371,9 +371,9 @@ SgNode* Labeler::getNode(Label label) {
        << mappingLabelToLabelProperty.size()
        << " ]";
     string errorInfo=ss.str();
-    throw SPRAY::Exception("Labeler: getNode: label id out of bounds "+errorInfo);
+    throw CodeThorn::Exception("Labeler: getNode: label id out of bounds "+errorInfo);
   } else if(label==Label()) {
-    throw SPRAY::Exception("Labeler: getNode: invalid label id");
+    throw CodeThorn::Exception("Labeler: getNode: invalid label id");
   }
   return mappingLabelToLabelProperty[label.getId()].getNode();
 }
@@ -422,7 +422,7 @@ Label Labeler::getLabel(SgNode* node) {
     computeNodeToLabelMapping(); // sets _isValidMappingNodeToLabel to true.
     return mappingNodeToLabel[node];
   }
-  throw SPRAY::Exception("Error: internal error getLabel.");
+  throw CodeThorn::Exception("Error: internal error getLabel.");
 }
 
 long Labeler::numberOfLabels() {

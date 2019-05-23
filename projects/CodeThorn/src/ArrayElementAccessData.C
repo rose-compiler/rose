@@ -2,7 +2,7 @@
 #include "ArrayElementAccessData.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 ArrayElementAccessData::ArrayElementAccessData() {
 }

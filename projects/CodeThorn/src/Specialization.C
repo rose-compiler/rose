@@ -7,7 +7,7 @@
 #include "AstTerm.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility Specialization::logger;
