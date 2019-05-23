@@ -19,7 +19,7 @@ latexFiles = \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
    roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
    modifiers.tex howToContribute.tex virtualCFG.tex binaryConstruction.tex reductionRecognition.tex \
-   haskell.tex livenessAnalysis.tex CFGTraversalTutorial.tex parserBuildingBlocks.tex astConstruction.tex
+   livenessAnalysis.tex CFGTraversalTutorial.tex parserBuildingBlocks.tex astConstruction.tex
 
 # This is an evolving list, but these are a few of the required files
 generatedCodeExamples = \

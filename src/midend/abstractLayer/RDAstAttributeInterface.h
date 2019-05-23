@@ -7,7 +7,7 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -15,14 +15,14 @@ namespace SPRAY {
  */
 class RDAstAttributeInterface : public DFAstAttribute {
  public:
-  typedef std::pair<SPRAY::Label,VariableId> RDPair;
+  typedef std::pair<CodeThorn::Label,VariableId> RDPair;
   typedef std::set<RDPair> RDPairSet;
   typedef RDPairSet::iterator iterator;
   virtual bool isBottomElement()=0;
   virtual VariableIdSet allVariableIds()=0;
-  virtual SPRAY::LabelSet allLabels()=0;
-  virtual SPRAY::LabelSet definitionsOfVariableId(VariableId varId)=0;
-  virtual VariableIdSet variableIdsOfDefinition(SPRAY::Label def)=0;
+  virtual CodeThorn::LabelSet allLabels()=0;
+  virtual CodeThorn::LabelSet definitionsOfVariableId(VariableId varId)=0;
+  virtual VariableIdSet variableIdsOfDefinition(CodeThorn::Label def)=0;
   virtual iterator begin()=0;
   virtual iterator end()=0;
   virtual ~RDAstAttributeInterface();

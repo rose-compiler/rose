@@ -857,7 +857,7 @@ void c_action_label(Token_t * lbl)
             SgIntVal* integerValue = new SgIntVal(value, token2->text);
             ROSE_ASSERT(integerValue != NULL);
 
-            // This set the start and end source position to the beginning of the number's text string)
+            // This sets the start and end source position to the beginning of the number's text string)
             setSourcePosition(integerValue, token2);
 
             if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
@@ -19315,7 +19315,8 @@ void c_action_label(Token_t * lbl)
                 keyword != NULL ? keyword->text : "NULL");
 
         SgContainsStatement* containsStatement = new SgContainsStatement();
-        SageInterface::setSourcePosition(containsStatement);
+     // Added keyword for position information (from hirotaki, pull request #8) [Rasmussen 2019.05.08]
+        setSourcePosition(containsStatement, keyword);
         containsStatement->set_definingDeclaration(containsStatement);
 
         astScopeStack.front()->append_statement(containsStatement);

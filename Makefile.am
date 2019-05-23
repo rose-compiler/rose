@@ -81,31 +81,20 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(ACLOCAL_INCLUDE)
 
 all: remove_sage3basic_h_pch
 
-# Commmented out some very old projects, Liao, 2019 March
-#	$(MAKE) install -C $(top_builddir)/projects/LineDeleter
-#	$(MAKE) install -C $(top_builddir)/projects/mint
-#	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
-#	$(MAKE) install -C $(top_builddir)/projects/OpenMP_Translator
-#	$(MAKE) install -C $(top_builddir)/projects/vectorization
-#	$(MAKE) -C $(top_builddir)/projects/mint
-#	$(MAKE) -C $(top_builddir)/projects/LineDeleter
-#	$(MAKE) install -C $(top_builddir)/projects/vulnerabilitySeeding
 core:
 	$(MAKE) -C $(top_builddir)/src
+
+tools:
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/projects/compass
 	$(MAKE) -C $(top_builddir)/projects/autoParallelization
-	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
-	$(MAKE) -C $(top_builddir)/projects/xgenTranslator
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) -C $(top_builddir)/projects/autoTuning
-	$(MAKE) -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
-#	$(MAKE) -C $(top_builddir)/projects/vulnerabilitySeeding
 if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
 	$(MAKE) -C $(top_builddir)/projects/typeforge
 endif
@@ -116,13 +105,15 @@ endif
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
+	cp rosePublicConfig.h $(pkgincludedir)
+
+install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) install -C $(top_builddir)/projects/autoTuning
-	$(MAKE) install -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
@@ -133,7 +124,27 @@ endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
-	cp rosePublicConfig.h $(pkgincludedir)
+
+check-core: core
+	$(MAKE) check -C $(top_builddir)/src
+
+check-tools: tools
+	$(MAKE) check -C $(top_builddir)/tools
+	$(MAKE) check -C $(top_builddir)/exampleTranslators
+	$(MAKE) check -C $(top_builddir)/projects/compass
+	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) check -C $(top_builddir)/projects/autoTuning
+	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
+	$(MAKE) check -C $(top_builddir)/projects/ArithmeticMeasureTool
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) check -C $(top_builddir)/projects/typeforge
+endif
+if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
+	$(MAKE) check -C $(top_builddir)/tutorial
+endif
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
@@ -433,8 +444,6 @@ FORCE_DOCS_TO_BE_MADE:
 
 # DQ (7/25/2008): Running "make docs" introduces dependences that are inappropriate
 # for a distribution.
-# Liao (9/26/2013) We no longer support haskellport as part of the migration to EDG 4.x based ROSE
-#	   $(MAKE) -Cprojects/haskellport docs && 
 docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
