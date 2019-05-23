@@ -3355,7 +3355,7 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
      unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
+     unparse_IO_Control_Support("NML",writeStatement->get_namelist(),false,info);
      unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
 
   // F2003 specific

@@ -9,7 +9,7 @@
 #include <set>
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 /*********************

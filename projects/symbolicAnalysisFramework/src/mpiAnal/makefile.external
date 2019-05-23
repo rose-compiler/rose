@@ -1,6 +1,0 @@
-ompAnal_OBJ = -L../mpiAnal/lib/ -lmpiAnal
-ompAnal_H = ../mpiAnal/mpiAnal.h
-
-.PHONY: mpiAnal
-mpiAnal:
-	cd ${ANALYSIS_ROOT}/src/mpiAnal; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

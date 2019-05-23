@@ -302,15 +302,8 @@ bool EState::isConst(VariableIdMapping* vim) const {
     // the following two variables are special variables that are not considered to contribute to const-ness in an EState
     if(varId.toString(vim)=="__PRETTY_FUNCTION__"||varId.toString(vim)=="stderr") {
       continue;
-    }
-
-    if(ps->varIsConst(varId)) {
-      continue;
-    } else {
-      // variable non-const in PState (i.e. top/bot) -> need to investigate constraints
-      if(!cs->varAbstractValue(varId).isConstInt()) {
-        return false;
-      }
+    } else if(!ps->varIsConst(varId)) {
+      return false;
     }
   }
   return true;

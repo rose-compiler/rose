@@ -5,25 +5,25 @@
 #include "SetAlgo.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-SPRAY::RDLattice::RDLattice() {
+CodeThorn::RDLattice::RDLattice() {
   setBot();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
+void CodeThorn::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
     os<<"bot";
   } else {
     os<<"{";
-    for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
+    for(CodeThorn::RDLattice::iterator i=begin();i!=end();++i) {
       if(i!=begin())
         os<<",";
       os<<"(";
@@ -43,28 +43,28 @@ void SPRAY::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   * \author Markus Schordan
   * \date 2013.
  */
-SPRAY::RDLattice::iterator SPRAY::RDLattice::begin() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() {
   return rdSet.begin();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-SPRAY::RDLattice::iterator SPRAY::RDLattice::end() {
+CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() {
   return rdSet.end();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-size_t SPRAY::RDLattice::size() {
+size_t CodeThorn::RDLattice::size() {
   return rdSet.size();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::insertPair(Label lab,VariableId var) {
+void CodeThorn::RDLattice::insertPair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.insert(p);
   _bot=false;
@@ -73,7 +73,7 @@ void SPRAY::RDLattice::insertPair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::erasePair(Label lab,VariableId var) {
+void CodeThorn::RDLattice::erasePair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.erase(p);
 }
@@ -81,8 +81,8 @@ void SPRAY::RDLattice::erasePair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::removeAllPairsWithVariableId(VariableId var) {
-  SPRAY::RDLattice::iterator i=rdSet.begin();
+void CodeThorn::RDLattice::removeAllPairsWithVariableId(VariableId var) {
+  CodeThorn::RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
     if(var==(*i).second) {
        rdSet.erase(i++);
@@ -96,14 +96,14 @@ void SPRAY::RDLattice::removeAllPairsWithVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool SPRAY::RDLattice::isBot() {
+bool CodeThorn::RDLattice::isBot() {
   return _bot;
 } 
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::setBot() {
+void CodeThorn::RDLattice::setBot() {
   _bot=true;
 } 
 
@@ -112,13 +112,13 @@ void SPRAY::RDLattice::setBot() {
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::combine(Lattice& b) {
+void CodeThorn::RDLattice::combine(Lattice& b) {
   RDLattice* other=dynamic_cast<RDLattice*>(&b);
   ROSE_ASSERT(other);
   if(b.isBot()) {
     return;
   }
-  for(SPRAY::RDLattice::iterator i=other->begin();i!=other->end();++i) {
+  for(CodeThorn::RDLattice::iterator i=other->begin();i!=other->end();++i) {
     rdSet.insert(*i);
   }
   _bot=false;
@@ -128,7 +128,7 @@ void SPRAY::RDLattice::combine(Lattice& b) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool SPRAY::RDLattice::approximatedBy(Lattice& b0) {
+bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) {
   RDLattice& b=dynamic_cast<RDLattice&>(b0);
   if(isBot()&&b.isBot())
     return true;
@@ -142,7 +142,7 @@ bool SPRAY::RDLattice::approximatedBy(Lattice& b0) {
   assert(!isBot()&&!b.isBot());
   if(size()>b.size())
      return false;
-  for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
+  for(CodeThorn::RDLattice::iterator i=begin();i!=end();++i) {
     if(!b.exists(*i))
       return false;
   }
@@ -153,7 +153,7 @@ bool SPRAY::RDLattice::approximatedBy(Lattice& b0) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool SPRAY::RDLattice::exists(pair<Label,VariableId> p) {
+bool CodeThorn::RDLattice::exists(pair<Label,VariableId> p) {
   return rdSet.find(p)!=end();
 }
 
@@ -161,14 +161,14 @@ bool SPRAY::RDLattice::exists(pair<Label,VariableId> p) {
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::RDLattice::setEmptySet() {
+void CodeThorn::RDLattice::setEmptySet() {
   _bot=false;
   rdSet.clear();
 }
 
-SPRAY::LabelSet SPRAY::RDLattice::getRDs(VariableId varId) {
-  SPRAY::LabelSet rdSet;
-  for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
+CodeThorn::LabelSet CodeThorn::RDLattice::getRDs(VariableId varId) {
+  CodeThorn::LabelSet rdSet;
+  for(CodeThorn::RDLattice::iterator i=begin();i!=end();++i) {
     if((*i).second==varId) {
       rdSet.insert((*i).first);
     }

@@ -6,6 +6,8 @@
 #include <rose_isnan.h>
 #include <Partitioner2/BasicTypes.h>
 #include <RoseException.h>
+#include <SqlDatabase.h>
+
 
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
@@ -107,17 +109,19 @@ typedef Sawyer::SharedPointer<LinuxExitStatus> LinuxExitStatusPtr;
  *
  *  The speciment represents the thing that is to be tested, but not how to test it.  In other words, a specimen might be an
  *  executable, but not any specifics about how to run the executable such as which arguments to give it. */
-// TO BE REMOVED BY PETER: Although ROSE contains documentation for Sawyer, the real (and more complete) Sawyer documentation
-// is at https://hoosierfocus.com/sawyer
 class Specimen: public Sawyer::SharedObject {
 public:
     /** Referenc-counting pointer to a @ref Specimen. */
     typedef Sawyer::SharedPointer<Specimen> Ptr;
 
 private:
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
-    std::string name_;                                  // name of specimen (e.g., for debugging)
-    std::vector<uint8_t> content_;                     // content of the binary executable file
+    typedef std::vector<uint8_t> BinaryData;
+
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;          // protects the following data members
+    std::string  name_;                                  // name of specimen (e.g., for debugging)
+    BinaryData   content_;                               // content of the binary executable file
+    mutable bool read_only_;                             // safe guards from writing content after it has been shared;
+    bool         empty_;                                 // indicates if this object is empty
 
 private:
     friend class boost::serialization::access;
@@ -126,14 +130,20 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(content_);
+        s & BOOST_SERIALIZATION_NVP(empty_);
     }
-    
+
 protected:
-    Specimen() {}
+    Specimen()
+    : mutex_(), name_(), content_(), read_only_(false), empty_(false)
+    {}
 
 public:
-    /** Allocating constructor. */
+    /** Allocating constructor.
+     * @{ */
     static Ptr instance(const boost::filesystem::path &executableName);
+    static Ptr instance();
+    /** @} */
 
     /** Open an executable file.
      *
@@ -176,22 +186,16 @@ public:
      *  that compose the executable file.  This property is read-only, initialized when the @ref Specimen is created.
      *
      *  Thread safety: This method is thread safe. */
-    const std::vector<uint8_t>& content() const {       // reference return is okay since content never changes
-        return content_;
-    }
-    
-private:
-    // TO BE REMOVED BY PETER: Since mutex_ is not a recursive mutex, none of the thread-safe public API methods can call other
-    // thread-safe public API methods. Therefore, if one method needs to call another, you should create a non-synchronized
-    // version by appending "NS" to the name. E.g., if you want the "name" method to call "isEmpty", then you should create an
-    // isEmptyNS which is called from both "name" and "isEmpty".  The only thing that "isEmpty" does is lock the mutex and then
-    // call "isEmptyNS". The same applies for all the other thread-safe classes.  Also, remember not to return references; only
-    // return copies.
+    const std::vector<uint8_t>& content() const;
+
+    void content(std::vector<uint8_t> binary_data);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test cases
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef std::pair<std::string, std::string> EnvValue;
 
 /** Information about how to run a specimen.
  *
@@ -204,7 +208,13 @@ public:
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::string name_;                                  // name for debugging
+    std::string executor_;                              // name of execution environment
     Specimen::Ptr specimen_;                            // the thing to run
+
+    std::vector<std::string> args_;                     // command line arguments
+    std::vector<EnvValue>    env_;                      // environment variables
+    Sawyer::Optional<double> concrete_rank_;            // rank after testing
+    bool                     concolically_tested;       // true if test was run concolically
 
 protected:
     TestCase() {}
@@ -240,6 +250,33 @@ public:
     Specimen::Ptr specimen() const;
     void specimen(const Specimen::Ptr&);
     /** @} */
+
+    /** Command line arguments.
+     * @{ */
+    std::vector<std::string> args() const;
+    void args(std::vector<std::string> arguments);
+    /** @} */
+
+    /** Environment variables.
+     * @{ */
+    std::vector<EnvValue> env() const;
+    void env(std::vector<EnvValue> envvars);
+    /** @} */
+    
+    /** returns if the test has been run concollically. */
+    bool hasConcolicTest() const;
+    
+    /** sets the status of the concolic test to true. */
+    void concolicTest(bool);
+    
+    /** returns if the test has been run concretely. */
+    bool hasConcreteTest() const;
+    
+    /** returns the concrete rank. */
+    Sawyer::Optional<double> concreteRank() const;
+    
+    /** sets the concrete rank. */
+    void concreteRank(Sawyer::Optional<double> val);
 
     // We'll need to add additional information about how to run the specimen:
     //   1. Command-line arguments (argc, argv)
@@ -290,6 +327,8 @@ public:
             ASSERT_forbid(rose_isnan(rank));
         }
         virtual ~Result() {}
+        
+        double rank() const { return rank_; }
 
     private:
         friend class boost::serialization::access;
@@ -303,16 +342,15 @@ public:
 protected:
     // Allocating constructors should be implemente by the non-abstract subclasses.
     ConcreteExecutor() {}
-    
+
 public:
     /** Execute one test case synchronously.
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-#if __cplusplus >= 201103L // needs to be fixed. Commented out for Jenkins testing.
-    // TO BE REMOVED BY PETER: Oops, the return value of "execute" is a C++11 type. We'll need to change that.
-    virtual std::unique_ptr<Result> execute(const TestCase::Ptr&) = 0;
-#endif
+    virtual    
+    Result*
+    execute(const TestCase::Ptr&) = 0;
 };
 
 
@@ -335,7 +373,7 @@ public:
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutor::Result);
             s & BOOST_SERIALIZATION_NVP(exitStatus_);
         }
-        
+
     public:
         Result(int exitStatus);
 
@@ -376,10 +414,9 @@ public:
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
 
-#if __cplusplus >= 201103L // needs to be fixed; commented out for Jenkins testing
-    // TO BE REMOVED BY PETER: Oops, C++11 return type.
-    virtual std::unique_ptr<ConcreteExecutor::Result> execute(const TestCase::Ptr&) ROSE_OVERRIDE;
-#endif
+    virtual
+    ConcreteExecutor::Result*
+    execute(const TestCase::Ptr&) ROSE_OVERRIDE;
 };
 
 
@@ -496,33 +533,89 @@ public:
  *  Objects within a database have an ID number, and these ID numbers are type-specific. When an object is inserted (copied)
  *  into a database a new ID number is returned. The @ref Database object memoizes the association between object IDs and
  *  objects. */
+
+template <class Tag>
+struct ObjectId : Sawyer::Optional<int>
+{
+  typedef Sawyer::Optional<int> Super;
+  typedef int                   Value;
+
+  ObjectId() : Super() {}
+
+  explicit
+  ObjectId(const Value& v)
+  : Super(v)
+  {}
+  
+  ObjectId(const ObjectId& rhs)
+  : Super(rhs)
+  {}
+
+  ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs)
+  {
+    this->Super::operator=(lhs);    
+    
+    return *this;
+  }
+  
+  ObjectId<Tag>& operator=(const Value& v)
+  {
+    this->Super::operator=(v);    
+    
+    return *this;
+  }
+
+  template<class _Tag>
+  friend
+  bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
+};
+
+  template<class Tag>
+  inline
+  bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
+  {
+    static const int noid = -1;
+
+    const int lhsid = lhs.orElse(noid);
+    const int rhsid = rhs.orElse(noid);
+
+    return lhsid < rhsid;
+  }
+
+
+typedef ObjectId<TestSuite> TestSuiteId;
+typedef ObjectId<Specimen>  SpecimenId;
+typedef ObjectId<TestCase>  TestCaseId;
+
 class Database: public Sawyer::SharedObject, boost::noncopyable {
 public:
     /** Reference counting pointer to @ref Database. */
     typedef Sawyer::SharedPointer<Database> Ptr;
 
-    /** Base class for object IDs */
-    typedef Sawyer::Optional<int> ObjectId;
-    
-    /** ID numbers for test suites. */
-    struct TestSuiteId: ObjectId {};
+    typedef ::Rose::BinaryAnalysis::Concolic::TestSuiteId TestSuiteId;
+    typedef ::Rose::BinaryAnalysis::Concolic::SpecimenId  SpecimenId;
+    typedef ::Rose::BinaryAnalysis::Concolic::TestCaseId  TestCaseId;
 
-    /** ID numbers for specimens. */
-    struct SpecimenId: ObjectId {};
+private:    
+    SqlDatabase::ConnectionPtr                            dbconn_; // holds connection to database
 
-    /** ID numbers for test cases. */
-    struct TestCaseId: ObjectId {};
+    // The lock protects the following concurrent accesses
+    //   - memoized data
+    //   - testSuiteId_
+    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;         
 
-private:
     // Memoization of ID to object mappings
-    Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr> specimens_;
-    Sawyer::Container::BiMap<TestCaseId, TestCase::Ptr> testCases_;
+    Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
+    Sawyer::Container::BiMap<TestCaseId, TestCase::Ptr>   testCases_;
     Sawyer::Container::BiMap<TestSuiteId, TestSuite::Ptr> testSuites_;
-    
+
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
-    
+
 protected:
-    Database() {}
+    Database()
+    : dbconn_(), mutex_(), specimens_(), testCases_(), testSuites_(), 
+      testSuiteId_()
+    {}
 
 public:
     /** Open an existing database.
@@ -570,7 +663,7 @@ public:
      *  If this database object has a current test suite, then the return value is limited to specimens used by that test
      *  suite, otherwise all specimens are returned. */
     std::vector<SpecimenId> specimens();
-    
+
     //------------------------------------------------------------------------------------------------------------------------
     // Test cases
     //------------------------------------------------------------------------------------------------------------------------
@@ -595,6 +688,13 @@ public:
     TestCase::Ptr object(TestCaseId, Update::Flag update = Update::YES);
     Specimen::Ptr object(SpecimenId, Update::Flag update = Update::YES);
     /** @} */
+    
+    
+    /** Reconstitute an object from a database ID as part of a subquery.
+     * 
+     *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
+     */
+    Specimen::Ptr object_ns(SqlDatabase::TransactionPtr tx, SpecimenId id);
 
     /** Returns an ID number for an object, optionally writing to the database.
      *
@@ -608,6 +708,17 @@ public:
     TestCaseId id(const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
+    
+    /** Returns an ID number for an object, optionally writing to the database.
+     * 
+     * The functions are executed in the context of some other transaction.
+     * 
+     *  Thread safety: not thread safe 
+     */
+    TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuite::Ptr&);
+    TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&);
+    SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&);
+    
 
     //------------------------------------------------------------------------------------------------------------------------
     // Cached info about disassembly. This is large data. Each specimen has zero or one associated RBA data blob.
@@ -646,6 +757,36 @@ public:
      *
      *  Thread safety: Not thread safe. */
     void eraseRba(SpecimenId);
+    
+    /** Associate TestCase w/ TestSuite
+     *
+     * Thread safety: thread safe
+     */ 
+   void assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite);
+   
+   /** returns @ref n testcases without concrete results. 
+    * 
+    * Thread safety: thread safe
+    */
+   std::vector<Database::TestCaseId> needConcreteTesting(size_t);
+   
+   /** returns @ref n testcases without concolic results. 
+    * 
+    * Thread safety: thread safe
+    */
+   std::vector<Database::TestCaseId> needConcolicTesting(size_t);
+
+   /** updates a testcase and its results.
+    * 
+    * Thread safety: thread safe
+    */
+   void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
+   
+   /** tests if there are more test cases that require testing.
+    * 
+    * Thread safety: thread safe
+    */   
+   bool hasUntested() const;
 };
 
 
@@ -671,7 +812,7 @@ protected:
         : database_(db) {
         ASSERT_not_null(db);
     }
-    
+
 public:
     virtual ~ExecutionManager() {}
 
@@ -755,10 +896,23 @@ public:
      *  If a test suite name is specified then it must exist in the database. If no test suite name is specified then the
      *  database must contain exactly one test suite which is the one that will be used. The actual run is not commenced until
      *  @ref run is called. */
-    static Ptr instance(const std::string databaseUri, const std::string &testSuiteName = "");
+    static Ptr instance(const std::string& databaseUri, const std::string &testSuiteName = "");
 
     virtual void run() ROSE_OVERRIDE;
 };
+
+/** Loads a binary file 
+ * 
+ * Throws a std::runtime_error if the file cannot be opened.
+ */
+std::vector<uint8_t> loadBinaryFile(const boost::filesystem::path& path);
+
+/** Stores a binary file 
+ * 
+ * Throws a std::runtime_error if the file cannot be opened.
+ */
+void storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& path);
+
 
 } // namespace
 } // namespace

@@ -19,7 +19,7 @@ namespace CodeThorn {
   */
   class Threadification {
   public:
-    Threadification(SPRAY::VariableIdMapping* vim);
+    Threadification(CodeThorn::VariableIdMapping* vim);
     virtual ~Threadification();
     // this transformation introduces new code as strings. It cannot be used for rewrites.
     void transform(SgNode* root);
@@ -29,7 +29,7 @@ namespace CodeThorn {
       integer variables, integer pointer variables, and they reside in
       the same file (SgFile) (not in a std-header file).
      */
-    virtual SPRAY::VariableIdSet determineVariablesOfInterest(SgNode* root);
+    virtual CodeThorn::VariableIdSet determineVariablesOfInterest(SgNode* root);
 
     /* transform variable declarations: 
        int  var = ... ; ==> int*  var;
@@ -38,7 +38,7 @@ namespace CodeThorn {
        param: varIdSet: the set of variables for which the
        declarations are to be transformed
     */
-    void transformVariableDeclarations(SgNode* root, SPRAY::VariableIdSet varIdSet);
+    void transformVariableDeclarations(SgNode* root, CodeThorn::VariableIdSet varIdSet);
     void transformVariableDeclaration(SgVariableDeclaration* varDecl);
 
     /* transform uses of variables:
@@ -51,10 +51,10 @@ namespace CodeThorn {
        variable is to be transformed. This set is supposed to only
        include variables and pointer variables (but no arrays).
      */
-    void transformVariableAccesses(SgNode* root, SPRAY::VariableIdSet varIdSet);
+    void transformVariableAccesses(SgNode* root, CodeThorn::VariableIdSet varIdSet);
     void transformVariableAccess(SgVarRefExp* varRefExp);
-    void transformVariableAccess(SgPntrArrRefExp* arrRefExp, SPRAY::VariableIdSet varIdSet);
-    SPRAY::VariableIdMapping* _variableIdMapping;
+    void transformVariableAccess(SgPntrArrRefExp* arrRefExp, CodeThorn::VariableIdSet varIdSet);
+    CodeThorn::VariableIdMapping* _variableIdMapping;
   };
 } // end of namespace CodeThorn
 

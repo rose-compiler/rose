@@ -6,14 +6,14 @@
 #include <string>
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class Lattice {
  public:
   Lattice();
   virtual bool isBot();
-  virtual void toStream(std::ostream& os, SPRAY::VariableIdMapping* vim);
-  virtual std::string toString(SPRAY::VariableIdMapping* vim=0);
+  virtual void toStream(std::ostream& os, CodeThorn::VariableIdMapping* vim);
+  virtual std::string toString(CodeThorn::VariableIdMapping* vim=0);
   virtual bool approximatedBy(Lattice& other)=0;
   // schroder3 (2016-08-05): Asymmetric variant of approximatedBy. Default implementation
   //  calls the "normal" approximatedBy. The asymmetric variant is for example used to check

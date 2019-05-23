@@ -382,7 +382,7 @@ ConnectionImpl::dec_driver_connection(size_t idx)
         case POSTGRESQL: {
             // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
             // create more transactions on that connection.
-            
+
             // Also, libpqxx3 has a bug in the pqxx::transaction<> destructor: if the transaction commit() method is called,
             // then the d'tor executes a conditional jump or move that depends on unitialized values (according to valgrind).
             // This occurs in:
@@ -672,7 +672,7 @@ TransactionImpl::rollback()
         ss <<"transaction: "; print(ss);
         fprintf(debug, "SqlDatabase: rolling back transaction\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
     }
-    
+
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
@@ -880,6 +880,8 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t>&);
+    StatementPtr bind_null(const StatementPtr &stmt, size_t idx);
     std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
@@ -1005,6 +1007,24 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val
     placeholders[idx].second = escape(val, tranx->driver());
     return stmt;
 }
+
+StatementPtr
+StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t> &val)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = hexSequence(val, tranx->driver());
+    return stmt;
+}
+
+StatementPtr
+StatementImpl::bind_null(const StatementPtr &stmt, size_t idx)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = "NULL";
+    return stmt;
+}
+
+
 
 // Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
 std::string
@@ -1177,6 +1197,16 @@ Statement::execute_string()
     return i.get<std::string>(0);
 }
 
+std::vector<uint8_t> 
+Statement::execute_blob()
+{
+    iterator i = begin();
+    if (i==end())
+        throw Exception("statement did not return any rows\n" + StringUtility::prefixLines(impl->sql, "  sql: ") + "\n",
+                        impl->tranx->impl->conn, impl->tranx, shared_from_this());
+    return i.get_blob(0);
+}
+
 void
 Statement::set_debug(FILE *debug)
 {
@@ -1204,6 +1234,8 @@ StatementPtr Statement::bind(size_t idx, uint32_t val) { return impl->bind(share
 StatementPtr Statement::bind(size_t idx, uint64_t val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, double val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, const std::string &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, const std::vector<uint8_t> &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind_null(size_t idx) { return impl->bind_null(shared_from_this(), idx); }
 
 /*******************************************************************************************************************************
  *                                      Statement iterators
@@ -1470,6 +1502,37 @@ Statement::iterator::get_str(size_t idx)
     return retval;
 }
 
+std::vector<uint8_t>
+Statement::iterator::get_blob(size_t idx)
+{
+    std::vector<uint8_t> retval;
+    check();
+    switch (stmt->driver()) {
+#ifdef ROSE_HAVE_SQLITE3
+        case SQLITE3: {
+            std::string data = stmt->impl->sqlite3_cursor->getblob(idx);
+            
+            retval.reserve(data.size());
+            std::copy(data.begin(), data.end(), std::back_inserter(retval));
+            break;
+        }
+#endif
+
+#ifdef ROSE_HAVE_LIBPQXX
+        case POSTGRESQL: {
+            assert(!"BLOBS (or BYTEA) not yet supported in Postgres interface");
+            abort();
+        }
+#endif
+
+        default:
+            assert(!"database driver not supported");
+            abort();
+    }
+    return retval;
+}
+
+
 template<> NoColumn Statement::iterator::get<NoColumn>(size_t idx) { return NoColumn(); }
 template<> int32_t Statement::iterator::get<int32_t>(size_t idx) { return get_i32(idx); }
 template<> int64_t Statement::iterator::get<int64_t>(size_t idx) { return get_i64(idx); }
@@ -1533,7 +1596,58 @@ escape(const std::string &s, Driver driver, bool quote)
         retval = std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
     return retval;
 }
+
+struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+    explicit
+    hex_appender(std::string& res)
+    : sink(&res)
+    {}
     
+    static
+    char hexDigit(uint8_t digit)
+    {
+      ROSE_ASSERT(digit < 16);
+      
+      if (digit < 10) return '0' + digit;
+      
+      return 'A' + (digit - 10);
+    }
+
+    hex_appender& operator=(const uint8_t& value)
+    {
+      char hexval[] = { hexDigit(value/16), hexDigit(value%16), 0 };
+      
+      //~ std::cout << ": " << hexval << "." << std::endl;
+      sink->append(hexval);
+      return *this;
+    }
+
+    hex_appender& operator*()     { return *this; }
+    hex_appender& operator++()    { return *this; }
+    hex_appender& operator++(int) { return *this; }
+
+  private:
+    std::string* sink;
+};
+
+
+std::string
+hexSequence(const std::vector<uint8_t> &v, Driver driver)
+{
+    static const std::string HEXPRE  = "X'";
+    static const std::string HEXPOST = "'";
+
+    size_t      len = HEXPRE.size() + 2*v.size() + HEXPOST.size();
+    std::string retval;
+
+    retval.reserve(len);
+    retval.append(HEXPRE);
+    std::copy(v.begin(), v.end(), hex_appender(retval));
+    retval.append(HEXPOST);
+    return retval;
+}
+
 bool
 is_valid_table_name(const std::string &name)
 {

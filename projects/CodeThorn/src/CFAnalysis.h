@@ -12,7 +12,7 @@
 #include "CommandLineOptions.h"
 #include "Flow.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -20,8 +20,8 @@ namespace SPRAY {
  */
 class CFAnalysis {
  public:
-  CFAnalysis(SPRAY::Labeler* l);
-  CFAnalysis(SPRAY::Labeler* l, bool createLocalEdge);
+  CFAnalysis(CodeThorn::Labeler* l);
+  CFAnalysis(CodeThorn::Labeler* l, bool createLocalEdge);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);
@@ -40,7 +40,7 @@ class CFAnalysis {
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
-  SPRAY::Labeler* getLabeler();
+  CodeThorn::Labeler* getLabeler();
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
@@ -83,7 +83,7 @@ class CFAnalysis {
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
-  SPRAY::Labeler* labeler;
+  CodeThorn::Labeler* labeler;
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
 };    

@@ -7,7 +7,7 @@
 #include "sage3basic.h"
 #include "GenericIntervalLattice.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class Number {
   public:
@@ -44,7 +44,7 @@ namespace SPRAY {
 
   std::ostream& operator<< (std::ostream &out, Number &number);
  
-  class NumberIntervalLattice : public SPRAY::GenericIntervalLattice<Number> {
+  class NumberIntervalLattice : public CodeThorn::GenericIntervalLattice<Number> {
   public:
     NumberIntervalLattice();
     NumberIntervalLattice(Number value);

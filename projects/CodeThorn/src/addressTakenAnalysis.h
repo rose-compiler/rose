@@ -23,7 +23,7 @@
  ***************** ProcessQuery  *****************
  *************************************************/
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class ProcessQuery
 {
@@ -237,6 +237,6 @@ public:
   VariableIdMapping& getVariableIdMapping();
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

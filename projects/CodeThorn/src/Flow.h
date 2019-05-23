@@ -8,7 +8,7 @@
 
 #include "Sawyer/Graph.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
 
@@ -169,7 +169,7 @@ namespace SPRAY {
     
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
-    SPRAY::Flow reverseFlow();
+    CodeThorn::Flow reverseFlow();
   private:
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;

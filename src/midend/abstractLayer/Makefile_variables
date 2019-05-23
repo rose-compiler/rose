@@ -1,7 +1,7 @@
 # Non-recursive Makefile
 
 mAbstractLayer_includeHeaders=\
-	$(mAbstractLayerPath)/SprayException.h \
+	$(mAbstractLayerPath)/CodeThornException.h \
 	$(mAbstractLayerPath)/AstAnnotator.h \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.h \
 	$(mAbstractLayerPath)/DFAstAttribute.h \
@@ -11,6 +11,7 @@ mAbstractLayer_includeHeaders=\
 	$(mAbstractLayerPath)/VariableIdMapping.h
 
 mAbstractLayer_la_sources=\
+	$(mAbstractLayerPath)/CodeThornException.C \
 	$(mAbstractLayerPath)/AstAnnotator.C \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.C \
 	$(mAbstractLayerPath)/DFAstAttribute.C \
