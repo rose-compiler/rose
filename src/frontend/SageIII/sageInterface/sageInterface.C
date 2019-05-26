@@ -23649,6 +23649,10 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
   std::vector<SgType *> seen_types;
 
   while (type != NULL) {
+
+ // DQ (4/15/2019): Added assertion.
+    ROSE_ASSERT(type != NULL);
+
     std::vector<SgType *>::const_iterator it = std::find(seen_types.begin(), seen_types.end(), type);
     if (it != seen_types.end()) {
       printf("ERROR: Cycle found in type = %p (%s):\n", type, type->class_name().c_str());
@@ -23668,12 +23672,22 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
     SgArrayType *     arrayType   = isSgArrayType(type);
     SgTypedefType *   typedefType = isSgTypedefType(type);
 
+#if 0
+ // DQ (4/15/2019): Don't count SgPointerMemberType (also fixed in SgType::stripType() function).
+    if (isSgPointerMemberType(type) != NULL)
+      {
+        pointType = NULL;
+      }
+#endif
+
     if ( modType ) {
       type = modType->get_base_type();
     } else if ( refType ) {
       type = refType->get_base_type();
     } else if ( pointType ) {
       type = pointType->get_base_type();
+ // } else if ( pointerMemberType ) {
+ //   type = pointerMemberType->get_base_type();
     } else if ( arrayType ) {
       type = arrayType->get_base_type();
     } else if ( typedefType ) {
