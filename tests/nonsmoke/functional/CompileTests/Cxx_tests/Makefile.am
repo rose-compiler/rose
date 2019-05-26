@@ -570,12 +570,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_157.C \
    rose-1540-0.C \
    rose-1541-0.C \
+   rose-1701-0.C \
+   rose-1766.C \
    rose-1789-001.C \
    rose-1814.C \
    rose-1834.C \
    rose-1839.C \
    rose-1846.C \
    rose-1860.C \
+   rose-1998.C \
+   rose-2000-01.C \
+   rose-2000-02.C \
+   rose-2007-01.C \
+   rose-2007-02.C \
+   rose-2008.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -599,9 +607,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C \
-   rose-1701-0.C \
-   rose-1766.C
+   test2019_24.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
@@ -1280,7 +1286,11 @@ if USING_INTEL_COMPILER
      test2014_211.C \
      test2006_08.C \
      test2006_37.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     rose-1962.C
 else
+  TESTCODE_CURRENTLY_FAILING += \
+     rose-1962.C
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2014_159.C \
      test2014_211.C \
@@ -1564,9 +1574,12 @@ test_ansi_and_nonansi_modes:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -ansi -c $(srcdir)/test_ansi.C
 	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test_nonansi.C
 
+<<<<<<< HEAD
 multipleDeclarationsBug: $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C $(srcdir)/markus_1.h
 	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C
 
+=======
+>>>>>>> origin/master
 
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit

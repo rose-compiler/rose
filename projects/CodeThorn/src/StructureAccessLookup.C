@@ -6,7 +6,7 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 std::list<SgVariableDeclaration*> StructureAccessLookup::getDataMembers(SgClassDefinition* classDef) {
@@ -130,7 +130,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
 #endif
 }
 
-int StructureAccessLookup::getOffset(SPRAY::VariableId varId) {
+int StructureAccessLookup::getOffset(CodeThorn::VariableId varId) {
   ROSE_ASSERT(varId.isValid());
   auto varIdOffsetPairIter=varIdTypeSizeMap.find(varId);
   if(varIdOffsetPairIter!=varIdTypeSizeMap.end()) {
@@ -140,7 +140,7 @@ int StructureAccessLookup::getOffset(SPRAY::VariableId varId) {
   }
 }
 
-bool StructureAccessLookup::isStructMember(SPRAY::VariableId varId) {
+bool StructureAccessLookup::isStructMember(CodeThorn::VariableId varId) {
   return varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end();
 }
 

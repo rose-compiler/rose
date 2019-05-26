@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+namespace Typeforge {
+
 class CastStats {
 public:
   void computeStats(SgNode* node);
@@ -16,5 +18,7 @@ private:
   void addCast(SgType* from, SgType* to);
   std::map<CastTypes,CastCountType> casts;
 };
+
+}
 
 #endif

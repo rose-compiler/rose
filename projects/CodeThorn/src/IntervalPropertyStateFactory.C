@@ -2,12 +2,12 @@
 #include "IntervalPropertyStateFactory.h"
 #include "IntervalPropertyState.h"
 
-SPRAY::IntervalPropertyStateFactory::IntervalPropertyStateFactory() {
+CodeThorn::IntervalPropertyStateFactory::IntervalPropertyStateFactory() {
 }
 
-SPRAY::PropertyState* SPRAY::IntervalPropertyStateFactory::create() {
+CodeThorn::PropertyState* CodeThorn::IntervalPropertyStateFactory::create() {
   return new IntervalPropertyState();
 }
 
-SPRAY::IntervalPropertyStateFactory::~IntervalPropertyStateFactory() {
+CodeThorn::IntervalPropertyStateFactory::~IntervalPropertyStateFactory() {
 }

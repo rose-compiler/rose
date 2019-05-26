@@ -1,98 +1,79 @@
 if(enable-binary-analysis)
 
-  # dumpMemory
-  add_executable(dumpMemory dumpMemory.C)
-  target_link_libraries(dumpMemory ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS dumpMemory DESTINATION bin)
+  add_executable(rose-dump-memory dumpMemory.C)
+  target_link_libraries(rose-dump-memory ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-dump-memory DESTINATION bin)
 
-  # linearDisassemble
-  add_executable(linearDisassemble linearDisassemble.C)
-  target_link_libraries(linearDisassemble ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS linearDisassemble DESTINATION bin)
+  add_executable(rose-linear-disassemble linearDisassemble.C)
+  target_link_libraries(rose-linear-disassemble ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-linear-disassemble DESTINATION bin)
 
-  # recursiveDisassemble
-  add_executable(recursiveDisassemble recursiveDisassemble.C)
-  target_link_libraries(recursiveDisassemble ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS recursiveDisassemble DESTINATION bin)
+  add_executable(rose-recursive-disassemble recursiveDisassemble.C)
+  target_link_libraries(rose-recursive-disassemble ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-recursive-disassemble DESTINATION bin)
 
-  # nativeExecutionTrace
-  add_executable(nativeExecutionTrace nativeExecutionTrace.C)
-  target_link_libraries(nativeExecutionTrace ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS nativeExecutionTrace DESTINATION bin)
+  add_executable(rose-native-execution-trace nativeExecutionTrace.C)
+  target_link_libraries(rose-native-execution-trace ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-native-execution-trace DESTINATION bin)
 
-  # checkExecutionAddresses
-  add_executable(checkExecutionAddresses checkExecutionAddresses.C)
-  target_link_libraries(checkExecutionAddresses ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS checkExecutionAddresses DESTINATION bin)
+  add_executable(rose-check-execution-addresses checkExecutionAddresses.C)
+  target_link_libraries(rose-check-execution-addresses ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-check-execution-addresses DESTINATION bin)
 
-  # magicScanner
-  add_executable(magicScanner magicScanner.C)
-  target_link_libraries(magicScanner ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS magicScanner DESTINATION bin)
+  add_executable(rose-magic-scanner magicScanner.C)
+  target_link_libraries(rose-magic-scanner ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-magic-scanner DESTINATION bin)
 
-  # simulate
-  add_executable(simulate simulate.C)
-  target_link_libraries(simulate ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS simulate DESTINATION bin)
+  add_executable(rose-simulate simulate.C)
+  target_link_libraries(rose-simulate ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-simulate DESTINATION bin)
 
-  # stringDecoder
-  add_executable(stringDecoder stringDecoder.C)
-  target_link_libraries(stringDecoder ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS stringDecoder DESTINATION bin)
+  add_executable(rose-string-decoder stringDecoder.C)
+  target_link_libraries(rose-string-decoder ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-string-decoder DESTINATION bin)
 
-  # findDeadCode
-  add_executable(findDeadCode findDeadCode.C)
-  target_link_libraries(findDeadCode ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS findDeadCode DESTINATION bin)
+  add_executable(rose-find-dead-code findDeadCode.C)
+  target_link_libraries(rose-find-dead-code ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-find-dead-code DESTINATION bin)
 
-  # symbolicSimplifier
-  add_executable(symbolicSimplifier symbolicSimplifier.C)
-  target_link_libraries(symbolicSimplifier ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS symbolicSimplifier DESTINATION bin)
+  add_executable(rose-symbolic-simplifier symbolicSimplifier.C)
+  target_link_libraries(rose-symbolic-simplifier ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-symbolic-simplifier DESTINATION bin)
 
-  # binaryToSource
-  add_executable(binaryToSource binaryToSource.C)
-  target_link_libraries(binaryToSource ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS binaryToSource DESTINATION bin)
+  add_executable(rose-binary-to-source binaryToSource.C)
+  target_link_libraries(rose-binary-to-source ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-binary-to-source DESTINATION bin)
 
-  # trace
-  add_executable(trace trace.C)
-  target_link_libraries(trace ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS trace DESTINATION bin)
+  add_executable(rose-trace trace.C)
+  target_link_libraries(rose-trace ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-trace DESTINATION bin)
 
-  # generatePaths
-  add_executable(generatePaths generatePaths.C)
-  target_link_libraries(generatePaths ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS generatePaths DESTINATION bin)
+  add_executable(rose-generate-paths generatePaths.C)
+  target_link_libraries(rose-generate-paths ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-generate-paths DESTINATION bin)
 
-  # maxBijection
-  add_executable(maxBijection maxBijection.C)
-  target_link_libraries(maxBijection ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS maxBijection DESTINATION bin)
+  add_executable(rose-max-bijection maxBijection.C)
+  target_link_libraries(rose-max-bijection ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-max-bijection DESTINATION bin)
 
-  # debugSemantics
-  add_executable(debugSemantics debugSemantics.C)
-  target_link_libraries(debugSemantics ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS debugSemantics DESTINATION bin)
+  add_executable(rose-debug-semantics debugSemantics.C)
+  target_link_libraries(rose-debug-semantics ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-debug-semantics DESTINATION bin)
 
-  # x86-call-targets
-  add_executable(x86-call-targets x86-call-targets.C)
-  target_link_libraries(x86-call-targets ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS x86-call-targets DESTINATION bin)
+  add_executable(rose-x86-call-targets x86-call-targets.C)
+  target_link_libraries(rose-x86-call-targets ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-x86-call-targets DESTINATION bin)
 
-  # rxml
-  add_executable(rxml rxml.C)
-  target_link_libraries(rxml ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS rxml DESTINATION bin)
+  add_executable(rose-rxml rxml.C)
+  target_link_libraries(rose-rxml ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-rxml DESTINATION bin)
 
-  # dwarf-lines
-  add_executable(dwarf-lines dwarf-lines.C)
-  target_link_libraries(dwarf-lines ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS dwarf-lines DESTINATION bin)
+  add_executable(rose-dwarf-lines dwarf-lines.C)
+  target_link_libraries(rose-dwarf-lines ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-dwarf-lines DESTINATION bin)
 
-  # xml2json
-  add_executable(xml2json xml2json.C)
-  target_link_libraries(xml2json ROSE_DLL ${Boost_LIBRARIES})
-  install(TARGETS xml2json DESTINATION bin)
+  add_executable(rose-xml2json xml2json.C)
+  target_link_libraries(rose-xml2json ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-xml2json DESTINATION bin)
   
 endif()

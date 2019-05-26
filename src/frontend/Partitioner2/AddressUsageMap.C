@@ -13,6 +13,14 @@ namespace Partitioner2 {
 //                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+rose_addr_t
+AddressUser::address() const {
+    if (insn_)
+        return insn_->get_address();
+    ASSERT_require(odblock_.isValid());
+    return odblock_.dataBlock()->address();
+}
+
 void
 AddressUser::insertBasicBlock(const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(insn_);
@@ -43,8 +51,13 @@ AddressUser::operator==(const AddressUser &other) const {
         return false;
     if (bblocks_.size() != other.bblocks_.size() || !std::equal(bblocks_.begin(), bblocks_.end(), other.bblocks_.begin()))
         return false;
-    if (odblock_.dataBlock() != other.odblock_.dataBlock())
-        return false;
+    if (odblock_.dataBlock() != other.odblock_.dataBlock()) {
+        // Data blocks are not same object, so compare by using their sort predicate. If a < b || b < a then a != b
+        if (sortDataBlocks(odblock_.dataBlock(), other.odblock_.dataBlock()) ||
+            sortDataBlocks(other.odblock_.dataBlock(), odblock_.dataBlock()))
+            return false;
+    }
+
     return true;
 }
 
@@ -53,11 +66,14 @@ AddressUser::operator<(const AddressUser &other) const {
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || other.isConsistent());
     if (insn_!=NULL && other.insn_!=NULL) {
+        // Both users have instructions, so sort by instruction address
         ASSERT_require((insn_!=other.insn_) ^ (insn_->get_address()==other.insn_->get_address()));
         return insn_->get_address() < other.insn_->get_address();
     } else if (insn_!=NULL || other.insn_!=NULL) {
-        return insn_==NULL;                         // instructions come before data blocks
+        // Exactly one user lacks an instruction.
+        return insn_==NULL;                         // data blocks come before instructions
     } else {
+        // Neither user has instructions, therefore both must have data blocks. Sort by the data blocks.
         ASSERT_not_null(odblock_.dataBlock());
         ASSERT_not_null(other.odblock_.dataBlock());
         return sortDataBlocks(odblock_.dataBlock(), other.odblock_.dataBlock());
@@ -412,16 +428,24 @@ AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr
 void
 AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
-    ASSERT_forbid2(dataBlockExists(odb.dataBlock()).isValid(), "data block must not already exist in the AUM");
     AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
-    Map adjustment;
-    adjustment.insert(interval, AddressUsers(odb));
+
+    // Either the data block is present in the AUM or it isn't. If it is present, then the AUM contains the entire block's
+    // interval, otherwise it might contain only parts of the interval. Keep track of which parts of the interval are missing
+    // so we can add them after the loop.
+    AddressIntervalSet missingParts;
+    missingParts.insert(interval);
+
+    // Update the existing parts of the interval.
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        missingParts.erase(node.key());
         AddressUsers newUsers = node.value();
         newUsers.insertDataBlock(odb);
-        adjustment.insert(interval.intersection(node.key()), newUsers);
     }
-    map_.insertMultiple(adjustment);
+
+    // Add the missing parts of the interval.
+    BOOST_FOREACH (const AddressInterval &i, missingParts.intervals())
+        map_.insert(i, AddressUsers(odb));
 }
 
 void

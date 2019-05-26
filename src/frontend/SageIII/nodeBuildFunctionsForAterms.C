@@ -11095,7 +11095,11 @@ SgAsmInstruction* SgAsmInstruction::build_node_from_nonlist_children ( rose_addr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmX86Instruction* SgAsmX86Instruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize )
+SgAsmX86Instruction* SgAsmX86Instruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                           Rose::BinaryAnalysis::X86InstructionKind kind,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize baseSize,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize operandSize,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize addressSize)
    {
 #if 0
   // debugging information!
@@ -11113,7 +11117,10 @@ SgAsmX86Instruction* SgAsmX86Instruction::build_node_from_nonlist_children ( ros
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, ArmInstructionKind kind, ArmInstructionCondition condition, int positionOfConditionInMnemonic )
+SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                           Rose::BinaryAnalysis::ArmInstructionKind kind,
+                                                                           Rose::BinaryAnalysis::ArmInstructionCondition condition,
+                                                                           int positionOfConditionInMnemonic)
    {
 #if 0
   // debugging information!
@@ -11131,7 +11138,8 @@ SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children ( ros
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, PowerpcInstructionKind kind )
+SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                                   Rose::BinaryAnalysis::PowerpcInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -11149,7 +11157,8 @@ SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, MipsInstructionKind kind )
+SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                             Rose::BinaryAnalysis::MipsInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -11167,7 +11176,8 @@ SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children ( r
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmM68kInstruction* SgAsmM68kInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, M68kInstructionKind kind )
+SgAsmM68kInstruction* SgAsmM68kInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                             Rose::BinaryAnalysis::M68kInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -11653,7 +11663,7 @@ SgAsmMemoryReferenceExpression* SgAsmMemoryReferenceExpression::build_node_from_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11671,7 +11681,7 @@ SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_f
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11689,7 +11699,7 @@ SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor, RegisterDescriptor stride, RegisterDescriptor offset, size_t index, size_t modulus )
+SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor, Rose::BinaryAnalysis::RegisterDescriptor stride, Rose::BinaryAnalysis::RegisterDescriptor offset, size_t index, size_t modulus )
    {
 #if 0
   // debugging information!

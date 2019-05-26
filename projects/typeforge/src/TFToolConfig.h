@@ -3,7 +3,9 @@
 
 #include "ToolConfig.hpp"
 
-namespace TFToolConfig{
+namespace Typeforge {
+
+namespace TFToolConfig {
  
   extern ToolConfig* config;
   extern std::string fileName;
@@ -13,6 +15,8 @@ namespace TFToolConfig{
 
   void addChangeVarType(std::string handle, std::string name, std::string scope, std::string source, std::string fromType, std::string toType);
   void addChangeVarBaseType(std::string handle, std::string name, std::string scope, std::string source, std::string fromType, std::string toType);
+
+}
 
 }
 

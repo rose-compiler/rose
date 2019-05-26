@@ -28,6 +28,14 @@ if(enable-binary-analysis)
     BinaryToSource.C
     BinaryYicesSolver.C
     BinaryZ3Solver.C
+    Concolic/ConcolicExecutor.C
+    Concolic/Database.C
+    Concolic/ExecutionManager.C
+    Concolic/LinuxExecutor.C
+    Concolic/LinuxExitStatus.C
+    Concolic/Specimen.C
+    Concolic/TestCase.C
+    Concolic/TestSuite.C
     DwarfLineMapper.C
     instructionSemantics/BaseSemantics2.C
     instructionSemantics/ConcreteSemantics2.C
@@ -64,6 +72,7 @@ install(
     BinaryBestMapAddress.h
     BinaryCallingConvention.h
     BinaryCodeInserter.h
+    BinaryConcolic.h
     BinaryControlFlow.h
     BinaryDataFlow.h
     BinaryDemangler.h

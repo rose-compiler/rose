@@ -4,7 +4,7 @@
 #define ROSE_DISASSEMBLER_POWERPC_H
 
 #include "integerOps.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 
 namespace Rose {
 namespace BinaryAnalysis {

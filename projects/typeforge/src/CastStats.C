@@ -5,6 +5,8 @@
 #include <string>
 #include "SgNodeHelper.h"
 
+namespace Typeforge {
+
 using namespace std;
 
 void CastStats::addCast(SgType* from, SgType* to) {
@@ -55,3 +57,6 @@ void CastStats::computeStats(SgNode* node) {
     }
   }
 }
+
+}
+

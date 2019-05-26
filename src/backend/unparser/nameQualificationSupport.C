@@ -10167,14 +10167,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parent);
-                    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
-                    SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
-                    SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
-                    SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+                    SgDeclarationScope * decl_scope = isSgDeclarationScope(parent);
                     if (variableDeclaration != NULL) {
                       int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
                       setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                    } else if (decl_scope != NULL) {
+                      // NOP that is a nontype template parameter
                     } else {
+                      SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(parent);
+                      SgTemplateClassDefinition * tpldef = isSgTemplateClassDefinition(parent);
+                      SgTemplateParameter* tplParam = isSgTemplateParameter(parent);
+                      SgTemplateInstantiationDefn * templateInstantiationDefn = isSgTemplateInstantiationDefn(parent);
+                      
                       int amountOfNameQualificationRequired = nameQualificationDepth(initializedName,explictlySpecifiedCurrentScope,currentStatement);
                       if (functionParameterList != NULL) {
                         setNameQualification(varRefExp,functionParameterList,amountOfNameQualificationRequired);
@@ -13908,12 +13912,19 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                bool previousTemplateArgumentOutput = false;
                while (i != templateArgumentList.end())
                   {
-                    bool filterTemplateArgument = ((*i)->outputTemplateArgument() == false);
+                    bool skipTemplateArgument = false;
+                    bool stopTemplateArgument = false;
+                    (*i)->outputTemplateArgument(skipTemplateArgument, stopTemplateArgument);
+
+                    if (stopTemplateArgument) {
+                      break;
+                    }
+
 #if 0
                     printf ("filterTemplateArgument = %s \n",filterTemplateArgument ? "true" : "false");
 #endif
                  // if ((*i)->get_argumentType() != SgTemplateArgument::start_of_pack_expansion_argument) 
-                    if (filterTemplateArgument == false)
+                    if (skipTemplateArgument == false)
                        {
                       // if (i != templateArgumentList.begin())
                          if (previousTemplateArgumentOutput == true)

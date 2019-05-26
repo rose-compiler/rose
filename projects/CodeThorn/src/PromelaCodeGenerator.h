@@ -7,7 +7,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "DotGraphCfgFrontend.h"
 #include "Flow.h"
 
@@ -21,7 +21,7 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   /*! 
    * \brief Generates PROMELA code that implements synchronized process graphs.
@@ -44,6 +44,6 @@ namespace SPRAY {
 				      bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
   };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

@@ -32,12 +32,15 @@ AC_DEFUN([DETERMINE_OS],
   msdos*)
   MSDOS=yes
   ;;
+  solaris*)
+    SOLARIS=yes;
+  ;;
   esac
-    AM_CONDITIONAL([OS_MACOSX],[ test "x$MACOSX" = xyes ] )
-    AM_CONDITIONAL([OS_LINUX], [ test "x$LINUX"  = xyes ] )
-    AM_CONDITIONAL([OS_MINGW], [ test "x$MINGW"  = xyes ] )
-    AM_CONDITIONAL([OS_MSDOS], [ test "x$MSDOS"  = xyes ] )
-
+    AM_CONDITIONAL([OS_MACOSX], [ test "x$MACOSX"  = xyes ] )
+    AM_CONDITIONAL([OS_LINUX],  [ test "x$LINUX"   = xyes ] )
+    AM_CONDITIONAL([OS_MINGW],  [ test "x$MINGW"   = xyes ] )
+    AM_CONDITIONAL([OS_MSDOS],  [ test "x$MSDOS"   = xyes ] )
+    AM_CONDITIONAL([OS_SOLARIS],[ test "x$SOLARIS" = xyes ] )
   # AC_DEFINE([ROSE_BUILD_OS], $build_os , [Operating System (OS) being used to build ROSE])
 ])
 
@@ -67,11 +70,13 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       dnl  cat /etc/issue
       dnl  echo "***************************";
 
-      dnl Fix the case of Apple OSX support.
+      # PP (05/14/2019) add solaris
+      dnl Fix the case of Apple OSX and Sun/Oracle Solaris support.
       dnl
-      dnl For at least Apple Mac OSX, there is no lsb_release program or /etc/*-release /etc/*-version
-      dnl files but autoconf will guess the vendor and the OS release correctly (so use those vaules).
-      if test "x$build_vendor" = xapple; then
+      dnl For at least Apple Mac OSX and Solaris, there is no lsb_release program or /etc/*-release /etc/*-version
+      dnl files but autoconf will guess the vendor and the OS release correctly (so use those values).
+      case $build_vendor in
+        apple)
           OS_vendor=$build_vendor
           case $build_os in
             darwin13*)
@@ -97,7 +102,20 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
              exit 1;
              OS_release="";;
           esac
-      fi
+        ;;
+
+        sun) 
+          OS_vendor=$build_vendor
+          case $build_os in
+             solaris2.10)                 
+               OS_release=2.10
+               ;;
+             *)
+               echo "Error: Solaris Version not supported (only solaris2.10 is supported, build_os = $build_os)"
+               exit 1;
+               OS_release="";;
+          esac 
+      esac  
 
     # DQ (12/3/2016): Added debugging info for Mac OSX support.
       echo "OS_vendor = $OS_vendor"

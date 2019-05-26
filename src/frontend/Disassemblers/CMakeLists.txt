@@ -24,6 +24,6 @@ install(
     BinaryDebugger.h DisassemblerArm.h DisassemblerM68k.h
     DisassemblerMips.h DisassemblerPowerpc.h DisassemblerX86.h
     InstructionEnumsM68k.h x86InstructionProperties.h
-    armInstructionEnum.h InstructionEnumsMips.h InstructionEnumsX86.h
-    Registers.h RegisterDescriptor.h powerpcInstructionEnum.h RegisterParts.h
+    InstructionEnumsArm.h InstructionEnumsMips.h InstructionEnumsX86.h
+    Registers.h RegisterDescriptor.h InstructionEnumsPowerpc.h RegisterParts.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

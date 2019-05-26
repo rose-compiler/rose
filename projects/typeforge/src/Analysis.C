@@ -7,6 +7,8 @@
 #include <boost/graph/graphviz.hpp>
 #include "TFToolConfig.h"
 
+namespace Typeforge {
+
 using namespace std;
 
 //Returns the base type of the given type or nullptr if it is the base type
@@ -311,3 +313,6 @@ void Analysis::addToMap(SgNode* originNode, SgNode* targetNode){
   setMap[originNode]->insert(targetNode);
   setMap[targetNode]->insert(originNode);
 }
+
+}
+

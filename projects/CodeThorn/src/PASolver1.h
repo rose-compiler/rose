@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class PASolver1 {
  public:

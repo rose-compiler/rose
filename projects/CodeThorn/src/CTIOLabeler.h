@@ -5,14 +5,14 @@
 #include "VariableIdMapping.h"
 
 namespace CodeThorn {
-  class CTIOLabeler : public SPRAY::IOLabeler {
+  class CTIOLabeler : public CodeThorn::IOLabeler {
   public:
-    CTIOLabeler(SgNode* start, SPRAY::VariableIdMapping* variableIdMapping);
-    virtual bool isStdIOLabel(SPRAY::Label label);
-    virtual bool isStdInLabel(SPRAY::Label label, SPRAY::VariableId* id);
-    bool isNonDetIntFunctionCall(SPRAY::Label lab,SPRAY::VariableId* varIdPtr);
-    bool isNonDetLongFunctionCall(SPRAY::Label lab,SPRAY::VariableId* varIdPtr);
-    bool isFunctionCallWithName(SPRAY::Label lab,SPRAY::VariableId* varIdPtr, std::string name);
+    CTIOLabeler(SgNode* start, CodeThorn::VariableIdMapping* variableIdMapping);
+    virtual bool isStdIOLabel(CodeThorn::Label label);
+    virtual bool isStdInLabel(CodeThorn::Label label, CodeThorn::VariableId* id);
+    bool isNonDetIntFunctionCall(CodeThorn::Label lab,CodeThorn::VariableId* varIdPtr);
+    bool isNonDetLongFunctionCall(CodeThorn::Label lab,CodeThorn::VariableId* varIdPtr);
+    bool isFunctionCallWithName(CodeThorn::Label lab,CodeThorn::VariableId* varIdPtr, std::string name);
     ~CTIOLabeler();
     void setExternalNonDetIntFunctionName(std::string);
     void setExternalNonDetLongFunctionName(std::string);

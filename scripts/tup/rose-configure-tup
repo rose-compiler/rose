@@ -61,7 +61,7 @@ config_switch() {
 	echo "$val"
 	return 0
     fi
-    
+
     case "$switch" in
 	--with-*)
 	    local name="${switch#--with-}"
@@ -88,7 +88,7 @@ makefile_value() {
     sed -n "/^${variable}[ \t]*=/ { s/^${variable}[ \t]*=[ \t]*//p; q }" <"$makefile"
 }
 
-# Give VALUE, YES, and NO
+# Given VALUE, YES, and NO
 #   if VALUE is empty, "no", "none", or "ambivalent" return NO
 #   otherwise return YES
 value_ite() {
@@ -103,7 +103,7 @@ value_ite() {
     esac
 }
 
-# Given a DEFAULT and a VALUE, return one or the other
+# Given a VALUE and DEFAULT, return one or the other
 value_or_else() {
     local value="$1" dflt="$2"
     value_ite "$value" "$value" "$dflt"
@@ -119,7 +119,7 @@ value_or_no() {
 }
 
 # Given ROSE configure arguments, echo the list of tup variables for enabling and disabling ROSE
-# language features in the tup.config file. 
+# language features in the tup.config file.
 language_vars() {
     # Get list of enabled languages
     local languages=()
@@ -150,12 +150,18 @@ language_vars() {
     done
 }
 
-# Information about the hosting (frontend) compiler
+# Information about the hosting compiler
 host_compiler_vars() {
     if [ -n "$CXX_VENDOR" ]; then
 	echo "CXX_VENDOR=\"$CXX_VENDOR\""
 	echo "CXX_VERSION=\"$CXX_VERSION\""
 	echo "CXX_LANGUAGE=\"$CXX_LANGUAGE\""
+    fi
+
+    if [ -n "$C_VENDOR" ]; then
+	echo "C_VENDOR=\"$C_VENDOR\""
+	echo "C_VERSION=\"$C_VERSION\""
+	echo "C_LANGUAGE=\"$C_LANGUAGE\""
     fi
 }
 
@@ -262,6 +268,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_BINWALK="$(value_or_else "$BINWALK_ROOT" "$(value_or_no "$(exe_prefix binwalk)")")" \
     WITH_BOOST="$(value_or_no "$(config_switch --with-boost "$@")")" \
     WITH_BZIP2="$(value_or_else "$LIBBZ2_ROOT" "$(value_or_no "$BZIP2_ROOT")")"  \
+    WITH_CAPSTONE="$(value_or_no "$(config_switch --with-capstone "$@")")" \
     WITH_DLIB="$(value_or_no "$(prefix "$(config_switch --with-dlib "$@")")")" \
     WITH_DOXYGEN="$(value_or_no "$(makefile_value DOXYGEN Makefile)")" \
     WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
@@ -327,7 +334,6 @@ else
 	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty rm
     fi
 	
-
     # Any files that were just created or modified by ROSE's configure script should be copied
     # into the stash so that Tupfile rules that copy them back out into the build tree will
     # get the latest version rather than overwriting the working copy with an old version. However,

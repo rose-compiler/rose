@@ -8,7 +8,7 @@ using namespace std;
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
@@ -83,6 +83,12 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       SgVarRefExp* lhsVar=0;
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
+    } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(node)) {
+      // handle special case of function call in variable declaration: type var=f();
+      SgVariableDeclaration* varDecl=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(node);
+      VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
+      ROSE_ASSERT(lhsVarId.isValid());
+      transferFunctionCallReturn(lab, lhsVarId, funCall, element);
     } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
@@ -91,9 +97,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         return;
       }
     } else {
-      cerr<<"Error: function-call-return unhandled function call."<<endl;
-      cerr<<node->unparseToString()<<endl;
-      exit(1);
+      if(getSkipSelectedFunctionCalls()) {
+        // ignore unknown function call (requires command line option --ignore-unknown-functions)
+      } else {
+        cerr<<"Error: function-call-return unhandled function call."<<endl;
+        cerr<<node->unparseToString()<<endl;
+        exit(1);
+      }
     }
   }
 
@@ -239,7 +249,17 @@ void DFTransferFunctions::transferExternalFunctionCall(Label lab, SgFunctionCall
   // default identity function
 }
 
-void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp*, SgFunctionCallExp* callExp, Lattice& element) {
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
+  // default function implementation
+  VariableId varId;
+  if(lhsVar) {
+    varId=getVariableIdMapping()->variableId(lhsVar);
+  }
+  // for void functions, varId remains invalid
+  transferFunctionCallReturn(lab,varId,callExp,element);
+}
+
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, VariableId varId, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
 }
 
@@ -285,8 +305,11 @@ VariableId DFTransferFunctions::getResultVariableId() {
 }
 
 void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
-  // empty by default. Only transfer functions that reason on function
-  // calls need to override this function.
+  _skipSelectedFunctionCalls=flag;
+}
+                       
+bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
 }
 
 bool DFTransferFunctions::isExternalFunctionCall(Label lab) {
