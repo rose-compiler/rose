@@ -2144,8 +2144,12 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
+         // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
          if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
-                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgUseStatement
+                 || (*p)->variantT()==V_SgImplicitStatement
+                 || (*p)->variantT()==V_SgDerivedTypeStatement)
              unparseStatement((*p), info);
      }
 
@@ -3355,7 +3359,7 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
      unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
+     unparse_IO_Control_Support("NML",writeStatement->get_namelist(),false,info);
      unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
 
   // F2003 specific

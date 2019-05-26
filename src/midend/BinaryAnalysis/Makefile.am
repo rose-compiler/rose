@@ -38,6 +38,14 @@ libbinaryMidend_la_SOURCES =					\
     BinaryToSource.C						\
     BinaryYicesSolver.C						\
     BinaryZ3Solver.C						\
+    Concolic/ConcolicExecutor.C					\
+    Concolic/Database.C						\
+    Concolic/ExecutionManager.C					\
+    Concolic/LinuxExecutor.C					\
+    Concolic/LinuxExitStatus.C					\
+    Concolic/Specimen.C						\
+    Concolic/TestCase.C						\
+    Concolic/TestSuite.C					\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/ConcreteSemantics2.C			\
@@ -60,6 +68,13 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/TraceSemantics2.C
+
+if ROSE_USE_SQLITE_DATABASE
+libbinaryMidend_la_SOURCES +=					\
+    libraryIdentification/FunctionIdDatabaseInterface.C         \
+    libraryIdentification/libraryIdentification.C
+endif
+
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
@@ -72,6 +87,7 @@ pkginclude_HEADERS =					\
     BinaryBestMapAddress.h				\
     BinaryCallingConvention.h				\
     BinaryCodeInserter.h				\
+    BinaryConcolic.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDemangler.h					\
@@ -124,20 +140,11 @@ pkginclude_HEADERS =					\
     instructionSemantics/TraceSemantics2.h		
 
 if ROSE_USE_SQLITE_DATABASE
-libbinaryMidend_la_SOURCES +=					\
-    libraryIdentification/FunctionIdDatabaseInterface.C         \
-    libraryIdentification/libraryIdentification.C
-#    libraryIdentification/libraryIdentification_reader.C	\
-#    libraryIdentification/libraryIdentification_writer.C	\
-#    libraryIdentification/functionIdentification.C 
-
 pkginclude_HEADERS +=					\
     libraryIdentification/FunctionIdDatabaseInterface.h \
     libraryIdentification/FunctionInfo.h \
     libraryIdentification/libraryIdentification.h \
     libraryIdentification/LibraryInfo.h
-#    libraryIdentification/functionIdentification.h	\
-#    libraryIdentification/libraryIdentification.h
 
 endif
 

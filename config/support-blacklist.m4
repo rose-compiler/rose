@@ -48,6 +48,13 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
 	    break
 	fi
 
+        # Z3 4.7.1 is blacklisted because it introduced an API change without any easy way to detect the change
+	# at compile time.
+	if test "$Z3_VERSION" = "4.7.1.0"; then
+	    prohibited="z3-4.7.1"
+	    break
+	fi
+
         # Add more blacklist items right above this line with comments like the others. If you detect
         # a combination that's blacklisted, then set the "prohibited" string to say what is blacklisted
         # and then break out of the loop to avoid testing other combinations.
@@ -74,7 +81,7 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
 		team occassionally blacklists combinations that are known to cause failures in
 		perhaps subtle ways. If you would like to continue with this configuration at your
 		own risk, then reconfigure with --disable-blacklist. (This message comes from
-		config/support-blacklist.m4, which also contains more information abou the reason
+		config/support-blacklist.m4, which also contains more information about the reason
 		for blacklisting.)])
 	else
 	    AC_MSG_WARN([blacklisted: $prohibited])

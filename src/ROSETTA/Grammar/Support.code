@@ -7294,7 +7294,7 @@ HEADER_TEMPLATE_ARGUMENT_START
 
        // DQ (2/11/2019): Refactored support for logic to control when template arguments are unparsed.
        // Temporarily this code is located in the unparseCxx_expressions.C file.
-          bool outputTemplateArgument();
+          void outputTemplateArgument(bool & skip_unparsing, bool & stop_unparsing);
 
 HEADER_TEMPLATE_ARGUMENT_END
 
