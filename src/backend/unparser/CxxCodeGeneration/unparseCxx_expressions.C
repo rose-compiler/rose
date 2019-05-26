@@ -6297,6 +6297,8 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
   // printf ("In Unparse_ExprStmt::unparseNewOp \n");
   // curprint ( "\n /* In Unparse_ExprStmt::unparseNewOp */ \n";
 
+#define DEBUG_NEW_OPERATOR 0
+
 #ifndef CXX_IS_ROSE_CODE_GENERATION
      SgNewExp* new_op = isSgNewExp(expr);
      ROSE_ASSERT(new_op != NULL);
@@ -6310,7 +6312,7 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
      curprint ("new ");
 
-#if 0
+#if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output any placement arguments */ \n");
 #endif
 
@@ -6344,7 +6346,7 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      newinfo.set_reference_node_for_qualification(new_op);
      ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
 
-#if 0
+#if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output type name for new operator */ \n");
 #endif
 
@@ -6352,6 +6354,19 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (3/26/2012): I think this is required because the type might be the only public way refer to the 
   // class (via a public typedef to a private class, so we can't use the constructor; except for it's args)
+
+#if DEBUG_NEW_OPERATOR
+     printf ("In unparseNewOp(): Calling unparseType(): new_op->get_specified_type() = %p = %s \n",new_op->get_specified_type(),new_op->get_specified_type()->class_name().c_str());
+#endif
+
+  // DQ (4/16/2019): Added support for name qualification implementation.
+  // newinfo.set_name_qualification_length(new_op->get_name_qualification_length());
+  // newinfo.set_global_qualification_required(new_op->get_global_qualification_required());
+  // newinfo.set_type_elaboration_required(new_op->get_type_elaboration_required());
+
+  // DQ (4/16/2019): Added support for name qualification.
+     newinfo.set_reference_node_for_qualification(new_op);
+     ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
 
   // DQ (3/26/2012): Turn this OFF to avoid output fo the class name twice (if the constructor is available).
   // DQ (1/17/2006): The the type specified explicitly in the new expressions syntax, 
@@ -6361,7 +6376,7 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
   // printf ("DONE: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
 
-#if 0
+#if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output constructor args */ \n");
 #endif
 
@@ -6380,7 +6395,8 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
           unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
         }
 #endif
-#if 0
+
+#if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output builtin args */ \n");
 #endif
 
@@ -6389,7 +6405,8 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_builtin_args() \n");
           unparseExpression(new_op->get_builtin_args(), newinfo);
         }
-#if 0
+
+#if DEBUG_NEW_OPERATOR
      curprint ("\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n");
      printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
 #endif
@@ -7109,7 +7126,13 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
+#if 0
+  // DQ (5/17/2019): Moved from the top of the function to be closer to where it is used.
      SgUnparse_Info newinfo(info);
+
+  // DQ (5/17/2019): Set this so that we can know to skip the output of type elaboration.
+     newinfo.set_inAggregateInitializer();
+#endif
 
      static int depth = 0;
 
@@ -7164,6 +7187,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   // DQ  (3/12/2018): Moved to outer functions scope so that we can reuse it in the loop over initializers.
      SgUnparse_Info newinfo2(info);
 
+  // DQ (5/17/2019): Set this so that we can know to skip the output of type elaboration.
+     newinfo2.set_inAggregateInitializer();
+
   // DQ (7/27/2013): Added support for aggregate initializers.
      if (aggr_init->get_uses_compound_literal() == true)
         {
@@ -7186,7 +7212,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (3/12/2018): Rewrite this so that we can output the calue of "shared".
        // if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
           bool shares = (sharesSameStatement(aggr_init,aggr_init->get_type()) == true);
-#if 0
+#if 1
           printf ("In unparseAggrInit(): shares = %s \n",shares ? "true" : "false");
 #endif
           if (shares == true)
@@ -7247,9 +7273,12 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      bool need_explicit_braces = aggr_init->get_need_explicit_braces();
 
 #if DEBUG_AGGREGATE_INITIALIZER
-     printf ("In unparseAggrInit(): after output of type: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
-     printf ("In unparseAggrInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
-     printf ("In unparseAggrInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: need_explicit_braces           = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo2.SkipEnumDefinition()  = %s \n",newinfo2.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo2.SkipClassDefinition() = %s \n",newinfo2.SkipClassDefinition() ? "true" : "false");
+
+  // DQ (5/18/2019): Adding test for inAggregateInitializer.
+     printf ("In unparseAggrInit(): after output of type: newinfo2.inAggregateInitializer() = %s \n",newinfo2.inAggregateInitializer() ? "true" : "false");
 #endif
 
 #if 0
@@ -7444,6 +7473,21 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                break;
              }
 #endif
+
+#if 1
+       // DQ (5/17/2019): Moved from the top of the function to be closer to where it is used.
+          SgUnparse_Info newinfo(info);
+
+       // DQ (5/17/2019): Set this so that we can know to skip the output of type elaboration.
+          newinfo.set_inAggregateInitializer();
+#endif
+
+#if DEBUG_AGGREGATE_INITIALIZER
+       // printf ("In unparseAggrInit(): before output of SgConstructorInitializer: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
+          printf ("In unparseAggrInit(): before output of SgConstructorInitializer: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+          printf ("In unparseAggrInit(): before output of SgConstructorInitializer: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+#endif
+
        // If there was an include then unparse everything (because we removed the include (above)).
        // If there was not an include then still unparse everything!
           unparseExpression(list[index], newinfo);
