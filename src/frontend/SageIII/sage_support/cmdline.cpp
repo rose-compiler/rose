@@ -6003,12 +6003,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
   // commandLine.push_back("--c++11");
 #endif
-<<<<<<< HEAD
-
           commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
-=======
-     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
->>>>>>> origin/master
         }
 
 // #endif for ROSE_USE_MICROSOFT_EXTENSIONS

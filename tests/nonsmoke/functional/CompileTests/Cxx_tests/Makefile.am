@@ -1574,12 +1574,8 @@ test_ansi_and_nonansi_modes:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -ansi -c $(srcdir)/test_ansi.C
 	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test_nonansi.C
 
-<<<<<<< HEAD
 multipleDeclarationsBug: $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C $(srcdir)/markus_1.h
 	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C
-
-=======
->>>>>>> origin/master
 
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
