@@ -6850,7 +6850,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               ROSE_ASSERT(currentStatement != NULL);
                               SgScopeStatement* currentScope = currentStatement->get_scope();
                               ROSE_ASSERT(currentScope != NULL);
-
+#if 0
+                              printf ("SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
                            // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
                            // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
                               generateNestedTraversalWithExplicitScope(baseExpression,currentScope);
@@ -9255,8 +9257,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
                            // DQ (4/19/2019): Now that we (optionally) also pass in the explictlySpecifiedCurrentStatement, we might want to use it directly.
+#if 0
                               printf ("case of SgMemberFunctionRefExp: Using explictlySpecifiedCurrentScope for the value of currentStatement: need to check this! \n");
-
+#endif
                               currentStatement = explictlySpecifiedCurrentScope;
                             }
                            else
@@ -9541,6 +9544,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgScopeStatement* tmp_currentScope = inheritedAttribute.get_currentScope();
                ROSE_ASSERT(tmp_currentScope != NULL);
 #if 0
+               printf ("SgAggregateInitializer: tmp_currentScope = %p = %s \n",tmp_currentScope,tmp_currentScope->class_name().c_str());
+               tmp_currentScope->get_file_info()->display("SgAggregateInitializer: debug");
+#endif
+#if 0
                printf ("Error in aggregateInitializer = %p \n",aggregateInitializer);
                ROSE_ASSERT(aggregateInitializer->get_parent() != NULL);
                aggregateInitializer->get_file_info()->display("Error in aggregateInitializer");
@@ -9548,6 +9555,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // If we don't have a statement derived from the expression to reference, then use the first statement in the current scope.
                currentStatement = tmp_currentScope->firstStatement();
+#if 0
+               if (currentStatement == NULL)
+                  {
+                    printf ("ERROR: currentStatement == NULL: tmp_currentScope = %p = %s \n",tmp_currentScope,tmp_currentScope->class_name().c_str());
+                 // tmp_currentScope->get_file_info()->display("ERROR: currentStatement == NULL: debug");
+                  }
+#endif
                ROSE_ASSERT(currentStatement != NULL);
              }
           ROSE_ASSERT(currentStatement != NULL);
