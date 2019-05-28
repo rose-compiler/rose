@@ -100,6 +100,14 @@ HEADER_START
           virtual bool get_global_qualification_required () const;
           virtual void set_global_qualification_required ( bool global_qualification_required );
 
+       // DQ (4/16/2019): Added virtual functions so that we can define specialized versions at specific IR nodes.
+          virtual int  get_name_qualification_for_pointer_to_member_class_length () const;
+          virtual void set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length );
+          virtual bool get_type_elaboration_for_pointer_to_member_class_required () const;
+          virtual void set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required );
+          virtual bool get_global_qualification_for_pointer_to_member_class_required () const;
+          virtual void set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required );
+
        // DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
        // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
        // DQ (9/16/2011): Modified to make this a virtual function and added set_originalExpressionTree().
@@ -972,6 +980,18 @@ HEADER_SIZEOF_OPERATOR_START
           bool get_global_qualification_required() const $ROSE_OVERRIDE;
           void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE; 
+          void set_name_qualification_for_pointer_to_member_class_length(int name_qualification_length) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_for_pointer_to_member_class_required(bool type_elaboration_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_for_pointer_to_member_class_required(bool global_qualification_required) $ROSE_OVERRIDE;
+
 HEADER_SIZEOF_OPERATOR_END
 
 
@@ -1044,6 +1064,18 @@ HEADER_TYPE_ID_OPERATOR_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const $ROSE_OVERRIDE;
           void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_for_pointer_to_member_class_length(int name_qualification_length) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_for_pointer_to_member_class_required(bool type_elaboration_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_for_pointer_to_member_class_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_TYPE_ID_OPERATOR_END
 
@@ -1234,6 +1266,18 @@ HEADER_CAST_EXPRESSION_START
 
           static std::string cast_type_to_string ( enum cast_type_enum );
 
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_for_pointer_to_member_class_length(int name_qualification_length) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_for_pointer_to_member_class_required(bool type_elaboration_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_for_pointer_to_member_class_required(bool global_qualification_required) $ROSE_OVERRIDE;
+
 HEADER_CAST_EXPRESSION_END
 
 
@@ -1272,6 +1316,18 @@ HEADER_NEW_OPERATOR_EXPRESSION_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const $ROSE_OVERRIDE;
           void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE;
+          void set_name_qualification_for_pointer_to_member_class_length(int name_qualification_length) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_type_elaboration_for_pointer_to_member_class_required(bool type_elaboration_required) $ROSE_OVERRIDE;
+
+       // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_for_pointer_to_member_class_required() const $ROSE_OVERRIDE;
+          void set_global_qualification_for_pointer_to_member_class_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
 HEADER_NEW_OPERATOR_EXPRESSION_END
 
@@ -2395,6 +2451,81 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
 
   // p_global_qualification_required = global_qualification_required;
    }
+
+
+int 
+SgExpression::get_name_qualification_for_pointer_to_member_class_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return 0; // p_name_qualification_length;
+   }
+
+void
+SgExpression::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_name_qualification_length = name_qualification_length;
+   }
+
+
+bool 
+SgExpression::get_type_elaboration_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_type_elaboration_required;
+   }
+
+void
+SgExpression::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgExpression::get_global_qualification_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_global_qualification_required;
+   }
+
+void
+SgExpression::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_global_qualification_required = global_qualification_required;
+   }
+
 
 // DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
 // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
@@ -5297,6 +5428,64 @@ SgSizeOfOp::set_global_qualification_required ( bool global_qualification_requir
      p_global_qualification_required = global_qualification_required;
    }
 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgSizeOfOp::get_name_qualification_for_pointer_to_member_class_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_for_pointer_to_member_class_length;
+   }
+
+void
+SgSizeOfOp::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
+   }
+
+bool 
+SgSizeOfOp::get_type_elaboration_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_for_pointer_to_member_class_required;
+   }
+
+void
+SgSizeOfOp::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
+   }
+
+bool 
+SgSizeOfOp::get_global_qualification_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_for_pointer_to_member_class_required;
+   }
+
+void
+SgSizeOfOp::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_for_pointer_to_member_class_required = global_qualification_required;
+   }
+
+
+
+
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
 
 
@@ -5623,6 +5812,61 @@ SgTypeIdOp::set_global_qualification_required ( bool global_qualification_requir
   // set_isModified(true);
 
      p_global_qualification_required = global_qualification_required;
+   }
+
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgTypeIdOp::get_name_qualification_for_pointer_to_member_class_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_for_pointer_to_member_class_length;
+   }
+
+void
+SgTypeIdOp::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
+   }
+
+bool 
+SgTypeIdOp::get_type_elaboration_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_for_pointer_to_member_class_required;
+   }
+
+void
+SgTypeIdOp::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
+   }
+
+bool 
+SgTypeIdOp::get_global_qualification_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_for_pointer_to_member_class_required;
+   }
+
+void
+SgTypeIdOp::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_for_pointer_to_member_class_required = global_qualification_required;
    }
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_END
@@ -6466,6 +6710,62 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
      return s;
    }
 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgCastExp::get_name_qualification_for_pointer_to_member_class_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_for_pointer_to_member_class_length;
+   }
+
+void
+SgCastExp::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
+   }
+
+bool 
+SgCastExp::get_type_elaboration_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_for_pointer_to_member_class_required;
+   }
+
+void
+SgCastExp::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
+   }
+
+bool 
+SgCastExp::get_global_qualification_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_for_pointer_to_member_class_required;
+   }
+
+void
+SgCastExp::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_for_pointer_to_member_class_required = global_qualification_required;
+   }
+
+
 
 SOURCE_CAST_EXPRESSION_END
 
@@ -6802,6 +7102,65 @@ SgNewExp::set_global_qualification_required ( bool global_qualification_required
 
      p_global_qualification_required = global_qualification_required;
    }
+
+
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgNewExp::get_name_qualification_for_pointer_to_member_class_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_for_pointer_to_member_class_length;
+   }
+
+void
+SgNewExp::set_name_qualification_for_pointer_to_member_class_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
+   }
+
+bool 
+SgNewExp::get_type_elaboration_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_for_pointer_to_member_class_required;
+   }
+
+void
+SgNewExp::set_type_elaboration_for_pointer_to_member_class_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
+   }
+
+bool 
+SgNewExp::get_global_qualification_for_pointer_to_member_class_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_for_pointer_to_member_class_required;
+   }
+
+void
+SgNewExp::set_global_qualification_for_pointer_to_member_class_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_for_pointer_to_member_class_required = global_qualification_required;
+   }
+
+
+
 
 SOURCE_NEW_OPERATOR_EXPRESSION_END
 

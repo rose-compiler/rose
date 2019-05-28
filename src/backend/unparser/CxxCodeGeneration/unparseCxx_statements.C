@@ -8025,9 +8025,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          ninfo_for_variable.set_global_qualification_required(vardecl_stmt->get_global_qualification_required());
                          ninfo_for_variable.set_type_elaboration_required(vardecl_stmt->get_type_elaboration_required());
 
+                      // DQ (4/27/2019): We need to get the name qualification from the SgInitializedName, and not the SgVariableDeclaration.
                       // SgName nameQualifier = unp->u_type->unp->u_name->generateNameQualifier(decl_item,ninfo2);
                       // SgName nameQualifier = unp->u_name->generateNameQualifier(decl_item,ninfo_for_variable);
-                         SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                      // SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                         SgName nameQualifier = decl_item->get_qualified_name_prefix();
 
 #if DEBUG_VARIABLE_DECLARATION
                          printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
