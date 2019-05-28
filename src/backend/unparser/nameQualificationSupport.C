@@ -9052,7 +9052,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
-                    printf ("Note: Name qualification: parent statement could not be identified (may be hidden in array type index) for functionRefExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+                 // printf ("Note: Name qualification: parent statement could not be identified (may be hidden in array type index) for functionRefExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
                   }
              }
         }

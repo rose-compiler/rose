@@ -6,9 +6,7 @@ LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2018_01.C \
-   test2018_03.C \
    test2018_04.C \
-   test2018_12.C \
    test2018_19.C
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -89,6 +87,16 @@ if USING_CLANG_COMPILER
 else
 #    TESTCODE_CURRENTLY_FAILING +=
 endif
+endif
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+     test2018_03.C \
+     test2018_12.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     test2018_03.C \
+     test2018_12.C
 endif
 
 # Note: last.C just simplifies the Makefile.am it
