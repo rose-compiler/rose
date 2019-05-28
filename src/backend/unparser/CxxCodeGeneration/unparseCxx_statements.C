@@ -11558,6 +11558,10 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
 
      unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
 
+  // DQ (5/28/2019): If there are any attached CPP directives then unparse them.
+  // This will cause then to be output twice.
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
+
 #if 0
      printf ("DONE: In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);
      curprint("/* DONE: In unparseTemplateMemberFunctionDeclStmt() */ \n");
