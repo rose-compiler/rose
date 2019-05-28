@@ -15,6 +15,11 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
 
+#ifdef REG_SP
+// \pp possibly defined on __sun
+#undef REG_SP
+#endif /* REG_SP */
+
 namespace Rose {
 namespace BinaryAnalysis {
 

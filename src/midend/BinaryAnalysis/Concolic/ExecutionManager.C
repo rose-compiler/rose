@@ -12,37 +12,68 @@ ExecutionManager::database() const {
 
 std::vector<Database::TestCaseId>
 ExecutionManager::pendingConcreteResults(size_t n) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+  return database_->needConcreteTesting(n);
 }
 
 Database::TestCaseId
 ExecutionManager::pendingConcreteResult() {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+  std::vector<Database::TestCaseId> res = database_->needConcreteTesting(1);
+  
+  if (0 == res.size()) return Database::TestCaseId();
+  
+  return res.front();
 }
 
 void
-ExecutionManager::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result &details) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+ExecutionManager::insertConcreteResults( const TestCase::Ptr &testCase, 
+                                         const ConcreteExecutor::Result& details
+                                       ) 
+{
+  testCase->concreteRank(details.rank());
+  database_->insertConcreteResults(testCase, details);
 }
 
 std::vector<Database::TestCaseId>
 ExecutionManager::pendingConcolicResults(size_t n) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+  return database_->needConcolicTesting(n);
 }
 
 Database::TestCaseId
 ExecutionManager::pendingConcolicResult() {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+  std::vector<Database::TestCaseId> res = database_->needConcolicTesting(1);
+  
+  if (0 == res.size()) return Database::TestCaseId();
+  
+  return res.front();
 }
 
+struct DBInserter
+{
+    explicit
+    DBInserter(Database::Ptr dbase)
+    : db(dbase)
+    {}
+    
+    void operator()(TestCase::Ptr tc)
+    {
+      db->id(tc, Update::YES);
+    }
+  
+  private:
+    Database::Ptr db;
+};
+
 void
-ExecutionManager::insertConcolicResults(const TestCase::Ptr &original, const std::vector<TestCase::Ptr> &newCases) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+ExecutionManager::insertConcolicResults(const TestCase::Ptr& original, const std::vector<TestCase::Ptr> &newCases) 
+{
+  original->concolicTest(true);
+  database_->id(original, Update::YES);
+  std::for_each(newCases.begin(), newCases.end(), DBInserter(database_));   
 }
 
 bool
 ExecutionManager::isFinished() const {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+    return database_->hasUntested();
 }
 
 } // namespace

@@ -6,18 +6,25 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 TestSuite::Ptr
-TestSuite::instance(const std::string &name) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+TestSuite::instance(const std::string& tsname) {
+  Ptr res(new TestSuite);
+
+  res->name(tsname);
+  return res;
 }
 
 std::string
 TestSuite::name() const {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  return name_;
 }
 
 void
-TestSuite::name(const std::string &s) {
-    ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
+TestSuite::name(const std::string& tsname) {
+  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  name_ = tsname;
 }
 
 } // namespace

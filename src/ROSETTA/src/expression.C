@@ -1933,6 +1933,21 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","is_objectless_nonstatic_data_member_reference","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_379.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
   // DQ (6/20/2013): Added alignOf operator.
      AlignOfOp.setFunctionPrototype ( "HEADER_ALIGNOF_OPERATOR", "../Grammar/Expression.code" );
      AlignOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
@@ -2057,6 +2072,22 @@ Grammar::setUpExpressions ()
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_380.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
   // DQ (2/5/2004): Adding vararg support for SAGE AST
      VarArgStartOp.setFunctionPrototype ( "HEADER_VARARG_START_OPERATOR", "../Grammar/Expression.code" );
@@ -2194,6 +2225,22 @@ Grammar::setUpExpressions ()
      CastExp.setDataPrototype("bool","castContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_381.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
 
      PntrArrRefExp.setFunctionPrototype ( "HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2245,6 +2292,22 @@ Grammar::setUpExpressions ()
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NewExp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
 
      DeleteExp.setFunctionPrototype ( "HEADER_DELETE_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      DeleteExp.setDataPrototype     ( "SgExpression*", "variable", "= NULL",

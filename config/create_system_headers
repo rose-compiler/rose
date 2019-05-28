@@ -376,6 +376,8 @@ fi
 
 
 ###### Fixups for cdefs.h
+## PP (05/15/19) solaris does not seem to have a cdefs.h file
+if [[ "$OSTYPE" != solaris2* ]]; then
 
 # Replace "#include "/.../cdefs.h" with the path that's valid for this platform, copying the file from the ROSE source
 # tree to the build tree in the process (because the source tree should not be modified when building).  The old behavior
@@ -417,10 +419,17 @@ else
     cp "$rose_src_cdefs_h" "$rose_bld_cdefs_h" || exit 1
 fi
 
+fi  # SOLARIS test  
 ###### End of fixups for cdefs.h
 
 
-
+###### FIXUP for missing err.h on Solaris
+## PP (05/15/19)
+if [[ "$OSTYPE" = solaris2* ]]; then
+  echo "Solaris Fix: install fake err.h in src/roseSupport"
+  cp "$roseHome/solaris-includes/err.h" "$roseHome/src/roseSupport/"
+fi
+###### End of fixup for missing err.h on Solaris
 
 # if [ is_C_compiler = "yes" ]
 if [ "x$language" = "xc" ]

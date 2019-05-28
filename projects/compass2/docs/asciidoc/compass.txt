@@ -1,8 +1,0 @@
-Compass
-=======
-
-include::./compass_parameters.txt[]
-///////
-include::./compass_support.txt[]
-///////
-

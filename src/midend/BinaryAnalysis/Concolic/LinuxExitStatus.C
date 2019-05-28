@@ -28,13 +28,12 @@ LinuxExitStatus::create(const std::string databaseUrl, const boost::filesystem::
 }
 
 LinuxExitStatus::Ptr
-LinuxExitStatus::instance(const std::string databaseUri, const std::string &testSuiteName) {
+LinuxExitStatus::instance(const std::string& databaseUri, const std::string &testSuiteName) {
     ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
 }
 
 void
 LinuxExitStatus::run() {
-#if __cplusplus >= 201103L // needs to be fixed; commented out for Jenkins
     LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance();
     ConcolicExecutor::Ptr concolicExecutor = ConcolicExecutor::instance();
 
@@ -42,7 +41,7 @@ LinuxExitStatus::run() {
         // Run as many test cases concretely as possible.
         while (Database::TestCaseId testCaseId = pendingConcreteResult()) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            std::unique_ptr<ConcreteExecutor::Result> concreteResult = concreteExecutor->execute(testCase);
+            std::auto_ptr<ConcreteExecutor::Result> concreteResult(concreteExecutor->execute(testCase));
             insertConcreteResults(testCase, *concreteResult);
         }
 
@@ -55,7 +54,6 @@ LinuxExitStatus::run() {
             insertConcolicResults(testCase, newTestCases);
         }
     }
-#endif
 }
 
 } // namespace
