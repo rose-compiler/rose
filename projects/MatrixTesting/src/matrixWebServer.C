@@ -651,7 +651,11 @@ struct GlobalState {
     std::string testsTable;
 
     GlobalState()
-        : docRoot("."), httpAddress("0.0.0.0"), httpPort(80), dbUrl(DEFAULT_DATABASE), testsTable("test_results") {}
+        : docRoot("."), httpAddress("0.0.0.0"), httpPort(80),
+#ifdef DEFAULT_DATABASE
+          dbUrl(DEFAULT_DATABASE),
+#endif
+          testsTable("test_results") {}
 };
 static GlobalState gstate;
 
@@ -4103,7 +4107,13 @@ main(int argc, char *argv[]) {
 #ifdef ROSE_USE_WT
     // Initialized global state shared by all serving threads.
     parseCommandLine(argc, argv);
-    gstate.tx = SqlDatabase::Connection::create(gstate.dbUrl)->transaction();
+    try {
+        gstate.tx = SqlDatabase::Connection::create(gstate.dbUrl)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     loadTestNames();
     loadDependencyNames();
     setPassDefinition("end");                           // a configuration passes if its status is >= "end"

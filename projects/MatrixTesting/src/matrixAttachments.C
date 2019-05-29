@@ -151,7 +151,14 @@ main(int argc, char *argv[]) {
         mlog[FATAL] <<"mutually exlusive operations: --attach and --detach\n";
         exit(1);
     }
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     int testId = boost::lexical_cast<int>(args[0]);
     if (!isValidTestId(testId, tx)) {
         mlog[FATAL] <<"test #" <<testId <<" does not exist\n";

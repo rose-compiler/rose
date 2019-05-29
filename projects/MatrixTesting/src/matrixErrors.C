@@ -18,9 +18,10 @@ struct Settings {
     bool dryRun;                                        // if true, don't modify the database
     bool latestTests;                                   // operate only on the latest version of ROSE in the database
 
-    Settings()
+    Settings() 
+        :
 #ifdef DEFAULT_DATABASE
-        : databaseUri(DEFAULT_DATABASE),
+          databaseUri(DEFAULT_DATABASE),
 #endif
           dryRun(false), latestTests(false)
         {}
@@ -432,7 +433,14 @@ main(int argc, char *argv[]) {
     if (const char *dbUri = getenv("ROSE_MATRIX_DATABASE"))
         settings.databaseUri = dbUri;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     if (args.empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);

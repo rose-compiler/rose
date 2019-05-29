@@ -3,7 +3,9 @@ include_rules
 DEFAULT_DATABASE       = 
 DEFAULT_DATABASE_LOCAL = 
 
-tool_CPPFLAGS += -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+ifneq ($(DEFAULT_DATABASE),)
+    tool_CPPFLAGS += -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+endif
 
 run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrixNextTest.C
 run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C

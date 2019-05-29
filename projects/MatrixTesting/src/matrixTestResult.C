@@ -203,7 +203,14 @@ main(int argc, char *argv[]) {
     boost::filesystem::path fileName = parseCommandLine(argc, argv, settings);
 
     // Query the database to find valid keys
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     DependencyNames dependencyNames = loadDependencyNames(tx);
     extraDependencies(dependencyNames);
 

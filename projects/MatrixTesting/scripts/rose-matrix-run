@@ -8,7 +8,7 @@ LIBDIR="$dir0/../lib/matrix"
 VARDIR="$dir0/../var/matrix"
 ETCDIR="$dir0/../etc/matrix"
 
-DATABASE=
+DATABASE="$ROSE_MATRIX_DATABASE"
 DRY_RUN=
 IGNORE_SETUP_FAILURES=
 INTERACTIVE=
@@ -55,7 +55,7 @@ help() {
     echo "        Start an interactive shell in the target machine before any steps are"
     echo "        run."
     echo
-    echo "    --keep-containers=(all|fail|pass)"
+    echo "    --keep-containers=(all|fail|pass|STATUS)"
     echo "        Defines which Docker containers (build trees) should be kept. Normally"
     echo "        each container is removed at the end of the test."
     echo
@@ -420,15 +420,20 @@ remove-or-keep-container() {
     local rundir="$1" image_name="$2" container_name="$3"
 
     local keep=
-    if [ "$(get-result "$rundir" status)" = end ]; then
-	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = pass ]; then
+    case "$KEEP_CONTAINERS" in
+	all)
 	    keep=yes
-	fi
-    else
-	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = fail ]; then
-	    keep=yes
-	fi
-    fi
+	    ;;
+	pass)
+	    [ "$(get-result "$rundir" status)" = end ] && keep=yes
+	    ;;
+	fail)
+	    [ "$(get-result "$rundir" status)" != end ] && keep=yes
+	    ;;
+	*)
+	    [ "$(get-result "$rundir" status)" = "$KEEP_CONTAINERS" ] && keep=yes
+	    ;;
+    esac
 
     if [ "$keep" = "" ]; then
 	run docker container rm "$container_name"
@@ -634,7 +639,7 @@ while [ "$#" -gt 0 ]; do
 	    shift
 	    ;;
 
-	--keep-containers=all|--keep-containers=fail|--keep-containers=pass)
+	--keep-containers=*)
 	    KEEP_CONTAINERS="${1#--keep-containers=}"
 	    shift
 	    ;;

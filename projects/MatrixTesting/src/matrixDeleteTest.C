@@ -62,7 +62,13 @@ main(int argc, char *argv[]) {
     if (const char *dbUri = getenv("ROSE_MATRIX_DATABASE"))
         settings.databaseUri = dbUri;
     std::vector<std::string> testIdStrings = parseCommandLine(argc, argv, settings);
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
 
     // Check that input arguments are all non-negative integers in order to prevent SQL injection
     BOOST_FOREACH (const std::string &s, testIdStrings)
