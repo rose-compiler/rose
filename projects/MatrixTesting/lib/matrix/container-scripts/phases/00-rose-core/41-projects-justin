@@ -1,4 +1,0 @@
-#!/bin/bash
-set -ex
-
-rmc -C ~/rose/_build/projects/compass2 make check
