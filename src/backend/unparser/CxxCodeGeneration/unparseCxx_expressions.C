@@ -1638,6 +1638,14 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
        newInfo.set_reference_node_for_qualification(NULL);
      }
 
+#if DEBUG_UNPARSE_TEMPLATE_ARGUMENT
+     printf (" -- newInfo.get_reference_node_for_qualification() = %p \n",newInfo.get_reference_node_for_qualification());
+     if (newInfo.get_reference_node_for_qualification() != NULL)
+        {
+          printf (" -- newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
+          unp->u_exprStmt->curprint(string("/* -- newInfo.get_reference_node_for_qualification() = ") + StringUtility::numberToString(newInfo.get_reference_node_for_qualification()) + " */");
+        }
+#endif
 
 #if 0
      printf ("Exiting in unparseTemplateArgument() to see where this is called \n");
@@ -1746,9 +1754,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
                printf ("newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
 #endif
+
 #if 0
                printf ("In unparseTemplateArgument(): case SgTemplateArgument::type_argument: templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
 #endif
+
 #if 0
             // DQ (5/4/2013): I think we have to separate out the parts of the type so that the name qualificaion will not be output before the "const" for const types.
                newInfo.set_isTypeFirstPart();
@@ -1763,7 +1773,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                if (templateArgument->get_name_qualification_length() > 0)
                   {
 #if 0
-                    printf ("In unparseTemplateArgument(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+                    printf ("In unparseTemplateArgument(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
 
 #if 1
