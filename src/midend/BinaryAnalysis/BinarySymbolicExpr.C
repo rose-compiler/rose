@@ -1171,6 +1171,27 @@ Interior::commutative() {
     return InteriorPtr(inode);
 }
 
+InteriorPtr
+Interior::idempotent(const SmtSolverPtr &solver) {
+    Nodes newArgs;
+    bool isSimplified = false;
+    BOOST_FOREACH (const Ptr &arg, children()) {
+        if (!newArgs.empty() && newArgs.back()->mustEqual(arg, solver)) {
+            isSimplified = true;
+        } else {
+            newArgs.push_back(arg);
+        }
+    }
+
+    if (isSimplified) {
+        // Construct the new node but don't simplify it yet (i.e., don't use Interior::create())
+        Interior *inode = new Interior(nBits(), getOperator(), newArgs, comment());
+        return InteriorPtr(inode);
+    } else {
+        return sharedFromThis().dynamicCast<Interior>();
+    }
+}
+        
 Ptr
 Interior::involutary() {
     if (InteriorPtr inode = isInteriorNode()) {
@@ -2532,7 +2553,7 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-                newnode = inode->associative()->commutative()->identity((uint64_t)-1, solver);
+                newnode = inode->associative()->commutative()->idempotent(solver)->identity((uint64_t)-1, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
                 if (newnode==node)
@@ -2592,7 +2613,7 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 newnode = inode->rewrite(NoopSimplifier(), solver);
                 break;
             case OP_OR:
-                newnode = inode->associative()->commutative()->identity(0, solver);
+                newnode = inode->associative()->commutative()->idempotent(solver)->identity(0, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
                 if (newnode==node)
