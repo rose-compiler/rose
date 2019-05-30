@@ -65,7 +65,7 @@ DisassemblerPowerpc::init()
 {
     name("ppc");
     wordSizeBytes(4);
-    byteOrder(ByteOrder::ORDER_LSB);
+    byteOrder(ByteOrder::ORDER_MSB);
     registerDictionary(RegisterDictionary::dictionary_powerpc()); // only a default
     REG_IP = *registerDictionary()->lookup("iar");
     REG_SP = *registerDictionary()->lookup("r1");
