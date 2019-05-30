@@ -182,6 +182,8 @@ struct IP_addme: P {
 
 // Fixed-point add to zero extended
 struct IP_addze: P {
+    bool record;
+    IP_addze(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
@@ -190,12 +192,28 @@ struct IP_addze: P {
         BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), zero, carry_in, carries);
         BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
         d->write(args[0], result);
+        ops->writeRegister(d->REG_XER_CA, carry_out);
+        if (record)
+            d->record(result);
+    }
+};
 
-        // This should be a helper function to read/write CA (and other flags)
-        // The value 0xdfffffff is the mask for the Carry (CA) flag
-        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
-        BaseSemantics::SValuePtr ones = ops->number_(32, 0xdfffffffu);
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), ones), v1));
+// Fixed-point add to zero extended
+struct IP_addzeo: P {
+    bool record;
+    IP_addzeo(bool record): record(record) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr carry_in = ops->extract(ops->readRegister(d->REG_XER), 29, 30);
+        BaseSemantics::SValuePtr carries = ops->number_(32, 0);
+        BaseSemantics::SValuePtr zero = d->number_(32, 0);
+        BaseSemantics::SValuePtr result = ops->addWithCarries(d->read(args[1], 32), zero, carry_in, carries);
+        BaseSemantics::SValuePtr carry_out = ops->extract(carries, 31, 32);
+        d->write(args[0], result);
+        ops->writeRegister(d->REG_XER_CA, carry_out);
+        d->updateXerOverflow(result, carry_out);
+        if (record)
+            d->record(result);
     }
 };
 
@@ -911,19 +929,27 @@ struct IP_slw: P {
 
 // Shift right algebraic word immediate
 struct IP_srawi: P {
+    bool record;
+    IP_srawi(bool record): record(record) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+
+        // Primary result: arg0 = arg1 << arg2
         BaseSemantics::SValuePtr rs = d->read(args[1], 32);
         BaseSemantics::SValuePtr sh = ops->extract(d->read(args[2], 32), 0, 5);
-        BaseSemantics::SValuePtr negative = ops->extract(rs, 31, 32);
-        BaseSemantics::SValuePtr mask = ops->invert(ops->shiftLeft(ops->number_(32, -1), sh));
-        BaseSemantics::SValuePtr hasValidBits = ops->invert(ops->equalToZero(ops->and_(rs, mask)));
-        BaseSemantics::SValuePtr carry_out = ops->and_(hasValidBits, negative);
-        d->write(args[0], ops->shiftRightArithmetic(rs, sh));
-        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
-        BaseSemantics::SValuePtr v1 = ops->ite(carry_out, ops->number_(32, 0x20000000u), zero);
-        BaseSemantics::SValuePtr v2 = ops->number_(32, 0xdfffffffu);
-        ops->writeRegister(d->REG_XER, ops->or_(ops->and_(ops->readRegister(d->REG_XER), v2), v1));
+        BaseSemantics::SValuePtr result = ops->shiftRightArithmetic(rs, sh);
+        d->write(args[0], result);
+
+        // XER CA bit is set if RS is negative and any 1-bits are shifted out; otherwise cleared
+        BaseSemantics::SValuePtr rsIsNegative = ops->extract(rs, 31, 32);
+        BaseSemantics::SValuePtr shiftOutMask = ops->invert(ops->shiftLeft(ops->number_(32, -1), sh));
+        BaseSemantics::SValuePtr shiftOutBits = ops->and_(rs, shiftOutMask);
+        BaseSemantics::SValuePtr hasBitsShiftedOut = ops->invert(ops->equalToZero(shiftOutBits));
+        BaseSemantics::SValuePtr ca = ops->or_(rsIsNegative, hasBitsShiftedOut);
+        ops->writeRegister(d->REG_XER_CA, ca);
+
+        if (record)
+            d->record(result);
     }
 };
 
@@ -1149,7 +1175,10 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_addis,            new Powerpc::IP_addis);
     iproc_set(powerpc_addme,            new Powerpc::IP_addme);
     iproc_set(powerpc_add,              new Powerpc::IP_add);
-    iproc_set(powerpc_addze,            new Powerpc::IP_addze);
+    iproc_set(powerpc_addze,            new Powerpc::IP_addze(false));
+    iproc_set(powerpc_addze_record,     new Powerpc::IP_addze(true));
+    iproc_set(powerpc_addzeo,           new Powerpc::IP_addzeo(false));
+    iproc_set(powerpc_addzeo_record,    new Powerpc::IP_addzeo(true));
     iproc_set(powerpc_andc,             new Powerpc::IP_andc(false));
     iproc_set(powerpc_andc_record,      new Powerpc::IP_andc(true));
     iproc_set(powerpc_andi_record,      new Powerpc::IP_and(true));
@@ -1223,7 +1252,8 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_rlwinm_record,    new Powerpc::IP_rlwinm(true));
     iproc_set(powerpc_sc,               new Powerpc::IP_sc);
     iproc_set(powerpc_slw,              new Powerpc::IP_slw);
-    iproc_set(powerpc_srawi,            new Powerpc::IP_srawi);
+    iproc_set(powerpc_srawi,            new Powerpc::IP_srawi(false));
+    iproc_set(powerpc_srawi_record,     new Powerpc::IP_srawi(true));
     iproc_set(powerpc_srw,              new Powerpc::IP_srw);
     iproc_set(powerpc_stb,              new Powerpc::IP_stb);
     iproc_set(powerpc_stbu,             new Powerpc::IP_stbu);
@@ -1255,6 +1285,9 @@ DispatcherPowerpc::regcache_init()
         REG_IAR = findRegister("iar", 32);              // instruction address register (instruction pointer)
         REG_LR  = findRegister("lr", 32);               // link register
         REG_XER = findRegister("xer", 32);              // fixed-point exception register
+        REG_XER_CA = findRegister("xer_ca", 1);         // carry
+        REG_XER_SO = findRegister("xer_so", 1);         // summary overflow
+        REG_XER_OV = findRegister("xer_ov", 1);         // summary overflow
         REG_CR  = findRegister("cr", 32);               // condition register
         REG_CR0 = findRegister("cr0", 4);               // CR Field 0, result of fixed-point instruction; set by record()
         REG_CTR = findRegister("ctr", 32);              // count register
@@ -1297,16 +1330,27 @@ DispatcherPowerpc::stackPointerRegister() const {
 }
 
 void
-DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
-{
+DispatcherPowerpc::updateXerOverflow(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &carryOut) {
+    BaseSemantics::SValuePtr signBit = operators->extract(result, result->get_width()-1, result->get_width());
+    BaseSemantics::SValuePtr overflow = operators->xor_(signBit, carryOut); // overflow when bits are not equal
+    operators->writeRegister(REG_XER_OV, overflow);
+    operators->writeRegister(REG_XER_SO, operators->ite(overflow, overflow, operators->readRegister(REG_XER_SO)));
+}
+
+void
+DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result) {
+    // Three-bit constants
+    BaseSemantics::SValuePtr one = operators->number_(3, 1);
     BaseSemantics::SValuePtr two = operators->number_(3, 2);
     BaseSemantics::SValuePtr four = operators->number_(3, 4);
-    BaseSemantics::SValuePtr v1 = operators->ite(operators->extract(result, 31, 32), four, two);
-    BaseSemantics::SValuePtr one = operators->number_(3, 1);
-    BaseSemantics::SValuePtr c = operators->ite(operators->equalToZero(result), one, v1);
-    BaseSemantics::SValuePtr so = operators->extract(operators->readRegister(REG_XER), 31, 32);
-    // Put "SO" into the lower bits, and "c" into the higher order bits
-    operators->writeRegister(REG_CR0, operators->concat(so, c));
+
+    // High three bits of CR0 are set when result is less than zero, greater than zero, or equal to zero
+    BaseSemantics::SValuePtr signBit = operators->extract(result, 31, 32);
+    BaseSemantics::SValuePtr highThree = operators->ite(operators->equalToZero(result), one, operators->ite(signBit, four, two));
+
+    // Low bit is the summary overflow copied from the XER's SO field
+    BaseSemantics::SValuePtr so = operators->readRegister(REG_XER_SO);
+    operators->writeRegister(REG_CR0, operators->concat(so, highThree));
 }
 
 } // namespace
