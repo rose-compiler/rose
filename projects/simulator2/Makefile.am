@@ -3,6 +3,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 # Forward declarations for "+="
 MOSTLYCLEANFILES=
 EXTRA_DIST=
@@ -1307,3 +1309,5 @@ old_stuff_to_remove =				\
 	x86futex.C				\
 	x86robb.C				\
 	x86win.C
+
+endif
