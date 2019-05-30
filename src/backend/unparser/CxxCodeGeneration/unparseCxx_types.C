@@ -4768,8 +4768,17 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_reference_node_for_qualification(initializedName);
      ninfo_for_type.set_reference_node_for_qualification(referenceNode);
 
+#if 0
+     printf ("ninfo_for_type.set_reference_node_for_qualification(referenceNode): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#endif
+
   // TV (08/16/2018): enforce global qualification if required through the SgUnparse_Info (to circumvent the info assoc with the reference node)
      if (ninfo_for_type.requiresGlobalNameQualification()) {
+
+#if 0
+       printf ("WARNING: Setting the ninfo_for_type.set_reference_node_for_qualification(NULL) \n");
+#endif
+
        ninfo_for_type.set_global_qualification_required(true);
        ninfo_for_type.set_reference_node_for_qualification(NULL);
      }

@@ -676,6 +676,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ROSE_ASSERT(positionStatement != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("11111111111111111111111111111111111111111111111111111111111111111111 \n");
      printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
@@ -2645,6 +2646,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
              }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("2222222222222222222222222222222222222222222222222222222222222222222 \n");
           printf ("Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
                declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
@@ -2653,8 +2655,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           evaluateTemplateInstantiationDeclaration(declaration,currentScope,positionStatement);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s currentScope = %p = %s \n",
-               declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str());
+          printf ("DONE: Calling evaluateTemplateInstantiationDeclaration() from nameQualificationDepth() declaration = %p = %s = %s currentScope = %p = %s \n",
+               declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),currentScope,currentScope->class_name().c_str());
+          printf ("===== declaration->unparseToString() = %s \n",declaration->unparseToString().c_str());
 #endif
 
 #if 0
@@ -3795,10 +3798,83 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #if 0
           printf ("===== Before being finished with evaluation of templateArgument name qualification: testNameInMap = %s \n",templateArgument->unparseToString().c_str());
 #endif
-          SgType* type = templateArgument->get_type();
-          SgExpression* expression = templateArgument->get_expression();
+
+       // DQ (5/29/2019): Newer version of code (still refactoring this section).
+          switch (templateArgument->get_argumentType())
+             {
+               case SgTemplateArgument::type_argument:
+                  {
+                    ROSE_ASSERT (templateArgument->get_type() != NULL);
+                    SgType* type = templateArgument->get_type();
+
+                    ROSE_ASSERT(type != NULL);
+
+                    break;
+                  }
+
+               case SgTemplateArgument::nontype_argument:
+                  {
+                 // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
+                 // ROSE_ASSERT (templateArgument->get_expression() != NULL);
+                    ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
+                    ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
+                    if (templateArgument->get_expression() != NULL)
+                       {
+                         SgExpression* expression = templateArgument->get_expression();
+
+                         ROSE_ASSERT(expression != NULL);
+                       }
+                      else
+                       {
+                         SgType* type = templateArgument->get_initializedName()->get_type();
+                         ROSE_ASSERT(type != NULL);
+                         SgInitializedName * iname = templateArgument->get_initializedName();
+
+                         ROSE_ASSERT(iname != NULL);
+                       }
+
+                    break;
+                  }
+
+               case SgTemplateArgument::template_template_argument:
+                  {
+                 // SgDeclarationStatement * tpldecl = templateArgument->get_templateDeclaration();
+                    SgDeclarationStatement * decl = templateArgument->get_templateDeclaration();
+                    ROSE_ASSERT(decl != NULL);
+
+                    SgTemplateDeclaration * tpl_decl = isSgTemplateDeclaration(decl);
+                    ROSE_ASSERT(tpl_decl == NULL);
+
+                    break;
+                  }
+
+                case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+#if 0
+                    printf ("WARNING: start_of_pack_expansion_argument in evaluateNameQualificationForTemplateArgumentList (can happen from some debug output)\n");
+#endif
+                    break;
+                  }
+
+               case SgTemplateArgument::argument_undefined:
+                  {
+                    printf ("Error argument_undefined in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Error default reached in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                  }
+             }
+
+       // DQ (5/29/2019): Older version of code.
+          SgType* type                     = templateArgument->get_type();
+          SgExpression* expression         = templateArgument->get_expression();
           SgDeclarationStatement * tpldecl = templateArgument->get_templateDeclaration();
-          SgInitializedName * iname = templateArgument->get_initializedName();
+          SgInitializedName * iname        = templateArgument->get_initializedName();
           if (type != NULL)
              {
             // Reduce the type to the base type stripping off wrappers that would hide the fundamental type inside.
@@ -3977,6 +4053,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
           printf ("===== After finishing with evaluation of templateArgument name qualification: templateArgument = %p testNameInMap = %s \n",templateArgument,templateArgument->unparseToString().c_str());
+          printf ("===== templateArgument->unparseToString() = %s \n",templateArgument->unparseToString().c_str());
 #endif
 
 //        ROSE_ASSERT(templateArgument->unparseToString() != "allocator< int >");
@@ -7255,9 +7332,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 
 #if DEBUG_INITIALIZED_NAME
-          printf ("################################################################## \n");
-          printf ("Case SgInitializedName: Processing the SgInitializedName IR's name \n");
-          printf ("################################################################## \n");
+          printf ("########################################################################### \n");
+          printf ("Case SgInitializedName: Processing the SgInitializedName IR's name = %s \n",initializedName->get_name().str());
+          printf ("########################################################################### \n");
 #endif
        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -7431,7 +7508,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                     int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,associatedStatement);
-#if 1
+#if 0
                     printf ("amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
 #endif
 #endif
@@ -8088,18 +8165,37 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                   }
 
+#if 0
+            // DQ (5/29/2019): Disable this feature as a test for test2019_444.C (it simplifies the name qualification 
+            // which will otherwise traverse two sets of function parameters (which can be confusing when debugging)).
+               if (functionDeclaration->get_type_syntax_is_available() == true)
+                  {
+                 // printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+                    printf ("Disabling the type_syntax_is_available feature for function parameters \n");
+                 // printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+
+                    ROSE_ASSERT(functionDeclaration->get_type_syntax() != NULL);
+
+                    functionDeclaration->set_type_syntax_is_available(false);
+                    functionDeclaration->set_type_syntax(NULL);
+                  }
+               ROSE_ASSERT(functionDeclaration->get_type_syntax_is_available() == false);
+               ROSE_ASSERT(functionDeclaration->get_type_syntax() == NULL);
+#endif
+
             // DQ (4/14/2018): Add the name qualification computation to the parameterList_syntax (since it will be used by preference in the unparser).
             // generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* input_currentScope )
                if (functionDeclaration->get_type_syntax_is_available() == true)
                   {
 #if 0
-                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-                    printf ("@@@@@@@@@@@@@@@@@@ Process the function parameter syntax @@@@@@@@@@@@@@@@@@ \n");
-                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@ functionDeclaration->get_type_syntax_is_available() == true @@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@            Process the function parameter syntax            @@@@@@@@@@@@@@@@@@ \n");
+                    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
                  // DQ (4/20/2018): This is an error reported by Charles, but in a reproducer testcode that does 
-                 // not generated the error for me.  I expect that it might be an issue of not recompiling the 
+                 // not generate the error for me.  I expect that it might be an issue of not recompiling the 
                  // build tree after the header files have been changed between versions that fixed a previous 
                  // bug (unrelated) and was checked in recently. I prefer the assertion, but I will remove it and 
                  // support a conditional check for now (before I leave on vacation).
@@ -13233,95 +13329,118 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
      ROSE_ASSERT(tpl_arg_parent != NULL);
 
      SgDeclarationStatement* associatedDeclaration = isSgDeclarationStatement(tpl_arg_parent);
-     if (associatedDeclaration != NULL) {
+     if (associatedDeclaration != NULL) 
+        {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-       printf ("associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
+          printf ("associatedDeclaration = %p = %s \n",associatedDeclaration,associatedDeclaration->class_name().c_str());
 #endif
-       SgDeclarationStatement* firstNondefining_associatedDeclaration = associatedDeclaration->get_firstNondefiningDeclaration();
-       SgDeclarationStatement* defining_associatedDeclaration         = associatedDeclaration->get_definingDeclaration();
+          SgDeclarationStatement* firstNondefining_associatedDeclaration = associatedDeclaration->get_firstNondefiningDeclaration();
+          SgDeclarationStatement* defining_associatedDeclaration         = associatedDeclaration->get_definingDeclaration();
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-       printf ("firstNondefining_associatedDeclaration = %p \n",firstNondefining_associatedDeclaration);
+          printf ("firstNondefining_associatedDeclaration = %p \n",firstNondefining_associatedDeclaration);
 #endif
-       SgTemplateInstantiationDecl* firstDefining_classTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(firstNondefining_associatedDeclaration);
+          SgTemplateInstantiationDecl* firstDefining_classTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(firstNondefining_associatedDeclaration);
 
-    // SgTemplateArgument* nondefining_templateArgument = templateArgument;
+       // SgTemplateArgument* nondefining_templateArgument = templateArgument;
 
-       int nondefiningDeclaration_templateArgument_position = 0;
-       int definingDeclaration_templateArgument_position    = 0;
+          int nondefiningDeclaration_templateArgument_position = 0;
+          int definingDeclaration_templateArgument_position    = 0;
 
-       bool found = false;
-       if (firstDefining_classTemplateInstantiationDeclaration != NULL)
-          {
-         // Find the index position of the current template argument.
-            SgTemplateArgumentPtrList & l = firstDefining_classTemplateInstantiationDeclaration->get_templateArguments();
-            for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
-               {
+          bool found = false;
+          if (firstDefining_classTemplateInstantiationDeclaration != NULL)
+             {
+            // Find the index position of the current template argument.
+               SgTemplateArgumentPtrList & l = firstDefining_classTemplateInstantiationDeclaration->get_templateArguments();
+               for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
+                  {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                 printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
+                    printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
-                 if (found == false)
-                    {
-                      if (*i == templateArgument)
-                           found = true;
-                        else
-                           nondefiningDeclaration_templateArgument_position++;
-                    }
-               }
-          }
+                    if (found == false)
+                       {
+                         if (*i == templateArgument)
+                              found = true;
+                           else
+                              nondefiningDeclaration_templateArgument_position++;
+                       }
+                  }
+             }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-       printf ("defining_associatedDeclaration                   = %p \n",defining_associatedDeclaration);
-       printf ("nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
-       printf ("definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
+          printf ("defining_associatedDeclaration                   = %p \n",defining_associatedDeclaration);
+          printf ("nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
+          printf ("definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
 #endif
 
-       SgTemplateInstantiationDecl* defining_classTemplateInstantiationDeclaration      = isSgTemplateInstantiationDecl(defining_associatedDeclaration);
-       if (defining_classTemplateInstantiationDeclaration != NULL)
-          {
-         // Find the associated template argument (matching position) in the template argument list of the defining declaration.
+          SgTemplateInstantiationDecl* defining_classTemplateInstantiationDeclaration      = isSgTemplateInstantiationDecl(defining_associatedDeclaration);
+          if (defining_classTemplateInstantiationDeclaration != NULL)
+             {
+            // Find the associated template argument (matching position) in the template argument list of the defining declaration.
 #if 0
-         // This is simpler code (but it causes some sort of error in the stack).
-            defining_templateArgument = defining_classTemplateInstantiationDeclaration->get_templateArguments()[nondefiningDeclaration_templateArgument_position];
+            // This is simpler code (but it causes some sort of error in the stack).
+               defining_templateArgument = defining_classTemplateInstantiationDeclaration->get_templateArguments()[nondefiningDeclaration_templateArgument_position];
 #else
-         // This code is better tested and works well.
-            SgTemplateArgumentPtrList & l = defining_classTemplateInstantiationDeclaration->get_templateArguments();
-            for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
-               {
+            // This code is better tested and works well.
+               SgTemplateArgumentPtrList & l = defining_classTemplateInstantiationDeclaration->get_templateArguments();
+               for (SgTemplateArgumentPtrList::iterator i = l.begin(); i != l.end(); i++)
+                  {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                 printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
-                 printf ("In loop: nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
-                 printf ("In loop: definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
+                    printf ("--- template argument = %p = %s \n",*i,(*i)->class_name().c_str());
+                    printf ("In loop: nondefiningDeclaration_templateArgument_position = %d \n",nondefiningDeclaration_templateArgument_position);
+                    printf ("In loop: definingDeclaration_templateArgument_position    = %d \n",definingDeclaration_templateArgument_position);
 #endif
-                 if (definingDeclaration_templateArgument_position == nondefiningDeclaration_templateArgument_position)
-                    {
-                   // This is the template argument in the coresponding defining declaration.
-                      defining_templateArgument = *i;
-                    }
+                    if (definingDeclaration_templateArgument_position == nondefiningDeclaration_templateArgument_position)
+                       {
+                      // This is the template argument in the coresponding defining declaration.
+                         defining_templateArgument = *i;
+                       }
 
-                 definingDeclaration_templateArgument_position++;
-               }
+                    definingDeclaration_templateArgument_position++;
+                  }
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-            printf ("defining_templateArgument = %p \n",defining_templateArgument);
+               printf ("defining_templateArgument = %p \n",defining_templateArgument);
 #endif
 
-         // This is false when the template arguments are shared (which appears to happen sometimes, see test2004_38.C).
-         // ROSE_ASSERT(defining_templateArgument != NULL);
-         // if (defining_templateArgument != NULL)
-            if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
-               {
-              // Mark the associated template argument in the defining declaration so that it can be output with qualification (see test2012_220.C).
-                 defining_templateArgument->set_global_qualification_required(outputGlobalQualification);
-                 defining_templateArgument->set_name_qualification_length(outputNameQualificationLength);
-                 defining_templateArgument->set_type_elaboration_required(outputTypeEvaluation);
+            // This is false when the template arguments are shared (which appears to happen sometimes, see test2004_38.C).
+            // ROSE_ASSERT(defining_templateArgument != NULL);
+            // if (defining_templateArgument != NULL)
+               if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
+                  {
+                 // Mark the associated template argument in the defining declaration so that it can be output with qualification (see test2012_220.C).
+                    defining_templateArgument->set_global_qualification_required(outputGlobalQualification);
+                    defining_templateArgument->set_name_qualification_length(outputNameQualificationLength);
+                    defining_templateArgument->set_type_elaboration_required(outputTypeEvaluation);
 
-              // DQ (9/24/2012): Make sure these are different.
-                 ROSE_ASSERT(defining_templateArgument != templateArgument);
-               }
-          }
-     }
+                 // DQ (9/24/2012): Make sure these are different.
+                    ROSE_ASSERT(defining_templateArgument != templateArgument);
+                  }
+             }
+        }
+       else
+        {
+#if 0
+          printf ("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \n");
+          printf ("NOTE: associatedDeclaration == NULL \n");
+          printf ("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \n");
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
+#if 0
+     printf ("#################### defining_templateArgument = %p templateArgument = %p qualifier = %s \n",defining_templateArgument,templateArgument,qualifier.c_str());
+
+  // DQ (5/29/2019): When this is violated, then we will put the name qualification string into the map using the wrong key.
+     if (defining_templateArgument != NULL && (defining_templateArgument != templateArgument) )
+        {
+          printf ("CASE OF defining_templateArgument != NULL && (defining_templateArgument != templateArgument) FOUND! \n");
+        }
+  // ROSE_ASSERT(defining_templateArgument == NULL || (defining_templateArgument != NULL && defining_templateArgument == templateArgument) );
+#endif
 
   // Look for the template argument in the IR node map and either reset it or add it to the map.
   // The support for the template argument from the defining declaration makes this a bit more 
@@ -13364,7 +13483,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: test 17: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: test 17: for templateArgument = %p replacing previousQualifier = %s with new qualifier = %s \n",templateArgument,previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
@@ -13408,6 +13527,30 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
                     printf ("defining_testNameInMap = %s \n",defining_testNameInMap.str());
 #endif
                     ROSE_ASSERT(defining_testNameInMap == testNameInMap);
+                  }
+             }
+            else
+             {
+            // DQ (5/30/2019): Need tohandle the case where the name qualification stored in the qualifiedNameMapForTypes 
+            // are the same for templateArgument, but different for defining_templateArgument.  This is a bugfix for test2019_444.C
+            // reported by Charles as part of reproducers for bugs in ROE from ASC codes.
+#if 0
+               printf ("The name qualifier is the same in the qualifiedNameMapForTypes for templateArgument, but need to check for defining_templateArgument \n");
+#endif
+               if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
+                  {
+                    ROSE_ASSERT(qualifiedNameMapForTypes.find(defining_templateArgument) != qualifiedNameMapForTypes.end());
+                    std::map<SgNode*,std::string>::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
+                    ROSE_ASSERT (j != qualifiedNameMapForTypes.end());
+                 // ROSE_ASSERT(j->second == qualifier);
+                    if (j->second != qualifier)
+                       {
+#if 0
+                         printf ("Setting the qualified for defining_templateArgument: j->second = %s qualifier = %s \n",j->second.c_str(),qualifier.c_str());
+#endif
+                         j->second = qualifier;
+                       }
+                    ROSE_ASSERT(j->second == qualifier);
                   }
              }
         }
