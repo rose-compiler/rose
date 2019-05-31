@@ -705,17 +705,33 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 string Visualizer::foldedTransitionGraphToDot() {
   tg2=true;
   stringstream ss;
+  size_t gSize=transitionGraph->size();
+  LabelSet labelSet=flow->nodeLabels();
+  size_t labelSetSize=labelSet.size();
+  size_t reportInterval=100;
+  cout<<"INFO: generating folded state graph: "<<labelSetSize<<" nodes, "<<gSize<<" edges"<<endl;
+
+  // generate graph
   ss<<"digraph html {\n";
   // generate nodes
-  LabelSet labelSet=flow->nodeLabels();
+  size_t labelNr=0;
   for(LabelSet::iterator i=labelSet.begin();i!=labelSet.end();++i) {
     ss<<transitionGraphDotHtmlNode(*i);
+    if(labelSetSize>reportInterval && labelNr%reportInterval==0) {
+      cout<<"INFO: generating label "<<labelNr<<" of "<<labelSetSize<<endl;
+    }
+    labelNr++;
   }
   // generate edges
-  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
+  size_t edgeNr=0;
+   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j)->source;
     const EState* target=(*j)->target;
 
+    if(gSize>reportInterval && edgeNr%reportInterval==0) {
+      cout<<"INFO: generating transition "<<edgeNr<<" of "<<gSize<<endl;
+    }
+    edgeNr++;
     // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 

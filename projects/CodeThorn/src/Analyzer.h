@@ -250,6 +250,7 @@ namespace CodeThorn {
 
     // temporary option
     bool optionStringLiteralsInState=false;
+    void reduceStg(function<bool(const EState*)> predicate);
 
   protected:
     void printStatusMessage(string s, bool newLineFlag);
