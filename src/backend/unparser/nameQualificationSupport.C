@@ -2865,7 +2865,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth += 1;
 
                                 // DQ (4/28/2019): We can see that this is called twice, once from the SgInitialization's initializer, and once from the SgConstructorInitializer.
-#if 1
+#if 0
                                    printf ("In nameQualificationDepth(): case V_SgMemberFunctionDeclaration: Incremented the qualificationDepth: declaration = %p = %s qualificationDepth = %d \n",
                                         declaration,declaration->class_name().c_str(),qualificationDepth);
 #endif
