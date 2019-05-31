@@ -453,6 +453,21 @@ SAWYER_EXPORT std::string thisExecutableName();
     std::vector<TYPE> NAME##Vec_(SIZE);                 \
     TYPE *NAME = &(NAME##Vec_[0]);
 
+#elif defined(__sun)
+//--------------------------
+// Sun Solaris
+//--------------------------
+
+# define SAWYER_ATTR_UNUSED /*void*/
+# define SAWYER_ATTR_NORETURN /*void*/
+# define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
+# define SAWYER_MAY_ALIAS /*void*/
+# define SAWYER_STATIC_INIT /*void*/
+# define SAWYER_DEPRECATED(WHY) /*void*/
+
+# define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
+    TYPE NAME[SIZE]; memset(NAME, 0, (SIZE)*sizeof(TYPE))
+
 #elif defined(__APPLE__) && defined(__MACH__)
 //--------------------------
 // Apple OSX, iOS, Darwin
