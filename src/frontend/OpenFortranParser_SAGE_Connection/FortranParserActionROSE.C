@@ -13564,9 +13564,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param hasInputItemList True if has an input item list.
      */
-// void c_action_read_stmt(Token_t * label, ofp_bool hasInputItemList)
-    void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos,
-            ofp_bool hasInputItemList)
+void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_bool hasInputItemList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -13577,14 +13575,10 @@ void c_action_label(Token_t * lbl)
 
         SgReadStatement* readStatement = new SgReadStatement();
         ROSE_ASSERT(readStatement != NULL);
+        ROSE_ASSERT(readKeyword != NULL);
         setSourcePosition(readStatement, readKeyword);
 
         setStatementNumericLabel(readStatement, label);
-
-#if 1
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R910 c_action_read_stmt()");
-#endif
 
         // DQ (12/19/2007): This is a more uniform handling of the SgExprListExp (computed in R915)
         // SgExprListExp* exprListExp = isSgExprListExp(astExpressionStack.front());
@@ -13626,9 +13620,9 @@ void c_action_label(Token_t * lbl)
 #endif
 
         // If there is only one entry then it is the unit, not the format.
-        int initalStackDepth = astExpressionStack.size();
+        int initialStackDepth = astExpressionStack.size();
 
-        // printf ("In R910 c_action_read_stmt(): initalStackDepth = %d \n",initalStackDepth);
+        // printf ("In R910 c_action_read_stmt(): initialStackDepth = %d \n",initialStackDepth);
 
         // If this list is empty then there was nothing specified, as reported by OFP, but this is the case of "read *, ..." so we will interpret this as the case of "read fmt=*. ..." or "read *, ..."
         bool availableFormatSpecifier = astNameStack.empty();
@@ -13680,10 +13674,10 @@ void c_action_label(Token_t * lbl)
 
             // The "unit=" string is optional, if it was not present then a token was pushed onto the stack with the text value "defaultString"
             // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) )
-            // if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initalStackDepth >= 2) ) )
+            // if ( (strncasecmp(name->text,"fmt",3) == 0) || ( (strncmp(name->text,"defaultString",13) == 0) && (readStatement->get_format() == NULL) && (initialStackDepth >= 2) ) )
             if ((strncasecmp(name->text, "fmt", 3) == 0) || ((strncmp(name->text,
                                             "defaultString", 13) == 0) && (readStatement->get_format()
-                                    == NULL) && (initalStackDepth >= 2) && (lookAheadName != NULL
+                                    == NULL) && (initialStackDepth >= 2) && (lookAheadName != NULL
                                     && strncmp(lookAheadName->text, "defaultString", 13) == 0)))
             {
                 // printf ("Processing token = %s as format spec \n",name->text);
@@ -13794,9 +13788,7 @@ void c_action_label(Token_t * lbl)
      * @param label The statement label
      * @param hasOutputItemList True if output-item-list is present
      */
-// void c_action_write_stmt(Token_t * label, ofp_bool hasOutputItemList)
-    void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos,
-            ofp_bool hasOutputItemList)
+void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, ofp_bool hasOutputItemList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -13804,14 +13796,9 @@ void c_action_label(Token_t * lbl)
                 label, label != NULL ? label->text : "NULL", writeKeyword,
                 writeKeyword != NULL ? writeKeyword->text : "NULL",
                 hasOutputItemList ? "true" : "false");
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R911 c_action_write_stmt()");
-#endif
 
         SgWriteStatement* writeStatement = new SgWriteStatement();
         ROSE_ASSERT(writeStatement != NULL);
-        // setSourcePosition(writeStatement);
         ROSE_ASSERT(writeKeyword != NULL);
         setSourcePosition(writeStatement, writeKeyword);
 
@@ -13819,7 +13806,8 @@ void c_action_label(Token_t * lbl)
 
         writeStatement->set_io_statement(SgIOStatement::e_write);
 
-        // DQ (12/19/2007): This is a more uniform handling of the SgExprListExp (computed in R915)
+     // Rasmussen (05/30/2019): Extensive rewrite to fix error in processing the io_control_spec_list
+     //
         SgExprListExp* exprListExp = isSgExprListExp(astExpressionStack.front());
 
         if (exprListExp == NULL)
@@ -13840,100 +13828,254 @@ void c_action_label(Token_t * lbl)
         writeStatement->set_io_stmt_list(exprListExp);
         exprListExp->set_parent(writeStatement);
 
-        // If there is only one entry then it is the unit, not the format.
-        // int initalStackDepth = astExpressionStack.size();
-        int numberOfDefaultOptions = 0;
-        AstNameListType::iterator i = astNameStack.begin();
-        while (i != astNameStack.end())
-        {
-            Token_t* tmp_name = *i;
-            bool isDefaultString = (strncmp(tmp_name->text, "defaultString", 13)
-                    == 0);
-            if (isDefaultString)
-            numberOfDefaultOptions++;
-            i++;
-        }
+     // Remove items from the io_control_spec_list that aren't specifically named.
+     // These are potentially {unit,fmt,nml}.  They are associated with the name
+     // "defaultString" and order matters.  Which io_control_spec they belong to
+     // will be sorted out last after processing the named ones (not "defaultString").
+     // Regarding order:
+     //   1. If unit is not named it shall be the first item in the list (and shall be present).
+     //   2. If nml is not named and appears in the list (as a namelist) it shall be the second item after unit.
+     //   3. If fmt is not named it shall be the second item in the list following unit.
+     //   4. There shall not be both a format spec and a namelist spec.
 
-        // printf ("Number of default options on stack = %d \n",numberOfDefaultOptions);
-        ROSE_ASSERT(numberOfDefaultOptions >= 0);
-        ROSE_ASSERT(numberOfDefaultOptions <= 2);
+        std::vector<SgExpression*> unnamed_spec_list;
 
-        // astExpressionStack.pop_front();
-        // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-        // while (astExpressionStack.empty() == false)
+        bool has_unit_spec   = false;
+        bool has_format_spec = false;
+        bool has_nml_spec    = false;
+
+        ROSE_ASSERT(astNameStack.size() <= astExpressionStack.size());
+
         while (astNameStack.empty() == false)
-        {
-            // ROSE_ASSERT(astNameStack.empty() == false);
+         {
             ROSE_ASSERT(astExpressionStack.empty() == false);
 
-            SgExpression* expression = astExpressionStack.front();
-            Token_t* name = astNameStack.front();
+            SgExpression* spec_expr = astExpressionStack.front();
+            Token_t*      spec_name = astNameStack.front();
 
-            // printf ("In c_action_write_stmt(): processing token = %s with expression = %p = %s \n",name->text,expression,expression->class_name().c_str());
+            ROSE_ASSERT(spec_expr != NULL);
 
-            // We don't need the current_IO_Control_Spec data structure in the code below.
-
-            // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
-            // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) )
-            // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) && initalStackDepth >= 2)
-            if ( ((strncasecmp(name->text, "fmt", 3) == 0) || (strncmp(name->text,"defaultString", 13) == 0))
-                && (writeStatement->get_format() == NULL)
-                && numberOfDefaultOptions == 2 )
-            {
-                // printf ("Processing token = %s as format spec \n",name->text);
-                // writeStatement->set_format(expression);
-                ROSE_ASSERT(expression != NULL);
-                SgExpression* labelRefExp = buildLabelRefExp(expression);
-                ROSE_ASSERT(labelRefExp != NULL);
-                writeStatement->set_format(labelRefExp);
-                labelRefExp->set_parent(writeStatement);
+         // Handle the unnamed case (with name "defaultString") by storing the expression in a list
+            if ( strncmp(spec_name->text, "defaultString", 13) == 0 )
+               {
+                  unnamed_spec_list.push_back(spec_expr);
+               }
+            else if ( strncasecmp(spec_name->text, "unit", 4) == 0 )
+               {
+                  has_unit_spec = true;
+                  writeStatement->set_unit(spec_expr);
+               }
+            else if ( strncasecmp(spec_name->text, "fmt", 3) == 0 )
+               {
+                  has_format_spec = true;
+                  if (isSgIntVal(spec_expr) != NULL)
+                     {
+                        SgExpression* labelRefExp = buildLabelRefExp(spec_expr);
+                        ROSE_ASSERT(labelRefExp != NULL);
+                        writeStatement->set_format(labelRefExp);
+                        labelRefExp->set_parent(writeStatement);
+                     }
+                  else if ( isSgStringVal       (spec_expr) != NULL  ||
+                            isSgVarRefExp       (spec_expr) != NULL  ||
+                            isSgFunctionCallExp (spec_expr) != NULL  || // can occur when trim is used for a character string
+                            isSgAsteriskShapeExp(spec_expr) != NULL )
+                     {
+                        writeStatement->set_format(spec_expr);
+                     }
+                  else
+                     {
+                        fprintf (stderr, "In c_action_write_stmt(): ERROR processing token = %s with spec_expr of class = %s \n",
+                                         spec_name->text, spec_expr->class_name().c_str());
+                        ROSE_ASSERT(false);
+                     }
             }
-            // Process this second because the unit expression is deeper on the stack!
-            else if ( ((strncasecmp(name->text, "unit", 4) == 0) || (strncmp(name->text, "defaultString", 13) == 0))
-                     && (writeStatement->get_unit() == NULL))
-            {
-                // printf ("Processing token = %s as unit spec \n",name->text);
-                writeStatement->set_unit(expression);
-            }
-            else if (strncasecmp(name->text, "iostat", 6) == 0)
-            {
-                writeStatement->set_iostat(expression);
-            }
-            else if (strncasecmp(name->text, "err", 3) == 0)
-            {
-                // writeStatement->set_err(expression);
-                ROSE_ASSERT(expression != NULL);
-                SgExpression* labelRefExp = buildLabelRefExp(expression);
-                ROSE_ASSERT(labelRefExp != NULL);
-                writeStatement->set_err(labelRefExp);
-                labelRefExp->set_parent(writeStatement);
-            }
-            else if (strncasecmp(name->text, "rec", 3) == 0)
-            {
-                writeStatement->set_rec(expression);
-            }
-            else if (strncasecmp(name->text, "iomsg", 5) == 0)
-            {
-                writeStatement->set_iomsg(expression);
-            }
-            else if (strncasecmp(name->text, "nml", 3) == 0)
-            {
-                writeStatement->set_namelist(expression);
-            }
-            else if (strncasecmp(name->text, "advance", 7) == 0)
-            {
-                writeStatement->set_advance(expression);
-            }
-            else if (strncasecmp(name->text, "asynchronous", 12) == 0)
-            {
-                writeStatement->set_asynchronous(expression);
+            else if (strncasecmp(spec_name->text, "nml", 3) == 0)
+               {
+                  has_nml_spec = true;
+                  writeStatement->set_namelist(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "advance", 7) == 0)
+               {
+                  writeStatement->set_advance(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "asynchronous", 12) == 0)
+               {
+                  writeStatement->set_asynchronous(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "blank", 5) == 0)
+               {
+                  writeStatement->set_blank(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "decimal", 7) == 0)
+               {
+                  writeStatement->set_decimal(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "delim", 5) == 0)
+               {
+                  writeStatement->set_delim(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "end", 3) == 0)
+               {
+                  ROSE_ASSERT(spec_expr != NULL);
+                  SgExpression* labelRefExp = buildLabelRefExp(spec_expr);
+                  ROSE_ASSERT(labelRefExp != NULL);
+                  writeStatement->set_end(labelRefExp);
+                  labelRefExp->set_parent(writeStatement);
+               }
+            else if (strncasecmp(spec_name->text, "eor", 3) == 0)
+               {
+                  ROSE_ASSERT(spec_expr != NULL);
+                  SgExpression* labelRefExp = buildLabelRefExp(spec_expr);
+                  ROSE_ASSERT(labelRefExp != NULL);
+                  writeStatement->set_eor(labelRefExp);
+                  labelRefExp->set_parent(writeStatement);
+               }
+            else if (strncasecmp(spec_name->text, "err", 3) == 0)
+               {
+                  ROSE_ASSERT(spec_expr != NULL);
+                  SgExpression* labelRefExp = buildLabelRefExp(spec_expr);
+                  ROSE_ASSERT(labelRefExp != NULL);
+                  writeStatement->set_err(labelRefExp);
+                  labelRefExp->set_parent(writeStatement);
+               }
+            else if (strncasecmp(spec_name->text, "id", 2) == 0)
+               {
+                  writeStatement->set_id(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "iomsg", 5) == 0)
+               {
+                  writeStatement->set_iomsg(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "iostat", 6) == 0)
+               {
+                  writeStatement->set_iostat(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text,"pad",3) == 0)
+               {
+                  writeStatement->set_pad(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text,"pos",3) == 0)
+               {
+                  writeStatement->set_pos(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "rec", 3) == 0)
+               {
+                  writeStatement->set_rec(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "round", 5) == 0)
+               {
+                  writeStatement->set_round(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "sign", 4) == 0)
+               {
+                  writeStatement->set_sign(spec_expr);
+               }
+            else if (strncasecmp(spec_name->text, "size", 4) == 0)
+               {
+                  writeStatement->set_size(spec_expr);
+               }
+            else
+               {
+                  fprintf (stderr, "In c_action_write_stmt(): ERROR processing token = %s with spec_expr of class = %s \n",
+                                   spec_name->text, spec_expr->class_name().c_str());
+                  ROSE_ASSERT(false);
             }
 
             astNameStack.pop_front();
             astExpressionStack.pop_front();
 
-            expression->set_parent(writeStatement);
+         // Always set the parent of the spec_expr so we won't have to do it later in processing the unnamed_spec_list
+            spec_expr->set_parent(writeStatement);
         }
+
+     // Now process the unnamed spec items (they are in reverse order because they came from a stack)
+     //
+        int num_unnamed = unnamed_spec_list.size();
+
+     // There are a maximum of two spec items in the list
+        ROSE_ASSERT(num_unnamed <= 2);
+
+     // If the io-spec has already been seen there can be only one item on the list
+        if (has_unit_spec) ROSE_ASSERT(num_unnamed <= 1);
+
+     // Get spec expressions in reverse order (recall they came from a stack)
+        SgExpression* spec_expr_1 = (num_unnamed >= 1) ? unnamed_spec_list[num_unnamed - 1] : NULL;
+        SgExpression* spec_expr_2 = (num_unnamed == 2) ? unnamed_spec_list[0]               : NULL;
+
+     // We have to keep track of the spec expression that isn't an io-unit
+     //   (if has_unit_spec=true it is has been named with "unit=" and is not on the unnamed list)
+        SgExpression* spec_expr_other = (has_unit_spec) ? spec_expr_1 : spec_expr_2;
+
+     // Handle the unit spec first as it must be present and first on the list (if not specified by name).
+        if (has_unit_spec == false)
+           {
+              ROSE_ASSERT(spec_expr_1 != NULL);
+              writeStatement->set_unit(spec_expr_1);
+              has_unit_spec = true;
+              spec_expr_1 = NULL;
+           }
+
+     // Now check for a namelist as it can only be a name (SgVarRefExp) and thus different from a format spec
+        SgVarRefExp* nml_expr = (has_nml_spec == false) ? isSgVarRefExp(spec_expr_other) : NULL;
+        if (nml_expr != NULL)
+           {
+           // Make sure this variable isn't a string, if so it is a format spec
+              SgType* type = nml_expr->get_type();
+              ROSE_ASSERT(type);
+              SgTypeString* string_type = isSgTypeString(type);
+              if (string_type == NULL) {
+                 writeStatement->set_namelist(nml_expr);
+                 has_nml_spec = true;
+                 spec_expr_other = NULL;
+              }
+           }
+
+     // Check for a format spec as a label (SgIntVal)
+        SgIntVal* fmt_label_expr = (has_format_spec == false) ? isSgIntVal(spec_expr_other) : NULL;
+        if (fmt_label_expr != NULL)
+           {
+              SgExpression* labelRefExp = buildLabelRefExp(fmt_label_expr);
+              ROSE_ASSERT(labelRefExp != NULL);
+              writeStatement->set_format(labelRefExp);
+              labelRefExp->set_parent(writeStatement);
+              has_format_spec = true;
+              spec_expr_other = NULL;
+           }
+
+     // Check for a format spec as a string, variable, function call (e.g., trim), or '*'
+        SgExpression* fmt_expr = NULL;
+        if (has_format_spec == false)
+           {
+              if ( isSgStringVal       (spec_expr_other) != NULL  ||
+                   isSgVarRefExp       (spec_expr_other) != NULL  ||
+                   isSgFunctionCallExp (spec_expr_other) != NULL  ||   // can occur when trim is used for character string
+                   isSgAsteriskShapeExp(spec_expr_other) != NULL )
+                 {
+                    fmt_expr = spec_expr_other;
+                    ROSE_ASSERT(fmt_expr);
+                    writeStatement->set_format(fmt_expr);
+                    has_format_spec = true;
+                    spec_expr_other = NULL;
+                 }
+           }
+
+     // Hopefully we are done!
+     //
+        if (spec_expr_other != NULL)
+           {
+              printf ("In c_action_write_stmt(): ERROR:  DID NOT process class name %s \n", spec_expr_other->class_name().c_str());
+              printf ("  assuming this is a name-list-spec gone wrong, examine and try test pr17285.f90 \n");
+           // test pr17285.f90 has a namelist that appears as a SgFunctionRefExp
+           // TODO - fix this - but for now let it be a name-list
+
+              printf ("--- recovering by processing expression class name %s as nml spec \n", spec_expr_other->class_name().c_str());
+              writeStatement->set_namelist(spec_expr_other);
+              has_nml_spec = true;
+              spec_expr_other = NULL;
+           }
+
+        ROSE_ASSERT(has_unit_spec);
+        ROSE_ASSERT(spec_expr_1 == NULL && spec_expr_other == NULL);
 
         setStatementNumericLabel(writeStatement, label);
 
@@ -13945,19 +14087,14 @@ void c_action_label(Token_t * lbl)
         // There are two mechanisms used to set labels, and we never know which will be used by OFP.
         setStatementNumericLabelUsingStack(writeStatement);
 
-#if 0
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R911 c_action_write_stmt()");
-#endif
-
-        // Error checking: there may still be something on the stack from an  unhandled implied do loop
+        // Error checking: there may still be something on the stack from an unhandled implied do loop
         // when we have a correctly handled implied do loop (there are three flavors) this should not be required.
         if (astExpressionStack.empty() == false)
         {
             // DQ (12/12/2010): Make this a warning only output within verbose mode.
-            if (SgProject::get_verbose() > 0)
-            printf(
-                    "WARNING: unfinished implied do loop expressions may be left on stack (or it may be from a c_action_if_stmt()) (write) \n");
+           if (SgProject::get_verbose() > 0) {
+              printf("WARNING: unfinished implied do loop expressions may be left on stack (or from a c_action_if_stmt()) (write)\n");
+           }
         }
     }
 
@@ -13969,9 +14106,7 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param hasOutputItemList True if output-item-list is present
      */
-// void c_action_print_stmt(Token_t * label, ofp_bool hasOutputItemList)
-    void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos,
-            ofp_bool hasOutputItemList)
+void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, ofp_bool hasOutputItemList)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -13986,13 +14121,8 @@ void c_action_label(Token_t * lbl)
 
         SgPrintStatement* printStatement = new SgPrintStatement();
         ROSE_ASSERT(printStatement != NULL);
-
-        // setSourcePosition(printStatement);
         ROSE_ASSERT(printKeyword != NULL);
-
-        // DQ (1/22/2008): Switched back to passing the printKeyword
         setSourcePosition(printStatement, printKeyword);
-        // setSourcePosition(printStatement);
 
         // Set below in this function...
         // setStatementNumericLabel(printStatement,label);
