@@ -33,8 +33,9 @@ endif
 #      PASSING TESTS
 # #######################
 
-F90_TESTCODES_REQUIRED_TO_PASS = \
-     jira-par-2_literal_max.f90 \
+F90_TESTCODES_REQUIRED_TO_PASS =  \
+     jira-par-2_literal_max.f90   \
+     jira-par-11_write_format.f90 \
      R832.f90        \
      R837.f90        \
      test2007_01.f90 \
@@ -317,6 +318,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
      test2019_derived_type.f90 \
+     test2019_write_io_control_spec.f90 \
      canonicalExample.f90 
 
 # Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
