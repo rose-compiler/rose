@@ -433,7 +433,7 @@ void PropertyValueTable::shuffle() {
   }
   for (unsigned int i = 1; i <= size(); ++i) {
     // randomly select a property that has not been copied yet
-    int indexNotCopied = SPRAY::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
+    int indexNotCopied = CodeThorn::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
     map<size_t, string>::iterator iter = _formulas.begin();
     int indexNotCopiedIter = 0;
     while (indexNotCopiedIter < indexNotCopied || copied[(*iter).first]) {

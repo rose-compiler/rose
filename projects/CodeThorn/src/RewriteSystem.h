@@ -9,7 +9,7 @@
 class RewriteSystem {
  public:
   RewriteSystem();
-  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
+  void rewriteAst(SgNode*& root, CodeThorn::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
   bool getRewriteCondStmt();
   void setRewriteCondStmt(bool);
 
@@ -18,13 +18,13 @@ class RewriteSystem {
   RewriteStatistics getRewriteStatistics();
   RewriteStatistics* getRewriteStatisticsPtr() { return &_rewriteStatistics; }
 
-  void rewriteCompoundAssignmentsInAst(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
-  void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
-  SgNode* buildRewriteCompoundAssignment(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
+  void rewriteCompoundAssignmentsInAst(SgNode* root, CodeThorn::VariableIdMapping* variableIdMapping);
+  void rewriteCompoundAssignments(SgNode*& root, CodeThorn::VariableIdMapping* variableIdMapping);
+  SgNode* buildRewriteCompoundAssignment(SgNode* root, CodeThorn::VariableIdMapping* variableIdMapping);
 
   // sorts nodes of operators SgAddOp and SgMultiplyOp according to variantT bottom up
   // shallow sort at each node
-  void establishCommutativeOrder(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
+  void establishCommutativeOrder(SgNode*& root, CodeThorn::VariableIdMapping* variableIdMapping);
 
   // transform conditions in 'SgDoWhileStatement', 'SgWhileStatement',
   // 'SgForStatement', 'ifStatement' into SgStatementExpressions that

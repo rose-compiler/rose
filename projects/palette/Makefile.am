@@ -1,4 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# DQ (10/17/2010): This seems to be problem for Java, we can fix this later.
+# DQ (4/17/2016): Restrict this to requiring both C/C++ language support and Binary analysis support.
+if !ROSE_USING_ROSE_CODE_GENERATION
+if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+if !ROSE_BUILD_COMPASS2
+
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # DQ (12/5/2009): Skip testing of this code to establish the size of the problem!
@@ -81,3 +90,9 @@ check-local: conditional-check-local
 
 clean-local:
 	rm -rf compass_parameters current_answers
+
+endif
+endif
+endif
+endif
+endif

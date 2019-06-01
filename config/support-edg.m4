@@ -103,8 +103,6 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 		  [want_edg_source="$enableval"],
 		  [want_edg_source=maybe])
 
-    echo "ROBB: want_edg_source=$want_edg_source" >&2
-
     if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
         has_edg_source=yes
     else

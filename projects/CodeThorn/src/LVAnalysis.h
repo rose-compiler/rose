@@ -14,7 +14,7 @@
 #include "DFAstAttribute.h"
 #include "LVTransferFunctions.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class LVPropertyStateFactory : public PropertyStateFactory {
  public:
@@ -36,6 +36,6 @@ class LVAnalysis : public DFAnalysisBase {
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };
 
-} // end namespace SPRAY
+} // end namespace CodeThorn
 
 #endif

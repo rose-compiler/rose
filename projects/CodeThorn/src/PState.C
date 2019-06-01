@@ -97,10 +97,10 @@ bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
     AbstractValue val=(*i).second;
-    return val.isConstInt();
+    return val.isConstInt()||val.isConstPtr();
   } else {
-    // TODO: this allows variables (intentionally) not to be in PState but still to analyze
-    // however, this check will have to be reinstated once this mode is fully supported
+    // assume that a variable not in state is non-const (has any value)
+    // this is currently used in some modes to reduce state size
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }

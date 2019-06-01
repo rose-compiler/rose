@@ -19,7 +19,7 @@
   * \date 2013.
  */
 
-namespace SPRAY {
+namespace CodeThorn {
 class IntervalAnalysis : public DFAnalysisBase {
  public:
   IntervalAnalysis();

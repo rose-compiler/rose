@@ -7,7 +7,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "Flow.h"
 
 // CodeThorn includes
@@ -20,7 +20,7 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   /*! 
    * \brief Generates consecutive integer values (simple counter).
@@ -69,6 +69,6 @@ namespace SPRAY {
     Label chooseRandomNode(Flow* cfa);
   };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

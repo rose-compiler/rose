@@ -4,7 +4,7 @@
 #include "TrivialInlining.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 bool DeadCodeElimination::isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();

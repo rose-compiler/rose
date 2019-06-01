@@ -21,7 +21,7 @@ namespace CodeThorn {
     CodeThorn::AbstractValue var;
     CodeThorn::AbstractValue val;
     string toString() const;
-    string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     void recordVariable(OpType op, CodeThorn::AbstractValue varId);
     void recordConst(OpType op, CodeThorn::AbstractValue val);
     void recordConst(OpType op, int val);

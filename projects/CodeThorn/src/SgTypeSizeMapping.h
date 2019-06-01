@@ -3,7 +3,7 @@
 
 #include "TypeSizeMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
   class SgTypeSizeMapping : public TypeSizeMapping {
   public:
     /* determine size of type in bytes from SgType and stored mapping
@@ -11,14 +11,14 @@ namespace SPRAY {
        type sizes provided by the type size mapping (it is independent
        of the system the analyzer is running on).
     */
-    SPRAY::TypeSize determineTypeSize(SgType* sgType);
+    CodeThorn::TypeSize determineTypeSize(SgType* sgType);
 
     // returns the element type size of an array
-    SPRAY::TypeSize determineElementTypeSize(SgArrayType* sgType);
+    CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
 
     // returns the size of the type pointed to.
-    SPRAY::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
+    CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
   };
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

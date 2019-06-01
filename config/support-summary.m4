@@ -72,6 +72,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX:-none}"
 	echo "    yices executable                 ${ROSE_YICES:-none}"
 	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"
+	echo "    z3 version                       ${Z3_VERSION:-unknown}"
 	echo "    z3 executable                    ${Z3:-none}"
 	echo "    z3 library                       ${Z3_LIBRARY_PATH:-none}"
     fi

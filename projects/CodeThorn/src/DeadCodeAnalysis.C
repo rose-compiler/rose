@@ -6,7 +6,7 @@
 #include "CppStdUtilities.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 void DeadCodeAnalysis::setOptionTrace(bool flag) {
   option_trace=flag;
@@ -24,7 +24,7 @@ void DeadCodeAnalysis::setOptionFilePath(bool flag) {
   optionFilePath=flag;
 }
 
-void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* intervalAnalyzer,
+void DeadCodeAnalysis::writeUnreachableCodeResultFile(CodeThorn::IntervalAnalysis* intervalAnalyzer,
                                                       string csvDeadCodeUnreachableFileName) {
   ofstream deadCodeCsvFile;
   deadCodeCsvFile.open(csvDeadCodeUnreachableFileName.c_str());
@@ -65,7 +65,7 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
                 deadCodeCsvFile <<","<<baseFileName;
               }
               if(optionSourceCode) {
-                deadCodeCsvFile <<","<< SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
+                deadCodeCsvFile <<","<< CodeThorn::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/");
               }
               deadCodeCsvFile << endl;
             }
@@ -81,7 +81,7 @@ void DeadCodeAnalysis::writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* i
   deadCodeCsvFile.close();
 }
 
-void DeadCodeAnalysis::writeDeadAssignmentResultFile(SPRAY::LVAnalysis* lvAnalysis,
+void DeadCodeAnalysis::writeDeadAssignmentResultFile(CodeThorn::LVAnalysis* lvAnalysis,
                                                      string deadCodeCsvFileName) {
   ofstream deadCodeCsvFile;
   deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
@@ -89,7 +89,7 @@ void DeadCodeAnalysis::writeDeadAssignmentResultFile(SPRAY::LVAnalysis* lvAnalys
     cout << "TRACE: checking for dead assignments." << endl;
   }
   // Iteratate over all CFG nodes/ labels:
-  for(SPRAY::Flow::const_node_iterator labIter = lvAnalysis->getFlow()->nodes_begin(); labIter != lvAnalysis->getFlow()->nodes_end(); ++labIter) {
+  for(CodeThorn::Flow::const_node_iterator labIter = lvAnalysis->getFlow()->nodes_begin(); labIter != lvAnalysis->getFlow()->nodes_end(); ++labIter) {
     const Label& label = *labIter;
     // Do not output a function call twice (only the function call return label and not the function call label):
     if(!lvAnalysis->getLabeler()->isFunctionCallLabel(label)) {
@@ -140,7 +140,7 @@ void DeadCodeAnalysis::writeDeadAssignmentResultFile(SPRAY::LVAnalysis* lvAnalys
           }
           // assignment to only dead variables found:
           deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                          << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
+                          << "," << CodeThorn::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
                           << endl;
         }
       }
