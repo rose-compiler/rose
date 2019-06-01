@@ -9251,7 +9251,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
        // ROSE_ASSERT(functionDeclaration != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#define DEBUG_MEMBER_FUNCTION_REF (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+
+#if DEBUG_MEMBER_FUNCTION_REF
           printf ("case of SgMemberFunctionRefExp: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
 #endif
 
@@ -9261,22 +9263,22 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
           bool isAddressTaken                  = SageInterface::isAddressTaken(memberFunctionRefExp);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
           printf ("isMemberFunctionMemberReference = %s \n",isMemberFunctionMemberReference ? "true" : "false");
 #endif
        // DQ (2/23/2019): I think that the test code test2019_191.C is not setting this correctly. The logic for 
        // member function pointers (references) is not yet worked out as well as for data membr references.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
           printf ("Explicitly setting isMemberFunctionMemberReference == false \n");
 #endif
        // isMemberFunctionMemberReference = false;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if DEBUG_MEMBER_FUNCTION_REF || 0
           printf ("Case of SgMemberFunctionRefExp: isMemberFunctionMemberReference = %s isAddressTaken = %s \n",isMemberFunctionMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
 #endif
           if (isMemberFunctionMemberReference == true && isAddressTaken == true)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if DEBUG_MEMBER_FUNCTION_REF || 0
                printf ("Detected case of name qualification required due to pointer to member function reference \n");
 #endif
                nameQualificationInducedFromPointerMemberType = true;
@@ -9286,7 +9288,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // bool isMemberFunctionMemberReference = SageInterface::isMemberFunctionMemberReference(memberFunctionRefExp);
                if (isMemberFunctionMemberReference == true)
                   {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("This is a member function member reference requiring name qualification to the class where the data member reference is referenced \n");
 #endif
                     ROSE_ASSERT(isAddressTaken == false);
@@ -9298,7 +9300,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // std::list<SgClassType*> classChain = SageInterface::getClassTypeChainForDataMemberReference(memberFunctionRefExp);
                     std::list<SgClassType*> classChain = SageInterface::getClassTypeChainForMemberReference(memberFunctionRefExp);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("classChain.size() = %zu \n",classChain.size());
                     std::list<SgClassType*>::iterator classChain_iterator = classChain.begin();
                     while (classChain_iterator != classChain.end())
@@ -9325,7 +9327,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          std::list<SgClassType*>::iterator classChain_first = classChain.begin();
                          std::string qualifier = std::string((*classChain_first)->get_name().str()) + "::";
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                          printf ("data member qualifier = %s \n",qualifier.c_str());
 #endif
                       // DQ (2/16/2019): Mark this as at least non-zero, but it is computed based on where the ambiguity is instead 
@@ -9337,7 +9339,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                          if (qualifiedNameMapForNames.find(memberFunctionRefExp) == qualifiedNameMapForNames.end())
                             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                               printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),memberFunctionRefExp,memberFunctionRefExp->class_name().c_str());
 #endif
                               qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(memberFunctionRefExp,qualifier));
@@ -9349,7 +9351,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(memberFunctionRefExp);
                               ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                               string previousQualifier = i->second.c_str();
                               printf ("WARNING: test 0: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
@@ -9367,9 +9369,46 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                       else
                        {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                          printf ("This has an empty class chain: classChain.size() = %zu \n",classChain.size());
 #endif
+
+#if 1
+                 // DQ (6/1/2019): When the function called is from a base class and conflicts with a member function 
+                 // in the derived class then we need additional name qualification.
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                    printf (" (isMemberFunctionMemberReference == true && isAddressTaken == false) == true \n");
+#endif
+                 // ROSE_ASSERT (isMemberFunctionMemberReference == true && isAddressTaken == false);
+
+                    SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+                 // ROSE_ASSERT(currentStatement != NULL);
+                    if (currentStatement != NULL)
+                       {
+                         SgScopeStatement* currentScope = currentStatement->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
+
+                         ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+                         int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                         printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
+                         printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                         ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+                         setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+#if DEBUG_MEMBER_FUNCTION_REF || 0
+                         printf ("case of SgMemberFunctionRefExp: currentStatement == NULL (could be a function call hidden in a decltype()) \n");
+#endif
+                       }
+#endif
+
 #if 0
                          printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
@@ -9380,11 +9419,63 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     ROSE_ASSERT(false);
 #endif
                   }
+                 else
+                  {
+                    ROSE_ASSERT (isMemberFunctionMemberReference == false);
+                    if (isAddressTaken == true)
+                       {
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(isAddressTaken == false);
+                       }
+
+#if 0
+                 // DQ (6/1/2019): When the function called is from a base class and conflicts with a member function 
+                 // in the derived class then we need additional name qualification.
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                    printf (" (isMemberFunctionMemberReference == true && isAddressTaken == false) == true \n");
+#endif
+                 // ROSE_ASSERT (isMemberFunctionMemberReference == true && isAddressTaken == false);
+
+                    SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+                 // ROSE_ASSERT(currentStatement != NULL);
+                    if (currentStatement != NULL)
+                       {
+                         SgScopeStatement* currentScope = currentStatement->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
+
+                         ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+                         int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                         printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
+                         printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                         ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+                         setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+#if DEBUG_MEMBER_FUNCTION_REF || 0
+                         printf ("case of SgMemberFunctionRefExp: currentStatement == NULL (could be a function call hidden in a decltype()) \n");
+#endif
+                       }
+#endif
+
+                  }
              }
 
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
+#endif
+
+#if DEBUG_MEMBER_FUNCTION_REF
+          printf ("Case of SgMemberFunctionRefExp: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
 #endif
 
           if (memberFunctionDeclaration != NULL)
@@ -9400,7 +9491,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                     SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("Compute the currentStatement: currentStatement = %p \n",currentStatement);
 #endif
                     if (currentStatement == NULL)
@@ -9415,7 +9506,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               SgArrayType* arrayType = isSgArrayType(associatedType);
                               if (arrayType == NULL)
                                  {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                                    printf ("Warning: Location of where we can NOT associate the expression to a SgArrayType \n");
                                    memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
                                    memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
@@ -9423,7 +9514,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  }
                                 else
                                  {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                                    printf ("Note: Location of where we CAN associate the expression to a statement: confirmed unassociated expression is buried in a type: associatedType = %p = %s \n",associatedType,associatedType->class_name().c_str());
 #endif
                                  }
@@ -9438,7 +9529,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // DQ (7/11/2014): Added support for when this is a nested call and the scope where the call is made from is essential.
                          if (explictlySpecifiedCurrentScope != NULL)
                             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                               printf ("explictlySpecifiedCurrentScope = %p = %s \n",explictlySpecifiedCurrentScope,explictlySpecifiedCurrentScope->class_name().c_str());
 #endif
 
@@ -9458,19 +9549,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                     ROSE_ASSERT(currentStatement != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 #endif
                     SgScopeStatement* currentScope = currentStatement->get_scope();
                     ROSE_ASSERT(currentScope != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                     printf ("***** case of SgMemberFunctionRefExp: Calling nameQualificationDepth() ***** \n");
 #endif
                     int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                     printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
                     printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -9483,7 +9574,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             {
                               amountOfNameQualificationRequired++;
                             }
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                          printf ("Found case of name qualification required because the variable is associated with SgPointerMemberType: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
 #if 0
@@ -9495,10 +9586,48 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
                  // DQ (2/17/2019): Case of xxx !(isDataMemberReference == true && isAddressTaken == true)
                   }
+                 else
+                  {
+#if 0
+                 // DQ (6/1/2019): When the function called is from a base class and conflicts with a member function 
+                 // in the derived class then we need additional name qualification.
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                    printf (" (isMemberFunctionMemberReference == true && isAddressTaken == false) == true \n");
+#endif
+                    ROSE_ASSERT (isMemberFunctionMemberReference == true && isAddressTaken == false);
+
+                    SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
+                 // ROSE_ASSERT(currentStatement != NULL);
+                    if (currentStatement != NULL)
+                       {
+                         SgScopeStatement* currentScope = currentStatement->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
+
+                         ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+                         int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+
+#if DEBUG_MEMBER_FUNCTION_REF
+                         printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
+                         printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                         ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+                         setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
+                       }
+                      else
+                       {
+#if DEBUG_MEMBER_FUNCTION_REF || 1
+                         printf ("case of SgMemberFunctionRefExp: currentStatement == NULL (could be a function call hidden in a decltype()) \n");
+#endif
+                       }
+#endif
+                  }
              }
             else
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+#if DEBUG_MEMBER_FUNCTION_REF || 0
                printf ("WARNING: memberFunctionDeclaration == NULL in SgMemberFunctionCallExp for name qualification support! \n");
 #endif
              }
@@ -9507,7 +9636,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(memberFunctionRefExp->getAssociatedMemberFunctionDeclaration());
           if (templateInstantiationMemberFunctionDeclaration != NULL)
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                printf ("Found a SgTemplateInstantiationMemberFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationMemberFunctionDeclaration->get_name().str());
                printf ("Must handle templated SgMemberFunctionRefExp! \n");
 #endif
@@ -9523,7 +9652,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
                printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
                printf ("***** calling traverseTemplatedMemberFunction() \n");
@@ -9533,7 +9662,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
                traverseTemplatedMemberFunction(memberFunctionRefExp,memberFunctionRefExp,currentScope,currentStatement);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if DEBUG_MEMBER_FUNCTION_REF
                printf ("***** DONE: calling traverseTemplatedMemberFunction() \n");
 #endif
                   }
@@ -12237,16 +12366,21 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
           std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           string previousQualifier = i->second.c_str();
           printf ("WARNING: test 4: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
           if (i->second != qualifier)
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 1
+               printf ("NOTE: test 4: replacing previousQualifier = %s with new qualifier = %s \n",i->second.c_str(),qualifier.c_str());
+#endif
                i->second = qualifier;
-#if 1
+#if 0
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
                ROSE_ASSERT(false);
+#else
+               printf (" --- Name qualificaiton was previously and error: we may need to set it to something different: qualifier = %s \n",qualifier.c_str());
 #endif
              }
         }
