@@ -231,8 +231,11 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
                   }
              }
 #else
+
+       // DQ (4/15/2019): With the new support for SgType::STRIP_POINTER_MEMBER_TYPE, we want to use it here.
        // Strip past pointers and other wrapping modifiers (but not the typedef types, since the whole point is to detect private instatances).
-          type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+       // type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+          type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_POINTER_MEMBER_TYPE|SgType::STRIP_ARRAY_TYPE);
 #endif
 
 #if 0

@@ -1150,6 +1150,7 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 # Recursion in CMake is not automatic. We have to tell it where the other CMakeList.txt files are located rather than
 # letting it find them automatically.
 
+add_subdirectory(LicenseInformation)
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(exampleTranslators)

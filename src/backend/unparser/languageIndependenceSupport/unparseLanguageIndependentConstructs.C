@@ -503,13 +503,36 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
-                    SgSourceFile* sourcefile = info.get_current_source_file();
-                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) {
+                 // SgSourceFile* sourcefile = info.get_current_source_file();
 #if 0
-                      printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration
+                    printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
 #endif
-                      statementInFile = false;
-                    }
+
+#if 1
+                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparing of the normalized functions.
+                 // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
+                    if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
+                      {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                      }
+#endif
+
+#if 0
+                 // DQ (5/28/2019): I think we should allow this to be unparsed, and so that any attached CPP directives 
+                 // can be ouput, even if within the unparser we don't output the function definition.
+                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) 
+                       {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                       }
+#endif
                   }
 #endif
 #if 0
@@ -6414,9 +6437,17 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
-       // printf ("Infinite value found as value in unparseFloatVal() \n");
-       // curprint ( "std::numeric_limits<float>::infinity()";
-          curprint( "__builtin_huge_valf()");
+       // Because of Fortran kind (compiler dependent) the string literal may be a double.
+       // Thus it makes more sense to print the original string literal [Rasmussen 4/28/2019].
+          if (SageInterface::is_Fortran_language() && float_val->get_valueString().length() > 0)
+             {
+               curprint(float_val->get_valueString());
+             }
+            else
+             {
+            // curprint ( "std::numeric_limits<float>::infinity()";
+               curprint( "__builtin_huge_valf()");
+             }
         }
        else
         {

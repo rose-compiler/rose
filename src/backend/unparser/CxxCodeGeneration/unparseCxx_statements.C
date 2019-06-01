@@ -1396,6 +1396,23 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
         }
 
 #if 0
+  // DQ (5/29/2019): Disavle this feature as a test for test2019_444.C.
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+          printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+          printf ("Disabling the type_syntax_is_available feature for function parameters \n");
+          printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+
+          ROSE_ASSERT(funcdecl_stmt->get_type_syntax() != NULL);
+
+          funcdecl_stmt->set_type_syntax_is_available(false);
+          funcdecl_stmt->set_type_syntax(NULL);
+        }
+     ROSE_ASSERT(funcdecl_stmt->get_type_syntax_is_available() == false);
+     ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
+#endif
+
+#if 0
   // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
      bool functionParametersMarkedToBeOutput = false;
      SgInitializedNamePtrList::iterator temp_p = funcdecl_stmt->get_args().begin();
@@ -1423,11 +1440,16 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 
      SgInitializedNamePtrList::iterator p        = funcdecl_stmt->get_args().begin();
 
-  // DQ (4/13/2018): I want to initialize this iterator, but it is not clea what to initialize it to...
+  // DQ (4/13/2018): I want to initialize this iterator, but it is not clear what to initialize it to...
      SgInitializedNamePtrList::iterator p_syntax = funcdecl_stmt->get_args().begin();
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
           p_syntax = funcdecl_stmt->get_parameterList_syntax()->get_args().begin();
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
      while ( p != funcdecl_stmt->get_args().end() )
@@ -1459,6 +1481,11 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                     printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
 #endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
+
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
                  else
                   {
@@ -8025,9 +8052,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          ninfo_for_variable.set_global_qualification_required(vardecl_stmt->get_global_qualification_required());
                          ninfo_for_variable.set_type_elaboration_required(vardecl_stmt->get_type_elaboration_required());
 
+                      // DQ (4/27/2019): We need to get the name qualification from the SgInitializedName, and not the SgVariableDeclaration.
                       // SgName nameQualifier = unp->u_type->unp->u_name->generateNameQualifier(decl_item,ninfo2);
                       // SgName nameQualifier = unp->u_name->generateNameQualifier(decl_item,ninfo_for_variable);
-                         SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                      // SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                         SgName nameQualifier = decl_item->get_qualified_name_prefix();
 
 #if DEBUG_VARIABLE_DECLARATION
                          printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
@@ -11555,6 +11584,10 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
 #endif
 
      unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
+
+  // DQ (5/28/2019): If there are any attached CPP directives then unparse them.
+  // This will cause then to be output twice.
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
 
 #if 0
      printf ("DONE: In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);

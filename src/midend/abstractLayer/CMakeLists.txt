@@ -1,7 +1,7 @@
 
 add_library(abstractLayer OBJECT
-  SprayException.h
   AstAnnotator.C
+  CodeThornException.C
   CPAstAttributeInterface.C
   DFAstAttribute.C
   Labeler.C
@@ -14,6 +14,7 @@ add_dependencies(abstractLayer rosetta_generated)
 
 install(FILES
   AstAnnotator.h
+  CodeThornException.h
   CPAstAttributeInterface.h
   DFAstAttribute.h
   Labeler.h
