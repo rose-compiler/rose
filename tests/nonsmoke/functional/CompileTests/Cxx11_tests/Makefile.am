@@ -633,6 +633,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_433.C \
    test2019_434.C \
    test2019_435.C \
+   test2019_436.C \
+   test2019_437.C \
+   test2019_439.C \
    test2019_440.C \
    test2019_441.C \
    test2019_442.C \
@@ -645,7 +648,19 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_449.C \
    test2019_450.C \
    test2019_451.C \
-   test2019_452.C
+   test2019_452.C \
+   test2019_454.C \
+   test2019_455.C \
+   test2019_456.C \
+   test2019_457.C \
+   test2019_458.C \
+   test2019_459.C \
+   test2019_460.C \
+   test2019_461.C \
+   test2019_462.C \
+   test2019_463.C \
+   test2019_464.C \
+   test2019_465.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -751,10 +766,7 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_382.C \
    test2019_388.C \
    test2019_411.C \
-   test2019_436.C \
-   test2019_437.C \
    test2019_438.C \
-   test2019_439.C \
    test2019_453.C
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
