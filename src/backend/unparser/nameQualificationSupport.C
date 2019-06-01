@@ -2378,6 +2378,89 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #endif
                             }
+                           else
+                            {
+                           // DQ (5/30/2019): If this is a SgEnumSymbol then are they others such that we require name qualification 
+                           // to select the correct enum declaration (type).
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope,templateParameterList,templateArgumentList);
+                              printf ("Previous lookup: symbol = %p = %s \n",symbol,(symbol != NULL) ? symbol->class_name().c_str() : "NULL");
+#endif
+                              size_t symbol_count       = currentScope->count_symbol(name);
+                              bool isUnNamed            = enumDeclaration->get_isUnNamed();
+#if 0
+                              size_t table_size         = currentScope->symbol_table_size();
+                              size_t alias_symbol_count = currentScope->count_alias_symbol(name);
+
+                              printf ("\n\n");
+                              printf (" --- currentScope       = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                              printf (" --- table_size         = %zu \n",table_size);
+                              printf (" --- symbol_count       = %zu \n",symbol_count);
+                              printf (" --- alias_symbol_count = %zu \n",alias_symbol_count);
+                              printf (" --- isUnNamed          = %s \n",enumDeclaration->get_isUnNamed() ? "true" : "false");;
+
+                              printf ("\n\nOutput using print() API \n");
+                              currentScope->get_symbol_table()->print();
+
+                              printf ("\n\nOutput using print(string,SgSymbol) API \n");
+                              currentScope->get_symbol_table()->print("How many of these enum symbols are there that match the same name",V_SgSymbol);
+                              printf ("\n\n");
+#endif
+#if 0
+                              SgScopeStatement* enumScope  = enumDeclaration->get_scope();
+                              ROSE_ASSERT(enumDeclaration->get_parent() != NULL);
+                              SgStatement*      enumParent = isSgStatement(enumDeclaration->get_parent());
+#error "DEAD CODE!"
+                              ROSE_ASSERT(enumParent != NULL);
+                              ROSE_ASSERT(enumScope != NULL);
+#if 0
+                              printf ("enumParent set to enumDeclaration->get_parent(): enumParent = %p = %s \n",enumParent,enumParent->class_name().c_str());
+#endif
+                              if (isSgTypedefDeclaration(enumParent) != NULL)
+                                 {
+                                   printf ("enumParent is SgTypedefDeclaration: get parent of enumParent \n");
+                                   enumParent = isSgStatement(enumParent->get_parent());
+                                   ROSE_ASSERT(enumParent != NULL);
+                                 }
+#if 0
+                              printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                              printf ("enumParent   = %p = %s \n",enumParent,enumParent->class_name().c_str());
+                              printf ("enumScope    = %p = %s \n",enumScope,enumScope->class_name().c_str());
+#endif
+
+#error "DEAD CODE!"
+                              if (enumParent == enumScope && false)
+                                 {
+                                   printf ("These locations match, so we don't want any name qualification on the declaration \n");
+                                 }
+                                else
+                                 {
+#error "DEAD CODE!"
+                                   if (symbol_count > 1 && isUnNamed == false)
+                                      {
+#if 0
+                                        printf ("Detected multiple symbols with the same name, so force name qualification: symbol_count = %zu \n",symbol_count);
+#endif
+                                        forceMoreNameQualification = true;
+                                      }
+#error "DEAD CODE!"
+                                 }
+#else
+                              if (symbol_count > 1 && isUnNamed == false)
+                                 {
+#if 0
+                                   printf ("Detected multiple symbols with the same name, so force name qualification: symbol_count = %zu \n",symbol_count);
+#endif
+                                   forceMoreNameQualification = true;
+                                 }
+#endif
+
+#if 0
+                              printf ("How many of these enum symbols are there that match the same name? (not implemented) \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
 
                          break;
                        }
@@ -2616,6 +2699,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                          break;
                        }
+
                     case V_SgNonrealDecl:
                        {
 #if 0
@@ -2815,6 +2899,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // We now make sure that name qualification is not called in this case, so we should not reach this point!
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Error: Skipping forced name qualification for enum types (sorry, not implemented) \n");
+#endif
+                           // DQ (5/30/2019): If we are forcing name qualification then I think we need to increment this variable.
+                           // See test2019_448.C for an example of where this is needed.
+                              qualificationDepth += 1;
+#if 0
+                              printf ("case V_SgEnumDeclaration: after incrementing qualificationDepth: qualificationDepth = %d \n",qualificationDepth);
 #endif
                            // We do reach this point in test2004_105.C
                            // ROSE_ASSERT(false);
@@ -10933,12 +11023,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                  // DQ (7/22/2017): I think the template arguments name qualification can be required. This fixes test2017_56.C.
                     int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,enumDeclaration);
+#if 0
+                    printf ("For this case: force amountOfNameQualificationRequired == 0: previously amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                 // We only really wanted to make sure that any template arguments were properly name qualified.
+                    amountOfNameQualificationRequired = 0;
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("NEW CASE: currentScope != enumDeclaration->get_scope(): SgEnumDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                     setNameQualification(enumDeclaration,amountOfNameQualificationRequired);
 #if 0
+                 // DQ (5/30/2019): uncomment this code as part of debugging only.
                     if (amountOfNameQualificationRequired > 0)
                        {
                          printf ("Need setNameQualification() for SgEnumDeclaration \n");
@@ -10977,6 +11073,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (2/13/2019): Make this an error for now!
             // ROSE_ASSERT(false);
              }
+
+#if 0
+          printf ("Exiting as a test (case of SgEnumDeclaration) \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
 
@@ -13531,7 +13632,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
              }
             else
              {
-            // DQ (5/30/2019): Need tohandle the case where the name qualification stored in the qualifiedNameMapForTypes 
+            // DQ (5/30/2019): Need to handle the case where the name qualification stored in the qualifiedNameMapForTypes 
             // are the same for templateArgument, but different for defining_templateArgument.  This is a bugfix for test2019_444.C
             // reported by Charles as part of reproducers for bugs in ROE from ASC codes.
 #if 0
