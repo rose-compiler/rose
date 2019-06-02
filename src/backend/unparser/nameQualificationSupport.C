@@ -4338,6 +4338,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
           ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
 #endif
           variableSymbol = isSgVariableSymbol(symbol);
+
+
+
           if (variableSymbol == NULL)
              {
                variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name,currentScope);
@@ -4375,15 +4378,142 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
              }
             else
              {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+
+#define DEBUG_SKIP_VARIABLE_SYMBOL 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
                printf ("initializedName->get_prev_decl_item() = %p \n",initializedName->get_prev_decl_item());
+               printf ("initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
 #endif
+            // DQ (6/1/2019): If this is associated with an extern declaration then don't use this symbol (see test2019_470.C).
+            // This should not apply to enum values which we would want to detect the correct symbol for to support the name qualification.
+            // bool skipThisSymbol = (initializedName->get_prev_decl_item() != NULL);
+            // bool skipThisSymbol = (initializedName->get_prev_decl_item() != NULL && isSgEnumDeclaration(initializedName->get_parent()) == NULL);
+            // bool skipThisSymbol = (initializedName->get_prev_decl_item() != NULL || isSgEnumDeclaration(initializedName->get_parent()) != NULL);
+            // bool skipThisSymbol = (initializedName->get_prev_decl_item() != NULL || isSgEnumDeclaration(initializedName->get_parent()) == NULL);
+            // bool skipThisSymbol = (initializedName->get_prev_decl_item() != NULL || isSgEnumDeclaration(initializedName->get_parent()) == NULL);
+            // bool skipThisSymbol = false;
+               bool skipThisSymbol = true;
+
+            // Check if the initializedName is appearing in different scopes, which would trigger name qualification.
+            // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+            // if (initializedName->get_prev_decl_item() != NULL && variableDeclaration != NULL)
+               if (initializedName->get_prev_decl_item() != NULL)
+                  {
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_prev_decl_item()->get_parent());
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+                    printf ("variableDeclaration = %p \n",variableDeclaration);
+#endif
+                 // if (variableDeclaration != NULL && variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() && variableDeclaration->get_linkage().empty() == true)
+                    if (variableDeclaration != NULL)
+                       {
+                         SgVariableDeclaration* possible_extern_variableDeclaration = isSgVariableDeclaration(initializedName->get_prev_decl_item()->get_parent());
+                         SgVariableDeclaration* original_variableDeclaration        = isSgVariableDeclaration(initializedName->get_parent());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+                         printf ("possible_extern_variableDeclaration = %p \n",possible_extern_variableDeclaration);
+                         printf ("original_variableDeclaration        = %p \n",original_variableDeclaration);
+#endif
+                         if (possible_extern_variableDeclaration != NULL && original_variableDeclaration != NULL)
+                            {
+                           // Need to check if either of these declarations was marked as extern.
+                              bool possible_extern_foundExternModifier = (possible_extern_variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() && 
+                                                                          possible_extern_variableDeclaration->get_linkage().empty() == true);
+                              bool original_foundExternModifier        = (original_variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() && 
+                                                                          original_variableDeclaration->get_linkage().empty() == true);
+                              bool foundExternModifier = (possible_extern_foundExternModifier || original_foundExternModifier);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+                              printf ("foundExternModifier = %s \n",foundExternModifier ? "true" : "false");
+#endif
+                              if (foundExternModifier == true)
+                                 {
+                                   SgScopeStatement* possible_extern_variable_scope = possible_extern_variableDeclaration->get_scope();
+                                   SgScopeStatement* original_variable_scope        = original_variableDeclaration->get_scope();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+                                   printf ("possible_extern_variable_scope = %p = %s \n",possible_extern_variable_scope,possible_extern_variable_scope->class_name().c_str());
+                                   printf ("original_variable_scope        = %p = %s \n",original_variable_scope,original_variable_scope->class_name().c_str());
+#endif
+                                   SgNamespaceDefinitionStatement* possible_extern_variable_namespace_definition = isSgNamespaceDefinitionStatement(possible_extern_variable_scope);
+                                   SgNamespaceDefinitionStatement* original_variable_namespace_definition        = isSgNamespaceDefinitionStatement(original_variable_scope);
+                                   if (possible_extern_variable_namespace_definition != NULL && original_variable_namespace_definition != NULL)
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+                                        printf ("possible_extern_variable_namespace_definition = %p \n",possible_extern_variable_namespace_definition);
+                                        printf ("original_variable_namespace_definition        = %p \n",original_variable_namespace_definition);
+                                        printf ("possible_extern_variable_namespace_definition->get_global_definition() = %p \n",possible_extern_variable_namespace_definition->get_global_definition());
+                                        printf ("original_variable_namespace_definition->get_global_definition()        = %p \n",original_variable_namespace_definition->get_global_definition());
+#endif
+                                        if (possible_extern_variable_namespace_definition->get_global_definition() == original_variable_namespace_definition->get_global_definition())
+                                           {
+                                          // skipThisSymbol = true;
+                                             skipThisSymbol = false;
+                                           }
+                                      }
+                                     else
+                                      {
+                                        ROSE_ASSERT(possible_extern_variable_scope != NULL && original_variable_scope != NULL);
+                                        if (possible_extern_variable_scope == original_variable_scope)
+                                           {
+                                          // skipThisSymbol = true;
+                                             skipThisSymbol = false;
+                                           }
+                                      }
+                                 }
+                                else
+                                 {
+                                // If neither is marked extern, then they should not be name qualified.
+                                   skipThisSymbol = false;
+                                 }
+                            }
+                       }
+                  }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_SKIP_VARIABLE_SYMBOL
+               printf ("skipThisSymbol = %s \n",skipThisSymbol ? "true" : "false");
+#endif
+
+#if 0
+            // DQ (6/1/2019): Better to seatch if the scopes are the same then is the previous variable declaration was marked as extern.
+                  {
+                    if (variableDeclaration != NULL && variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() && variableDeclaration->get_linkage().empty() == true)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("FOUND extern modifier \n");
+#endif
+                         if ( (variableDeclaration->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(variableDeclaration) == NULL) )
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              printf ("SETTING skipThisSymbol = true \n");
+#endif
+                              skipThisSymbol = true;
+                            }
+                           else
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                              printf ("NOT setting skipThisSymbol = true \n");
+#endif
+                            }
+                       }
+                      else
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+                         printf ("NOT found extern modifier \n");
+#endif
+                       }
+                  }
+#endif
+
             // DQ (6/4/2011): Get the associated symbol so that we can avoid matching on name only; and not the actual SgVariableSymbol symbols.
                SgVariableSymbol* targetInitializedNameSymbol = isSgVariableSymbol(initializedName->search_for_symbol_from_symbol_table());
                ROSE_ASSERT(targetInitializedNameSymbol != NULL);
 
+            // DQ (6/1/2019): If this is associated with an extern declaration then don't use this symbol (see test2019_470.C).
             // DQ (6/4/2011): Make sure we have the correct symbol, else we have detected a collision which will require name qualification to resolve.
-               if (variableSymbol == targetInitializedNameSymbol)
+            // if (variableSymbol == targetInitializedNameSymbol)
+            // if (variableSymbol == targetInitializedNameSymbol && skipThisSymbol == false)
+               if (variableSymbol == targetInitializedNameSymbol && skipThisSymbol == false)
                   {
                  // Found the correct symbol.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -7437,6 +7567,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
                SgInitializedName* originallyDeclaredInitializedName = initializedName->get_prev_decl_item();
 
+#if DEBUG_INITIALIZED_NAME
+               printf ("originallyDeclaredInitializedName = %p = %s name = %s \n",
+                    originallyDeclaredInitializedName,originallyDeclaredInitializedName->class_name().c_str(),originallyDeclaredInitializedName->get_name().str());
+#endif
             // SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
                ROSE_ASSERT(initializedName != NULL);
                ROSE_ASSERT(initializedName->get_parent() != NULL);
