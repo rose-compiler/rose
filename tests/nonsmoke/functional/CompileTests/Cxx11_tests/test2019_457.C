@@ -1,4 +1,3 @@
-
 class A {};
 
 class B;
@@ -6,7 +5,9 @@ class B;
 class C
    {
      public:
-          C (B x);
+       // C (B x);
+          C (const B & x);
+       // C (int x);
           A foo(void) const;
    };
 
@@ -16,6 +17,7 @@ class D: public C
    {
      public:
           D(const C & x);
+       // D(int x);
           A foo(void);
    };
 
@@ -28,9 +30,12 @@ class B
 
 void foobar(B x)
    {
+  // This must be unparsed using the assignment copy constructor syntax.
      D y = C(x);
-  // ROSE will unparse as: "D y(C(x));" which is confused with a function syntax for a function y.
-  // Then calling foo from function y is not defined.
+
+  // This will be parsed as a function prototype, which cause the y.foo() expression to be wrong.
+  // D y(C(x));
+
      y.foo();
    }
 
