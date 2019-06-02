@@ -660,7 +660,17 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_462.C \
    test2019_463.C \
    test2019_464.C \
-   test2019_465.C
+   test2019_465.C \
+   test2019_466.C \
+   test2019_467.C \
+   test2019_468.C \
+   test2019_469.C \
+   test2019_470.C \
+   test2019_471.C \
+   test2019_472.C \
+   test2019_473.C \
+   test2019_474.C \
+   test2019_475.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
