@@ -12569,6 +12569,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      ROSE_ASSERT(scope != NULL);
 
 #if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+#if 0
   // DQ (2/2/2010): This fails in the projects/OpenMP_Translator "make check" tests.
   // DQ (1/2/2010): Introducing test that are enforced at lower levels to catch errors as early as possible.
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
