@@ -546,6 +546,12 @@ public:
      *
      *  The output contains one entry per line and the last line is terminated with a linefeed. */
     void print(std::ostream&, const std::string &prefix="") const;
+
+    /** Check invariants.
+     *
+     *  Aborts if invariants are not satisified. */
+    void checkConsistency() const;
+
 private:
     friend class Partitioner;
 

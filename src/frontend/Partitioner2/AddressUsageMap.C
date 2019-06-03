@@ -5,6 +5,8 @@
 #include <boost/foreach.hpp>
 #include <integerOps.h>
 
+using namespace Sawyer::Message::Common;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -580,6 +582,35 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     BOOST_FOREACH (const Map::Node &node, map_.nodes())
         out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
             <<"] " <<StringUtility::plural(node.key().size(), "bytes") << ": " <<node.value() <<"\n";
+}
+
+void
+AddressUsageMap::checkConsistency() const {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug <<"checking AUM consistency...\n";
+
+    // Find all distinct data block objects
+    std::set<DataBlock::Ptr> allDataBlocks;
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        const AddressUsers &users = node.value();
+        BOOST_FOREACH (const AddressUser &user, users.addressUsers()) {
+            if (DataBlock::Ptr dblock = user.dataBlock())
+                allDataBlocks.insert(dblock);
+        }
+    }
+
+    // Of all the data block objects, no two objects should have the same identification. Data blocks are identified by their
+    // starting address and size.
+    size_t nErrors = 0;
+    std::vector<DataBlock::Ptr> dblocks(allDataBlocks.begin(), allDataBlocks.end());
+    for (size_t i=1; i < dblocks.size(); ++i) {
+        if (dblocks[i]->address() == dblocks[i-1]->address() && dblocks[i]->size() == dblocks[i-1]->size()) {
+            debug <<"  duplicate data blocks detected: idx = " <<(i-1) <<" and " <<i <<"\n";
+            ++nErrors;
+        }
+    }
+
+    ASSERT_always_require2(0 == nErrors, StringUtility::plural(nErrors, "errors"));
 }
 
 } // namespace
