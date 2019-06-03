@@ -310,6 +310,28 @@ generate-rmc-config-file() {
 }
 
 ########################################################################################################################
+# Check whether the RMC configuration file is suitable for the specified OS.
+check-rmc-suitability() {
+    local os="$1" rundir="$2"
+
+    local reject_script="$ETCDIR/$(simplified-os-name "$os")-reject.sh"
+    (
+	echo "#!/bin/bash"
+	echo "os='$os'"
+	sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
+	echo
+	cat "$LIBDIR/run-support"
+	echo
+	[ -f "$ETCDIR/general-reject.sh" ] && cat "$ETCDIR/general-reject.sh"
+	echo
+	[ -f "$reject_script" ] && cat "$reject_script"
+    ) >"$rundir/rejected"
+    bash "$rundir/rejected" || return 1
+    rm -f "$rundir/rejected"
+    return 0
+}
+	    
+########################################################################################################################
 # Given an operating system name, return the Docker image name.
 generate-image-name() {
     local os="$1"
@@ -506,7 +528,11 @@ run-test() {
     mkdir -p "$rundir/artifacts"
 
     # Create configuration files
-    generate-rmc-config-file "${rundir}"
+    echo "Obtaining test configuration for $os..."
+    while true; do
+	generate-rmc-config-file "$rundir"
+	check-rmc-suitability "$os" "$rundir" && break
+    done
     echo "RMC configuration:"
     cat -n "${rundir}/rmc-config"
 

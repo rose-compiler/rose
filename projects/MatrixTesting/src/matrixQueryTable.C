@@ -61,8 +61,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable. "
-                   "The default value is \"" + StringUtility::cEscape(settings.databaseUri) + "\"." +
+              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable. " +
                    SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("localtime")

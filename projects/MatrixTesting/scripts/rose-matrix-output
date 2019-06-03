@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Purpose: to show the final output from a test.
+
+arg0="${0##*/}"
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+[ "$#" -eq 1 ] || die "usage: $arg0 TEST_ID"
+TEST_ID="$1"
+ATTACH_ID="$(rose-matrix-attachments $TEST_ID 2>&1 |sed -n '/Final output/ s/^.\([0-9]\+\).*/\1/p')"
+[ -n "$ATTACH_ID" ] || die "no output associated with test ID $TEST_ID"
+
+exec rose-matrix-attachments $TEST_ID $ATTACH_ID

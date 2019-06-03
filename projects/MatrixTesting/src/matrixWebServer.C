@@ -4008,8 +4008,7 @@ parseCommandLine(int argc, char *argv[]) {
     parser.with(Switch("database", 'd')
                 .argument("uri", anyParser(gstate.dbUrl))
                 .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
-                     "variable. The default value is \"" + StringUtility::cEscape(gstate.dbUrl) + "\"." +
-                     SqlDatabase::uriDocumentation()));
+                     "variable. " + SqlDatabase::uriDocumentation()));
 
     parser.purpose("serves matrix testing results as HTML");
 

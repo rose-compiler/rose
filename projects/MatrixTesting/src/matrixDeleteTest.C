@@ -46,8 +46,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
               .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
-                   "variable. The default value is \"" + StringUtility::cEscape(settings.databaseUri) + "\"." +
-                   SqlDatabase::uriDocumentation()));
+                   "variable. " + SqlDatabase::uriDocumentation()));
 
     return parser.with(Rose::CommandLine::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
