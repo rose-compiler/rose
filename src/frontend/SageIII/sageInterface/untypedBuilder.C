@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include "untypedBuilder.h"
+#include "general_language_translation.h"
 
 namespace UntypedBuilder {
 
@@ -12,26 +13,44 @@ void set_language(SgFile::languageOption_enum current_language)
 }
 
 
-SgUntypedScope* buildUntypedScope(const std::string & label)
-   {
-      SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
-      ROSE_ASSERT(decl_list);
-      SageInterface::setSourcePosition(decl_list);
+template <class ScopeClass>
+ScopeClass* buildScope()
+{
+   return buildScope<ScopeClass>("");
+}
 
-      SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
-      ROSE_ASSERT(stmt_list);
-      SageInterface::setSourcePosition(stmt_list);
+template <class ScopeClass>
+ScopeClass* buildScope(const std::string & label)
+{
+   SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
+   ROSE_ASSERT(decl_list);
+   SageInterface::setSourcePosition(decl_list);
 
-      SgUntypedFunctionDeclarationList* func_list = new SgUntypedFunctionDeclarationList();
-      ROSE_ASSERT(func_list);
-      SageInterface::setSourcePosition(func_list);
+   SgUntypedStatementList* stmt_list = new SgUntypedStatementList();
+   ROSE_ASSERT(stmt_list);
+   SageInterface::setSourcePosition(stmt_list);
 
-      SgUntypedScope* scope = new SgUntypedScope(label, decl_list, stmt_list, func_list);
-      ROSE_ASSERT(scope);
-      SageInterface::setSourcePosition(scope);
+   SgUntypedFunctionDeclarationList* func_list = new SgUntypedFunctionDeclarationList();
+   ROSE_ASSERT(func_list);
+   SageInterface::setSourcePosition(func_list);
 
-      return scope;
-   }
+   ScopeClass* scope = new ScopeClass(label, decl_list, stmt_list, func_list);
+   ROSE_ASSERT(scope);
+   SageInterface::setSourcePosition(scope);
+
+   return scope;
+}
+
+// Explicit instantiations for library usage
+//
+template SgUntypedScope* buildScope<SgUntypedScope>();
+template SgUntypedScope* buildScope<SgUntypedScope>(const std::string & label);
+
+template SgUntypedGlobalScope* buildScope<SgUntypedGlobalScope>();
+template SgUntypedGlobalScope* buildScope<SgUntypedGlobalScope>(const std::string & label);
+
+template SgUntypedFunctionScope* buildScope<SgUntypedFunctionScope>();
+template SgUntypedFunctionScope* buildScope<SgUntypedFunctionScope>(const std::string & label);
 
 
 SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
@@ -176,9 +195,10 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
-             case SgUntypedType::e_user_defined:
+             case SgUntypedType::e_table:
                {
                  is_user_defined = true;
+                 is_class = true;
                  is_intrinsic = false;
                  type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
@@ -359,10 +379,196 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
 }
 
 
+// Build an untyped Jovial table type from a base type (currently base type can only be an intrinsic type).
+// It would be better to have an SgUntypedTableType that contains a base type.
+//
+SgUntypedArrayType* buildJovialTableType (std::string name, SgUntypedType* base_type, SgUntypedExprListExpression* shape)
+{
+   ROSE_ASSERT(language_enum == SgFile::e_Jovial_language);
+
+   ROSE_ASSERT(base_type->get_is_intrinsic() == true);
+
+   bool has_kind = base_type->get_has_kind();
+   SgUntypedExpression* type_kind = base_type->get_type_kind();
+// If this changes then deleting the original base_type could be a problem
+   ROSE_ASSERT(type_kind == NULL);
+
+   bool is_literal = base_type->get_is_literal();
+   bool is_constant = base_type->get_is_constant();
+
+   std::string char_length;
+   bool char_length_is_string = base_type->get_char_length_is_string();
+   SgUntypedExpression* char_length_expr = base_type->get_char_length_expression();
+// If this changes then deleting the original base_type could be a problem
+   ROSE_ASSERT(char_length_expr == NULL);
+
+   bool is_intrinsic = base_type->get_is_intrinsic();
+   bool is_user_defined = base_type->get_is_user_defined();
+
+// This is the hack to allow a Table type to be table/array -like and possible be an intrinsic type
+// i.e., no body (structure components).  NOTE, is_intrinsic AND is_class may both be true
+   bool is_class = true;
+
+   SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
+   ROSE_ASSERT(modifiers);
+
+   SgUntypedArrayType* type = NULL;
+
+   int rank = shape->get_expressions().size();
+   SgUntypedType::type_enum type_enum = SgUntypedType::e_table;
+
+   type = new SgUntypedArrayType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                 is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
+                                 shape, rank);
+   ROSE_ASSERT(type);
+
+   return type;
+}
+
+
+SgUntypedInitializedName*
+buildInitializedName(const std::string & name, SgUntypedType* type, SgUntypedExpression* initializer)
+{
+   ROSE_ASSERT(type);
+
+   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(type, name);
+   ROSE_ASSERT(initialized_name);
+   SageInterface::setSourcePosition(initialized_name);
+
+   if (initializer != NULL) {
+      initialized_name->set_has_initializer(true);
+      initialized_name->set_initializer(initializer);
+   }
+
+   return initialized_name;
+}
+
+
+SgUntypedInitializedNameList*
+buildInitializedNameList(SgUntypedInitializedName* initialized_name)
+{
+   SgUntypedInitializedNameList* name_list = new SgUntypedInitializedNameList();
+   ROSE_ASSERT(name_list);
+   SageInterface::setSourcePosition(name_list);
+
+   if (initialized_name != NULL)
+      {
+      // This case works when there is only one variable
+         name_list->get_name_list().push_back(initialized_name);
+      }
+
+   return name_list;
+}
+
+
+SgUntypedVariableDeclaration*
+buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntypedExprListExpression* attr_list, SgUntypedExpression* initializer)
+{
+   ROSE_ASSERT(type);
+   ROSE_ASSERT(attr_list);
+
+   std::string label = "";
+
+   SgUntypedInitializedName* initialized_name = buildInitializedName(name, type, initializer);
+   ROSE_ASSERT(initialized_name);
+
+   SgUntypedInitializedNameList* var_name_list = buildInitializedNameList(initialized_name);
+   ROSE_ASSERT(var_name_list);
+
+   SgUntypedVariableDeclaration* variable_decl = new SgUntypedVariableDeclaration(label, type, attr_list, var_name_list);
+   ROSE_ASSERT(variable_decl);
+   SageInterface::setSourcePosition(variable_decl);
+
+   return variable_decl;
+}
+
+
+// Build an untyped StructureDefinition. This version has a body and thus a scope.
+// Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDefinition* buildStructureDefinition()
+{
+   int expr_enum;
+   std::string label, type_name;
+   bool has_body = true;
+   bool has_type_name = false;
+
+   SgUntypedStructureDefinition* table_desc = NULL;
+
+   expr_enum = General_Language_Translation::e_struct_modifier_list;
+   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(attr_list);
+   SageInterface::setSourcePosition(attr_list);
+
+   expr_enum = General_Language_Translation::e_struct_initializer;
+   SgUntypedExprListExpression* preset = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(preset);
+   SageInterface::setSourcePosition(preset);
+
+   SgUntypedScope* scope = UntypedBuilder::buildScope<SgUntypedScope>(label);
+
+   table_desc = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, preset, attr_list, scope);
+   ROSE_ASSERT(table_desc);
+   SageInterface::setSourcePosition(table_desc);
+
+   return table_desc;
+}
+
+
+// Build an untyped StructureDefinition. This version has a type name and no body.
+// Source position for the initializer and table description should be set after construction.
+SgUntypedStructureDefinition* buildStructureDefinition(std::string type_name)
+{
+   int expr_enum;
+   bool has_body = false;
+   bool has_type_name = true;
+
+   SgUntypedScope* scope = NULL;
+   SgUntypedStructureDefinition* struct_desc = NULL;
+
+   expr_enum = General_Language_Translation::e_struct_modifier_list;
+   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(attr_list);
+   SageInterface::setSourcePosition(attr_list);
+
+   expr_enum = General_Language_Translation::e_struct_initializer;
+   SgUntypedExprListExpression* preset = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(preset);
+   SageInterface::setSourcePosition(preset);
+
+   struct_desc = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, preset, attr_list, scope);
+   ROSE_ASSERT(struct_desc);
+   SageInterface::setSourcePosition(struct_desc);
+
+   std::cout << "-x- build StructureDefinition " << struct_desc << std::endl;
+   std::cout << "-x-       scope is " << struct_desc->get_scope() << std::endl;
+
+   return struct_desc;
+}
+
+
+// Build an untyped JovialTableDescription. This version has a body and thus a scope.
+// Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDefinition* buildJovialTableDescription()
+{
+   return buildStructureDefinition();
+}
+
+
+// Build an untyped JovialTableDescription. This version has a type name and no body.
+// Source position for the initializer and table description should be set after construction.
+SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name)
+{
+   return buildStructureDefinition(type_name);
+}
+
+
 SgUntypedNullExpression* buildUntypedNullExpression()
 {
    SgUntypedNullExpression* expr = new SgUntypedNullExpression();
+   ROSE_ASSERT(expr);
+
    SageInterface::setOneSourcePositionForTransformation(expr);
+
    return expr;
 }
 

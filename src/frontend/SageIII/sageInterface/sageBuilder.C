@@ -12503,6 +12503,7 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
         {
           ROSE_ASSERT(nondefdecl == NULL);
 
+       // DeclClass is the template type parameter
           nondefdecl = new DeclClass(name, kind, NULL, NULL);
           ROSE_ASSERT(nondefdecl != NULL);
 
@@ -12528,9 +12529,21 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
 
           if (nondefdecl->get_type() == NULL)
              {
-               SgClassType* class_type = (kind == SgClassDeclaration::e_java_parameter
-                                                ? (SgClassType *) SgJavaParameterType::createType(nondefdecl)
-                                                : (SgClassType *) SgClassType::createType(nondefdecl));
+               SgClassType* class_type = NULL;
+               switch (kind)
+                  {
+                    case SgClassDeclaration::e_java_parameter:
+                       class_type = SgJavaParameterType::createType(nondefdecl);
+                       break;
+                    case SgClassDeclaration::e_jovial_table:
+                       class_type = SgJovialTableType::createType(nondefdecl);
+                       break;
+                    default:
+                       class_type = SgClassType::createType(nondefdecl);
+                       break;
+                  }
+               ROSE_ASSERT(class_type != NULL);
+
                nondefdecl->set_type(class_type);
 
                SgClassDeclaration* tmp_classDeclarationFromType = isSgClassDeclaration(class_type->get_declaration());

@@ -387,7 +387,7 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    return sg_decl;
 }
 
-SgClassDeclaration*
+SgDeclarationStatement*
 UntypedFortranConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
    {
       //

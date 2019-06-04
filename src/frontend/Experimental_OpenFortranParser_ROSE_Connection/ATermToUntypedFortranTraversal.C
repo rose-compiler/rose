@@ -1357,7 +1357,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
 
       } else return ATfalse;
 
-      SgUntypedScope* struct_scope = UntypedBuilder::buildUntypedScope(label);
+      SgUntypedScope* struct_scope = UntypedBuilder::buildScope<SgUntypedScope>(label);
       ROSE_ASSERT(struct_scope);
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
@@ -1399,7 +1399,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // t_private, can this be added to the attr_list?
       // t_type_bound
 
+// TODO - use new StructionDefinition for scope.
+#if 0
       struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, 0/*rank*/, struct_scope);
+#endif
       ROSE_ASSERT(struct_decl);
       setSourcePosition(struct_decl, term);
    }

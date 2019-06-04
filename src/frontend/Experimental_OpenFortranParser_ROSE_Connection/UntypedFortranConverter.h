@@ -39,7 +39,7 @@ namespace Untyped {
       virtual SgDeclarationStatement* convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration*  ut_decl, SgScopeStatement* scope);
       virtual SgImplicitStatement*    convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration*  ut_decl, SgScopeStatement* scope);
       virtual SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration*  ut_decl, SgScopeStatement* scope);
-      virtual SgClassDeclaration*     convertUntypedStructureDeclaration  (SgUntypedStructureDeclaration* ut_decl, SgScopeStatement* scope);
+      virtual SgDeclarationStatement* convertUntypedStructureDeclaration  (SgUntypedStructureDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //

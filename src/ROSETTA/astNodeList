@@ -830,6 +830,7 @@ SgUntypedModuleDeclaration
 SgUntypedSubmoduleDeclaration
 SgUntypedBlockDataDeclaration
 SgUntypedStructureDeclaration
+SgUntypedStructureDefinition
 SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration
 SgUntypedExceptionHandlerDeclaration
