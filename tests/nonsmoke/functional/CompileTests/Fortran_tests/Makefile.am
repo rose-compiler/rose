@@ -34,6 +34,7 @@ endif
 # #######################
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
+     jira-par-2_literal_max.f90 \
      R832.f90        \
      R837.f90        \
      test2007_01.f90 \

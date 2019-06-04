@@ -31,8 +31,6 @@ check-typeforge: typeforge
 	rm -f typegraph.dot craft_initial.json rose_casttest3.C
 #	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
 #	dot -Tpdf typegraph.dot -o type-graph.pdf
-#	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
 	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf ${CHECK_TRACE_OPTION} $(srcdir)/tests/casttest3.C --compile
 	g++ -Wall rose_casttest3.C
 	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf ${CHECK_TRACE_OPTION} $(srcdir)/tests/type_replace_test1.C

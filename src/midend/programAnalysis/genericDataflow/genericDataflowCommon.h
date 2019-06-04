@@ -42,7 +42,10 @@ inline bool XOR(bool x, bool y) { return x != y; }
    ######### T Y P E S #########
    ############################# */
 
+
+#if !defined(__sun)
 typedef long long quad;
+#endif
 //typedef quad variable;
 
 typedef std::map<quad, quad>                     m_quad2quad;

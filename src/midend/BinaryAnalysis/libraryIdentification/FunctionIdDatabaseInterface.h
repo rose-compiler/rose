@@ -54,7 +54,7 @@ namespace LibraryIdentification
          *
          * @param[in] dbName  Name of the database to open
          **/
-        FunctionIdDatabaseInterface(std::string dbName);
+        FunctionIdDatabaseInterface(const std::string& dbName);
         
 
          /** 
@@ -116,13 +116,13 @@ namespace LibraryIdentification
           **/
          bool matchLibrary(LibraryInfo& fInfo);
 
-
  private:
      // @brief The name of the database
      std::string database_name;
      
      // @brief SQLite database handle
      sqlite3x::sqlite3_connection sqConnection;
+
     };   
 }
 

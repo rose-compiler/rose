@@ -1280,7 +1280,11 @@ if USING_INTEL_COMPILER
      test2014_211.C \
      test2006_08.C \
      test2006_37.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     rose-1962.C
 else
+  TESTCODE_CURRENTLY_FAILING += \
+     rose-1962.C
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2014_159.C \
      test2014_211.C \
@@ -1555,6 +1559,15 @@ testBuildUsingRelativePath: $(TEST_TRANSLATOR)
 testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
+
+# DQ (4/26/2019): Test the use of the -ansi option in ROSE.
+test_ansi_and_nonansi_modes:
+# DQ (4/26/2019): It appears that -edg:strict option does not work.
+#	$(TEST_TRANSLATOR) -rose:verbose 0 -edg:strict $(srcdir)/test_ansi.C
+#	$(TEST_TRANSLATOR) -rose:verbose 0 $(srcdir)/test_nonansi.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -ansi -c $(srcdir)/test_ansi.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test_nonansi.C
+
 
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit

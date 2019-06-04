@@ -166,8 +166,7 @@ namespace LibraryIdentification
         
         static std::string getHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
         {
-            Rose::Combinatorics::HasherFnv fnv;
-            Rose::Combinatorics::Hasher& hasher = dynamic_cast<Rose::Combinatorics::Hasher&>(fnv);            
+            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher = Rose::Combinatorics::Hasher::createHasher("FNV");
             Rose::BinaryAnalysis::AstHash astHash(hasher);            
 
             const std::set<rose_addr_t>& basicBlocks = function->basicBlockAddresses();
@@ -180,7 +179,7 @@ namespace LibraryIdentification
                     
                 }
 
-            return fnv.toString();
+            return hasher->toString();
         }
         
 

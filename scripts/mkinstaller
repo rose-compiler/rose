@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "4";
-$mkinstaller_ver_build = "8";
+$mkinstaller_ver_build = "9";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.4.8";
-$mkinstaller_ver_time  = " 8Apr2019 15:23:04z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.8 -  8Apr2019 15:23:04z";
+$mkinstaller_ver_name  = "2.4.9";
+$mkinstaller_ver_time  = "12Apr2019 13:55:49z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.4.9 - 12Apr2019 13:55:49z";
 
 #{------------------------------------------------------------------------------
 #
@@ -5897,13 +5897,15 @@ EOF09
          |#
          |#  Collect, map, and return the OS type. Mapping the string reported by [uname -s]
          |#  to something like what would be returned by Perl's special \$^O variable. Note
-         |#  that the value is through the "global variable" PerlOStype (ugly but that is the
+         |#  that the value is through the "global variable" OStype (ugly but that is the
          |#  way that the Bourne-shell works). In particular note how uname -s reports "SunOS"
          |#  but Perl reports "solaris".
          |#
+         |#  return: The value is passed back through the global variable PerlOStype.
+         |#
          |#  see: totebag/src/sh-lib/map_uname_s_to_perl.shfrag
          |#
-         |#  Dated: 19Jan2019
+         |#  Dated: 12Apr2019
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -10074,6 +10076,8 @@ EOF67
    #
    #  See: totebag/src/autokonf/autokonf.pmain
    #
+   #  Dated: 11Apr2019
+   #
    #----------------------------------------------------------------------------
 
    sub mki_checkForCompilerVersion {
@@ -10331,8 +10335,12 @@ EOF
                               $result   = "cc $1";
                               print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                            }
+                           elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "cc $2";
+                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging;
+                           }
                            else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging;
+                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging;
                               $cmd      = "$pathname -version 2>&1";
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
@@ -10344,8 +10352,12 @@ EOF
                                  $result   = "cc $1";
                                  print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                               }
+                              elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                                 $result   = "cc $2";
+                                 print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging;
+                              }
                               else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging;
+                                 print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging;
                               }
                            }
                         }
@@ -10520,6 +10532,10 @@ EOF
                               $result   = "CC $1";
                               print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                            }
+                           elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "CC $2";
+                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging;
+                           }
                            else {
                               print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging;
                               $cmd      = "$pathname -V 2>&1";
@@ -10533,8 +10549,12 @@ EOF
                                  $result   = "CC $1";
                                  print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging;
                               }
+                              elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                                 $result   = "CC $2";
+                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging;
+                              }
                               else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging;
+                                 print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging;
                               }
                            }
                         }
@@ -10596,8 +10616,12 @@ EOF
                               $result   = "f77 $1";
                               print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                            }
+                           elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "f77 $2";
+                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging;
+                           }
                            else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging;
+                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging;
                               $cmd      = "$pathname -V 2>&1";
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
@@ -10609,8 +10633,12 @@ EOF
                                  $result   = "f77 $1";
                                  print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging;
                               }
+                              elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                                 $result   = "f77 $2";
+                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging;
+                              }
                               else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging;
+                                 print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging;
                               }
                            }
                         }
@@ -10694,11 +10722,15 @@ EOF
                            $response    =~ tr!\n! !;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "f77 $1";
+                              $result   = "f90 $1";
                               print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging;
                            }
+                           elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "f90 $2";
+                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging;
+                           }
                            else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging;
+                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging;
                               $cmd      = "$pathname -V 2>&1";
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
@@ -10707,11 +10739,15 @@ EOF
                               $response    =~ tr!\n! !;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "f77 $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging;
+                                 $result   = "f90 $1";
+                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging;
+                              }
+                              elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                                 $result   = "f90 $2";
+                                 print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging;
                               }
                               else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging;
+                                 print DBGOUT "mki_checkForCompilerVersion:       case F\n" if $debugging;
                               }
                            }
                         }
@@ -15634,6 +15670,8 @@ sub lookForExecutable {
 #
 #  see: totebag/src/perl-lib/makePathNative.psub
 #
+#  Dated: 04May2016
+#
 #-------------------------------------------------------------------------------
 
 sub makePathNative {
@@ -16153,12 +16191,13 @@ sub help {
    |
    |DESCRIPTION
    |    This script is used to generate an "installer" script implemented as
-   |    a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
-   |    as a binary executable on Windows-like systems. A wide assortment of
-   |    options are provided by mkinstaller to specify what is to be included
-   |    for installation by the generated installer script. This generated
-   |    installer itself supports a number of options for specifying the where
-   |    the various directories are to be installed (prefix directory pathnames).
+   |    a Bourne-shell script on UNIX-like systems (such as Linux, MacOS, or
+   |    Solaris) or as a binary executable on Windows-like systems. A wide
+   |    assortment of options are provided by mkinstaller to specify what is
+   |    to be included for installation by the generated installer script.
+   |    This generated installer itself supports a number of options for
+   |    specifying the where the various directories are to be installed
+   |    (prefix directory pathnames).
    |
    |    There are 2 separate computer systems involved in this process:
    |
@@ -17093,12 +17132,13 @@ sub html {
    |      </h3>
    |      <blockquote>
    |         This script is used to generate an "installer" script implemented as
-   |         a Bourne-shell script on UNIX-like systems (such as Linux or MacOS) or
-   |         as a binary executable on Windows-like systems. A wide assortment of
-   |         options are provided by <i>mkinstaller</i> to specify what is to be included
-   |         for installation by the generated installer script. This generated
-   |         installer itself supports a number of options for specifying the where
-   |         the various directories are to be installed (prefix directory pathnames).
+   |         a Bourne-shell script on UNIX-like systems (such as Linux, MacOS, or
+   |         Solaris) or as a binary executable on Windows-like systems. A wide
+   |         assortment of options are provided by <i>mkinstaller</i> to specify what is
+   |         to be included for installation by the generated installer script.
+   |         This generated installer itself supports a number of options for
+   |         specifying the where the various directories are to be installed
+   |         (prefix directory pathnames).
    |      </blockquote>
    |
    |      <blockquote>
