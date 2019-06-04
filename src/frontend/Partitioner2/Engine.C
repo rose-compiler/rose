@@ -1639,6 +1639,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
     if (interp_) {
         SAWYER_MESG(where) <<"naming imports\n";
         ModulesPe::nameImportThunks(partitioner, interp_);
+        ModulesPowerpc::nameImportThunks(partitioner, interp_);
     }
     if (settings_.partitioner.namingConstants) {
         SAWYER_MESG(where) <<"naming constants\n";
