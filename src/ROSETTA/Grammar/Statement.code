@@ -2834,6 +2834,21 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
           bool get_global_qualification_required_for_base_type() const;
           void set_global_qualification_required_for_base_type(bool global_qualification_required_for_base_type);
 
+       // DQ (4/10/2019): These are added to support when the the base type is a SgMemberPointer (which van have name qualification in two locations).
+       // DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (4/10/2019): These are added to support when the the base type is a SgMemberPointer (which van have name qualification in two locations).
+       // DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (4/10/2019): These are added to support when the the base type is a SgMemberPointer (which van have name qualification in two locations).
+       // DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
      private:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
       //! Internal support for the traversal mechanism.
@@ -14920,8 +14935,8 @@ SgNonrealDecl::get_mangled_name (void) const {
     } else if (xdecl != NULL) {
        mangled_name << xdecl->get_mangled_name().getString() << "___";
     } else if (nrdecl != NULL) {
-       SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
 #if DEBUG_NONREAL_DECL_MANGLED
+       SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
        printf("  - nrscope = %p\n", nrscope);
 #endif
        mangled_name << nrdecl->get_mangled_name().getString() << "___";
@@ -17668,6 +17683,63 @@ SgTypedefDeclaration::set_global_qualification_required_for_base_type ( bool glo
      p_global_qualification_required_for_base_type = global_qualification_required_for_base_type;
    }
 
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+int 
+SgTypedefDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+void
+SgTypedefDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_name_qualification_length = name_qualification_length;
+   }
+
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+bool 
+SgTypedefDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+void
+SgTypedefDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+bool 
+SgTypedefDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+// DQ (4/10/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+void
+SgTypedefDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
@@ -19248,6 +19320,61 @@ $CLASSNAME::get_qualified_name() const
 
      return returnName;
    }
+
+// DQ (4/10/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+int
+SgTypedefDeclaration::get_name_qualification_length() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgTypedefDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+// DQ (4/10/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+bool 
+SgTypedefDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgTypedefDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+// DQ (4/10/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
+bool 
+SgTypedefDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgTypedefDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_END
 

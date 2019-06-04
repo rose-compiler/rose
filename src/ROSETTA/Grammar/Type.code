@@ -932,8 +932,14 @@ HEADER_TYPE_TUPLE_END
 
 
 HEADER_POINTER_MEMBER_TYPE_START
+       //! The API to this function has been changed to support returning a SgDeclarationStatement.
+       // DQ (4/11/2019): This alllows it to support both the cases where a definition might not 
+       // exist and the case of a pointer to member of a nonreal type.
+       // The old functionality is represented in the get_class_definition_of() function.
+          SgDeclarationStatement* get_class_declaration_of() const;
+
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
-          SgClassDefinition* get_class_of() const;
+          SgClassDefinition* get_class_definition_of() const;
 HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
@@ -3186,17 +3192,88 @@ SOURCE_POINTER_TYPE_END
 
 SOURCE_POINTER_MEMBER_TYPE_START
 
-// PC (10/29/2009): Deprecated compatibility routine for those still using get_class_of()
-SgClassDefinition*
-SgPointerMemberType::get_class_of() const
+// DQ (4/11/2019): This function supports returning a SgDeclarationStatement instead of a SgClassDeclaration, 
+// which will always be well define where returning a SgClassDefinition is not always well defined.  Using
+// a SgDeclarationStatement will also allow it to work with the case of pointer to member associated with 
+// SgNonrealType IR nodes as well.
+SgDeclarationStatement*
+SgPointerMemberType::get_class_declaration_of() const
    {
-     if (get_class_type() == NULL)
-          return NULL;
-     SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
-     ROSE_ASSERT(clsType != NULL);
-     SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
-     ROSE_ASSERT(clsDecl != NULL);
-     return clsDecl->get_definition();
+     SgDeclarationStatement* result = NULL;
+
+     if (get_class_type() != NULL)
+        {
+          SgType* type = get_class_type()->stripTypedefsAndModifiers();
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+          SgClassType *clsType = isSgClassType(type);
+       // ROSE_ASSERT(clsType != NULL);
+
+          if (clsType != NULL)
+             {
+            // DQ (4/11/2019): Note that the defining declaration may not exist.
+            // SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+               SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration());
+               result = clsDecl;
+             }
+            else
+             {
+#if 0
+               printf ("WARNING: SgPointerMemberType::get_class_declaration_of() retuning NULL type = %p = %s \n",type,type->class_name().c_str());
+#endif
+               SgNonrealType* nonrealType = isSgNonrealType(type);
+               ROSE_ASSERT(nonrealType != NULL);
+               result = nonrealType->get_declaration();
+             }
+
+          ROSE_ASSERT(result != NULL);
+        }
+
+     ROSE_ASSERT(result != NULL);
+
+     return result;
+   }
+
+// DQ (4/11/2019): This is a depricated function, because it can not always return a valid SgClassDefinition.
+SgClassDefinition*
+SgPointerMemberType::get_class_definition_of() const
+   {
+     SgClassDefinition* result = NULL;
+
+     if (get_class_type() != NULL)
+        {
+          SgType* type = get_class_type()->stripTypedefsAndModifiers();
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+          SgClassType *clsType = isSgClassType(type);
+       // ROSE_ASSERT(clsType != NULL);
+       // SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+       // ROSE_ASSERT(clsType != NULL);
+
+          if (clsType != NULL)
+             {
+               SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+
+            // DQ (4/10/2019): This should not be an error when the SgClassDefinition is not available.  
+            // But we might want to change the API to return the SgClassDeclaration instead.
+            // ROSE_ASSERT(clsDecl != NULL);
+            // return clsDecl->get_definition();
+
+            // DQ (4/10/2019): This should not be an error when the SgClassDefinition is not available.  
+               if (clsDecl != NULL)
+                  {
+                    result = clsDecl->get_definition();
+                  }
+                 else
+                  {
+                    printf ("NOTE: SgPointerMemberType::get_class_definition_of() retuning NULL: use SgPointerMemberType::get_class_declaration_of() instead! \n");
+                  }
+             }
+            else
+             {
+               printf ("WARNING: SgPointerMemberType::get_class_definition_of() retuning NULL type = %p = %s \n",type,type->class_name().c_str());
+             }
+        }
+
+     return result;
    }
 
 SOURCE_POINTER_MEMBER_TYPE_END

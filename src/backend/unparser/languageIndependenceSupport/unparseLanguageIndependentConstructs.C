@@ -6414,9 +6414,17 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
-       // printf ("Infinite value found as value in unparseFloatVal() \n");
-       // curprint ( "std::numeric_limits<float>::infinity()";
-          curprint( "__builtin_huge_valf()");
+       // Because of Fortran kind (compiler dependent) the string literal may be a double.
+       // Thus it makes more sense to print the original string literal [Rasmussen 4/28/2019].
+          if (SageInterface::is_Fortran_language() && float_val->get_valueString().length() > 0)
+             {
+               curprint(float_val->get_valueString());
+             }
+            else
+             {
+            // curprint ( "std::numeric_limits<float>::infinity()";
+               curprint( "__builtin_huge_valf()");
+             }
         }
        else
         {
