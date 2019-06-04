@@ -315,45 +315,7 @@ struct IP_bc: P {
         }
         SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
-        BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
-        BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr target = d->read(args[2], 32);
-        BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
-        ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
-    }
-};
-
-// Branch conditional absolute (optionally save link)
-struct IP_bca: P {
-    bool save_link;
-    IP_bca(bool save_link): save_link(save_link) {}
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 3);
-        if (save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
-        ASSERT_not_null(byteValue);
-        uint8_t boConstant = byteValue->get_value();
-        // bool bo_4 = boConstant & 0x1;
-        bool bo_3 = boConstant & 0x2;
-        bool bo_2 = boConstant & 0x4;
-        bool bo_1 = boConstant & 0x8;
-        bool bo_0 = boConstant & 0x10;
-        if (!bo_2) {
-            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
-            ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
-        }
-        BaseSemantics::SValuePtr ctr_ok;
-        if (bo_2) {
-            ctr_ok = ops->boolean_(true);
-        } else if (bo_3) {
-            ctr_ok = ops->equalToZero(ops->readRegister(d->REG_CTR));
-        } else {
-            ctr_ok = ops->invert(ops->equalToZero(ops->readRegister(d->REG_CTR)));
-        }
-        SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
-        ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
-        BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
+        BaseSemantics::SValuePtr cr_bi = bo_0 && bo_2 ? ops->boolean_(true) : ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
         BaseSemantics::SValuePtr target = d->read(args[2], 32);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
@@ -414,7 +376,7 @@ struct IP_bclr: P {
         }
         SgAsmRegisterReferenceExpression *bi = isSgAsmRegisterReferenceExpression(args[1]);
         ASSERT_require(bi && bi->get_descriptor().get_major() == powerpc_regclass_cr && bi->get_descriptor().get_nbits() == 1);
-        BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
+        BaseSemantics::SValuePtr cr_bi = bo_0 && bo_2 ? ops->boolean_(true) : ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
         BaseSemantics::SValuePtr mask = ops->number_(32, 0xfffffffc);
         BaseSemantics::SValuePtr target = ops->and_(ops->readRegister(d->REG_LR), mask);
@@ -1186,10 +1148,10 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_and,              new Powerpc::IP_and(false));
     iproc_set(powerpc_and_record,       new Powerpc::IP_and(true));
     iproc_set(powerpc_ba,               new Powerpc::IP_ba(false));
-    iproc_set(powerpc_bca,              new Powerpc::IP_bca(false));
+    iproc_set(powerpc_bca,              new Powerpc::IP_bc(false));
     iproc_set(powerpc_bcctrl,           new Powerpc::IP_bcctr(true));
     iproc_set(powerpc_bcctr,            new Powerpc::IP_bcctr(false));
-    iproc_set(powerpc_bcla,             new Powerpc::IP_bca(true));
+    iproc_set(powerpc_bcla,             new Powerpc::IP_bc(true));
     iproc_set(powerpc_bcl,              new Powerpc::IP_bc(true));
     iproc_set(powerpc_bclrl,            new Powerpc::IP_bclr(true));
     iproc_set(powerpc_bclr,             new Powerpc::IP_bclr(false));
@@ -1327,6 +1289,11 @@ DispatcherPowerpc::instructionPointerRegister() const {
 RegisterDescriptor
 DispatcherPowerpc::stackPointerRegister() const {
     return findRegister("r1");
+}
+
+RegisterDescriptor
+DispatcherPowerpc::callReturnRegister() const {
+    return REG_LR;
 }
 
 void

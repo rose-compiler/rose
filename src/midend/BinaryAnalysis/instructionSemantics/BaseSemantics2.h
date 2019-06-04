@@ -2241,6 +2241,9 @@ public:
     /** Returns the stack pointer register. */
     virtual RegisterDescriptor stackPointerRegister() const = 0;
 
+    /** Returns the function call return address register. */
+    virtual RegisterDescriptor callReturnRegister() const = 0;
+
     /** Property: Reset instruction pointer register for each instruction.
      *
      *  If this property is set, then each time an instruction is processed, the first thing that happens is that the
