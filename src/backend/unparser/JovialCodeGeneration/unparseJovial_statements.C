@@ -661,14 +661,41 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
-     SgClassDefinition* table_def = table_decl->get_definition();
+     cout << "--> unparse TableDeclStmt: table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
+
+     SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
+     cout << "--> unparse TableDeclStmt: defining_decl is " << defining_decl << ": " << defining_decl->class_name() << endl;
+     ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
+
+     SgClassDefinition* table_def = defining_decl->get_definition();
      ROSE_ASSERT(table_def);
+
+     cout << "--> unparse TableDeclStmt: table_def is " << table_def << ": " << table_def->class_name() << endl;
 
      SgName table_name = table_decl->get_name();
 
-     curprint("TYPE ");
-     curprint(table_name.str());
-     curprint(" TABLE");
+      SgType* type = table_decl->get_type();
+      ROSE_ASSERT(type);
+
+      SgJovialTableType* table_type = isSgJovialTableType(type);
+      ROSE_ASSERT(table_type);
+
+   // Table DimensionList
+      SgExprListExp* dim_info = table_type->get_dim_info();
+      if (table_type->get_rank() > 0)
+         {
+            bool first = true;
+            curprint(" (");
+            BOOST_FOREACH(SgExpression* expr, dim_info->get_expressions())
+               {
+                  SgSubscriptExpression* subscript = isSgSubscriptExpression(expr);
+                  ROSE_ASSERT(subscript);
+                  if (first) first = false;
+                  else       curprint(",");
+                  unparseSubscriptExpr(subscript, info);
+               }
+            curprint(")");
+         }
 
   // WordsPerEntry
      if (table_decl->get_has_table_entry_size())
@@ -713,6 +740,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ROSE_ASSERT(type);
 
+     cout << "--> unparse VarDecl: name is " << name << endl;
+
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -729,9 +758,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      switch (type->variantT())
         {
-          case V_SgArrayType:
+          case V_SgJovialTableType:
              curprint("TABLE ");
              curprint(name.str());
+             curprint(" ");
              break;
           default:
              curprint("ITEM ");
@@ -765,6 +795,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            ROSE_ASSERT(initializer != NULL);
            unparseExpression(initializer, info);
         }
+
+     cout << "--> unparse VarDecl FINISHED: name is " << name << endl;
 
      curprint(";\n");
    }
