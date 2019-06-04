@@ -1191,6 +1191,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
   // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
   // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
+  // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1213,7 +1214,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
-          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDefinition" && variableNameString == "scope") ||
           (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
@@ -1322,6 +1323,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
   // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
   // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
+  // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
@@ -1337,7 +1339,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
-          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDefinition" && variableNameString == "scope") ||
           (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||

@@ -1375,6 +1375,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
                name = isSgClassDeclaration(declaration)->get_name().str();
                break;
 
