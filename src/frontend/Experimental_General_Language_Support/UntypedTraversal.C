@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "UntypedTraversal.h"
 
-#define DEBUG_UNTYPED_TRAVERSAL 0
+#define DEBUG_UNTYPED_TRAVERSAL 1
 
 using namespace Untyped;
 using std::cout;
@@ -62,7 +62,16 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedStructureDeclaration:
       {
          SgUntypedStructureDeclaration* ut_struct = dynamic_cast<SgUntypedStructureDeclaration*>(node);
+         cout << "--- SgUntypedStructureDeclaration: " << ut_struct << endl;
          pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDefinition:
+      {
+         SgUntypedStructureDefinition* ut_struct_def = dynamic_cast<SgUntypedStructureDefinition*>(node);
+         cout << "--- SgUntypedStructureDefinition: " << ut_struct_def << endl;
+         //         pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
@@ -406,6 +415,22 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       }
     case V_SgUntypedStructureDeclaration:
       {
+         SgNodePtrList children(childAttrs);
+         cout << "--- SgUntypedStructureDeclaration: # children is " << children.size() << endl;
+         SgNode* child1 = children[0];
+         SgNode* child2 = children[1];
+
+         cout << "---     child1 is " << children[0] << endl;
+         cout << "---     child2 is " << children[1] << endl;
+
+#if 0
+         ROSE_ASSERT(child1);
+         ROSE_ASSERT(child2);
+
+         cout << "---     child1 is " << child1->class_name() << endl;
+         cout << "---     child2 is " << child2->class_name() << endl;
+#endif
+
          SageBuilder::popScopeStack();  // structure scope
          currentScope = SageBuilder::topScopeStack();
          break;

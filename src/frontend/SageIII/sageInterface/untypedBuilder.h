@@ -6,13 +6,44 @@ namespace UntypedBuilder {
 void set_language(SgFile::languageOption_enum language);
 
 //! Build an untyped scope including empty lists contained in the scope
-SgUntypedScope* buildUntypedScope(const std::string & label);
+template <class ScopeClass>
+ScopeClass* buildScope();
+
+//! Build an untyped scope including empty lists contained in the scope
+template <class ScopeClass>
+ScopeClass* buildScope(const std::string & label);
 
 //! Build an untyped type
 SgUntypedType* buildType (SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown, std::string name = "");
 
 //! Build an untyped array type
 SgUntypedArrayType* buildArrayType (SgUntypedType::type_enum type_enum, SgUntypedExprListExpression* shape, int rank);
+
+//! Build an untyped Jovial table type from a base type (currently base type can only be an intrinsic type)
+SgUntypedArrayType* buildJovialTableType (std::string name, SgUntypedType* base_type, SgUntypedExprListExpression* shape);
+
+//! Build an untyped initialized name for the given name and type.  The initializer may be a nullptr.
+SgUntypedInitializedName* buildInitializedName(const std::string & name, SgUntypedType* type, SgUntypedExpression* initializer = NULL);
+
+//! Build an untyped initialized name list with potentially one name. The list will be empty if the initialized name parameter is a nullptr.
+SgUntypedInitializedNameList* buildInitializedNameList(SgUntypedInitializedName* initialized_name = NULL);
+
+//! Build a variable declaration for only one variable with the given name and type.
+SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name, SgUntypedType* type,
+                                                       SgUntypedExprListExpression* attr_list,
+                                                       SgUntypedExpression* initializer = NULL);
+
+//! Build an untyped StructureDefinition. This version has a body and thus a scope.
+//! Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDefinition* buildStructureDefinition();
+
+//! Build an untyped JovialTableDescription. This version has a body and thus a scope.
+//! Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDefinition* buildJovialTableDescription();
+
+//! Build an untyped JovialTableDescription. This version has a type name and no body.
+//! Source position for the initializer and table description should be set after construction.
+SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name);
 
 //! Build a null expression, set file info as the default one
 ROSE_DLL_API SgUntypedNullExpression* buildUntypedNullExpression();

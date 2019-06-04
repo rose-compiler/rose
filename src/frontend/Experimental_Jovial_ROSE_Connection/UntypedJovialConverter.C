@@ -78,6 +78,100 @@ UntypedJovialConverter::convertUntypedJovialCompoolStatement(SgUntypedNameListDe
    return compool_decl;
 }
 
+SgDeclarationStatement*
+UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
+{
+      SgName name = ut_struct->get_name();
+
+      SgUntypedStructureDefinition* ut_table_def = ut_struct->get_definition();
+      ROSE_ASSERT(ut_table_def);
+
+#if 1
+      cout << "\n-x- convertUntypedStructureDeclaration: specialization for Jovial \n";
+      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
+      cout << ut_table_def->get_scope()->get_declaration_list()->get_decl_list().size();
+      cout << "..........\n\n";
+      cout << "-x- creating SgClassDeclaration (or is this a variable) for name " << name << endl;
+      cout << "    size of modifier list is " << ut_struct->get_modifiers()->get_expressions().size()
+           << endl;
+#endif
+
+   // This function builds a class declaration and definition with both the defining and nondefining declarations as required
+      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(name, scope);
+      ROSE_ASSERT(table_decl);
+      setSourcePositionFrom(table_decl, ut_struct);
+
+      cout << "-x- created SgClassDeclaration " << table_decl << endl;
+
+   // A Jovial table may have array dimensions, set this information in the type
+      SgType* type = table_decl->get_type();
+      ROSE_ASSERT(type);
+
+      SgJovialTableType* table_type = isSgJovialTableType(type);
+      ROSE_ASSERT(table_type);
+
+      cout << "-x- found type " << table_type << endl;
+      cout << "-x- ut_dim_info " << ut_struct->get_dim_info() << endl;
+      cout << "-x- found dim_info expr kind is " << ut_struct->get_dim_info()->get_expression_enum() << endl;
+
+      int rank = ut_struct->get_rank();
+// delete this when possible after ROSETTA change (also delete in Fortran; or delete in parent destructor???)
+//    SgExprListExp* dim_info = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/true);
+      SgExprListExp* dim_info = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/false);
+      ROSE_ASSERT(dim_info);
+
+      table_type->set_rank(rank);
+      table_type->set_dim_info(dim_info);
+
+      cout << "-x- has rank " << rank << endl;
+
+      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
+         {
+            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
+            ROSE_ASSERT(sg_expr_list);
+
+            ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+
+         // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
+            table_decl->set_has_table_entry_size(true);
+            table_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+         }
+
+      SgClassDefinition* table_def = table_decl->get_definition();
+      ROSE_ASSERT(table_def);
+
+   // Jovial is insensitive to case
+   // TODO: src/midend/astDiagnostics/AstConsistencyTests.C, line 6406
+   // table_def->setCaseInsensitive(true);
+
+   // Perhaps don't need this
+      SgScopeStatement* table_scope = table_def->get_scope();
+      ROSE_ASSERT(table_scope);
+
+   // TODO: Need to create a variable for (possibly) anonymous type
+   // TODO: First make sure this isn't just a type declaration
+      SgVariableDeclaration* var_decl = SageBuilder::buildVariableDeclaration(name, table_type, NULL, scope);
+
+      SageInterface::setBaseTypeDefiningDeclaration(var_decl, table_decl);
+
+   // The type or variable declaration should be added (NEED TO DECIDE WHICH)
+   // SageInterface::appendStatement(table_decl, scope);
+      SageInterface::appendStatement(var_decl, scope);
+
+   // The table description (SgUntypedStructureDefinition) will be traversed and table items added to the table_scope
+      SageBuilder::pushScopeStack(table_def);
+
+#if 1
+      cout << "--- TABLE \n";
+      cout << "---        var_decl is " << var_decl << ": " << var_decl->class_name() << endl;
+      cout << "---      table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
+      cout << "---       table_def is " << table_def << ": " << table_def->class_name() << endl;
+      cout << "---      table_type is " << table_type << ": " << table_type->class_name() << endl;
+#endif
+
+      return var_decl;
+}
+
 SgStatement*
 UntypedJovialConverter::convertUntypedCaseStatement (SgUntypedCaseStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope)
   {
@@ -151,7 +245,7 @@ UntypedJovialConverter::convertUntypedForStatement (SgUntypedForStatement* ut_st
           // TODO: create a SageBuilder function for this
              sg_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, block_body);
 
-             SageInterface::setOneSourcePositionForTransformation(sg_stmt);
+             SageInterface::setSourcePosition(sg_stmt);
              init_expr->set_parent(sg_stmt);
              incr_expr->set_parent(sg_stmt);
              test_expr->set_parent(sg_stmt);
