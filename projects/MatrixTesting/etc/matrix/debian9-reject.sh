@@ -10,7 +10,7 @@ fi
 
 # Yaml-CPP
 if [ "$rmc_yaml" = 0.5.1 ]; then
-    if version-ge "$rmc_boost" 0.67.0; then
+    if version-ge "$rmc_boost" 1.67.0; then
 	# compiler error: 'next' is not a member of 'boost'
 	reject-configuration "yaml-$rmc_yaml cannot use boost-$rmc_boost"
     fi

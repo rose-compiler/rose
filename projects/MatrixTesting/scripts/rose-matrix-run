@@ -24,6 +24,7 @@ RUN_FOREVER=
 SOURCE_CODE=
 TARGET_OS=
 TEST_NUMBER=1
+UPLOAD_ARTIFACTS=
 VERBOSITY=0
 
 ########################################################################################################################
@@ -92,6 +93,11 @@ help() {
     echo "        (2) each rmc_\* command is followed by a space-separated list of allowed"
     echo "        values, one of which will be chosen at random to replace the"
     echo "        corresponding line in the RMC configuration file."
+    echo
+    echo "    --upload=URL"
+    echo "        For every successful test (tests that reached their final \"end\" state)"
+    echo "        copy the test artifacts (files in the \"artifacts\" run directory) to the"
+    echo "        specified URL."
     echo
     echo "    --var=DIRECTORY"
     echo "        Name of directory that contains run-time information for testing."
@@ -506,6 +512,40 @@ remove-or-keep-rundir() {
 }
 
 ########################################################################################################################
+# Conditionally upload artifacts to a server.
+upload-artifacts() {
+    local rundir="$1" container_name="$2"
+
+    if [ -n "$UPLOAD_ARTIFACTS" ]; then
+	if [ "$(get-result "$rundir" status)" = end ]; then
+	    if [ -d "$rundir/artifacts" ]; then
+		echo "uploading test artifacts to $UPLOAD_ARTIFACTS..."
+		case "$UPLOAD_ARTIFACTS" in
+		    s3://*)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    aws s3 cp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		    *)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    scp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		esac
+	    fi
+	fi
+    fi
+}
+
+########################################################################################################################
 # Run one test in a Docker container
 run-test() {
     # Generate the Docker image for the selected target operating system.
@@ -538,7 +578,7 @@ run-test() {
 
     # Create initial contents for some output files
     set-result "$rundir" os "$os"
-    set-result "$rundir" tester "$(whoami)@$(hostname) docker ${image_name}"
+    set-result "$rundir" tester "$(whoami)@$(hostname) using $arg0"
 
     (
 	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -592,6 +632,7 @@ run-test() {
 	fi
     done
     report-results "$rundir"
+    upload-artifacts "$rundir" "$container_name"
     remove-or-keep-rundir "$rundir"
 }
 
@@ -677,6 +718,11 @@ while [ "$#" -gt 0 ]; do
 
 	--rmc-constraints=*)
 	    RMC_CONSTRAINTS="${1#--rmc-constraints=}"
+	    shift
+	    ;;
+
+	--upload=*)
+	    UPLOAD_ARTIFACTS="${1#--upload=}"
 	    shift
 	    ;;
 
