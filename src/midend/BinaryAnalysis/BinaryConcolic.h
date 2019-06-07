@@ -467,10 +467,16 @@ public:
      *  Executes the test case to produce new test cases. */
     std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
 
+#if 0 // FIXME[Robb Matzke 2019-06-06]: public for testing, but will eventually be private
 private:
+#endif
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
     Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
+
+    // Run the execution
+    void run(const Partitioner2::Partitioner&);
+    void run(const Partitioner2::Partitioner&, rose_addr_t startVa);
 
     // TODO: Lots of properties to control the finer aspects of executing a test case!
 };
