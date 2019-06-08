@@ -373,6 +373,15 @@ endif()
 option(enable-java "Enable Java analysis" ON)
 if(enable-java)
   message(STATUS "Looking for JAVA ...")
+  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
+  # value of JAVA_ROOT that we can support is the empty string.
+  if("${JAVA_ROOT}" STREQUAL "")
+  elseif("${JAVA_ROOT}" STREQUAL "no")
+    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and enabled (-Denable-java=TRUE)")
+  else()
+    message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
+  endif()
+  
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
