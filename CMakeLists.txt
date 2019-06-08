@@ -460,6 +460,7 @@ set(EDG_VERSION "4.9" CACHE STRING "major.minor version number for EDG (e.g. 3.3
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
 
+
 set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
 set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
 if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
@@ -479,11 +480,26 @@ if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
   endif()
 endif()
 
-# Check if we need to download the EDG binary tarball
+# Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
+option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
-  set(have_EDG_source TRUE)
+  message(STATUS "ROBB: EDG/CMakeLists.txt is found")
+  if(EDG_COMPILE)
+    message(STATUS "ROBB: EDG_COMPILE is true")
+    set(have_EDG_source TRUE)
+  else()
+    message(STATUS "ROBB: EDG_COMPILE is false")
+    set(have_EDG_source FALSE)
+  endif()
 else()
+  message(STATUS "ROBB: EDG/CMakeLists.txt is absent")
   set(have_EDG_source FALSE)
+  set(EDG_COMPILE FALSE)
+endif()
+
+# Check if we should download the EDG binary tarball. We only need to download it if we're not compiling the
+# EDG source code and ROSE is configured to analyze C (and C++).
+if(NOT have_EDG_source)
   set(BINARY_EDG 0)
   if(enable-c)
     set(BINARY_EDG 1)
@@ -496,7 +512,7 @@ else()
 	if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
 	  message(WARNING
 	    "At build time, CMake will attempt to download a required library tarball.\n"
-	    "Please note that EDG binary tarballs are generated upstream for only certain compilers.")
+	    "Please note that EDG binary tarballs are available for only certain configurations.")
 	endif()
 	include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
       endif()
