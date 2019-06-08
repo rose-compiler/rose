@@ -8,6 +8,7 @@ set -e
 arg0="${0##*/}"
 date=$(date '+%Y%m%d')
 SETUP="$1"
+cd
 
 # Cause all EC2 instances to have the same host name as far as RMC/Spock is concerned. This allows us to install
 # RMC/Spock on the template instance and use it in all the slave instances. Normally, since each slave has its own host
@@ -119,39 +120,86 @@ matrix-install-developer-scripts() {
 # versions of software dependencies simultaneously. In order to update RMC/Spock, you'll need to either do it by hand or
 # remove the ~/.spock directory.
 matrix-install-rmc-spock() {
-    if ! $HOME/.spock/bin/spock-ls --version >/dev/null 2>&1; then
-	echo
-	echo
-	echo "================================================================================"
-	echo "Installing ROSE Meta Config (RMC/Spock)"
-	echo "================================================================================"
-	echo
-	rm -rf rmc-spock
-	git clone https://github.com/matzke1/rmc-spock
-	rm -rf $HOME/rose-installed # since about to blow away all dynamic libraries
-	(cd rmc-spock && ./scripts/bootstrap.sh)
-	rm -rf rmc-spock
-    fi
+    echo
+    echo
+    echo "================================================================================"
+    echo "Installing ROSE Meta Config (RMC/Spock)"
+    echo "================================================================================"
+    echo
+
+    local spock_repo="https://github.com/matzke1/rmc-spock"
+    local needs_update=
     export PATH="$HOME/.spock/bin:$PATH"
+
+    echo "Testing whether RMC/Spock is operational..."
+    if ! spock-ls --version >/dev/null; then
+	needs_update=yes
+    elif ! spock-shell --with default-c++ c++ --version; then
+	needs_update=yes
+    elif [ ! -d rmc-spock ]; then
+	needs_update=yes
+	git clone "$spock_repo" rmc-spock
+    else
+	pushd rmc-spock >/dev/null
+	git fetch "$spock_repo"
+	local latest_version="$(git rev-parse FETCH_HEAD)"
+	local current_version="$(git rev-parse HEAD)"
+	if [ "$latest_version" != "$current_version" ]; then
+	    git reset --hard FETCH_HEAD
+	    git clean -dfx
+	    needs_update=yes
+	fi
+	popd >/dev/null
+    fi
+
+    if [ -n "$needs_update" ]; then
+	echo
+	echo "Update is necessary..."
+	echo
+	rm -rf $HOME/rose-installed # since about to blow away libraries used by ROSE
+	rm -rf rmc-spock/_build # build will fail if this is present from last time
+	(cd rmc-spock && ./scripts/bootstrap.sh)
+	rm -rf rmc-spock/_build
+    else
+	echo
+	echo "RMC/Spock is up to date and appears to work"
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# In case we were last interrupted during the middle of building a software dependency, remove all failed build attempts.
+# If we don't do this, then a subsequent attempt to build the same software will assume that it can't be done and will
+# immediately fail.
+matrix-clean-failed-dependencies() {
+    rm -vf ~/.spock/var/installed/matrix-slave/*-build-log.txt
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 # Install the ROSE Matrix Testing command-line tools. These are distributed as part of ROSE itself and depend on the
 # ROSE library.
 matrix-install-matrix-tools() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Installing ROSE portability testing tools version $MATRIX_COMMITTISH"
+    echo "Downloading from $MATRIX_REPOSITORY"
+    echo "================================================================================"
+    echo
+
+    local needs_update=
+    local installed_version="$(cat $HOME/rose-installed/latest/key 2>/dev/null)"
+    local desired_version="$MATRIX_REPOSITORY $MATRIX_COMMITTISH"
+
     if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
 	echo "$arg0: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)" >&2
 	return 1
+    elif [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
+	needs_update=yes
+    elif [ "$installed_version" != "$desired_version" ]; then
+	needs_update=yes
     fi
 
-    if [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
-	echo
-	echo
-	echo "================================================================================"
-	echo "Installing ROSE portability testing tools version $MATRIX_COMMITTISH"
-	echo "Downloading from $MATRIX_REPOSITORY"
-	echo "================================================================================"
-	echo
+    if [ -n "$needs_update" ]; then
 	rm -rf matrix-src
 	git clone "$MATRIX_REPOSITORY" matrix-src
 	(
@@ -166,6 +214,16 @@ matrix-install-matrix-tools() {
 	    rmc install
 	)
 	rm -rf matrix-src
+	echo "$desired_version" >$HOME/rose-installed/latest/key
+
+	# Since we upgraded the tools, we might have upgraded this very script that's running. If so, start
+	# over with the new script.
+	if [ -x "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" ]; then
+	    if ! diff -q "$0" "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave"; then
+		cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
+		exec bash "$0"
+	    fi
+	fi
     fi
     export "PATH=$HOME/rose-installed/latest/bin:$PATH"
 }
@@ -205,6 +263,18 @@ matrix-get-test-source() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
+# Remove images for all Docker containers
+matrix-maybe-remove-os-images() {
+    local installed_version="$(cat images-key 2>/dev/null)"
+    local desired_version="$TEST_ENVIRONMENT_VERSION"
+
+    if [ "$installed_version" != "$desired_version" ]; then
+	rose-matrix-run --rebuild-images
+	echo "$desired_version" >images-key
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Clean up some things
 matrix-cleanup() {
     rm -f crontab matrix-config
@@ -217,7 +287,9 @@ matrix-update-system-software
 matrix-get-aws-configuration
 matrix-install-developer-scripts
 matrix-install-rmc-spock
+matrix-clean-failed-dependencies
 matrix-install-matrix-tools
+matrix-get-slave-configuration
 
 test_number=0
 while true; do
@@ -230,6 +302,7 @@ while true; do
 	sleep 120
 	continue
     fi
+    matrix-maybe-remove-os-images
     matrix-get-test-source
 
     echo
