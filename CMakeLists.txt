@@ -694,6 +694,10 @@ endif()
 include(FindMagic)
 find_magic()
 
+# To use libpqxx, set PQXX_ROOT to the libpqxx installation prefix. To avoid libpqxx set PQXX_ROOT=no
+include(FindPqxx)
+find_pqxx()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
