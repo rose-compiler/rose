@@ -669,6 +669,10 @@ endif()
 include(FindZlib)
 find_zlib()
 
+# DWARF library
+include(FindDwarf)
+find_dwarf()
+
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
   add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_ABORT")
@@ -682,7 +686,6 @@ endif()
 
 find_path(with-backstroke-ross ROSS DOC "Specify the path where ROSS is installed")
 find_path(with-backstroke-speedes SPEEDES DOC "Specify the path where SPEEDES is installed")
-find_library(with-dwarf dwarf DOC "Specify the path where libdwarf is installed")
 find_library(with-gomp_omp_runtime_library gomp_omp DOC "Specify the prefix where GOMP Runtime System is installed")
 find_path(with-GraphViz_include graphviz.h DOC "Specify the prefix where GraphViz include files are installed")
 find_path(with-GraphViz_libs GraphViz_libs DOC "Specify the prefix where GraphViz libraries are installed")
