@@ -706,6 +706,10 @@ find_qt()
 include(FindReadline)
 find_readline()
 
+# To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
+include(FindSpot)
+find_spot()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
