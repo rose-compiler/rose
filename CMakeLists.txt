@@ -710,6 +710,10 @@ find_readline()
 include(FindSpot)
 find_spot()
 
+# To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
+include(FindWt)
+find_wt()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
