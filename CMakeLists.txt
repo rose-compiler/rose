@@ -698,6 +698,10 @@ find_magic()
 include(FindPqxx)
 find_pqxx()
 
+# To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
+include(FindQt)
+find_qt()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
@@ -739,7 +743,6 @@ endif()
 
 find_path(with-QRose QRose DOC "prefix of QRose installation")
 
-option(with-roseQt "Build with roseQt" OFF)
 if(with-roseQt)
   find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
