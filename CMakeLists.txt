@@ -702,6 +702,10 @@ find_pqxx()
 include(FindQt)
 find_qt()
 
+# To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
+include(FindReadline)
+find_readline()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
