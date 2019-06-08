@@ -690,6 +690,10 @@ if(GCRYPT_FOUND)
   find_gpgerror()
 endif()
 
+# To use libmagic, set MAGIC_ROOT to the libmagic installation prefix. To avoid libmagic set MAGIC_ROOT=no
+include(FindMagic)
+find_magic()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
