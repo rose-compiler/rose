@@ -656,11 +656,6 @@ endif()
 
 option(enable-poet "Enable POET support" OFF)
 
-option(enable-yices "Use the Yices satisfiability modulo theories (SMT) solver" OFF)
-if(enable-yices)
-  find_path(with-yices bin/yices DOC "The prefix used to install Yices")
-endif()
-
 # To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=no
 include(FindBison)
 find_bison()
@@ -713,6 +708,10 @@ find_spot()
 # To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
 include(FindWt)
 find_wt()
+
+# To use Yices, set YICES_ROOT to the Yices installation prefix. To avoid Yices set YICES_ROOT=no
+include(FindYices)
+find_yices()
 
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
