@@ -25,7 +25,7 @@ namespace Concolic {
 /*****
  **  LinuxExecutors work best on Linux
  *****/
-  
+
 typedef Sawyer::Optional<unsigned long> Persona;
 
 LinuxExecutor::Result::Result(int exitStatus)
@@ -43,15 +43,15 @@ std::string to_std_string(const EnvValue& v)
   return v.first + v.second;
 }
 
-std::vector<std::string> 
+std::vector<std::string>
 conv_to_string_vector(std::vector<EnvValue> env)
 {
   std::vector<std::string>  res;
-  
+
   res.reserve(env.size());
   std::transform(env.begin(), env.end(), std::back_inserter(res), to_std_string);
-  
-  return res;  
+
+  return res;
 }
 
 #if 0 /* after boost 1.65 and C++11 */
@@ -86,28 +86,28 @@ int execute_binary( const boost::filesystem::path& binary,
     waitpid(pid, &status, 0); // wait for the child to exit
     return status;
   }
-  
+
   if (persona) personality(persona.get());
 
-  std::string              tc_binary    = binary.string(); 
+  std::string              tc_binary    = binary.string();
   std::vector<std::string> tc_arguments = tc->args(); // holds arguments
   std::vector<char*>       args;  // points to arguments
-  
+
   // set up arguments
   args.reserve(2 /* program name + delimiter */ + tc_arguments.size());
   args.push_back(const_cast<char*>(tc_binary.c_str()));
   std::transform(tc_arguments.begin(), tc_arguments.end(), std::back_inserter(args), c_str_ptr);
   args.push_back(NULL);
-  
+
   std::vector<std::string> env_strings = conv_to_string_vector(tc->env()); // holds environment strings
   std::vector<char*>       envv;        // points to environment strings
-  
-  envv.reserve(1 /* delimter */ +env_strings.size());  
+
+  envv.reserve(1 /* delimiter */ + env_strings.size());
   std::transform(env_strings.begin(), env_strings.end(), std::back_inserter(envv), c_str_ptr);
   envv.push_back(NULL);
-  
-  
-  
+
+
+
   // execute the program
   /* const int err = */ execvpe(args[0], &args[0], &envv[0]);
   exit(0);
@@ -121,22 +121,22 @@ typedef boost::atomic<int> atomic_counter_t;
 // when boost does not have atomic
 template <class T>
 struct atomic_counter
-{  
+{
   explicit
   atomic_counter(T init)
   : val(init), mutex_()
   {}
-  
+
   T fetch_add(T incr)
   {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    
+
     T res = val;
-    
+
     val += incr;
     return res;
   }
-  
+
   private:
     T val;
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
@@ -148,6 +148,16 @@ typedef atomic_counter<int> atomic_counter_t;
 
 //~ static atomic_counter<int> versioning(0);
 static atomic_counter_t versioning(0);
+
+
+LinuxExecutor::Result*
+createLinuxResult(int errcode)
+{
+  LinuxExecutor::Result* res = new LinuxExecutor::Result(errcode);
+
+  res->exitStatus(errcode);
+  return res;
+}
 
 ConcreteExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
@@ -166,15 +176,17 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::path logerr(basename + "_err.log");
 
   storeBinaryFile(tc->specimen()->content(), binary);
-  
-#if BOOST_VERSION >= 105300  
+
+#if BOOST_VERSION >= 105300
   bstfs::permissions(binary, bstfs::owner_exe);
+#else
+  ROSE_ASSERT(false);
 #endif /* BOOST_VERSION */
-  
+
   Persona persona;
-  
-  if (useAddressRandomization_) persona = Persona(ADDR_NO_RANDOMIZE);
-  
+
+  if (!useAddressRandomization_) persona = Persona(ADDR_NO_RANDOMIZE);
+
   const int   errcode = execute_binary(binary, logout, logerr, persona, tc);
 
   // cleanup
@@ -182,12 +194,10 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::remove(logout);
   bstfs::remove(binary);
 
-  return ResultType(new LinuxExecutor::Result(errcode));
+  return createLinuxResult(errcode);
 }
 
 #else // !defined (__linux__)
-
-typedef Sawyer::Optional<unsigned long> Persona;
 
 LinuxExecutor::Result::Result(int exitStatus)
     : ConcreteExecutor::Result(0.0), exitStatus_(exitStatus) {

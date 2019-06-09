@@ -59,3 +59,5 @@ LinuxExitStatus::run() {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)

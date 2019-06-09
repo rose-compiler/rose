@@ -8,11 +8,13 @@
 #include <RoseException.h>
 #include <SqlDatabase.h>
 
-
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/archive/xml_oarchive.hpp>
+
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
@@ -262,19 +264,19 @@ public:
     std::vector<EnvValue> env() const;
     void env(std::vector<EnvValue> envvars);
     /** @} */
-    
+
     /** returns if the test has been run concollically. */
     bool hasConcolicTest() const;
-    
+
     /** sets the status of the concolic test to true. */
     void concolicTest(bool);
-    
+
     /** returns if the test has been run concretely. */
     bool hasConcreteTest() const;
-    
+
     /** returns the concrete rank. */
     Sawyer::Optional<double> concreteRank() const;
-    
+
     /** sets the concrete rank. */
     void concreteRank(Sawyer::Optional<double> val);
 
@@ -326,8 +328,11 @@ public:
         explicit Result(double rank): rank_(rank) {
             ASSERT_forbid(rose_isnan(rank));
         }
+
+        Result() {}  // required for serialization
+
         virtual ~Result() {}
-        
+
         double rank() const { return rank_; }
 
     private:
@@ -348,7 +353,7 @@ public:
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-    virtual    
+    virtual
     Result*
     execute(const TestCase::Ptr&) = 0;
 };
@@ -375,7 +380,10 @@ public:
         }
 
     public:
+        explicit
         Result(int exitStatus);
+
+        Result() {} // required for boost serialization
 
         /** Property: Exit status of the executable.
          *
@@ -418,7 +426,6 @@ public:
     ConcreteExecutor::Result*
     execute(const TestCase::Ptr&) ROSE_OVERRIDE;
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Concolic (concrete + symbolic) executors
@@ -546,22 +553,22 @@ struct ObjectId : Sawyer::Optional<int>
   ObjectId(const Value& v)
   : Super(v)
   {}
-  
+
   ObjectId(const ObjectId& rhs)
   : Super(rhs)
   {}
 
   ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs)
   {
-    this->Super::operator=(lhs);    
-    
+    this->Super::operator=(lhs);
+
     return *this;
   }
-  
+
   ObjectId<Tag>& operator=(const Value& v)
   {
-    this->Super::operator=(v);    
-    
+    this->Super::operator=(v);
+
     return *this;
   }
 
@@ -596,13 +603,13 @@ public:
     typedef ::Rose::BinaryAnalysis::Concolic::SpecimenId  SpecimenId;
     typedef ::Rose::BinaryAnalysis::Concolic::TestCaseId  TestCaseId;
 
-private:    
+private:
     SqlDatabase::ConnectionPtr                            dbconn_; // holds connection to database
 
     // The lock protects the following concurrent accesses
     //   - memoized data
     //   - testSuiteId_
-    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;         
+    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;
 
     // Memoization of ID to object mappings
     Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
@@ -613,7 +620,7 @@ private:
 
 protected:
     Database()
-    : dbconn_(), mutex_(), specimens_(), testCases_(), testSuites_(), 
+    : dbconn_(), mutex_(), specimens_(), testCases_(), testSuites_(),
       testSuiteId_()
     {}
 
@@ -688,10 +695,10 @@ public:
     TestCase::Ptr object(TestCaseId, Update::Flag update = Update::YES);
     Specimen::Ptr object(SpecimenId, Update::Flag update = Update::YES);
     /** @} */
-    
-    
+
+
     /** Reconstitute an object from a database ID as part of a subquery.
-     * 
+     *
      *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
      */
     Specimen::Ptr object_ns(SqlDatabase::TransactionPtr tx, SpecimenId id);
@@ -708,17 +715,22 @@ public:
     TestCaseId id(const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
-    
+
     /** Returns an ID number for an object, optionally writing to the database.
-     * 
+     *
      * The functions are executed in the context of some other transaction.
-     * 
-     *  Thread safety: not thread safe 
+     *
+     *  Thread safety: not thread safe
      */
     TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuite::Ptr&);
     TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&);
     SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&);
-    
+
+    /** Returns an ID number for a specimen with a given key @ref name
+     * @{ */
+    SpecimenId  specimen(const std::string& name);
+    TestSuiteId testSuite(const std::string& name);
+    /** @} */
 
     //------------------------------------------------------------------------------------------------------------------------
     // Cached info about disassembly. This is large data. Each specimen has zero or one associated RBA data blob.
@@ -757,35 +769,35 @@ public:
      *
      *  Thread safety: Not thread safe. */
     void eraseRba(SpecimenId);
-    
+
     /** Associate TestCase w/ TestSuite
      *
      * Thread safety: thread safe
-     */ 
+     */
    void assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite);
-   
-   /** returns @ref n testcases without concrete results. 
-    * 
+
+   /** returns @ref n testcases without concrete results.
+    *
     * Thread safety: thread safe
     */
    std::vector<Database::TestCaseId> needConcreteTesting(size_t);
-   
-   /** returns @ref n testcases without concolic results. 
-    * 
+
+   /** returns @ref n testcases without concolic results.
+    *
     * Thread safety: thread safe
     */
    std::vector<Database::TestCaseId> needConcolicTesting(size_t);
 
    /** updates a testcase and its results.
-    * 
+    *
     * Thread safety: thread safe
     */
    void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
-   
+
    /** tests if there are more test cases that require testing.
-    * 
+    *
     * Thread safety: thread safe
-    */   
+    */
    bool hasUntested() const;
 };
 
@@ -901,20 +913,32 @@ public:
     virtual void run() ROSE_OVERRIDE;
 };
 
-/** Loads a binary file 
- * 
+/** Loads a binary file
+ *
  * Throws a std::runtime_error if the file cannot be opened.
  */
 std::vector<uint8_t> loadBinaryFile(const boost::filesystem::path& path);
 
-/** Stores a binary file 
- * 
+/** Stores a binary file
+ *
  * Throws a std::runtime_error if the file cannot be opened.
  */
 void storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& path);
 
+/** prints all SQL schema statements on @ref os.
+ */
+void writeDBSchema(std::ostream& os);
+
+/** prints all SQL statements on @ref os.
+ */
+void writeSqlStmts(std::ostream& os);
+
 
 } // namespace
 } // namespace
 } // namespace
+
+//~ BOOST_CLASS_EXPORT_GUID(LinuxExecutor::Result, "LinuxExecutor::Result")
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
+
 #endif
