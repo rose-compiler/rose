@@ -633,6 +633,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    SgIncludeDirectiveStatement* includeDirectiveStatement = new SgIncludeDirectiveStatement();
                                    ROSE_ASSERT(includeDirectiveStatement != NULL);
 
+                                // DQ (6/3/2019): To be consistant with other SgDeclarationStatement IR nodes, mark this as the defining declaration.
+                                   includeDirectiveStatement->set_definingDeclaration(includeDirectiveStatement);
+                                   ROSE_ASSERT(includeDirectiveStatement->get_definingDeclaration() != NULL);
+
                                 // DQ (9/18/2018): Adding the connection to the include file hierarchy as generated in the EDG/ROSE translation.
                                    includeDirectiveStatement->set_include_file_heirarchy(include_file);
 
@@ -707,7 +711,12 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    headerFileBody->get_endOfConstruct()  ->display("headerFileBody: endOfConstruct: debug");
 #endif
                                 // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
-                                   ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                                   if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
+                                      {
+                                     // DQ (6/3/2019):Output a warning so we can look into this later.
+                                        printf ("WARNING: In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL \n");
+                                      }
+                                // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
                                 // DQ (5/28/2019): debugging test2019_441.C.
                                 // printf ("Using OneBillion figure for end of construct line number \n");
