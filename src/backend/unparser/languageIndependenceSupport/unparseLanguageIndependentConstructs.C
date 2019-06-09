@@ -192,6 +192,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      bool statementInFile = false;
 
 #if 0
+     printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+#endif
+
+#if 0
      printf ("\n");
      printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
      printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
