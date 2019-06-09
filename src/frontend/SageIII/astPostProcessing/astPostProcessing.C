@@ -211,7 +211,7 @@ void postProcessingSupport (SgNode* node)
                              (SageInterface::is_PHP_language()     == true) ||
                              (SageInterface::is_Python_language()  == true);
 
-  // If this is C or C++ then we are using the new EDG translation and althrough fewer 
+  // If this is C or C++ then we are using the new EDG translation and using fewer 
   // fixups should be required, some are still required.
      if (noPostprocessing == false)
         {
@@ -547,6 +547,10 @@ void postProcessingSupport (SgNode* node)
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
        // step.
+
+#if 0
+          printf ("In postProcessingSupport(): noPostprocessing == false: calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
        // DQ (4/16/2015): This is replaced with a better implementation.
        // checkIsModifiedFlag(node);
@@ -931,6 +935,10 @@ void postProcessingSupport (SgNode* node)
 
   // Make sure that compiler-generated AST nodes are marked for Sg_File_Info::isCompilerGenerated().
      checkIsCompilerGeneratedFlag(node);
+
+#if 0
+     printf ("In postProcessingSupport(): calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (4/16/2015): This is replaced with a better implementation.
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
