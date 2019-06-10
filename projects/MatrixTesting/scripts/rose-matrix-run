@@ -217,7 +217,9 @@ select-os() {
     if [ -n "$TARGET_OS" ]; then
 	echo "$TARGET_OS"
     else
-	sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]$//' -e '/^$/d' <${ETCDIR}/target-os |shuf -n1
+	local os="$(rose-matrix-slave-config --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
+	echo "$os"
     fi
 }
 

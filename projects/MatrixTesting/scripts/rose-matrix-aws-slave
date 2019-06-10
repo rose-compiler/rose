@@ -96,7 +96,8 @@ matrix-get-aws-configuration() {
 matrix-get-slave-configuration() {
     echo "obtaining current slave configuration information from database"
     rose-matrix-slave-config >matrix-config
-    source matrix-config
+    cat -n matrix-config
+    . matrix-config
 }
 
 #------------------------------------------------------------------------------------------------------------------------

@@ -18,11 +18,14 @@ using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {
+    bool unformatted;                                   // if set, then don't escape special characters
+    bool showingName;                                   // show variable name and equal sign along with value?
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
 
     Settings()
+        : unformatted(false), showingName(true)
 #ifdef DEFAULT_DATABASE
-        : databaseUri(DEFAULT_DATABASE)
+          , databaseUri(DEFAULT_DATABASE)
 #endif
         {}
 };
@@ -42,6 +45,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .argument("uri", anyParser(settings.databaseUri))
                 .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
                      "variable. " + SqlDatabase::uriDocumentation()));
+
+    tool.insert(Switch("plain")
+                .intrinsicValue(true, settings.unformatted)
+                .doc("Don't escape special shell characters in the output."));
+
+    tool.insert(Switch("value-only")
+                .intrinsicValue(false, settings.showingName)
+                .doc("Omit the property name and equal sign, and show only the value."));
 
     parser.with(Rose::CommandLine::genericSwitches());
     parser.with(tool);
@@ -106,16 +117,24 @@ main(int argc, char *argv[]) {
             if (row == stmt->end()) {
                 mlog[ERROR] <<"property \"" <<StringUtility::cEscape(args[0]) <<"\" is not defined\n";
                 ++nErrors;
-            } else if (eq != std::string::npos) {
-                value = arg.substr(eq+1);
-                tx->statement("update slave_settings set value = ? where name = ?")
-                    ->bind(0, value)
-                    ->bind(1, property)
-                    ->execute();
-                std::cout <<property <<"=" <<shellEscape(value) <<"\n";
             } else {
-                value = row.get_str(0);
-                std::cout <<property <<"=" <<shellEscape(value) <<"\n";
+                if (eq != std::string::npos) {
+                    value = arg.substr(eq+1);
+                    tx->statement("update slave_settings set value = ? where name = ?")
+                        ->bind(0, value)
+                        ->bind(1, property)
+                        ->execute();
+                } else {
+                    value = row.get_str(0);
+                }
+
+                if (settings.showingName)
+                    std::cout <<property <<"=";
+                if (settings.unformatted) {
+                    std::cout <<value <<"\n";
+                } else {
+                    std::cout <<shellEscape(value) <<"\n";
+                }
             }
         }
     }
