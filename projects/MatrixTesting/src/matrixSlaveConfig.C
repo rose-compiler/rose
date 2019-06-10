@@ -101,9 +101,15 @@ main(int argc, char *argv[]) {
     if (args.empty()) {
         // list all properties and their values
         SqlDatabase::StatementPtr stmt = tx->statement("select name, value from slave_settings order by name");
-        for (SqlDatabase::Statement::iterator row = stmt->begin(); row != stmt->end(); ++row)
-            std::cout <<row.get_str(0) <<"=" <<shellEscape(row.get_str(1)) <<"\n";
-
+        for (SqlDatabase::Statement::iterator row = stmt->begin(); row != stmt->end(); ++row) {
+            if (settings.showingName)
+                std::cout <<row.get_str(0) <<"=";
+            if (settings.unformatted) {
+                std::cout <<row.get_str(1) <<"\n";
+            } else {
+                std::cout <<shellEscape(row.get_str(1)) <<"\n";
+            }
+        }
     } else {
         BOOST_FOREACH (const std::string &arg, args) {
             size_t eq = arg.find('=');

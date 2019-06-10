@@ -290,7 +290,6 @@ matrix-install-developer-scripts
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
 matrix-install-matrix-tools
-matrix-get-slave-configuration
 
 test_number=0
 while true; do
