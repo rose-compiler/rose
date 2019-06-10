@@ -802,7 +802,8 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
    // This is an issue with the astOutliner test code jacobi.c.
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
    // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
-      convertFunctionDefinitionsToFunctionPrototypes(new_file);
+   // convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
 #endif
     }
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
@@ -810,7 +811,8 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
     return new_file;
 }
 
-
+#if 0
+// DQ (6/6/2019): Move this to the SageInteface namespace.
 void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node) 
    {
   // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
@@ -857,7 +859,7 @@ void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
                          SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
                          if (functionDeclaration == definingFunctionDeclaration)
                             {
-#if 1
+#if 0
                               printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
                                    functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 
@@ -868,14 +870,14 @@ void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
                            // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
                            // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
                               bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
-#if 1
+#if 0
                               printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
 #endif
                            // Remove the defining declaration as a test.
                               SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
                               if (isInSourceFile == true && functionDeclarationScope != NULL)
                                  {
-#if 1
+#if 0
                                    printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
                                         functionDeclarationScope,functionDeclarationScope->class_name().c_str());
 #endif
@@ -894,7 +896,7 @@ void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 
      std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
 
-#if 1
+#if 0
      printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
 #endif
 
@@ -906,8 +908,7 @@ void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 
           SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
           ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
-
-#if 1
+#if 0
           printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s \n",
                functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
@@ -923,7 +924,7 @@ void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
      ROSE_ASSERT(false);
 #endif
    }
-
+#endif
 
 
 // eof
