@@ -219,16 +219,20 @@ main(int argc, char *argv[]) {
     DependencyNames dependencyNames = loadDependencyNames(tx);
 
     // Parse positional command-line arguments
+    boost::regex nameRe("[_a-zA-Z][_a-zA-Z0-9]*");
+    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=~])(.*)");
     Sawyer::Container::Set<std::string> keysSeen;
     std::vector<std::string> whereClauses, whereValues, columnsSelected, keysSelected;
     BOOST_FOREACH (const std::string &arg, args) {
-        size_t eq = arg.find('=');
-        if (eq != std::string::npos) {
-            // Arguments of the form "key=value" mean restrict the table to that value of the key.  This key column will be
-            // emitted above the table instead of within the table (since the column within the table would have one value
-            // across all the rows.
-            std::string key = boost::trim_copy(arg.substr(0, eq));
-            std::string val = boost::trim_copy(arg.substr(eq+1));
+        boost::smatch exprParts;
+        if (boost::regex_match(arg, exprParts, exprRe)) {
+            // Arguments of the form <KEY><OPERATOR><VALUE> mean restrict the table to that value of the key.  This key column
+            // will be emitted above the table instead of within the table (since the column within the table would have one
+            // value across all the rows.
+            std::string key = exprParts.str(1);
+            std::string comparison = exprParts.str(2);
+            std::string val = exprParts.str(3);
+
             if (!dependencyNames.exists(key)) {
                 mlog[FATAL] <<"invalid key \"" <<StringUtility::cEscape(key) <<"\"\n";
                 exit(1);
@@ -238,8 +242,8 @@ main(int argc, char *argv[]) {
                 exit(1);
             }
 
-            // Special cases for comparing some values
-            if ("rose" == key) {
+            if ("rose" == key && "=" == comparison) {
+                // Special cases for comparing ROSE commit hashes to allow specifying abbreviated hashes.
                 boost::regex partialKeyRe("([0-9a-f]{1,39})(\\+local)?");
                 boost::smatch matches;
                 if (boost::regex_match(val, matches, partialKeyRe)) {
@@ -251,6 +255,11 @@ main(int argc, char *argv[]) {
                 whereValues.push_back(val);
 
             } else if ("reporting_time" == key || "rose_date" == key) {
+                // Special case for dates to allow for ranges.
+                if (comparison != "=") {
+                    mlog[FATAL] <<"field \"" <<key <<"\" can only be compared with \"=\"\n";
+                    exit(1);
+                }
                 if (Sawyer::Optional<std::pair<time_t, time_t> > range = parseDateTime(settings, val)) {
                     whereClauses.push_back(dependencyNames[key] + " >= ? and " +
                                            dependencyNames[key] + " <= ?");
@@ -261,10 +270,17 @@ main(int argc, char *argv[]) {
                     whereValues.push_back(val);
                 }
 
+            } else if ("~" == comparison) {
+                // Substring comparison
+                whereClauses.push_back(dependencyNames[key] + " like ?");
+                whereValues.push_back("%" + val + "%");
+
             } else {
+                // Equality comparison
                 whereClauses.push_back(dependencyNames[key] + " = ?");
                 whereValues.push_back(val);
             }
+
             std::cerr <<"  " <<std::left <<std::setw(16) <<key <<" = \"" <<StringUtility::cEscape(val) <<"\"\n";
             keysSeen.insert(key);
         } else if (arg == "list") {
