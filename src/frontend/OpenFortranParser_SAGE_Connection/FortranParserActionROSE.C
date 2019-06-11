@@ -6870,7 +6870,7 @@ void c_action_label(Token_t * lbl)
         if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
         {
             printf(
-                    "After trace_back_through_parent_scopes_lookup_variable_symbol(%s,astScopeStack) variableSymbol = %p = %s \n",
+                    "After trace_back_through_parent_scopes_lookup_member_variable_symbol(%s,astScopeStack) variableSymbol = %p = %s \n",
                     variableName.str(),
                     variableSymbol,
                     variableSymbol ? SageInterface::get_name(variableSymbol).c_str()
@@ -7862,8 +7862,60 @@ void c_action_label(Token_t * lbl)
                     }
                     ROSE_ASSERT(scope != NULL);
 
+                    //Pei-Hung In the case that variable name is same as the derived type member, we should not remove the symbol
+
+                    SgScopeStatement* tempScope = astScopeStack.front();
+                    SgVariableSymbol* memberSymbol = NULL;
+                    bool isMemberInDerivedType = false;
+                    
+                    while (memberSymbol == NULL && tempScope != NULL)
+                       {
+                         SgSymbolTable* symtable = tempScope->get_symbol_table();
+                         std::set<SgNode*> symbolSet = symtable->get_symbols();
+                         if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                              printf ("In currentScope = %p symbol table has %d symbols \n",tempScope,symbolSet.size());
+                         for(std::set<SgNode*>::iterator it = symbolSet.begin(); it != symbolSet.end(); ++it)
+                         {
+                            SgSymbol* sym = NULL;
+                            SgClassSymbol* classSymbol = NULL;
+                            SgClassDeclaration* classDecl = NULL;
+                            SgClassDeclaration* classDefDecl = NULL;
+                            SgClassDefinition* classDef = NULL;
+
+                            sym = isSgSymbol(*it);
+                            if(sym != NULL)
+                               classSymbol = isSgClassSymbol(sym);
+                            if(classSymbol == NULL) continue;
+                               printf("Found SgClassSymbol = %s %d\n",sym->get_name().str(),sym->variantT());
+                            classDecl = isSgDerivedTypeStatement(classSymbol->get_declaration());
+                            if(classDecl == NULL) continue;
+                            classDefDecl = isSgDerivedTypeStatement(classDecl->get_definingDeclaration());
+                            if(classDefDecl == NULL) continue;
+                            classDef = isSgClassDefinition(classDefDecl->get_definition());
+                            if(classDef == NULL) continue;
+
+                            SgSymbol* foundSymbol = classDef->lookup_symbol(variableName->get_name().str());
+                            if(foundSymbol != NULL)
+                            {
+                               isMemberInDerivedType = true;
+                               if(SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                                  printf ("In DerivedTypeStatement = %p found Symbol %p has same name, %s, as symbol %p \n",classDecl,foundSymbol, foundSymbol->get_name().str(), variableSymbol);
+                            }
+                         }
+
+                         tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+                       }
+
+
+
+
+
+
+
                     // Note that we might want to clean up more than just removing the variableSymbol from the symbol table
-                    scope->remove_symbol(variableSymbol);
+                    // Pei-Hung (06/11/2019) only remove the symbol when it is not a member in the derived type
+                    if(!isMemberInDerivedType) 
+                      scope->remove_symbol(variableSymbol);
 #if 0
                     // Output debugging information about saved state (stack) information.
                     outputState("At BOTTOM of R613 c_action_part_ref()");
