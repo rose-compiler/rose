@@ -1,0 +1,129 @@
+%{
+#include <stdio.h>
+#include <string.h>
+
+#include "crsh.hpp"
+
+void yyerror(const char *str)
+{
+  fprintf(stderr,"error: %s\n",str);
+}
+
+int yywrap()
+{
+  return 1;
+}
+
+int yylex();
+
+%}
+
+%error-verbose
+
+%union {
+  int         m_num;
+  char*       m_str;
+  envvar*     m_env;
+  evar_lst*   m_envlst;
+  arg*        m_arg;
+  arg_lst*    m_arg;
+  bool        m_success;
+}
+
+%token CONNECT
+%token EQU
+%token EXIT
+%token EXPORT
+%token LBLK
+%token RBLK
+%token RUN
+%token SPECIMEN
+%token TESTCASE
+%token TESTSUITE
+%token <m_num> NUM
+%token <m_str> SQLLITE
+%token <m_str> STRING
+
+%type <m_str> filename ident string specimen testsuite_opt
+%type <m_num> num num_opt
+%type <m_env> export environ_opt
+%type <m_arg> argument arguments_opt
+%type <m_success> fail_opt
+
+%start crush
+
+%%
+num              : NUM                       { $$ = $1; }
+                 ;
+
+filename         : SQLLITE                   { $$ = $1; }
+                 ;
+
+ident            : STRING                    { $$ = $1; }
+                 ;
+
+string           : STRING                    { $$ = $1; }
+              /* | '"' words_opt '"';        { $$ = $2; } */
+                 ;
+
+export           : EXPORT ident EQU string   { $$ = crsh_envvar($2, $4); }
+
+environ_opt      : /* empty */               { $$ = crsh_env_lst(); }
+                 | environ_opt export        { $$ = crsh_env_lst($1, $2);
+                 ;
+
+argument         : string                    { $$ = crsh_cmdlarg($1); }
+                 ;
+
+arguments_opt    : /* empty */               { $$ = crsh_arg_lst();   }
+                 | arguments_opt argument    { $$ = crsh_arg($1, $2); }
+                 ;
+
+specimen         : string                    { $$ = $1; }
+                 ;
+
+fail_opt         : /* empty */               { $$ = true;  }
+                 | EQU FAIL                  { $$ = false; }
+                 ;
+
+testcmd          : specimen arguments_opt
+                   fail_opt                  { $$ = crsh_invoke($1, $2, $3); }
+                 ;
+
+test_cmd         : ident QUAL ident
+                   fail_opt
+                   LBLK
+                     environ_opt
+                     testcmd
+                   RBLK                      { crsh_test($1, $3, $4, $6, $7); }
+                 ;
+
+testsuite_opt    : /* empty */               { $$ = NULL; }
+                 | ident                     { $$ = $1; }
+                 ;
+
+num_opt          : /* empty */               { $$ = -1; }
+                 | num                       { $$ = $1; }
+                 ;
+
+exec_cmd         : RUN testsuite_opt num_opt { crsh_run($2, $3); }
+                 ;
+
+connect_cmd      : CONNECT filename          { crsh_db($2); }
+                 ;
+
+exit_cmd         : EXIT
+                 ;
+
+cmd              : test_cmd
+                 | exec_cmd
+                 | connect_cmd
+                 | exit_cmd
+                 ;
+
+cmds_opt         : /* empty */
+                 | cmd cmds_opt
+                 ;
+
+crush            : cmds_opt
+                 ;

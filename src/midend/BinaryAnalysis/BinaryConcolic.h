@@ -609,7 +609,7 @@ private:
     // The lock protects the following concurrent accesses
     //   - memoized data
     //   - testSuiteId_
-    mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;
+    //~ mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;
 
     // Memoization of ID to object mappings
     Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
@@ -620,8 +620,7 @@ private:
 
 protected:
     Database()
-    : dbconn_(), mutex_(), specimens_(), testCases_(), testSuites_(),
-      testSuiteId_()
+    : dbconn_(),  specimens_(), testCases_(), testSuites_(), testSuiteId_()
     {}
 
 public:

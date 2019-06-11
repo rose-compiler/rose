@@ -1007,6 +1007,16 @@ Database::testSuite(const TestSuite::Ptr& obj)
   return testSuiteId_;
 }
 
+
+template <class IdClass>
+IdClass getId(SqlIterator pos, SqlIterator end)
+{
+  if (pos == end) return IdClass();
+
+  return IdClass(pos.get_i32(0));
+}
+
+
 template <class IdClass>
 IdClass
 queryIdByName( SqlDatabase::ConnectionPtr& dbconn,
@@ -1016,8 +1026,8 @@ queryIdByName( SqlDatabase::ConnectionPtr& dbconn,
 {
   DBTxGuard       dbtx(dbconn);
   SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), sqlstmt, name);
+  IdClass         id = getId<IdClass>(stmt->begin(), stmt->end());
 
-  IdClass         id( stmt->execute_int() );
   dbtx.commit();
   return id;
 }
