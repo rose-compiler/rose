@@ -4076,15 +4076,15 @@ createSupportedResultsView() {
     SqlDatabase::StatementPtr q = gstate.tx->statement("select name from dependencies where supported > 0"
                                                        " group by name having count(*) > 0 order by name");
     std::string qstr = "create temporary view supported_results as select t.* from test_results as t";
-    std::vector<std::string> whereClause;
     int i = 0;
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
         std::string key = row.get<std::string>(0);
-        std::string jname = "d" + boost::lexical_cast<std::string>(++i);
-        qstr += " join dependencies as " + jname + " on t.rmc_" + key + " = " + jname + ".value";
-        whereClause.push_back(jname + ".name = '" + key + "' and " + jname + ".supported > 0");
+        std::string joinName = "d" + boost::lexical_cast<std::string>(++i);
+        qstr += " join dependencies as " + joinName +
+                " on " + joinName + ".name = '" + key + "'"
+                " and " + joinName + ".supported > 0"
+                " and " + joinName + ".value = t.rmc_" + key;
     }
-    qstr += " where " + boost::join(whereClause, " and ");
     gstate.tx->statement(qstr)->execute();
 }
 

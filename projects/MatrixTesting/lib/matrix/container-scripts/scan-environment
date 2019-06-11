@@ -47,6 +47,7 @@ scan-rmc-environment() {
     emit-pair dwarf       "$DWARF_VERSION"           "$RMC_DWARF"
     emit-pair edg         "$RMC_EDG"
     emit-pair edg_compile "$RMC_EDG_COMPILE"
+    emit-pair jq          "JQ_VERSION"               "$RMC_JQ"
     emit-pair languages   "$RMC_LANGUAGES"
     emit-pair magic       "$LIBMAGIC_VERSION"        "$RMC_MAGIC"
     emit-pair optimize    "$RMC_OPTIMIZE"
@@ -96,6 +97,7 @@ scan-rmc-config() {
     config-line "$config_file" edg
     config-line "$config_file" edg_compile
     config-line "$config_file" java
+    config-line "$config_file" jq
     config-line "$config_file" languages
     config-line "$config_file" magic
     config-line "$config_file" optimize
