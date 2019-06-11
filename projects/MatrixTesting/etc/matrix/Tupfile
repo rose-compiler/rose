@@ -8,5 +8,4 @@ run $(public_file) --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt --l
     ubuntu1604-reject.sh \
     ubuntu1804-reject.sh \
     ubuntu1810-reject.sh \
-    ubuntu1904-reject.sh \
-    target-os
+    ubuntu1904-reject.sh

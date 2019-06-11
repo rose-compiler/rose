@@ -22,6 +22,7 @@
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
+    namespace Concolic { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
@@ -118,6 +119,7 @@ void initialize() {
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
+        BinaryAnalysis::Concolic::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();

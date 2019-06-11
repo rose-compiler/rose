@@ -13,38 +13,18 @@ PHONIES=
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-# Location of binary specimens
-#~ SPECIMEN_DIR = $(nonsmoke_specimens_binary_directory)
-
-# Corresponding smoke directory
-#~ SMOKE_BLDDIR = $(abspath $(top_builddir))/tests/smoke/functional/BinaryAnalysis
-#~ SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
-
 # To keep compile commands tidy, please ONLY put required include flags here.
-AM_CPPFLAGS = $(ROSE_INCLUDES) #-I$(top_srcdir)/src/midend/BinaryAnalysis/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-#~ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-#~ TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
-# this, this implementation needs review).  It might be better to prepend the information to the 
-# CC and CXX variables. I think that the purify support uses this approach.
-if ROSE_USE_SANITIZER
-VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
-else
-VALGRIND =
-endif
+########################################################################################################################
+# Tests
+########################################################################################################################
 
-
-###############################################################################################################################
-# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
-###############################################################################################################################
-
-#~ noinst_PROGRAMS += sampleExecutable
-#~ testBinaryConcolic_SOURCES = sampleExecutable.C
-#~ testBinaryConcolic_LDADD = 
-
+#------------------------------------------------------------------------------------------------------------------------
+# Test concolic database operations
 
 noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C
@@ -54,24 +34,33 @@ TEST_TARGETS += testConcolicDB.passed
 
 testConcolicDB.passed: $(top_srcdir)/tests/nonsmoke/functional/BinaryAnalysis/Concolic/concolicDB.conf testConcolicDB # sampleExecutable
 	@$(RTH_RUN) \
-		TITLE="t[$@]" \
+		TITLE="concolic database [$@]" \
 		CMD="./testConcolicDB" \
 		ANS="no" \
 		$< $@
 
+#------------------------------------------------------------------------------------------------------------------------
+# Test concolic executor
+
+noinst_PROGRAMS += testConcolicExecutor
+testConcolicExecutor_SOURCES = testConcolicExecutor.C
+testConcolicExecutor_LDADD = $(ROSE_SEPARATE_LIBS)
+testConcolicExecutor_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/concolic-specimen-01
+testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)'
+
+TEST_TARGETS += testConcolicExecutor.passed
+
+testConcolicExecutor.passed: $(TEST_EXIT_STATUS) testConcolicExecutor $(testConcolicExecutor_specimen)
+	@$(RTH_RUN)												\
+	    TITLE="concolic executor [$@]"									\
+	    CMD="$$(pwd)/testConcolicExecutor $(testConcolicExecutor_flags) $(testConcolicExecutor_specimen)"	\
+	    $< $@
 
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
 
-if ROSE_BUILD_OS_IS_CYGWIN
-# DQ (3/21/2009): These tests don't appear to run under Cygwin.
-check-local:
-	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
-else
-# Binary analysis is enabled and supported
 check-local: $(TEST_TARGETS)
-endif
 else
 # Binary analysis is not enabled
 check-local:
