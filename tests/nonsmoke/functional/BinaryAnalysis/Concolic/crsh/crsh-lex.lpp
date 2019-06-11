@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include "crsh.hpp"
 #include "crsh-parse.hpp"
 
 extern "C" int yywrap(void) { return 1; }
@@ -8,8 +9,7 @@ extern "C" int yywrap(void) { return 1; }
 %%
 "connect"                      return CONNECT;
 "export"                       return EXPORT;
-"suite"                        return TESTSUITE;
-"test"                         return TESTCASE;
+"run"                          return RUN;
 "exit"                         return EXIT;
 "::"                           return QUAL;
 "sqlite3://"[".""/"a-zA-Z0-9]+ {
@@ -18,12 +18,14 @@ extern "C" int yywrap(void) { return 1; }
                                }
 "{"                            return LBLK;
 "}"                            return RBLK;
-"="                            return EQU;
+"@success"                     return SUCCESS;
+"@failure"                     return FAILURE;
+"="                            return EQUAL;
 [0-9]+                         {
                                  yylval.m_num = atoi(yytext);
                                  return NUM;
                                }
-[a-zA-Z0-9"\""/"".""-"]+       {
+[a-zA-Z0-9\\\.\-\+\=\*/]+      {
                                  yylval.m_str = strdup(yytext);
                                  return STRING;
                                }

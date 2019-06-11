@@ -23,9 +23,6 @@ void yy_switch_to_buffer(YY_BUFFER_STATE buffer);
 extern char* yytext;
 extern int yylex (void);
 
-
-namespace concolic = Rose::BinaryAnalysis::Concolic;
-
 static inline
 std::string
 rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
@@ -37,60 +34,8 @@ rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
   return str.substr(0, pos+1);
 }
 
-//! crush
-//! - to press between opposing bodies so as to break, compress, or injure
-struct Crsh
-{
-    void connect(const std::string& s);
-    void disconnect();
-
-    void suite(const std::string& s);
-    void suite_end();
-
-    void test(const std::string& s);
-    void test_end();
-
-    void cmdlarg(const std::string& s);
-    void invoke(const std::string& s);
-    void envvar(const concolic::EnvValue& v);
-
-    void runTestcase(concolic::TestCaseId testcaseId);
-    void run(const char* testsuitename, int cnt);
-
-    void parse();
-
-    std::ostream& out() { return std::cout; }
-    std::ostream& err() { return std::cerr; }
-
-  private:
-    concolic::Specimen::Ptr  specimen (const std::string& s);
-    concolic::TestSuite::Ptr testSuite(const std::string& s);
-
-  private:
-    concolic::DatabasePtr              db;
-    concolic::TestSuitePtr             current_suite;
-    std::vector<concolic::TestCasePtr> tests;
-    std::vector<std::string>           names;
-    std::vector<concolic::EnvValue>    environment;
-    std::vector<std::string>           args;
-};
-
-Crsh crsh;
-
-namespace
-{
-  template <class T>
-  T pop(std::vector<T>& vec)
-  {
-    T res = vec.back();
-
-    vec.pop_back();
-    return res;
-  }
-}
-
 //
-// Bison interface
+// implementation
 
 static inline
 std::string conv(const char* str)
@@ -101,26 +46,15 @@ std::string conv(const char* str)
   return res;
 }
 
-void crsh_db(const char* str)      { crsh.connect(conv(str)); }
-void crsh_suite(const char* str)   { crsh.suite(conv(str)); }
-void crsh_test(const char* str)    { crsh.test(conv(str)); }
-void crsh_cmdlarg(const char* str) { crsh.cmdlarg(conv(str)); }
-void crsh_invoke(const char* str)  { crsh.invoke(conv(str)); }
-
-void crsh_envvar(const char* key, const char* val)
+struct InvocationDesc
 {
-  crsh.envvar(concolic::EnvValue(conv(key), conv(val)));
-}
+  std::string specimen;
+  Arguments   arguments;
 
-void crsh_db_end()    { crsh.disconnect(); }
-void crsh_suite_end() { crsh.suite_end(); }
-void crsh_test_end()  { crsh.test_end();  }
-
-void crsh_run(const char* testsuite, int num)
-{
-  crsh.run(testsuite, num);
-}
-
+  InvocationDesc(const std::string& sp, const Arguments& args)
+  : specimen(sp), arguments(args)
+  {}
+};
 
 //
 // Crsh implementation
@@ -132,13 +66,13 @@ void Crsh::disconnect()
 
 void Crsh::connect(const std::string& s)
 {
-  db = concolic::Database::instance(s);
+  db = Database::instance(s);
 }
 
 template <class T>
 static
 typename T::Ptr
-byName(concolic::DatabasePtr& db, const std::string& s, concolic::ObjectId<T> id)
+byName(Crsh::Database::Ptr& db, const std::string& s, Rose::BinaryAnalysis::Concolic::ObjectId<T> id)
 {
   if (id) return db->object(id);
 
@@ -149,97 +83,162 @@ byName(concolic::DatabasePtr& db, const std::string& s, concolic::ObjectId<T> id
   return obj;
 }
 
-concolic::TestSuite::Ptr
+Crsh::TestSuite::Ptr
 Crsh::testSuite(const std::string& s)
 {
   return byName(db, s, db->testSuite(s));
 }
 
 
-void Crsh::suite(const std::string& s)
+//
+template <class T>
+std::list<T>* enlist(std::list<T>* lst, const T* el)
 {
-  current_suite = testSuite(s);
+  ROSE_ASSERT(lst && el);
+
+  std::auto_ptr<const T> elguard(el);
+
+  lst->push_back(*el);
+  return lst;
 }
 
-void Crsh::suite_end()
+
+Crsh::EnvValue*
+Crsh::envvar(const char* key, const char* val) const
 {
-  // store all in DB
-  concolic::TestSuiteId id = db->testSuite(current_suite);
-
-  // std::for_each(tests.begin(), tests.end(), ..);
-
-  tests.clear();
-  current_suite = Sawyer::Nothing();
+  return new EnvValue(conv(key), conv(val));
 }
 
-void Crsh::test(const std::string& s)
+Environment*
+Crsh::environment() const
 {
-  names.push_back(s);
-
-  assert(environment.size() == 0);
-  assert(args.size() == 0);
+  return new Environment();
 }
 
-void Crsh::cmdlarg(const std::string& s)
+Environment*
+Crsh::environment(Environment* env, const EnvValue* val) const
 {
-  args.push_back(s);
+  return enlist(env, val);
 }
 
-void Crsh::envvar(const concolic::EnvValue& v)
+
+std::string*
+Crsh::arg(const char* argument) const
 {
-  environment.push_back(v);
+  std::string tmp = conv(argument);
+
+  return new std::string(tmp);
 }
 
-concolic::SpecimenPtr
+Arguments*
+Crsh::args() const
+{
+  return new Arguments();
+}
+
+Arguments*
+Crsh::args(Arguments* arglst, const std::string* argument) const
+{
+  return enlist(arglst, argument);
+}
+
+InvocationDesc*
+Crsh::invoke(const char* specimen, Arguments* args) const
+{
+  std::auto_ptr<Arguments> arguments(args);
+
+  return new InvocationDesc(conv(specimen), *args);
+}
+
+template <class T>
+static inline
+std::vector<T> mkVector(const std::list<T>& lst)
+{
+  return std::vector<T>(lst.begin(), lst.end());
+}
+
+std::string str(Crsh::expectation expct)
+{
+  std::string res;
+
+  switch (expct)
+  {
+    case Crsh::none:    res = "none";    break;
+    case Crsh::success: res = "success"; break;
+    case Crsh::failure: res = "failure"; break;
+    default: ROSE_ASSERT(false);
+  }
+
+  return res;
+}
+
+void
+Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, InvocationDesc* inv)
+{
+  std::string                   suitename = conv(ts);
+  std::string                   testname  = conv(tst);
+  std::auto_ptr<Environment>    envguard(env);
+  std::auto_ptr<InvocationDesc> invguard(inv);
+  expectation                   state = success;
+
+  try
+  {
+    // get the object for the specimen's name
+    Specimen::Ptr               specobj = specimen(inv->specimen);
+    TestCase::Ptr               test    = TestCase::instance(specobj);
+
+    test->name(testname);
+    test->args(mkVector(inv->arguments));
+    test->env(mkVector(*env));
+
+    TestCaseId                  id        = db->id(test);
+    TestSuite::Ptr              suite_obj = testSuite(suitename);
+    TestSuiteId                 suite_id  = db->id(suite_obj);
+
+    ROSE_ASSERT(id);
+    ROSE_ASSERT(suite_id);
+
+    db->assocTestCaseWithTestSuite(id, suite_id);
+  }
+  catch (...)
+  {
+    state = failure;
+  }
+
+  if ((exp != none) && (exp != state))
+  {
+    err() << "error in test: " << suitename << "::" << testname << '\n'
+          << "  exited with " << str(state) << ", expected " << str(exp)
+          << std::endl;
+
+    exit(1);
+  }
+}
+
+
+
+Crsh::Specimen::Ptr
 Crsh::specimen(const std::string& specimen_name)
 {
   return byName(db, specimen_name, db->specimen(specimen_name));
 }
 
-void Crsh::test_end()
-{
-  assert(names.size() == 2);
-
-  // get the object for the specimen's name
-  concolic::SpecimenPtr specobj = specimen(pop(names));
-
-  // create a new test
-  concolic::TestCasePtr test    = concolic::TestCase::instance(specobj);
-
-  test->name(pop(names));
-  test->args(args);
-  test->env(environment);
-
-  // store in database
-  db->id(test);
-
-  // store for later execution
-  tests.push_back(test);
-
-  // clear the intermediate storage
-  environment.clear();
-  args.clear();
-  assert(names.size() == 0);
-}
-
-void Crsh::invoke(const std::string& s)
-{
-  names.push_back(s);
-}
-
 
 /** Runs the testcase @ref testcaseId.
  */
-void Crsh::runTestcase(concolic::TestCaseId testcaseId)
+void Crsh::runTestcase(TestCaseId testcaseId)
 {
-  typedef std::auto_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
+  using namespace Rose::BinaryAnalysis;
 
-  concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance();
-  concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);
+  typedef Concolic::ConcreteExecutor::Result ExecutionResult;
+  typedef std::auto_ptr<ExecutionResult>     ExecutionResultGuard;
 
-  assert(testcase.getRawPointer());
+  Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
+  Concolic::TestCasePtr      testcase = db->object(testcaseId, Concolic::Update::YES);
+
+  ROSE_ASSERT(testcase.getRawPointer());
   std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
-  ExecutionResult            result(exec->execute(testcase));
+  ExecutionResultGuard       result(exec->execute(testcase));
 
   db->insertConcreteResults(testcase, *result.get());
 }
@@ -256,7 +255,7 @@ struct TestCaseStarter
   : crsh(crshobj)
   {}
 
-  void operator()(concolic::TestCaseId id)
+  void operator()(Crsh::TestCaseId id)
   {
     crsh.runTestcase(id);
   }
@@ -265,21 +264,18 @@ struct TestCaseStarter
 
 void Crsh::run(const char* testsuite, int num)
 {
-  typedef std::vector<concolic::TestCaseId> test_container;
-
   if (num < 0) num = 1;
 
   if (testsuite != NULL)
   {
-    std::string tstsuite = conv(testsuite);
-
-    concolic::TestSuiteId  id  = db->testSuite(testsuite);
-    concolic::TestSuitePtr ptr = db->object(id);
+    std::string    tstsuite = conv(testsuite);
+    TestSuiteId    id  = db->testSuite(testsuite);
+    TestSuite::Ptr ptr = db->object(id);
 
     db->testSuite(ptr);
   }
 
-  test_container tests = db->needConcreteTesting(num);
+  std::vector<TestCaseId> tests = db->needConcreteTesting(num);
 
   std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this));
 }
@@ -308,19 +304,7 @@ std::string readLine(std::istream& input)
 
 void Crsh::parse()
 {
-  try
-  {
-    yyparse();
-  }
-  catch (const std::logic_error& e)
-  {
-    err() << e.what() << std::endl;
-    exit(0);
-  }
-  catch (const std::runtime_error& e)
-  {
-    err() << e.what() << std::endl;
-  }
+  yyparse();
 }
 
 void readEvalPrint(std::istream& input)
@@ -328,13 +312,13 @@ void readEvalPrint(std::istream& input)
   static const char  CONTINUE_ON_NEXT_LINE = '\\';
   static const char* EXIT_CMD  = "exit";
 
-  crsh.out() << "crsh v0.0.1\n" << std::endl;
+  crsh().out() << "crsh v0.0.1\n" << std::endl;
 
   std::string cmd;
 
   while (!input.eof() && EXIT_CMD != cmd)
   {
-    crsh.out() << ">";
+    crsh().out() << ">";
     cmd = CONTINUE_ON_NEXT_LINE;
 
     // create input from multi-line input
@@ -345,7 +329,7 @@ void readEvalPrint(std::istream& input)
     }
 
     YY_BUFFER_STATE buf = yy_scan_string(cmd.c_str());
-    crsh.parse();
+    crsh().parse();
     yy_delete_buffer(buf);
   }
 }
@@ -354,13 +338,19 @@ void parse_file(const char* filename)
 {
   yyin = fopen(filename, "r");
 
-/*
-  int token;
-  while ((token = yylex()) != 0)
-      printf("Token: %d (%s)\n", token, yytext);
-*/
-  crsh.parse();
+  //~ int token;
+  //~ while ((token = yylex()) != 0)
+      //~ printf("Token: %d (%s)\n", token, yytext);
+
+  crsh().parse();
   fclose(yyin);
+}
+
+Crsh& crsh()
+{
+  static Crsh obj;
+
+  return obj;
 }
 
 int main(int argc, char** argv)
@@ -374,6 +364,6 @@ int main(int argc, char** argv)
     parse_file(argv[1]);
   }
 
-  crsh.disconnect();
+  crsh().disconnect();
   return 0;
 }

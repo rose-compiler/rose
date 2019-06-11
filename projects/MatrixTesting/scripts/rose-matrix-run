@@ -18,6 +18,7 @@ LIMIT_TIME=
 MAX_SAVED_LINES=500
 ONLY_SUPPORTED=
 PROJECT_NAME="mx"
+REBUILD_IMAGES=
 RMC_CONFIG=
 RMC_CONSTRAINTS=
 RUN_FOREVER=
@@ -78,6 +79,11 @@ help() {
     echo "        Run tests on the specified operating system name instead of randomly"
     echo "        selecting an operating system from the etc/matrix/target-os file."
     echo
+    echo "    --rebuild-images"
+    echo "        Specifying this switch will cause the Docker images for all operating"
+    echo "        system containers to be removed so that they're recreated. You can use"
+    echo "        this to force upgrade to the latest software in the container."
+    echo
     echo "    --rmc-config=FILE"
     echo "        Instead of getting an RMC configuration file from the database server"
     echo "        use the one specified for this command-line switch. Regardless of"
@@ -120,13 +126,15 @@ die() {
 ########################################################################################################################
 # Show a heading when starting a new test
 test-heading() {
-    echo
-    echo
-    echo "================================================================================"
-    echo
-    (figlet $TEST_NUMBER || banner $TEST_NUMBER || echo $TEST_NUMBER) 2>/dev/null
-    echo "================================================================================"
-    echo
+    if [ $LIMIT_TESTS != 1 -o $TEST_NUMBER != 1 ]; then
+	echo
+	echo
+	echo "================================================================================"
+	echo
+	(figlet "Test $TEST_NUMBER" || banner "Test $TEST_NUMBER" || echo "Test $TEST_NUMBER") 2>/dev/null
+	echo "================================================================================"
+	echo
+    fi
 }    
 
 ########################################################################################################################
@@ -191,6 +199,13 @@ initialize-limits() {
 	LIMIT_TIME=1
 	LIMIT_TESTS=1
     fi
+
+    if [ "$SOURCE_CODE" = "" ]; then
+	RUN_FOREVER=
+	LIMIT_TESTS=0
+	LIMIT_TIME=0
+    fi
+
     [ "$LIMIT_TESTS" -ge 0 ]
     [ "$LIMIT_TIME" -ge 0 ]
 }
@@ -202,7 +217,9 @@ select-os() {
     if [ -n "$TARGET_OS" ]; then
 	echo "$TARGET_OS"
     else
-	sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]$//' -e '/^$/d' <${ETCDIR}/target-os |shuf -n1
+	local os="$(rose-matrix-slave-config --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
+	echo "$os"
     fi
 }
 
@@ -324,6 +341,8 @@ check-rmc-suitability() {
     (
 	echo "#!/bin/bash"
 	echo "os='$os'"
+	echo "SOURCE_CODE='$SOURCE_CODE'"
+	echo
 	sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
 	echo
 	cat "$LIBDIR/run-support"
@@ -353,6 +372,19 @@ generate-image-name() {
 generate-container-name() {
     local os="$1"
     printf "%s-%04x%04x" "${image_name}" $RANDOM $RANDOM
+}
+
+########################################################################################################################
+# Removes images for all the operating system containers (or if --os was specified, for just that operating system).
+remove-os-images() {
+    if [ -n "$TARGET_OS" ]; then
+	docker image rm "$(generate-image-name "$TARGET_OS")" || true
+    else
+	sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]$//' -e '/^$/d' <${ETCDIR}/target-os |\
+	    while read OS; do
+		docker image rm "$(generate-image-name "$OS")" || true
+	    done
+    fi
 }
 
 ########################################################################################################################
@@ -711,6 +743,11 @@ while [ "$#" -gt 0 ]; do
 	    shift
 	    ;;
 
+	--rebuild-images)
+	    REBUILD_IMAGES=yes
+	    shift
+	    ;;
+
 	--rmc-config=*)
 	    RMC_CONFIG="${1#--rmc-config=}"
 	    shift
@@ -731,7 +768,7 @@ while [ "$#" -gt 0 ]; do
 	    shift
 	    ;;
 
-	--verbose)
+	--verbose|-v)
 	    VERBOSITY=$[VERBOSITY + 1]
 	    shift
 	    ;;
@@ -745,20 +782,25 @@ while [ "$#" -gt 0 ]; do
 	    ;;
     esac
 done
+
+SOURCE_CODE="$1"
 [ "$VERBOSITY" -ge 2 ] && set -x
-[ -n "$DATABASE" ] || die "no database URL specified"
+[ -n "$REBUILD_IMAGES" ] && remove-os-images
 
 initialize-limits
 
-SOURCE_CODE="$1"
-[ -n "$SOURCE_CODE" -a -d "$SOURCE_CODE/." ] || die "incorrect usage; see --help"
-
-while true; do
+if [ "$SOURCE_CODE" = "" ]; then
+    echo "Nothing to test"
+    exit 0
+fi
+while [ -n "$SOURCE_CODE" ]; do
     if [ "$RUN_FOREVER" = "" ]; then
 	[ "$LIMIT_TESTS" -le 0 ] && break
 	[ "$LIMIT_TIME"  -le 0 ] && break
     fi
+    [ ! -d "$SOURCE_CODE/." ] && die "test directory missing: $SOURCE_CODE"
 
+    [ -n "$DATABASE" ] || die "no database URL specified"
     test-heading
     start_time=$SECONDS
     run-test

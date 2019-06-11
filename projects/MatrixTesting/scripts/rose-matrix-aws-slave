@@ -1,130 +1,326 @@
 #!/bin/bash
-set -ex
+#
+# The purpose of this script is to (re)configure an AWS EC2 instance as a portability testing slave, and then begin
+# running tests as directed by the central database.  If a command-line argument is specified (usually the word "setup")
+# then do everything except running tests. The testing is performed in an infinite loop.
+#
+set -e
+arg0="${0##*/}"
 date=$(date '+%Y%m%d')
 SETUP="$1"
+cd
 
-# Ubuntu insists on updating system software willy nilly, which is confusing to matrix testing
-# since it needs a stable system. Therefore, turn it off.
-if [ -n "$SETUP" ]; then
-    sudo sed -i~ 's/Update-Package-Lists "1"/Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
-fi
+# Cause all EC2 instances to have the same host name as far as RMC/Spock is concerned. This allows us to install
+# RMC/Spock on the template instance and use it in all the slave instances. Normally, since each slave has its own host
+# name (based on its private IP address), they would each store host-specific RMC/Spock files in different directories;
+# this prevents that.
+export SPOCK_HOSTNAME=matrix-slave
 
-# Install basic system software. If this is the setup script, we might be fighting with Ubuntu's
-# automatic updates, so just keep trying until we succeed.
-while true; do
-    echo
-    echo "Trying to update system software..."
-    echo
-    sleep 5
+# When using Tup to compile ROSE, we need to set this to non-empty, acknowledging that it's an experimental feature not
+# intended for most users. If we don't set this, then the ROSE build using Tup will fail with a message about being
+# experimental.
+export TUP_ACKNOWLEDGMENT=yes
 
-    # FIXME: python is needed to install libpqxx, but should probably be installed by RMC/Spock.
-    sudo apt-get -y update || continue
-    sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
-	 graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
-	 libfcgi-dev libfuse-dev patchelf gcc-multilib g++-multilib gfortran-multilib \
-	 fuse bsdmainutils locales language-pack-en-base jq rsync python screen figlet || continue
-
-    # Install Docker
-    if ! docker --version >/dev/null 2>&1; then
-	sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common || continue
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - || continue
-	sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" || continue
-	sudo apt-get -y update || continue
-	sudo apt-get -y install docker-ce || continue
+#------------------------------------------------------------------------------------------------------------------------
+# Make sure the system is up-to-date, that all system dependencies are installed, that users and user groups are set.
+matrix-update-system-software() {
+    # Ubuntu insists on updating system software willy nilly, which is confusing to matrix testing since it needs a
+    # stable system. Therefore, turn it off.
+    if [ -n "$SETUP" ]; then
+	sudo sed -i~ 's/Update-Package-Lists "1"/Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
     fi
 
-    break
+    # Install basic system software. If this is the setup script, we might be fighting with Ubuntu's automatic updates,
+    # so just keep trying until we succeed.
+    while true; do
+	echo
+	echo
+	echo "================================================================================"
+	echo "Updating system software"
+	echo "================================================================================"
+	echo
+	sleep 5
+
+	# FIXME: python is needed to install libpqxx, but should probably be installed by RMC/Spock.
+	sudo apt-get -y update || continue
+	sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
+	     graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
+	     libfcgi-dev libfuse-dev patchelf gcc-multilib g++-multilib gfortran-multilib \
+	     fuse bsdmainutils locales language-pack-en-base jq rsync python screen figlet || continue
+
+	# Install Docker
+	if ! docker --version >/dev/null 2>&1; then
+	    sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common || continue
+	    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - || continue
+	    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" || continue
+	    sudo apt-get -y update || continue
+	    sudo apt-get -y install docker-ce || continue
+	fi
+
+	break
+    done
+
+    if [ -n "$SETUP" ]; then
+	sudo usermod -aG docker $USER
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Get configuration information from the AWS User Data. The following variables should be set:
+#   ROSE_MATRIX_DATABASE: URL for the central matrix database (required)
+#   MATRIX_REPOSITORY: URL for the ROSE repo containing the matrix testing tools (optional)
+#   MATRIX_COMMITTISH: Commit, tag, or branch for the matrix testing tools (optional)
+#
+# These variables are defined in the AWS EC2 console under "Actions" -> "Instance Settings" -> "View/Change User Data".
+matrix-get-aws-configuration() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Downloading AWS EC2 User Data"
+    echo "================================================================================"
+    echo
+    wget -O matrix-config http://169.254.169.254/latest/user-data
+    source matrix-config
+    export ROSE_MATRIX_DATABASE
+    : "${MATRIX_REPOSITORY:=https://github.com/rose-compiler/rose}"
+    : "${MATRIX_COMMITTISH:=origin/develop}"
+
+    if [ "$ROSE_MATRIX_DATABASE" = "" ]; then
+	echo "$arg0: no portability testing database specified (ROSE_MATRIX_DATABASE)" >&2
+	exit 1
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Get slave configuration from the database.
+matrix-get-slave-configuration() {
+    echo "obtaining current slave configuration information from database"
+    rose-matrix-slave-config >matrix-config
+    cat -n matrix-config
+    . matrix-config
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Install Robb's developer scripts so that logging into the instance to debug it is nicer than plain old bash config.
+# This is a no-op if the scripts are already installed (if you want updates, do it by hand).
+matrix-install-developer-scripts() {
+    if [ ! -d DeveloperScripts ]; then
+	echo
+	echo
+	echo "================================================================================"
+	echo "Installing Robb's developer scripts (bash, emacs, ROSE devel, etc.)"
+	echo "================================================================================"
+	echo
+	git clone https://github.com/matzke1/DeveloperScripts
+	(cd DeveloperScripts && bash install.sh </dev/null)
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Install the ROSE Meta Config system which is how the instance and its Docker containers all manage to install many
+# versions of software dependencies simultaneously. In order to update RMC/Spock, you'll need to either do it by hand or
+# remove the ~/.spock directory.
+matrix-install-rmc-spock() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Installing ROSE Meta Config (RMC/Spock)"
+    echo "================================================================================"
+    echo
+
+    local spock_repo="https://github.com/matzke1/rmc-spock"
+    local needs_update=
+    export PATH="$HOME/.spock/bin:$PATH"
+
+    echo "Testing whether RMC/Spock is operational..."
+    if ! spock-ls --version >/dev/null; then
+	needs_update=yes
+    elif ! spock-shell --with default-c++ c++ --version; then
+	needs_update=yes
+    elif [ ! -d rmc-spock ]; then
+	needs_update=yes
+	git clone "$spock_repo" rmc-spock
+    else
+	pushd rmc-spock >/dev/null
+	git fetch "$spock_repo"
+	local latest_version="$(git rev-parse FETCH_HEAD)"
+	local current_version="$(git rev-parse HEAD)"
+	if [ "$latest_version" != "$current_version" ]; then
+	    git reset --hard FETCH_HEAD
+	    git clean -dfx
+	    needs_update=yes
+	fi
+	popd >/dev/null
+    fi
+
+    if [ -n "$needs_update" ]; then
+	echo
+	echo "Update is necessary..."
+	echo
+	rm -rf $HOME/rose-installed # since about to blow away libraries used by ROSE
+	rm -rf rmc-spock/_build # build will fail if this is present from last time
+	(cd rmc-spock && ./scripts/bootstrap.sh)
+	rm -rf rmc-spock/_build
+    else
+	echo
+	echo "RMC/Spock is up to date and appears to work"
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# In case we were last interrupted during the middle of building a software dependency, remove all failed build attempts.
+# If we don't do this, then a subsequent attempt to build the same software will assume that it can't be done and will
+# immediately fail.
+matrix-clean-failed-dependencies() {
+    rm -vf ~/.spock/var/installed/matrix-slave/*-build-log.txt
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Install the ROSE Matrix Testing command-line tools. These are distributed as part of ROSE itself and depend on the
+# ROSE library.
+matrix-install-matrix-tools() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Installing ROSE portability testing tools version $MATRIX_COMMITTISH"
+    echo "Downloading from $MATRIX_REPOSITORY"
+    echo "================================================================================"
+    echo
+
+    local needs_update=
+    local installed_version="$(cat $HOME/rose-installed/latest/key 2>/dev/null)"
+    local desired_version="$MATRIX_REPOSITORY $MATRIX_COMMITTISH"
+
+    if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
+	echo "$arg0: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)" >&2
+	return 1
+    elif [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
+	needs_update=yes
+    elif [ "$installed_version" != "$desired_version" ]; then
+	needs_update=yes
+    fi
+
+    if [ -n "$needs_update" ]; then
+	rm -rf matrix-src
+	git clone "$MATRIX_REPOSITORY" matrix-src
+	(
+	    cd matrix-src
+	    git reset --hard "$MATRIX_COMMITTISH"
+	    git clean -dfxq
+	    mkdir _build
+	    cd _build
+	    BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 TUP=0.7.8 WT=none rmc init --batch --project=matrix ..
+	    rmc --install=yes build
+	    rmc config
+	    rmc install
+	)
+	rm -rf matrix-src
+	echo "$desired_version" >$HOME/rose-installed/latest/key
+
+	# Since we upgraded the tools, we might have upgraded this very script that's running. If so, start
+	# over with the new script.
+	if [ -x "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" ]; then
+	    if ! diff -q "$0" "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave"; then
+		cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
+		exec bash "$0"
+	    fi
+	fi
+    fi
+    export "PATH=$HOME/rose-installed/latest/bin:$PATH"
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Cause the next boot of this instance to automatically reconfigure itself and start running tests.
+matrix-setup-cron-jobs() {
+    echo "Activating cron jobs"
+    echo "@reboot screen -d -m -e^Zz -S matrix -L /bin/bash $0" >crontab
+    crontab crontab
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Get the test source that is to be tested.  This is efficient in that it only updates the source code if the current
+# version is different than what we're supposed to be testing.
+have_test_source=
+matrix-get-test-source() {
+    local key="$TEST_REPOSITORY $TEST_COMMITTISH"
+    if [ "$key" != "$have_test_source" ]; then
+	echo
+	echo
+	echo "================================================================================"
+	echo "Getting new testable source code, version $TEST_COMMITTISH"
+	echo "Downloading from $TEST_REPOSITORY"
+	echo "================================================================================"
+	echo
+	rm -rf rose
+	git clone "$TEST_REPOSITORY" rose
+	(
+	    cd rose
+	    git reset --hard "$TEST_COMMITTISH"
+	    git submodule update
+	    ./scripts/smgit clean -dfx || git clean -dfx
+	)
+	have_test_source="$key"
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Remove images for all Docker containers
+matrix-maybe-remove-os-images() {
+    local installed_version="$(cat images-key 2>/dev/null)"
+    local desired_version="$TEST_ENVIRONMENT_VERSION"
+
+    if [ "$installed_version" != "$desired_version" ]; then
+	rose-matrix-run --rebuild-images
+	echo "$desired_version" >images-key
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Clean up some things
+matrix-cleanup() {
+    rm -f crontab matrix-config
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Main program...
+
+matrix-update-system-software
+matrix-get-aws-configuration
+matrix-install-developer-scripts
+matrix-install-rmc-spock
+matrix-clean-failed-dependencies
+matrix-install-matrix-tools
+
+test_number=0
+while true; do
+    test_number=$[test_number + 1]
+    matrix-get-slave-configuration
+    if [ -n "$SETUP" ]; then
+	break
+    elif [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
+	echo "$arg0: testing is paused (no testable version specified)"
+	sleep 120
+	continue
+    fi
+    matrix-maybe-remove-os-images
+    matrix-get-test-source
+
+    echo
+    echo
+    echo "================================================================================"
+    echo "Starting test, loop iteration $test_number"
+    echo "================================================================================"
+    echo
+    rose-matrix-run $TEST_FLAGS -n1 ~/rose
 done
 
 if [ -n "$SETUP" ]; then
-    sudo usermod -aG docker $USER
+    matrix-setup-cron-jobs
+    echo
+    echo "AWS EC2 portability testing slave setup has been completed. This machine will"
+    echo "  automatically start testing next time it is rebooted. If you want to test now,"
+    echo "  run this script again but without any arguments."
 fi
 
-# Get user meta-data to control the finer aspects of this script. User data is set in the
-# AWS EC2 console under "Actions" -> "Instance Settings" -> "View/Change User Data".
-#
-# The user data should be a shell script fragment that sets the following variables:
-#   ROSE_TEST_REPOSITORY
-#      The URL for the ROSE repository that will be tested. The default is
-#      https://github.com/rose-compiler/rose
-#
-#   ROSE_TEST_COMMITTISH
-#      The committish (SHA1 or branch name) specifying which commit should be tested.
-#      The default is "origin/develop"
-#
-#   ROSE_MATRIX_DATABASE
-#      The URL for the ROSE matrix database.
-#
-#   ROSE_MATRIX_REPOSITORY
-#      The repository holding the ROSE matrix testing tools. The default is
-#      https://github.com/rose-compiler/rose
-#
-#   ROSE_MATRIX_COMMITTISH
-#      The commit hash or branch containing the matrix testing tools. The default
-#      is "origin/develop".
-#
-#   ROSE_MATRIX_RUN
-#      Command-line switches for the "rose-matrix-run" tool.  The default is
-#      --forever --only-supported.
-
-wget -O matrix-config http://169.254.169.254/latest/user-data
-source matrix-config
-export ROSE_MATRIX_DATABASE
-: "${ROSE_TEST_REPOSITORY:=https://github.com/rose-compiler/rose}"
-: "${ROSE_TEST_COMMITTISH:=origin/develop}"
-: "${ROSE_MATRIX_REPOSITORY:=https://github.com/rose-compiler/rose}"
-: "${ROSE_MATRIX_COMMITTISH:=origin/develop}"
-: "${ROSE_MATRIX_RUN:=--forever --only-supported}"
-
-# Install developer scripts (for interactive logins)
-if [ ! -d DeveloperScripts ]; then
-    git clone https://github.com/matzke1/DeveloperScripts
-    (cd DeveloperScripts && bash install.sh </dev/null)
-fi
-
-# Install ROSE Meta Config (RMC/Spock)
-export SPOCK_HOSTNAME=matrix-slave
-if [ ! -x $HOME/.spock/bin/spock-ls ]; then
-    rm -rf rmc-spock
-    git clone https://github.com/matzke1/rmc-spock
-    rm -rf $HOME/rose-installed # since about to blow away all dynamic libraries
-    (cd rmc-spock && ./scripts/bootstrap.sh)
-    rm -rf rmc-spock
-fi
-export PATH="$HOME/.spock/bin:$PATH"
-
-# Install matrix testing tools
-export TUP_ACKNOWLEDGMENT=yes
-if [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
-    (
-	rm -rf rose
-	git clone "$ROSE_MATRIX_REPOSITORY" rose
-	cd rose
-	git reset --hard "$ROSE_MATRIX_COMMITTISH"
-	git clean -dfxq
-	mkdir _build
-	cd _build
-	BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 TUP=0.7.8 WT=none rmc init --batch --project=matrix ..
-	rmc --install=yes build
-	rmc config
-	rmc install
-    )
-fi
-export "PATH=$HOME/rose-installed/latest/bin:$PATH"
-
-if [ -n "$SETUP" ]; then
-    echo "@reboot screen -d -m -e^Zz -S matrix -L /bin/bash $0" >crontab
-    crontab crontab
-else
-    # Obtain the ROSE source code
-    rm -rf rose
-    git clone "$ROSE_TEST_REPOSITORY" rose
-    (
-	cd rose
-	git reset --hard "$ROSE_TEST_COMMITTISH"
-	git clean -dfxq
-    )    
-
-    # Run portability testing
-    exec rose-matrix-run $ROSE_MATRIX_RUN ~/rose
-fi
+matrix-cleanup
+exit 0

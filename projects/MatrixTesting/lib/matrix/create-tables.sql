@@ -22,6 +22,23 @@ create table interface_settings (
 insert into interface_settings (rose_public_version) values ('');
 
 --
+-- Information for the slaves doing the actual testing
+create table slave_settings (
+    name text default '',
+    value text default ''
+);
+
+-- Info about what ROSE version should be tested and how
+insert into slave_settings values ('TEST_REPOSITORY', 'https://github.com/rose-compiler/rose');
+insert into slave_settings values ('TEST_COMMITTISH', 'origin/master');
+insert into slave_settings values ('TEST_FLAGS', '--only-supported');
+
+-- Info about what version of the MatrixTesting tools should be used
+insert into slave_settings values ('MATRIX_REPOSITORY', 'https://github.com/rose-compiler/rose');
+insert into slave_settings values ('MATRIX_COMMITTISH', 'origin/master');
+
+
+--
 -- List of software dependency packages.  There are a number of different kinds of dependencies:
 --   1. Simple dependencies like "boost" whose value is a version number.
 --   2. Complex dependencies like "compiler" where the value is more than a version number, e.g., "llvm-3.5".
@@ -252,13 +269,16 @@ create table test_results (
     rmc_assertions      varchar(64) default 'unknown',
     rmc_boost           varchar(64) default 'unknown',
     rmc_build           varchar(64) default 'unknown',
+    rmc_cmake           varchar(64) default 'unknown',
     rmc_compiler        varchar(64) default 'unknown',
     rmc_debug           varchar(64) default 'unknown',
     rmc_dlib            varchar(64) default 'unknown',
     rmc_doxygen         varchar(64) default 'unknown',
     rmc_dwarf           varchar(64) default 'unknown',
     rmc_edg             varchar(64) default 'unknown',
+    rmc_edg_compile     varchar(64) default 'unknown',
     rmc_java            varchar(64) default 'unknown',
+    rmc_jq              varchar(64) default 'unknown',
     rmc_languages       varchar(64) default 'unknown',
     rmc_magic           varchar(64) default 'unknown',
     rmc_optimize        varchar(64) default 'unknown',
@@ -266,6 +286,7 @@ create table test_results (
     rmc_qt              varchar(64) default 'unknown',
     rmc_readline        varchar(64) default 'unknown',
     rmc_sqlite          varchar(64) default 'unknown',
+    rmc_tup             varchar(64) default 'unknown',
     rmc_warnings        varchar(64) default 'unknown',
     rmc_wt              varchar(64) default 'unknown',
     rmc_yaml            varchar(64) default 'unknown',
