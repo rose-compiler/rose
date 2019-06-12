@@ -15194,7 +15194,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
         SgRewindStatement* rewindStatement = new SgRewindStatement();
         ROSE_ASSERT(rewindStatement != NULL);
-        setSourcePosition(rewindStatement);
+        setSourcePosition(rewindStatement, rewindKeyword);
 
 #if 0
         // Output debugging information about saved state (stack) information.
