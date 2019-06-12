@@ -10,10 +10,13 @@
 
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
@@ -727,9 +730,9 @@ public:
      *
      *  Thread safety: not thread safe
      */
-    TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuite::Ptr&);
-    TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&);
-    SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&);
+    TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuite::Ptr&, Update::Flag update = Update::YES);
+    TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&, Update::Flag update = Update::YES);
+    SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&, Update::Flag update = Update::YES);
 
     /** Returns an ID number for a specimen with a given key @ref name
      * @{ */
@@ -943,7 +946,9 @@ void writeSqlStmts(std::ostream& os);
 } // namespace
 } // namespace
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 //~ BOOST_CLASS_EXPORT_GUID(LinuxExecutor::Result, "LinuxExecutor::Result")
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 #endif

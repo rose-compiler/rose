@@ -4,8 +4,8 @@
 
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include "boost/tuple/tuple.hpp"
-#include <boost/archive/xml_oarchive.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/lexical_cast.hpp>
 
 #ifdef ROSE_HAVE_SQLITE3
 // bypass intermediate layers for very large files (RBA)
@@ -49,6 +49,12 @@ namespace BinaryAnalysis {
 
   namespace
   {
+    static const double
+    NO_CONCRETE_RANK     = -99;
+
+    static const std::string
+    NO_CONCRETE_RANK_STR = "\"" + boost::lexical_cast<std::string>(NO_CONCRETE_RANK) + "\"";
+
     // convenience function for throwing exceptions
     template <class ExceptionType>
     static inline
@@ -254,7 +260,7 @@ namespace BinaryAnalysis {
     // binds NULL to an SQL placeholder at position @ref pos
     template <class L>
     static inline
-    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const SqlNullType&)
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const SqlNullType&)
     {
       stmt.sql->bind_null(pos);
     }
@@ -262,9 +268,23 @@ namespace BinaryAnalysis {
     // binds a value to an SQL placeholder at position @ref pos
     template <class L>
     static inline
-    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const typename L::head_type& val)
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const typename L::head_type& val)
     {
       stmt.sql->bind(pos, val);
+    }
+
+    // binds optional values
+    template <class L>
+    static inline
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const Sawyer::Optional<typename L::head_type>& val)
+    {
+      if (val)
+      {
+        sqlBindVal(stmt, pos, val.get());
+        return;
+      }
+
+      sqlBindVal(stmt, pos, SqlNullType());
     }
 
     // base case --> all palceholders are bound
@@ -274,7 +294,7 @@ namespace BinaryAnalysis {
     template<class L, class H, class T>
     void sqlBind(SqlQueryPrepared<L> stmt, const bt::cons<H,T>& args, int pos = 0)
     {
-      sqlElemBind(stmt, pos, args.get_head());
+      sqlBindVal(stmt, pos, args.get_head());
 
       sqlBind(stmt.tail(), args.get_tail(), pos+1);
     }
@@ -421,7 +441,7 @@ namespace BinaryAnalysis {
     QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
                            "  \"testcase_id\" int UNIQUE NOT NULL,"
                            "  \"result\" Text,"
-                           "  \"concolic_run\" boolean NOT NULL,"
+                           "  \"concolic_run\" boolean,"
                            " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
                            ");";
 
@@ -533,27 +553,30 @@ namespace BinaryAnalysis {
                             " LIMIT " + SqlInt() + ";";
 
     static const
+    std::string
+    HAS_CONCRETE_RESULTS  = " EXISTS"
+                            "    ( SELECT *"
+                            "        FROM ConcreteResults cr"
+                            "       WHERE cr.testcase_id = tc.rowid )";
+
+    static const
     SqlQuery<bt::tuple<int, int>::inherited>
     QY_NEED_CONCRETE      = "SELECT tc.rowid"
                             "  FROM TestCases tc, TestSuiteTestCases tt"
                             " WHERE tc.rowid = tt.testcase_id"
                             "   AND tt.testsuite_id = " + SqlInt() +
+                            "   AND NOT" + HAS_CONCRETE_RESULTS +
                             " ORDER BY tc.concrete_result ASC"
                             " LIMIT " + SqlInt() + ";";
-
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_ALL_NEED_CONCRETE  = "SELECT rowid"
-                            "  FROM TestCases"
+    QY_ALL_NEED_CONCRETE  = "SELECT tc.rowid"
+                            "  FROM TestCases tc"
+                            " WHERE NOT" + HAS_CONCRETE_RESULTS +
                             " ORDER BY tc.concrete_result ASC"
                             " LIMIT " + SqlInt() + ";";
 
-    static const
-    SqlQuery<>
-    QY_NEED_TESTING       = "SELECT count(*) FROM TestCases"
-                            " WHERE tc.concrete_result < 0"
-                            "    OR tc.concolic_result = 0;";
     static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
@@ -608,8 +631,10 @@ namespace BinaryAnalysis {
     static const
     SqlQuery<bt::tuple<int, std::string, std::string>::inherited>
     QY_NEW_TESTCASE      = "INSERT INTO TestCases"
-                           "  (specimen_id, name, executor)"
-                           "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString() + ");";
+                           "  (specimen_id, name, executor, concrete_result)"
+                           "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString()
+                                       + ", " + NO_CONCRETE_RANK_STR +
+                                    ");";
 
     static const
     SqlQuery<bt::tuple<int, std::string, std::string, double, bool, int>::inherited>
@@ -673,7 +698,7 @@ namespace BinaryAnalysis {
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_COUNT_RBAFILES    = "SELECT count(*) FROM RBAFiles"
+    QY_NUM_RBAFILES      = "SELECT count(*) FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
 
     static const
@@ -696,7 +721,7 @@ namespace BinaryAnalysis {
     static const
     SqlQuery<bt::tuple<int, std::string>::inherited>
     QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
-                           "  (specimen_id, data)"
+                           "  (testcase_id, result)"
                            "  VALUES(" + SqlInt() + "," + SqlString() + ");";
 
     static const
@@ -887,7 +912,9 @@ namespace BinaryAnalysis {
 
 namespace Concolic {
 
-// responsible for commit handling of transactions
+//! Responsible for transaction handling
+//! It is the user's responsibility to explicitly commit any DB updates,
+//!   otherwise the TX is rolled back!.
 struct DBTxGuard
 {
     // creates a new database transaction
@@ -897,6 +924,8 @@ struct DBTxGuard
     {}
 
     // in case there was no explicit commit the tx is rolled back
+    // ( alternatively, the destructor could auto commit/rollback
+    //   depending on exception handling context. )
     ~DBTxGuard()
     {
       if (tx_) tx_->rollback();
@@ -917,7 +946,7 @@ struct DBTxGuard
 // queries a vector of object IDs using @args to constrain the query.
 template <class IdTag, class BoostTypeList, class BoostTypeTuple>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn,
+queryIds( SqlDatabase::ConnectionPtr dbconn,
           const SqlQuery<BoostTypeList>& sql,
           const BoostTypeTuple& args
         )
@@ -941,7 +970,7 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
 // workaround for lack of function default template arguments in C++03.
 template <class IdTag, class BoostTypeList>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, const SqlQuery<BoostTypeList>& sql)
+queryIds( SqlDatabase::ConnectionPtr dbconn, const SqlQuery<BoostTypeList>& sql)
 {
   return queryIds<IdTag>(dbconn, sql, bt::null_type());
 }
@@ -951,7 +980,7 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn, const SqlQuery<BoostTypeList>& sql
 // if @ref id is not set, all objects are queried (@ref full)
 template <class IdTag, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn,
+queryIds( SqlDatabase::ConnectionPtr dbconn,
           TestSuiteId id,
           const SqlQuery<>& full,
           const SqlQuery<BoostTypeList2>& restricted
@@ -966,15 +995,20 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
 //   maximum number of rows returned
 template <class IdTag, class BoostTypeList1, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn,
+queryIds( SqlDatabase::ConnectionPtr dbconn,
           TestSuiteId id,
           const SqlQuery<BoostTypeList1>& full,
           const SqlQuery<BoostTypeList2>& restricted,
           int limit
         )
 {
-  if (!id) queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
+  if (!id)
+  {
+    std::cerr << "restricted" << std::endl;
+    return queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
+  }
 
+  std::cerr << "full" << std::endl;
   return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get(), limit));
 }
 
@@ -999,7 +1033,19 @@ Database::testSuite()
 Database::TestSuiteId
 Database::testSuite(const TestSuite::Ptr& obj)
 {
-  Database::TestSuiteId res = id(obj);
+  TestSuiteId res;
+
+  if (obj)
+  {
+    std::cerr << "obj\n";
+    res = id(obj);
+
+    std::cerr << (res?"t":"f") << std::endl;;
+  }
+  else
+  {
+    std::cerr << "!obj\n";
+  }
 
   // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
@@ -1258,7 +1304,9 @@ insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 //
 // methods to insert/update new objects into the DB
 
-void deleteTestCaseElems(SqlTransactionPtr tx, const SqlQuery<bt::tuple<int>::inherited>& query, int tcid)
+typedef SqlQuery<bt::tuple<int>::inherited> SqlQueryInt;
+
+void deleteTestCaseElems( SqlTransactionPtr tx, const SqlQueryInt& query, int tcid)
 {
   sqlPrepare(tx, query, tcid)
     ->execute();
@@ -1387,9 +1435,12 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, Specimen::Ptr obj,
 void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId id)
 {
-  const int                specId       = db.id_ns(tx, obj->specimen()).get();
+  // Update::NO: updating the specimen object for every update to a
+  //   testcase is excessive (i.e., copying the entire binary).
+  const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
-  /* use some negative number, since queries cannot test for nuln*/
+
+  // \todo use some negative number, since queries cannot test for null
   double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */;
   bool                     hasConc      = obj->hasConcolicTest();
 
@@ -1478,21 +1529,21 @@ Database::id(const TestCase::Ptr& ptc, Update::Flag update)
 }
 
 TestSuiteId
-Database::id_ns(SqlTransactionPtr tx, const TestSuite::Ptr& obj)
+Database::id_ns(SqlTransactionPtr tx, const TestSuite::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, testSuites_);
+  return _id(*this, tx, obj, update, testSuites_);
 }
 
 TestCaseId
-Database::id_ns(SqlTransactionPtr tx, const TestCase::Ptr& obj)
+Database::id_ns(SqlTransactionPtr tx, const TestCase::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, testCases_);
+  return _id(*this, tx, obj, update, testCases_);
 }
 
 SpecimenId
-Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj)
+Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, specimens_);
+  return _id(*this, tx, obj, update, specimens_);
 }
 
 
@@ -1765,7 +1816,7 @@ Database::rbaExists(Database::SpecimenId id)
   //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   DBTxGuard dbtx(dbconn_);
-  int       res = sqlPrepare(dbtx.tx(), QY_COUNT_RBAFILES, id.get())
+  int       res = sqlPrepare(dbtx.tx(), QY_NUM_RBAFILES, id.get())
                     ->execute_int();
 
   dbtx.commit();
@@ -1847,12 +1898,7 @@ Database::needConcolicTesting(size_t num)
 bool
 Database::hasUntested() const
 {
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_NEED_TESTING);
-  const int       num = stmt->execute_int();
-
-  dbtx.commit();
-  return num > 0;
+  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
 }
 
 
@@ -1870,15 +1916,24 @@ std::string xml(const T& o)
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
-  std::string  detailtxt = xml(details);
+  std::string  detailtxt = "<requires BOOST serialization>";
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+  detailtxt = xml(details);
+  std::cerr << "*** insert concrete" << std::endl;
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
   {
     DBTxGuard  dbtx(dbconn_);
     TestCaseId tcid = id_ns(dbtx.tx(), testCase);
 
+    updateDBObject(*this, dbtx.tx(), testCase, tcid);
+
     sqlPrepare(dbtx.tx(), QY_NEW_CONCRETE_RES, tcid.get(), detailtxt)
       ->execute();
-}
+
+    dbtx.commit();
+  }
 }
 
 void writeDBSchema(std::ostream& os)
@@ -1911,7 +1966,6 @@ void writeSqlStmts(std::ostream& os)
      << QY_ALL_NEED_CONCOLIC      << "\n\n"
      << QY_NEED_CONCRETE          << "\n\n"
      << QY_ALL_NEED_CONCRETE      << "\n\n"
-     << QY_NEED_TESTING           << "\n\n"
      << QY_TESTCASE               << "\n\n"
      << QY_TESTCASE_ARGS          << "\n\n"
      << QY_TESTCASE_ENV           << "\n\n"
@@ -1931,7 +1985,7 @@ void writeSqlStmts(std::ostream& os)
      << QY_NEW_TESTSUITE_TESTCASE << "\n\n"
      << QY_CMDLINEARG_ID          << "\n\n"
      << QY_NEW_CMDLINEARG         << "\n\n"
-     << QY_COUNT_RBAFILES         << "\n\n"
+     << QY_NUM_RBAFILES           << "\n\n"
      << QY_NEW_RBAFILE            << "\n\n"
      << QY_RBAFILE                << "\n\n"
      << QY_RM_RBAFILE             << "\n\n"

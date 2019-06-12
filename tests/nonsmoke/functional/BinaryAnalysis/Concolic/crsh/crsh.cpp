@@ -11,6 +11,9 @@
 #include "crsh-parse.hpp"
 
 
+//
+// flex & bison declarations
+
 struct yy_buffer_state;
 extern FILE* yyin;
 typedef yy_buffer_state* YY_BUFFER_STATE;
@@ -23,6 +26,21 @@ void yy_switch_to_buffer(YY_BUFFER_STATE buffer);
 extern char* yytext;
 extern int yylex (void);
 
+//
+// auxiliary functions
+
+std::ostream& operator<<(std::ostream& os, Crsh::TestCase& test)
+{
+  std::vector<std::string> args(test.args());
+
+  os << test.name() << ":" << test.specimen()->name() << " ";
+
+  for (size_t i = 0; i < args.size(); ++i)
+    os << args.at(i);
+
+  return os;
+}
+
 static inline
 std::string
 rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
@@ -34,9 +52,6 @@ rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
   return str.substr(0, pos+1);
 }
 
-//
-// implementation
-
 static inline
 std::string conv(const char* str)
 {
@@ -46,6 +61,34 @@ std::string conv(const char* str)
   return res;
 }
 
+template <class T>
+static
+typename T::Ptr
+byName(Crsh::Database::Ptr& db, const std::string& s, Rose::BinaryAnalysis::Concolic::ObjectId<T> id)
+{
+  if (id) return db->object(id);
+
+  // if not in the database already, create it from a file
+  typename T::Ptr obj = T::instance(s);
+
+  db->id(obj);
+  return obj;
+}
+
+//
+template <class T>
+std::list<T>* enlist(std::list<T>* lst, const T* el)
+{
+  ROSE_ASSERT(lst && el);
+
+  std::auto_ptr<const T> elguard(el);
+
+  lst->push_back(*el);
+  return lst;
+}
+
+
+//! InvocationDesc is opaque for other translation units
 struct InvocationDesc
 {
   std::string specimen;
@@ -69,39 +112,11 @@ void Crsh::connect(const std::string& s)
   db = Database::instance(s);
 }
 
-template <class T>
-static
-typename T::Ptr
-byName(Crsh::Database::Ptr& db, const std::string& s, Rose::BinaryAnalysis::Concolic::ObjectId<T> id)
-{
-  if (id) return db->object(id);
-
-  // if not in the database already, create it from a file
-  typename T::Ptr obj = T::instance(s);
-
-  db->id(obj);
-  return obj;
-}
-
 Crsh::TestSuite::Ptr
 Crsh::testSuite(const std::string& s)
 {
   return byName(db, s, db->testSuite(s));
 }
-
-
-//
-template <class T>
-std::list<T>* enlist(std::list<T>* lst, const T* el)
-{
-  ROSE_ASSERT(lst && el);
-
-  std::auto_ptr<const T> elguard(el);
-
-  lst->push_back(*el);
-  return lst;
-}
-
 
 Crsh::EnvValue*
 Crsh::envvar(const char* key, const char* val) const
@@ -234,10 +249,11 @@ void Crsh::runTestcase(TestCaseId testcaseId)
   typedef std::auto_ptr<ExecutionResult>     ExecutionResultGuard;
 
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
-  Concolic::TestCasePtr      testcase = db->object(testcaseId, Concolic::Update::YES);
+  Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
 
   ROSE_ASSERT(testcase.getRawPointer());
-  std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
+  out() << "***> " << *testcase << std::endl;
+
   ExecutionResultGuard       result(exec->execute(testcase));
 
   db->insertConcreteResults(testcase, *result.get());
@@ -264,17 +280,17 @@ struct TestCaseStarter
 
 void Crsh::run(const char* testsuite, int num)
 {
+  TestSuite::Ptr suite;
+
   if (num < 0) num = 1;
 
   if (testsuite != NULL)
   {
-    std::string    tstsuite = conv(testsuite);
-    TestSuiteId    id  = db->testSuite(testsuite);
-    TestSuite::Ptr ptr = db->object(id);
-
-    db->testSuite(ptr);
+    suite = testSuite(conv(testsuite));
+    ROSE_ASSERT(suite);
   }
 
+  db->testSuite(suite);
   std::vector<TestCaseId> tests = db->needConcreteTesting(num);
 
   std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this));
