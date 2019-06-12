@@ -7878,6 +7878,7 @@ void c_action_label(Token_t * lbl)
                          {
                             SgSymbol* sym = NULL;
                             SgClassSymbol* classSymbol = NULL;
+                            SgAliasSymbol* aliasSymbol = NULL;
                             SgClassDeclaration* classDecl = NULL;
                             SgClassDeclaration* classDefDecl = NULL;
                             SgClassDefinition* classDef = NULL;
@@ -7885,8 +7886,18 @@ void c_action_label(Token_t * lbl)
                             sym = isSgSymbol(*it);
                             if(sym != NULL)
                                classSymbol = isSgClassSymbol(sym);
+                            if(classSymbol == NULL) 
+                            {
+                              aliasSymbol = isSgAliasSymbol(sym);
+                              if(aliasSymbol != NULL)
+                              {
+                                SgSymbol* aliasedSymbol = aliasSymbol->get_alias();
+                                classSymbol = isSgClassSymbol(aliasedSymbol);
+                              }
+                            } 
                             if(classSymbol == NULL) continue;
-                               printf("Found SgClassSymbol = %s %d\n",sym->get_name().str(),sym->variantT());
+                               if(SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                                 printf("Found SgClassSymbol = %s %d\n",classSymbol->get_name().str(),classSymbol->variantT());
                             classDecl = isSgDerivedTypeStatement(classSymbol->get_declaration());
                             if(classDecl == NULL) continue;
                             classDefDecl = isSgDerivedTypeStatement(classDecl->get_definingDeclaration());
