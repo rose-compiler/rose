@@ -14,6 +14,7 @@ run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachmen
 run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
 run $(tool_compile_linkexe) --install -o rose-matrix-delete-test matrixDeleteTest.C
 run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrixSlaveConfig.C
+run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrixSlaveHealth.C
 
 ifneq (@(WITH_WT),no)
     run $(tool_compile_linkexe) --install -o rose-matrix-web-server-http matrixWebServer.C -lwthttp

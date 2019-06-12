@@ -439,6 +439,7 @@ report-results() {
     fi
     
     local testid=$(rose-matrix-test-result $DRY_RUN --database="$DATABASE" --log='tool(>=trace)' "${rundir}/result")
+    rose-matrix-slave-health test "$test_id"
     if [ "$testid" = "" -a -z "$DRY_RUN" ]; then
 	echo "$arg0: error: failed to send test results to database ********"
     elif  [ "$DRY_RUN" = "" ]; then

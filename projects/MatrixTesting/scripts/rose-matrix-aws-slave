@@ -290,6 +290,7 @@ matrix-install-developer-scripts
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
 matrix-install-matrix-tools
+rose-matrix-slave-health boot
 
 test_number=0
 while true; do
@@ -323,4 +324,5 @@ if [ -n "$SETUP" ]; then
 fi
 
 matrix-cleanup
+rose-matrix-slave-health shutdown
 exit 0

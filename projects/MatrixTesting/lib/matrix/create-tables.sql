@@ -23,9 +23,20 @@ insert into interface_settings (rose_public_version) values ('');
 
 --
 -- Information for the slaves doing the actual testing
+--
 create table slave_settings (
     name text default '',
     value text default ''
+);
+
+-- Information from the slaves about their health
+create table slave_health (
+    name varchar(256),					-- slave name
+    timestamp integer,	   				-- time of report (Unix time)
+    load_ave real,	   				-- machine load average between 0.0 and 1.0
+    free_space integer,	   				-- free disk space in MB
+    event varchar(16),	   				-- "boot", "shutdown", or "test"
+    test_id integer					-- test reported if event is "test"
 );
 
 -- Info about what ROSE version should be tested and how
