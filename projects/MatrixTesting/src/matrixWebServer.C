@@ -2156,6 +2156,7 @@ public:
             if (row.get_str(0) == "TEST_COMMITTISH") {
                 if (row.get_str(1).empty()) {
                     testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("Testing is paused"));
+                    testArticleGrid_->elementAt(0, 0)->setStyleClass("notice");
                 } else {
                     testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
                 }
@@ -2167,6 +2168,9 @@ public:
                 testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "TEST_OS") {
                 testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "NOTICE" && !row.get_str(1).empty()) {
+                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Notice:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(5, 0)->setStyleClass("notice");
             }
         }
     }
@@ -2226,7 +2230,7 @@ public:
         slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
         slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
         slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
-        slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Disk space</b>"));
+        slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Free disk</b>"));
         slaveGrid_->elementAt(0, 4)->addWidget(new Wt::WText("<b>Last event</b>"));
         slaveGrid_->elementAt(0, 5)->addWidget(new Wt::WText("<b>Test OS</b>"));
         slaveGrid_->elementAt(0, 6)->addWidget(new Wt::WText("<b>Test status</b>"));
@@ -4081,6 +4085,9 @@ public:
         styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
         styleSheet().addRule(".language-status-box", "border: solid black 1px;");
+        styleSheet().addRule(".notice",
+                             "border: solid black 1px; "
+                             "background-color: " + Rose::Color::RGB(1.00, 0.92, 0.18).toHtml() + ";");
 
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");
