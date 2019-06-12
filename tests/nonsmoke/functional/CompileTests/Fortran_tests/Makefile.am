@@ -319,6 +319,9 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2011_Rice_wrong-func-type-2.f90 \
      test2019_derived_type.f90 \
      test2019_write_io_control_spec.f90 \
+     test2019_recursive_function.f90 \
+     test2019_derived_type_name_conflict.f90 \
+     test2019_write_io_control_spec.f90 \
      canonicalExample.f90 
 
 # Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
