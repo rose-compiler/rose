@@ -290,7 +290,7 @@ matrix-install-developer-scripts
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
 matrix-install-matrix-tools
-rose-matrix-slave-health boot
+rose-matrix-slave-health start
 
 test_number=0
 while true; do
@@ -300,7 +300,9 @@ while true; do
 	break
     elif [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
 	echo "$arg0: testing is paused (no testable version specified)"
+	rose-matrix-slave-health stop
 	sleep 120
+	rose-matrix-slave-health start
 	continue
     fi
     matrix-maybe-remove-os-images
@@ -324,5 +326,5 @@ if [ -n "$SETUP" ]; then
 fi
 
 matrix-cleanup
-rose-matrix-slave-health shutdown
+rose-matrix-slave-health stop
 exit 0

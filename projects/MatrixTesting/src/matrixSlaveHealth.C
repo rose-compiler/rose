@@ -34,7 +34,7 @@ struct Settings {
 
 static Sawyer::Message::Facility mlog;
 
-// Parse command-line and return event type, "boot", "shutdown", or "test".
+// Parse command-line and return event type, "start", "stop", or "test".
 static std::string
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
@@ -43,7 +43,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     parser.doc("Synopsis",
                "@prop{programName} [@v{switches}] [show]\n\n"
-               "@prop{programName} [@v{switches}] boot|shutdown\n\n"
+               "@prop{programName} [@v{switches}] start|stop\n\n"
                "@prop{programName} [@v{switches}] test TEST_ID");
 
     SwitchGroup tool("Tool-specific switches");
@@ -78,7 +78,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     } else if (args.size() != 1) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
-    } else if (args[0] == "show" || args[0] == "boot" || args[0] == "shutdown") {
+    } else if (args[0] == "show" || args[0] == "start" || args[0] == "stop") {
         return args[0];
     } else {
         mlog[FATAL] <<"unrecognized even type \"" <<StringUtility::cEscape(args[0]) <<"\"\n";

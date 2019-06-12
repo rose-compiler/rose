@@ -380,10 +380,10 @@ remove-os-images() {
     if [ -n "$TARGET_OS" ]; then
 	docker image rm "$(generate-image-name "$TARGET_OS")" || true
     else
-	sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]$//' -e '/^$/d' <${ETCDIR}/target-os |\
-	    while read OS; do
-		docker image rm "$(generate-image-name "$OS")" || true
-	    done
+	local os=
+	for os in $(rose-matrix-slave-config --value-only --plain TEST_OS); do
+	    docker image rm "$(generate-image-name "$os")" || true
+	done
     fi
 }
 
@@ -439,7 +439,7 @@ report-results() {
     fi
     
     local testid=$(rose-matrix-test-result $DRY_RUN --database="$DATABASE" --log='tool(>=trace)' "${rundir}/result")
-    rose-matrix-slave-health test "$test_id"
+    rose-matrix-slave-health test "$testid"
     if [ "$testid" = "" -a -z "$DRY_RUN" ]; then
 	echo "$arg0: error: failed to send test results to database ********"
     elif  [ "$DRY_RUN" = "" ]; then
@@ -612,7 +612,6 @@ run-test() {
     # Create initial contents for some output files
     set-result "$rundir" os "$os"
     set-result "$rundir" tester "$(whoami)@$(hostname) using $arg0"
-
     (
 	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 	echo "Host machine: $(whoami)@$(hostname -f) $(uname -srv)"

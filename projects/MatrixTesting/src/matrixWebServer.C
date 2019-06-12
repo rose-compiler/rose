@@ -53,6 +53,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
+#include <Wt/WTimer>
 #include <Wt/WVBoxLayout>
 
 using namespace Rose;
@@ -875,6 +876,34 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
     return depValue;
 }
 
+static std::string
+humanAge(time_t secondsAgo) {
+    if (unsigned nYears = secondsAgo / (365*86400)) {
+        return StringUtility::plural(nYears, "years") + " ago";
+    } else if (unsigned nMonths = secondsAgo / (30*86400)) {
+        return StringUtility::plural(nMonths, "months") + " ago";
+    } else if (unsigned nWeeks = secondsAgo / (7*86400)) {
+        return StringUtility::plural(nWeeks, "weeks") + " ago";
+    } else if (unsigned nDays = secondsAgo / 86400) {
+        return StringUtility::plural(nDays, "days") + " ago";
+    } else if (unsigned nHours = secondsAgo / 3600) {
+        return StringUtility::plural(nHours, "hours") + " ago";
+    } else if (unsigned nMinutes = secondsAgo / 60) {
+        return StringUtility::plural(nMinutes, "minutes") + " ago";
+    } else {
+        return "just now";
+    }
+}
+
+static std::string
+humanDiskSize(size_t mib) {
+    if (unsigned gib = mib / 1024) {
+        return boost::lexical_cast<std::string>(gib) + " GiB";
+    } else {
+        return boost::lexical_cast<std::string>(mib) + " MiB";
+    }
+}
+    
 // Clip val to be in the interval [minVal,maxVal]
 template<typename T>
 static T
@@ -2029,6 +2058,221 @@ private:
 
         tableModel_->setBaselineVersion(chartBaselineChoices_->currentData().version);
         tableModel_->updateModel(constraints_->dependencies());
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dashboard
+class WDashboard: public Wt::WContainerWidget {
+    Wt::WTable *languageGrid_, *slaveGrid_, *testArticleGrid_;
+    Wt::WText *languageVersion_;
+    Wt::WCheckBox *languageOnlySupported_;
+    Wt::WTimer *timer_;
+    static const size_t languageGridColumns_ = 4;
+
+    typedef Sawyer::Container::Map<std::string, size_t> LanguageCounts;
+
+public:
+    explicit WDashboard(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), languageGrid_(NULL), slaveGrid_(NULL), testArticleGrid_(NULL),
+          languageVersion_(NULL), languageOnlySupported_(NULL), timer_(NULL) {
+
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+
+        // Version information
+        vbox->addWidget(new Wt::WText("<h1>Software status</h1>"));
+        vbox->addWidget(testArticleGrid_ = new Wt::WTable);
+
+        // Grid of languages being tested.
+        vbox->addWidget(new Wt::WText("<h1>Language status</h1>"));
+        vbox->addWidget(languageVersion_ = new Wt::WText);
+        vbox->addWidget(languageOnlySupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
+        languageOnlySupported_->changed().connect(this, &WDashboard::update);
+        vbox->addWidget(languageGrid_ = new Wt::WTable);
+
+        // Grid of slaves running
+        vbox->addWidget(new Wt::WText("<h1>Slave status</h1>"));
+        vbox->addWidget(slaveGrid_ = new Wt::WTable);
+
+        // Final stuff
+        vbox->addStretch(1);
+        update();
+        timer_ = new Wt::WTimer;
+        timer_->setInterval(60 * 1000);
+        timer_->timeout().connect(this, &WDashboard::update);
+        timer_->start();
+    }
+
+    // Update the contents of the dashboard by querying the database
+    void update() {
+        updateTestArticleGrid();
+        updateLanguageGrid();
+        updateSlaveGrid();
+    }
+    
+
+    // What sets of languages are being tested?
+    std::vector<std::string> languageSets() {
+        std::vector<std::string> retval;
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct value from dependencies"
+                                                           " where name = 'languages' and enabled > 0"
+                                                           " order by value");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
+            retval.push_back(row.get_str(0));
+        return retval;
+    }
+
+    // For each language that has a test result, return the number of test results. The tests must also satisfy the conditon.
+    LanguageCounts getLanguageCounts(const std::string &condition) {
+        std::string tableName = languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
+        std::string projectVersionQuery =
+            "select max(rose_date) from test_results";
+        std::string enabledLanguagesQuery =
+            "select distinct value from dependencies where name = 'languages' and enabled > 0";
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select rmc_languages, count(*) from " + tableName +
+                                                           " where rose_date = (" + projectVersionQuery + ")"
+                                                           " and status <> 'setup' "
+                                                           " and " + condition +
+                                                           " and rmc_languages in (" + enabledLanguagesQuery + ")"
+                                                           " group by rmc_languages");
+        LanguageCounts retval;
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string languageSet = row.get_str(0);
+            unsigned count = row.get_u32(1);
+            retval.insert(languageSet, count);
+        }
+        return retval;
+    }
+
+    // Updates information about the version being tested
+    void updateTestArticleGrid() {
+        ASSERT_not_null(testArticleGrid_);
+        testArticleGrid_->clear();
+
+        // Slave configuration info
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select name, value from slave_settings");
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            if (row.get_str(0) == "TEST_COMMITTISH") {
+                if (row.get_str(1).empty()) {
+                    testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("Testing is paused"));
+                } else {
+                    testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
+                }
+            } else if (row.get_str(0) == "TEST_REPOSITORY") {
+                testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "TEST_ENVIRONMENT_VERSION") {
+                testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Environment:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "TEST_FLAGS") {
+                testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "TEST_OS") {
+                testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
+            }
+        }
+    }
+    
+    // Update the languageGrid_ with latest database results.
+    void updateLanguageGrid() {
+        ASSERT_not_null(languageGrid_);
+        ASSERT_not_null(languageVersion_);
+
+        // What software version was tested by the latest test?
+        std::string softwareVersion;
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select max(rose_date) from test_results");
+        SqlDatabase::Statement::iterator row = q->begin();
+        if (row != q->end()) {
+            time_t date = row.get_u32(0);               // tested software version date
+            std::string hash = gstate.tx->statement("select rose from test_results where rose_date = ? limit 1")
+                               ->bind(0, date)
+                               ->execute_string();
+            languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) + " created " + humanLocalTime(date));
+        } else {
+            languageVersion_->setText("");
+        }
+
+        std::vector<std::string> languages = languageSets();
+        LanguageCounts passed = getLanguageCounts("status = 'end'");
+        LanguageCounts failed = getLanguageCounts("status <> 'end'");
+        languageGrid_->clear();
+        for (size_t i=0; i<languages.size(); ++i) {
+            size_t nPassed = passed.getOrElse(languages[i], 0);
+            size_t nFailed = failed.getOrElse(languages[i], 0);
+            size_t nTests = nPassed + nFailed;
+            size_t score = nTests > 0 ? round(100.0 * nPassed / nTests) : 0.0;
+            Wt::WText *text = new Wt::WText("<b>" + languages[i] + "</b><br/>" +
+                                            boost::lexical_cast<std::string>(score) + "% passing<br/>" +
+                                            StringUtility::plural(nTests, "tests") + " performed");
+            text->setTextAlignment(Wt::AlignCenter);
+            Wt::WTableCell *cell = languageGrid_->elementAt(i / languageGridColumns_, i % languageGridColumns_);
+            cell->addWidget(text);
+            cell->setStyleClass("language-status-box " + redToGreen(score, 0, 100, std::max(nTests, size_t(1))));
+            cell->setPadding(5);
+        }
+        for (int i = 0; i < languageGrid_->rowCount(); ++i)
+            languageGrid_->rowAt(i)->setHeight(200);
+    }
+
+    // Update test slaves
+    void updateSlaveGrid() {
+        ASSERT_not_null(slaveGrid_);
+        slaveGrid_->clear();
+        
+        SqlDatabase::StatementPtr stmt =
+            gstate.tx->statement("select name, timestamp, load_ave, free_space, event, test_id"
+                                 " from slave_health"
+                                 " where timestamp >= " + boost::lexical_cast<std::string>(time(NULL) - 48*84600) +
+                                 " order by name");
+
+        slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
+        slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
+        slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
+        slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Disk space</b>"));
+        slaveGrid_->elementAt(0, 4)->addWidget(new Wt::WText("<b>Last event</b>"));
+        slaveGrid_->elementAt(0, 5)->addWidget(new Wt::WText("<b>Test OS</b>"));
+        slaveGrid_->elementAt(0, 6)->addWidget(new Wt::WText("<b>Test status</b>"));
+        slaveGrid_->elementAt(0, 7)->addWidget(new Wt::WText("<b>Test duration</b>"));
+        size_t i = 1;
+        for (SqlDatabase::Statement::iterator row = stmt->begin(); row != stmt->end(); ++row, ++i) {
+            slaveGrid_->elementAt(i, 0)->addWidget(new Wt::WText(row.get_str(0)));
+
+            time_t age = time(NULL) - row.get_u32(1);
+            slaveGrid_->elementAt(i, 1)->addWidget(new Wt::WText(humanAge(age)));
+
+            std::string pct = boost::lexical_cast<std::string>(round(100.0*row.get_dbl(2))) + "%";
+            slaveGrid_->elementAt(i, 2)->addWidget(new Wt::WText(pct));
+            slaveGrid_->elementAt(i, 3)->addWidget(new Wt::WText(humanDiskSize(row.get_u32(3))));
+
+            std::string event = row.get_str(4);
+            int testId = row.get_i32(5);
+            if ("test" == event && testId > 0) {
+                slaveGrid_->elementAt(i, 4)->addWidget(new Wt::WText("test " + boost::lexical_cast<std::string>(testId)));
+            } else {
+                slaveGrid_->elementAt(i, 4)->addWidget(new Wt::WText(event));
+            }
+
+            if (testId > 0) {
+                SqlDatabase::StatementPtr testQuery =
+                    gstate.tx->statement("select os, status, duration from test_results where id = ?")
+                    ->bind(0, testId);
+                SqlDatabase::Statement::iterator testRow = testQuery->begin();
+                if (testRow != testQuery->end()) {
+                    slaveGrid_->elementAt(i, 5)->addWidget(new Wt::WText(testRow.get_str(0)));
+                    slaveGrid_->elementAt(i, 6)->addWidget(new Wt::WText(testRow.get_str(1)));
+                    slaveGrid_->elementAt(i, 7)->addWidget(new Wt::WText(humanDuration(testRow.get_u32(2))));
+                }
+            }
+
+            // Highlight whole row based on age
+            if ("shutdown" == event) {
+                slaveGrid_->rowAt(i)->setStyleClass(redToGreen(0, 0, 1));
+            } else {
+                slaveGrid_->rowAt(i)->setStyleClass(greenToRed(age, 0.0, 4.0*3600));
+            }
+
+            // Highlight the disk space in red if free space is getting tight.
+            if (row.get_u32(3) < 10*1024)
+                slaveGrid_->elementAt(i, 3)->setStyleClass(redToGreen(0, 0, 1));
+        }
     }
 };
 
@@ -3778,6 +4022,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // One application object is created per user session.
 class WApplication: public Wt::WApplication {
+    WDashboard *dashboard_;
     WFindWorkingConfig *findWorkingConfig_;
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
@@ -3811,9 +4056,17 @@ public:
         //   Classes redgreen-N vary from red to green as N goes from integer 0 through 100.
         //   Classes redgreen-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
         Rose::Color::Gradient redgreen;
+#if 0 // [Robb Matzke 2019-06-12]
         redgreen.insert(0.0, Rose::Color::HSV(0.00, 0.50, 0.50));
         redgreen.insert(0.5, Rose::Color::HSV(0.17, 0.40, 0.50));
         redgreen.insert(1.0, Rose::Color::HSV(0.33, 0.50, 0.50));
+#else
+        redgreen.insert(0.00, Rose::Color::HSV(0.00, 0.50, 0.70)); // red
+        redgreen.insert(0.33, Rose::Color::HSV(0.07, 0.60, 0.70)); // orange
+        redgreen.insert(0.66, Rose::Color::HSV(0.15, 0.80, 0.50)); // yellow
+        redgreen.insert(0.90, Rose::Color::HSV(0.28, 0.50, 0.70)); // green-yellow
+        redgreen.insert(1.00, Rose::Color::HSV(0.33, 0.90, 0.75)); // green
+#endif
         for (int i=0; i<=100; ++i) {
             Rose::Color::RGB c = redgreen.interpolate(i/100.0);
             std::string cssClass = ".redgreen-" + StringUtility::numberToString(i);
@@ -3826,6 +4079,8 @@ public:
             }
         }
         styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
+
+        styleSheet().addRule(".language-status-box", "border: solid black 1px;");
 
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");
@@ -3844,6 +4099,8 @@ public:
         // Main application
         tabs_ = new Wt::WTabWidget();
         vbox->addWidget(tabs_);
+        mlog[INFO] <<"creating tab: Dashboard\n";
+        tabs_->addTab(dashboard_ = new WDashboard, "Dashboard");
         mlog[INFO] <<"creating tab: Public view\n";
         tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Public");
         mlog[INFO] <<"creating tab: Overview\n";
@@ -3888,6 +4145,7 @@ private:
     }
 
     void showSetupView() {
+        tabs_->setTabHidden(tabs_->indexOf(dashboard_),                 HIDE);
         tabs_->setTabHidden(tabs_->indexOf(findWorkingConfig_),         HIDE);
         tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_),        HIDE);
         tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
@@ -3899,6 +4157,7 @@ private:
     }
 
     void showLoggedInView() {
+        tabs_->setTabHidden(tabs_->indexOf(dashboard_),                 SHOW);
         tabs_->setTabHidden(tabs_->indexOf(findWorkingConfig_),         SHOW);
         tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_),        SHOW);
         tabs_->setTabHidden(tabs_->indexOf(details_),                   SHOW);
@@ -3910,6 +4169,7 @@ private:
     }
 
     void showLoggedOutView() {
+        tabs_->setTabHidden(tabs_->indexOf(dashboard_),                 SHOW);
         tabs_->setTabHidden(tabs_->indexOf(findWorkingConfig_),         SHOW);
         tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_),        HIDE);
         tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
@@ -3917,10 +4177,11 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW); // shows the login form
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
-        tabs_->setCurrentIndex(tabs_->indexOf(findWorkingConfig_));
+        tabs_->setCurrentIndex(tabs_->indexOf(dashboard_));
     }
 
     void showDeveloperActionView() {
+        tabs_->setTabHidden(tabs_->indexOf(dashboard_),                 HIDE);
         tabs_->setTabHidden(tabs_->indexOf(findWorkingConfig_),         HIDE);
         tabs_->setTabHidden(tabs_->indexOf(resultsConstraints_),        HIDE);
         tabs_->setTabHidden(tabs_->indexOf(details_),                   HIDE);
