@@ -1901,7 +1901,7 @@ Database::hasUntested() const
   return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
 }
 
-
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 template <class T>
 static
 std::string xml(const T& o)
@@ -1912,6 +1912,7 @@ std::string xml(const T& o)
   oa << BOOST_SERIALIZATION_NVP(o);
   return stream.str();
 }
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
