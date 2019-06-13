@@ -3,7 +3,7 @@ include $(top_srcdir)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
 
 SUBDIRS =
 
-EXTRA_DIST = 
+EXTRA_DIST =
 
 # Forward declarations
 TEST_TARGETS=
