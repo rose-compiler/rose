@@ -179,6 +179,7 @@ matrix-clean-failed-dependencies() {
 # Install the ROSE Matrix Testing command-line tools. These are distributed as part of ROSE itself and depend on the
 # ROSE library.
 matrix-install-matrix-tools() {
+    RUNNING_SCRIPT_NEEDS_UPDATE=
     echo
     echo
     echo "================================================================================"
@@ -221,12 +222,24 @@ matrix-install-matrix-tools() {
 	# over with the new script.
 	if [ -x "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" ]; then
 	    if ! diff -q "$0" "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave"; then
-		cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
-		exec bash "$0"
+		RUNNING_SCRIPT_NEEDS_UPDATE=yes
 	    fi
 	fi
     fi
     export "PATH=$HOME/rose-installed/latest/bin:$PATH"
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# If the script that's running is different than the version that's installed, then replace the running script with the
+# new version. This also requires that we restart the script from its beginning or immediately exit.
+matrix-update-running-script() {
+    local restart="$1"
+
+    if [ -n "$RUNNING_SCRIPT_NEEDS_UPDATE" ]; then
+	cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
+	[ -n "$restart" ] && exec bash "$0"
+	exit 0
+    fi
 }
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -289,13 +302,21 @@ matrix-get-aws-configuration
 matrix-install-developer-scripts
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
+
+# This installation of matrix tools depends only on the EC2 User Data settings.
 matrix-install-matrix-tools
 rose-matrix-slave-health start
+matrix-update-running-script restart
 
 test_number=0
 while true; do
     test_number=$[test_number + 1]
     matrix-get-slave-configuration
+
+    # The slave configuration might specify a different version of matrix tools, and we should
+    # Use them. This allows us to update matrix tools while the slave is running.
+    matrix-install-matrix-tools
+
     if [ -n "$SETUP" ]; then
 	break
     elif [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
@@ -327,4 +348,5 @@ fi
 
 matrix-cleanup
 rose-matrix-slave-health stop
+matrix-update-running-script
 exit 0

@@ -39,6 +39,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WContainerWidget>
 #include <Wt/WGridLayout>
 #include <Wt/WHBoxLayout>
+#include <Wt/WImage>
 #include <Wt/WInPlaceEdit>
 #include <Wt/WLabel>
 #include <Wt/WLineEdit>
@@ -834,12 +835,19 @@ humanDuration(long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
     seconds %= 60;
 
     if (HUMAN_VERBOSE == fmt) {
-        std::string retval = boost::lexical_cast<std::string>(seconds) + " second" + (1==seconds?"":"s");
-        if (hours > 0 || minutes > 0)
-            retval = boost::lexical_cast<std::string>(minutes) + " minute" + (1==minutes?"":"s") + " " + retval;
-        if (hours > 0)
-            retval = boost::lexical_cast<std::string>(hours) + " hour" + (1==hours?"":"s") + " " + retval;
-        return (isNegative?"-":"") + retval;
+        if (isNegative) {
+            return "0 seconds";
+        } else if (long days = seconds / 86400) {
+            long hours = (seconds - days * 86400) / 3600;
+            return StringUtility::plural(days, "days") + " " + StringUtility::plural(hours, "hours");
+        } else if (long hours = seconds / 3600) {
+            long minutes = (seconds - hours * 3600) / 60;
+            return StringUtility::plural(hours, "hours") + " " + StringUtility::plural(minutes, "minutes");
+        } else if (long minutes = seconds / 60) {
+            return StringUtility::plural(minutes, "minutes") + " " + StringUtility::plural(seconds % 60, "secons");
+        } else {
+            return StringUtility::plural(seconds, "seconds");
+        }
     } else {
         char buf[256];
         sprintf(buf, "%s%2d:%02d:%02u", isNegative?"-":"", hours, minutes, (unsigned)seconds);
@@ -897,7 +905,9 @@ humanAge(time_t secondsAgo) {
 
 static std::string
 humanDiskSize(size_t mib) {
-    if (unsigned gib = mib / 1024) {
+    if (unsigned tib = mib / (1024*1024)) {
+        return boost::lexical_cast<std::string>(tib) + " TiB";
+    } else if (unsigned gib = mib / 1024) {
         return boost::lexical_cast<std::string>(gib) + " GiB";
     } else {
         return boost::lexical_cast<std::string>(mib) + " MiB";
@@ -1352,10 +1362,13 @@ private:
     void loadDataset(const Dependencies &deps, DataSet &ds /*out*/, const std::string &version) {
         // Build the SQL query
         ASSERT_require(!depMajorName_.empty());
-        std::string depMajorColumn = sqlDependencyExpression(deps, depMajorName_);
-        std::string depMinorColumn = sqlDependencyExpression(deps, depMinorName_);
-        std::string passFailColumn = sqlDependencyExpression(deps, "pass/fail");
-        std::string setupColumn    = sqlDependencyExpression(deps, "setup");
+        std::string depMajorColumn    = sqlDependencyExpression(deps, depMajorName_);
+        std::string depMinorColumn    = sqlDependencyExpression(deps, depMinorName_);
+        std::string passFailColumn    = sqlDependencyExpression(deps, "pass/fail");
+#if 0 // [Robb Matzke 2019-06-14]
+        std::string setupColumn       = sqlDependencyExpression(deps, "setup");
+        std::string blacklistedColumn = sqlDependencyExpression(deps, "blacklisted");
+#endif
         std::vector<std::string> args;
         std::string sql = "select " +
                           depMajorColumn + ", " +       // 0
@@ -1734,6 +1747,10 @@ public:
             if (depHumanValue == "valid")
                 return Wt::WColor(52, 147, 19);         // green
             return Wt::WColor(156, 21, 21);             // red
+        } else if (depName == "blacklisted") {
+            if (depHumanValue == "no")
+                return Wt::WColor(52, 147, 19);         // green
+            return Wt::WColor(156, 21, 21);             // red
         } else if (depName == "status" && depHumanValue == "end") {
             // Use a fairly bright green to contrast with the other colors.
             return Wt::WColor(52, 147, 19);
@@ -2077,26 +2094,26 @@ public:
         : Wt::WContainerWidget(parent), languageGrid_(NULL), slaveGrid_(NULL), testArticleGrid_(NULL),
           languageVersion_(NULL), languageOnlySupported_(NULL), timer_(NULL) {
 
-        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-        setLayout(vbox);
-
         // Version information
-        vbox->addWidget(new Wt::WText("<h1>Software status</h1>"));
-        vbox->addWidget(testArticleGrid_ = new Wt::WTable);
+        addWidget(new Wt::WText("<h1>Software status</h1>"));
+        addWidget(testArticleGrid_ = new Wt::WTable);
 
         // Grid of languages being tested.
-        vbox->addWidget(new Wt::WText("<h1>Language status</h1>"));
-        vbox->addWidget(languageVersion_ = new Wt::WText);
-        vbox->addWidget(languageOnlySupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
+        addWidget(new Wt::WText("<h1>Language status</h1>"));
+        addWidget(languageVersion_ = new Wt::WText);
+        addWidget(new Wt::WText("<br/>"));
+        addWidget(languageOnlySupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
         languageOnlySupported_->changed().connect(this, &WDashboard::update);
-        vbox->addWidget(languageGrid_ = new Wt::WTable);
+        addWidget(languageGrid_ = new Wt::WTable);
+        languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
+        addWidget(new Wt::WText("<small><sup>*</sup> Considering only non-blacklisted tests with valid setup.</small>"));
 
         // Grid of slaves running
-        vbox->addWidget(new Wt::WText("<h1>Slave status</h1>"));
-        vbox->addWidget(slaveGrid_ = new Wt::WTable);
+        addWidget(new Wt::WText("<h1>Slave status</h1>"));
+        addWidget(slaveGrid_ = new Wt::WTable);
+        slaveGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
 
         // Final stuff
-        vbox->addStretch(1);
         update();
         timer_ = new Wt::WTimer;
         timer_->setInterval(60 * 1000);
@@ -2130,9 +2147,11 @@ public:
             "select max(rose_date) from test_results";
         std::string enabledLanguagesQuery =
             "select distinct value from dependencies where name = 'languages' and enabled > 0";
+        // If you change the conditions here, consider updated the footnote below the language status table.
         SqlDatabase::StatementPtr q = gstate.tx->statement("select rmc_languages, count(*) from " + tableName +
                                                            " where rose_date = (" + projectVersionQuery + ")"
                                                            " and status <> 'setup' "
+                                                           " and blacklisted = '' "
                                                            " and " + condition +
                                                            " and rmc_languages in (" + enabledLanguagesQuery + ")"
                                                            " group by rmc_languages");
@@ -2189,7 +2208,7 @@ public:
             std::string hash = gstate.tx->statement("select rose from test_results where rose_date = ? limit 1")
                                ->bind(0, date)
                                ->execute_string();
-            languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) + " created " + humanLocalTime(date));
+            languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) + " created " + humanLocalTime(date) + "<sup>*</sup>");
         } else {
             languageVersion_->setText("");
         }
@@ -2230,7 +2249,7 @@ public:
         slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
         slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
         slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
-        slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Free disk</b>"));
+        slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Disk avail</b>"));
         slaveGrid_->elementAt(0, 4)->addWidget(new Wt::WText("<b>Last event</b>"));
         slaveGrid_->elementAt(0, 5)->addWidget(new Wt::WText("<b>Test OS</b>"));
         slaveGrid_->elementAt(0, 6)->addWidget(new Wt::WText("<b>Test status</b>"));
@@ -2701,10 +2720,11 @@ public:
         args.clear();
         std::string passFailExpr = sqlDependencyExpression(deps, "pass/fail");
         std::string sql = "select count(*) as n, status, coalesce(first_error,''), " + passFailExpr +
+                          ", " + sqlDependencyExpression(deps, "blacklisted") + " as bl" +
                           sqlFromClause() +
                           sqlWhereClause(deps, args) +
                           " and " + passFailExpr + " = 'fail'"
-                          " group by status, coalesce(first_error,''), tnames.position"
+                          " group by status, coalesce(first_error,''), tnames.position, bl"
                           " order by n desc"
                           " limit 15";
         SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
@@ -2724,8 +2744,9 @@ public:
         for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1, bigRow+=3) {
             int nErrors = iter1.get<int>(0);
             double errorsPercent = 100.0*nErrors/nTests;
-            std::string status = iter1.get<std::string>(1);
-            std::string message = iter1.get<std::string>(2);
+            std::string status = iter1.get_str(1);
+            std::string message = iter1.get_str(2);
+            bool isBlacklisted = iter1.get_str(4) == "yes";
 
             // Error count and failure rate
             {
@@ -2739,7 +2760,12 @@ public:
 
             // Test status for these errors.  An error is always identified by a unique (status,message) pair so that we can
             // distinguish between, for example, the same compiler error message for the ROSE library vs. a test case.
-            grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status));
+            grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status + "<br/>"));
+            if (isBlacklisted) {
+                Wt::WImage *img = new Wt::WImage("blacklisted.png", "Blacklisted");
+                img->setToolTip("Blacklisted");
+                grid_->elementAt(bigRow+0, 1)->addWidget(img);
+            }
             grid_->elementAt(bigRow+0, 1)->setRowSpan(3);
             if (!statusCssClass.exists(status))
                 statusCssClass.insert(status, "error-status-"+StringUtility::numberToString(statusCssClass.size()%8));
@@ -2796,7 +2822,7 @@ public:
             }
             BOOST_FOREACH (const Characteristics::Node &characteristic, characteristics.nodes()) {
                 const std::string &depname = characteristic.key();
-                if (depname == "status" || depname == "pass/fail" || depname == "setup")
+                if (depname == "status" || depname == "pass/fail" || depname == "setup" || depname == "blacklisted")
                     continue;
                 Wt::WComboBox *combos = new Wt::WComboBox;
                 BOOST_FOREACH (const DepValueCounts::Node &valcount, characteristic.value().nodes()) {
@@ -4084,9 +4110,11 @@ public:
         }
         styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
-        styleSheet().addRule(".language-status-box", "border: solid black 1px;");
+        styleSheet().addRule(".language-status-box",
+                             "border-radius: 15px;");
         styleSheet().addRule(".notice",
-                             "border: solid black 1px; "
+                             "border-top: 2px solid black;"
+                             "border-bottom: 2px solid black;"
                              "background-color: " + Rose::Color::RGB(1.00, 0.92, 0.18).toHtml() + ";");
 
         // Styles of error priority table cells
@@ -4337,6 +4365,7 @@ loadDependencyNames() {
     gstate.dependencyNames.insert("rose_date", "test.rose_date");
     gstate.dependencyNames.insert("status", "test.status");
     gstate.dependencyNames.insert("setup", "case when test.status = 'setup' then 'invalid' else 'valid' end");
+    gstate.dependencyNames.insert("blacklisted", "case when test.blacklisted = '' then 'no' else 'yes' end");
 }
 
 static void

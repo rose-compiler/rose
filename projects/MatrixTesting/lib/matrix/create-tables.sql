@@ -314,6 +314,7 @@ create table test_results (
     --    project-bintools  -- runs "make -C $ROSE/projects/BinaryAnalysisTools checK"
     --    project-foo       -- runs "make -C $ROSE/projects/foo check"
     status varchar(64) not null,
+    blacklistd varchar(80) default '',
 
     -- Additional optional information reported by the tester.
     duration integer default 0,                         -- time it took to run the test (seconds)

@@ -324,6 +324,24 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                   " where test.first_error_staging is not null and test.first_error_staging <> ''"
                   " and " + sqlIdLimitation("test.id", testIds))
         ->execute();
+
+    //---------------------------------------------------------------------------------------------------
+    // Step 4: Unrelated to above, populate the 'blacklisted' column
+    //---------------------------------------------------------------------------------------------------
+
+    std::string blacklistPrefixRe = "configure: error: blacklisted: ";
+    tx->statement("update test_results as test"
+                  " set blacklisted ="
+                  "   regexp_replace("
+                  "     coalesce(substring(att.content from '(?n)" + blacklistPrefixRe + ".*'), ''),"
+                  "     '" + blacklistPrefixRe + "',"
+                  "     '')"
+                  " from attachments as att " +
+                  sqlWhereClause(tx, settings, args) +
+                  " and test.id = att.test_id"
+                  " and att.name = 'Final output'"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute();
 }
 
 // List tests that are missing error information.
