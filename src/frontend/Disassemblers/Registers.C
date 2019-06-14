@@ -722,52 +722,52 @@ RegisterDictionary::dictionary_powerpc() {
         regs->insert("cr",  powerpc_regclass_cr, 0,  0, 32);
 
         regs->insert("cr0", powerpc_regclass_cr, 0, 28,  4);
-        regs->insert("cr0*4+lt", powerpc_regclass_cr, 0, 31, 1);
-        regs->insert("cr0*4+gt", powerpc_regclass_cr, 0, 30, 1);
-        regs->insert("cr0*4+eq", powerpc_regclass_cr, 0, 29, 1);
-        regs->insert("cr0*4+so", powerpc_regclass_cr, 0, 28, 1);
+        regs->insert("cr0.lt", powerpc_regclass_cr, 0, 31, 1);
+        regs->insert("cr0.gt", powerpc_regclass_cr, 0, 30, 1);
+        regs->insert("cr0.eq", powerpc_regclass_cr, 0, 29, 1);
+        regs->insert("cr0.so", powerpc_regclass_cr, 0, 28, 1);
 
         regs->insert("cr1", powerpc_regclass_cr, 0, 24,  4);
-        regs->insert("cr1*4+lt", powerpc_regclass_cr, 0, 27, 1);
-        regs->insert("cr1*4+gt", powerpc_regclass_cr, 0, 26, 1);
-        regs->insert("cr1*4+eq", powerpc_regclass_cr, 0, 25, 1);
-        regs->insert("cr1*4+so", powerpc_regclass_cr, 0, 24, 1);
+        regs->insert("cr1.lt", powerpc_regclass_cr, 0, 27, 1);
+        regs->insert("cr1.gt", powerpc_regclass_cr, 0, 26, 1);
+        regs->insert("cr1.eq", powerpc_regclass_cr, 0, 25, 1);
+        regs->insert("cr1.so", powerpc_regclass_cr, 0, 24, 1);
 
         regs->insert("cr2", powerpc_regclass_cr, 0, 20,  4);
-        regs->insert("cr2*4+lt", powerpc_regclass_cr, 0, 23, 1);
-        regs->insert("cr2*4+gt", powerpc_regclass_cr, 0, 22, 1);
-        regs->insert("cr2*4+eq", powerpc_regclass_cr, 0, 21, 1);
-        regs->insert("cr2*4+so", powerpc_regclass_cr, 0, 20, 1);
+        regs->insert("cr2.lt", powerpc_regclass_cr, 0, 23, 1);
+        regs->insert("cr2.gt", powerpc_regclass_cr, 0, 22, 1);
+        regs->insert("cr2.eq", powerpc_regclass_cr, 0, 21, 1);
+        regs->insert("cr2.so", powerpc_regclass_cr, 0, 20, 1);
 
         regs->insert("cr3", powerpc_regclass_cr, 0, 16,  4);
-        regs->insert("cr3*4+lt", powerpc_regclass_cr, 0, 19, 1);
-        regs->insert("cr3*4+gt", powerpc_regclass_cr, 0, 18, 1);
-        regs->insert("cr3*4+eq", powerpc_regclass_cr, 0, 17, 1);
-        regs->insert("cr3*4+so", powerpc_regclass_cr, 0, 16, 1);
+        regs->insert("cr3.lt", powerpc_regclass_cr, 0, 19, 1);
+        regs->insert("cr3.gt", powerpc_regclass_cr, 0, 18, 1);
+        regs->insert("cr3.eq", powerpc_regclass_cr, 0, 17, 1);
+        regs->insert("cr3.so", powerpc_regclass_cr, 0, 16, 1);
 
         regs->insert("cr4", powerpc_regclass_cr, 0, 12,  4);
-        regs->insert("cr4*4+lt", powerpc_regclass_cr, 0, 15, 1);
-        regs->insert("cr4*4+gt", powerpc_regclass_cr, 0, 14, 1);
-        regs->insert("cr4*4+eq", powerpc_regclass_cr, 0, 13, 1);
-        regs->insert("cr4*4+so", powerpc_regclass_cr, 0, 12, 1);
+        regs->insert("cr4.lt", powerpc_regclass_cr, 0, 15, 1);
+        regs->insert("cr4.gt", powerpc_regclass_cr, 0, 14, 1);
+        regs->insert("cr4.eq", powerpc_regclass_cr, 0, 13, 1);
+        regs->insert("cr4.so", powerpc_regclass_cr, 0, 12, 1);
 
         regs->insert("cr5", powerpc_regclass_cr, 0,  8,  4);
-        regs->insert("cr5*4+lt", powerpc_regclass_cr, 0, 11, 1);
-        regs->insert("cr5*4+gt", powerpc_regclass_cr, 0, 10, 1);
-        regs->insert("cr5*4+eq", powerpc_regclass_cr, 0,  9, 1);
-        regs->insert("cr5*4+so", powerpc_regclass_cr, 0,  8, 1);
+        regs->insert("cr5.lt", powerpc_regclass_cr, 0, 11, 1);
+        regs->insert("cr5.gt", powerpc_regclass_cr, 0, 10, 1);
+        regs->insert("cr5.eq", powerpc_regclass_cr, 0,  9, 1);
+        regs->insert("cr5.so", powerpc_regclass_cr, 0,  8, 1);
 
         regs->insert("cr6", powerpc_regclass_cr, 0,  4,  4);
-        regs->insert("cr6*4+lt", powerpc_regclass_cr, 0,  7, 1);
-        regs->insert("cr6*4+gt", powerpc_regclass_cr, 0,  6, 1);
-        regs->insert("cr6*4+eq", powerpc_regclass_cr, 0,  5, 1);
-        regs->insert("cr6*4+so", powerpc_regclass_cr, 0,  4, 1);
+        regs->insert("cr6.lt", powerpc_regclass_cr, 0,  7, 1);
+        regs->insert("cr6.gt", powerpc_regclass_cr, 0,  6, 1);
+        regs->insert("cr6.eq", powerpc_regclass_cr, 0,  5, 1);
+        regs->insert("cr6.so", powerpc_regclass_cr, 0,  4, 1);
 
         regs->insert("cr7", powerpc_regclass_cr, 0,  0,  4);
-        regs->insert("cr7*4+lt", powerpc_regclass_cr, 0,  3, 1);
-        regs->insert("cr7*4+gt", powerpc_regclass_cr, 0,  2, 1);
-        regs->insert("cr7*4+eq", powerpc_regclass_cr, 0,  1, 1);
-        regs->insert("cr7*4+so", powerpc_regclass_cr, 0,  0, 1);
+        regs->insert("cr7.lt", powerpc_regclass_cr, 0,  3, 1);
+        regs->insert("cr7.gt", powerpc_regclass_cr, 0,  2, 1);
+        regs->insert("cr7.eq", powerpc_regclass_cr, 0,  1, 1);
+        regs->insert("cr7.so", powerpc_regclass_cr, 0,  0, 1);
 
         /* The processor version register is a 32-bit read-only register that identifies the version and revision level of the
          * processor. Processor versions are assigned by the PowerPC architecture process. Revision levels are implementation
