@@ -400,6 +400,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
+    ("abstraction-mode",po::value< int >()->default_value(false)->implicit_value(true),"Perform abstract model checking.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
 
@@ -955,6 +956,10 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
       cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
+  }
+
+  if(args.count("abstraction-mode")) {
+    analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
   }
 
   if(args.count("max-transitions")) {

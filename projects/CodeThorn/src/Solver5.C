@@ -126,8 +126,27 @@ void Solver5::run() {
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
+              if(pres.first==true) {
+                int abstractionMode=_analyzer->getAbstractionMode();
+                switch(abstractionMode) {
+                case 0:
+                  // no abstraction
+                  _analyzer->addToWorkList(newEStatePtr);
+                  break;
+                case 1: {
+                  // performing merge
+#pragma omp critical(SUMMARY_STATES_MAP)
+                  {
+                    EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label());
+                    // TODO: if newEStatePtr <= summaryEState ... else ...
+                  }
+                }
+                default:
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  exit(1);
+                }
                 _analyzer->addToWorkList(newEStatePtr);
+              }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {

@@ -26,6 +26,26 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
+void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initialPStateStored, 
+                                                  const CodeThorn::ConstraintSet* emptycsetstored) {
+  //  return;
+  for(auto label:*getLabeler()) {
+    // create bottom elements for each label
+    EState estate(label,initialPStateStored,emptycsetstored); // implicitly empty cs
+    const EState* bottomElement=processNewOrExisting(estate);
+    setSummaryState(label,const_cast<EState*>(bottomElement));
+  }
+}
+
+CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
+  return _summaryStateMap[lab];
+}
+
+void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState* estate) {
+  ROSE_ASSERT(lab==estate->label());
+  _summaryStateMap[lab]=estate;
+}
+
 void CodeThorn::Analyzer::setOptionContextSensitiveAnalysis(bool flag) {
   _contextSensitiveAnalysis=flag;
 }
@@ -1371,6 +1391,9 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
   // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+
+  // initialize summary states map for abstract model checking mode
+  initializeSummaryStates(initialPStateStored,emptycsetstored);
 
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem

@@ -62,6 +62,7 @@ namespace CodeThorn {
    * \author Markus Schordan
    * \date 2012.
    */
+
   class Analyzer {
     friend class Solver;
     friend class Solver5;
@@ -184,6 +185,8 @@ namespace CodeThorn {
 
     void setStgTraceFileName(std::string filename);
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+    void setAbstractionMode(int mode) { _abstractionMode=mode; }
+    int getAbstractionMode() { return _abstractionMode; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
@@ -252,6 +255,9 @@ namespace CodeThorn {
     bool optionStringLiteralsInState=false;
     void reduceStg(function<bool(const EState*)> predicate);
 
+    void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
+    EState* getSummaryState(CodeThorn::Label lab);
+    void setSummaryState(CodeThorn::Label lab, EState* estate);
   protected:
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -386,6 +392,7 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
+    int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
     bool _explicitArrays;
 
     int _iterations;
@@ -409,6 +416,11 @@ namespace CodeThorn {
     std::vector<string> _commandLineOptions;
     SgTypeSizeMapping _typeSizeMapping;
     bool _contextSensitiveAnalysis;
+    // this is used in abstract mode to hold a pointer to the
+    // *current* summary state (more than one may be created to allow
+    // to represent multiple summary states in the transition system)
+  private:
+    map<Label,EState*> _summaryStateMap;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 
