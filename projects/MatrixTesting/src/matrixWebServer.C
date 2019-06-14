@@ -830,9 +830,6 @@ humanDuration(long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
     bool isNegative = seconds < 0;
     if (seconds < 0)
         seconds = -seconds;
-    unsigned hours = seconds / 3600;
-    unsigned minutes = seconds / 60 % 60;
-    seconds %= 60;
 
     if (HUMAN_VERBOSE == fmt) {
         if (isNegative) {
@@ -849,6 +846,9 @@ humanDuration(long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
             return StringUtility::plural(seconds, "seconds");
         }
     } else {
+        unsigned hours = seconds / 3600;
+        unsigned minutes = seconds / 60 % 60;
+        seconds %= 60;
         char buf[256];
         sprintf(buf, "%s%2d:%02d:%02u", isNegative?"-":"", hours, minutes, (unsigned)seconds);
         return buf;
@@ -2082,7 +2082,7 @@ private:
 // Dashboard
 class WDashboard: public Wt::WContainerWidget {
     Wt::WTable *languageGrid_, *slaveGrid_, *testArticleGrid_;
-    Wt::WText *languageVersion_;
+    Wt::WText *notices_, *languageVersion_;
     Wt::WCheckBox *languageOnlySupported_;
     Wt::WTimer *timer_;
     static const size_t languageGridColumns_ = 4;
@@ -2092,7 +2092,13 @@ class WDashboard: public Wt::WContainerWidget {
 public:
     explicit WDashboard(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), languageGrid_(NULL), slaveGrid_(NULL), testArticleGrid_(NULL),
-          languageVersion_(NULL), languageOnlySupported_(NULL), timer_(NULL) {
+          notices_(NULL), languageVersion_(NULL), languageOnlySupported_(NULL), timer_(NULL) {
+
+        // Notices
+        addWidget(notices_ = new Wt::WText);
+        notices_->setInline(false);
+        notices_->setStyleClass("notice");
+        notices_->hide();
 
         // Version information
         addWidget(new Wt::WText("<h1>Software status</h1>"));
@@ -2168,6 +2174,7 @@ public:
     void updateTestArticleGrid() {
         ASSERT_not_null(testArticleGrid_);
         testArticleGrid_->clear();
+        notices_->hide();
 
         // Slave configuration info
         SqlDatabase::StatementPtr q = gstate.tx->statement("select name, value from slave_settings");
@@ -2187,9 +2194,13 @@ public:
                 testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "TEST_OS") {
                 testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "MATRIX_REPOSITORY") {
+                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + row.get_str(1)));
+            } else if (row.get_str(0) == "MATRIX_COMMITTISH") {
+                testArticleGrid_->elementAt(6, 0)->addWidget(new Wt::WText("<b>Tool version:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "NOTICE" && !row.get_str(1).empty()) {
-                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Notice:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(5, 0)->setStyleClass("notice");
+                notices_->setText("<b>Notice:</b> " + row.get_str(1));
+                notices_->show();
             }
         }
     }
