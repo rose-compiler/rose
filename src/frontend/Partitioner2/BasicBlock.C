@@ -292,12 +292,9 @@ BasicBlock::eraseDataBlock(const DataBlock::Ptr &dblock) {
 }
 
 void
-BasicBlock::replaceDataBlock(const DataBlock::Ptr &dblock) {
+BasicBlock::replaceOrInsertDataBlock(const DataBlock::Ptr &dblock) {
     ASSERT_not_null(dblock);
-    std::vector<DataBlock::Ptr>::iterator lb = std::lower_bound(dblocks_.begin(), dblocks_.end(), dblock, sortDataBlocks);
-    ASSERT_require(lb != dblocks_.end());
-    *lb = dblock;
-    ASSERT_require(dataBlockExists(dblock) == dblock);
+    replaceOrInsert(dblocks_, dblock, sortDataBlocks);
 }
 
 std::set<rose_addr_t>

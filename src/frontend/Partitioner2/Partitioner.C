@@ -795,10 +795,9 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
 
     // Insert the basic block static data. If the AUM contains an equivalent data block already, then use that one instead.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
-        DataBlock::Ptr existing = attachDataBlock(dblock);
-        existing->incrementOwnerCount();
-        if (existing != dblock)
-            bblock->replaceDataBlock(existing);
+        ASSERT_not_null(dblock);
+        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, bblock));
+        bblock->replaceOrInsertDataBlock(odb.dataBlock());
     }
 
     if (basicBlockSemanticsAutoDrop())
@@ -1315,7 +1314,7 @@ Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
     if (NULL == dblock)
         return DataBlock::Ptr();
 
-    // If this data block has attached ownwers, then this data block must already exist in the AUM.
+    // If this data block has attached owners, then this data block must already exist in the AUM.
     if (dblock->nAttachedOwners() > 0) {
         ASSERT_require(aum_.dataBlockExists(dblock).dataBlock() == dblock);
         return dblock;
@@ -1323,27 +1322,31 @@ Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
     
     // If any data block has the exact same extent as the specified data block, then return that already-existing, equivalent
     // data block.
-    BOOST_FOREACH (const DataBlock::Ptr &exists, dataBlocksSpanning(dblock->extent())) {
-        if (exists->extent() == dblock->extent())
-            return exists;
-    }
+    OwnedDataBlock odb = aum_.dataBlockExists(dblock);
+    if (odb.isValid())
+        return odb.dataBlock();
 
     return DataBlock::Ptr();
 }
 
+// Attach data block without any new owners.
 DataBlock::Ptr
 Partitioner::attachDataBlock(const DataBlock::Ptr &dblock) {
     ASSERT_not_null(dblock);
-    DataBlock::Ptr canonicalDataBlock;
-    if (DataBlock::Ptr existingDataBlock = dataBlockExists(dblock)) {
-        canonicalDataBlock = existingDataBlock;
-    } else {
-        canonicalDataBlock = dblock;
-        ASSERT_require(0==dblock->nAttachedOwners());
-        aum_.insertDataBlock(OwnedDataBlock(dblock));
-        dblock->freeze();
-    }
-    return canonicalDataBlock;
+    return attachDataBlock(OwnedDataBlock(dblock)).dataBlock();
+}
+
+// attach data block with owners. This is private and doesn't check whether owners are attached. If the data block is already
+// attached then this function can be used to give it more owners.
+OwnedDataBlock
+Partitioner::attachDataBlock(const OwnedDataBlock &toInsert) {
+    ASSERT_require(toInsert.isValid());
+
+    OwnedDataBlock inserted = aum_.insertDataBlock(toInsert);
+    ASSERT_require(inserted.isValid());
+    inserted.dataBlock()->nAttachedOwners(inserted.nOwners());
+    inserted.dataBlock()->freeze();
+    return inserted;
 }
 
 DataBlock::Ptr
@@ -1424,27 +1427,10 @@ Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Funct
         // The specified data block (or equivalent) is not attached to the specified function yet, but the specified function
         // is already in the CFG/AUM. The AUM might already contain an equivalent data block that we should use instead, and if
         // so, that's the one we'll return.
-        DataBlock::Ptr blockToAdd;
-        OwnedDataBlock odb = aum_.dataBlockExists(dblock);
-        if (odb.isValid()) {
-            // The AUM contains either this very dblock or an equivalent one. If it contains an equivalent but different data
-            // block, then it doesn't contain the specified dblock.
-            canonicalDataBlock = odb.dataBlock();
-            aum_.eraseDataBlock(dblock);                // we'll replace it later
-            odb.insertOwner(function);                  // no-op if function is already an owner
-            
-        } else {
-            // The AUM doesn't yet have this or any equivalent data block, so add the specified dblock to the AUM.
-            canonicalDataBlock = dblock;
-            dblock->freeze();
-            odb = OwnedDataBlock(dblock, function);
-        }
-        aum_.insertDataBlock(odb);
-
-        // Add the data block to the function.
+        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, function));
+        canonicalDataBlock = odb.dataBlock();
         function->thaw();
-        if (function->insertDataBlock(dblock))          // false if dblock is already in the function
-            dblock->incrementOwnerCount();
+        function->replaceOrInsertDataBlock(canonicalDataBlock);
         function->freeze();
 
     } else if (DataBlock::Ptr existingDataBlock = function->dataBlockExists(dblock)) {
@@ -1478,26 +1464,9 @@ Partitioner::attachDataBlockToBasicBlock(const DataBlock::Ptr &dblock, const Bas
         // The specified data block (or equivalent) is not attached to the specified basic block yet, but the specified basic
         // block is already in the CFG/AUM. The AUM might already contain an equivalent data block that we should use instead,
         // and if so, that's the one we'll return.
-        OwnedDataBlock odb = aum_.dataBlockExists(dblock);
-        if (odb.isValid()) {
-            // The AUM contains either this very dblock or an equivalent one. If it contains an equivalent but different data
-            // block, then it doesn't contain the specified dblock.
-            canonicalDataBlock = odb.dataBlock();
-            aum_.eraseDataBlock(dblock);                // we'll replace it later
-            odb.insertOwner(bblock);                    // no-op if data block is already an owner
-        } else {
-            // The AUM doesn't yet have this or any equivalent data block, so add the specified dblock to the AUM.
-            canonicalDataBlock = dblock;
-            dblock->freeze();
-            odb = OwnedDataBlock(dblock, bblock);
-        }
-        aum_.insertDataBlock(odb);
-
-        // Add the data block to the basic block.
-        bblock->thaw();
-        if (bblock->insertDataBlock(dblock))            // false if dblock is already owned by the basic block
-            dblock->incrementOwnerCount();
-        bblock->freeze();
+        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, bblock));
+        canonicalDataBlock = odb.dataBlock();
+        bblock->replaceOrInsertDataBlock(canonicalDataBlock);
 
     } else if (DataBlock::Ptr existingDataBlock = bblock->dataBlockExists(dblock)) {
         // The basic block is not attached to the CFG/AUM, therefore we don't need to attach the specified dblock to the
@@ -1734,10 +1703,9 @@ Partitioner::attachFunction(const Function::Ptr &function) {
 
         // Attach function data blocks. If the AUM contains an equivalent data block already, then use that one instead.
         BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
-            DataBlock::Ptr existing = attachDataBlock(dblock);
-            existing->incrementOwnerCount();
-            if (existing != dblock)
-                function->replaceDataBlock(existing);
+            ASSERT_not_null(dblock);
+            OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, function));
+            function->replaceOrInsertDataBlock(odb.dataBlock());
         }
 
         // Prevent the function connectivity from changing while the function is in the CFG.  Non-frozen functions

@@ -58,12 +58,9 @@ Function::dataAddresses() const {
 }
 
 void
-Function::replaceDataBlock(const DataBlock::Ptr &dblock) {
+Function::replaceOrInsertDataBlock(const DataBlock::Ptr &dblock) {
     ASSERT_not_null(dblock);
-    std::vector<DataBlock::Ptr>::iterator lb = std::lower_bound(dblocks_.begin(), dblocks_.end(), dblock, sortDataBlocks);
-    ASSERT_require(lb != dblocks_.end());
-    *lb = dblock;
-    ASSERT_require(dataBlockExists(dblock) == dblock);
+    replaceOrInsert(dblocks_, dblock, sortDataBlocks);
 }
 
 std::string

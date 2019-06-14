@@ -2413,8 +2413,9 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
 
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
+            DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
+            dblock->comment("data encapsulated by function");
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
                 dblock = partitioner.attachDataBlockToFunction(dblock, function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }

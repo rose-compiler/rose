@@ -1490,8 +1490,8 @@ public:
      *
      *  Attaches the data block to the CFG/AUM if it is not already attached and there is no equivalent data block already
      *  attached. If no equivalent data block exists in the CFG/AUM then the specified block is attached and will have an
-     *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been already
-     *  attached). It is an error to supply a null pointer.
+     *  ownership count of zero since none of its owners are attached (otherwise the data block or an equivalent block would
+     *  also have been already attached). It is an error to supply a null pointer.
      *
      *  Returns the canonical data block, either one that already existed in the CFG/AUM or the specified data block which is
      *  now attached.
@@ -2495,6 +2495,13 @@ private:
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();
+
+    // Attach a data block with ownership information to the AUM. This is private because it doesn't check that the owners
+    // specified in the argument are actually already attached to the AUM. Returns an updated OwnedDataBlock record containing
+    // the specified owners plus any owners that were already present in the AUM for an equivalent data block. The data block
+    // pointed to by the return value is the one that's in the AUM, which might be other than the one that was specified in the
+    // argument.
+    OwnedDataBlock attachDataBlock(const OwnedDataBlock&);
 };
 
 } // namespace

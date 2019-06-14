@@ -360,8 +360,8 @@ private:
     void freeze() { isFrozen_ = true; }
     void thaw() { isFrozen_ = false; }
 
-    // Find an equivalent data block and replace it with the specified data block.
-    void replaceDataBlock(const DataBlock::Ptr&);
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;

@@ -121,6 +121,7 @@ private:
     void thaw() { isFrozen_ = false; }
     size_t incrementOwnerCount();
     size_t decrementOwnerCount();
+    void nAttachedOwners(size_t);
 };
 
 

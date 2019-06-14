@@ -637,8 +637,8 @@ private:
     void thaw() { isFrozen_ = false; }
     BasicBlockSemantics undropSemanticsNS(const Partitioner&);
 
-    // Find an equivalent data block and replace it with the specified data block.
-    void replaceDataBlock(const DataBlock::Ptr&);
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block.
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 } // namespace
