@@ -928,7 +928,14 @@ struct DBTxGuard
     //   depending on exception handling context. )
     ~DBTxGuard()
     {
-      if (tx_) tx_->rollback();
+      if (tx_)
+      {
+        tx_->rollback();
+
+        //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+        std::cerr
+          << "ConcolicDB: TX uncommitted -> rollback" << std::endl;
+      }
     }
 
     SqlTransactionPtr tx() { return tx_; }
@@ -1004,11 +1011,9 @@ queryIds( SqlDatabase::ConnectionPtr dbconn,
 {
   if (!id)
   {
-    std::cerr << "restricted" << std::endl;
     return queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
   }
 
-  std::cerr << "full" << std::endl;
   return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get(), limit));
 }
 
@@ -1035,20 +1040,9 @@ Database::testSuite(const TestSuite::Ptr& obj)
 {
   TestSuiteId res;
 
-  if (obj)
-  {
-    std::cerr << "obj\n";
-    res = id(obj);
-
-    std::cerr << (res?"t":"f") << std::endl;;
-  }
-  else
-  {
-    std::cerr << "!obj\n";
-  }
+  if (obj) res = id(obj);
 
   // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
   testSuiteId_ = res;
   return testSuiteId_;
 }
@@ -1736,22 +1730,22 @@ struct GuardedStmt
     sqlite3_stmt*   stmt_;
 };
 
-struct SqlLiteStringGuard
-{
-  explicit
-  SqlLiteStringGuard(const char* s)
-  : str(s)
-  {}
+//~ struct SqlLiteStringGuard
+//~ {
+  //~ explicit
+  //~ SqlLiteStringGuard(const char* s)
+  //~ : str(s)
+  //~ {}
 
-  ~SqlLiteStringGuard()
-  {
-    if (str) sqlite3_free(const_cast<char*>(str));
-  }
+  //~ ~SqlLiteStringGuard()
+  //~ {
+    //~ if (str) sqlite3_free(const_cast<char*>(str));
+  //~ }
 
-  operator const char*() { return str; }
+  //~ operator const char*() { return str; }
 
-  const char* const str;
-};
+  //~ const char* const str;
+//~ };
 
 
 void GuardedDB::debug(GuardedStmt& sql)
@@ -1760,9 +1754,11 @@ void GuardedDB::debug(GuardedStmt& sql)
 
   //~ Available since the pi release ( >= 3.14 )
   //~ SqlLiteStringGuard sqlstmt(sqlite3_expanded_sql(sql.stmt()));
-  SqlLiteStringGuard sqlstmt(NULL);
+  //~ SqlLiteStringGuard sqlstmt(NULL);
 
-  std::cerr << sqlstmt << std::endl;
+  //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+  std::cerr
+     << sql.c_str() << std::endl;
 }
 
 
@@ -1917,11 +1913,15 @@ std::string xml(const T& o)
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
-  std::string  detailtxt = "<requires BOOST serialization>";
+  std::string  detailtxt = "<error>requires BOOST serialization</error>";
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
   detailtxt = xml(details);
-  std::cerr << "*** insert concrete" << std::endl;
+#else
+  //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+  std::cerr
+    << "ConcolicDB: Boost::Serialization not available; result not serialized."
+    << std::endl;
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
   {

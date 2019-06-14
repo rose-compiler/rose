@@ -111,7 +111,8 @@ num_opt          : /* empty */               { $$ = -1; }
                  | num                       { $$ = $1; }
                  ;
 
-exec_cmd         : RUN testsuite_opt num_opt { crsh().run($2, $3); }
+exec_cmd         : testsuite_opt QUAL
+                   RUN num_opt               { crsh().run($1, $4); }
                  ;
 
 connect_cmd      : CONNECT filename          { crsh().connect($2); }
