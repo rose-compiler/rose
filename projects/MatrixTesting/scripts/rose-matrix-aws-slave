@@ -10,6 +10,8 @@ date=$(date '+%Y%m%d')
 SETUP="$1"
 cd
 
+export "PATH=$HOME/rose-installed/latest/bin:$HOME/.spock/bin:$PATH"
+
 # Cause all EC2 instances to have the same host name as far as RMC/Spock is concerned. This allows us to install
 # RMC/Spock on the template instance and use it in all the slave instances. Normally, since each slave has its own host
 # name (based on its private IP address), they would each store host-specific RMC/Spock files in different directories;
@@ -20,6 +22,9 @@ export SPOCK_HOSTNAME=matrix-slave
 # intended for most users. If we don't set this, then the ROSE build using Tup will fail with a message about being
 # experimental.
 export TUP_ACKNOWLEDGMENT=yes
+
+# If non-empty, then this very script that's running needs to be updated.
+THIS_SCRIPT_OUT_OF_DATE=
 
 #------------------------------------------------------------------------------------------------------------------------
 # Make sure the system is up-to-date, that all system dependencies are installed, that users and user groups are set.
@@ -82,11 +87,9 @@ matrix-get-aws-configuration() {
     wget -O matrix-config http://169.254.169.254/latest/user-data
     source matrix-config
     export ROSE_MATRIX_DATABASE
-    : "${MATRIX_REPOSITORY:=https://github.com/rose-compiler/rose}"
-    : "${MATRIX_COMMITTISH:=origin/develop}"
 
     if [ "$ROSE_MATRIX_DATABASE" = "" ]; then
-	echo "$arg0: no portability testing database specified (ROSE_MATRIX_DATABASE)" >&2
+	echo "$arg0: no portability testing database specified (set ROSE_MATRIX_DATABASE in EC2 User Data)" >&2
 	exit 1
     fi
 }
@@ -94,8 +97,13 @@ matrix-get-aws-configuration() {
 #------------------------------------------------------------------------------------------------------------------------
 # Get slave configuration from the database.
 matrix-get-slave-configuration() {
+    local failure_okay="$1"
     echo "obtaining current slave configuration information from database"
-    rose-matrix-slave-config >matrix-config
+    if [ -n "$failure_okay" ]; then
+	rose-matrix-slave-config >matrix-config || true
+    else
+	rose-matrix-slave-config >matrix-config
+    fi
     cat -n matrix-config
     . matrix-config
 }
@@ -130,7 +138,6 @@ matrix-install-rmc-spock() {
 
     local spock_repo="https://github.com/matzke1/rmc-spock"
     local needs_update=
-    export PATH="$HOME/.spock/bin:$PATH"
 
     echo "Testing whether RMC/Spock is operational..."
     if ! spock-ls --version >/dev/null; then
@@ -139,7 +146,6 @@ matrix-install-rmc-spock() {
 	needs_update=yes
     elif [ ! -d rmc-spock ]; then
 	needs_update=yes
-	git clone "$spock_repo" rmc-spock
     else
 	pushd rmc-spock >/dev/null
 	git fetch "$spock_repo"
@@ -158,9 +164,10 @@ matrix-install-rmc-spock() {
 	echo "Update is necessary..."
 	echo
 	rm -rf $HOME/rose-installed # since about to blow away libraries used by ROSE
-	rm -rf rmc-spock/_build # build will fail if this is present from last time
+	rm -rf rmc-spock
+	git clone "$spock_repo" rmc-spock
 	(cd rmc-spock && ./scripts/bootstrap.sh)
-	rm -rf rmc-spock/_build
+	rm -rf rmc-spock/_build # leave source code for next call to this function
     else
 	echo
 	echo "RMC/Spock is up to date and appears to work"
@@ -176,10 +183,9 @@ matrix-clean-failed-dependencies() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
-# Install the ROSE Matrix Testing command-line tools. These are distributed as part of ROSE itself and depend on the
-# ROSE library.
+# Install or update the ROSE Matrix Testing command-line tools. These are distributed as part of ROSE itself and depend
+# on the ROSE library.
 matrix-install-matrix-tools() {
-    RUNNING_SCRIPT_NEEDS_UPDATE=
     echo
     echo
     echo "================================================================================"
@@ -188,20 +194,23 @@ matrix-install-matrix-tools() {
     echo "================================================================================"
     echo
 
+    # Decide whether we should install/update the tools
     local needs_update=
     local installed_version="$(cat $HOME/rose-installed/latest/key 2>/dev/null)"
     local desired_version="$MATRIX_REPOSITORY $MATRIX_COMMITTISH"
-
-    if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
-	echo "$arg0: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)" >&2
-	return 1
-    elif [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
+    if [ ! -x $HOME/rose-installed/latest/bin/rose-matrix-run ]; then
 	needs_update=yes
     elif [ "$installed_version" != "$desired_version" ]; then
 	needs_update=yes
     fi
 
+    # If update is needed, make sure we know where to get the source code
     if [ -n "$needs_update" ]; then
+	if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
+	    echo "$arg0: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)" >&2
+	    return 1
+	fi
+
 	rm -rf matrix-src
 	git clone "$MATRIX_REPOSITORY" matrix-src
 	(
@@ -218,24 +227,24 @@ matrix-install-matrix-tools() {
 	rm -rf matrix-src
 	echo "$desired_version" >$HOME/rose-installed/latest/key
 
-	# Since we upgraded the tools, we might have upgraded this very script that's running. If so, start
-	# over with the new script.
+	# Since we upgraded the tools, we might have upgraded this very script that's running. Don't actually upgrade
+	# this very script yet because we're running it and that would cause shell interpreter problems. Instead, only
+	# record that it's out of date. (Note: diff exits non-zero (fails) if the files differ).
 	if [ -x "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" ]; then
 	    if ! diff -q "$0" "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave"; then
-		RUNNING_SCRIPT_NEEDS_UPDATE=yes
+		THIS_SCRIPT_OUT_OF_DATE=yes
 	    fi
 	fi
     fi
-    export "PATH=$HOME/rose-installed/latest/bin:$PATH"
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 # If the script that's running is different than the version that's installed, then replace the running script with the
 # new version. This also requires that we restart the script from its beginning or immediately exit.
-matrix-update-running-script() {
+matrix-update-this-script() {
     local restart="$1"
 
-    if [ -n "$RUNNING_SCRIPT_NEEDS_UPDATE" ]; then
+    if [ -n "$THIS_SCRIPT_OUT_OF_DATE" ]; then
 	cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
 	[ -n "$restart" ] && exec bash "$0"
 	exit 0
@@ -297,32 +306,44 @@ matrix-cleanup() {
 #------------------------------------------------------------------------------------------------------------------------
 # Main program...
 
-matrix-update-system-software
+# Try to get the slave's configuration. This works if the slave is already configured, but will fail if the portability
+# testing tools are not yet installed. The reason we want to do this early is that the slave's configuration tells us
+# which version of portability testing tools to use, but it requires that some version is already installed. If we wait
+# until after the RMC/Spock upgrade then the portability tools are no longer installed.
 matrix-get-aws-configuration
+matrix-get-slave-configuration failure_okay
+
+# Update software that will be needed to configure and compile the portability testing tools (and ROSE itself). If
+# RMC/Spock needs to be updated, then any existing portability tools that are installed will no longer work (because
+# their shared libraries were purged) and will be removed.
+matrix-update-system-software
 matrix-install-developer-scripts
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
 
-# This installation of matrix tools depends only on the EC2 User Data settings.
+# Install initial version of portability testing tools if there are none installed (or if they were removed by prior
+# steps of this script).  We need to know where to get the tools, which comes from either the slave configuration we
+# might have downloaded already (preferred), or the AWS EC2 User Data (fallback). This info was already obtained.
 matrix-install-matrix-tools
-rose-matrix-slave-health start
-matrix-update-running-script restart
+[ -n "$SETUP" ] || rose-matrix-slave-health start
+matrix-update-this-script restart
 
+# Here starts the actual testing loop.
 test_number=0
-while true; do
+while [ "$SETUP" = "" ]; do
     test_number=$[test_number + 1]
-    matrix-get-slave-configuration
 
-    # The slave configuration might specify a different version of matrix tools, and we should
-    # Use them. This allows us to update matrix tools while the slave is running.
+    # Get that latest slave configuration and possibly update the portability testing tools. This is done inside the
+    # testing loop so that we can upgrade all slaves even while they're running. Unfortunately, it's not practical
+    # to update the script we're running (we can only do that during the initial setup, or when we're about to exit).
+    matrix-get-slave-configuration
     matrix-install-matrix-tools
 
-    if [ -n "$SETUP" ]; then
-	break
-    elif [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
+    # Obtain the software which is to be tested
+    if [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
 	echo "$arg0: testing is paused (no testable version specified)"
 	rose-matrix-slave-health stop
-	sleep 120
+	sleep 300
 	rose-matrix-slave-health start
 	continue
     fi
@@ -338,6 +359,7 @@ while true; do
     rose-matrix-run $TEST_FLAGS -n1 ~/rose
 done
 
+# Cleanup
 if [ -n "$SETUP" ]; then
     matrix-setup-cron-jobs
     echo
@@ -347,6 +369,6 @@ if [ -n "$SETUP" ]; then
 fi
 
 matrix-cleanup
-rose-matrix-slave-health stop
-matrix-update-running-script
+[ -n "$SETUP" ] || rose-matrix-slave-health stop
+matrix-update-this-script
 exit 0
