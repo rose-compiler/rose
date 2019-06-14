@@ -709,6 +709,14 @@ struct IP_move: P {
     }
 };
 
+// Copies the value from the first argument to the second argument.
+struct IP_mtspr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        d->write(args[1], d->read(args[0]));
+    }
+};
+
 // Multiply high word
 struct IP_mulhw: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1195,7 +1203,7 @@ DispatcherPowerpc::iproc_init()
     iproc_set(powerpc_mfcr,             new Powerpc::IP_mfcr);
     iproc_set(powerpc_mfspr,            new Powerpc::IP_move);
     iproc_set(powerpc_mtcrf,            new Powerpc::IP_mtcrf);
-    iproc_set(powerpc_mtspr,            new Powerpc::IP_move);
+    iproc_set(powerpc_mtspr,            new Powerpc::IP_mtspr);
     iproc_set(powerpc_mulhw,            new Powerpc::IP_mulhw);
     iproc_set(powerpc_mulhwu,           new Powerpc::IP_mulhwu);
     iproc_set(powerpc_mulli,            new Powerpc::IP_mullw);
