@@ -841,7 +841,7 @@ humanDuration(long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
             long minutes = (seconds - hours * 3600) / 60;
             return StringUtility::plural(hours, "hours") + " " + StringUtility::plural(minutes, "minutes");
         } else if (long minutes = seconds / 60) {
-            return StringUtility::plural(minutes, "minutes") + " " + StringUtility::plural(seconds % 60, "secons");
+            return StringUtility::plural(minutes, "minutes") + " " + StringUtility::plural(seconds % 60, "seconds");
         } else {
             return StringUtility::plural(seconds, "seconds");
         }
@@ -2090,6 +2090,289 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dependencies
+class WDependencies: public Wt::WContainerWidget {
+    Session &session_;
+    Wt::WComboBox *dependencyNames_;
+    Wt::WTable *table_;
+public:
+    explicit WDependencies(Session &session, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), session_(session), dependencyNames_(NULL), table_(NULL) {
+        addWidget(new Wt::WText("<h1>Dependencies</h1>"
+                                "<p>These are the dependency settings used when testing the software. A dependency value "
+                                "can be either supported or unsupported. A test that uses only supported dependencies is a "
+                                "supported test and shows up when the GUI is configured to show only supported tests. If a "
+                                "value is enabled then it's broadcasted to the slaves for testing, although slaves can be "
+                                "configured to test only those enabled values that are also supported.</p>"));
+
+        // Big table
+        addWidget(dependencyNames_ = new Wt::WComboBox);
+        addWidget(table_ = new Wt::WTable);
+        table_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
+
+        // End of big table
+        addWidget(new Wt::WText("<hr style=\"border: 1px solid black;\"/><br/>"));
+        Wt::WPushButton *refresh = new Wt::WPushButton("Refresh");
+        refresh->setToolTip("Update table from database");
+        addWidget(refresh);
+
+        update();
+
+        refresh->clicked().connect(this, &WDependencies::update);
+        dependencyNames_->activated().connect(this, &WDependencies::updateTable);
+    }
+
+    void update() {
+        updateDependencyNames();
+        updateTable();
+    }
+
+    void updateDependencyNames() {
+        Wt::WString current = dependencyNames_->currentText();
+        dependencyNames_->clear();
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct name from dependencies order by name");
+        Sawyer::Optional<int> restoreIndex;
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string value = row.get_str(0);
+            if (value == current)
+                restoreIndex = dependencyNames_->count();
+            dependencyNames_->addItem(row.get_str(0));
+        }
+        if (restoreIndex)
+            dependencyNames_->setCurrentIndex(*restoreIndex);
+    }
+
+    // How many tests use each dependency value
+    Sawyer::Container::Map<std::string, size_t>
+    countTestsUsingDependency(const std::string &name) {
+        Sawyer::Container::Map<std::string, size_t> retval;
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select dep.value, count(*)"
+                                                           " from dependencies as dep"
+                                                           " join test_results as test"
+                                                           " on dep.value = test.rmc_" + name +
+                                                           " where dep.name = ?"
+                                                           " group by dep.value")
+                                      ->bind(0, name);
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string value = row.get_str(0);
+            size_t count = row.get_u32(1);
+            retval.insertMaybe(value, 0) += count;
+        }
+        return retval;
+    }
+    
+    void updateTable() {
+        table_->clear();
+        if (dependencyNames_->count() == 0)
+            return;
+        bool canChange = session_.isPublisher(session_.currentUser());
+        std::string name = dependencyNames_->currentText().narrow();
+        Sawyer::Container::Map<std::string, size_t> valueCounts = countTestsUsingDependency(name);
+        SqlDatabase::StatementPtr q = gstate.tx->statement("select value, enabled, supported, comment"
+                                                           " from dependencies"
+                                                           " where name = ?"
+                                                           " order by value")
+                                      ->bind(0, name);
+
+        // Headers for the columns
+        table_->elementAt(0, 1)->addWidget(new Wt::WText("Value"));
+        table_->elementAt(0, 1)->setToolTip("Value of the dependency shown above, usually a version number.");
+        table_->elementAt(0, 2)->addWidget(new Wt::WText("Supported"));
+        table_->elementAt(0, 2)->setToolTip("Supported values for when tests are restricted to supported dependencies only.");
+        table_->elementAt(0, 3)->addWidget(new Wt::WText("Enabled"));
+        table_->elementAt(0, 3)->setToolTip("Enabled values are sent to slaves for testing.");
+        table_->elementAt(0, 4)->addWidget(new Wt::WText("Tests"));
+        table_->elementAt(0, 4)->setToolTip("Number of tests that report that they used this value.");
+        table_->elementAt(0, 5)->addWidget(new Wt::WText("Comment"));
+        table_->elementAt(0, 5)->setToolTip("Arbitrary commentary about this dependency value.");
+        table_->columnAt(5)->setWidth(Wt::WLength(100, Wt::WLength::Percentage));
+
+        // Give all headers the header styling
+        for (int i = 0; i < table_->columnCount(); ++i)
+            table_->elementAt(0, i)->setStyleClass("table-header");
+
+        // Fill in the table body
+        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+            std::string value = row.get_str(0);
+            bool isEnabled = row.get_i32(1) != 0;
+            bool isSupported = row.get_i32(2) != 0;
+            std::string comment = row.get_str(3);
+            int i = table_->rowCount(), j=0;
+
+            // Delete button
+            Wt::WTableCell *cell = table_->elementAt(i, j++);
+            if (canChange && valueCounts.getOrElse(value, 0) == 0) {
+                Wt::WText *remove = new Wt::WText(Wt::WString::fromUTF8("\u2297"));
+                remove->setToolTip("Delete this row");
+                remove->clicked().connect(boost::bind(&WDependencies::removeItem, this, name, value));
+                remove->setStyleClass("text-button");
+                cell->addWidget(remove);
+            }
+
+            // Value
+            cell = table_->elementAt(i, j++);
+            cell->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+            Wt::WText *text = new Wt::WText(value, Wt::TextFormat::PlainText);
+            text->setWordWrap(false);
+            cell->addWidget(text);
+
+            // Supported. Same story for the read-only check box.
+            cell = table_->elementAt(i, j++);
+            Wt::WCheckBox *cb = new Wt::WCheckBox;
+            cb->setCheckState(isSupported ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+            if (canChange) {
+                cb->changed().connect(boost::bind(&WDependencies::setSupported, this, name, value, cb));
+            } else {
+                cb->changed().connect(boost::bind(&WDependencies::setCheckbox, this, cb, isSupported));
+            }
+            cell->setContentAlignment(Wt::AlignmentFlag::AlignCenter);
+            cell->addWidget(cb);
+
+            // Enabled. Making the checkbox readOnly or disabled causes it to also be grayed out and difficult to read.
+            // We don't want that, so instead just connect it to something that forces its value to never change.
+            cell = table_->elementAt(i, j++);
+            cb = new Wt::WCheckBox;
+            cb->setCheckState(isEnabled ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+            if (canChange) {
+                cb->changed().connect(boost::bind(&WDependencies::setEnabled, this, name, value, cb));
+            } else {
+                cb->changed().connect(boost::bind(&WDependencies::setCheckbox, this, cb, isEnabled));
+            }
+            cell->setContentAlignment(Wt::AlignmentFlag::AlignCenter);
+            cell->addWidget(cb);
+
+            // How many tests use this dependency
+            cell = table_->elementAt(i, j++);
+            cell->addWidget(new Wt::WText(boost::lexical_cast<std::string>(valueCounts.getOrElse(value, 0))));
+            cell->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+
+            // Comment
+            cell = table_->elementAt(i, j++);
+            if (canChange) {
+                Wt::WInPlaceEdit *edit = new Wt::WInPlaceEdit(comment);
+                edit->setPlaceholderText(Wt::WString::fromUTF8("\u25a2"));
+                edit->valueChanged().connect(boost::bind(&WDependencies::setComment, this, name, value, edit));
+                edit->lineEdit()->setTextSize(200);
+                cell->addWidget(edit);
+            } else {
+                text = new Wt::WText(comment);
+                text->setWordWrap(false);
+                cell->addWidget(text);
+            }
+        }
+
+        // Special table row for adding a new value
+        if (canChange) {
+            Wt::WLineEdit *itemToAdd = new Wt::WLineEdit;
+
+            Wt::WText *addButton = new Wt::WText(Wt::WString::fromUTF8("\u2295"));
+            addButton->setToolTip("Add this value");
+            addButton->clicked().connect(boost::bind(&WDependencies::addItem, this, name, itemToAdd));
+            addButton->setStyleClass("text-button");
+
+            int i = table_->rowCount();
+            table_->elementAt(i, 0)->addWidget(addButton);
+            table_->elementAt(i, 1)->addWidget(itemToAdd);
+        }
+
+        // Make the padding the same across the entire table.
+        for (int i = 0; i < table_->rowCount(); ++i) {
+            for (int j = 0; j < table_->columnCount(); ++j)
+                table_->elementAt(i, j)->setPadding(3, Wt::Side::Left | Wt::Side::Right);
+        }
+    }
+
+    void authenticationEvent() {
+        update();
+    }
+
+    void setCheckbox(Wt::WCheckBox *cb, bool value) {
+        cb->setCheckState(value ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+    }
+    
+    void setEnabled(const std::string &name, const std::string &value, Wt::WCheckBox *cb) {
+        ASSERT_not_null(cb);
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("update dependencies"
+                      " set enabled = ?"
+                      " where name = ? and value = ?")
+            ->bind(0, cb->checkState() == Wt::CheckState::Checked ? 1 : 0)
+            ->bind(1, name)
+            ->bind(2, value)
+            ->execute();
+        tx->commit();
+    }
+
+    void setSupported(const std::string &name, const std::string &value, Wt::WCheckBox *cb) {
+        ASSERT_not_null(cb);
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("update dependencies"
+                      " set supported = ?"
+                      " where name = ? and value = ?")
+            ->bind(0, cb->checkState() == Wt::CheckState::Checked ? 1 : 0)
+            ->bind(1, name)
+            ->bind(2, value)
+            ->execute();
+        tx->commit();
+    }
+
+    void setComment(const std::string &name, const std::string &value, Wt::WInPlaceEdit *edit) {
+        ASSERT_not_null(edit);
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("update dependencies"
+                      " set comment = ?"
+                      " where name = ? and value = ?")
+            ->bind(0, edit->text().narrow())
+            ->bind(1, name)
+            ->bind(2, value)
+            ->execute();
+        tx->commit();
+    }
+
+    void removeItem(const std::string &name, const std::string &value) {
+        if (countTestsUsingDependency(name).getOrElse(value, 0) > 0)
+            return; // Don't remove if tests use it
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("delete from dependencies"
+                      " where name = ? and value = ?")
+            ->bind(0, name)
+            ->bind(1, value)
+            ->execute();
+        tx->commit();
+        updateTable();
+    }
+    
+    void addItem(const std::string &name, Wt::WLineEdit *edit) {
+        ASSERT_forbid(name.empty());
+        ASSERT_not_null(edit);
+        std::string value = boost::trim_copy(edit->text().narrow());
+        if (value.empty())
+            return;
+
+        // Don't add it if it exists already
+        if (gstate.tx->statement("select count(*) from dependencies"
+                                 " where name = ? and value = ?")
+            ->bind(0, name)
+            ->bind(1, value)
+            ->execute_int() > 0) {
+            edit->setText("");
+            return;                                     // already exists
+        }
+
+        // Add it
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("insert into dependencies (name, value, enabled)"
+                      " values(?, ?, 0)")
+            ->bind(0, name)
+            ->bind(1, value)
+            ->execute();
+        tx->commit();
+        updateTable();
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dashboard
 class WDashboard: public Wt::WContainerWidget {
     Wt::WTable *languageGrid_, *slaveGrid_, *testArticleGrid_;
@@ -2278,6 +2561,7 @@ public:
                 osNameBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Left);
                 osScoreBox->addWidget(new Wt::WText(boost::lexical_cast<std::string>(osScore) + "%"));
                 osScoreBox->setStyleClass(redToGreen(osScore, 0, 100));
+                osScoreBox->setContentAlignment(Wt::AlignmentFlag::AlignRight);
                 osScoreBox->setPadding(Wt::WLength(0.5, Wt::WLength::FontEm), Wt::Side::Left | Wt::Side::Right);
                 osCountBox->addWidget(new Wt::WText("of " + StringUtility::plural(total, "tests")));
                 osCountBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Right);
@@ -2311,7 +2595,9 @@ public:
         slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
         slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
         slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
+        slaveGrid_->elementAt(0, 2)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
         slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Disk avail</b>"));
+        slaveGrid_->elementAt(0, 3)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
         slaveGrid_->elementAt(0, 4)->addWidget(new Wt::WText("<b>Last event</b>"));
         slaveGrid_->elementAt(0, 5)->addWidget(new Wt::WText("<b>Test OS</b>"));
         slaveGrid_->elementAt(0, 6)->addWidget(new Wt::WText("<b>Test status</b>"));
@@ -2325,7 +2611,10 @@ public:
 
             std::string pct = boost::lexical_cast<std::string>(round(100.0*row.get_dbl(2))) + "%";
             slaveGrid_->elementAt(i, 2)->addWidget(new Wt::WText(pct));
+            slaveGrid_->elementAt(i, 2)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+
             slaveGrid_->elementAt(i, 3)->addWidget(new Wt::WText(humanDiskSize(row.get_u32(3))));
+            slaveGrid_->elementAt(i, 3)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
 
             std::string event = row.get_str(4);
             int testId = row.get_i32(5);
@@ -2357,6 +2646,13 @@ public:
             // Highlight the disk space in red if free space is getting tight.
             if (row.get_u32(3) < 10*1024)
                 slaveGrid_->elementAt(i, 3)->setStyleClass(redToGreen(0, 0, 1));
+        }
+
+        // Add some padding to all the table cells
+        for (int i = 0; i < slaveGrid_->rowCount(); ++i) {
+            for (int j = 0; j < slaveGrid_->columnCount(); ++j) {
+                slaveGrid_->elementAt(i, j)->setPadding(3, Wt::Side::Left | Wt::Side::Right);
+            }
         }
     }
 };
@@ -3131,7 +3427,8 @@ public:
         wVersions_->activated().connect(this, &WFindWorkingConfig::selectNewVersion);
 
         // Build a table showing some results
-        addWidget(new Wt::WText("<p>This table shows the number of tests that pass as a percent of the number of tests that "
+        addWidget(new Wt::WText("<h1>Popular Confgurations</h1>"
+                                "<p>This table shows the number of tests that pass as a percent of the number of tests that "
                                 "were run subject to the constraints listed below.  The table is organized so each row is a "
                                 "compiler and each column is a boost version since these are the two most sensitive ROSE "
                                 "dependencies. Green represents cases where all tested configurations passed, and red "
@@ -4121,6 +4418,7 @@ class WApplication: public Wt::WApplication {
     WErrors *errors_;
     WSettings *settings_;
     WDevelopersTab *developers_;
+    WDependencies *dependencies_;
     Wt::WTabWidget *tabs_;
     Session session_;
     WCreateAdminAccount *setup_;
@@ -4172,6 +4470,7 @@ public:
         }
         styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
+        // For the dashboard
         styleSheet().addRule(".language-status-box",
                              "border-radius: 15px;");
         styleSheet().addRule(".os-status-table",
@@ -4180,6 +4479,15 @@ public:
                              "border-top: 2px solid black;"
                              "border-bottom: 2px solid black;"
                              "background-color: " + Rose::Color::RGB(1.00, 0.92, 0.18).toHtml() + ";");
+
+        // For the dependencies
+        styleSheet().addRule(".table-header",
+                             "font-weight: bold;"
+                             "border-bottom: 2px solid black;"
+                             "background-color: " + Rose::Color::HSV(0, 0, 0.9).toHtml() + ";"
+                             "padding: 5px;");
+        styleSheet().addRule(".text-button",
+                             "cursor: pointer;");
 
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");
@@ -4200,8 +4508,10 @@ public:
         vbox->addWidget(tabs_);
         mlog[INFO] <<"creating tab: Dashboard\n";
         tabs_->addTab(dashboard_ = new WDashboard, "Dashboard");
-        mlog[INFO] <<"creating tab: Public view\n";
-        tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Public");
+        mlog[INFO] <<"creating tab: Dependencies\n";
+        tabs_->addTab(dependencies_ = new WDependencies(session_), "Dependencies");
+        mlog[INFO] <<"creating tab: Configurations\n";
+        tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Configs");
         mlog[INFO] <<"creating tab: Overview\n";
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         mlog[INFO] <<"creating tab: Details\n";
@@ -4241,6 +4551,7 @@ private:
         }
         settings_->authenticationEvent();
         developers_->authenticationEvent();
+        dependencies_->authenticationEvent();
     }
 
     void showSetupView() {
@@ -4251,6 +4562,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
         tabs_->setTabHidden(tabs_->indexOf(developers_),                HIDE);
+        tabs_->setTabHidden(tabs_->indexOf(dependencies_),              HIDE);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     SHOW);
         tabs_->setCurrentIndex(tabs_->indexOf(setup_));
     }
@@ -4263,6 +4575,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    SHOW);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  SHOW);
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW);
+        tabs_->setTabHidden(tabs_->indexOf(dependencies_),              SHOW);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         tabs_->setCurrentIndex(tabs_->indexOf(resultsConstraints_));
     }
@@ -4275,6 +4588,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW); // shows the login form
+        tabs_->setTabHidden(tabs_->indexOf(dependencies_),              SHOW);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         tabs_->setCurrentIndex(tabs_->indexOf(dashboard_));
     }
@@ -4287,6 +4601,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(errors_),                    HIDE);
         tabs_->setTabHidden(tabs_->indexOf(settings_),                  HIDE);
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW);
+        tabs_->setTabHidden(tabs_->indexOf(dependencies_),              HIDE);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
         tabs_->setCurrentIndex(tabs_->indexOf(developers_));
     }

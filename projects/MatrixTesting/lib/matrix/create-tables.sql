@@ -64,7 +64,8 @@ create table dependencies (
     name varchar(64) not null,                          -- name of package, such as "boost", "compiler", "languages".
     value varchar(64) not null,                         -- argument(s) for the "rmc_" function
     enabled integer not null,                           -- whether this version should be tested
-    supported integer not null				-- whether this is an officially supported configuration
+    supported integer not null,				-- whether this is an officially supported configuration
+    comment varchar(256) not null default ""
 );
 
 --
