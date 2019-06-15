@@ -913,7 +913,18 @@ humanDiskSize(size_t mib) {
         return boost::lexical_cast<std::string>(mib) + " MiB";
     }
 }
-    
+
+// If the string looks like a URL, then turn it into a link that opens in a new tab or window.
+static std::string
+linkify(const std::string &s) {
+    boost::regex urlRe("https?://.*");
+    if (boost::regex_match(s, urlRe)) {
+        return "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"" + s + "\">" + s + "</a>";
+    } else {
+        return s;
+    }
+}
+
 // Clip val to be in the interval [minVal,maxVal]
 template<typename T>
 static T
@@ -2146,30 +2157,6 @@ public:
         return retval;
     }
 
-    // For each language that has a test result, return the number of test results. The tests must also satisfy the conditon.
-    LanguageCounts getLanguageCounts(const std::string &condition) {
-        std::string tableName = languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
-        std::string projectVersionQuery =
-            "select max(rose_date) from test_results";
-        std::string enabledLanguagesQuery =
-            "select distinct value from dependencies where name = 'languages' and enabled > 0";
-        // If you change the conditions here, consider updated the footnote below the language status table.
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select rmc_languages, count(*) from " + tableName +
-                                                           " where rose_date = (" + projectVersionQuery + ")"
-                                                           " and status <> 'setup' "
-                                                           " and blacklisted = '' "
-                                                           " and " + condition +
-                                                           " and rmc_languages in (" + enabledLanguagesQuery + ")"
-                                                           " group by rmc_languages");
-        LanguageCounts retval;
-        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            std::string languageSet = row.get_str(0);
-            unsigned count = row.get_u32(1);
-            retval.insert(languageSet, count);
-        }
-        return retval;
-    }
-
     // Updates information about the version being tested
     void updateTestArticleGrid() {
         ASSERT_not_null(testArticleGrid_);
@@ -2187,7 +2174,7 @@ public:
                     testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
                 }
             } else if (row.get_str(0) == "TEST_REPOSITORY") {
-                testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + linkify(row.get_str(1))));
             } else if (row.get_str(0) == "TEST_ENVIRONMENT_VERSION") {
                 testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Environment:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "TEST_FLAGS") {
@@ -2195,7 +2182,7 @@ public:
             } else if (row.get_str(0) == "TEST_OS") {
                 testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "MATRIX_REPOSITORY") {
-                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + linkify(row.get_str(1))));
             } else if (row.get_str(0) == "MATRIX_COMMITTISH") {
                 testArticleGrid_->elementAt(6, 0)->addWidget(new Wt::WText("<b>Tool version:</b> " + row.get_str(1)));
             } else if (row.get_str(0) == "NOTICE" && !row.get_str(1).empty()) {
@@ -2204,46 +2191,110 @@ public:
             }
         }
     }
-    
+
     // Update the languageGrid_ with latest database results.
     void updateLanguageGrid() {
         ASSERT_not_null(languageGrid_);
         ASSERT_not_null(languageVersion_);
+        languageGrid_->clear();
 
         // What software version was tested by the latest test?
-        std::string softwareVersion;
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select max(rose_date) from test_results");
-        SqlDatabase::Statement::iterator row = q->begin();
-        if (row != q->end()) {
-            time_t date = row.get_u32(0);               // tested software version date
-            std::string hash = gstate.tx->statement("select rose from test_results where rose_date = ? limit 1")
-                               ->bind(0, date)
-                               ->execute_string();
-            languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) + " created " + humanLocalTime(date) + "<sup>*</sup>");
-        } else {
-            languageVersion_->setText("");
+        {
+            std::string softwareVersion;
+            SqlDatabase::StatementPtr q = gstate.tx->statement("select max(rose_date) from test_results");
+            SqlDatabase::Statement::iterator row = q->begin();
+            if (row != q->end()) {
+                time_t date = row.get_u32(0);               // tested software version date
+                std::string hash = gstate.tx->statement("select rose from test_results where rose_date = ? limit 1")
+                                   ->bind(0, date)
+                                   ->execute_string();
+                languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) +
+                                          " created " + humanLocalTime(date) + "<sup>*</sup>");
+            } else {
+                languageVersion_->setText("");
+            }
+        }
+        
+        // Join two tables: the first counts the total number of tests per language set and operating system, the second counts
+        // the number of passing tests for the same language set and operating system.
+        std::string tableName = languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
+        std::string projectVersionQuery = "select max(rose_date) from test_results";
+        std::string enabledLanguagesQuery = "select distinct value from dependencies where name = 'languages' and enabled > 0";
+        SqlDatabase::StatementPtr stmt =
+            gstate.tx->statement("select t1.rmc_languages as languages, t1.os as os, t1.total, coalesce(t2.npass, 0)"
+                                 " from ("
+                                 "     select rmc_languages, os, count(*) as total"
+                                 "     from " + tableName +
+                                 "     where rose_date = (" + projectVersionQuery + ")"
+                                 "     and blacklisted = ''"
+                                 "     and status <> 'setup'"
+                                 "     and rmc_languages in (" + enabledLanguagesQuery + ")"
+                                 "     group by rmc_languages, os) as t1"
+                                 " left join ("
+                                 "     select rmc_languages, os, count(*) as npass"
+                                 "     from " + tableName +
+                                 "     where rose_date = (" + projectVersionQuery + ")"
+                                 "     and blacklisted = ''"
+                                 "     and status = 'end'"
+                                 "     and rmc_languages in (" + enabledLanguagesQuery + ")"
+                                 "     group by rmc_languages, os) as t2"
+                                 " on t1.rmc_languages = t2.rmc_languages"
+                                 " and t1.os = t2.os"
+                                 " order by languages, os");
+
+        SqlDatabase::Statement::iterator row = stmt->begin();
+        for (int boxNumber = 0; row != stmt->end(); ++boxNumber) {
+            std::string languages = row.get_str(0);
+
+            // Create the language box and a placeholder for its text.
+            Wt::WText *langText = new Wt::WText;
+            langText->setInline(false);
+            int boxRow = boxNumber / languageGridColumns_;
+            int boxCol = boxNumber % languageGridColumns_;
+            Wt::WTableCell *langBox = languageGrid_->elementAt(boxRow, boxCol);
+            langBox->setPadding(9);
+            langBox->addWidget(langText);
+
+            // Create the grid for the operating systems within the language box
+            Wt::WTable *osGrid = new Wt::WTable;
+            osGrid->setStyleClass("os-status-table");
+            langBox->addWidget(osGrid);
+
+            // Create the operating system sub-boxes within the language box.
+            size_t langTotal = 0, langPass = 0;
+            for (size_t osNumber = 0; row != stmt->end() && row.get_str(0) == languages; ++osNumber, ++row) {
+                std::string os = row.get_str(1);
+                size_t total = row.get_u32(2);
+                size_t npass = row.get_u32(3);
+                langTotal += total;
+                langPass += npass;
+
+                // create the OS sub-box
+                Wt::WTableCell *osNameBox = osGrid->elementAt(osNumber, 0);
+                Wt::WTableCell *osScoreBox = osGrid->elementAt(osNumber, 1);
+                Wt::WTableCell *osCountBox = osGrid->elementAt(osNumber, 2);
+                unsigned osScore = round(100.0 * npass / total);
+                osNameBox->addWidget(new Wt::WText(os));
+                osNameBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Left);
+                osScoreBox->addWidget(new Wt::WText(boost::lexical_cast<std::string>(osScore) + "%"));
+                osScoreBox->setStyleClass(redToGreen(osScore, 0, 100));
+                osScoreBox->setPadding(Wt::WLength(0.5, Wt::WLength::FontEm), Wt::Side::Left | Wt::Side::Right);
+                osCountBox->addWidget(new Wt::WText("of " + StringUtility::plural(total, "tests")));
+                osCountBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Right);
+            }
+
+            // Update the language text
+            size_t langScore = round(100.0 * langPass / langTotal);
+            langText->setText("<b>" + languages + "</b><br/>" +
+                              boost::lexical_cast<std::string>(langScore) + "% passing<br/>" +
+                              StringUtility::plural(langTotal, "tests") + " performed");
+            langBox->setStyleClass("language-status-box " + redToGreen(langScore, 0, 100, langTotal));
         }
 
-        std::vector<std::string> languages = languageSets();
-        LanguageCounts passed = getLanguageCounts("status = 'end'");
-        LanguageCounts failed = getLanguageCounts("status <> 'end'");
-        languageGrid_->clear();
-        for (size_t i=0; i<languages.size(); ++i) {
-            size_t nPassed = passed.getOrElse(languages[i], 0);
-            size_t nFailed = failed.getOrElse(languages[i], 0);
-            size_t nTests = nPassed + nFailed;
-            size_t score = nTests > 0 ? round(100.0 * nPassed / nTests) : 0.0;
-            Wt::WText *text = new Wt::WText("<b>" + languages[i] + "</b><br/>" +
-                                            boost::lexical_cast<std::string>(score) + "% passing<br/>" +
-                                            StringUtility::plural(nTests, "tests") + " performed");
-            text->setTextAlignment(Wt::AlignCenter);
-            Wt::WTableCell *cell = languageGrid_->elementAt(i / languageGridColumns_, i % languageGridColumns_);
-            cell->addWidget(text);
-            cell->setStyleClass("language-status-box " + redToGreen(score, 0, 100, std::max(nTests, size_t(1))));
-            cell->setPadding(5);
-        }
         for (int i = 0; i < languageGrid_->rowCount(); ++i)
             languageGrid_->rowAt(i)->setHeight(200);
+        if (languageGrid_->rowCount() == 0)
+            languageGrid_->elementAt(0, 0)->addWidget(new Wt::WText("No results yet."));
     }
 
     // Update test slaves
@@ -2773,7 +2824,7 @@ public:
             // distinguish between, for example, the same compiler error message for the ROSE library vs. a test case.
             grid_->elementAt(bigRow+0, 1)->addWidget(new Wt::WText(status + "<br/>"));
             if (isBlacklisted) {
-                Wt::WImage *img = new Wt::WImage("blacklisted.png", "Blacklisted");
+                Wt::WImage *img = new Wt::WImage("/matrix-docroot/blacklisted.png", "Blacklisted");
                 img->setToolTip("Blacklisted");
                 grid_->elementAt(bigRow+0, 1)->addWidget(img);
             }
@@ -4123,6 +4174,8 @@ public:
 
         styleSheet().addRule(".language-status-box",
                              "border-radius: 15px;");
+        styleSheet().addRule(".os-status-table",
+                             "border: 1px solid black;");
         styleSheet().addRule(".notice",
                              "border-top: 2px solid black;"
                              "border-bottom: 2px solid black;"
