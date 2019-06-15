@@ -25,6 +25,7 @@ void yy_switch_to_buffer(YY_BUFFER_STATE buffer);
 
 extern char* yytext;
 extern int yylex (void);
+extern int yyparse(void);
 
 //
 // auxiliary functions

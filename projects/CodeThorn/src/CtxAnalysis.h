@@ -3,6 +3,7 @@
 
 #include "CtxLattice.h"
 #include "CtxTransfer.h"
+#include "CtxAttribute.h"
 
 namespace CodeThorn
 {
@@ -38,11 +39,11 @@ struct CtxPropertyStateFactory : PropertyStateFactory
 //! analysis class that wraps a context-sensitive analysis around
 //!   a non-context-sensitive forward analysis.
 template <class CallContext>
-struct CtxAnalysis : CodeThorn::DFAnalysisBase
+struct CtxAnalysis : DFAnalysisBase
 {
-    typedef CodeThorn::DFAnalysisBase base;
-    typedef CallContext               context_t;
-    typedef CtxLattice<context_t>     context_lattice_t;
+    typedef DFAnalysisBase        base;
+    typedef CallContext           context_t;
+    typedef CtxLattice<context_t> context_lattice_t;
 
     //
     CtxAnalysis( DFAnalysisBase&       compAnalysis,
@@ -92,11 +93,12 @@ struct CtxAnalysis : CodeThorn::DFAnalysisBase
     }
 
   protected:
-    DFAstAttribute*
-    createDFAstAttribute(Lattice* elem)
+    CtxAttribute<CallContext>*
+    createDFAstAttribute(Lattice* elem) ROSE_OVERRIDE
     {
-      ROSE_ASSERT(false);
-      return NULL;
+      context_lattice_t* lat = dynamic_cast<context_lattice_t*>(elem);
+
+      return new CtxAttribute(subAnalysis, elem);
     }
 
   private:

@@ -1,6 +1,6 @@
 
-#ifndef CTXCONTEXTS_H
-#define CTXCONTEXTS_H 1
+#ifndef CTX_CALLSTRINGS_H
+#define CTX_CALLSTRINGS_H 1
 
 #include <vector>
 
@@ -165,4 +165,4 @@ std::ostream& operator<<(std::ostream& os, const InfiniteContext& el);
 
 } // namespace CodeThorn
 
-#endif /* CTXCONTEXTS_H */
+#endif /* CTX_CALLSTRINGS_H */
