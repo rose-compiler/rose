@@ -2406,7 +2406,8 @@ public:
         languageOnlySupported_->changed().connect(this, &WDashboard::update);
         addWidget(languageGrid_ = new Wt::WTable);
         languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
-        addWidget(new Wt::WText("<small><sup>*</sup> Considering only non-blacklisted tests with valid setup.</small>"));
+        addWidget(new Wt::WText("<small><sup>*</sup> Considering only non-blacklisted tests with valid setup; failure is anything "
+                                "short of complete success.</small>"));
 
         // Grid of slaves running
         addWidget(new Wt::WText("<h1>Slave status</h1>"));
@@ -2428,17 +2429,6 @@ public:
         updateSlaveGrid();
     }
     
-
-    // What sets of languages are being tested?
-    std::vector<std::string> languageSets() {
-        std::vector<std::string> retval;
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct value from dependencies"
-                                                           " where name = 'languages' and enabled > 0"
-                                                           " order by value");
-        for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
-            retval.push_back(row.get_str(0));
-        return retval;
-    }
 
     // Updates information about the version being tested
     void updateTestArticleGrid() {
@@ -2474,25 +2464,22 @@ public:
             }
         }
     }
-
+    
     // Update the languageGrid_ with latest database results.
     void updateLanguageGrid() {
         ASSERT_not_null(languageGrid_);
         ASSERT_not_null(languageVersion_);
         languageGrid_->clear();
+        Sawyer::Container::Map<std::string, size_t> nErrorTypes = countDistinctErrors();
 
         // What software version was tested by the latest test?
         {
             std::string softwareVersion;
-            SqlDatabase::StatementPtr q = gstate.tx->statement("select max(rose_date) from test_results");
+            SqlDatabase::StatementPtr q = gstate.tx->statement("select rose, rose_date from test_results where " + projectVersionClause() + " limit 1");
             SqlDatabase::Statement::iterator row = q->begin();
             if (row != q->end()) {
-                time_t date = row.get_u32(0);               // tested software version date
-                std::string hash = gstate.tx->statement("select rose from test_results where rose_date = ? limit 1")
-                                   ->bind(0, date)
-                                   ->execute_string();
-                languageVersion_->setText("Results for commit " + humanSha1(hash, HUMAN_TERSE) +
-                                          " created " + humanLocalTime(date) + "<sup>*</sup>");
+                languageVersion_->setText("Results for commit " + humanSha1(row.get_str(0), HUMAN_TERSE) +
+                                          " created " + humanLocalTime(row.get_u32(1)) + "<sup>*</sup>");
             } else {
                 languageVersion_->setText("");
             }
@@ -2500,26 +2487,23 @@ public:
         
         // Join two tables: the first counts the total number of tests per language set and operating system, the second counts
         // the number of passing tests for the same language set and operating system.
-        std::string tableName = languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
-        std::string projectVersionQuery = "select max(rose_date) from test_results";
-        std::string enabledLanguagesQuery = "select distinct value from dependencies where name = 'languages' and enabled > 0";
         SqlDatabase::StatementPtr stmt =
             gstate.tx->statement("select t1.rmc_languages as languages, t1.os as os, t1.total, coalesce(t2.npass, 0)"
                                  " from ("
                                  "     select rmc_languages, os, count(*) as total"
-                                 "     from " + tableName +
-                                 "     where rose_date = (" + projectVersionQuery + ")"
+                                 "     from " + testResultsTable() +
+                                 "     where " + projectVersionClause() +
                                  "     and blacklisted = ''"
                                  "     and status <> 'setup'"
-                                 "     and rmc_languages in (" + enabledLanguagesQuery + ")"
+                                 "     and " + enabledLanguagesClause() +
                                  "     group by rmc_languages, os) as t1"
                                  " left join ("
                                  "     select rmc_languages, os, count(*) as npass"
-                                 "     from " + tableName +
-                                 "     where rose_date = (" + projectVersionQuery + ")"
+                                 "     from " + testResultsTable() +
+                                 "     where " + projectVersionClause() +
                                  "     and blacklisted = ''"
                                  "     and status = 'end'"
-                                 "     and rmc_languages in (" + enabledLanguagesQuery + ")"
+                                 "     and " + enabledLanguagesClause() +
                                  "     group by rmc_languages, os) as t2"
                                  " on t1.rmc_languages = t2.rmc_languages"
                                  " and t1.os = t2.os"
@@ -2569,9 +2553,14 @@ public:
 
             // Update the language text
             size_t langScore = round(100.0 * langPass / langTotal);
+            size_t langFailures = langTotal - langPass;
             langText->setText("<b>" + languages + "</b><br/>" +
                               boost::lexical_cast<std::string>(langScore) + "% passing<br/>" +
-                              StringUtility::plural(langTotal, "tests") + " performed");
+                              StringUtility::plural(langTotal, "tests") + " performed, " +
+                              (0 == langFailures ? "all passed" :
+                               boost::lexical_cast<std::string>(langFailures) + " failed") + "<br/>" +
+                              StringUtility::plural(nErrorTypes.getOrElse(languages, 0), "distinct errors"));
+                              
             langBox->setStyleClass("language-status-box " + redToGreen(langScore, 0, 100, langTotal));
         }
 
@@ -2654,6 +2643,43 @@ public:
                 slaveGrid_->elementAt(i, j)->setPadding(3, Wt::Side::Left | Wt::Side::Right);
             }
         }
+    }
+
+private:
+    std::string testResultsTable() {
+        return languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
+    }
+    
+    // SQL "where" condition for selecting the thing that's being tested.
+    std::string projectVersionClause() {
+        return "rose_date = (select max(rose_date) from test_results)";
+    }
+
+    std::string enabledLanguagesClause() {
+        return "rmc_languages in (select distinct value from dependencies where name = 'languages' and enabled > 0)";
+    }
+    
+    // Number of distinct error messages per language
+    Sawyer::Container::Map<std::string, size_t>
+    countDistinctErrors() {
+        Sawyer::Container::Map<std::string, size_t> retval;
+        SqlDatabase::StatementPtr stmt =
+            gstate.tx->statement("select count(*), rmc_languages from ("
+                                 "     select rmc_languages, status, first_error"
+                                 "     from " + testResultsTable() +
+                                 "     where " + projectVersionClause() +
+                                 "     and blacklisted = ''"
+                                 "     and status <> 'end' and status <> 'setup'"
+                                 "     and " + enabledLanguagesClause() +
+                                 "     group by rmc_languages, status, first_error"
+                                 " ) as errors"
+                                 " group by rmc_languages");
+        for (SqlDatabase::Statement::iterator row = stmt->begin(); row != stmt->end(); ++row) {
+            size_t count = row.get_u32(0);
+            std::string languages = row.get_str(1);
+            retval.insert(languages, count);
+        }
+        return retval;
     }
 };
 
@@ -3407,7 +3433,7 @@ public:
         depLabels_.push_back("Boost version");
 
         depNames_.push_back("languages");
-        depLabels_.push_back("Frontend languages");
+        depLabels_.push_back("Analysis languages");
 
         depNames_.push_back("edg");
         depLabels_.push_back("EDG version");
@@ -3482,6 +3508,13 @@ public:
         }
     }
 
+    void adjustColumnWidths() {
+        for (int j = 1; j < tableModel_->columnCount(); ++j) {
+            tableView_->setColumnAlignment(j, Wt::AlignmentFlag::AlignRight);
+            tableView_->setColumnWidth(j, Wt::WLength(4, Wt::WLength::FontEm));
+        }
+    }
+
     void clearConstraints() {
         bool needUpdate = false;
         suppressCountUpdates_ = true;
@@ -3495,6 +3528,7 @@ public:
         if (needUpdate)
             updateCounts();
         tableModel_->updateModel(deps_);
+        adjustColumnWidths();
     }
 
     void setPassCriteria(const std::string &reachedTestName) {
@@ -3635,6 +3669,7 @@ public:
         }
 
         tableModel_->updateModel(deps_);
+        adjustColumnWidths();
     }
 
 private:
