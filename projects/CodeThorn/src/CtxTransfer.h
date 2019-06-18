@@ -20,7 +20,7 @@ namespace CodeThorn
 namespace
 {
   inline
-  bool isCallContextModifier(CodeThorn::Labeler& labeler, CodeThorn::Label lbl)
+  bool isCallContextModifier(Labeler& labeler, Label lbl)
   {
     return (  labeler.isFunctionCallLabel(lbl)
            || labeler.isFunctionCallReturnLabel(lbl)
@@ -30,23 +30,33 @@ namespace
   //
   // auxiliary functors
 
+  //! calls transfer on the TfObject.
+  //! \tparam TfObject either a node (source) or an edge
+  template <class TfObject>
   struct ComponentTransfer
   {
-      ComponentTransfer(CodeThorn::DFTransferFunctions& comptrans, CodeThorn::Edge edge)
-      : component(comptrans), theEdge(edge)
+      ComponentTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
+      : component(comptrans), object(tfobj)
       {}
 
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(theEdge, sg::deref(p.second));
-        std::cerr << "t " << p.second << std::endl;
+        component.transfer(object, sg::deref(p.second));
       }
 
     private:
-      CodeThorn::DFTransferFunctions& component;
-      CodeThorn::Edge                 theEdge;
+      DFTransferFunctions& component;
+      TfObject             object;
   };
+
+  template <class TfObject>
+  inline
+  ComponentTransfer<TfObject>
+  componentTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
+  {
+    return ComponentTransfer<TfObject>(comptrans, tfobj);
+  }
 }
 
 
@@ -86,13 +96,23 @@ struct CtxTransfer : DFTransferFunctions
     //! actual transfer function.
     //! \details computes call context changes for call and return labels
     //! \note the method does not override
-    void transfer(CodeThorn::Label lbl, ctx_lattice_t& lat);
+    void transfer(Label lbl, ctx_lattice_t& lat);
+
+    //! handles transfers on edges
+    //! \note CURRENTLY ONLY CALLED form post-info processing
+    void transfer(Label lbl, Lattice& element) ROSE_OVERRIDE
+    {
+      ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
+
+      this->transfer(lbl, lat);
+      std::for_each(lat.begin(), lat.end(), componentTransfer(component, lbl));
+    }
 
     //! this method is invoked from the solver/worklist algorithm and
     //!   calls the component's transfer function for each context.
     //!   It also calls the concrete transfer function (above) to
     //!   handle context changes.
-    void transfer(CodeThorn::Edge edge, CodeThorn::Lattice& element) ROSE_OVERRIDE;
+    void transfer(Edge edge, Lattice& element) ROSE_OVERRIDE;
 
 
   private:
@@ -131,8 +151,8 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 {
   ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-  std::for_each(lat.begin(), lat.end(), ComponentTransfer(component, edge));
-  this->transfer(edge.source(), lat);
+  this->transfer(edge.source(), element);
+  std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
 }
 
 } // namespace CodeThorn
