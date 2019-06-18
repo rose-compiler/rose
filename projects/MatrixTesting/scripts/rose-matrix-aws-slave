@@ -298,6 +298,50 @@ matrix-maybe-remove-os-images() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
+# Amount of free disk space for filesystem containing the CWD, measured in kB
+matrix-free-space() {
+    (unset POSIXLY_CORRECT && df . |tail -n +2 |head -n1 |tr -s ' ' '\t' |cut -f4)
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Reclaim some disk free space by removing old software installed by RMC/Spock on the testing systems.
+matrix-reclaim-disk() {
+    local min_free_space="$1" # kB
+    [ -d ~/rose-installed/latest/var/matrix/spock/var/installed ] || return 0
+
+    (
+	cd ~/rose-installed/latest/var/matrix/spock/var/installed
+	ls -tr */*.used |cat |sed 's/\.used//' |while read installed; do
+	    # Check free space
+	    if [ $(matrix-free-space) -lt $min_free_space ]; then
+		# Get the name of the package
+		local package_name="$(sed -n "/^package/ s/package:[ \t]*'\(.*\)'.*/\1/p" <"$installed.yaml")"
+		if [ "$package_name" = "" ]; then
+		    package_name="$(sed -n '/^package/ s/package:[ \t]*\([-_a-zA-Z0-9]*\)[ \t]*$/\1/p' <"$installed.yaml")"
+		fi
+
+		# Avoid removing compilers and other important things
+		case "$package_name" in
+		    spock)                # Spock itself
+			continue
+			;;
+		    gnu-*|llvm-*|intel-*) # compilers
+			continue
+			;;
+		    *-generatation)       # compiler code generators
+			continue
+			;;
+
+		esac
+
+		echo "removing $package_name as $installed"
+		rm -rf "$installed.used" "$installed.yaml" "$installed"
+	    fi
+	done
+    )
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Clean up some things
 matrix-cleanup() {
     rm -f crontab matrix-config
@@ -332,6 +376,10 @@ matrix-update-this-script restart
 test_number=0
 while [ "$SETUP" = "" ]; do
     test_number=$[test_number + 1]
+
+    # Delete software installed by the testing slaves until we have at least the specified amount of free space,
+    # measured in kB. We do this by removing the least recently used packages first.
+    matrix-reclaim-disk $[20*1024*1024]
 
     # Get that latest slave configuration and possibly update the portability testing tools. This is done inside the
     # testing loop so that we can upgrade all slaves even while they're running. Unfortunately, it's not practical

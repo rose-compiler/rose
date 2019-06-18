@@ -2578,7 +2578,7 @@ public:
         SqlDatabase::StatementPtr stmt =
             gstate.tx->statement("select name, timestamp, load_ave, free_space, event, test_id"
                                  " from slave_health"
-                                 " where timestamp >= " + boost::lexical_cast<std::string>(time(NULL) - 48*84600) +
+                                 " where timestamp >= " + boost::lexical_cast<std::string>(time(NULL) - 4*84600) +
                                  " order by name");
 
         slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));

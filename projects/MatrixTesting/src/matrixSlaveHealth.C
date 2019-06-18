@@ -92,10 +92,12 @@ slaveName() {
     char buf[64];
 
     std::string userName;
-    if (-1 == getlogin_r(buf, sizeof buf)) {
-        userName = "unknown";
-    } else {
+    if (getlogin_r(buf, sizeof buf) == 0) {
         userName = buf;
+    } else if (const char *s = getenv("USER")) {
+        userName = s;
+    } else {
+        userName = "unknown";
     }
 
     std::string hostName;
