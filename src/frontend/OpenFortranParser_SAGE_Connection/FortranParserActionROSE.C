@@ -6487,66 +6487,56 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(id != NULL);
         SgName variableName = id->text;
 
-        // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
-        // printf ("WARNING: This use of trace_back_through_parent_scopes_lookup_variable_symbol() used the side effect of building a symbol if the reference is not found! \n");
-        // ROSE_ASSERT(false);
-
         // Look for the symbol associated with the variable given by the name starting
         // at the current scope and working backwards through the parent scopes.
-        // SgVariableSymbol* variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
         SgVariableSymbol* variableSymbol =
-        trace_back_through_parent_scopes_lookup_variable_symbol(
-                variableName, getTopOfScopeStack());
+        trace_back_through_parent_scopes_lookup_variable_symbol(variableName, getTopOfScopeStack());
 
         SgExpression* constructedReference = NULL;
 
-        // To be referenced in the common block it should have been defined already, but this is not required
-        // ROSE_ASSERT(variableSymbol != NULL);
-        // printf ("In c_action_common_block_object(): variableSymbol = %p \n",variableSymbol);
         if (variableSymbol != NULL)
         {
+            if (hasShapeSpecList == true)
+            {
+             // There must be a scalar variable declaration for this symbol because we found a symbol and
+             // there is a shape-spec-list (the array specification can't be in two places).  Thus the
+             // common-block-object acts like a dimension statement and the variable type should be
+             // converted into an array type (see c_action_dimension_decl) [Rasmussen, 2019.06.19].
+
+             // We need to get the declaration of the variable
+                SgInitializedName* arrayVariable = variableSymbol->get_declaration();
+                ROSE_ASSERT(arrayVariable != NULL);
+
+                SgType* arrayVariableBaseType = arrayVariable->get_type();
+                ROSE_ASSERT(arrayVariableBaseType != NULL);
+
+                DeclAttributes.setBaseType(arrayVariableBaseType);
+                SgExprListExp* dimInfo = DeclAttributes.buildDimensionInfo();
+                ROSE_ASSERT(dimInfo);
+                SgArrayType* arrayVariableType = DeclAttributes.buildArrayType(dimInfo);
+                arrayVariable->set_type(arrayVariableType);
+                DeclAttributes.reset();
+            }
+
             SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
             setSourcePosition(variableReference, id);
 
-            if (hasShapeSpecList == true)
-            {
-                // I think we need to build the array reference for this case.
-                // printf ("hasShapeSpecList == true, case not implemented \n");
-
-                printf("Sorry, hasShapeSpecList == true, case not implemented \n");
-                ROSE_ASSERT(false);
-
-                constructedReference = NULL;
-            }
-            else
-            {
-                constructedReference = variableReference;
-            }
+            constructedReference = variableReference;
         }
         else
         {
             // The variable has not previously been declared.
             // OR it maybe declared at some point in the future (see test2010_51.90).
 
-#if 1
             // DQ (1/19/2011): Build the implicit variable
             buildImplicitVariableDeclaration(variableName);
 
             // Now verify that it is present.
-            variableSymbol
-            = trace_back_through_parent_scopes_lookup_variable_symbol(
-                    variableName, astScopeStack.front());
+            variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,astScopeStack.front());
             ROSE_ASSERT(variableSymbol != NULL);
-#else
-            // Note that the second time we look for it we will get a valid symbol.
-            variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,getTopOfScopeStack());
-            ROSE_ASSERT(variableSymbol != NULL);
-#endif
+
             constructedReference = new SgVarRefExp(variableSymbol);
             setSourcePosition(constructedReference, id);
-
-            // printf ("The variable has not previously been declared (case not implemented)\n");
-            // ROSE_ASSERT(false);
         }
 
         ROSE_ASSERT(constructedReference != NULL);
