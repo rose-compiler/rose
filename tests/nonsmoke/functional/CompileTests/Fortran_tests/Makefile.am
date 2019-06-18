@@ -36,6 +36,7 @@ endif
 F90_TESTCODES_REQUIRED_TO_PASS =  \
      jira-par-2_literal_max.f90   \
      jira-par-11_write_format.f90 \
+     jira-par-18_common_block.f90 \
      R832.f90        \
      R837.f90        \
      test2007_01.f90 \
