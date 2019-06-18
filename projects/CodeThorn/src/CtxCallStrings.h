@@ -69,13 +69,6 @@ concept CallContext
 template <class ContextType>
 struct CtxAnalysis;
 
-//! returns the sage node corresponding to lbl
-static inline
-SgNode* astNode(Labeler& labels, Label lbl)
-{
-  return labels.getNode(lbl);
-}
-
 //! a class representing an infinite long call string. The class
 //! is precise, but will NOT WORK for analyzing codes with recursion.
 struct InfiniteContext : private std::vector<Label>
@@ -111,7 +104,6 @@ struct InfiniteContext : private std::vector<Label>
                    );
 
 
-    // for debugging
     friend
     std::ostream&
     operator<<(std::ostream& os, const InfiniteContext& el);
@@ -154,6 +146,10 @@ struct FiniteContext : private std::vector<Label>
                      Labeler& labeler,
                      Label lbl
                    );
+
+    friend
+    std::ostream&
+    operator<<(std::ostream& os, const FiniteContext& el);
 };
 
 
@@ -162,6 +158,7 @@ bool operator<(const InfiniteContext& lhs, const InfiniteContext& rhs);
 bool operator<(const FiniteContext&   lhs, const FiniteContext&   rhs);
 
 std::ostream& operator<<(std::ostream& os, const InfiniteContext& el);
+std::ostream& operator<<(std::ostream& os, const FiniteContext& el);
 
 } // namespace CodeThorn
 

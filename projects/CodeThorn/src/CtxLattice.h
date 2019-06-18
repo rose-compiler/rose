@@ -6,6 +6,9 @@
 
 #include "DFAnalysisBase.h"
 
+// for debugging
+#include "RDLattice.h"
+
 
 namespace CodeThorn
 {
@@ -20,6 +23,22 @@ namespace
 
     return typeid(*p).name();
   }
+
+  //! returns the sage node corresponding to lbl
+  static inline
+  SgNode* astNode(Labeler& labels, Label lbl)
+  {
+    return labels.getNode(lbl);
+  }
+
+  static inline
+  void dbg_rd(std::ostream& os, char sep, Lattice* lat)
+  {
+    RDLattice& rdlat = dynamic_cast<RDLattice&>(sg::deref(lat));
+
+    os << lat << sep << rdlat.size() << std::endl;
+  }
+
 
   //! pseudo type to indicate that an element is not in a sequence
   struct unavailable_t {};
@@ -79,10 +98,14 @@ namespace
   Lattice*
   cloneLattice(PropertyStateFactory& factory, Lattice& orig)
   {
-    Lattice* clone = factory.create();
+    Lattice& clone = sg::deref(factory.create());
 
-    clone->combine(orig);
-    return clone;
+    clone.combine(orig);
+
+    ROSE_ASSERT(orig.approximatedBy(clone));
+    ROSE_ASSERT(clone.approximatedBy(orig));
+    std::cerr << &orig << " -> " << &clone << std::endl;
+    return &clone;
   }
 
 
@@ -112,6 +135,7 @@ namespace
       void operator()(entry_t& lhs, const entry_t& rhs)
       {
         lhs.second->combine(const_cast<Lattice&>(sg::deref(rhs.second)));
+        std::cerr << rhs.second << " ~> " << lhs.second << std::endl;
       }
 
     private:
@@ -177,6 +201,26 @@ namespace
   {
     std::for_each(aa, zz, LatticeDeleter());
   }
+
+  struct CtxLatticeStreamer
+  {
+      CtxLatticeStreamer(std::ostream& stream, VariableIdMapping* vmap)
+      : os(stream), vm(vmap)
+      {}
+
+      template <class CallContext>
+      void operator()(const std::pair<const CallContext, Lattice*>& entry)
+      {
+        os << "[" << entry.first << ": ";
+        os << entry.second << ", ";
+        entry.second->toStream(os, vm);
+        os << "]";
+      }
+
+    private:
+      std::ostream&      os;
+      VariableIdMapping* vm;
+  };
 }
 
 //! A CtxLattice holds information organized by call contexts.
@@ -202,7 +246,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
 
     explicit
     CtxLattice(PropertyStateFactory& compfac)
-    : base(), context_map(), _compPropertyFactory(compfac)
+    : base(), context_map(), /*compAnalysis(compdfa),*/ compPropertyFactory(compfac)
     {}
 
     ~CtxLattice()
@@ -231,16 +275,34 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
 
       merge_keys(begin(), end(), that.begin(), that.end(), latticeCombiner(*this));
+
+      ROSE_ASSERT(this->size() >= that.size());
       ROSE_ASSERT(other.approximatedBy(*this));
     }
 
     PropertyStateFactory& componentFactory()
     {
-      return _compPropertyFactory;
+      return compPropertyFactory;
+    }
+
+/*
+    DFAnalysisBase& componentAnalysis()
+    {
+      return compAnalysis;
+    }
+*/
+    void toStream(std::ostream& os, VariableIdMapping* vm) ROSE_OVERRIDE
+    {
+      if (isBot()) { os << "bot"; return; }
+
+      std::for_each(begin(), end(), CtxLatticeStreamer(os, vm));
     }
 
   private:
-    PropertyStateFactory& _compPropertyFactory;
+    PropertyStateFactory& compPropertyFactory;
+
+    CtxLattice(const CtxLattice&) = delete;
+    CtxLattice(CtxLattice&&) = delete;
 };
 
 } // namespace CodeThorn

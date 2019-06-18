@@ -1,6 +1,7 @@
 #ifndef CTX_ANALYSIS_H
 #define CTX_ANALYSIS_H 1
 
+
 #include "CtxLattice.h"
 #include "CtxTransfer.h"
 #include "CtxAttribute.h"
@@ -16,9 +17,9 @@ struct CtxPropertyStateFactory : PropertyStateFactory
     typedef CallContext           context_t;
     typedef CtxLattice<context_t> context_lattice_t;
 
-    explicit
-    CtxPropertyStateFactory(CodeThorn::PropertyStateFactory& compFac)
-    : compFactory(compFac)
+    //~ explicit
+    CtxPropertyStateFactory(DFAnalysisBase& dfa, PropertyStateFactory& compFac)
+    : compAnalysis(dfa), compFactory(compFac)
     {}
 
     context_lattice_t* create() ROSE_OVERRIDE
@@ -32,6 +33,7 @@ struct CtxPropertyStateFactory : PropertyStateFactory
     }
 
   private:
+    DFAnalysisBase&       compAnalysis;
     PropertyStateFactory& compFactory;
 };
 
@@ -53,7 +55,7 @@ struct CtxAnalysis : DFAnalysisBase
     : base(),
       subAnalysis(compAnalysis),
       ctxTransfer(compTransfer, *this),
-      ctxFactory(compFactory)
+      ctxFactory(compAnalysis, compFactory)
     {
       _initialElementFactory = &ctxFactory;
       _transferFunctions     = &ctxTransfer;
@@ -72,12 +74,28 @@ struct CtxAnalysis : DFAnalysisBase
       lat[context_t()] = sub;
     }
 
-    void initialize(SgProject* root) ROSE_OVERRIDE
+    void initializeTransferFunctions() ROSE_OVERRIDE
     {
-      base::initialize(root, true);
+      base::initializeTransferFunctions();
+
+      subAnalysis.initializeTransferFunctions();
+    }
+
+/*
+    Lattice* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
+    {
+      // subAnalysis.initializeGlobalVariables(root);
+      return base::initializeGlobalVariables(root);
+    }
+*/
+
+    // shadows non-virtual function in base class
+    void initialize(SgProject* root, bool variableIdForEachArrayElement = false) ROSE_OVERRIDE
+    {
+      base::initialize(root, variableIdForEachArrayElement);
 
       // \todo do we need to initialize component?
-      subAnalysis.initialize(root);
+      subAnalysis.initialize(root, variableIdForEachArrayElement);
     }
 
     //! retrieves the lattice from the call site
@@ -98,7 +116,7 @@ struct CtxAnalysis : DFAnalysisBase
     {
       context_lattice_t* lat = dynamic_cast<context_lattice_t*>(elem);
 
-      return new CtxAttribute(subAnalysis, elem);
+      return new CtxAttribute<CallContext>(sg::deref(lat));
     }
 
   private:

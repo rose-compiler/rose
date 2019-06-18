@@ -40,6 +40,7 @@ namespace
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
         component.transfer(theEdge, sg::deref(p.second));
+        std::cerr << "t " << p.second << std::endl;
       }
 
     private:
@@ -75,6 +76,8 @@ struct CtxTransfer : DFTransferFunctions
     //! sets its and its' component's abstraction layer
     void setProgramAbstractionLayer(ProgramAbstractionLayer* pal) ROSE_OVERRIDE
     {
+      ROSE_ASSERT(pal);
+
       base::setProgramAbstractionLayer(pal);
 
       component.setProgramAbstractionLayer(pal);
@@ -90,6 +93,7 @@ struct CtxTransfer : DFTransferFunctions
     //!   It also calls the concrete transfer function (above) to
     //!   handle context changes.
     void transfer(CodeThorn::Edge edge, CodeThorn::Lattice& element) ROSE_OVERRIDE;
+
 
   private:
     DFTransferFunctions&      component; //!< The component transfer
@@ -127,8 +131,8 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 {
   ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-  this->transfer(edge.source(), lat);
   std::for_each(lat.begin(), lat.end(), ComponentTransfer(component, edge));
+  this->transfer(edge.source(), lat);
 }
 
 } // namespace CodeThorn
