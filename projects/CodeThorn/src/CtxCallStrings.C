@@ -289,7 +289,7 @@ bool operator<(const InfiniteContext& lhs, const InfiniteContext& rhs)
 std::ostream& operator<<(std::ostream& os, const InfiniteContext& el)
 {
   for (size_t i = 0; i < el.size(); ++i)
-    os << el.at(i);
+    os << (i == 0 ? "'" : ", ") << el.at(i);
 
   os << ".";
   return os;
@@ -351,6 +351,16 @@ bool operator<(const FiniteContext& lhs, const FiniteContext& rhs)
 {
   return std::lexicographical_compare(lhs.rbegin(), lhs.rend(), rhs.rbegin(), rhs.rend());
 }
+
+std::ostream& operator<<(std::ostream& os, const FiniteContext& el)
+{
+  for (size_t i = 0; i < el.size(); ++i)
+    os << (i == 0 ? "'" : ", ") << el.at(i);
+
+  os << ".";
+  return os;
+}
+
 
 
 } // namespace CodeThorn
