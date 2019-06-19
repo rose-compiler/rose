@@ -1022,6 +1022,10 @@ struct ComboBoxVersion {
             return "";
         return humanSha1(version, HUMAN_TERSE);
     }
+
+    bool operator==(const ComboBoxVersion &other) const {
+        return version == other.version;
+    }
 };
 
 // Fill the version selection combo box, returning the first entry that matches the needle version (or -1)
@@ -2376,9 +2380,10 @@ public:
 // Dashboard
 class WDashboard: public Wt::WContainerWidget {
     Wt::WTable *languageGrid_, *slaveGrid_, *testArticleGrid_;
-    Wt::WText *notices_, *languageVersion_;
-    Wt::WCheckBox *languageOnlySupported_;
-    Wt::WTimer *timer_;
+    Wt::WText *notices_;
+    WComboBoxWithData<ComboBoxVersion> *softwareVersions_;
+    Wt::WCheckBox *restrictToSupported_;
+    Wt::WTimer *timer_, *versionUpdateTimer_;
     static const size_t languageGridColumns_ = 4;
 
     typedef Sawyer::Container::Map<std::string, size_t> LanguageCounts;
@@ -2386,7 +2391,7 @@ class WDashboard: public Wt::WContainerWidget {
 public:
     explicit WDashboard(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent), languageGrid_(NULL), slaveGrid_(NULL), testArticleGrid_(NULL),
-          notices_(NULL), languageVersion_(NULL), languageOnlySupported_(NULL), timer_(NULL) {
+          notices_(NULL), softwareVersions_(NULL), restrictToSupported_(NULL), timer_(NULL) {
 
         // Notices
         addWidget(notices_ = new Wt::WText);
@@ -2400,30 +2405,43 @@ public:
 
         // Grid of languages being tested.
         addWidget(new Wt::WText("<h1>Language status</h1>"));
-        addWidget(languageVersion_ = new Wt::WText);
+        addWidget(new Wt::WText("Results<sup>*</sup> for commit "));
+        addWidget(softwareVersions_ = new WComboBoxWithData<ComboBoxVersion>);
+        softwareVersions_->setToolTip("Version of tested softare for which results are displayed.");
+        softwareVersions_->activated().connect(this, &WDashboard::update);
         addWidget(new Wt::WText("<br/>"));
-        addWidget(languageOnlySupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
-        languageOnlySupported_->changed().connect(this, &WDashboard::update);
+        addWidget(restrictToSupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
+        restrictToSupported_->setToolTip("Consider only those tests that use only supported features and dependencies.");
+        restrictToSupported_->changed().connect(this, &WDashboard::update);
         addWidget(languageGrid_ = new Wt::WTable);
         languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
-        addWidget(new Wt::WText("<small><sup>*</sup> Considering only non-blacklisted tests with valid setup; failure is anything "
-                                "short of complete success.</small>"));
+        addWidget(new Wt::WText("<small><sup>*</sup> Each test includes all the steps necessary to build, install, and use the "
+                                "software, and a failure is anything short of complete success. Blacklisted configurations and "
+                                "failures to install dependencies are not counted.</small>"));
 
         // Grid of slaves running
         addWidget(new Wt::WText("<h1>Slave status</h1>"));
         addWidget(slaveGrid_ = new Wt::WTable);
         slaveGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
 
-        // Final stuff
         update();
+
+        // Periodically update the widget
         timer_ = new Wt::WTimer;
         timer_->setInterval(60 * 1000);
         timer_->timeout().connect(this, &WDashboard::update);
         timer_->start();
+
+        // Periodically update the software versions
+        versionUpdateTimer_ = new Wt::WTimer;
+        versionUpdateTimer_->setInterval(10 * 60 * 1000);
+        versionUpdateTimer_->timeout().connect(this, &WDashboard::updateSoftwareVersions);
+        versionUpdateTimer_->start();
     }
 
     // Update the contents of the dashboard by querying the database
     void update() {
+        updateSoftwareVersions();
         updateTestArticleGrid();
         updateLanguageGrid();
         updateSlaveGrid();
@@ -2445,19 +2463,30 @@ public:
                     testArticleGrid_->elementAt(0, 0)->setStyleClass("notice");
                 } else {
                     testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
+                    testArticleGrid_->elementAt(0, 0)->setToolTip("This is the tag or commit that's currently being advertised to "
+                                                                  "the slaves for tsting. It might not be the same as the version for "
+                                                                  "which results are presented below.");
                 }
             } else if (row.get_str(0) == "TEST_REPOSITORY") {
                 testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + linkify(row.get_str(1))));
+                testArticleGrid_->elementAt(1, 0)->setToolTip("Repository from whence to-be-tested softare is obtained.");
             } else if (row.get_str(0) == "TEST_ENVIRONMENT_VERSION") {
-                testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Environment:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Test environment:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(2, 0)->setToolTip("Version (usually a date) of the envornment found in the Docker "
+                                                              "containers in which the tests are running.");
             } else if (row.get_str(0) == "TEST_FLAGS") {
                 testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(3, 0)->setToolTip("Command-line switches passed to the testing scripts.");
             } else if (row.get_str(0) == "TEST_OS") {
                 testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(4, 0)->setToolTip("Operating system in which the tests are running.");
             } else if (row.get_str(0) == "MATRIX_REPOSITORY") {
                 testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + linkify(row.get_str(1))));
+                testArticleGrid_->elementAt(5, 0)->setToolTip("Repository from which to the source code for the tools that compose the "
+                                                              "portability testing framework.");
             } else if (row.get_str(0) == "MATRIX_COMMITTISH") {
                 testArticleGrid_->elementAt(6, 0)->addWidget(new Wt::WText("<b>Tool version:</b> " + row.get_str(1)));
+                testArticleGrid_->elementAt(6, 0)->setToolTip("Tag or commit defining the version of the tools being used to run tests.");
             } else if (row.get_str(0) == "NOTICE" && !row.get_str(1).empty()) {
                 notices_->setText("<b>Notice:</b> " + row.get_str(1));
                 notices_->show();
@@ -2468,23 +2497,10 @@ public:
     // Update the languageGrid_ with latest database results.
     void updateLanguageGrid() {
         ASSERT_not_null(languageGrid_);
-        ASSERT_not_null(languageVersion_);
         languageGrid_->clear();
         Sawyer::Container::Map<std::string, size_t> nErrorTypes = countDistinctErrors();
+        std::string softwareVersion = softwareVersions_->count() > 0 ? softwareVersions_->currentData().version : "";
 
-        // What software version was tested by the latest test?
-        {
-            std::string softwareVersion;
-            SqlDatabase::StatementPtr q = gstate.tx->statement("select rose, rose_date from test_results where " + projectVersionClause() + " limit 1");
-            SqlDatabase::Statement::iterator row = q->begin();
-            if (row != q->end()) {
-                languageVersion_->setText("Results for commit " + humanSha1(row.get_str(0), HUMAN_TERSE) +
-                                          " created " + humanLocalTime(row.get_u32(1)) + "<sup>*</sup>");
-            } else {
-                languageVersion_->setText("");
-            }
-        }
-        
         // Join two tables: the first counts the total number of tests per language set and operating system, the second counts
         // the number of passing tests for the same language set and operating system.
         SqlDatabase::StatementPtr stmt =
@@ -2492,7 +2508,7 @@ public:
                                  " from ("
                                  "     select rmc_languages, os, count(*) as total"
                                  "     from " + testResultsTable() +
-                                 "     where " + projectVersionClause() +
+                                 "     where rose = ?"
                                  "     and blacklisted = ''"
                                  "     and status <> 'setup'"
                                  "     and " + enabledLanguagesClause() +
@@ -2500,14 +2516,16 @@ public:
                                  " left join ("
                                  "     select rmc_languages, os, count(*) as npass"
                                  "     from " + testResultsTable() +
-                                 "     where " + projectVersionClause() +
+                                 "     where rose = ?"
                                  "     and blacklisted = ''"
                                  "     and status = 'end'"
                                  "     and " + enabledLanguagesClause() +
                                  "     group by rmc_languages, os) as t2"
                                  " on t1.rmc_languages = t2.rmc_languages"
                                  " and t1.os = t2.os"
-                                 " order by languages, os");
+                                 " order by languages, os")
+            ->bind(0, softwareVersion)
+            ->bind(1, softwareVersion);
 
         SqlDatabase::Statement::iterator row = stmt->begin();
         for (int boxNumber = 0; row != stmt->end(); ++boxNumber) {
@@ -2566,8 +2584,11 @@ public:
 
         for (int i = 0; i < languageGrid_->rowCount(); ++i)
             languageGrid_->rowAt(i)->setHeight(200);
-        if (languageGrid_->rowCount() == 0)
-            languageGrid_->elementAt(0, 0)->addWidget(new Wt::WText("No results yet."));
+        if (languageGrid_->rowCount() == 0) {
+            Wt::WText *noResults = new Wt::WText("No test results match criteria.");
+            noResults->setStyleClass("notice");
+            languageGrid_->elementAt(0, 0)->addWidget(noResults);
+        }
     }
 
     // Update test slaves
@@ -2647,14 +2668,9 @@ public:
 
 private:
     std::string testResultsTable() {
-        return languageOnlySupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
+        return restrictToSupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
     }
     
-    // SQL "where" condition for selecting the thing that's being tested.
-    std::string projectVersionClause() {
-        return "rose_date = (select max(rose_date) from test_results)";
-    }
-
     std::string enabledLanguagesClause() {
         return "rmc_languages in (select distinct value from dependencies where name = 'languages' and enabled > 0)";
     }
@@ -2663,23 +2679,42 @@ private:
     Sawyer::Container::Map<std::string, size_t>
     countDistinctErrors() {
         Sawyer::Container::Map<std::string, size_t> retval;
+        std::string softwareVersion = softwareVersions_->count() > 0 ? softwareVersions_->currentData().version : "";
         SqlDatabase::StatementPtr stmt =
             gstate.tx->statement("select count(*), rmc_languages from ("
                                  "     select rmc_languages, status, first_error"
                                  "     from " + testResultsTable() +
-                                 "     where " + projectVersionClause() +
+                                 "     where rose = ?"
                                  "     and blacklisted = ''"
                                  "     and status <> 'end' and status <> 'setup'"
                                  "     and " + enabledLanguagesClause() +
                                  "     group by rmc_languages, status, first_error"
                                  " ) as errors"
-                                 " group by rmc_languages");
+                                 " group by rmc_languages")
+            ->bind(0, softwareVersion);
         for (SqlDatabase::Statement::iterator row = stmt->begin(); row != stmt->end(); ++row) {
             size_t count = row.get_u32(0);
             std::string languages = row.get_str(1);
             retval.insert(languages, count);
         }
         return retval;
+    }
+
+    // Get the list of all ROSE versions in a human friendly format, and use it to update the combo box. If the combo box
+    // already had a version selected, then try to keep it selected, otherwise select the most recent version.
+    void updateSoftwareVersions() {
+        Sawyer::Optional<ComboBoxVersion> oldVersion;
+        if (softwareVersions_->count() > 0)
+            oldVersion = softwareVersions_->currentData();
+
+        softwareVersions_->clear();
+        fillVersionComboBox(softwareVersions_);
+        int idx = 0;
+        if (oldVersion && (idx = softwareVersions_->findData(*oldVersion)) >=0) {
+            softwareVersions_->setCurrentIndex(idx);
+        } else if (softwareVersions_->count() > 0) {
+            softwareVersions_->setCurrentIndex(softwareVersions_->count() - 1);
+        }
     }
 };
 

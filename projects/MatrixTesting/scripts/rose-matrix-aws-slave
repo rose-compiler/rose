@@ -65,7 +65,7 @@ matrix-update-system-software() {
 	break
     done
 
-    if [ -n "$SETUP" ]; then
+    if [ -n "$SETUP" -a -n "$USER" ]; then
 	sudo usermod -aG docker $USER
     fi
 }
