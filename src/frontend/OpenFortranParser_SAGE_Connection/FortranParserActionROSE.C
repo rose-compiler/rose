@@ -17233,7 +17233,11 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         {
             // If there was not renaming, then build the SgRenamePair using empty names for the local name to signal
             // that there was no renaming. This permits a consistant interface when they are processed by R1109.
-            for (int i = 0; i < count; i++)
+            // Pei-Hung (06/18/2019) renameList and generic name can co-exist in the same list
+            // Since no renameList will exist in astNameStack, it should use the stack size here,
+            // not the count from parser.
+            int astNameStackSize = astNameStack.size();
+            for (int i = 0; i < astNameStackSize; i++)
             {
                 // Construct the name pair for the case of the "only" clause, where there is no renaming.
                 ROSE_ASSERT(astNameStack.empty() == false);
