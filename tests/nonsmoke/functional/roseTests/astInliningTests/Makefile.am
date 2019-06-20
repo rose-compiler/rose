@@ -40,6 +40,10 @@ inlineEverything_specimens =			\
 	specimen21_1.C				\
 	specimen22_1.C
 
+#Liao, new set of tests with C++11 lambda expressions, not yet supported
+inlineEverything_cpp11_specimens =			\
+        simplest_raja.C
+
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
 inlineEverything_test_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_specimens)))
@@ -65,6 +69,17 @@ $(inlineEverything_test_tokenStreamUnparsing_targets): inlineEverything_%.passed
 		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
 		TRANSLATOR="$$(pwd)/inlineEverything -rose:unparse_tokens"								\
 		$(srcdir)/inlineEverything_withTokenStreamUnparsing.conf $@
+
+# TODO: this rule does not work yet
+inlineEverything_test_cpp11_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_cpp11_specimens)))
+TEST_TARGETS += $(inlineEverything_test_cpp11_targets)
+$(inlineEverything_test_cpp11_targets): inlineEverything_%.passed: % inlineEverything inlineEverything.conf
+	@$(RTH_RUN)												\
+		TITLE="inlineEverything $< [$@]"								\
+		SPECIMEN="$(abspath $<)"									\
+		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
+		TRANSLATOR="$$(pwd)/inlineEverything -std=c++11"								\
+		$(srcdir)/inlineEverything.conf $@
 
 #------------------------------------------------------------------------------------------------------------------------
 # additional tests not executed by "make check"
