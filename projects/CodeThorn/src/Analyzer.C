@@ -5,6 +5,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
+#include "Labeler.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"
@@ -26,6 +27,43 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
+std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
+  SgNode* node=getLabeler()->getNode(lab);
+  return SgNodeHelper::lineColumnNodeToString(node);
+}
+
+bool CodeThorn::Analyzer::isApproximatedBy(const EState* es1, const EState* es2) {
+  return es1->isApproximatedBy(es2);
+}
+
+EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
+  ROSE_ASSERT(es1->label()==es2->label());
+  ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
+  PState ps1=*es1->pstate();
+  PState ps2=*es2->pstate();
+
+  InputOutput io;
+  if(es1->io.isBot()) {
+    io=es2->io;
+  } else if(es2->io.isBot()) {
+    io=es1->io;
+  } else {
+    ROSE_ASSERT(es1->io==es2->io);
+    io=es1->io;
+  }
+
+  return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
+}
+
+const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
+  return _summaryStateMap[lab.getId()];
+}
+
+void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate) {
+  ROSE_ASSERT(lab==estate->label());
+  _summaryStateMap[lab.getId()]=estate;
+}
+
 void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initialPStateStored, 
                                                   const CodeThorn::ConstraintSet* emptycsetstored) {
   //  return;
@@ -33,17 +71,8 @@ void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initi
     // create bottom elements for each label
     EState estate(label,initialPStateStored,emptycsetstored); // implicitly empty cs
     const EState* bottomElement=processNewOrExisting(estate);
-    setSummaryState(label,const_cast<EState*>(bottomElement));
+    setSummaryState(label,bottomElement);
   }
-}
-
-CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
-  return _summaryStateMap[lab];
-}
-
-void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState* estate) {
-  ROSE_ASSERT(lab==estate->label());
-  _summaryStateMap[lab]=estate;
 }
 
 void CodeThorn::Analyzer::setOptionContextSensitiveAnalysis(bool flag) {
@@ -560,8 +589,8 @@ EState CodeThorn::Analyzer::createEStateInternal(Label label, PState pstate, Con
     //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0;
-    cset=cset0;
+    ConstraintSet cset0; 
+    cset=cset0; 
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);

@@ -77,10 +77,6 @@ namespace CodeThorn {
     Analyzer();
     virtual ~Analyzer();
 
-  protected:
-    static Sawyer::Message::Facility logger;
-
-  public:
     static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
@@ -113,8 +109,8 @@ namespace CodeThorn {
     const EState* popWorkList();
     
     // initialize command line arguments provided by option "--cl-options" in PState
-    void initializeVariableIdMapping(SgProject*);
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeVariableIdMapping(SgProject*);
     void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
@@ -256,9 +252,14 @@ namespace CodeThorn {
     void reduceStg(function<bool(const EState*)> predicate);
 
     void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
-    EState* getSummaryState(CodeThorn::Label lab);
-    void setSummaryState(CodeThorn::Label lab, EState* estate);
+    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab);
+    void setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate);
+    std::string programPositionInfo(CodeThorn::Label);
+
+    bool isApproximatedBy(const EState* es1, const EState* es2);
+    EState combine(const EState* es1, const EState* es2);
   protected:
+    static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
 
     std::string analyzerStateToString();
@@ -420,7 +421,7 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
   private:
-    map<Label,EState*> _summaryStateMap;
+    std::unordered_map<int,const EState*> _summaryStateMap;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

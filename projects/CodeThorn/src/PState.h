@@ -9,6 +9,7 @@
 #include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
+#include "Lattice.h"
 
 typedef int PStateId;
 
@@ -65,6 +66,8 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
+    bool isApproximatedBy(CodeThorn::PState& other) const;
+    static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
   private:
   };
   

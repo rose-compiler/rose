@@ -2,9 +2,11 @@
 #include "Solver5.h"
 #include "Analyzer.h"
 
-using namespace CodeThorn;
 using namespace std;
+using namespace CodeThorn;
 using namespace Sawyer::Message;
+
+#include "Analyzer.h"
 
 Sawyer::Message::Facility Solver5::logger;
 // initialize static member flag
@@ -122,7 +124,10 @@ void Solver5::run() {
                 fout.close();
               }
             }
+            
+            //cout<<"Analyzing: "<<_analyzer->programPositionInfo(newEState.label());
 
+  
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -137,15 +142,37 @@ void Solver5::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label());
-                    // TODO: if newEStatePtr <= summaryEState ... else ...
+                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label());
+                    if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
+                      // this is not a memory leak. newEStatePtr is
+                      // stored in EStateSet and will be collected
+                      // later. It may be an existing estate alread
+                      // used in the state graph.
+                      newEStatePtr=summaryEState; 
+                    } else {
+                      EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      ROSE_ASSERT(_analyzer);
+                      HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
+                      const EState* newEStatePtr2=pres.second;
+                      if(pres.first==true) {
+                        newEStatePtr=newEStatePtr2;
+                      } else {
+                        // nothing to do, EState already exists
+                      }
+                      ROSE_ASSERT(newEStatePtr);
+                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr);
+                    }
                   }
+                  _analyzer->addToWorkList(newEStatePtr);  
+                  break;
+                  case 2: 
+                    cout<<"Mode 2 (topifying) not available for this option yet."<<endl;
+                    exit(1);
                 }
                 default:
                   cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
                   exit(1);
                 }
-                _analyzer->addToWorkList(newEStatePtr);
               }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }

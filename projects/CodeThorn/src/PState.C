@@ -301,3 +301,51 @@ PState::const_iterator PState::begin() const {
 PState::const_iterator PState::end() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
+
+// Lattice functions
+bool PState::isApproximatedBy(CodeThorn::PState& other) const {
+  // check if all values of 'this' are approximated by 'other'
+  for(auto elem:*this) {
+    auto iter=other.find(elem.first);
+    if(iter!=other.end()) {
+      if(!AbstractValue::approximatedBy(elem.second,(*iter).second)) {
+        return false;
+      }
+    } else {
+      // a variable of 'this' is not in state of 'other'
+      return false;
+    }
+  }
+  // all values stored in memory locations of 'this' are approximated
+  // by values of the corresponding memory location in
+  // 'other'. TODO: if the memory location itself is a summary.
+  return true;
+}
+
+CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) {
+  CodeThorn::PState res;
+  size_t numMatched=0;
+  for(auto elem1:p1) {
+    auto iter=p2.find(elem1.first);
+    if(iter!=p2.end()) {
+      // same memory location in both states: elem.first==(*iter).first
+      // merge values elem.second and (*iter).second
+
+      res.writeToMemoryLocation(elem1.first,AbstractValue::combine(elem1.second,(*iter).second));
+      numMatched++;
+    } else {
+      // a variable of 'p1' is not in state of 'p2', add to result state
+      res.writeToMemoryLocation(elem1.first,elem1.second);
+    }
+  }
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  if(numMatched!=p2.size()) {
+    for(auto elem2:p2) {
+      if(p1.find(elem2.first)==p1.end()) {
+        res.writeToMemoryLocation(elem2.first,elem2.second);
+      }
+    }
+  }
+  return res;
+}
