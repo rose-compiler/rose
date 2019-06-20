@@ -14,6 +14,7 @@ inlineEverything_CPPFLAGS = $(ROSE_INCLUDES)
 inlineEverything_LDFLAGS = $(ROSE_RPATHS)
 inlineEverything_LDADD = $(ROSE_SEPARATE_LIBS)
 
+# Note: must use the name convention of specimenXX_N.C , in which N is the number of function calls inlined.   
 # The specimens are named so that the number between the "_" and next "." is the number of function calls that
 # we expect this specimen to inline.
 inlineEverything_specimens =			\
@@ -38,11 +39,15 @@ inlineEverything_specimens =			\
 	specimen19_1.C				\
 	specimen20_1.C				\
 	specimen21_1.C				\
-	specimen22_1.C
+	specimen22_1.C  \
+	specimen25_1.C 
+# current failing 	
+#        specimen23_1.C
+#specimen24_1.C
 
 #Liao, new set of tests with C++11 lambda expressions, not yet supported
-inlineEverything_cpp11_specimens =			\
-        simplest_raja.C
+#inlineEverything_cpp11_specimens =			\
+#        simplest_raja.C
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
