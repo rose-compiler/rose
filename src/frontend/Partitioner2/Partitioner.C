@@ -497,10 +497,8 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         adjustPlaceholderEdges(placeholder);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
             aum_.eraseInstruction(insn, bblock);
-        BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
-            if (0==dblock->decrementOwnerCount())
-                detachDataBlock(dblock);
-        }
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks())
+            detachDataBlock(OwnedDataBlock(dblock, bblock));
         bblock->thaw();
         bblockDetached(bblock->address(), bblock);
     }
@@ -1349,17 +1347,35 @@ Partitioner::attachDataBlock(const OwnedDataBlock &toInsert) {
     return inserted;
 }
 
+// Detach data block if it has no owners
 DataBlock::Ptr
 Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
-    if (dblock!=NULL) {
-        if (dblock->nAttachedOwners()) {
+    if (dblock != NULL && dblock->isFrozen()) {
+        OwnedDataBlock remaining = detachDataBlock(OwnedDataBlock(dblock));
+        if (remaining.nOwners() > 0) {
             throw DataBlockError(dblock, dataBlockName(dblock) + " cannot be detached because it has " +
                                  StringUtility::plural(dblock->nAttachedOwners(), "basic block and/or function owners"));
         }
-        aum_.eraseDataBlock(dblock);
-        dblock->thaw();
     }
     return dblock;
+}
+
+// Remove the specified owners from the specified data block (or an equivalent data block) and if the data block has no more
+// owners then remove it from the AUM and cause it to become detached from this partitioner. Returns info about the specified
+// (or equivalent) data block that remains in the AUM.
+OwnedDataBlock
+Partitioner::detachDataBlock(const OwnedDataBlock &toDetach) {
+    OwnedDataBlock remaining = aum_.eraseDataBlockOwners(toDetach);
+    ASSERT_require(remaining.isValid()); // only adjusts data block owner lists; does not erase data block from AUM
+    remaining.dataBlock()->nAttachedOwners(remaining.nOwners());
+
+    if (remaining.nOwners() == 0) {
+        aum_.eraseDataBlock(remaining.dataBlock());
+        remaining.dataBlock()->thaw();
+        remaining = OwnedDataBlock();
+    }
+
+    return remaining;
 }
 
 std::vector<DataBlock::Ptr>
@@ -1873,8 +1889,7 @@ Partitioner::detachFunction(const Function::Ptr &function) {
     // Unlink data block ownership, but do not detach data blocks from CFG/AUM unless ownership count hits zero.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
         ASSERT_not_null(dblock);
-        if (0==dblock->decrementOwnerCount())
-            detachDataBlock(dblock);
+        detachDataBlock(OwnedDataBlock(dblock, function));
     }
 
     // Unlink the function itself

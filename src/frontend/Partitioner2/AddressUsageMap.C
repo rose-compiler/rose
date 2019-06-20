@@ -259,6 +259,23 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     }
 }
 
+OwnedDataBlock
+AddressUsers::eraseDataBlockOwners(const OwnedDataBlock &toErase) {
+    OwnedDataBlock retval;
+    AddressUser needle = AddressUser(OwnedDataBlock(toErase.dataBlock()));
+    std::vector<AddressUser>::iterator found = std::find(users_.begin(), users_.end(), needle);
+    if (found != users_.end()) {
+        ASSERT_require(found->isDataBlock());
+        OwnedDataBlock &odb = found->dataBlockOwnership();
+        BOOST_FOREACH (const BasicBlock::Ptr &bb, toErase.owningBasicBlocks())
+            odb.eraseOwner(bb);
+        BOOST_FOREACH (const Function::Ptr &f, toErase.owningFunctions())
+            odb.eraseOwner(f);
+        retval = odb;
+    }
+    return retval;
+}
+
 std::vector<SgAsmInstruction*>
 AddressUsers::instructions() const {
     std::vector<SgAsmInstruction*> insns;
@@ -445,11 +462,11 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     missingParts.insert(interval);
 
     // Update the existing parts of the interval by merging this odb's ownership info into the existing odb. Even if the map
-    // contains multiple overlapping parts, they should all the OwnedDataBlock values corresponding to the specified dblock
+    // contains multiple overlapping parts, all the OwnedDataBlock objects containing the specified dblock or equivalent dblock
     // will have the same data block pointer and ownership lists.
-    BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+    BOOST_FOREACH (Map::Node &node, map_.findAll(interval)) {
         missingParts.erase(node.key());
-        AddressUsers newUsers = node.value();
+        AddressUsers &newUsers = node.value();
         retval = newUsers.insertDataBlock(odb);
     }
 
@@ -482,7 +499,7 @@ AddressUsageMap::eraseInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr 
 void
 AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock) {
-        AddressInterval interval = AddressInterval::baseSize(dblock->address(), dblock->size());
+        AddressInterval interval = dblock->extent();
         Map adjustment;
         BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
             AddressUsers newUsers = node.value();
@@ -493,6 +510,19 @@ AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &dblock) {
         map_.erase(interval);
         map_.insertMultiple(adjustment);
     }
+}
+
+OwnedDataBlock
+AddressUsageMap::eraseDataBlockOwners(const OwnedDataBlock &odb) {
+    OwnedDataBlock remaining;
+    if (odb.isValid()) {
+        AddressInterval interval = odb.dataBlock()->extent();
+        BOOST_FOREACH (Map::Node &node, map_.findAll(interval)) {
+            AddressUsers &users = node.value();
+            remaining = users.eraseDataBlockOwners(odb); // all returns will be the same
+        }
+    }
+    return remaining;
 }
 
 bool

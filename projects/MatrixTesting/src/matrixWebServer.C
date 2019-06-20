@@ -2414,7 +2414,7 @@ public:
         restrictToSupported_->setToolTip("Consider only those tests that use only supported features and dependencies.");
         restrictToSupported_->changed().connect(this, &WDashboard::update);
         addWidget(languageGrid_ = new Wt::WTable);
-        languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
+        //languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
         addWidget(new Wt::WText("<small><sup>*</sup> Each test includes all the steps necessary to build, install, and use the "
                                 "software, and a failure is anything short of complete success. Blacklisted configurations and "
                                 "failures to install dependencies are not counted.</small>"));
@@ -2422,7 +2422,7 @@ public:
         // Grid of slaves running
         addWidget(new Wt::WText("<h1>Slave status</h1>"));
         addWidget(slaveGrid_ = new Wt::WTable);
-        slaveGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
+        //slaveGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
 
         update();
 
@@ -2464,7 +2464,7 @@ public:
                 } else {
                     testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
                     testArticleGrid_->elementAt(0, 0)->setToolTip("This is the tag or commit that's currently being advertised to "
-                                                                  "the slaves for tsting. It might not be the same as the version for "
+                                                                  "the slaves for testing. It might not be the same as the version for "
                                                                   "which results are presented below.");
                 }
             } else if (row.get_str(0) == "TEST_REPOSITORY") {
@@ -2482,8 +2482,7 @@ public:
                 testArticleGrid_->elementAt(4, 0)->setToolTip("Operating system in which the tests are running.");
             } else if (row.get_str(0) == "MATRIX_REPOSITORY") {
                 testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + linkify(row.get_str(1))));
-                testArticleGrid_->elementAt(5, 0)->setToolTip("Repository from which to the source code for the tools that compose the "
-                                                              "portability testing framework.");
+                testArticleGrid_->elementAt(5, 0)->setToolTip("Repository containing the testing tools.");
             } else if (row.get_str(0) == "MATRIX_COMMITTISH") {
                 testArticleGrid_->elementAt(6, 0)->addWidget(new Wt::WText("<b>Tool version:</b> " + row.get_str(1)));
                 testArticleGrid_->elementAt(6, 0)->setToolTip("Tag or commit defining the version of the tools being used to run tests.");

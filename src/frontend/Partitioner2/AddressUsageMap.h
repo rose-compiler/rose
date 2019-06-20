@@ -261,6 +261,13 @@ public:
      *  then this is a no-op. */
     void eraseDataBlock(const DataBlock::Ptr&);
 
+    /** Erase owners of a data block.
+     *
+     *  Finds the specified data block or an equivalent data block and removes from the data block all specified basic block
+     *  and function owners.  Returns information about whether we found the specified data block, an equivalent data block,
+     *  or no data block, and what owners (if any) remain.  This function does not erase the data block itself. */
+    OwnedDataBlock eraseDataBlockOwners(const OwnedDataBlock&);
+
     /** Selector to select all users.
      *
      *  This selector is the default for methods like @ref AddressUsageMap::overlapping, and causes all users to be selected. */
@@ -573,8 +580,14 @@ private:
     // If the pointer is null or the instruction/block pair does not exist in the map, then this is a no-op.
     void eraseInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
 
-    // Remove a data block from the map.  The specified data block is removed from the map.  If the pointer is null or the data
-    // block does not exist in the map, then this is a no-op.
+    // Unlinks the specified owners from a data block without affecting whether those owners are still present in the AUM.
+    // Returns information about whether the specified data block or an equivalent data block exists (retval.dataBLock()) and
+    // what owners remain.
+    OwnedDataBlock eraseDataBlockOwners(const OwnedDataBlock&);
+
+    // Remove a data block from the map.  The specified data block is removed from the map regardless of whether it's owned by
+    // basic blocks and/or functions.  If the pointer is null or the data block does not exist in the map, then this is a
+    // no-op.
     void eraseDataBlock(const DataBlock::Ptr&);
 };
 

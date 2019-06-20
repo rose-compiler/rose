@@ -55,7 +55,8 @@ DataBlock::nAttachedOwners(size_t n) {
 
 std::string
 DataBlock::printableName() const {
-    return "data block " + StringUtility::addrToString(address());
+    return "data block " + StringUtility::addrToString(address()) +
+        (comment_.empty() ? "" : " \"" + StringUtility::cEscape(comment_) + "\"");
 }
 
 std::vector<uint8_t>

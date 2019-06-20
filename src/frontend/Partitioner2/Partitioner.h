@@ -2502,6 +2502,11 @@ private:
     // pointed to by the return value is the one that's in the AUM, which might be other than the one that was specified in the
     // argument.
     OwnedDataBlock attachDataBlock(const OwnedDataBlock&);
+
+    // Removes the specified basic block or function owners from specified or equivalent data block, and if the data block has
+    // no other owners then detaches it from the AUM. Returns information about what remains in the AUM. No check is made
+    // whether the owners are attached, and no attempt is made to detach them (which is why this method is private).
+    OwnedDataBlock detachDataBlock(const OwnedDataBlock&);
 };
 
 } // namespace
