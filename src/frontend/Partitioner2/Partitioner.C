@@ -63,60 +63,82 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
     init(disassembler, map);
 }
 
-// FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
-// partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
-// things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
-// unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-// FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
-// after a while.
-Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
-    init(NULL, memoryMap_);                             // initialize just like default
-    *this = other;                                      // then delegate to the assignment operator
+// move constructor
+Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other) {
+    *this = boost::move(other);
 }
 
+// move assignment
 Partitioner&
-Partitioner::operator=(const Partitioner &other) {
+Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
+    // FIXME[Robb Matzke 2019-06-21]: Some of the data members don't support move semantics, so we copy those and then
+    // delete them from the source. The key thing we're trying to avoid is for other's destructor from doing anything
+    // that might interfere with the new object.
+
+    // FIXME[Robb Matzke 2019-06-21]: faked move semantics
     Sawyer::Attribute::Storage<>::operator=(other);
     settings_ = other.settings_;
     config_ = other.config_;
-    instructionProvider_ = other.instructionProvider_;
-    memoryMap_ = other.memoryMap_;
     cfg_ = other.cfg_;
-    vertexIndex_.clear();                               // initialized by init(other)
     aum_ = other.aum_;
-    solver_ = other.solver_;
+    vertexIndex_.clear();                               // initialized by init(other)
     functions_ = other.functions_;
-    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
-    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
     addressNames_ = other.addressNames_;
-    unparser_ = other.unparser_;
-    insnUnparser_ = other.insnUnparser_;
+
+    // FIXME[Robb Matzke 2019-06-21]: faked move semantics and no way to clear the source
     cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
     basicBlockCallbacks_ = other.basicBlockCallbacks_;
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
     functionPaddingMatchers_ = other.functionPaddingMatchers_;
+
+    // The rest are okay because they're PODs
+    instructionProvider_ = other.instructionProvider_;
+    other.instructionProvider_ = InstructionProvider::Ptr();
+
+    memoryMap_ = other.memoryMap_;
+    other.memoryMap_ = MemoryMap::Ptr();
+
+    solver_ = other.solver_;
+    other.solver_ = SmtSolver::Ptr();
+
+    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
 
+    unparser_ = other.unparser_;
+    other.unparser_ = Unparser::BasePtr();
+
+    insnUnparser_ = other.insnUnparser_;
+    other.insnUnparser_ = Unparser::BasePtr();
+
     {
-        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
         cfgProgressTotal_ = other.cfgProgressTotal_;
         progress_ = other.progress_;
+        other.progress_ = Progress::Ptr();
     }
 
-    init(other);                                        // copies graph iterators, etc.
+    // Finish initializing the enew object before we totally wipe out the old one.
+    init(other);
+
+    // FIXME[Robb Matzke 2019-06-21]: For all the faked move semantics above, clear them now in other.
+    other.clearAttributes();
+    other.settings_ = BasePartitionerSettings();
+    other.config_ = Configuration();
+    other.cfg_ = ControlFlowGraph();
+    other.aum_ = AddressUsageMap();
+    other.functions_ = Functions();
+    other.addressNames_ = AddressNameMap();
+    
     return *this;
 }
 
 Partitioner::~Partitioner() {
-#if 0 // [Robb Matzke 2019-06-21]: interferers with functions reutrning a Partitioner object
     // Detaching all functions breaks any reference-counting pointer cycles
     std::vector<Function::Ptr> list = functions();      // make a copy so we can modify while iterating
     BOOST_FOREACH (const Function::Ptr &function, list)
         detachFunction(function);
-#endif
 }
 
 void

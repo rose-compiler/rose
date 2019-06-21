@@ -26,6 +26,7 @@
 #include <Progress.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
@@ -51,7 +52,7 @@ namespace BinaryAnalysis {
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
  *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
- *      global control flow graph (CFG) and address usage map (AUM). It's operations are quite low-level and its behavior is
+ *      global control flow graph (CFG) and address usage map (AUM). Its operations are quite low-level and its behavior is
  *      customized primarily by callbacks.
  *
  *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
@@ -286,11 +287,13 @@ namespace Partitioner2 {
  * Q. Why is this class final?
  *
  * A. This class represents the low-level operations for partitioning instructions and is responsible for ensuring that certain
- *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. It's
+ *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. Its
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
 class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage<> {     // final
+    BOOST_MOVABLE_BUT_NOT_COPYABLE(Partitioner)
+
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
@@ -432,14 +435,11 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
 
-    // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
-    // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
-    // things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
-    // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-    // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
-    // after a while.
-    Partitioner(const Partitioner &other);
-    Partitioner& operator=(const Partitioner &other);
+    /** Move constructor. */
+    Partitioner(BOOST_RV_REF(Partitioner));
+
+    /** Move assignment. */
+    Partitioner& operator=(BOOST_RV_REF(Partitioner));
 
     ~Partitioner();
 
@@ -1375,7 +1375,7 @@ public:
      *  @li If the block is owned by a function and the function's name is present on a whitelist or blacklist
      *      then the block's may-return is positive if whitelisted or negative if blacklisted.
      *
-     *  @li If the block is a non-existing placeholder (i.e. it's address is not mapped with execute permission) then
+     *  @li If the block is a non-existing placeholder (i.e. its address is not mapped with execute permission) then
      *      its may-return is positive or negative depending on the value of this partitioner's @ref assumeFunctionsReturn
      *      property.
      *

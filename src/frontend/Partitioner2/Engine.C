@@ -1424,7 +1424,7 @@ Engine::createBarePartitioner() {
                                             SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH));
     }
 
-    return p;
+    return boost::move(p);
 }
 
 Partitioner
@@ -1444,7 +1444,7 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-    return p;
+    return boost::move(p);
 }
 
 Partitioner
@@ -1456,7 +1456,7 @@ Engine::createTunedPartitioner() {
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
-        return p;
+        return boost::move(p);
     }
 
     if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
@@ -1472,14 +1472,14 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
         p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-        return p;
+        return boost::move(p);
     }
 
     if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
-        return p;
+        return boost::move(p);
     }
 
     return createGenericPartitioner();
@@ -1547,7 +1547,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         partitioner.attachFunction(function);
     }
 
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 Partitioner
@@ -1695,7 +1695,7 @@ Engine::partition(const std::vector<std::string> &fileNames) {
             obtainDisassembler();
             Partitioner partitioner = createPartitioner();
             runPartitioner(partitioner);
-            return partitioner;
+            return boost::move(partitioner);
         }
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
@@ -1755,7 +1755,7 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 
     info <<"; took " <<timer << " seconds\n";
     map_ = partitioner.memoryMap();
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 
