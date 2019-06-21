@@ -324,6 +324,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_derived_type_name_conflict.f90 \
      test2019_rewind.f90 \
      test2019_renameList.f90 \
+     test2019_designator.f90 \
      canonicalExample.f90 
 
 # Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
