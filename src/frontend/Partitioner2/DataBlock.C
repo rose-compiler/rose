@@ -1,6 +1,10 @@
 #include "sage3basic.h"
 #include <Partitioner2/DataBlock.h>
 
+#include <Partitioner2/BasicBlock.h>
+#include <Partitioner2/Function.h>
+#include <Partitioner2/Utility.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -38,19 +42,8 @@ DataBlock::extent() const {
 }
 
 size_t
-DataBlock::incrementOwnerCount() {
-    return ++nAttachedOwners_;
-}
-
-size_t
-DataBlock::decrementOwnerCount() {
-    ASSERT_require(nAttachedOwners_ > 0);
-    return --nAttachedOwners_;
-}
-
-void
-DataBlock::nAttachedOwners(size_t n) {
-    nAttachedOwners_ = n;
+DataBlock::nAttachedOwners() const {
+    return attachedBasicBlockOwners_.size() + attachedFunctionOwners_.size();
 }
 
 std::string
@@ -67,6 +60,32 @@ DataBlock::read(const MemoryMap::Ptr &map) const {
         retval.resize(nread);
     }
     return retval;
+}
+
+void
+DataBlock::insertOwner(const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    insertUnique(attachedBasicBlockOwners_, bb, sortBasicBlocksByAddress);
+}
+
+void
+DataBlock::insertOwner(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+    insertUnique(attachedFunctionOwners_, function, sortFunctionsByAddress);
+}
+
+void
+DataBlock::eraseOwner(const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    bool erased = eraseUnique(attachedBasicBlockOwners_, bb, sortBasicBlocksByAddress);
+    ASSERT_always_require(erased);
+}
+
+void
+DataBlock::eraseOwner(const Function::Ptr &function) {
+    ASSERT_not_null(function);
+    bool erased = eraseUnique(attachedFunctionOwners_, function, sortFunctionsByAddress);
+    ASSERT_always_require(erased);
 }
 
 } // namespace

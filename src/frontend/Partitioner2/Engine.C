@@ -2751,7 +2751,7 @@ Engine::CodeConstants::nextConstant(const Partitioner &partitioner) {
     while (!toBeExamined_.empty()) {
         inProgress_ = *toBeExamined_.begin();
         toBeExamined_.erase(inProgress_);
-        if (SgAsmInstruction *insn = partitioner.instructionExists(inProgress_).orDefault().insn()) {
+        if (SgAsmInstruction *insn = partitioner.instructionExists(inProgress_).insn()) {
 
             struct T1: AstSimpleProcessing {
                 std::set<rose_addr_t> constants;

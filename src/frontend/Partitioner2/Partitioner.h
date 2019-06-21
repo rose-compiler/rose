@@ -738,17 +738,17 @@ public:
     /** Determines whether an instruction is attached to the CFG/AUM.
      *
      *  If the CFG/AUM represents an instruction that starts at the specified address, then this method returns the
-     *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
-     *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
+     *  instruction/block pair, otherwise it returns an empty pair. The initial instruction for a basic block does not exist if
+     *  the basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
      *
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const /*final*/ {
-        return aum_.instructionExists(startVa);
+    AddressUser instructionExists(rose_addr_t startVa) const /*final*/ {
+        return aum_.findInstruction(startVa);
     }
-    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const /*final*/ {
-        return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
+    AddressUser instructionExists(SgAsmInstruction *insn) const /*final*/ {
+        return aum_.findInstruction(insn);
     }
     /** @} */
 
@@ -1505,7 +1505,7 @@ public:
      *  to attempt to detach a data block which is owned by attached basic blocks or attached functions.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
+    void detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Attach a data block to an attached or detached function.
      *
@@ -2495,18 +2495,6 @@ private:
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();
-
-    // Attach a data block with ownership information to the AUM. This is private because it doesn't check that the owners
-    // specified in the argument are actually already attached to the AUM. Returns an updated OwnedDataBlock record containing
-    // the specified owners plus any owners that were already present in the AUM for an equivalent data block. The data block
-    // pointed to by the return value is the one that's in the AUM, which might be other than the one that was specified in the
-    // argument.
-    OwnedDataBlock attachDataBlock(const OwnedDataBlock&);
-
-    // Removes the specified basic block or function owners from specified or equivalent data block, and if the data block has
-    // no other owners then detaches it from the AUM. Returns information about what remains in the AUM. No check is made
-    // whether the owners are attached, and no attempt is made to detach them (which is why this method is private).
-    OwnedDataBlock detachDataBlock(const OwnedDataBlock&);
 };
 
 } // namespace
