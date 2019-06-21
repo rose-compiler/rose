@@ -6585,6 +6585,11 @@ void c_action_label(Token_t * lbl)
         printf("In c_action_designator() hasSubstringRange = %s \n",
                 hasSubstringRange ? "true" : "false");
 
+#if 1 
+            // Output debugging information about saved state (stack) information.
+            outputState("At TOP in R603 c_action_designator()");
+#endif
+
         if (hasSubstringRange == true)
         {
             // printf ("Sorry, case hasSubstringRange == true not implemented \n");
@@ -6600,31 +6605,51 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(simpleExpression != NULL);
             astExpressionStack.pop_front();
 
-            SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(simpleExpression);
-            ROSE_ASSERT(arrayReference != NULL);
+            SgPntrArrRefExp* arrayReference  = NULL;
+            SgPntrArrRefExp* arrayOfStringsArrayRef = NULL; 
+
+            if(isSgPntrArrRefExp(simpleExpression))
+            {
+              arrayReference = isSgPntrArrRefExp(simpleExpression);
+              ROSE_ASSERT(arrayReference != NULL);
 #if 0
-            printf ("arrayReference lhs  = %p = %s \n",arrayReference->get_lhs_operand(),arrayReference->get_lhs_operand()->class_name().c_str());
-            printf ("arrayReference rhs  = %p = %s \n",arrayReference->get_rhs_operand(),arrayReference->get_rhs_operand()->class_name().c_str());
-            printf ("arrayReference type = %p = %s \n",arrayReference->get_type(),arrayReference->get_type()->class_name().c_str());
+              printf ("arrayReference lhs  = %p = %s \n",arrayReference->get_lhs_operand(),arrayReference->get_lhs_operand()->class_name().c_str());
+              printf ("arrayReference rhs  = %p = %s \n",arrayReference->get_rhs_operand(),arrayReference->get_rhs_operand()->class_name().c_str());
+              printf ("arrayReference type = %p = %s \n",arrayReference->get_type(),arrayReference->get_type()->class_name().c_str());
 #endif
 
-            // DQ (12/3/2010): This should maybe have a type that is array of strings.
-            // SgPntrArrRefExp* arrayOfStringsArrayRef = new SgPntrArrRefExp (arrayReference,subscriptRange,arrayReference->get_type());
-            SgPntrArrRefExp* arrayOfStringsArrayRef = new SgPntrArrRefExp(
-                    arrayReference, subscriptRange,/* type should not be specified */
-                    NULL);
-            ROSE_ASSERT(arrayOfStringsArrayRef != NULL);
+              // DQ (12/3/2010): This should maybe have a type that is array of strings.
+              // SgPntrArrRefExp* arrayOfStringsArrayRef = new SgPntrArrRefExp (arrayReference,subscriptRange,arrayReference->get_type());
+              arrayOfStringsArrayRef = new SgPntrArrRefExp(
+                      arrayReference, subscriptRange,/* type should not be specified */
+                      NULL);
+              ROSE_ASSERT(arrayOfStringsArrayRef != NULL);
 
-            // arrayReference->set_parent(arrayOfStringsArrayRef);
-            // subscriptRange->set_parent(arrayOfStringsArrayRef);
+              // arrayReference->set_parent(arrayOfStringsArrayRef);
+              // subscriptRange->set_parent(arrayOfStringsArrayRef);
 
+            }
+
+            // Pei-Hung (06/21/2019) the array can be a member of derived type 
+            // Example found in test2019_designator.f90 
+            if(isSgDotExp(simpleExpression))
+            {
+              SgDotExp* DotExpression = isSgDotExp(simpleExpression);
+              arrayReference = isSgPntrArrRefExp(DotExpression->get_rhs_operand());
+              ROSE_ASSERT(arrayReference != NULL);
+              arrayOfStringsArrayRef = new SgPntrArrRefExp(
+                      DotExpression, subscriptRange,/* type should not be specified */
+                      NULL);
+              ROSE_ASSERT(arrayOfStringsArrayRef != NULL);
+              
+            }
             setSourcePosition(arrayOfStringsArrayRef);
 
             astExpressionStack.push_front(arrayOfStringsArrayRef);
         }
 #if 1
         // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R602 c_action_designator()");
+        outputState("At Bottom of R603 c_action_designator()");
 #endif
     }
 
@@ -6776,7 +6801,7 @@ void c_action_label(Token_t * lbl)
                 hasLowerBound ? "true" : "false",
                 hasUpperBound ? "true" : "false");
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R611 c_action_substring_range()");
 #endif
@@ -6786,7 +6811,7 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(subscriptRange != NULL);
         astExpressionStack.push_front(subscriptRange);
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R611 c_action_substring_range()");
 #endif
