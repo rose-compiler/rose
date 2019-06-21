@@ -323,7 +323,8 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_POINTER_TYPE   |
         SgType::STRIP_MODIFIER_TYPE  |
         SgType::STRIP_REFERENCE_TYPE |
-        SgType::STRIP_RVALUE_REFERENCE_TYPE
+        SgType::STRIP_RVALUE_REFERENCE_TYPE |
+        SgType::STRIP_TYPEDEF_TYPE
       );
       SgExpression * rhs = bop->get_rhs_operand_i();
       SgType * rhs_t = rhs->get_type();
@@ -332,13 +333,15 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_POINTER_TYPE   |
         SgType::STRIP_MODIFIER_TYPE  |
         SgType::STRIP_REFERENCE_TYPE |
-        SgType::STRIP_RVALUE_REFERENCE_TYPE
+        SgType::STRIP_RVALUE_REFERENCE_TYPE |
+        SgType::STRIP_TYPEDEF_TYPE
       );
       if (rhs_t_s != lhs_t_s) {
         SgExpression * new_rhs = SageBuilder::buildCastExp(rhs, lhs_t->stripType(
           SgType::STRIP_MODIFIER_TYPE  |
           SgType::STRIP_REFERENCE_TYPE |
-          SgType::STRIP_RVALUE_REFERENCE_TYPE
+          SgType::STRIP_RVALUE_REFERENCE_TYPE |
+          SgType::STRIP_TYPEDEF_TYPE
         ));
         rhs->set_parent(new_rhs);
         new_rhs->set_parent(bop);
