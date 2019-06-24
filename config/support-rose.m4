@@ -2498,7 +2498,6 @@ tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
-tools/fortranTranslation/Makefile
 tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
