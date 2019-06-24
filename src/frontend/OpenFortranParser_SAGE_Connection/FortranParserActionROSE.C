@@ -3443,6 +3443,15 @@ void c_action_label(Token_t * lbl)
                 break;
             }
 
+            case AttrSpec_CONTIGUOUS:
+            {
+                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+                printf("found a CONTIGUOUS spec \n");
+                DeclAttributes.setIsContiguous(true);
+                DeclAttributes.setContiguousAttr(AttrSpec_CONTIGUOUS);
+                break;
+            }
+
             default:
             {
                 printf("default reached in c_action_attr_spec() attr = %d \n", attr);
