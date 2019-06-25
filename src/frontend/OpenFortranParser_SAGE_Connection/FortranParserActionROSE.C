@@ -12292,7 +12292,9 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(endKeyword != NULL);
         resetEndingSourcePosition(astScopeStack.front(), endKeyword);
 
-        ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+        // Pei-Hung (06/25/2019) test2019_doconstruct.f90 shows that a do constrcut can be in a single line.
+        // Therefore the following assert is unnecessary.
+        //ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
         setStatementNumericLabel(astScopeStack.front(), label);
 
