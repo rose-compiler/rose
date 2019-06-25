@@ -323,7 +323,8 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_POINTER_TYPE   |
         SgType::STRIP_MODIFIER_TYPE  |
         SgType::STRIP_REFERENCE_TYPE |
-        SgType::STRIP_RVALUE_REFERENCE_TYPE
+        SgType::STRIP_RVALUE_REFERENCE_TYPE |
+        SgType::STRIP_TYPEDEF_TYPE
       );
       SgExpression * rhs = bop->get_rhs_operand_i();
       SgType * rhs_t = rhs->get_type();
@@ -332,10 +333,16 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_POINTER_TYPE   |
         SgType::STRIP_MODIFIER_TYPE  |
         SgType::STRIP_REFERENCE_TYPE |
-        SgType::STRIP_RVALUE_REFERENCE_TYPE
+        SgType::STRIP_RVALUE_REFERENCE_TYPE |
+        SgType::STRIP_TYPEDEF_TYPE
       );
       if (rhs_t_s != lhs_t_s) {
-        SgExpression * new_rhs = SageBuilder::buildCastExp(rhs, lhs_t);
+        SgExpression * new_rhs = SageBuilder::buildCastExp(rhs, lhs_t->stripType(
+          SgType::STRIP_MODIFIER_TYPE  |
+          SgType::STRIP_REFERENCE_TYPE |
+          SgType::STRIP_RVALUE_REFERENCE_TYPE |
+          SgType::STRIP_TYPEDEF_TYPE
+        ));
         rhs->set_parent(new_rhs);
         new_rhs->set_parent(bop);
         bop->set_rhs_operand_i(new_rhs);
@@ -525,15 +532,68 @@ int TFTypeTransformer::changeTypeIfFromTypeMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
+template <typename N>
+bool node_can_be_changed(N * node);
+
+template <>
+bool node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
+  return ! SageInterface::insideSystemHeader(lnode) &&
+         ! lnode->isCompilerGenerated();
+}
+
+template <>
+bool node_can_be_changed<SgStatement>(SgStatement * stmt) {
+  return node_can_be_changed<SgLocatedNode>(stmt);
+}
+
+template <>
+bool node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
+  return node_can_be_changed<SgStatement>(decl);
+}
+
+template <>
+bool node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
+  return fdecl->get_name().getString().find("__builtin_") != 0 && node_can_be_changed<SgDeclarationStatement>(fdecl);
+}
+
+template <>
+bool node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
+  return node_can_be_changed<SgDeclarationStatement>(vdecl);
+}
+
+template <>
+bool node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
+  return node_can_be_changed<SgLocatedNode>(lnode_s);
+}
+
+template <>
+bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
+  return node_can_be_changed<SgLocatedNodeSupport>(iname);
+}
+
+#define DEBUG__TFTypeTransformer_changeVariableType 0
+
 //will search for variables to change. first by type if fromtype is provided then by name if it is not.
 int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclaration* funDecl, string varNameToFind, SgType* newType, bool base, SgType* fromType, bool listing) {
-
+#if DEBUG__TFTypeTransformer_changeVariableType
+  std::cout << "ENTER TFTypeTransformer::changeVariableType" << std::endl;
+  std::cout << "    $ project       = " << project << std::endl;
+  std::cout << "    $ funDecl       = " << funDecl << " (" << ( funDecl != nullptr ? funDecl->class_name() : "" ) << ")" << std::endl;
+  std::cout << "    $ varNameToFind = " << varNameToFind << std::endl;
+  std::cout << "    $ newType       = " << newType << " (" << ( newType != nullptr ? newType->class_name() : "" ) << ")" << std::endl;
+  std::cout << "    $ base          = " << base << std::endl;
+  std::cout << "    $ fromType      = " << fromType << " (" << ( fromType != nullptr ? fromType->class_name() : "" ) << ")" << std::endl;
+  std::cout << "    $ listing       = " << listing << std::endl;
+#endif
   ROSE_ASSERT(project != NULL);
   int foundVar=0;
 
   // Process type changes inside of a function
   if (funDecl != NULL) {
-    if (SageInterface::insideSystemHeader(funDecl) || funDecl->get_name().getString().find("__builtin_") == 0) return 0;
+#if DEBUG__TFTypeTransformer_changeVariableType
+    std::cout << " CASE Change type inside function" << std::endl;
+#endif
+    if (!node_can_be_changed(funDecl)) return 0;
 
     SgFunctionDefinition* funDef = funDecl->get_definition();
 
@@ -542,6 +602,10 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
       for(RoseAst::iterator i = ast.begin(); i != ast.end(); ++i) {
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           SgInitializedName * varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+#if DEBUG__TFTypeTransformer_changeVariableType
+          std::cout << "   * varInitName    = " << std::hex << varInitName << " (" << varInitName->class_name() << ")" << std::endl;
+          std::cout << "       ->get_name() = " << varInitName->get_name() << std::endl;
+#endif
           if ( fromType != nullptr && varNameToFind == "TYPEFORGEbody" ) {
             foundVar += changeTypeIfFromTypeMatches(varInitName, funDecl, newType, fromType, base, varDecl, listing);
           } else if ( varNameToFind != "" && fromType == nullptr ) {
@@ -551,11 +615,14 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
       }
     }
 
+#define EXPERIMENTAL_CALL_SITE_UPDATES 0
+#if EXPERIMENTAL_CALL_SITE_UPDATES
     std::vector<SgFunctionCallExp *> calls;
     if (funDecl->get_firstNondefiningDeclaration() == funDecl) {
       // TODO get all func call expr with function reference whose symbol point to funDecl
       RoseAst ast(project);
     }
+#endif
 
     int param_idx = 0;
     for(auto varInitName : funDecl->get_parameterList()->get_args()) {
@@ -567,6 +634,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
         foundParam += changeTypeIfInitNameMatches(varInitName, funDecl, varNameToFind, newType, base, varInitName, listing);
       }
 
+#if EXPERIMENTAL_CALL_SITE_UPDATES
       if (foundParam > 0) {
         for (auto call: calls) {
           SgCastExp * cast = isSgCastExp(call->get_args()->get_expressions()[param_idx]);
@@ -575,6 +643,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
           }
         }
       }
+#endif
 
       foundVar += foundParam;
       param_idx++;
@@ -607,11 +676,22 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
     }
   } else {
     // Change type of global variables
+#if DEBUG__TFTypeTransformer_changeVariableType
+    std::cout << " CASE Change type of global variables" << std::endl;
+#endif
+
     ROSE_ASSERT(varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs");
 
     list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
     for (auto varDecl: listOfGlobalVars) {
       SgInitializedName * varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+#if DEBUG__TFTypeTransformer_changeVariableType
+      std::cout << "   * varInitName    = " << std::hex << varInitName << " (" << varInitName->class_name() << ")" << std::endl;
+      std::cout << "       ->get_name() = " << varInitName->get_name() << std::endl;
+#endif
+
+      if (!node_can_be_changed(varInitName)) continue;
+
       if (fromType != nullptr) {
         foundVar += changeTypeIfFromTypeMatches(varInitName, project, newType, fromType, base, varDecl, listing);
       } else {

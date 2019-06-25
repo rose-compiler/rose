@@ -55,7 +55,7 @@ namespace Rose {
  *      }
  *  };
  * @endcode */
-template<typename E, typename V = unsigned long>
+template<typename E, typename V = int64_t>
 class BitFlags {
 public:
     typedef E Enum;
@@ -225,7 +225,7 @@ public:
      *  The enum constants are first sorted so that those with more set bits appear before those with fewer bits. Then each
      *  constant is searched in the bit vector and those bits are removed. This continues until either no bits remain or no
      *  matching constant is found. The @p leftovers is set to those bits that could not be matched by this process. */
-    std::vector<Enum> split(std::vector<long> constants, Vector &leftovers /*out*/) const {
+    std::vector<Enum> split(std::vector<int64_t> constants, Vector &leftovers /*out*/) const {
         leftovers = Vector(0);
         std::vector<Enum> retval;
         std::sort(constants.begin(), constants.end(), moreBits);
@@ -251,7 +251,7 @@ public:
      *
      *  Converts a bit vector to a string of the form "NAME1|NAME2|...". The @p constants are the individual enum flags, and
      *  the @p stringifier is a function that converts each of those constants to strings. */
-    std::string toString(std::vector<long> constants, const char*(*stringifier)(long)) const {
+    std::string toString(std::vector<int64_t> constants, const char*(*stringifier)(int64_t)) const {
         std::string retval;
         if (vector_ != Vector(0)) {
             Vector leftovers(0);

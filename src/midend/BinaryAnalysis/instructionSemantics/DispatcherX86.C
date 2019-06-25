@@ -4493,6 +4493,11 @@ DispatcherX86::stackPointerRegister() const {
     return REG_anySP;
 }
 
+RegisterDescriptor
+DispatcherX86::callReturnRegister() const {
+    return RegisterDescriptor();
+}
+
 static bool
 isStatusRegister(RegisterDescriptor reg) {
     return reg.get_major()==x86_regclass_flags && reg.get_minor()==x86_flags_status;

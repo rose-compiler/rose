@@ -8,7 +8,7 @@ LIBDIR="$dir0/../lib/matrix"
 VARDIR="$dir0/../var/matrix"
 ETCDIR="$dir0/../etc/matrix"
 
-DATABASE=
+DATABASE="$ROSE_MATRIX_DATABASE"
 DRY_RUN=
 IGNORE_SETUP_FAILURES=
 INTERACTIVE=
@@ -18,12 +18,14 @@ LIMIT_TIME=
 MAX_SAVED_LINES=500
 ONLY_SUPPORTED=
 PROJECT_NAME="mx"
+REBUILD_IMAGES=
 RMC_CONFIG=
 RMC_CONSTRAINTS=
 RUN_FOREVER=
 SOURCE_CODE=
 TARGET_OS=
 TEST_NUMBER=1
+UPLOAD_ARTIFACTS=
 VERBOSITY=0
 
 ########################################################################################################################
@@ -55,7 +57,7 @@ help() {
     echo "        Start an interactive shell in the target machine before any steps are"
     echo "        run."
     echo
-    echo "    --keep-containers=(all|fail|pass)"
+    echo "    --keep-containers=(all|fail|pass|STATUS)"
     echo "        Defines which Docker containers (build trees) should be kept. Normally"
     echo "        each container is removed at the end of the test."
     echo
@@ -77,6 +79,11 @@ help() {
     echo "        Run tests on the specified operating system name instead of randomly"
     echo "        selecting an operating system from the etc/matrix/target-os file."
     echo
+    echo "    --rebuild-images"
+    echo "        Specifying this switch will cause the Docker images for all operating"
+    echo "        system containers to be removed so that they're recreated. You can use"
+    echo "        this to force upgrade to the latest software in the container."
+    echo
     echo "    --rmc-config=FILE"
     echo "        Instead of getting an RMC configuration file from the database server"
     echo "        use the one specified for this command-line switch. Regardless of"
@@ -92,6 +99,11 @@ help() {
     echo "        (2) each rmc_\* command is followed by a space-separated list of allowed"
     echo "        values, one of which will be chosen at random to replace the"
     echo "        corresponding line in the RMC configuration file."
+    echo
+    echo "    --upload=URL"
+    echo "        For every successful test (tests that reached their final \"end\" state)"
+    echo "        copy the test artifacts (files in the \"artifacts\" run directory) to the"
+    echo "        specified URL."
     echo
     echo "    --var=DIRECTORY"
     echo "        Name of directory that contains run-time information for testing."
@@ -114,13 +126,15 @@ die() {
 ########################################################################################################################
 # Show a heading when starting a new test
 test-heading() {
-    echo
-    echo
-    echo "================================================================================"
-    echo
-    (figlet $TEST_NUMBER || banner $TEST_NUMBER || echo $TEST_NUMBER) 2>/dev/null
-    echo "================================================================================"
-    echo
+    if [ $LIMIT_TESTS != 1 -o $TEST_NUMBER != 1 ]; then
+	echo
+	echo
+	echo "================================================================================"
+	echo
+	(figlet "Test $TEST_NUMBER" || banner "Test $TEST_NUMBER" || echo "Test $TEST_NUMBER") 2>/dev/null
+	echo "================================================================================"
+	echo
+    fi
 }    
 
 ########################################################################################################################
@@ -185,6 +199,13 @@ initialize-limits() {
 	LIMIT_TIME=1
 	LIMIT_TESTS=1
     fi
+
+    if [ "$SOURCE_CODE" = "" ]; then
+	RUN_FOREVER=
+	LIMIT_TESTS=0
+	LIMIT_TIME=0
+    fi
+
     [ "$LIMIT_TESTS" -ge 0 ]
     [ "$LIMIT_TIME" -ge 0 ]
 }
@@ -196,7 +217,9 @@ select-os() {
     if [ -n "$TARGET_OS" ]; then
 	echo "$TARGET_OS"
     else
-	sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]$//' -e '/^$/d' <${ETCDIR}/target-os |shuf -n1
+	local os="$(rose-matrix-slave-config --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
+	echo "$os"
     fi
 }
 
@@ -310,6 +333,30 @@ generate-rmc-config-file() {
 }
 
 ########################################################################################################################
+# Check whether the RMC configuration file is suitable for the specified OS.
+check-rmc-suitability() {
+    local os="$1" rundir="$2"
+
+    local reject_script="$ETCDIR/$(simplified-os-name "$os")-reject.sh"
+    (
+	echo "#!/bin/bash"
+	echo "os='$os'"
+	echo "SOURCE_CODE='$SOURCE_CODE'"
+	echo
+	sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
+	echo
+	cat "$LIBDIR/run-support"
+	echo
+	[ -f "$ETCDIR/general-reject.sh" ] && cat "$ETCDIR/general-reject.sh"
+	echo
+	[ -f "$reject_script" ] && cat "$reject_script"
+    ) >"$rundir/rejected"
+    bash "$rundir/rejected" || return 1
+    rm -f "$rundir/rejected"
+    return 0
+}
+	    
+########################################################################################################################
 # Given an operating system name, return the Docker image name.
 generate-image-name() {
     local os="$1"
@@ -325,6 +372,19 @@ generate-image-name() {
 generate-container-name() {
     local os="$1"
     printf "%s-%04x%04x" "${image_name}" $RANDOM $RANDOM
+}
+
+########################################################################################################################
+# Removes images for all the operating system containers (or if --os was specified, for just that operating system).
+remove-os-images() {
+    if [ -n "$TARGET_OS" ]; then
+	docker image rm "$(generate-image-name "$TARGET_OS")" || true
+    else
+	local os=
+	for os in $(rose-matrix-slave-config --value-only --plain TEST_OS); do
+	    docker image rm "$(generate-image-name "$os")" || true
+	done
+    fi
 }
 
 ########################################################################################################################
@@ -379,6 +439,7 @@ report-results() {
     fi
     
     local testid=$(rose-matrix-test-result $DRY_RUN --database="$DATABASE" --log='tool(>=trace)' "${rundir}/result")
+    rose-matrix-slave-health test "$testid"
     if [ "$testid" = "" -a -z "$DRY_RUN" ]; then
 	echo "$arg0: error: failed to send test results to database ********"
     elif  [ "$DRY_RUN" = "" ]; then
@@ -420,15 +481,20 @@ remove-or-keep-container() {
     local rundir="$1" image_name="$2" container_name="$3"
 
     local keep=
-    if [ "$(get-result "$rundir" status)" = end ]; then
-	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = pass ]; then
+    case "$KEEP_CONTAINERS" in
+	all)
 	    keep=yes
-	fi
-    else
-	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = fail ]; then
-	    keep=yes
-	fi
-    fi
+	    ;;
+	pass)
+	    [ "$(get-result "$rundir" status)" = end ] && keep=yes
+	    ;;
+	fail)
+	    [ "$(get-result "$rundir" status)" != end ] && keep=yes
+	    ;;
+	*)
+	    [ "$(get-result "$rundir" status)" = "$KEEP_CONTAINERS" ] && keep=yes
+	    ;;
+    esac
 
     if [ "$keep" = "" ]; then
 	run docker container rm "$container_name"
@@ -479,6 +545,40 @@ remove-or-keep-rundir() {
 }
 
 ########################################################################################################################
+# Conditionally upload artifacts to a server.
+upload-artifacts() {
+    local rundir="$1" container_name="$2"
+
+    if [ -n "$UPLOAD_ARTIFACTS" ]; then
+	if [ "$(get-result "$rundir" status)" = end ]; then
+	    if [ -d "$rundir/artifacts" ]; then
+		echo "uploading test artifacts to $UPLOAD_ARTIFACTS..."
+		case "$UPLOAD_ARTIFACTS" in
+		    s3://*)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    aws s3 cp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		    *)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    scp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		esac
+	    fi
+	fi
+    fi
+}
+
+########################################################################################################################
 # Run one test in a Docker container
 run-test() {
     # Generate the Docker image for the selected target operating system.
@@ -501,14 +601,17 @@ run-test() {
     mkdir -p "$rundir/artifacts"
 
     # Create configuration files
-    generate-rmc-config-file "${rundir}"
+    echo "Obtaining test configuration for $os..."
+    while true; do
+	generate-rmc-config-file "$rundir"
+	check-rmc-suitability "$os" "$rundir" && break
+    done
     echo "RMC configuration:"
     cat -n "${rundir}/rmc-config"
 
     # Create initial contents for some output files
     set-result "$rundir" os "$os"
-    set-result "$rundir" tester "$(whoami)@$(hostname) docker ${image_name}"
-
+    set-result "$rundir" tester "$(whoami)@$(hostname) using $arg0"
     (
 	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 	echo "Host machine: $(whoami)@$(hostname -f) $(uname -srv)"
@@ -561,6 +664,7 @@ run-test() {
 	fi
     done
     report-results "$rundir"
+    upload-artifacts "$rundir" "$container_name"
     remove-or-keep-rundir "$rundir"
 }
 
@@ -634,8 +738,13 @@ while [ "$#" -gt 0 ]; do
 	    shift
 	    ;;
 
-	--keep-containers=all|--keep-containers=fail|--keep-containers=pass)
+	--keep-containers=*)
 	    KEEP_CONTAINERS="${1#--keep-containers=}"
+	    shift
+	    ;;
+
+	--rebuild-images)
+	    REBUILD_IMAGES=yes
 	    shift
 	    ;;
 
@@ -649,12 +758,17 @@ while [ "$#" -gt 0 ]; do
 	    shift
 	    ;;
 
+	--upload=*)
+	    UPLOAD_ARTIFACTS="${1#--upload=}"
+	    shift
+	    ;;
+
 	--var=*)
 	    VARDIR="${1#--var=}"
 	    shift
 	    ;;
 
-	--verbose)
+	--verbose|-v)
 	    VERBOSITY=$[VERBOSITY + 1]
 	    shift
 	    ;;
@@ -668,20 +782,25 @@ while [ "$#" -gt 0 ]; do
 	    ;;
     esac
 done
+
+SOURCE_CODE="$1"
 [ "$VERBOSITY" -ge 2 ] && set -x
-[ -n "$DATABASE" ] || die "no database URL specified"
+[ -n "$REBUILD_IMAGES" ] && remove-os-images
 
 initialize-limits
 
-SOURCE_CODE="$1"
-[ -n "$SOURCE_CODE" -a -d "$SOURCE_CODE/." ] || die "incorrect usage; see --help"
-
-while true; do
+if [ "$SOURCE_CODE" = "" ]; then
+    echo "Nothing to test"
+    exit 0
+fi
+while [ -n "$SOURCE_CODE" ]; do
     if [ "$RUN_FOREVER" = "" ]; then
 	[ "$LIMIT_TESTS" -le 0 ] && break
 	[ "$LIMIT_TIME"  -le 0 ] && break
     fi
+    [ ! -d "$SOURCE_CODE/." ] && die "test directory missing: $SOURCE_CODE"
 
+    [ -n "$DATABASE" ] || die "no database URL specified"
     test-heading
     start_time=$SECONDS
     run-test

@@ -12569,6 +12569,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      ROSE_ASSERT(scope != NULL);
 
 #if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+#if 0
   // DQ (2/2/2010): This fails in the projects/OpenMP_Translator "make check" tests.
   // DQ (1/2/2010): Introducing test that are enforced at lower levels to catch errors as early as possible.
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
@@ -22382,6 +22386,26 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
      return traversal.returnset;
    }
 
+//! Use the set of IR nodes and set the isModified flag in each IR node to true.
+void 
+SageInterface::resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifiedNodeSet)
+   {
+  // DQ (6/5/2019): Use a previously constructed set to reset the IR nodes to be marked as isModified.
+
+#if 0
+     printf ("In resetModifiedLocatedNodes(): modifiedNodeSet.size() = %zu \n",modifiedNodeSet.size());
+#endif
+
+     std::set<SgLocatedNode*>::const_iterator i = modifiedNodeSet.begin();
+     while (i != modifiedNodeSet.end())
+        {
+          SgLocatedNode* node = *i;
+          node->set_isModified(true);
+
+          i++;
+        }
+   }
+
 
 void
 SageInterface::reportModifiedStatements( const string & label, SgNode* node )
@@ -22418,7 +22442,13 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
           i++;
         }
 
-     printf ("##################################################### \n\n\n");
+#if 1
+  // DQ (6/8/2019): This helps track down where this is being called when are are cleaning up 
+  // output spew else the message output at the top of this function will scroll off the screen.
+     printf ("########################################################## \n");
+     printf ("reportModifiedStatements(): Called using label = %s \n",label.c_str());
+#endif
+     printf ("########################################################## \n\n\n");
    }
 
 
@@ -23699,3 +23729,119 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
   }
 }
 
+
+
+// DQ (6/6/2019): Move this to the SageInteface namespace.
+void
+SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node) 
+   {
+  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
+  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
+  // declarations in the outlined code we can support the outpiled code with those references.  This
+  // approach has the added advantage of also supporting the same include file tree as the original 
+  // file where the outlined code is being taken from.
+
+     class TransformFunctionDefinitionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               std::vector<SgFunctionDeclaration*> functionList;
+               SgSourceFile* sourceFile;
+               int sourceFileId;
+               string filenameWithPath;
+
+          public:
+               TransformFunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
+                    if (temp_sourceFile != NULL)
+                       {
+                         sourceFile       = temp_sourceFile;
+                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
+
+                      // The file_id is not sufficnet, not clear why, but the filenames match.
+                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
+
+                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+
+                       }
+
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    if (functionDeclaration != NULL)
+                       {
+                      // This should have been set already.
+                         ROSE_ASSERT(sourceFile != NULL);
+
+                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+                         if (functionDeclaration == definingFunctionDeclaration)
+                            {
+#if 1
+                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
+                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+                              printf (" --- source file: file_info: id = %d name = %s \n",
+                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
+#endif
+                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
+                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
+                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
+#if 1
+                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
+#endif
+                           // Remove the defining declaration as a test.
+                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
+                              if (isInSourceFile == true && functionDeclarationScope != NULL)
+                                 {
+#if 1
+                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
+                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
+#endif
+                                // functionDeclarationScope->removeStatement(functionDeclaration);
+                                // removeStatement(functionDeclaration);
+                                   functionList.push_back(functionDeclaration);
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     TransformFunctionDefinitionsTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
+
+#if 1
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+     while (i != functionList.end())
+        {
+          SgFunctionDeclaration* functionDeclaration = *i;
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+          SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+#if 1
+          printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s \n",
+               functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+       // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
+       // removeStatement(functionDeclaration);
+          replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
+
+          i++;
+        }
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }

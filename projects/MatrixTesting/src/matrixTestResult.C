@@ -51,8 +51,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable. "
-                   "The default value is \"" + StringUtility::cEscape(settings.databaseUri) + "\"." +
+              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable. " +
                    SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("dry-run")
@@ -203,7 +202,14 @@ main(int argc, char *argv[]) {
     boost::filesystem::path fileName = parseCommandLine(argc, argv, settings);
 
     // Query the database to find valid keys
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     DependencyNames dependencyNames = loadDependencyNames(tx);
     extraDependencies(dependencyNames);
 

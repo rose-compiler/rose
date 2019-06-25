@@ -53,8 +53,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
               .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
-                   "variable. The default value is \"" + StringUtility::cEscape(settings.databaseUri) + "\"." +
-                   SqlDatabase::uriDocumentation()));
+                   "variable. " + SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("format", 'f')
               .argument("style", enumParser<OutputMode>(settings.outputMode)
@@ -68,7 +67,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("only-supported")
               .intrinsicValue(true, settings.onlySupported)
-              .doc("Resulting configuration will container only supported values."));
+              .doc("Resulting configuration will contain only supported values."));
 
     Rose::CommandLine::insertBooleanSwitch(sg, "list", settings.listing,
                                            "Instead of showing single values, show a space-separated list of all values");
@@ -169,7 +168,14 @@ main(int argc, char *argv[]) {
         settings.databaseUri = dbUri;
     parseCommandLine(argc, argv, settings);
 
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what() <<"\n";
+        exit(1);
+    }
+        
     Dependencies dependencies = loadAllDependencies(tx, settings);
 
     if (settings.listing) {

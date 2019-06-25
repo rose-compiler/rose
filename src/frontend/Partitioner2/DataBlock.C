@@ -48,6 +48,11 @@ DataBlock::decrementOwnerCount() {
     return --nAttachedOwners_;
 }
 
+void
+DataBlock::nAttachedOwners(size_t n) {
+    nAttachedOwners_ = n;
+}
+
 std::string
 DataBlock::printableName() const {
     return "data block " + StringUtility::addrToString(address());

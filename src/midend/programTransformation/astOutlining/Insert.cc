@@ -394,6 +394,52 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       cls_def->get_members().insert(i, friend_proto);
       friend_proto->set_parent (cls_def);
       friend_proto->set_scope (scope);
+
+   // Address the iterator invalidation caused by the insertion of a new element into the list.
+   // i = mems.begin();
+   // ROSE_ASSERT(*i == friend_proto);
+   // i++;
+
+#if 0
+      printf ("In insertFriendDecl(): friend_proto = %p friend_proto->get_isModified() = %s (mark explicitly as modified) \n",
+           friend_proto,friend_proto->get_isModified() ? "true" : "false");
+#endif
+
+   // DQ (6/4/2019): The isModified flag is reset by the SageBuilder functions as part of adding the function.
+   // It is however marked as a transformation.  To support the header file unparsing, we also need to set
+   // the physical file name to the header file name.
+      string filename = cls_def->get_startOfConstruct()->get_physical_filename();
+#if 0
+      printf (" --- Set the physical filename: filename = %s \n",filename.c_str());
+#endif
+
+      friend_proto->get_startOfConstruct()->set_physical_filename(filename);
+      friend_proto->get_endOfConstruct()->set_physical_filename(filename);
+
+   // DQ (6/4/2019): Need to mark this as a modification, so that it will be detected as something to 
+   // trigger the output of the header file when the class declaration appears in a header file.
+   // Maybe the insert function should do this?
+      friend_proto->set_isModified(true);
+      cls_def->set_isModified(true);
+
+#if 0
+     friend_proto->get_startOfConstruct()->display("insertFriendDecl(): debug");
+#endif
+
+#if 0
+     Sg_File_Info* fileInfo    = friend_proto->get_startOfConstruct();
+     int physical_file_id      = fileInfo->get_physical_file_id();
+  // string normalizedFileName = FileHelper::normalizePath(fileInfo->getFilenameFromID(physical_file_id));
+     string normalizedFileName = fileInfo->getFilenameFromID(physical_file_id);
+
+     printf ("insertFriendDecl(): normalizedFileName = %s \n",normalizedFileName.c_str());
+#endif
+
+#if 0
+      printf ("Exiting as a test! \n");
+      ROSE_ASSERT(false);
+#endif
+
     }
 
 //  printf ("In insertFriendDecl(): Returning SgFunctionDeclaration prototype = %p \n",friend_proto);

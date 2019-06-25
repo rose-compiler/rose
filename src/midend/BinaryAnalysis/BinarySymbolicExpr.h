@@ -796,6 +796,14 @@ public:
      *  first. */
     InteriorPtr commutative();
 
+    /** Simplifies idempotent operators.
+     *
+     *  An idempotent operator I is one such that X I X = X. For operators that have more than two operands, only those
+     *  repeated neighboring operands are reduced to a single operand. Therefore, if the operator is commutative, then do the
+     *  commutative simplification before the idempotent simplification. Returns either a new, simplified expression or the
+     *  original unmodified expression. */
+    InteriorPtr idempotent(const SmtSolverPtr &solver = SmtSolverPtr());
+
     /** Simplifies involutary operators.  An involutary operator is one that is its own inverse.  This method should only be
      *  called if this node is an interior node whose operator has the involutary property (such as invert or negate). Returns
      *  either a new expression that is simplified, or the original expression. */

@@ -32,7 +32,7 @@ class DFAnalysisBase {
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
-  void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
+  virtual void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();
@@ -108,7 +108,7 @@ class DFAnalysisBase {
   CodeThorn::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-  
+
  private:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
