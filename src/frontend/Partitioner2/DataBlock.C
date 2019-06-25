@@ -9,6 +9,14 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+DataBlock::DataBlock()
+    : isFrozen_(false), startVa_(0), type_(NULL) {}
+
+DataBlock::DataBlock(rose_addr_t startVa, SgAsmType *type)
+    : isFrozen_(false), startVa_(startVa), type_(type) {}
+
+DataBlock::~DataBlock() {}
+
 // class method
 DataBlock::Ptr
 DataBlock::instance(rose_addr_t startVa, SgAsmType *type) {
@@ -36,6 +44,16 @@ DataBlock::type(SgAsmType *t) {
     type_ = t;
 }
 
+const std::string&
+DataBlock::comment() const {
+    return comment_;
+}
+
+void
+DataBlock::comment(const std::string &s) {
+    comment_ = s;
+}
+
 AddressInterval
 DataBlock::extent() const {
     return AddressInterval::baseSize(address(), size());
@@ -44,6 +62,16 @@ DataBlock::extent() const {
 size_t
 DataBlock::nAttachedOwners() const {
     return attachedBasicBlockOwners_.size() + attachedFunctionOwners_.size();
+}
+
+const std::vector<FunctionPtr>&
+DataBlock::attachedFunctionOwners() const {
+    return attachedFunctionOwners_;
+}
+
+const std::vector<BasicBlockPtr>&
+DataBlock::attachedBasicBlockOwners() const {
+    return attachedBasicBlockOwners_;
 }
 
 std::string
@@ -86,6 +114,18 @@ DataBlock::eraseOwner(const Function::Ptr &function) {
     ASSERT_not_null(function);
     bool erased = eraseUnique(attachedFunctionOwners_, function, sortFunctionsByAddress);
     ASSERT_always_require(erased);
+}
+
+void
+DataBlock::freeze() {
+    isFrozen_ = true;
+}
+
+void
+DataBlock::thaw() {
+    isFrozen_ = false;
+    ASSERT_require(attachedBasicBlockOwners_.empty());
+    ASSERT_require(attachedFunctionOwners_.empty());
 }
 
 } // namespace

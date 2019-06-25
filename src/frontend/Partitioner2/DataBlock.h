@@ -67,11 +67,11 @@ private:
     
 protected:
     // needed for serialization
-    DataBlock()
-        : isFrozen_(false), startVa_(0), type_(NULL) {}
+    DataBlock();
+    DataBlock(rose_addr_t startVa, SgAsmType *type);
 
-    DataBlock(rose_addr_t startVa, SgAsmType *type)
-        : isFrozen_(false), startVa_(startVa), type_(type) {}
+public:
+    ~DataBlock();
 
 public:
     /** Static allocating constructor. */
@@ -107,8 +107,8 @@ public:
     /** Property: Comment.
      *
      * @{ */
-    const std::string& comment() const { return comment_; }
-    void comment(const std::string& s) { comment_ = s; }
+    const std::string& comment() const;
+    void comment(const std::string& s);
     /** @} */
 
     /** Number of attached basic block and function owners.
@@ -119,17 +119,12 @@ public:
     /** Functions that are attached to the partitioner and own this data block.
      *
      *  The returned vector is sorted and has unique elements. */
-    const std::vector<FunctionPtr>& attachedFunctionOwners() const {
-        return attachedFunctionOwners_;
-    }
+    const std::vector<FunctionPtr>& attachedFunctionOwners() const;
 
     /** Basic blocks that are attached to the partitioner and own this data block.
      *
      *  The returned vector is sorted and has unique elements. */
-    const std::vector<BasicBlockPtr>& attachedBasicBlockOwners() const {
-        return attachedBasicBlockOwners_;
-    }
-    
+    const std::vector<BasicBlockPtr>& attachedBasicBlockOwners() const;    
     /** Addresses represented. */
     AddressInterval extent() const;
 
@@ -146,14 +141,8 @@ public:
 
 private:
     friend class Partitioner;
-    void freeze() {
-        isFrozen_ = true;
-    }
-    void thaw() {
-        isFrozen_ = false;
-        ASSERT_require(attachedBasicBlockOwners_.empty());
-        ASSERT_require(attachedFunctionOwners_.empty());
-    }
+    void freeze();
+    void thaw();
 
     // Insert the specified owner into this data block.
     void insertOwner(const BasicBlockPtr&);
