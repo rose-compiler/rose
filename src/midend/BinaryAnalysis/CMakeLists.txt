@@ -36,6 +36,7 @@ if(enable-binary-analysis)
     Concolic/Specimen.C
     Concolic/TestCase.C
     Concolic/TestSuite.C
+    Concolic/Utility.C
     DwarfLineMapper.C
     instructionSemantics/BaseSemantics2.C
     instructionSemantics/ConcreteSemantics2.C
