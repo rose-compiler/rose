@@ -4334,6 +4334,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_NON_OVERRIDABLE:
           case AttrSpec_DEFERRED:
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
+          case AttrSpec_CONTIGUOUS:
                break;
 
           case ComponentAttrSpec_access_spec:
