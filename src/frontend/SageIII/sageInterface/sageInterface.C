@@ -22764,11 +22764,13 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
     string buildtree_str2 = string("include-staging/g++_HEADERS");
     string installtree_str1 = string("include/edg/gcc_HEADERS"); 
     string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    string system_headers = string("/usr/include"); 
     // if the file name has a sys header path of either source or build tree
     if ((fname.find (buildtree_str1, 0) != string::npos) ||
         (fname.find (buildtree_str2, 0) != string::npos) ||
         (fname.find (installtree_str1, 0) != string::npos) ||
-        (fname.find (installtree_str2, 0) != string::npos)
+        (fname.find (installtree_str2, 0) != string::npos) ||
+        (fname.find (system_headers, 0) != string::npos)
        )
       rtval = true;
   }
