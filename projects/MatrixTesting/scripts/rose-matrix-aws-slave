@@ -8,6 +8,11 @@ set -e
 arg0="${0##*/}"
 date=$(date '+%Y%m%d')
 SETUP="$1"
+
+# Minimum amount of free disk space in GiB. At the end of each test, this script deletes as many cached software
+# dependencies as necessary to reach this amount of free space.
+MIN_FREE_SPACE=30
+
 cd
 
 export "PATH=$HOME/rose-installed/latest/bin:$HOME/.spock/bin:$PATH"
@@ -379,7 +384,7 @@ while [ "$SETUP" = "" ]; do
 
     # Delete software installed by the testing slaves until we have at least the specified amount of free space,
     # measured in kB. We do this by removing the least recently used packages first.
-    matrix-reclaim-disk $[20*1024*1024]
+    matrix-reclaim-disk $[MIN_FREE_SPACE * 1024 * 1024]
 
     # Get that latest slave configuration and possibly update the portability testing tools. This is done inside the
     # testing loop so that we can upgrade all slaves even while they're running. Unfortunately, it's not practical
