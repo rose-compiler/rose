@@ -42,6 +42,29 @@
 #include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
 
+// Define ROSE_PARTITIONER_MOVE if boost::move works. Mainly this is to work around a GCC bug that reports this error:
+//
+//   prototype for
+//   'Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)'
+//   does not match any in class 'Rose::BinaryAnalysis::Partitioner2::Partitioner'
+//
+// followed by saying that the exact same signature is one of the candidates:
+//
+//   candidates are:
+//   Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)
+//
+// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0, however we've
+// seen it on a more limited basis so far.
+#if __cplusplus >= 201103L
+    #define ROSE_PARTITIONER_MOVE
+#elif defined(__GNUC__)
+    #if __GNUC__ > 4
+       #define ROSE_PARTITIONER_MOVE
+    #elif BOOST_VERSION >= 106900 // 1.68.0 might be okay too, but ROSE blacklists it for other reasons
+       #define ROSE_PARTITIONER_MOVE
+    #endif
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -292,7 +315,9 @@ namespace Partitioner2 {
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
 class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage<> {     // final
+#ifdef ROSE_PARTITIONER_MOVE
     BOOST_MOVABLE_BUT_NOT_COPYABLE(Partitioner)
+#endif
 
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
@@ -435,11 +460,17 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
 
+#ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
     Partitioner(BOOST_RV_REF(Partitioner));
 
     /** Move assignment. */
     Partitioner& operator=(BOOST_RV_REF(Partitioner));
+#else
+    // These are unsafe
+    Partitioner(const Partitioner&);
+    Partitioner& operator=(const Partitioner&);
+#endif
 
     ~Partitioner();
 
