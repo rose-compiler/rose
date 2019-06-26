@@ -64,6 +64,7 @@ enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
 enum BaselineType { BASELINE_NONE, BASELINE_DIFFERENCE, BASELINE_CONJUNCTION, BASELINE_SWAP };
+enum SortDirection { SORT_HORIZONTALLY, SORT_VERTICALLY };
 static int END_STATUS_POSITION = 999;                   // tnames.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
@@ -241,6 +242,15 @@ public:
         return model_->findData(data);
     }
 
+    // First item with specified base text, or -1
+    int findBaseText(const std::string &s) {
+        for (int idx = 0; idx < count(); ++idx) {
+            if (itemBaseText(idx) == s)
+                return idx;
+        }
+        return -1;
+    }
+    
     Wt::Signal<int>& activated() {
         return comboBox_->activated();
     }
@@ -749,18 +759,27 @@ bindSqlVariables(const SqlDatabase::StatementPtr &q, const std::vector<std::stri
 // Sorts dependency values
 class DependencyValueSorter {
     std::string depName_;
+    SortDirection direction_;
 
 public:
-    explicit DependencyValueSorter(const std::string &depName)
-        : depName_(depName) {}
+    explicit DependencyValueSorter(const std::string &depName, SortDirection direction)
+        : depName_(depName), direction_(direction) {}
 
     bool operator()(const std::string &a, const std::string &b) {
-        if (depName_ == "status") {
+        if ("status" == depName_) {
             // Status (failed test names) should be sorted in the order that the tests run.
             int ai = gstate.testNameIndex.getOrElse(a, 900);
             int bi = gstate.testNameIndex.getOrElse(b, 900);
             return ai < bi;
-        } else if (depName_ == "compiler") {
+        } else if ("reporting_time" == depName_ || "rose_date" == depName_) {
+            if (SORT_HORIZONTALLY == direction_) {
+                return a < b;
+            } else {
+                // Vertical presentation of dates should put the most recent date at the top. This order works better for
+                // things like combo boxes.
+                return b < a;
+            }
+        } else if ("compiler" == depName_) {
             // Compilers have three-part names: VENDOR-VERSION-LANGUAGE like "gcc-4.8.4-c++11". We should sort these are three
             // columns and the LANGUAGE should be sorted so "default" is less than everything but the empty string.
             std::vector<std::string> ac = StringUtility::split("-", a, 3, true);
@@ -786,9 +805,9 @@ public:
 
 // Sorts human-friendly values of a dependency
 static std::vector<std::string>
-sortedHumanValues(const Dependency &dep) {
+sortedHumanValues(const Dependency &dep, SortDirection direction) {
     std::vector<std::string> retval(dep.humanValues.keys().begin(), dep.humanValues.keys().end());
-    std::sort(retval.begin(), retval.end(), DependencyValueSorter(dep.name));
+    std::sort(retval.begin(), retval.end(), DependencyValueSorter(dep.name, direction));
     return retval;
 }
 
@@ -1035,6 +1054,8 @@ fillVersionComboBox(WComboBoxWithData<ComboBoxVersion> *comboBox, const std::str
     SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct rose, rose_date"
                                                        " from test_results"
                                                        " order by rose_date");
+
+    // We're only interested in the days, not the times
     Sawyer::Container::Set<std::string> uniqueValues;
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
         std::string version = row.get<std::string>(0);
@@ -1042,7 +1063,8 @@ fillVersionComboBox(WComboBoxWithData<ComboBoxVersion> *comboBox, const std::str
         uniqueValues.insert(date + "\t" + version);
     }
 
-    BOOST_FOREACH (const std::string &s, uniqueValues.values()) {
+    // Reverse the order so the most recent date is first. Makes combo box easier to use.
+    BOOST_REVERSE_FOREACH (const std::string &s, uniqueValues.values()) {
         size_t tab = s.find('\t');
         ASSERT_require(tab != std::string::npos);
         std::string date = s.substr(0, tab);
@@ -1105,7 +1127,7 @@ private:
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
         : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_NONE), chartValueType_(CVT_PERCENT),
-          roundToInteger_(false), humanReadable_(false), depMajorName_("rose_date"), depMajorIsData_(false),
+          roundToInteger_(false), humanReadable_(false), depMajorName_("languages"), depMajorIsData_(false),
           depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
@@ -1566,7 +1588,7 @@ private:
         bindSqlVariables(q, args);
 
         std::set<std::string, DependencyValueSorter> humanValues =
-            std::set<std::string, DependencyValueSorter>(DependencyValueSorter(depName));
+            std::set<std::string, DependencyValueSorter>(DependencyValueSorter(depName, SORT_HORIZONTALLY));
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
             humanValues.insert(humanDepValue(depName, row.get<std::string>(0), HUMAN_TERSE));
 
@@ -1803,12 +1825,28 @@ public:
             dep.comboBox = new DependencyComboBox;
             dep.comboBox->addItem(WILD_CARD_STR);
             dep.comboBox->setMinimumSize(Wt::WLength(20, Wt::WLength::FontEm), Wt::WLength::Auto);
-            std::vector<std::string> comboValues = sortedHumanValues(dep);
+            std::vector<std::string> comboValues = sortedHumanValues(dep, SORT_VERTICALLY);
             BOOST_FOREACH (const std::string &comboValue, comboValues)
                 dep.comboBox->addItem(comboValue);
             dep.comboBox->activated().connect(this, &WConstraints::emitConstraintsChanged);
         }
 
+        // Some dependencies have default values
+        if (DependencyComboBox *cb = dependencies_["setup"].comboBox) {
+            int idx = cb->findBaseText("valid");
+            if (idx >= 0 && idx < cb->count())
+                cb->setCurrentIndex(idx);
+        }
+        if (DependencyComboBox *cb = dependencies_["blacklisted"].comboBox) {
+            int idx = cb->findBaseText("no");
+            if (idx >= 0 && idx < cb->count())
+                cb->setCurrentIndex(idx);
+        }
+        if (DependencyComboBox *cb = dependencies_["rose_date"].comboBox) {
+            if (cb->count() > 1)
+                cb->setCurrentIndex(1);                 // newest date
+        }
+        
         static const size_t nDepCols = 2;               // number of columns for dependencies
         size_t nDepRows = (dependencies_.size() + nDepCols - 1) / nDepCols;
         Wt::WTable *grid = new Wt::WTable;
@@ -1873,6 +1911,23 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
 public:
     explicit WResultsConstraintsTab(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
+
+        //------------------
+        // Constraints area
+        //------------------
+
+        addWidget(new Wt::WText("<h2>Constraints</h2>"));
+        addWidget(new Wt::WText("<p>These constraints limit what results are shown in the chart/table below and "
+                                "in the \"Errors\" and \"Details\" tabs.</p>"));
+
+        // Constraints
+        addWidget(constraints_ = new WConstraints);
+        constraints_->constraintsChanged().connect(this, &WResultsConstraintsTab::updateStatusCounts);
+
+        // Button to reset everything to the initial state.
+        Wt::WPushButton *reset = new Wt::WPushButton("Clear");
+        reset->clicked().connect(this, &WResultsConstraintsTab::resetConstraints);
+        addWidget(reset);
 
         //------------
         // Chart area
@@ -1981,6 +2036,8 @@ public:
         chartBaselineChoices_->setToolTip("ROSE version to use as the baseline.");
         chartBaselineChoices_->addItem("none");
         fillVersionComboBox(chartBaselineChoices_);
+        if (chartBaselineChoices_->count() > 2)
+            chartBaselineChoices_->setCurrentIndex(2);
 
         // Update button to reload data from the database
         chartSettingsBox->addWidget(new Wt::WLabel("&nbsp;&nbsp;"));
@@ -1991,21 +2048,6 @@ public:
 
         addWidget(chartSettingsBox);
         addWidget(chartStack_);
-
-        //------------------
-        // Constraints area
-        //------------------
-
-        addWidget(new Wt::WText("<h2>Constraints</h2>"));
-
-        // Constraints
-        addWidget(constraints_ = new WConstraints);
-        constraints_->constraintsChanged().connect(this, &WResultsConstraintsTab::updateStatusCounts);
-
-        // Button to reset everything to the initial state.
-        Wt::WPushButton *reset = new Wt::WPushButton("Clear");
-        reset->clicked().connect(this, &WResultsConstraintsTab::resetConstraints);
-        addWidget(reset);
 
         //---------
         // Wiring
@@ -2407,11 +2449,12 @@ public:
         addWidget(new Wt::WText("<h1>Language status</h1>"));
         addWidget(new Wt::WText("Results<sup>*</sup> for commit "));
         addWidget(softwareVersions_ = new WComboBoxWithData<ComboBoxVersion>);
-        softwareVersions_->setToolTip("Version of tested softare for which results are displayed.");
+        softwareVersions_->setToolTip("Version of tested software for which results are displayed.");
         softwareVersions_->activated().connect(this, &WDashboard::update);
         addWidget(new Wt::WText("<br/>"));
         addWidget(restrictToSupported_ = new Wt::WCheckBox("Restrict to supported configurations"));
-        restrictToSupported_->setToolTip("Consider only those tests that use only supported features and dependencies.");
+        restrictToSupported_->setCheckState(Wt::Checked);
+        restrictToSupported_->setToolTip("Consider only those tests that use only supported features and dependencies");
         restrictToSupported_->changed().connect(this, &WDashboard::update);
         addWidget(languageGrid_ = new Wt::WTable);
         //languageGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
@@ -2469,10 +2512,10 @@ public:
                 }
             } else if (row.get_str(0) == "TEST_REPOSITORY") {
                 testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + linkify(row.get_str(1))));
-                testArticleGrid_->elementAt(1, 0)->setToolTip("Repository from whence to-be-tested softare is obtained.");
+                testArticleGrid_->elementAt(1, 0)->setToolTip("Repository from whence to-be-tested software is obtained.");
             } else if (row.get_str(0) == "TEST_ENVIRONMENT_VERSION") {
                 testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Test environment:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(2, 0)->setToolTip("Version (usually a date) of the envornment found in the Docker "
+                testArticleGrid_->elementAt(2, 0)->setToolTip("Version (usually a date) of the environment found in the Docker "
                                                               "containers in which the tests are running.");
             } else if (row.get_str(0) == "TEST_FLAGS") {
                 testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
@@ -2660,7 +2703,7 @@ public:
         // Add some padding to all the table cells
         for (int i = 0; i < slaveGrid_->rowCount(); ++i) {
             for (int j = 0; j < slaveGrid_->columnCount(); ++j) {
-                slaveGrid_->elementAt(i, j)->setPadding(3, Wt::Side::Left | Wt::Side::Right);
+                slaveGrid_->elementAt(i, j)->setPadding(6, Wt::Side::Left | Wt::Side::Right);
             }
         }
     }
@@ -2712,7 +2755,7 @@ private:
         if (oldVersion && (idx = softwareVersions_->findData(*oldVersion)) >=0) {
             softwareVersions_->setCurrentIndex(idx);
         } else if (softwareVersions_->count() > 0) {
-            softwareVersions_->setCurrentIndex(softwareVersions_->count() - 1);
+            softwareVersions_->setCurrentIndex(0);      // latest version
         }
     }
 };
@@ -3620,7 +3663,7 @@ public:
                 dep.comboBox->addItem(WILD_CARD_STR);
             dep.comboBox->activated().connect(this, &WFindWorkingConfig::updateCounts);
             dep.comboBox->setMinimumSize(Wt::WLength(15, Wt::WLength::FontEm), Wt::WLength::Auto);
-            std::vector<std::string> humanValues = sortedHumanValues(dep);
+            std::vector<std::string> humanValues = sortedHumanValues(dep, SORT_VERTICALLY);
             BOOST_FOREACH (const std::string &s, humanValues) {
                 dep.comboBox->addItem(s);
                 if (depNames_[i] == "rose" && s == roseVersionHuman)
@@ -3753,9 +3796,11 @@ public:
         addWidget(passCriteria_);
         addWidget(new Wt::WText("step, otherwise it is considered to have failed. This rule generates "
                                 "the 'pass' or 'fail' values for the \"pass/fail\" property used throughout "
-                                "this application except in the public areas (see below).<br/>"));
+                                "this application except in the public areas (see below).<br/><br/>"));
 
         onlySupportedConfigs_ = new Wt::WCheckBox("Restrict views to only supported configurations.");
+        onlySupportedConfigs_->setToolTip("Consider only those tests that use only supported features and dependencies."
+                                         " This setting affects most tabs except the dashboard.");
         addWidget(onlySupportedConfigs_);
 
         //-------------------------
@@ -4583,10 +4628,10 @@ public:
         tabs_->addTab(findWorkingConfig_ = new WFindWorkingConfig, "Configs");
         mlog[INFO] <<"creating tab: Overview\n";
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
-        mlog[INFO] <<"creating tab: Details\n";
-        tabs_->addTab(details_ = new WDetails, "Details");
         mlog[INFO] <<"creating tab: Errors\n";
         tabs_->addTab(errors_ = new WErrors, "Errors");
+        mlog[INFO] <<"creating tab: Details\n";
+        tabs_->addTab(details_ = new WDetails, "Details");
         mlog[INFO] <<"creating tab: Settings\n";
         tabs_->addTab(settings_ = new WSettings(session_, findWorkingConfig_), "Settings");
         mlog[INFO] <<"creating tab: Developers\n";
@@ -4791,7 +4836,7 @@ loadTestNames() {
             END_STATUS_POSITION = position;
     }
 
-    std::sort(gstate.testNames.begin(), gstate.testNames.end(), DependencyValueSorter("status"));
+    std::sort(gstate.testNames.begin(), gstate.testNames.end(), DependencyValueSorter("status", SORT_VERTICALLY));
 }
 
 // These are the dependencies that will show up as constraints that the user can adjust.
