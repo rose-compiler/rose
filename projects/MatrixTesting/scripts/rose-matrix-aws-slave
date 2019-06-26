@@ -227,6 +227,8 @@ matrix-install-matrix-tools() {
 	    BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 TUP=0.7.8 WT=none rmc init --batch --project=matrix ..
 	    rmc --install=yes build
 	    rmc config
+	    rmc make
+	    rm -rf $HOME/rose-installed/.
 	    rmc install
 	)
 	rm -rf matrix-src
