@@ -308,7 +308,14 @@ void TFTypeTransformer::analyzeTransformations(SgProject* project, VarTypeVarNam
 }
 
 
+#define DEBUG__addExplicitCast 0
+
 void addExplicitCast(SgProject* project) {
+
+#if DEBUG__addExplicitCast
+  std::cout << "ENTER addExplicitCast" << std::endl;
+#endif
+
   RoseAst ast(project);
   for (auto n: ast) {
     SgBinaryOp * bop = isSgBinaryOp(n);
@@ -337,12 +344,23 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_TYPEDEF_TYPE
       );
       if (rhs_t_s != lhs_t_s) {
-        SgExpression * new_rhs = SageBuilder::buildCastExp(rhs, lhs_t->stripType(
+        SgType * cast_type = lhs_t->stripType(
           SgType::STRIP_MODIFIER_TYPE  |
           SgType::STRIP_REFERENCE_TYPE |
-          SgType::STRIP_RVALUE_REFERENCE_TYPE |
-          SgType::STRIP_TYPEDEF_TYPE
-        ));
+          SgType::STRIP_RVALUE_REFERENCE_TYPE
+        );
+#if DEBUG__addExplicitCast
+        std::cout << " * add cast:" << std::endl;
+        std::cout << "      bop       = " << bop       << " ( " << bop->class_name()       << ")"   << std::endl;
+        std::cout << "      lhs       = " << lhs       << " ( " << lhs->class_name()       << ")"   << std::endl;
+        std::cout << "      lhs_t     = " << lhs_t     << " ( " << lhs_t->class_name()     << "): " << lhs_t->unparseToString()     << "" << std::endl;
+        std::cout << "      lhs_t_s   = " << lhs_t_s   << " ( " << lhs_t_s->class_name()   << "): " << lhs_t_s->unparseToString()   << "" << std::endl;
+        std::cout << "      rhs       = " << rhs       << " ( " << rhs->class_name()       << ")"   << std::endl;
+        std::cout << "      rhs_t     = " << rhs_t     << " ( " << rhs_t->class_name()     << "): " << rhs_t->unparseToString()     << "" << std::endl;
+        std::cout << "      rhs_t_s   = " << rhs_t_s   << " ( " << rhs_t_s->class_name()   << "): " << rhs_t_s->unparseToString()   << "" << std::endl;
+        std::cout << "      cast_type = " << cast_type << " ( " << cast_type->class_name() << "): " << cast_type->unparseToString() << "" << std::endl;
+#endif
+        SgExpression * new_rhs = SageBuilder::buildCastExp(rhs, cast_type);
         rhs->set_parent(new_rhs);
         new_rhs->set_parent(bop);
         bop->set_rhs_operand_i(new_rhs);

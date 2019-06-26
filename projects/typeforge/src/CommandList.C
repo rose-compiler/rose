@@ -48,8 +48,13 @@ SgType* findUserDefinedTypeByName(SgFunctionDefinition* funDef, string userDefin
   return nullptr;
 }
 
+#define DEBUG__buildTypeFromStringSpec 0
+
 //Returns the SgType* that mathces the type defined by the string in the given scope. If no type matches will exit.
 SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
+#if DEBUG__buildTypeFromStringSpec
+  std::cout << "ENTER buildTypeFromStringSpec" << std::endl;
+#endif
   SgType* newType=nullptr;
   regex e1("[_A-Za-z:]+|\\*|&|const|<|>");
   regex_token_iterator<string::iterator> rend;
@@ -103,6 +108,9 @@ SgType* buildTypeFromStringSpec(string type, SgScopeStatement* providedScope) {
         ROSE_ASSERT(globalScope != NULL);
         // TODO handle scoping: split `typePart` using `::` then lookup/create namespaces
         newType=SageBuilder::buildOpaqueType(typePart, globalScope);
+#if DEBUG__buildTypeFromStringSpec
+        std::cout << " - newType = " << newType << " ( " << newType->class_name() << "): " << newType->unparseToString() << "" << std::endl;
+#endif
       }
     } else {
     parseerror:
