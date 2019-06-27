@@ -1,4 +1,4 @@
-connect run1.db
+connect sqlite3://./run1.db
 
 ls-family :: t01
   @ success
@@ -13,3 +13,6 @@ ls-family :: t02
 }
 
 ls-family::run
+
+echo ok.
+

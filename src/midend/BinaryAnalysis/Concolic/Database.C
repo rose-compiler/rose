@@ -18,6 +18,8 @@
 #include <sqlite3.h>
 #endif /* WITH_DIRECT_SQLITE3 */
 
+#include "io-utility.h"
+
 namespace bt = boost::tuples;
 
 
@@ -54,18 +56,6 @@ namespace BinaryAnalysis {
 
     static const std::string
     NO_CONCRETE_RANK_STR = "\"" + boost::lexical_cast<std::string>(NO_CONCRETE_RANK) + "\"";
-
-    // convenience function for throwing exceptions
-    template <class ExceptionType>
-    static inline
-    void
-    throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
-    {
-      arg1.append(arg2);
-      arg1.append(arg3);
-
-      throw ExceptionType(arg1);
-    }
 
     // type function to add types to the end of a boost::tuple
     //   generic case
@@ -754,7 +744,7 @@ namespace BinaryAnalysis {
                      const Concolic::ObjectId<IdTag>& id
                    )
     {
-      if (!id) throw_ex<std::logic_error>("ID not set");
+      if (!id) throw std::logic_error("ID not set");
 
       return sqlPrepare(tx, objQueryString(id), id.get());
     }
@@ -932,9 +922,11 @@ struct DBTxGuard
       {
         tx_->rollback();
 
-        //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
-        std::cerr
-          << "ConcolicDB: TX uncommitted -> rollback" << std::endl;
+        if (!std::uncaught_exception())
+        {
+          //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+          std::cerr << "ConcolicDB: TX uncommitted -> rollback" << std::endl;
+        }
       }
     }
 
@@ -1584,82 +1576,6 @@ Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
   dbtx.commit();
 }
 
-
-std::vector<uint8_t>
-loadBinaryFile(const boost::filesystem::path& path)
-{
-  typedef std::istreambuf_iterator<char> stream_iterator;
-
-  std::vector<uint8_t> res;
-  std::ifstream        stream(path.string().c_str(), std::ios::in | std::ios::binary);
-
-  if (!stream.good())
-  {
-    throw_ex<std::runtime_error>("Unable to open ", path.string(), ".");
-  }
-
-  std::copy(stream_iterator(stream), stream_iterator(), std::back_inserter(res));
-  return res;
-}
-
-
-// https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
-template <class T, class CharT = char, class Traits = std::char_traits<CharT> >
-struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void, void, void>
-{
-  typedef std::basic_ostream<CharT, Traits> ostream_type;
-  typedef Traits                            traits_type;
-  typedef CharT                             char_type;
-
-  ostreambin_iterator(ostream_type& s) : stream(s) { }
-
-  ostreambin_iterator& operator=(const T& value)
-  {
-    stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
-    return *this;
-  }
-
-  ostreambin_iterator& operator*()     { return *this; }
-  ostreambin_iterator& operator++()    { return *this; }
-  ostreambin_iterator& operator++(int) { return *this; }
-
-  ostream_type& stream;
-};
-
-template <class T>
-struct FileSink
-{
-  typedef ostreambin_iterator<T> insert_iterator;
-
-  std::ostream& datastream;
-
-  FileSink(std::ostream& stream)
-  : datastream(stream)
-  {}
-
-  void reserve(size_t) {}
-
-  insert_iterator
-  inserter()
-  {
-    return insert_iterator(datastream);
-  }
-};
-
-void
-storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& binary)
-{
-  std::ofstream outfile(binary.string().c_str(), std::ofstream::binary);
-
-  if (!outfile.good())
-    throw_ex<std::runtime_error>("Unable to open ", binary.string(), ".");
-
-  FileSink<char>              sink(outfile);
-
-  sink.reserve(data.size());
-  std::copy(data.begin(), data.end(), sink.inserter());
-}
-
 #if WITH_DIRECT_SQLITE3
 
 std::pair<std::string, bool>
@@ -1765,7 +1681,7 @@ void GuardedDB::debug(GuardedStmt& sql)
 void checkSql(GuardedDB& db, int sql3code, int expected = SQLITE_OK)
 {
   if (sql3code != expected)
-    throw_ex<std::runtime_error>(sqlite3_errmsg(db));
+    throw std::runtime_error(sqlite3_errmsg(db));
 }
 
 template <class Iterator>
@@ -1852,7 +1768,7 @@ Database::extractRbaFile(const boost::filesystem::path& path, Database::Specimen
   std::ofstream outfile(path.string().c_str(), std::ofstream::binary);
 
   if (!outfile.good())
-    throw_ex<std::runtime_error>("unable to open file: ", path.string());
+    throw std::runtime_error("unable to open file: " + path.string());
 
   retrieveRBAFile(db, id, FileSink<char>(outfile));
 #else
@@ -1908,6 +1824,17 @@ std::string xml(const T& o)
   oa << BOOST_SERIALIZATION_NVP(o);
   return stream.str();
 }
+
+template <class T>
+static
+std::string text(const T& o)
+{
+  std::stringstream             stream;
+  boost::archive::text_oarchive oa(stream);
+
+  oa << BOOST_SERIALIZATION_NVP(o);
+  return stream.str();
+}
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 void
@@ -1916,7 +1843,18 @@ Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExe
   std::string  detailtxt = "<error>requires BOOST serialization</error>";
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-  detailtxt = xml(details);
+  // was: detailtxt = xml(details);
+  //      BOOST serialization does not seem to pick up the polymorphic
+  //      type...
+  //      BOOST_CLASS_EXPORT_KEYs are defined in BinaryConcolic.h
+  //      BOOST_CLASS_EXPORT_IMPLEMENTs are defined in LinuxExecutor.C
+  const LinuxExecutor::Result* linuxres = dynamic_cast<const LinuxExecutor::Result*>(&details);
+
+  // \todo enable BOOST serialization polymorphism
+  detailtxt = linuxres ? xml(*linuxres) : xml(details);
+  //~ detailtxt = text(details);
+
+  std::cerr << "XML:" << detailtxt << std::endl;
 #else
   //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
   std::cerr

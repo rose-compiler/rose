@@ -1,4 +1,4 @@
-connect defineFail.db
+connect sqlite3://./defineFail.db
 
 ls-family :: t01
   @ success
@@ -11,3 +11,5 @@ ls-family :: t02
 {
   ls -l --author *.o
 }
+
+echo ok.

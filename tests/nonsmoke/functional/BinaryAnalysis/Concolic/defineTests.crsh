@@ -1,4 +1,4 @@
-connect defineTests.db
+connect sqlite3://./defineTests.db
 
 ls-family :: t01
   @ success
@@ -13,3 +13,5 @@ ls-family :: t02
 
   /usr/bin/ls -l --author *.o
 }
+
+echo ok.

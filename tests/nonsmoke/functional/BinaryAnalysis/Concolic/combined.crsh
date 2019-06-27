@@ -1,4 +1,4 @@
-connect combined.db
+connect sqlite3://./combined.db
 
 ls :: t01
   @ success
@@ -29,3 +29,5 @@ tail :: t04
 ls :: run 1
 
 run 2
+
+echo ok.

@@ -1,12 +1,8 @@
-#include "rose.h"
-#include "BinaryConcolic.h"
+#include <rose.h>
+#include <BinaryConcolic.h>
+#include <Sawyer/CommandLine.h>
 
-#if defined(ROSE_HAVE_SQLITE3) && defined(__linux)
-#define TEST_CONCOLICDB 1
-#else
-#define TEST_CONCOLICDB 0
-#endif /* w/ sqlite && linux */
-
+#include "configDB.h"
 
 #if TEST_CONCOLICDB
 

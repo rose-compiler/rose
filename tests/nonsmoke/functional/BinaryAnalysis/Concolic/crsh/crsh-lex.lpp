@@ -10,16 +10,23 @@ extern "C" int yywrap(void) { return 1; }
 "connect"                      return CONNECT;
 "export"                       return EXPORT;
 "run"                          return RUN;
+"echo"                         return ECHO;
 "exit"                         return EXIT;
 "::"                           return QUAL;
+
+\"(\\.|[^"\\])*\"              {
+                                 yylval.m_str = strdup(yytext);
+                                 return QUOTSTR;
+                               }
+
 "sqlite3://"[".""/"a-zA-Z0-9]+ {
                                  yylval.m_str = strdup(yytext);
                                  return SQLLITE;
                                }
 "{"                            return LBLK;
 "}"                            return RBLK;
-"@success"                     return SUCCESS;
-"@failure"                     return FAILURE;
+"@"                            return EXPECT;
+"$"                            return VAR;
 "="                            return EQUAL;
 [0-9]+                         {
                                  yylval.m_num = atoi(yytext);

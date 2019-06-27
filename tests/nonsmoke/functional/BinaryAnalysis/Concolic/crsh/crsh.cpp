@@ -10,6 +10,8 @@
 
 #include "crsh-parse.hpp"
 
+#include "../configDB.h"
+
 
 //
 // flex & bison declarations
@@ -27,6 +29,22 @@ extern char* yytext;
 extern int yylex (void);
 extern int yyparse(void);
 
+
+//
+// InvocationDesc
+
+//! InvocationDesc is opaque for other translation units
+
+struct InvocationDesc
+{
+  std::string specimen;
+  Arguments   arguments;
+
+  InvocationDesc(const std::string& sp, const Arguments& args)
+  : specimen(sp), arguments(args)
+  {}
+};
+
 //
 // auxiliary functions
 
@@ -34,10 +52,10 @@ std::ostream& operator<<(std::ostream& os, Crsh::TestCase& test)
 {
   std::vector<std::string> args(test.args());
 
-  os << test.name() << ":" << test.specimen()->name() << " ";
+  os << test.name() << ": " << test.specimen()->name();
 
   for (size_t i = 0; i < args.size(); ++i)
-    os << args.at(i);
+    os << ' ' << args.at(i);
 
   return os;
 }
@@ -89,16 +107,14 @@ std::list<T>* enlist(std::list<T>* lst, const T* el)
 }
 
 
-//! InvocationDesc is opaque for other translation units
-struct InvocationDesc
+void require_outcome(Crsh::expectation expct, Crsh::expectation outcome)
 {
-  std::string specimen;
-  Arguments   arguments;
+  if (expct == Crsh::none || expct == outcome)
+    return;
 
-  InvocationDesc(const std::string& sp, const Arguments& args)
-  : specimen(sp), arguments(args)
-  {}
-};
+
+}
+
 
 //
 // Crsh implementation
@@ -144,6 +160,51 @@ Crsh::arg(const char* argument) const
   std::string tmp = conv(argument);
 
   return new std::string(tmp);
+}
+
+void Crsh::echo(const char* what)
+{
+  out() << conv(what) << std::endl;
+}
+
+
+void Crsh::echo_var(const char* id)
+{
+  std::string varid = conv(id);
+
+  if ("concolicdb" == varid)
+    Rose::BinaryAnalysis::Concolic::writeDBSchema(out());
+  else if ("concolicsql" == varid)
+    Rose::BinaryAnalysis::Concolic::writeSqlStmts(out());
+  else
+    out() << "unknown variable";
+
+  out() << std::endl;
+}
+
+Crsh::expectation
+Crsh::annotate(const char* expect)
+{
+  std::string note = conv(expect);
+
+  if ("success" == note) return success;
+  if ("failure" == note) return failure;
+
+  std::cerr << "unexpected note: " << note << std::endl;
+  exit(1);
+}
+
+char* Crsh::unquote_string(const char* str)
+{
+  size_t len   = strlen(str)-1;
+  ROSE_ASSERT(len > 0 && str[0] == '\"');
+
+  char*  clone = static_cast<char*>(malloc(len));
+  strncpy(clone, str+1, len);
+  ROSE_ASSERT(clone[len] == 0);
+
+  free(const_cast<char*>(str));
+  return clone;
 }
 
 Arguments*
@@ -242,22 +303,32 @@ Crsh::specimen(const std::string& specimen_name)
 
 /** Runs the testcase @ref testcaseId.
  */
-void Crsh::runTestcase(TestCaseId testcaseId)
+void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
 {
   using namespace Rose::BinaryAnalysis;
 
-  typedef Concolic::ConcreteExecutor::Result ExecutionResult;
-  typedef std::auto_ptr<ExecutionResult>     ExecutionResultGuard;
+  typedef Concolic::LinuxExecutor::Result ExecutionResult;
+  typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
 
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
 
   ROSE_ASSERT(testcase.getRawPointer());
-  out() << "***> " << *testcase << std::endl;
+  err() << "***> " << *testcase << std::endl;
 
-  ExecutionResultGuard       result(exec->execute(testcase));
+  ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
+  expectation          state = result->exitStatus() ? failure : success;
 
   db->insertConcreteResults(testcase, *result.get());
+
+  if ((expct != none) && (expct != state))
+  {
+    err() << "error in test: " << testcase->name() << '\n'
+          << "  exited with " << str(state) << ", expected " << str(expct)
+          << std::endl;
+
+    exit(1);
+  }
 }
 
 
@@ -265,21 +336,22 @@ void Crsh::runTestcase(TestCaseId testcaseId)
  */
 struct TestCaseStarter
 {
-  Crsh& crsh;
+    TestCaseStarter(Crsh& crshobj, Crsh::expectation expct)
+    : crsh(crshobj), expect(expct)
+    {}
 
-  explicit
-  TestCaseStarter(Crsh& crshobj)
-  : crsh(crshobj)
-  {}
+    void operator()(Crsh::TestCaseId id)
+    {
+      crsh.runTestcase(id, expect);
+    }
 
-  void operator()(Crsh::TestCaseId id)
-  {
-    crsh.runTestcase(id);
-  }
+  private:
+    Crsh&             crsh;
+    Crsh::expectation expect;
 };
 
 
-void Crsh::run(const char* testsuite, int num)
+void Crsh::run(const char* testsuite, int num, expectation expct)
 {
   TestSuite::Ptr suite;
 
@@ -294,7 +366,7 @@ void Crsh::run(const char* testsuite, int num)
   db->testSuite(suite);
   std::vector<TestCaseId> tests = db->needConcreteTesting(num);
 
-  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this));
+  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this, expct));
 }
 
 
@@ -372,6 +444,12 @@ Crsh& crsh()
 
 int main(int argc, char** argv)
 {
+  if (!TEST_CONCOLICDB)
+  {
+    std::cerr << "concolic DB testing is disabled." << std::endl;
+    return 0;
+  }
+
   if (argc == 1)
   {
     readEvalPrint(std::cin);

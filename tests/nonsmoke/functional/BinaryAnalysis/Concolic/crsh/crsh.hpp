@@ -46,6 +46,9 @@ struct Crsh
     // invocation description
     InvocationDesc* invoke(const char*, Arguments* args) const;
 
+    // removes quotes form the string
+    char* unquote_string(const char* str);
+
     // test definition
     void test( const char*     suite,
                const char*     test,
@@ -54,8 +57,14 @@ struct Crsh
                InvocationDesc* invocation
              );
 
-    void runTestcase(TestCaseId testcaseId);
-    void run(const char* testsuitename, int cnt);
+    void runTestcase(TestCaseId testcaseId, expectation expct);
+    void run(const char* testsuitename, int cnt, expectation expct);
+
+    void echo(const char* what);
+    void echo_var(const char* id);
+
+    // converts a string into an annotation
+    expectation annotate(const char*);
 
     void parse();
 

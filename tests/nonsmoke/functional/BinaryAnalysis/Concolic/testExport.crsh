@@ -1,0 +1,59 @@
+connect sqlite3://./testExport.db
+
+exp :: e01
+  @success
+{
+  export E0 = Hello
+
+  ./sampleExecutable --env=E0=Hello
+}
+
+exp :: e02
+  @success
+{
+  export E0 = Hello
+  export A1 = Test
+
+  ./sampleExecutable --env=E0=Hello
+}
+
+exp :: e03
+  @success
+{
+  export E0 = Howdy
+  export A1 = Test
+
+  ./sampleExecutable --env=A1=Test --env=E0=Howdy
+}
+
+exp :: e04
+  @success
+{
+  export E0 = Howdy
+  export A1 = Test
+
+  ./sampleExecutable --env=E0=Howdy --env=A1=Test
+}
+
+exp2 :: f01
+  @success
+{
+  export E0 = Hello
+
+  ./sampleExecutable --env=E0=Howdy
+}
+
+exp2 :: f02
+  @success
+{
+  ./sampleExecutable --env=E0=Howdy
+}
+
+
+exp2 :: run 10 @failure
+
+exp :: run 10 @success
+
+echo ok.
+
+

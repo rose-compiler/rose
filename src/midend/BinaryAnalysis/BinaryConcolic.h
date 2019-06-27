@@ -15,6 +15,10 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
@@ -298,6 +302,9 @@ public:
 // Concrete executors and their results
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
+static const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+
 /** Base class for executing test cases concretely.
  *
  *  The user is expected to subclass this object in order to define the specifics of how to execute a test case concretely,
@@ -361,7 +368,6 @@ public:
     execute(const TestCase::Ptr&) = 0;
 };
 
-
 /** Concrete executor for Linux ELF executables. */
 class LinuxExecutor: public ConcreteExecutor {
 public:
@@ -371,15 +377,24 @@ public:
     /** Base class for user-defined Linux concrete execution results. */
     class Result: public ConcreteExecutor::Result {
     protected:
-        int exitStatus_;                                /**< Exit status as returned by waitpid[2]. */
+        int         exitStatus_;  /**< Exit status as returned by waitpid[2]. */
+        std::string capturedOut;   /**< Output written to STDOUT */
+        std::string capturedErr;   /**< Output written to STDERR */
 
     private:
         friend class boost::serialization::access;
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutor::Result);
+            // was: s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutor::Result);
+            //      nvp of a base class in a different namespace seems to produce
+            //      invalid results.
+            s & boost::serialization::make_nvp( tagConcreteExecutorResult,
+                                                boost::serialization::base_object<ConcreteExecutor::Result>(*this)
+                                              );
             s & BOOST_SERIALIZATION_NVP(exitStatus_);
+            s & BOOST_SERIALIZATION_NVP(capturedOut);
+            s & BOOST_SERIALIZATION_NVP(capturedErr);
         }
 
     public:
@@ -397,6 +412,16 @@ public:
          * @{ */
         int exitStatus() const { return exitStatus_; }
         void exitStatus(int x) { exitStatus_ = x; }
+        /** @} */
+
+        /** Property: Output to STDOUT and STDERR of the executable
+         *
+         * @{ */
+        std::string out() const             { return capturedOut; }
+        void out(const std::string& output) { capturedOut = output; }
+
+        std::string err() const             { return capturedErr; }
+        void err(const std::string& output) { capturedErr = output; }
         /** @} */
     };
 
@@ -921,18 +946,6 @@ public:
     virtual void run() ROSE_OVERRIDE;
 };
 
-/** Loads a binary file
- *
- * Throws a std::runtime_error if the file cannot be opened.
- */
-std::vector<uint8_t> loadBinaryFile(const boost::filesystem::path& path);
-
-/** Stores a binary file
- *
- * Throws a std::runtime_error if the file cannot be opened.
- */
-void storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& path);
-
 /** prints all SQL schema statements on @ref os.
  */
 void writeDBSchema(std::ostream& os);
@@ -948,7 +961,16 @@ void writeSqlStmts(std::ostream& os);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 //~ BOOST_CLASS_EXPORT_GUID(LinuxExecutor::Result, "LinuxExecutor::Result")
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
+
+//~ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::ConcreteExecutor::Result)
+//~ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
+
+BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::ConcreteExecutor::Result,
+                         Rose::BinaryAnalysis::Concolic::tagConcreteExecutorResult
+                       )
+BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result,
+                         Rose::BinaryAnalysis::Concolic::tagLinuxExecutorResult
+                       )
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 #endif

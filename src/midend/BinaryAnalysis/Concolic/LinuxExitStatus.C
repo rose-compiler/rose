@@ -60,6 +60,3 @@ LinuxExitStatus::run() {
 } // namespace
 } // namespace
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
-#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
