@@ -2257,40 +2257,40 @@ public:
 
             // Value
             cell = table_->elementAt(i, j++);
-            cell->setContentAlignment(Wt::AlignmentFlag::AlignRight);
-            Wt::WText *text = new Wt::WText(value, Wt::TextFormat::PlainText);
+            cell->setContentAlignment(Wt::AlignRight);
+            Wt::WText *text = new Wt::WText(value, Wt::PlainText);
             text->setWordWrap(false);
             cell->addWidget(text);
 
             // Supported. Same story for the read-only check box.
             cell = table_->elementAt(i, j++);
             Wt::WCheckBox *cb = new Wt::WCheckBox;
-            cb->setCheckState(isSupported ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+            cb->setCheckState(isSupported ? Wt::Checked : Wt::Unchecked);
             if (canChange) {
                 cb->changed().connect(boost::bind(&WDependencies::setSupported, this, name, value, cb));
             } else {
                 cb->changed().connect(boost::bind(&WDependencies::setCheckbox, this, cb, isSupported));
             }
-            cell->setContentAlignment(Wt::AlignmentFlag::AlignCenter);
+            cell->setContentAlignment(Wt::AlignCenter);
             cell->addWidget(cb);
 
             // Enabled. Making the checkbox readOnly or disabled causes it to also be grayed out and difficult to read.
             // We don't want that, so instead just connect it to something that forces its value to never change.
             cell = table_->elementAt(i, j++);
             cb = new Wt::WCheckBox;
-            cb->setCheckState(isEnabled ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+            cb->setCheckState(isEnabled ? Wt::Checked : Wt::Unchecked);
             if (canChange) {
                 cb->changed().connect(boost::bind(&WDependencies::setEnabled, this, name, value, cb));
             } else {
                 cb->changed().connect(boost::bind(&WDependencies::setCheckbox, this, cb, isEnabled));
             }
-            cell->setContentAlignment(Wt::AlignmentFlag::AlignCenter);
+            cell->setContentAlignment(Wt::AlignCenter);
             cell->addWidget(cb);
 
             // How many tests use this dependency
             cell = table_->elementAt(i, j++);
             cell->addWidget(new Wt::WText(boost::lexical_cast<std::string>(valueCounts.getOrElse(value, 0))));
-            cell->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+            cell->setContentAlignment(Wt::AlignRight);
 
             // Comment
             cell = table_->elementAt(i, j++);
@@ -2324,7 +2324,7 @@ public:
         // Make the padding the same across the entire table.
         for (int i = 0; i < table_->rowCount(); ++i) {
             for (int j = 0; j < table_->columnCount(); ++j)
-                table_->elementAt(i, j)->setPadding(3, Wt::Side::Left | Wt::Side::Right);
+                table_->elementAt(i, j)->setPadding(3, Wt::Left | Wt::Right);
         }
     }
 
@@ -2333,7 +2333,7 @@ public:
     }
 
     void setCheckbox(Wt::WCheckBox *cb, bool value) {
-        cb->setCheckState(value ? Wt::CheckState::Checked : Wt::CheckState::Unchecked);
+        cb->setCheckState(value ? Wt::Checked : Wt::Unchecked);
     }
     
     void setEnabled(const std::string &name, const std::string &value, Wt::WCheckBox *cb) {
@@ -2342,7 +2342,7 @@ public:
         tx->statement("update dependencies"
                       " set enabled = ?"
                       " where name = ? and value = ?")
-            ->bind(0, cb->checkState() == Wt::CheckState::Checked ? 1 : 0)
+            ->bind(0, cb->checkState() == Wt::Checked ? 1 : 0)
             ->bind(1, name)
             ->bind(2, value)
             ->execute();
@@ -2355,7 +2355,7 @@ public:
         tx->statement("update dependencies"
                       " set supported = ?"
                       " where name = ? and value = ?")
-            ->bind(0, cb->checkState() == Wt::CheckState::Checked ? 1 : 0)
+            ->bind(0, cb->checkState() == Wt::Checked ? 1 : 0)
             ->bind(1, name)
             ->bind(2, value)
             ->execute();
@@ -2602,13 +2602,13 @@ public:
                 Wt::WTableCell *osCountBox = osGrid->elementAt(osNumber, 2);
                 unsigned osScore = round(100.0 * npass / total);
                 osNameBox->addWidget(new Wt::WText(os));
-                osNameBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Left);
+                osNameBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Left);
                 osScoreBox->addWidget(new Wt::WText(boost::lexical_cast<std::string>(osScore) + "%"));
                 osScoreBox->setStyleClass(redToGreen(osScore, 0, 100));
-                osScoreBox->setContentAlignment(Wt::AlignmentFlag::AlignRight);
-                osScoreBox->setPadding(Wt::WLength(0.5, Wt::WLength::FontEm), Wt::Side::Left | Wt::Side::Right);
+                osScoreBox->setContentAlignment(Wt::AlignRight);
+                osScoreBox->setPadding(Wt::WLength(0.5, Wt::WLength::FontEm), Wt::Left | Wt::Right);
                 osCountBox->addWidget(new Wt::WText("of " + StringUtility::plural(total, "tests")));
-                osCountBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Side::Right);
+                osCountBox->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Right);
             }
 
             // Update the language text
@@ -2647,9 +2647,9 @@ public:
         slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
         slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
         slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
-        slaveGrid_->elementAt(0, 2)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+        slaveGrid_->elementAt(0, 2)->setContentAlignment(Wt::AlignRight);
         slaveGrid_->elementAt(0, 3)->addWidget(new Wt::WText("<b>Disk avail</b>"));
-        slaveGrid_->elementAt(0, 3)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+        slaveGrid_->elementAt(0, 3)->setContentAlignment(Wt::AlignRight);
         slaveGrid_->elementAt(0, 4)->addWidget(new Wt::WText("<b>Last event</b>"));
         slaveGrid_->elementAt(0, 5)->addWidget(new Wt::WText("<b>Test OS</b>"));
         slaveGrid_->elementAt(0, 6)->addWidget(new Wt::WText("<b>Test status</b>"));
@@ -2663,10 +2663,10 @@ public:
 
             std::string pct = boost::lexical_cast<std::string>(round(100.0*row.get_dbl(2))) + "%";
             slaveGrid_->elementAt(i, 2)->addWidget(new Wt::WText(pct));
-            slaveGrid_->elementAt(i, 2)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+            slaveGrid_->elementAt(i, 2)->setContentAlignment(Wt::AlignRight);
 
             slaveGrid_->elementAt(i, 3)->addWidget(new Wt::WText(humanDiskSize(row.get_u32(3))));
-            slaveGrid_->elementAt(i, 3)->setContentAlignment(Wt::AlignmentFlag::AlignRight);
+            slaveGrid_->elementAt(i, 3)->setContentAlignment(Wt::AlignRight);
 
             std::string event = row.get_str(4);
             int testId = row.get_i32(5);
@@ -2703,7 +2703,7 @@ public:
         // Add some padding to all the table cells
         for (int i = 0; i < slaveGrid_->rowCount(); ++i) {
             for (int j = 0; j < slaveGrid_->columnCount(); ++j) {
-                slaveGrid_->elementAt(i, j)->setPadding(6, Wt::Side::Left | Wt::Side::Right);
+                slaveGrid_->elementAt(i, j)->setPadding(6, Wt::Left | Wt::Right);
             }
         }
     }
@@ -3587,7 +3587,7 @@ public:
 
     void adjustColumnWidths() {
         for (int j = 1; j < tableModel_->columnCount(); ++j) {
-            tableView_->setColumnAlignment(j, Wt::AlignmentFlag::AlignRight);
+            tableView_->setColumnAlignment(j, Wt::AlignRight);
             tableView_->setColumnWidth(j, Wt::WLength(4, Wt::WLength::FontEm));
         }
     }
