@@ -7611,10 +7611,12 @@ void c_action_label(Token_t * lbl)
                         SgFunctionType* functionType = isSgFunctionType(
                                 functionSymbol->get_declaration()->get_type());
                         ROSE_ASSERT(functionType != NULL);
-                        SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
-                        ROSE_ASSERT(functionReference != NULL);
-
-                        setSourcePosition(functionReference, nameToken);
+                        // Pei-Hung (06/28/19) The following code only generates an unused AST node
+                        // comment them out to clean up the AST.
+                        // SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
+                        // ROSE_ASSERT(functionReference != NULL);
+                        // setSourcePosition(functionReference, nameToken);
+                        
                         // DQ (12/28/2010): This branch is required for test2007_57.f90 to work.
                         // Take the function call expression from the astExpressionStack
                         variable = astExpressionStack.front();
@@ -11263,8 +11265,11 @@ void c_action_label(Token_t * lbl)
         if (id != NULL)
         {
             setStatementStringLabel(switchStatement, id);
-            printf("Set the named label: %s (in switchStatement = %p) \n",
-                    id->text, switchStatement);
+            if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+            {
+               printf("Set the named label: %s (in switchStatement = %p) \n",
+                       id->text, switchStatement);
+            }
             // ROSE_ASSERT(false);
         }
 
@@ -15702,8 +15707,9 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         // DQ (12/2/2010): I think this is the case of an inner list as an entry in the outer list (see test2010_115.f90).
         if (descOrDigit == NULL && hasFormatItemList == false)
         {
-            printf(
-                    "Exiting from In c_action_format_item(): already processed list! \n");
+            if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+                printf(
+                        "Exiting from In c_action_format_item(): already processed list! \n");
             return;
         }
 
@@ -17934,7 +17940,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_proc_decl(): id = %p = %s hasNullInit = %s \n", id,
                 id != NULL ? id->text : "NULL", hasNullInit ? "true" : "false");
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R1214 c_action_proc_decl()");
 #endif
@@ -18094,7 +18100,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_proc_decl_list(): count = %d \n", count);
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R1214 c_action_proc_decl_list()");
 #endif
