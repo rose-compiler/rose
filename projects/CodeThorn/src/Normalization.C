@@ -621,7 +621,7 @@ namespace CodeThorn {
           SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
           SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
           SgScopeStatement* scope=stmt->get_scope();
-          SAWYER_MESG(logger[TRACE])<<"GENERATING BOOL VAR IF ELSE STMT: logOpTmpVarNr: "<<(*j).declVarNr<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GENERATING BOOL VAR IF ELSE STMT: logOpTmpVarNr: "<<(*j).declVarNr<<" condVarNr: "<<(*j).condVarNr<<endl;
           SgExpression* cond=getVarRefExp((*j).condVarNr);
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
@@ -722,6 +722,8 @@ add
 
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
+    ROSE_ASSERT(stmt);
+    ROSE_ASSERT(expr);
     Normalization::TmpVarNrType mostRecentTmpVarNr=0;
     SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
@@ -801,6 +803,8 @@ add
       registerIfElseStmt(stmt,expr,lhsResultTmpVarNr,block,0,subExprTransformationList);
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(block,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       registerLogOpReplacement(stmt,expr,declVarNr,subExprTransformationList); // will be used for replacing Or operator
+      SAWYER_MESG(logger[TRACE])<<"AND-normalization: declVarId: "<<declVarNr<<" rhsResultTmpVarNr:"<<rhsResultTmpVarNr<<endl;
+      // TODO: rhsResultTmpVarNr can be 0!
       registerBoolVarIfElseStmt(block,expr,declVarNr,rhsResultTmpVarNr,0,0,subExprTransformationList);
       mostRecentTmpVarNr=declVarNr;
     } else if(isSgOrOp(expr)) {
@@ -887,7 +891,16 @@ add
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
     } else {
-      // leave node, nothing to do. Nr 0 is returned.
+      // leave node.  
+      // MS: 05/09/2019: register tmp var if parent is AndOp or OrOp
+      // to ensure logop (and/or)s can operate on registered tmp vars
+      // (NORM41)
+      SgNode* p=expr->get_parent();
+      if(isSgAndOp(p)||isSgOrOp(p)) {
+        mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
+      } else {
+        mostRecentTmpVarNr=0;
+      }
     }
 
     SAWYER_MESG(logger[TRACE])<<SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<": mostRecentTmpVarNr on return: "<<mostRecentTmpVarNr<<endl;
@@ -1055,6 +1068,7 @@ add
 
   void Normalization::registerBoolVarIfElseStmt(SgStatement* stmt, SgExpression  * expr, Normalization::TmpVarNrType declVarNr, Normalization::TmpVarNrType condVarNr, SgStatement* trueBody, SgStatement* falseBody, SubExprTransformationList& subExprTransformationList) {
     auto transOp=RegisteredSubExprTransformation(Normalization::GEN_BOOL_VAR_IF_ELSE_STMT,stmt,expr,declVarNr,trueBody,falseBody);
+    SAWYER_MESG(logger[TRACE])<<"registerBoolVarIfElseStmt: condVarNr: "<<condVarNr<<endl;
     transOp.condVarNr=condVarNr;
     subExprTransformationList.push_back(transOp);
   }
@@ -1125,7 +1139,7 @@ add
             breakTransformationList.push_back(stmt);
           } 
         } else {
-          if(options.transformBreakToGotoInLoopStmts && SPRAY::CFAnalysis::isLoopConstructRootNode(stmt)) {
+          if(options.transformBreakToGotoInLoopStmts && CodeThorn::CFAnalysis::isLoopConstructRootNode(stmt)) {
             breakTransformationList.push_back(stmt);
           }
           if(options.transformContinueToGotoInWhileStmts) {

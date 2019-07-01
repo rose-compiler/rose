@@ -2545,23 +2545,31 @@ SgPrintStatement::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgReadStatement::cfgIndexForEnd() const {
-  return numberOfFortranIOCommonEdges + 8;
+  return numberOfFortranIOCommonEdges + 16;
 }
 
 std::vector<CFGEdge>
 SgReadStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  if (handleFortranIOCommonOutEdges(this, idx, 8, result)) return result;
+  if (handleFortranIOCommonOutEdges(this, idx, 16, result)) return result;
   switch (idx) {
-    case 0: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 1: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 2: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
-    case 3: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 4: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 5: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 6: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
-    case 7: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case numberOfFortranIOCommonEdges + 8: {
+    case 0:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
+    case 1:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
+    case 2:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
+    case 3:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 4:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
+    case 5:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
+    case 6:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
+    case 7:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
+    case 8:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
+    case 9:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_id(), result); break;
+    case 10: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
+    case 11: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pos(), result); break;
+    case 12: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
+    case 13: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
+    case 14: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
+    case 15: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
+    case numberOfFortranIOCommonEdges + 16: {
       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
       break;
     }
@@ -2574,20 +2582,28 @@ std::vector<CFGEdge>
 SgReadStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
-  if (handleFortranIOCommonInEdges(this, idx, 8, result)) return result;
+  if (handleFortranIOCommonInEdges(this, idx, 16, result)) return result;
   switch (idx) {
     case 0: {
       makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
       break;
     }
-    case 1: addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 2: addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 3: addInEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
-    case 4: addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 5: addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 6: addInEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 7: addInEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
-    case 8: addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 1:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
+    case 2:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
+    case 3:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
+    case 4:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 5:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
+    case 6:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
+    case 7:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
+    case 8:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
+    case 9:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
+    case 10: addInEdgeOrBypassForExpressionChild(this, idx, this->get_id(), result); break;
+    case 11: addInEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
+    case 12: addInEdgeOrBypassForExpressionChild(this, idx, this->get_pos(), result); break;
+    case 13: addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
+    case 14: addInEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
+    case 15: addInEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
+    case 16: addInEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
     default: ROSE_ASSERT (!"Invalid index for SgReadStatement");
   }
   return result;
@@ -2595,20 +2611,31 @@ SgReadStatement::cfgInEdges(unsigned int idx) {
 
 unsigned int
 SgWriteStatement::cfgIndexForEnd() const {
-  return numberOfFortranIOCommonEdges + 5;
+  return numberOfFortranIOCommonEdges + 16;
 }
 
 std::vector<CFGEdge>
 SgWriteStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  if (handleFortranIOCommonOutEdges(this, idx, 5, result)) return result;
+  if (handleFortranIOCommonOutEdges(this, idx, 16, result)) return result;
   switch (idx) {
-    case 0: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 1: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 2: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 3: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 4: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case numberOfFortranIOCommonEdges + 5: {
+    case 0:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
+    case 1:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
+    case 2:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
+    case 3:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 4:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
+    case 5:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
+    case 6:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
+    case 7:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
+    case 8:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
+    case 9:  addOutEdgeOrBypassForExpressionChild(this, idx, this->get_id(), result); break;
+    case 10: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
+    case 11: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pos(), result); break;
+    case 12: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
+    case 13: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
+    case 14: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
+    case 15: addOutEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
+    case numberOfFortranIOCommonEdges + 16: {
       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
       break;
     }
@@ -2621,17 +2648,28 @@ std::vector<CFGEdge>
 SgWriteStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   addIncomingFortranGotos(this, idx, result);
-  if (handleFortranIOCommonInEdges(this, idx, 5, result)) return result;
+  if (handleFortranIOCommonInEdges(this, idx, 16, result)) return result;
   switch (idx) {
     case 0: {
       makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
       break;
     }
-    case 1: addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 2: addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 3: addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 4: addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 5: addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 1:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
+    case 2:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
+    case 3:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
+    case 4:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
+    case 5:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
+    case 6:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
+    case 7:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
+    case 8:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
+    case 9:  addInEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
+    case 10: addInEdgeOrBypassForExpressionChild(this, idx, this->get_id(), result); break;
+    case 11: addInEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
+    case 12: addInEdgeOrBypassForExpressionChild(this, idx, this->get_pos(), result); break;
+    case 13: addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
+    case 14: addInEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
+    case 15: addInEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
+    case 16: addInEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
     default: ROSE_ASSERT (!"Invalid index for SgWriteStatement");
   }
   return result;

@@ -1,0 +1,15 @@
+connect sqlite3://./defineFail.db
+
+ls-family :: t01
+  @ success
+{
+  /usr/bin/ls -la
+}
+
+ls-family :: t02
+  @ failure
+{
+  ls -l --author *.o
+}
+
+echo ok.

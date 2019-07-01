@@ -5960,18 +5960,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      if (get_strict_language_handling() == false)
         {
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #endif
 
 #ifdef BACKEND_CXX_IS_GNU_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #else
    #ifdef USE_CMAKE
-  // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
-     commandLine.push_back("--gnu_version");
+       // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
+          commandLine.push_back("--gnu_version");
    #endif
 #endif
-
 
 #ifdef BACKEND_CXX_IS_CLANG_COMPILER
 #if 0
@@ -6004,7 +6003,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
   // commandLine.push_back("--c++11");
 #endif
-     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+          commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
         }
 
 // #endif for ROSE_USE_MICROSOFT_EXTENSIONS

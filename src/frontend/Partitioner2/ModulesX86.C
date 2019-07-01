@@ -549,6 +549,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
     SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
     DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
+    addressTable->comment("x86 \"switch\" statement's \"case\" address table");
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging

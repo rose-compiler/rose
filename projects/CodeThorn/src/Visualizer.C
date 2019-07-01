@@ -14,6 +14,7 @@
 #include "Miscellaneous2.h"
 
 #include "rose_config.h"
+
 #ifdef HAVE_SPOT
 // SPOT includes
 #include "tgba/succiter.hh"
@@ -25,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 class AssertionAttribute : public DFAstAttribute {
 public:
@@ -234,9 +235,9 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
     string s=estate->predicateToString(variableIdMapping);
     // replace ASCII with HTML characters
-    s=SPRAY::replace_string(s,",","&and;");
-    s=SPRAY::replace_string(s,"!=","&ne;");
-    s=SPRAY::replace_string(s,"==","=");
+    s=CodeThorn::replace_string(s,",","&and;");
+    s=CodeThorn::replace_string(s,"!=","&ne;");
+    s=CodeThorn::replace_string(s,"==","=");
     ss<<s;
   }
   return ss.str();

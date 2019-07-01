@@ -3785,6 +3785,11 @@ DispatcherM68k::stackPointerRegister() const {
     return REG_A[7];
 }
 
+RegisterDescriptor
+DispatcherM68k::callReturnRegister() const {
+    return RegisterDescriptor();
+}
+
 void
 DispatcherM68k::set_register_dictionary(const RegisterDictionary *regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);

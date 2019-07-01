@@ -442,6 +442,21 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     return functions;
 }
 
+std::vector<SgAsmElfSection*>
+findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
+    std::vector<SgAsmElfSection*> retval;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            std::vector<SgAsmGenericSection*> sections = fileHeader->get_sections_by_name(name);
+            BOOST_FOREACH (SgAsmGenericSection *section, sections) {
+                if (SgAsmElfSection *elfSection = isSgAsmElfSection(section))
+                    retval.push_back(elfSection);
+            }
+        }
+    }
+    return retval;
+}
+
 void
 buildMayReturnLists(Partitioner &p) {
     // Most of these were obtained by searching for "noreturn" in all the header files on Debian Squeeze.

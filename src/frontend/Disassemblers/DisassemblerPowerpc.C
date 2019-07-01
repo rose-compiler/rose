@@ -65,10 +65,11 @@ DisassemblerPowerpc::init()
 {
     name("ppc");
     wordSizeBytes(4);
-    byteOrder(ByteOrder::ORDER_LSB);
+    byteOrder(ByteOrder::ORDER_MSB);
     registerDictionary(RegisterDictionary::dictionary_powerpc()); // only a default
     REG_IP = *registerDictionary()->lookup("iar");
     REG_SP = *registerDictionary()->lookup("r1");
+    REG_LINK = *registerDictionary()->lookup("lr");
     callingConventions(CallingConvention::dictionaryPowerpc());
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
     d->set_register_dictionary(registerDictionary());

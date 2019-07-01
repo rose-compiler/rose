@@ -1357,6 +1357,8 @@ Engine::createBarePartitioner() {
 
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    if (p.memoryMap() && p.memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+        p.memoryMap()->byteOrder(disassembler_->byteOrder());
     p.settings(settings_.partitioner.base);
     p.progress(progress_);
 
@@ -1637,6 +1639,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
     if (interp_) {
         SAWYER_MESG(where) <<"naming imports\n";
         ModulesPe::nameImportThunks(partitioner, interp_);
+        ModulesPowerpc::nameImportThunks(partitioner, interp_);
     }
     if (settings_.partitioner.namingConstants) {
         SAWYER_MESG(where) <<"naming constants\n";
@@ -2410,8 +2413,9 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
 
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
+            DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
+            dblock->comment("data encapsulated by function");
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
                 dblock = partitioner.attachDataBlockToFunction(dblock, function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }

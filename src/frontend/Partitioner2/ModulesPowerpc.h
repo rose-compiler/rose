@@ -20,6 +20,12 @@ public:
     virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
+/** Matches a PowerPC ELF dynamic function stub. */
+bool matchElfDynamicStub(const Partitioner&, const Function::Ptr&, const AddressIntervalSet &pltAddresses);
+
+/** Give names to thunks for dynamically linked functions. */
+void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
+
 } // namespace
 } // namespace
 } // namespace

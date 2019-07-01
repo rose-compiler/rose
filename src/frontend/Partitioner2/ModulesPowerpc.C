@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/Partitioner.h>
 
@@ -51,6 +52,96 @@ MatchStwuPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     }
 
     return false;
+}
+
+bool
+matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &function, const AddressIntervalSet &pltAddresses) {
+    ASSERT_not_null(function);
+
+    if (function->basicBlockAddresses().size() != 1)
+        return false;
+    BasicBlock::Ptr bb = partitioner.basicBlockExists(function->address());
+    ASSERT_not_null(bb);
+    if (bb->nInstructions() != 4)
+        return false;
+
+    // addis r11, A, B
+    SgAsmPowerpcInstruction *addis = isSgAsmPowerpcInstruction(bb->instructions()[0]);
+    if (!addis || addis->get_kind() != powerpc_addis || addis->get_operandList()->get_operands().size() != 3)
+        return false;
+    SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(addis->get_operandList()->get_operands()[0]);
+    const RegisterDescriptor REG_R11 = *partitioner.instructionProvider().registerDictionary()->lookup("r11");
+    if (!rre || rre->get_descriptor() != REG_R11)
+        return false;
+    SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[1]);
+    if (!ival)
+        return false;
+    rose_addr_t target = ival->get_absoluteValue();
+    ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[2]);
+    if (!ival)
+        return false;
+    target += ival->get_absoluteValue() << 16;
+    
+    // lwz r11, [r11 + C]
+    SgAsmPowerpcInstruction *lwz = isSgAsmPowerpcInstruction(bb->instructions()[1]);
+    if (!lwz || lwz->get_kind() != powerpc_lwz || lwz->get_operandList()->get_operands().size() != 2)
+        return false;
+    rre = isSgAsmDirectRegisterExpression(lwz->get_operandList()->get_operands()[0]);
+    if (!rre || rre->get_descriptor() != REG_R11)
+        return false;
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(lwz->get_operandList()->get_operands()[1]);
+    SgAsmBinaryAdd *add = mre ? isSgAsmBinaryAdd(mre->get_address()) : NULL;
+    rre = add ? isSgAsmDirectRegisterExpression(add->get_lhs()) : NULL;
+    if (!rre || rre->get_descriptor() != REG_R11)
+        return false;
+    ival = isSgAsmIntegerValueExpression(add->get_rhs());
+    if (!ival)
+        return false;
+    target += ival->get_absoluteValue();
+
+    // Target address must be in the ".plt" section.
+    if (!pltAddresses.contains(target))
+        return false;
+    
+    // mtspr r11, ctr
+    SgAsmPowerpcInstruction *mtspr = isSgAsmPowerpcInstruction(bb->instructions()[2]);
+    if (!mtspr || mtspr->get_kind() != powerpc_mtspr || mtspr->get_operandList()->get_operands().size() != 2)
+        return false;
+    rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[0]);
+    if (!rre || rre->get_descriptor() != REG_R11)
+        return false;
+    rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[1]);
+    const RegisterDescriptor REG_CTR = *partitioner.instructionProvider().registerDictionary()->lookup("ctr");
+    if (!rre || rre->get_descriptor() != REG_CTR)
+        return false;
+
+    // bcctr 0x14, X, 0   (bits 0x14 must be set, other are irrelevant)
+    SgAsmPowerpcInstruction *bcctr = isSgAsmPowerpcInstruction(bb->instructions()[3]);
+    if (!bcctr || bcctr->get_kind() != powerpc_bcctr || bcctr->get_operandList()->get_operands().size() != 3)
+        return false;
+    ival = isSgAsmIntegerValueExpression(bcctr->get_operandList()->get_operands()[0]);
+    if (!ival || (ival->get_absoluteValue() & 0x14) != 0x14)
+        return false;
+    ival = isSgAsmIntegerValueExpression(bcctr->get_operandList()->get_operands()[2]);
+    if (!ival || ival->get_absoluteValue() != 0)
+        return false;
+
+    return true;
+}
+
+void
+nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+    AddressIntervalSet pltAddresses;
+    std::vector<SgAsmElfSection*> pltSections = ModulesElf::findSectionsByName(interp, ".plt");
+    BOOST_FOREACH (SgAsmElfSection *section, pltSections) {
+        if (section->is_mapped())
+            pltAddresses |= AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size());
+    }
+    
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        if (function->name() == "" && matchElfDynamicStub(partitioner, function, pltAddresses))
+            function->name("F" + StringUtility::addrToString(function->address()).substr(2) + "@plt");
+    }
 }
 
 } // namespace

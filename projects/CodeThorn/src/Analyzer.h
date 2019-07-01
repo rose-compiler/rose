@@ -316,7 +316,7 @@ namespace CodeThorn {
     // requires normalized AST
     AbstractValue singleValevaluateExpression(SgExpression* expr,EState currentEState);
   
-    std::set<std::string> variableIdsToVariableNames(SPRAY::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
     bool isStartLabel(Label label);
     int reachabilityAssertCode(const EState* currentEStatePtr);

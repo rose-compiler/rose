@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
 
-SUBDIRS = libraryIdentification_tests Dwarf_tests Pin_tests BinaryConcolic
+SUBDIRS = libraryIdentification_tests Dwarf_tests Pin_tests Concolic
 
 EXTRA_DIST = \
 	runExecFormatsTest testShiftResizeSection.sh \

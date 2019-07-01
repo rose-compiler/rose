@@ -16,7 +16,7 @@ namespace CodeThorn {
     return getLength()==0;
   }
 
-  bool CallString::addLabel(SPRAY::Label lab) {
+  bool CallString::addLabel(CodeThorn::Label lab) {
     if(getLength()<=getMaxLength()) {
       _callString.push_back(lab);
       return true;
@@ -31,7 +31,7 @@ namespace CodeThorn {
     }
   }
 
-  bool CallString::removeIfLastLabel(SPRAY::Label lab) {
+  bool CallString::removeIfLastLabel(CodeThorn::Label lab) {
     if(isLastLabel(lab)) {
       _callString.pop_back();
       return true;
@@ -39,7 +39,7 @@ namespace CodeThorn {
     return false;
   }
 
-  bool CallString::isLastLabel(SPRAY::Label lab) {
+  bool CallString::isLastLabel(CodeThorn::Label lab) {
     if(_callString.size()>0) {
       if(lab==_callString.back()) {
         return  true;

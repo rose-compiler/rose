@@ -157,6 +157,12 @@ host_compiler_vars() {
 	echo "CXX_VERSION=\"$CXX_VERSION\""
 	echo "CXX_LANGUAGE=\"$CXX_LANGUAGE\""
     fi
+
+    if [ -n "$C_VENDOR" ]; then
+	echo "C_VENDOR=\"$C_VENDOR\""
+	echo "C_VERSION=\"$C_VERSION\""
+	echo "C_LANGUAGE=\"$C_LANGUAGE\""
+    fi
 }
 
 # Information about the target (backend) compiler

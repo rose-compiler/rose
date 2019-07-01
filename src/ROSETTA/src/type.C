@@ -712,6 +712,33 @@ Grammar::setUpTypes ()
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/17/2019): To support SgPointerMemberType name qualification for the class type and the base type,
+  // we need to add a name qualification field to the SgPointerMemberType which will allow the name qualification
+  // to be computed for a set of types in a specific context (location in the code, e.g. statement) and then use 
+  // the mechanism to generate a string for the type (as is used for template instantiations) and then put the
+  // generated string into a map used for name qualificaiton of types.  The reason we can't just use a limited 
+  // number of fields on each IR node that can reference a type is that there can be an abitrary number of
+  // points in the nested representation of SgPointerMemberType(s) where name qualificaiton is required.
+  // To this extent it is similar to the name qualification complexity of the template instantiations which
+  // can have arbitrary numbers of template arguments with additional name qualification.
+
+  // To support each context generating the name qualification for every part of type tree, we need to put
+  // support for the name qualificaiton directly into the SgPointerMemberType.
+
+#if 0
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      NamedType.setFunctionPrototype ("HEADER_VIRTUAL_GET_NAME", "../Grammar/Type.code" );
      NamedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 

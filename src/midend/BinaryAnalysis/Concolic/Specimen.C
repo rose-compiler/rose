@@ -1,23 +1,11 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
+#include "io-utility.h"
+
 namespace Rose {
 namespace BinaryAnalysis {
 
-namespace
-{
-  template <class ExceptionType>
-  static inline
-  void
-  throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
-  {
-    arg1.append(arg2);
-    arg1.append(arg3);
-
-    throw ExceptionType(arg1);
-  }
-}  
-  
 namespace Concolic {
 
 // class method
@@ -27,7 +15,7 @@ Specimen::instance(const boost::filesystem::path &executableName) {
 
     if (!executableName.empty())
         self->open(executableName);
-        
+
     self->name(executableName.string());
     return self;
 }
@@ -41,7 +29,7 @@ Specimen::instance() {
 void
 Specimen::open(const boost::filesystem::path &executableName) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    
+
     content_ = loadBinaryFile(executableName);
     empty_ = false;
 }

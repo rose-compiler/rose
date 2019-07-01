@@ -47,7 +47,7 @@
 #include "Solver12.h"
 #include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
 
@@ -81,7 +81,7 @@ namespace po = boost::program_options;
 #endif
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace boost;
 
 #include "Diagnostics.h"
@@ -338,7 +338,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg1-estate-properties", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
     ("tg2-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize address.")
-    ("tg2-estate-id", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
+    ("tg2-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
@@ -579,7 +579,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.4\n";
+    cout << "CodeThorn version 1.10.5\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -2100,10 +2100,6 @@ int main( int argc, char * argv[] ) {
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
-    mfacilities.shutdown();
-    return 1;
-  } catch(const SPRAY::Exception& e) {
-    cerr<< "Spray::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(const std::exception& e) {

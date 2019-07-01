@@ -135,18 +135,9 @@ SUBDIRS += CompilationDB
 # Associate projects with developers
 ########################################################################################################################
 
-# List the projects you want to be tested after your name. By doing so, you are sponsoring the project and will
-# be responsible for fixing bugs (either yourself or by delegation).  The names listed here should be the same as the names
-# listed here will be intersected with the $(SUBDIRS) value before tests are run, which means you can safely list
-# subdirectories that might not be present or might not be configured.
-
-PROJECTS_ROBB    = BinaryAnalysisTools
-PROJECTS_JUSTIN  = compass2
-PROJECTS_DAN     =
-PROJECTS_MARKUS  =
-PROJECTS_PEIHUNG =
-PROJECTS_LEO     =
-
+# The developer-specific project lists used for portability testing have been moved to
+# project/MatrixTesting/lib/matrix/docker-scripts/steps so they can be used by all
+# supported build systems. [Matzke, 2019-04-24]
 
 ########################################################################################################################
 # Rules for testing projects having particular core developer sponsors
@@ -179,3 +170,6 @@ check-projects-leo:
 		$(MAKE) -C $$project check || exit 1;				\
 	done
 
+
+
+EXTRA_DIST = StaticDynamicAnalysis

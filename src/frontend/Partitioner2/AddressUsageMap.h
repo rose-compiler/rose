@@ -209,14 +209,15 @@ public:
 
     /** Determines if a data block exists in the list.
      *
-     *  If the specified data block exists then its ownership information is returned, otherwise nothing is returned. */
+     *  If the specified data block or an equivalent data block exists then its ownership information is returned, otherwise
+     *  nothing is returned. */
     Sawyer::Optional<OwnedDataBlock> dataBlockExists(const DataBlock::Ptr&) const;
 
     /** Determines if a data block exists in the list.
      *
-     *  If a data block with the specified starting address exists in the list then its ownership information is returned,
-     *  otherwise nothing is returned. It is possible that multiple data blocks can exist at a particular address, in which
-     *  case an arbitrary one is returned. */
+     *  If a data block with the specified starting addres exists in the list then its ownership information is
+     *  returned, otherwise nothing is returned. It is possible that multiple data blocks can exist at a particular address, in
+     *  which case an arbitrary one is returned. */
     Sawyer::Optional<OwnedDataBlock> dataBlockExists(rose_addr_t dbStart) const;
 
     /** Find the basic block that starts at this address.
@@ -235,9 +236,12 @@ public:
     /** Insert a data block.
      *
      *  The specified data block ownership information (which must be valid) is inserted into this list of users.  If this list
-     *  already contains an ownership record for the data block, then the specified record is merged into the existing
-     *  record. */
-    void insertDataBlock(const OwnedDataBlock&);
+     *  already contains an ownership record for the data block (or an equivalent data block), then the specified record is
+     *  merged into the existing record.
+     *
+     *  Returns the data block ownership information, which contains the information specified in the argument merged with the
+     *  information that might have been already present in this object. */
+    OwnedDataBlock insertDataBlock(const OwnedDataBlock&);
 
     /** Inser a user.
      *
@@ -463,8 +467,8 @@ public:
 
     /** Determines whether a data block exists in the map.
      *
-     *  If the specified data block exists in the map then return its ownership record, otherwise return a default-constructed
-     *  ownership record whose isValid method will return false. */
+     *  If the specified data block or an equivalent data block exists in the map then return its ownership record, otherwise
+     *  return a default-constructed ownership record whose isValid method will return false. */
     OwnedDataBlock dataBlockExists(const DataBlock::Ptr&) const;
 
     /** Find address users that span the entire interval.
@@ -546,6 +550,12 @@ public:
      *
      *  The output contains one entry per line and the last line is terminated with a linefeed. */
     void print(std::ostream&, const std::string &prefix="") const;
+
+    /** Check invariants.
+     *
+     *  Aborts if invariants are not satisified. */
+    void checkConsistency() const;
+
 private:
     friend class Partitioner;
 
@@ -554,8 +564,9 @@ private:
 
     // Insert or merge a data block into the map.  The data block must not be a null pointer. A data pointer is always inserted
     // along with ownership information--which functions and basic blocks own this data block. If the address usage map already
-    // has this data block, then the provided ownership information is merged into the existing ownership lists.
-    void insertDataBlock(const OwnedDataBlock&);
+    // has this data block, then the provided ownership information is merged into the existing ownership lists. Returns the
+    // data block ownership information, either a copy of the argument or a copy of the updated existing one in the AUM.
+    OwnedDataBlock insertDataBlock(const OwnedDataBlock&);
 
     // Remove an instruction/block pair from the map.  If the instruction exists in the map then the specified block is removed
     // from the instruction's owner list. If this results in an empty owner list then the instruction is also removed.

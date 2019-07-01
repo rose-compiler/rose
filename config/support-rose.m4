@@ -8,7 +8,7 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 # This macro encapsulates the complexity of the tests required for ROSE
 # to understnd the machine environment and the configure command line.
 # It is represented a s single macro so that we can simplify the ROSE
-# configure.in and permit other external project to call this macro as 
+# configure.in and permit other external project to call this macro as
 # a way to set up there environment and define the many macros that an
 # application using ROSE might require.
 # *********************************************************************
@@ -181,7 +181,7 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
 
 # ****************************************************
-# ROSE/tests directory compilation & testing 
+# ROSE/tests directory compilation & testing
 # ****************************************************
 AC_MSG_CHECKING([if we should build & test the ROSE/tests directory])
 AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Disable compilation and testing of the ROSE/tests directory]),[],[enableval=yes])
@@ -212,9 +212,9 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
-# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# Option to turn on a special mode of memory pools: no reuse of deleted memory.
 # This is useful to track AST nodes during transformation, otherwise the same memory may be reused
-# by multiple different AST nodes. 
+# by multiple different AST nodes.
 # Liao 8/13/2014
 # ************************************************************
 
@@ -238,14 +238,14 @@ if test "x$enable_smaller_generated_files" = "xyes"; then
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
-# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific 
+# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific
 # frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
 AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
 AM_CONDITIONAL(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT, [test "x$enable_internalFrontendDevelopment" = xyes])
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
   AC_MSG_WARN([using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
 
-# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file) 
+# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file)
 # since it is seen too late in the process.
 # AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
 fi
@@ -295,7 +295,7 @@ fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
 AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
-# DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
+# DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
 AC_ARG_ENABLE(debug_output_for_new_edg_interface,
     AS_HELP_STRING([--enable-debug_output_for_new_edg_interface], [Enable debugging output (spew) of new EDG/ROSE connection]))
@@ -492,11 +492,11 @@ AC_CANONICAL_HOST
 
 # *****************************************************************
 
-# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that 
+# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that
 # the warnings options can use the compiler vendor instead of the compiler name.
 AC_LANG(C++)
 
-# Get frontend compiler vendor 
+# Get frontend compiler vendor
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
@@ -565,7 +565,7 @@ AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 # *****************************************************************
 
-# DQ: added here to see if it would be defined for the template tests and avoid placing 
+# DQ: added here to see if it would be defined for the template tests and avoid placing
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 
@@ -595,7 +595,7 @@ case "$enable_assertion_behavior" in
 esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
-    
+
 # *****************************************************************
 
 # ********************************************************************************
@@ -646,7 +646,7 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # we can make the backend selection a bit more compiler dependent. Actually we likely
 # don't need this!
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
-# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
+# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 # GET_COMPILER_SPECIFIC_DEFINES
@@ -664,7 +664,7 @@ AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [C
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
 
-# Get frontend compiler vendor 
+# Get frontend compiler vendor
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 unset ax_cv_cxx_compiler_vendor
@@ -675,7 +675,7 @@ unset ax_cv_cxx_compiler_vendor
   AC_MSG_NOTICE([after resetting CXX to be the backend compiler: CXX = "$CXX"])
 
   AX_COMPILER_VENDOR
-# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns
 # the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
 # CcompilerVendorName= $ax_cv_c_compiler_vendor
 # CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
@@ -725,7 +725,7 @@ fi
 
 # DQ (2/7/17): This is a problem reported by Robb (sometimes gcc is not installed).
 # This is used in EDG (host_envir.h)  Test by building a bad version of gcc
-# use shell script called gcc with "exit 1" inside. 
+# use shell script called gcc with "exit 1" inside.
 if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
    GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
    GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
@@ -746,10 +746,10 @@ fi
 
 # *****************************************************************
 
-# DQ (2/7/2017): These macros test for C++11 and C++14 features and 
+# DQ (2/7/2017): These macros test for C++11 and C++14 features and
 # the default behavior of the CXX compiler.  Unfortunately the also
 # modify the CXX value so we have to save it and reset it after the
-# macros are called.  We modified the macros as well to save the 
+# macros are called.  We modified the macros as well to save the
 # default behavior of the CXX compiler so that we can detect C++11
 # mode within the frontend compiler used to compile ROSE.  Thi is used
 # mostly so far to just disable some test that are causing GNU g++
@@ -808,7 +808,7 @@ rm -rf ./include-stagin
 if test x$enable_clang_frontend = xyes; then
   INSTALL_CLANG_SPECIFIC_HEADERS
 else
-  # DQ (11/1/2011): I think that we need these for more complex header file 
+  # DQ (11/1/2011): I think that we need these for more complex header file
   # requirements than we have seen in testing C code to date.  Previously
   # in testing C codes with the EDG 4.x we didn't need as many header files.
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
@@ -836,7 +836,7 @@ AC_PROG_CXX
 AC_MSG_NOTICE([in configure.in ... CXX = "$CXX"])
 
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
-# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
+# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 GET_COMPILER_SPECIFIC_DEFINES
@@ -873,7 +873,7 @@ AM_PATH_XML2(2.0.0, [with_xml="yes"])
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
 # DQ (10/17/2009): This is a bug introduced (again) into ROSE which disables the Java support.
-# See elsewhere in this file where this macro is commented out and the reason explained in 
+# See elsewhere in this file where this macro is commented out and the reason explained in
 # more details.
 # AS Check for ssl for the binary clone detection work
 # CHECK_SSL
@@ -1048,7 +1048,7 @@ AM_CONDITIONAL(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
 ROSE_SUPPORT_EDG_DEBUGGING
 
 # Call supporting macro for Omni OpenMP
-# 
+#
 ROSE_SUPPORT_OMNI_OPENMP
 
 # call supporting macro for GCC 4.4.x gomp OpenMP runtime library
@@ -1173,7 +1173,7 @@ AC_MSG_NOTICE([TCLSH = "$TCLSH"])
 # Call supporting macro for OFP
 ROSE_SUPPORT_OFP
 
-# DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report 
+# DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report
 # we are using the wrong version of swig (likely we need a newer version of this m4 script).
 # AC_PROG_SWIG(1.3.31)
 AC_PROG_SWIG(2.0.0)
@@ -1245,9 +1245,9 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
         [
         if test "$withval" = "no"; then
-	    AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
+      AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
         elif test "$withval" = "yes"; then
-	    AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
+      AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
         else
             has_ppl_path="yes"
             ppl_path="$withval"
@@ -1284,7 +1284,7 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
         [
         if test "$withval" = "no"; then
-	    AC_MSG_FAILURE([--with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)])
+      AC_MSG_FAILURE([--with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)])
         elif test "$withval" = "yes"; then
             AC_MSG_FAILURE([--with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)])
         else
@@ -1323,9 +1323,9 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
         [
         if test "$withval" = "no"; then
-	    AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
+      AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
         elif test "$withval" = "yes"; then
-	    AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
+      AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
         else
             has_scoplib_path="yes"
             scoplib_path="$withval"
@@ -1412,7 +1412,7 @@ ROSE_SUPPORT_DOXYGEN
 # Setup Automake conditional to allow use of Doxygen Tag file to speedup
 # generation of Rose documentation this does not however provide the
 # best organized documentation so we use it as an option to speed up
-# the development of the documenation and then alternatively build the 
+# the development of the documenation and then alternatively build the
 # final documentation.
 # AM_CONDITIONAL(DOXYGEN_GENERATE_FAST_DOCS,test "$enable_doxygen_generate_fast_docs" = yes)
 # echo "In configure.in: enable_doxygen_generate_fast_docs = $enable_doxygen_generate_fast_docs"
@@ -1501,11 +1501,11 @@ AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
 
 # Enable turning on purify and setting its options, etc.
 ROSE_SUPPORT_PURIFY
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
 
 # Enable turning on Insure and setting its options, etc.
 ROSE_SUPPORT_INSURE
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
 
 # DQ (7/8/2004): Added support for shared libraries using Brian's macros
 # ROSE_TEST_LIBS="-L`pwd`/src"
@@ -1542,7 +1542,7 @@ AC_MSG_CHECKING(for A++P++)
 AC_ARG_WITH(AxxPxx,
 [  --with-AxxPxx=PATH   Specify the prefix where A++P++ is installed],
 ,
-if test "$AxxPxx_PREFIX" ; then 
+if test "$AxxPxx_PREFIX" ; then
    with_AxxPxx="$AxxPxx_PREFIX"
 else
    with_AxxPxx=no
@@ -1586,7 +1586,7 @@ AC_ARG_WITH(PERFORMANCE_TESTS,
    [  --with-PERFORMANCE_TESTS ... compile and run performance tests within both A++ and P++],, with_PERFORMANCE_TESTS=no )
 # BTNG_AC_LOG(with_PERFORMANCE_TESTS is $with_PERFORMANCE_TESTS)
 # with_PERFORMANCE_TESTS variable is exported so that other packages
-# (e.g. indirect addressing) can set 
+# (e.g. indirect addressing) can set
 # themselves up dependent upon the use/non-use of PADRE
 export with_PERFORMANCE_TESTS;
 
@@ -1617,7 +1617,7 @@ dnl    fi
 dnl    with_gcj=yes
 dnl ],[
 dnl    _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
-dnl ]) 
+dnl ])
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
@@ -1641,8 +1641,8 @@ AC_SUBST(RT_LIBS)
 # AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
 # AC_SUBST(optional_PERFORMANCE_subdirs)
 
-# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been 
-# removed from the ROSE's git repository and it is a separate git repository that can be 
+# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been
+# removed from the ROSE's git repository and it is a separate git repository that can be
 # checked out internally by ROSE developers.
 # Set up for Dan Quinlan's development test directory.
 # AC_ARG_ENABLE(dq-developer-tests,
@@ -1721,15 +1721,15 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_4],
 # Begin macro ROSE_SUPPORT_ROSE_PART_4.
 
 dnl ---------------------------------------------------------------------
-dnl (8/29/2007): This was added to provide more portable times upon the 
+dnl (8/29/2007): This was added to provide more portable times upon the
 dnl suggestion of Matt Sottile at LANL.
 dnl ---------------------------------------------------------------------
 AC_C_INLINE
 AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
 
-AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H 
-#include <sys/time.h> 
+AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif])
 
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
@@ -1752,7 +1752,7 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
-# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE
 # when call graph analysis tests are used.
 res_top_src=$(cd "$srcdir" && pwd -P)
 AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
@@ -1821,7 +1821,7 @@ AC_MSG_NOTICE([with_QRose = "$with_QRose"])
 #         Support for Qt (General GUI support)
 # ****************************************************
 
-# These are defined in config/qrose_indigo_1.m4, they 
+# These are defined in config/qrose_indigo_1.m4, they
 # are not standard AC macros.
 AC_PATH_QT
 AC_PATH_QT_MOC
@@ -2006,6 +2006,7 @@ exampleTranslators/documentedExamples/Makefile
 exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
+LicenseInformation/Makefile
 projects/ArithmeticMeasureTool/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
@@ -2314,7 +2315,8 @@ tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
-tests/nonsmoke/functional/BinaryAnalysis/BinaryConcolic/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Concolic/crsh/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
 tests/nonsmoke/functional/CompileTests/C_tests/Makefile
@@ -2496,7 +2498,6 @@ tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
-tools/fortranTranslation/Makefile
 tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile

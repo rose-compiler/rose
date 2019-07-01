@@ -11,24 +11,24 @@
 
 using std::string;
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class RDAstAttribute : public RDAstAttributeInterface {
  public:
   virtual bool isBottomElement();
-  virtual SPRAY::VariableIdSet allVariableIds();
-  virtual SPRAY::LabelSet allLabels();
-  virtual SPRAY::LabelSet definitionsOfVariableId(SPRAY::VariableId varId);
-  virtual SPRAY::VariableIdSet variableIdsOfDefinition(SPRAY::Label def);
+  virtual CodeThorn::VariableIdSet allVariableIds();
+  virtual CodeThorn::LabelSet allLabels();
+  virtual CodeThorn::LabelSet definitionsOfVariableId(CodeThorn::VariableId varId);
+  virtual CodeThorn::VariableIdSet variableIdsOfDefinition(CodeThorn::Label def);
   virtual iterator begin();
   virtual iterator end();
   virtual ~RDAstAttribute();
  public:
-  RDAstAttribute(SPRAY::RDLattice* elem);
-  void toStream(std::ostream& os, SPRAY::VariableIdMapping* vim);
+  RDAstAttribute(CodeThorn::RDLattice* elem);
+  void toStream(std::ostream& os, CodeThorn::VariableIdMapping* vim);
   string toString();
  private:
-  SPRAY::RDLattice* _elem;
+  CodeThorn::RDLattice* _elem;
 };
 
 }

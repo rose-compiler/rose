@@ -4,7 +4,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 void RDAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
   os<<"RD:";

@@ -249,6 +249,20 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
+
+          case V_SgPointerMemberType:
+             {
+               SgPointerMemberType* node = isSgPointerMemberType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+
+            // DQ (4/21/2019): Added support for SgPointerMemberType, but not clear which of these functions should be called here.
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case SgPointerMemberType: calling node->get_qualified_name_prefix_for_class_of() \n");
+
+            // nameQualifier = node->get_qualified_name_prefix_for_base_type();
+               nameQualifier = node->get_qualified_name_prefix_for_class_of();
+               break;
+             }
+
 #if 0
           case V_:
              {

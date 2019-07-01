@@ -11,7 +11,7 @@
 #include "FunctionNormalization.h"
 #include "Normalization.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 DFAnalysisBase::DFAnalysisBase()
@@ -32,7 +32,7 @@ void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(&_flow);
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new SPRAY::PASolver1(_workList,
+  _solver=new CodeThorn::PASolver1(_workList,
                       _analyzerDataPreInfo,
                       _analyzerDataPostInfo,
                       *_initialElementFactory,
@@ -71,7 +71,7 @@ void DFAnalysisBase::computeAllPostInfo() {
       _solver->computeCombinedPreInfo(lab,*info);
       _transferFunctions->transfer(lab,*info);
       if(_analyzerDataPostInfo[lab.getId()]) {
-	delete _analyzerDataPostInfo[lab.getId()];
+        delete _analyzerDataPostInfo[lab.getId()];
       }
       _analyzerDataPostInfo[lab.getId()]=info;
     }
@@ -120,7 +120,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,getVariableIdMapping());
   VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
   //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
-  //			  usedVarsInGlobalVarsInitializers.end());
+  //        usedVarsInGlobalVarsInitializers.end());
   cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
   //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
@@ -208,7 +208,7 @@ void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
 }
 
-SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
+CodeThorn::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
   return _pointerAnalysisInterface;
 }
 
@@ -311,7 +311,7 @@ DFAnalysisBase::run() {
       for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
         //cout << (*i).toString() << endl;
         _workList.add(*i);
-      } 
+      }
     } else {
       cout << "INFO: Using non-topologically sorted CFG with multiple function entries as work list initialization." << endl;
       for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
@@ -365,7 +365,7 @@ FunctionIdMapping* DFAnalysisBase::getFunctionIdMapping() {
 CodeThorn::DFAnalysisBase::iterator CodeThorn::DFAnalysisBase::begin() {
   return _analyzerDataPostInfo.begin();
 }
-  
+
 
 DFAnalysisBase::iterator CodeThorn::DFAnalysisBase::end() {
   return _analyzerDataPostInfo.end();
@@ -377,7 +377,7 @@ size_t DFAnalysisBase::size() {
 }
 #endif // begin/end
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
@@ -430,7 +430,7 @@ void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
           cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
           exit(1);
         }
-        
+
       }
       ROSE_ASSERT(info!=0);
       node->setAttribute(attributeName,createDFAstAttribute(info));
@@ -438,7 +438,7 @@ void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
   }
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
@@ -447,7 +447,7 @@ void DFAnalysisBase::attachInInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,true);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
@@ -456,7 +456,7 @@ void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2018.
  */

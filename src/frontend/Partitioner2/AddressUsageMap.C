@@ -5,6 +5,8 @@
 #include <boost/foreach.hpp>
 #include <integerOps.h>
 
+using namespace Sawyer::Message::Common;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -148,7 +150,7 @@ AddressUsers::dataBlockExists(const DataBlock::Ptr &dblock) const {
     AddressUser needle = AddressUser(OwnedDataBlock(dblock));
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     std::vector<AddressUser>::const_iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
-    if (lb==users_.end() || lb->dataBlock()!=dblock)
+    if (lb == users_.end() || !equalUnique(lb->dataBlock(), dblock, sortDataBlocks))
         return Sawyer::Nothing();
     ASSERT_require(lb->dataBlockOwnership().isValid());
     return lb->dataBlockOwnership();
@@ -191,23 +193,28 @@ AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &b
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
 }
 
-void
+OwnedDataBlock
 AddressUsers::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    OwnedDataBlock retval;
     AddressUser user(odb);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
-    if (lb==users_.end() || lb->dataBlock()!=odb.dataBlock()) {
+    if (lb == users_.end() || !equalUnique(lb->dataBlock(), odb.dataBlock(), sortDataBlocks)) {
+        // Wasn't present and list doesn't contain an equivalent data block, so add it
         users_.insert(lb, odb);
+        retval = odb;
     } else {
-        // merge new ownership list into existing ownership list
-        ASSERT_require(lb->dataBlock()==odb.dataBlock());
+        // An equivalent data block was present, so merge new ownership list into existing ownership list
+        ASSERT_require(equalUnique(lb->dataBlock(), odb.dataBlock(), sortDataBlocks));
         BOOST_FOREACH (const Function::Ptr &function, odb.owningFunctions())
             lb->dataBlockOwnership().insertOwner(function);
         BOOST_FOREACH (const BasicBlock::Ptr &bblock, odb.owningBasicBlocks())
             lb->dataBlockOwnership().insertOwner(bblock);
+        retval = lb->dataBlockOwnership();
     }
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
+    return retval;
 }
 
 #if 0 // [Robb P Matzke 2016-06-30]
@@ -425,9 +432,10 @@ AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr
     map_.insertMultiple(adjustment);
 }
 
-void
+OwnedDataBlock
 AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     ASSERT_require(odb.isValid());
+    Sawyer::Optional<OwnedDataBlock> retval;
     AddressInterval interval = AddressInterval::baseSize(odb.dataBlock()->address(), odb.dataBlock()->size());
 
     // Either the data block is present in the AUM or it isn't. If it is present, then the AUM contains the entire block's
@@ -436,16 +444,22 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     AddressIntervalSet missingParts;
     missingParts.insert(interval);
 
-    // Update the existing parts of the interval.
+    // Update the existing parts of the interval by merging this odb's ownership info into the existing odb. Even if the map
+    // contains multiple overlapping parts, they should all the OwnedDataBlock values corresponding to the specified dblock
+    // will have the same data block pointer and ownership lists.
     BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
         missingParts.erase(node.key());
         AddressUsers newUsers = node.value();
-        newUsers.insertDataBlock(odb);
+        retval = newUsers.insertDataBlock(odb);
     }
 
     // Add the missing parts of the interval.
     BOOST_FOREACH (const AddressInterval &i, missingParts.intervals())
         map_.insert(i, AddressUsers(odb));
+
+    // Either there was at least one matching OwnedDataBlock that was updated (and copied into retval), or we simply inserted
+    // the specified odb argument.
+    return retval.orElse(odb);
 }
 
 void
@@ -580,6 +594,35 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     BOOST_FOREACH (const Map::Node &node, map_.nodes())
         out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
             <<"] " <<StringUtility::plural(node.key().size(), "bytes") << ": " <<node.value() <<"\n";
+}
+
+void
+AddressUsageMap::checkConsistency() const {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug <<"checking AUM consistency...\n";
+
+    // Find all distinct data block objects
+    std::set<DataBlock::Ptr> allDataBlocks;
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        const AddressUsers &users = node.value();
+        BOOST_FOREACH (const AddressUser &user, users.addressUsers()) {
+            if (DataBlock::Ptr dblock = user.dataBlock())
+                allDataBlocks.insert(dblock);
+        }
+    }
+
+    // Of all the data block objects, no two objects should have the same identification. Data blocks are identified by their
+    // starting address and size.
+    size_t nErrors = 0;
+    std::vector<DataBlock::Ptr> dblocks(allDataBlocks.begin(), allDataBlocks.end());
+    for (size_t i=1; i < dblocks.size(); ++i) {
+        if (dblocks[i]->address() == dblocks[i-1]->address() && dblocks[i]->size() == dblocks[i-1]->size()) {
+            debug <<"  duplicate data blocks detected: idx = " <<(i-1) <<" and " <<i <<"\n";
+            ++nErrors;
+        }
+    }
+
+    ASSERT_always_require2(0 == nErrors, StringUtility::plural(nErrors, "errors"));
 }
 
 } // namespace

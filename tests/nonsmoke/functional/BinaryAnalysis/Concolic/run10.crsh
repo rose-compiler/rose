@@ -1,0 +1,17 @@
+connect sqlite3://./run10.db
+
+ls-family :: t01
+  @ success
+{
+  /usr/bin/ls -la
+}
+
+ls-family :: t02
+  @ success
+{
+  /usr/bin/ls -l --author *.o
+}
+
+ls-family::run 10
+
+echo ok.

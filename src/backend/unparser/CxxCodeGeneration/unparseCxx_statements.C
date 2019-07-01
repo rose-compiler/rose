@@ -1396,6 +1396,23 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
         }
 
 #if 0
+  // DQ (5/29/2019): Disavle this feature as a test for test2019_444.C.
+     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+        {
+          printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+          printf ("Disabling the type_syntax_is_available feature for function parameters \n");
+          printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
+
+          ROSE_ASSERT(funcdecl_stmt->get_type_syntax() != NULL);
+
+          funcdecl_stmt->set_type_syntax_is_available(false);
+          funcdecl_stmt->set_type_syntax(NULL);
+        }
+     ROSE_ASSERT(funcdecl_stmt->get_type_syntax_is_available() == false);
+     ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
+#endif
+
+#if 0
   // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
      bool functionParametersMarkedToBeOutput = false;
      SgInitializedNamePtrList::iterator temp_p = funcdecl_stmt->get_args().begin();
@@ -1423,11 +1440,16 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 
      SgInitializedNamePtrList::iterator p        = funcdecl_stmt->get_args().begin();
 
-  // DQ (4/13/2018): I want to initialize this iterator, but it is not clea what to initialize it to...
+  // DQ (4/13/2018): I want to initialize this iterator, but it is not clear what to initialize it to...
      SgInitializedNamePtrList::iterator p_syntax = funcdecl_stmt->get_args().begin();
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
           p_syntax = funcdecl_stmt->get_parameterList_syntax()->get_args().begin();
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
      while ( p != funcdecl_stmt->get_args().end() )
@@ -1459,6 +1481,11 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
                     printf ("In unparseFunctionArgs(): Output the syntax for function parameters: (*p_syntax)->get_name() = %s \n",(*p_syntax)->get_name().str());
 #endif
                     unparseFunctionParameterDeclaration (funcdecl_stmt,*p_syntax,false,info);
+
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
                  else
                   {
@@ -7264,7 +7291,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      if ((*p)->get_using_C11_Alignas_keyword() == true)
         {
           curprint("_Alignas(");
-          SgNode* constant_or_type = (*p)->get_constant_or_type_argument_for_Alignas_keyword();
+          SgNode*       constant_or_type = (*p)->get_constant_or_type_argument_for_Alignas_keyword();
           SgType*       type_operand     = isSgType(constant_or_type);
           SgExpression* constant_operand = isSgExpression(constant_or_type);
           if (type_operand != NULL)
@@ -8025,9 +8052,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          ninfo_for_variable.set_global_qualification_required(vardecl_stmt->get_global_qualification_required());
                          ninfo_for_variable.set_type_elaboration_required(vardecl_stmt->get_type_elaboration_required());
 
+                      // DQ (4/27/2019): We need to get the name qualification from the SgInitializedName, and not the SgVariableDeclaration.
                       // SgName nameQualifier = unp->u_type->unp->u_name->generateNameQualifier(decl_item,ninfo2);
                       // SgName nameQualifier = unp->u_name->generateNameQualifier(decl_item,ninfo_for_variable);
-                         SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                      // SgName nameQualifier = vardecl_stmt->get_qualified_name_prefix();
+                         SgName nameQualifier = decl_item->get_qualified_name_prefix();
 
 #if DEBUG_VARIABLE_DECLARATION
                          printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
@@ -8207,10 +8236,22 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (tmp_init != NULL)
                   {
                     printf ("In unparseVarDeclStmt(): Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+                    printf (" --- decl_item->get_using_assignment_copy_constructor_syntax() = %s \n",decl_item->get_using_assignment_copy_constructor_syntax() ? "true" : "false");
 #if 0
                     tmp_init->get_file_info()->display("Initializer tmp_init: debug");
 #endif
                   }
+#endif
+
+#define DEBUG_COPY_INITIALIZER_SYNTAX 0
+
+            // DQ (5/31/2019): We need additional control over which form of syntax is output for the copy constructor 
+            // (the "A a = B" copy constructor syntax as opposed to the "A a(B)" syntax).
+               bool output_using_assignment_copy_constructor_syntax = ( (tmp_init != NULL) && (decl_item->get_using_assignment_copy_constructor_syntax() == true) );
+
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+            // DQ (5/31/2019): Check for brace initialization.
+               printf ("decl_item->get_is_braced_initialized() = %s \n",decl_item->get_is_braced_initialized() ? "true" : "false");
 #endif
 
             // DQ (7/23/2013): Added better control over when to output the initializer.
@@ -8219,6 +8260,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       ( (tmp_init->get_file_info()->isCompilerGenerated() == false) || 
                         (tmp_init->get_file_info()->isCompilerGenerated() == true && tmp_init->get_file_info()->isOutputInCodeGeneration() == true) ) );
 
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+               printf ("tmp_init                                        = %p \n",tmp_init);
+               if (tmp_init != NULL)
+                  {
+                    printf ("tmp_init                                        = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+                  }
+               printf ("ninfo.SkipInitializer()                         = %s \n",ninfo.SkipInitializer() ? "true" : "false");
+               printf ("outputInitializerBasedOnSourcePositionInfo      = %s \n",outputInitializerBasedOnSourcePositionInfo ? "true" : "false");
+               printf ("output_using_assignment_copy_constructor_syntax = %s \n",output_using_assignment_copy_constructor_syntax ? "true" : "false");
+#endif
             // DQ (7/23/2013): Modified back to a previously implemented case of checking (tmp_init->get_file_info()->isOutputInCodeGeneration() == true).
             //     See test2013_250.C for an example.
             // DQ (3/29/2013): Don't output the initializer if it was compiler generated and not meant to be output (see test2013_78.C).
@@ -8233,14 +8284,15 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
 #endif
                     SgConstructorInitializer* constructor = isSgConstructorInitializer(tmp_init);
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                  // DQ (1/16/2019): Added debug information.
                     printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor = %p \n",constructor);
                     if (constructor != NULL)
                       {
-                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_need_name()                = %s \n",constructor->get_need_name() ? "true" : "false");
-                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_associated_class_unknown() = %s \n",constructor->get_associated_class_unknown() ? "true" : "false");
-                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo.inConditional()                       = %s \n",ninfo.inConditional() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): output_using_assignment_copy_constructor_syntax = %s \n",output_using_assignment_copy_constructor_syntax ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_need_name()                    = %s \n",constructor->get_need_name() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): constructor->get_associated_class_unknown()     = %s \n",constructor->get_associated_class_unknown() ? "true" : "false");
+                        printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo.inConditional()                           = %s \n",ninfo.inConditional() ? "true" : "false");
                       }
 #endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
@@ -8255,14 +8307,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                       // ( false ) )
                       // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
-                         ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
+                      // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
+                         ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional() || output_using_assignment_copy_constructor_syntax == true) ) )
                        {
                       // DQ (11/9/2009): Skip the case of when we are in a isSgForInitStmt, since this is a bug in GNU g++ (at least version 4.2)
                       // See test2009_40.C test2009_41.C, and test2009_42.C
                       // curprint ( string(" = "));
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+                         printf ("Found SgConstructorInitializer: check if we want to use the assignment form of syntax for the constructor call \n");
+#endif
                          if ( constructor != NULL && isSgForInitStatement(stmt->get_parent()) != NULL )
                             {
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                               printf ("This is the special case of a constructor call \n");
 #endif
                            // DQ (2/9/2010): Previous code had this commented out to fix test2009_40.C.
@@ -8272,7 +8328,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                               if (constructor->get_need_name() == true && constructor->get_is_explicit_cast() == true )
                                  {
                                 // This is the syntax: class X = X(arg)
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                                    printf ("Output the = syntax \n");
 #endif
                                    curprint (" = ");
@@ -8281,32 +8337,72 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                  {
                                 // This is the alternative syntax: class X(arg)
                                 // So don't output a "="
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                                    printf ("Skip output of the = syntax \n");
 #endif
                                  }
                             }
                            else
                             {
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                               printf ("This is the MORE general case of a constructor call \n");
 #endif
                            // DQ (1/16/2019): only use the "=" syntax if we are going to output the name.
                            // curprint (" = ");
-                              if ( (constructor != NULL) && (constructor->get_need_name() == true) && (constructor->get_is_explicit_cast() == true) )
+
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+                              if (constructor != NULL)
+                                 {
+                                   printf ("constructor                         = %p \n",constructor);
+                                   printf ("constructor->get_need_name()        = %s \n",constructor->get_need_name() ? "true" : "false");
+                                   printf ("constructor->get_is_explicit_cast() = %s \n",constructor->get_is_explicit_cast() ? "true" : "false");
+                                 }
+                                else
+                                 {
+                                   printf ("constructor == NULL \n");
+                                 }
+#endif
+                           // if ( (constructor != NULL) && (constructor->get_need_name() == true) && (constructor->get_is_explicit_cast() == true) )
+                              if ( (constructor != NULL) && ( ( (constructor->get_need_name() == true) && (constructor->get_is_explicit_cast() == true) ) || (output_using_assignment_copy_constructor_syntax == true) ) )
                                  {
                                 // This is the syntax: class X = X(arg)
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                                    printf ("Output the = syntax \n");
 #endif
-                                   curprint (" = ");
+
+                                // DQ (5/31/2019): We need to supress the "=" if there will be no output from the unparsing of the initializer.
+                                // curprint (" = ");
+                                   ROSE_ASSERT(constructor != NULL);
+                                // bool suppressAssignmentSyntax = (constructor->get_args()->get_expressions().size() == 0);
+                                   bool suppressAssignmentSyntax = (constructor->get_args()->get_expressions().size() == 0 && (constructor->get_is_explicit_cast() == false) );
+
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+                                   printf ("constructor->get_is_braced_initialized() = %s \n",constructor->get_is_braced_initialized() ? "true" : "false");
+#endif
+                                // DQ (5/31/2019): This effects only Cxx11_tests/test2012_25.C
+                                   if (constructor->get_is_braced_initialized() == true)
+                                      {
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+                                        printf ("Set suppressAssignmentSyntax = false because this is braced initialized \n");
+#endif
+                                        suppressAssignmentSyntax = true;
+                                      }
+
+#if DEBUG_COPY_INITIALIZER_SYNTAX
+                                   printf ("suppressAssignmentSyntax = %s \n",suppressAssignmentSyntax ? "true" : "false");
+#endif
+                                   if (suppressAssignmentSyntax == false)
+                                      {
+                                        curprint (" = ");
+                                      }
                                  }
                                 else
                                  {
                                 // DQ (1/16/2019): Output the equals operator in the case of a assignment or aggregate initializer.
                                    if ( (tmp_init->variant() == ASSIGN_INIT) || (tmp_init->variant() == AGGREGATE_INIT) )
+                                // if ( (tmp_init->variant() == ASSIGN_INIT) || (tmp_init->variant() == AGGREGATE_INIT) || (output_using_assignment_copy_constructor_syntax == true) )
                                       {
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                                         printf ("Output the = syntax in the case of a assignment or aggregate initializer \n");
 #endif
                                         curprint (" = ");
@@ -8315,7 +8411,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                       {
                                      // This is the alternative syntax: class X(arg)
                                      // So don't output a "="
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                                         printf ("Skip output of the = syntax \n");
 #endif
                                       }
@@ -8324,7 +8420,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                       else
                        {
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                          printf ("This is the MOST general case of not using an initializer \n");
 #endif
                        }
@@ -8343,25 +8439,26 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                  // DQ (2/26/2012): Added test.
                     ROSE_ASSERT(tmp_init != NULL);
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                     printf ("Unparse the initializer = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
 #endif
                  // DQ (5/26/2013): Added support for name qualification.
                     statementInfo.set_reference_node_for_qualification(tmp_init);
                     ROSE_ASSERT(statementInfo.get_reference_node_for_qualification() != NULL);
-#if 0
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                     printf ("In unparseVarDeclStmt(): statementInfo.SkipClassDefinition() = %s \n",(statementInfo.SkipClassDefinition() == true) ? "true" : "false");
                     printf ("In unparseVarDeclStmt(): statementInfo.SkipEnumDefinition()  = %s \n",(statementInfo.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
                  // DQ (1/9/2014): These should have been setup to be the same.
                     ROSE_ASSERT(statementInfo.SkipClassDefinition() == statementInfo.SkipEnumDefinition());
 
-                 // curprint (string("/* Unparse the initializer */ \n"));
+                 // curprint (" /* Unparse the initializer */ ");
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);
-#if 0
+
+#if DEBUG_COPY_INITIALIZER_SYNTAX
                     printf ("DONE: Unparse the initializer \n");
-                 // curprint (string("/* DONE: Unparse the initializer */ \n"));
+                    curprint (" /* DONE: Unparse the initializer */ ");
 #endif
                   }
              }
@@ -11555,6 +11652,10 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
 #endif
 
      unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
+
+  // DQ (5/28/2019): If there are any attached CPP directives then unparse them.
+  // This will cause then to be output twice.
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
 
 #if 0
      printf ("DONE: In unparseTemplateMemberFunctionDeclStmt(stmt = %p) \n",stmt);

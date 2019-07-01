@@ -19,7 +19,7 @@
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   using std::set;
   using std::vector;
@@ -32,7 +32,7 @@ class DFAnalysisBase {
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
-  void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
+  virtual void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();
@@ -70,8 +70,8 @@ class DFAnalysisBase {
   void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
-  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
-  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
+  void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
+  CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
  protected:
 
@@ -105,13 +105,13 @@ class DFAnalysisBase {
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
   PropertyStateFactory* _initialElementFactory=nullptr;
-  SPRAY::PASolver1* _solver=nullptr;
+  CodeThorn::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-  
+
  private:
-  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
-  SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
+  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
+  CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
   Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
 };

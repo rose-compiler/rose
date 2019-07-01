@@ -48,10 +48,25 @@ using namespace std;
 using namespace Rose;
 using namespace SageInterface;
 
+
+namespace EDG_ROSE_Translation
+   {
+  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations 
+  // that this checking will fail on because it is for the typical case of checking the 
+  // AST for transformations after construction of the AST from an typical input file.
+#if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
+  // DQ (6/3/2019): Use the definition in the EDG edgRose.C file if C/C++ support IS defined.
+     extern bool suppress_detection_of_transformations;
+#else
+  // DQ (6/3/2019): Allow this to be the definition if C/C++ support is NOT defined.
+     bool suppress_detection_of_transformations;
+#endif
+   }
+
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
 namespace SageBuilder {
 
-// DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
+// DQ (3/24/2016): Adding Robb's message mechanism (data member and function).
 Sawyer::Message::Facility mlog;
 void
 initDiagnostics()
@@ -4154,6 +4169,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // This fails for everything.... not sure why...
   // ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL);
 
+#if 0
+     printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s (calling unsetNodesMarkedAsModified()) \n", XXX_name.str());
+#endif
+
   // DQ (4/16/2015): This is replaced with a better implementation.
   // Make sure the isModified boolean is clear for all newly-parsed nodes.
      unsetNodesMarkedAsModified(func);
@@ -5689,6 +5708,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
           defining_func->get_declarationModifier().get_typeModifier().setRestrict();
         }
+
+#if 0
+     printf ("In buildDefiningFunctionDeclaration_T(): XXX_name = %s (calling unsetNodesMarkedAsModified()) \n", XXX_name.str());
+#endif
 
   // DQ (4/16/2015): This is replaced with a better implementation.
   // DQ (4/15/2015): We should reset the isModified flags as part of the transforamtion
@@ -15817,6 +15840,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 0
           printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
+
        // Liao, 5/1/2009,
        // if the original command line is: gcc -c -o my.o my.c and we want to
        // add a new file(mynew.c), the command line for the new file would become "gcc -c -o my.o mynew.c "
@@ -15837,9 +15861,28 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 #endif
 
+  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations 
+  // that this checking will fail on because it is for the typical case of checking the 
+  // AST for transformations after construction of the AST from an typical input file.
+     EDG_ROSE_Translation::suppress_detection_of_transformations = true;
+
+#if 1
+     printf ("In SageBuilder::buildFile(): EDG_ROSE_Translation::suppress_detection_of_transformations = %s \n",EDG_ROSE_Translation::suppress_detection_of_transformations ? "true" : "false");
+#endif
+
 #if 0
      printf ("In SageBuilder::buildFile(): (after project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
+
+
+  // DQ (6/5/2019): Record what is marked as isModified() and then reset these IR nodes to be isModified after the new file has been processed.
+  // This is required because the modified IR nodes will be reset in this AST associated with the new file, and IR nodes that are common
+  // across the two AST's will be reset (shared IR nodes, which are also not marked as shared).  The solution is to compute the list of IR nodes
+  // which are marked as isModified, and then build the new file (which will reset them for the new file's AST (plus any shared nodes visited in 
+  // the traversal) and then afterward reset the set of isModified IR nodes to isModified.  By isolating the fix in this function we can eliminate
+  // the complexity of it being seen from the outside (outside of this abstraction).  Note that the function:
+  // SageInterface::collectModifiedLocatedNodes() has previously been implemented and used for debugging.
+     std::set<SgLocatedNode*> modifiedNodeSet = collectModifiedLocatedNodes(project);
 
   // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
   // For C/C++ it does not appear to matter if the call is made before the SgFile has been added to the file list in the SgProject.
@@ -15864,8 +15907,35 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           result->clearGlobalMangledNameMap();
         }
 
+  // DQ (6/5/2019): Use the previously constructed set (above) to reset the IR nodes to be marked as isModified.
+  // std::set<SgLocatedNode*> modifiedNodeSet = collectModifiedLocatedNodes(project);
+  // void resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifiedNodeSet);
+     resetModifiedLocatedNodes(modifiedNodeSet);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+
+#if 0
+     reportModifiedStatements("Leaving SageBuilder::buildFile(): calling reportModifiedStatements()",project);
+#endif
+
+#if 1
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
+
      return result;
 #else
+
+  // false branch of #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT (at top of function.
+
      return NULL;
 #endif
    }

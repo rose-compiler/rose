@@ -1468,12 +1468,13 @@ public:
      *  Thread safety: Not thread safe. */
     size_t nDataBlocks() const /*final*/;
 
-    /** Determine if a data block is attached to the CFG/AUM.
+    /** Determine if a data block or its equivalent is attached to the CFG/AUM.
      *
-     *  Returns true if this data block is attached to the CFG/AUM and false if not attached.
+     *  If the AUM contains the specified data block or an equivalent data block, then return the non-null pointer for the data
+     *  block that's already present in the AUM. Otherwise return a null pointer.
      *
      *  Thread safety: Not thread safe. */
-    bool dataBlockExists(const DataBlock::Ptr&) const /*final*/;
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const /*final*/;
 
     /** Find an existing data block.
      *
@@ -1487,13 +1488,16 @@ public:
 
     /** Attach a data block to the CFG/AUM.
      *
-     *  Attaches the data block to the CFG/AUM if it is not already attached.  A newly attached data block will have a
-     *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been
-     *  already attached). Multiple data blocks having the same address can be attached. It is an error to supply a null
-     *  pointer.
+     *  Attaches the data block to the CFG/AUM if it is not already attached and there is no equivalent data block already
+     *  attached. If no equivalent data block exists in the CFG/AUM then the specified block is attached and will have an
+     *  ownership count of zero since none of its owners are attached (otherwise the data block or an equivalent block would
+     *  also have been already attached). It is an error to supply a null pointer.
+     *
+     *  Returns the canonical data block, either one that already existed in the CFG/AUM or the specified data block which is
+     *  now attached.
      *
      *  Thread safety: Not thread safe. */
-    void attachDataBlock(const DataBlock::Ptr&) /*final*/;
+    DataBlock::Ptr attachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Detaches a data block from the CFG/AUM.
      *
@@ -2284,6 +2288,9 @@ public:
     /** Print some partitioner performance statistics. */
     void showStatistics() const;
 
+    // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
+    void checkConsistency() const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Settings
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2478,9 +2485,6 @@ private:
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
     BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa) const;
 
-    // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
-    void checkConsistency() const;
-
     // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
     // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
     void bblockAttached(const ControlFlowGraph::VertexIterator &newVertex);
@@ -2491,6 +2495,13 @@ private:
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();
+
+    // Attach a data block with ownership information to the AUM. This is private because it doesn't check that the owners
+    // specified in the argument are actually already attached to the AUM. Returns an updated OwnedDataBlock record containing
+    // the specified owners plus any owners that were already present in the AUM for an equivalent data block. The data block
+    // pointed to by the return value is the one that's in the AUM, which might be other than the one that was specified in the
+    // argument.
+    OwnedDataBlock attachDataBlock(const OwnedDataBlock&);
 };
 
 } // namespace

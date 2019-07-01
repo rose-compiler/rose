@@ -1,0 +1,21 @@
+#!/bin/bash
+arg0="${0##*/}"
+
+die() {
+    echo "$arg0" "error:" "$@" >&2
+    exit 1
+}
+
+[ "$#" -ne 2 -a "$#" -ne 3 ] && die "incorrect usage"
+CONFIG_FILE="$1"
+KEY="$2"
+DEFAULT="$3"
+
+value="$(sed -n "s/^[ \\t]*rmc_${KEY}[ \\t]\\+\\([^ \\t]\\+\\).*/\\1/p" "$CONFIG_FILE")"
+if [ "$value" = "" ]; then
+    echo "$DEFAULT"
+else
+    echo "$value"
+fi
+
+exit 0

@@ -1667,6 +1667,10 @@ Grammar::buildAtermSupportFunctions(AstNodeClass & node, StringUtility::FileWith
      outputFile << "     ATerm term16;\n";
      outputFile << "     ATerm term17;\n";
      outputFile << "     ATerm term18;\n";
+     outputFile << "     ATerm term19;\n";
+     outputFile << "     ATerm term20;\n";
+     outputFile << "     ATerm term21;\n";
+     outputFile << "     ATerm term22;\n";
      outputFile << "     string unrecognizedAterm;\n";
   // outputFile << "\n";
 

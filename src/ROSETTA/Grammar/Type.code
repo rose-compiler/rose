@@ -65,6 +65,9 @@ HEADER_START
           bool isUnsignedType() const;  //!< There are many sorts of unsigned types (this queries an arbitrary type).
           bool isIntegerType() const;   //!< There are many sorts of integer types (this queries an arbitrary type).
           bool isFloatType() const;     //!< There are several sorts of float types (this queries an arbitrary type).
+
+       // DQ (4/20/2019): Added support to detect primative types (which don't require name qualification).
+          bool isPrimativeType() const;   //!< There are many sorts of primative types (this queries an arbitrary type).
        /*! */
 
        // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
@@ -75,6 +78,12 @@ HEADER_START
           static const unsigned char STRIP_POINTER_TYPE          = ((unsigned char) 1 << 3); // 0x08
           static const unsigned char STRIP_ARRAY_TYPE            = ((unsigned char) 1 << 4); // 0x16
           static const unsigned char STRIP_TYPEDEF_TYPE          = ((unsigned char) 1 << 5); // 0x32
+
+       // DQ (4/15/2019): Adding specific support for pointer to member (SgPointerMemberType) since we don't always 
+       // want to strip it and we need better control over this.  Since SgPointerMemberType is derived from SgPointerType 
+       // (which might be a design mistake) it was handled along with SgPointer but for name qualification we need the 
+       // stripType function to have greater expresiveness.
+          static const unsigned char STRIP_POINTER_MEMBER_TYPE   = ((unsigned char) 1 << 6); // 0x64
 
       /*! \brief Some types store internal SgType pointers explicitly while others compute them from other data.  This function is true if it has a data member that is a type (pointer, array, etc.).
 
@@ -117,7 +126,9 @@ HEADER_START
 
        // DQ (6/21/2005): Added to support getting a deeply nested types quickly and easily.
       //! Returns hidden type beneath layers of typedefs, pointers, references, modifiers, array representation, etc.
-          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+      //  SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | 
+                                                      STRIP_POINTER_TYPE  | STRIP_ARRAY_TYPE     | STRIP_TYPEDEF_TYPE          | STRIP_POINTER_MEMBER_TYPE ) const;
 
        // DQ (6/30/2005): Added to support invistigation of hidden types
       //! This only strips away typedefs and modifiers (specialized usage).
@@ -940,6 +951,13 @@ HEADER_POINTER_MEMBER_TYPE_START
 
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
           SgClassDefinition* get_class_definition_of() const;
+
+       // DQ (4/20/2019): Renamed these to make them more clear, since there are two locations for name qualification in a SgPointerMemberType.
+       // DQ (4/18/2019): Added support for name qualification of type chains of SgPointerMemberType.
+       // SgName get_qualified_name_prefix() const;
+          SgName get_qualified_name_prefix_for_class_of() const;
+          SgName get_qualified_name_prefix_for_base_type() const;
+
 HEADER_POINTER_MEMBER_TYPE_END
 
 HEADER_TYPE_STRING_TYPE_START
@@ -1628,9 +1646,16 @@ SgType::isFloatType() const
      switch (t->variant())
         {
           case T_FLOAT :
+
+       // DQ (4/20/2019): Added additional floating point types to be classified as (isFloatType() == true) by this function.
+          case T_FLOAT80 :
+          case T_FLOAT128 :
+
           case T_DOUBLE:
           case T_LONG_DOUBLE:
                return 1;
+               break;
+
           default:
                return 0;
         }
@@ -1650,10 +1675,76 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_128BIT_INTEGER:
                return 1;
                break;
+
           default:
                return 0;
         }
    }
+
+
+bool
+SgType::isPrimativeType() const
+   {
+  // DQ (4/20/2019): Added query for primative types so that they can be easily skipped in name qualification.
+  // Note that a typedef type is not a primative type, even if it resolves to such a type (because it can be name qualified).
+  // A typedef type may be otherwise type equvalent to a primative type.
+
+     switch (variant())
+        {
+       // The list of types from isIntegerType() function
+          case T_CHAR:
+          case T_SIGNED_CHAR:
+          case T_UNSIGNED_CHAR:
+          case T_SHORT:
+          case T_SIGNED_SHORT:
+          case T_UNSIGNED_SHORT:
+          case T_INT:
+          case T_SIGNED_INT:
+          case T_UNSIGNED_INT:
+          case T_LONG:
+          case T_SIGNED_LONG:
+          case T_UNSIGNED_LONG:
+          case T_WCHAR:
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          case T_CHAR16:
+          case T_CHAR32:
+
+          case T_LONG_LONG:
+          case T_SIGNED_LONG_LONG:
+          case T_UNSIGNED_LONG_LONG:
+       // DQ (3/24/2014): Added support for 128 bit integers.
+          case T_SIGNED_128BIT_INTEGER:
+          case T_UNSIGNED_128BIT_INTEGER:
+          case T_BOOL:
+
+       // float types
+          case T_FLOAT :
+          case T_FLOAT80 :
+          case T_FLOAT128 :
+          case T_DOUBLE:
+          case T_LONG_DOUBLE:
+
+       // Other kinds of float types.
+          case T_COMPLEX:
+          case T_IMAGINARY:
+
+       // Other types
+          case T_VOID:
+          case T_LABEL:
+          case T_NULLPTR:
+          case T_DECLTYPE:
+          case T_STRING:
+
+               return true; // 1
+               break;
+
+          default:
+               return false; // 0
+        }
+   }
+
+
 
 SgType*
 SgType::integer_promotion(SgType * t1, SgType * t2)
@@ -1910,7 +2001,7 @@ SgType::stripType(unsigned char bit_array) const
    {
   // This function forms the low level support for both SgType::findBaseType()
   // and SgType::stripTypedefsAndModifiers().  It takes a default valued
-  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_RVALUE_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE | STRIP_POINTER_MEMBER_TYPE)
   // Alternatively any of these value may be ORed together to for other combinations.
 
   // Cast away const of "this" pointer
@@ -1928,6 +2019,8 @@ SgType::stripType(unsigned char bit_array) const
      SgRvalueReferenceType* rRefType    = NULL;
      SgArrayType*           arrayType   = NULL;
      SgTypedefType*         typedefType = NULL;
+
+     SgPointerMemberType*   pointerMemberType = NULL;
 
      size_t counter = 0;
      while (true)
@@ -1956,12 +2049,25 @@ SgType::stripType(unsigned char bit_array) const
 #endif
                currentType = rRefType->get_base_type();
              }
-          else if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+       // DQ (4/15/2019): I don't think this should apply to SgPointerMemberType (which maybe should not be derived from SgPointerType).
+       // Is SgPointerMemberType a kind of type that should be something we should support in this stripType function?
+       // else if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+          else if ( (bit_array & STRIP_POINTER_TYPE) && ((pointType = isSgPointerType(currentType)) && (isSgPointerMemberType(currentType) == NULL)) )
              {
 #if DEBUG_SGTYPE_STRIPTYPE_MORE
-               printf ("In loop of SgType::stripType(): found SgPointerType \n");
+               printf ("In loop of SgType::stripType(): found SgPointerType (that is not SgPointerMemberType) \n");
 #endif
+            // DQ (4/15/2019): Added assertion.
+               ROSE_ASSERT(pointType != NULL);
+
                currentType = pointType->get_base_type();
+             }
+          else if ( (bit_array & STRIP_POINTER_MEMBER_TYPE) && (pointerMemberType = isSgPointerMemberType(currentType)) )
+             {
+#if DEBUG_SGTYPE_STRIPTYPE_MORE
+               printf ("In loop of SgType::stripType(): found SgPointerMemberType \n");
+#endif
+               currentType = pointerMemberType->get_base_type();
              }
           else if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
              {
@@ -1979,7 +2085,7 @@ SgType::stripType(unsigned char bit_array) const
             // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                currentType = typedefType->get_base_type();
              }
-          else
+            else
              {
             // Exit the while(true){} loop!
                ROSE_ASSERT(currentType != NULL);
@@ -1994,6 +2100,7 @@ SgType::stripType(unsigned char bit_array) const
              {
                printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " currentType = %p = %s = %s\n",bit_array,counter,currentType,currentType->class_name().c_str(),currentType->unparseToString().c_str());
              }
+
           if (counter >= 100)
              {
             // Exit loop and return the currentType... 
@@ -2311,8 +2418,12 @@ SgType::getAssociatedDeclaration() const
 
   // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
 
+  // DQ (4/15/2019): Adding support for SgType::STRIP_POINTER_MEMBER_TYPE, not clear if we need it here.
+  // printf ("NOTE: SgType::getAssociatedDeclaration(): not using SgType::STRIP_POINTER_MEMBER_TYPE in call to stripType() \n");
+
   // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
   // we want to avoid expressing typedefs that are private in functions that are public.
+  // SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
@@ -2336,6 +2447,42 @@ SgType::getAssociatedDeclaration() const
              }
        // ROSE_ASSERT(declaration->class_name() != "SgNode");
         }
+
+#if 0
+  // DQ (4/28/2019): Added support for member functions which are the base type of SgPointerMemberType 
+  // when they are pointers to member functions.
+     SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(strippedType);
+     if (memberFunctionType != NULL)
+        {
+#if 0
+          SgType* associtedClass = memberFunctionType->get_class_type();
+          ROSE_ASSERT(associtedClass != NULL);
+
+          declaration = associtedClass->getAssociatedDeclaration();
+          ROSE_ASSERT(declaration != NULL);
+#else
+       // DQ (4/28/2019): I think this is the better implementation.
+          SgType* returnType = memberFunctionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+
+          declaration = returnType->getAssociatedDeclaration();
+#endif
+        }
+#endif
+
+#if 1
+  // DQ (4/28/2019): Added support for functions (for which a member function is the base type of SgPointerMemberType 
+  // when they are pointers to member functions.
+     SgFunctionType* functionType = isSgFunctionType(strippedType);
+     if (functionType != NULL)
+        {
+       // DQ (4/28/2019): I think this is the better implementation.
+          SgType* returnType = functionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+
+          declaration = returnType->getAssociatedDeclaration();
+        }
+#endif
 
      return declaration;
    }
@@ -2574,6 +2721,8 @@ SgType::isEquivalentType (const SgType & Y) const;
      static int counter = 0;
 
      const SgType & X = *this;
+
+#error "DEAD CODE!"
 
   // DQ (11/28/2015): We don't want to strip off everything.
   // SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
@@ -2845,6 +2994,8 @@ SgType::isEquivalentType (const SgType & Y) const;
 #if DEBUG_TYPE_EQUIVALENCE
      printf ("In SgType::operator==(): isSame = %s \n",isSame ? "true" : "false");
 #endif
+
+#error "DEAD CODE!"
 
      return isSame;
    }
@@ -3275,6 +3426,128 @@ SgPointerMemberType::get_class_definition_of() const
 
      return result;
    }
+
+
+SgName
+SgPointerMemberType::get_qualified_name_prefix_for_class_of() const
+   {
+  // DQ (4/18/2019): Adding support for type chains of types (including SgPointerMemberType).
+
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForTypes: this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (4/20/2019): Use the globalQualifiedNameMapForNames for the get_qualified_name_prefix_for_class_of() function.
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+  // if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+  // if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+     printf ("nameQualifier for SgType = %p = %p = %s = %s \n",this,const_cast<SgType*>(this),class_name().c_str(),nameQualifier.str());
+#endif
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgPointerMemberType*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgPointerMemberType::get_qualified_name_prefix_for_class_of(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
+     return nameQualifier;
+   }
+ 
+
+SgName
+SgPointerMemberType::get_qualified_name_prefix_for_base_type() const
+   {
+  // DQ (4/18/2019): Adding support for type chains of types (including SgPointerMemberType).
+
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+  // printf ("In SgPointerMemberType::get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgPointerMemberType::get_qualified_name_prefix(): search globalQualifiedNameMapForTypes: this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+  // if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+
+#if DEBUG_SGTYPE_GET_QUALIFIED_NAME_PREFIX
+     printf ("nameQualifier for SgType = %p = %p = %s = %s \n",this,const_cast<SgType*>(this),class_name().c_str(),nameQualifier.str());
+#endif
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgPointerMemberType*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgPointerMemberType::get_qualified_name_prefix(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
+     return nameQualifier;
+   }
+ 
+
 
 SOURCE_POINTER_MEMBER_TYPE_END
 
@@ -8466,6 +8739,9 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for $CLASSNAME = %s (does NOT exist in type table) \n",name.str());
           get_globalTypeTable()->insert_type(name,newType);
 #else
+       // DQ (4/15/2019): Adding pointer to member support: not using SgType::STRIP_POINTER_MEMBER_TYPE
+       // printf ("In SgModifierType::insertModifierTypeIntoTypeTable(): Adding pointer to member support: not using SgType::STRIP_POINTER_MEMBER_TYPE \n");
+
        // DQ (7/30/2018): This function can't just strip down to the bae type (past typedefs, since we need 
        // to resolve different typedefs in different classes to be different, we need to stop at typedefs.
        // This issue is important ot Cxx11_tests/test2018_134.C where a typedef is not to be shared since it 

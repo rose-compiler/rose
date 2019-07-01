@@ -168,6 +168,12 @@ public:
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
     RegisterDescriptor stackFrameRegister() const { return disassembler_->stackFrameRegister(); }
 
+    /** Register holding a function call's return address.
+     *
+     *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. Some
+     *  architectures call this a "link" register (e.g., PowerPC). */
+    RegisterDescriptor callReturnRegister() const { return disassembler_->callReturnRegister(); }
+
     /** Register used as a segment to access stack memory.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */

@@ -112,7 +112,7 @@ namespace CodeThorn {
     bool isLValueOp(SgNode* node);
     void initializeStructureAccessLookup(SgProject* node);
     // requires StructureAccessLookup to be initialized.
-    bool isStructMember(SPRAY::VariableId varId);
+    bool isStructMember(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);

@@ -1994,6 +1994,11 @@ ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject*
 // DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
 ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStatement);
 
+// DQ (6/7/2019): Add support for transforming function definitions to function prototypes in a subtree.
+// We might have to make this specific to a file (only traversing the functions in that file).
+ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+
+
 //@}
 //------------------------------------------------------------------------
 //@{
@@ -2055,6 +2060,11 @@ ROSE_DLL_API std::set<SgStatement*> collectModifiedStatements( SgNode* node );
 
 //! This collects the SgLocatedNodes that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
 ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node );
+
+// DQ (6/5/2019): Use the previously constructed set (above) to reset the IR nodes to be marked as isModified.
+//! Use the set of IR nodes and set the isModified flag in each IR node to true.
+ROSE_DLL_API void resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifiedNodeSet);
+
 
 // DQ (10/23/2018): Report nodes that are marked as modified.
 ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);

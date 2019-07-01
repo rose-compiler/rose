@@ -6,7 +6,7 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
 
-CLEANFILES = 
+CLEANFILES =
 
 if USE_Z3
 Z3_INCLUDES = -I$(Z3_INCLUDE_PATH)
@@ -14,12 +14,12 @@ Z3_LIB_INCLUDES = -L$(Z3_LIBRARY_PATH)
 Z3_LINK = -lz3
 else
 Z3_INCLUDES =
-Z3_LIB_INCLUDES = 
+Z3_LIB_INCLUDES =
 Z3_LINK =
 endif
 
 if ROSE_WITH_SPOT
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH) 
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH)
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
 else
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp $(Z3_LIB_INCLUDES)
@@ -28,11 +28,11 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libspray.la libcodethorn.la
+lib_LTLIBRARIES = libcodethorndf.la libcodethorn.la
 
-libspray_la_LDFLAGS= -no-undefined
-libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-libspray_la_SOURCES=\
+libcodethorndf_la_LDFLAGS= -no-undefined
+libcodethorndf_la_CXXFLAGS = -Wall -O3
+libcodethorndf_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
@@ -67,7 +67,6 @@ libspray_la_SOURCES=\
  RDAnalysis.h \
  RDAstAttribute.h \
  RDTransferFunctions.h \
- SprayException.h \
  WorkListSeq.h \
  TypeSizeMapping.h \
  SgTypeSizeMapping.h \
@@ -117,10 +116,15 @@ libspray_la_SOURCES=\
  TypeSizeMapping.C \
  SgTypeSizeMapping.C \
  Timer.h \
- Timer.cpp
+ Timer.cpp \
+ CtxAnalysis.h \
+ CtxCallStrings.h \
+ CtxCallStrings.C \
+ CtxLattice.h \
+ CtxTransfer.h
 
 libcodethorn_la_LDFLAGS= -no-undefined
-libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 libcodethorn_la_SOURCES=\
   AnalysisParameters.h             \
   Analyzer.C                       \
@@ -131,7 +135,6 @@ libcodethorn_la_SOURCES=\
   AstNodeInfo.C \
   CallString.h \
   CallString.C \
-  CodeThornException.h \
   ParProAnalyzer.C                 \
   ParProAnalyzer.h                 \
   ParProExplorer.C                 \
@@ -273,15 +276,15 @@ libcodethorn_la_SOURCES=\
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
-codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_DEPENDENCIES=libspray.la libcodethorn.la
+codethorn_CXXFLAGS = -fopenmp -Wall -O3
+codethorn_DEPENDENCIES=libcodethorndf.la libcodethorn.la
 
-#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lspot -lbdd -lz3
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn -lspot -lbdd $(Z3_LINK)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lcodethorn -lspot -lbdd $(Z3_LINK)
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lcodethorn
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lcodethorn
 endif
 
 codethorn_SOURCES = \
@@ -289,7 +292,7 @@ codethorn_SOURCES = \
   LTL.h                            \
   LTLParser.y++                    \
   codethorn.h \
-  codethorn.C 
+  codethorn.C
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
@@ -297,22 +300,22 @@ addressTakenAnalysis_SOURCES = \
   CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-addressTakenAnalysis_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-addressTakenAnalysis_DEPENDENCIES=libspray.la
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
+addressTakenAnalysis_CXXFLAGS = -Wall -O3
+addressTakenAnalysis_DEPENDENCIES=libcodethorndf.la
 
 REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-woodpecker_DEPENDENCIES=libspray.la
+woodpecker_DEPENDENCIES=libcodethorndf.la
 if ROSE_WITH_SPOT
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf -lspot -lbdd
 woodpecker_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf
 endif
-woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -352,18 +355,17 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.C \
 #  DFAnalysisBase.h
 
-analyterix_DEPENDENCIES=libspray.la
+analyterix_DEPENDENCIES=libcodethorndf.la
 if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray -lspot -lbdd
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf -lspot -lbdd
 analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf
 endif
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
-  CodeThornException.h \
   CppStdUtilities.C \
   CppStdUtilities.h \
   DeadCodeAnalysis.C \
@@ -409,16 +411,16 @@ check-roseonlytools: check-flow-insenstive
 #	rm lex.yy.c y.tab.c
 
 # MS: matcher_demo
-matcher_demo_DEPENDENCIES=libspray.la
-matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_demo_DEPENDENCIES=libcodethorndf.la
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
 matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_demo_SOURCES = Timer.cpp matcher_demo.C
-BUILT_SOURCES = 
+BUILT_SOURCES =
 AM_YFLAGS =
 AM_LFLAGS =
 
-matcher_DEPENDENCIES=libspray.la
-matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_DEPENDENCIES=libcodethorndf.la
+matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_SOURCES = Timer.cpp matcher.C
 
@@ -457,7 +459,7 @@ check-matcher:
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness
 
-CHECK_DEFAULT_FAILING=check-data-races check-deadcode 
+CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven
 CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer
@@ -484,7 +486,7 @@ check-codethorn-internal:
 	@echo ================================================================
 	@echo RUNNING CODETHORN INTERNAL CHECKS
 	@echo ================================================================
-	@./codethorn --internal-checks	
+	@./codethorn --internal-checks
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
@@ -494,8 +496,8 @@ check-domain-old:
 	@echo DOMAIN TESTS
 	@echo ================================================================
 	@xxx
-	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
-	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
@@ -522,7 +524,7 @@ check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
+	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
@@ -572,7 +574,7 @@ check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-array-bounds: ./codethorn
-	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
+	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C
 
 # seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes
 check-ltl-driven:
@@ -642,7 +644,7 @@ clean-local:
 	rm -f codethorn-LTLParser.c++
 	rm -f tmp.nsdump
 	rm -f rose_Problem1401_opt.pp.c
-	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv 
+	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv
 	rm -f transitiongraph1.pdf
 	rm -f transitiongraph2.pdf
 

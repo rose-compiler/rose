@@ -244,9 +244,9 @@ void CodeThorn::Analyzer::runSolver() {
   _solver->run();
 }
 
-set<string> CodeThorn::Analyzer::variableIdsToVariableNames(SPRAY::VariableIdSet s) {
+set<string> CodeThorn::Analyzer::variableIdsToVariableNames(CodeThorn::VariableIdSet s) {
   set<string> res;
-  for(SPRAY::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
+  for(CodeThorn::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
     res.insert((AbstractValue(*i)).toString(getVariableIdMapping()));
   }
   return res;

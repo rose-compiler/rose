@@ -1,0 +1,17 @@
+connect sqlite3://./defineTests.db
+
+ls-family :: t01
+  @ success
+{
+  /usr/bin/ls -la
+}
+
+ls-family :: t02
+  @ success
+{
+  export DESC = ThisIsASimpleTest
+
+  /usr/bin/ls -l --author *.o
+}
+
+echo ok.

@@ -799,6 +799,9 @@ RegisterDictionary::dictionary_powerpc() {
          * also contains carry input to certain integer arithmetic operations and the number of bytes to transfer during load
          * and store string instructions, lswx and stswx. */
         regs->insert("xer", powerpc_regclass_spr, powerpc_spr_xer, 0, 32);
+        regs->insert("xer_so", powerpc_regclass_spr, powerpc_spr_xer, 31, 1); // summary overflow
+        regs->insert("xer_ov", powerpc_regclass_spr, powerpc_spr_xer, 30, 1); // overflow
+        regs->insert("xer_ca", powerpc_regclass_spr, powerpc_spr_xer, 29, 1); // carry
 
         /* The count register contains a loop counter that is decremented on certain branch operations. Also, the conditional
          * branch instruction bcctr branches to the value in the CTR. */

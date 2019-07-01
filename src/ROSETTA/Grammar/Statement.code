@@ -7617,11 +7617,30 @@ SgScopeStatement::generateUniqueStatementNumberForScopeHelper(unsigned int& coun
 SgStatement*
 SgScopeStatement::firstStatement() const
    {
+     SgStatement* first = NULL;
+
+#if 0
+  // DQ (5/27/2019): Need to handle the case where this is a scope containing declaration statements, this code does not do this.
      const SgStatementPtrList & statementList = getStatementList();
 
-     SgStatement* first = NULL;
      if (statementList.empty() == false)
           first = *(statementList.begin());
+#else
+  // DQ (5/27/2019): This code handles the case where this is a scope containing declaration statements.
+     if (containsOnlyDeclarations() == true)
+        {
+          const SgDeclarationStatementPtrList & declarationList = getDeclarationList();
+          if (declarationList.empty() == false)
+               first = *(declarationList.begin());
+        }
+       else
+        {
+          const SgStatementPtrList & statementList = getStatementList();
+
+          if (statementList.empty() == false)
+               first = *(statementList.begin());
+        }
+#endif
 
      return first;
    }

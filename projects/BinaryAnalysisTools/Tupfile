@@ -69,7 +69,7 @@ bROwSE_SOURCES = \
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 
-run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install
+run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install -lwthttp
 
 endif
 

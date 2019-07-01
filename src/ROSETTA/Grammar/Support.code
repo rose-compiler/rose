@@ -7294,7 +7294,7 @@ HEADER_TEMPLATE_ARGUMENT_START
 
        // DQ (2/11/2019): Refactored support for logic to control when template arguments are unparsed.
        // Temporarily this code is located in the unparseCxx_expressions.C file.
-          bool outputTemplateArgument();
+          void outputTemplateArgument(bool & skip_unparsing, bool & stop_unparsing);
 
 HEADER_TEMPLATE_ARGUMENT_END
 
@@ -14257,7 +14257,10 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
      printf ("In Sg_File_Info::set_filenameString(filename = %s) this = %p \n",filename.c_str(),this);
 #endif
 
-     if (p_nametofileid_map.count(filename) == 0)
+  // DQ (6/6/2019): I think this is a more efficent implementation.
+  // p_nametofileid_map has type: std::map<std::string, int>
+  // if (p_nametofileid_map.count(filename) == 0)
+     if (p_nametofileid_map.find(filename) == p_nametofileid_map.end())
         {
           p_file_id = p_nametofileid_map.size();
           p_nametofileid_map[filename]  = p_file_id;
@@ -14303,14 +14306,19 @@ Sg_File_Info::set_physical_filename ( const std::string & filename )
      printf ("In Sg_File_Info::set_physical_filename(filename = %s) this = %p p_nametofileid_map.count(filename) = %" PRIuPTR " \n",filename.c_str(),this,p_nametofileid_map.count(filename));
 #endif
 
-     if (p_nametofileid_map.count(filename) == 0)
+  // DQ (6/6/2019): I think this is a more efficent implementation.
+  // p_nametofileid_map has type: std::map<std::string, int>
+  // if (p_nametofileid_map.count(filename) == 0)
+     if (p_nametofileid_map.find(filename) == p_nametofileid_map.end())
         {
+       // If the filename is not in the p_nametofileid_map then we need to add it.
           p_physical_file_id = p_nametofileid_map.size();
           p_nametofileid_map[filename]  = p_physical_file_id;
           p_fileidtoname_map[p_physical_file_id] = filename;
         }
        else
         {
+       // If it is in the p_nametofileid_map then we just need to get the integer file id.
           p_physical_file_id = p_nametofileid_map[filename];
         }
 
@@ -16868,7 +16876,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
 
-#if 0
+#if 1
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -16878,6 +16886,22 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           ROSE_ASSERT(i->first  != NULL);
           ROSE_ASSERT(i->second != NULL);
 
+#if 1
+       // DQ (6/3/2019): Testing (unparse heaaders active, but token-based unparsing inactive) with an alternative implementation.
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (tokenMap.find(i->first) != tokenMap.end())
+             {
+               printf ("In SgSourceFile::set_tokenSubsequenceMap(): This is a redundant entry in the tokenMap (not inserted)  \n");
+
+            // DQ (6/3/2019): comment this out, but don't include this map.
+            // ROSE_ASSERT(false);
+             }
+            else
+             {
+               tokenMap.insert(*i);
+             }
+#else
        // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
           if (tokenMap.find(i->first) != tokenMap.end())
              {
@@ -16886,11 +16910,12 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
              }
 
           tokenMap.insert(*i);
+#endif
 
           i++;
         }
 
-#if 0
+#if 1
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -17398,7 +17423,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 
      std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
 
-#if 0
+#if 1
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
 
@@ -17408,6 +17433,23 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
           ROSE_ASSERT(i->first  != NULL);
           ROSE_ASSERT(i->second != NULL);
 
+#if 1
+       // DQ (6/3/2019): Testing (unparse heaaders active, but token-based unparsing inactive) with an alternative implementation.
+
+       // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
+          if (frontierMap.find(i->first) != frontierMap.end())
+             {
+               printf ("SgSourceFile::set_representativeWhitespaceStatementMap(): This is a redundant entry in the Map \n");
+               printf ("   --- filename = %s \n",getFileName().c_str());
+               printf ("   --- i->first  = %p = %s \n",i->first,i->first->class_name().c_str());
+               printf ("   --- i->second = %p = %s \n",i->second,i->second->class_name().c_str());
+            // ROSE_ASSERT(false);
+             }
+            else
+             {
+               frontierMap.insert(*i);
+             }
+#else
        // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
           if (frontierMap.find(i->first) != frontierMap.end())
              {
@@ -17419,11 +17461,11 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
              }
 
           frontierMap.insert(*i);
-
+#endif
           i++;
         }
 
-#if 0
+#if 1
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }

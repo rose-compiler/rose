@@ -1506,6 +1506,11 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/30/2019): Is initialized using the "A a = B" copy constructor syntax as opposed to the "A a(B)" syntax.
+  // This appears to make a different in Cxx11_tests/test2019_454.C.
+     InitializedName.setDataPrototype     ( "bool", "using_assignment_copy_constructor_syntax", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

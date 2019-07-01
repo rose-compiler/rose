@@ -15,12 +15,12 @@ struct LoopInfo {
   SgExpression* condExpr;
   bool isOmpCanonical;
   IterVarType iterationVarType;
-  static SPRAY::VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
-  SPRAY::VariableId iterationVarId;
-  SPRAY::VariableIdSet outerLoopsVarIds;
-  SPRAY::LabelSet loopLabelSet;
-  void computeOuterLoopsVarIds(SPRAY::VariableIdMapping* variableIdMapping);
-  void computeLoopLabelSet(SPRAY::Labeler* labeler);
+  static CodeThorn::VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
+  CodeThorn::VariableId iterationVarId;
+  CodeThorn::VariableIdSet outerLoopsVarIds;
+  CodeThorn::LabelSet loopLabelSet;
+  void computeOuterLoopsVarIds(CodeThorn::VariableIdMapping* variableIdMapping);
+  void computeLoopLabelSet(CodeThorn::Labeler* labeler);
   bool isInAssociatedLoop(const CodeThorn::EState* estate);
   std::string toString();
 };

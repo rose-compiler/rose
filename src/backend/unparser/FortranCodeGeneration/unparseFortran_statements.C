@@ -2144,8 +2144,12 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
+         // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
          if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
-                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgUseStatement
+                 || (*p)->variantT()==V_SgImplicitStatement
+                 || (*p)->variantT()==V_SgDerivedTypeStatement)
              unparseStatement((*p), info);
      }
 
@@ -3317,20 +3321,24 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
           curprint("(");
           unparse_IO_Support(readStatement,false,info);
 
-       // printf ("In unparseReadStatement(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
+       // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-          unparse_IO_Control_Support("FMT",readStatement->get_format(),false,info);
-          unparse_IO_Control_Support("REC",readStatement->get_rec(),false,info);
-          unparse_IO_Control_Support("END",readStatement->get_end(),false,info);
-
-       // F90 specific
-          unparse_IO_Control_Support("NML",readStatement->get_namelist(),false,info);
-          unparse_IO_Control_Support("ADVANCE",readStatement->get_advance(),false,info);
-          unparse_IO_Control_Support("EOR",readStatement->get_eor(),false,info);
-          unparse_IO_Control_Support("SIZE",readStatement->get_size(),false,info);
-
-       // F2003 specific
+          unparse_IO_Control_Support("FMT",         readStatement->get_format(),      false,info);
+          unparse_IO_Control_Support("NML",         readStatement->get_namelist(),    false,info);
+          unparse_IO_Control_Support("ADVANCE",     readStatement->get_advance(),     false,info);
           unparse_IO_Control_Support("ASYNCHRONOUS",readStatement->get_asynchronous(),false,info);
+          unparse_IO_Control_Support("BLANK",       readStatement->get_blank(),       false,info);
+          unparse_IO_Control_Support("DECIMAL",     readStatement->get_decimal(),     false,info);
+          unparse_IO_Control_Support("DELIM",       readStatement->get_delim(),       false,info);
+          unparse_IO_Control_Support("END",         readStatement->get_end(),         false,info);
+          unparse_IO_Control_Support("EOR",         readStatement->get_eor(),         false,info);
+          unparse_IO_Control_Support("ID",          readStatement->get_id(),          false,info);
+          unparse_IO_Control_Support("PAD",         readStatement->get_pad(),         false,info);
+          unparse_IO_Control_Support("POS",         readStatement->get_pos(),         false,info);
+          unparse_IO_Control_Support("REC",         readStatement->get_rec(),         false,info);
+          unparse_IO_Control_Support("ROUND",       readStatement->get_round(),       false,info);
+          unparse_IO_Control_Support("SIGN",        readStatement->get_sign(),        false,info);
+          unparse_IO_Control_Support("SIZE",        readStatement->get_size(),        false,info);
 
           curprint(") ");
         }
@@ -3353,13 +3361,24 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
-     unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
-     unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
+  // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-  // F2003 specific
+     unparse_IO_Control_Support("FMT",         writeStatement->get_format(),      false,info);
+     unparse_IO_Control_Support("NML",         writeStatement->get_namelist(),    false,info);
+     unparse_IO_Control_Support("ADVANCE",     writeStatement->get_advance(),     false,info);
      unparse_IO_Control_Support("ASYNCHRONOUS",writeStatement->get_asynchronous(),false,info);
+     unparse_IO_Control_Support("BLANK",       writeStatement->get_blank(),       false,info);
+     unparse_IO_Control_Support("DECIMAL",     writeStatement->get_decimal(),     false,info);
+     unparse_IO_Control_Support("DELIM",       writeStatement->get_delim(),       false,info);
+     unparse_IO_Control_Support("END",         writeStatement->get_end(),         false,info);
+     unparse_IO_Control_Support("EOR",         writeStatement->get_eor(),         false,info);
+     unparse_IO_Control_Support("ID",          writeStatement->get_id(),          false,info);
+     unparse_IO_Control_Support("PAD",         writeStatement->get_pad(),         false,info);
+     unparse_IO_Control_Support("POS",         writeStatement->get_pos(),         false,info);
+     unparse_IO_Control_Support("REC",         writeStatement->get_rec(),         false,info);
+     unparse_IO_Control_Support("ROUND",       writeStatement->get_round(),       false,info);
+     unparse_IO_Control_Support("SIGN",        writeStatement->get_sign(),        false,info);
+     unparse_IO_Control_Support("SIZE",        writeStatement->get_size(),        false,info);
 
      curprint(") ");
 

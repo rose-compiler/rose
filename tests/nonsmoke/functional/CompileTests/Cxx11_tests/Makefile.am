@@ -296,6 +296,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    rose-1774.C \
    rose-1763.C \
    rose-1863.C \
+   rose-1973.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -572,7 +573,104 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_370.C \
    test2019_371.C \
    test2019_372.C \
-   test2019_373.C 
+   test2019_373.C \
+   test2019_374.C \
+   test2019_375.C \
+   test2019_376.C \
+   test2019_377.C \
+   test2019_378.C \
+   test2019_379.C \
+   test2019_380.C \
+   test2019_381.C \
+   test2019_383.C \
+   test2019_384.C \
+   test2019_385.C \
+   test2019_386.C \
+   test2019_387.C \
+   test2019_389.C \
+   test2019_390.C \
+   test2019_391.C \
+   test2019_392.C \
+   test2019_393.C \
+   test2019_394.C \
+   test2019_395.C \
+   test2019_396.C \
+   test2019_397.C \
+   test2019_398.C \
+   test2019_399.C \
+   test2019_400.C \
+   test2019_401.C \
+   test2019_402.C \
+   test2019_403.C \
+   test2019_404.C \
+   test2019_405.C \
+   test2019_406.C \
+   test2019_407.C \
+   test2019_408.C \
+   test2019_409.C \
+   test2019_410.C \
+   test2019_412.C \
+   test2019_413.C \
+   test2019_414.C \
+   test2019_415.C \
+   test2019_416.C \
+   test2019_417.C \
+   test2019_418.C \
+   test2019_419.C \
+   test2019_420.C \
+   test2019_421.C \
+   test2019_422.C \
+   test2019_423.C \
+   test2019_424.C \
+   test2019_425.C \
+   test2019_426.C \
+   test2019_427.C \
+   test2019_428.C \
+   test2019_429.C \
+   test2019_430.C \
+   test2019_431.C \
+   test2019_432.C \
+   test2019_433.C \
+   test2019_434.C \
+   test2019_435.C \
+   test2019_436.C \
+   test2019_437.C \
+   test2019_439.C \
+   test2019_440.C \
+   test2019_441.C \
+   test2019_442.C \
+   test2019_443.C \
+   test2019_444.C \
+   test2019_445.C \
+   test2019_446.C \
+   test2019_447.C \
+   test2019_448.C \
+   test2019_449.C \
+   test2019_450.C \
+   test2019_451.C \
+   test2019_452.C \
+   test2019_454.C \
+   test2019_455.C \
+   test2019_456.C \
+   test2019_457.C \
+   test2019_458.C \
+   test2019_459.C \
+   test2019_460.C \
+   test2019_461.C \
+   test2019_462.C \
+   test2019_463.C \
+   test2019_464.C \
+   test2019_465.C \
+   test2019_466.C \
+   test2019_467.C \
+   test2019_468.C \
+   test2019_469.C \
+   test2019_470.C \
+   test2019_471.C \
+   test2019_472.C \
+   test2019_473.C \
+   test2019_474.C \
+   test2019_475.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -674,7 +772,12 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_345.C \
    test2019_346.C \
    test2019_348.C \
-   test2019_366.C 
+   test2019_366.C \
+   test2019_382.C \
+   test2019_388.C \
+   test2019_411.C \
+   test2019_438.C \
+   test2019_453.C
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
