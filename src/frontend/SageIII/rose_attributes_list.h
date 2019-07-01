@@ -59,6 +59,13 @@
    #endif
 #endif
 
+#if __sun
+  // PP 05/16/19
+  // Continue skipping WAVE until it is needed
+  // (after boost 1.65 is working on Solaris, WAVE should also work)
+  #define ROSE_SKIP_COMPILATION_OF_WAVE
+#endif
+
 // DQ (2/27/2016): Test compilation of ROSE without boost::wave support.
 // #define ROSE_SKIP_COMPILATION_OF_WAVE
 

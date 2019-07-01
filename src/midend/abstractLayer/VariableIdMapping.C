@@ -5,14 +5,14 @@
 
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
 #include <vector>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 int exprToInt(SgExpression* exp) {
   if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
@@ -595,14 +595,14 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
   return sym;
 }
 
-SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
+CodeThorn::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
   setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
   return varId;
 }
 
-SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
+CodeThorn::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
   setNumberOfElements(varId,regionSize);
@@ -630,7 +630,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
   } else {
     stringstream ss;
     ss<< "VariableIdMapping: registerNewArraySymbol: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-    throw SPRAY::Exception(ss.str());
+    throw CodeThorn::Exception(ss.str());
   }
 }
 
@@ -660,7 +660,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   } else {
     stringstream ss;
     ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-    throw SPRAY::Exception(ss.str());
+    throw CodeThorn::Exception(ss.str());
   }
 }
 
@@ -674,7 +674,7 @@ void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
     //cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
     //delete getSymbol(varId);
   } else {
-    throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
+    throw CodeThorn::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
   }
   }
 
@@ -742,17 +742,17 @@ VariableId::toString(VariableIdMapping* vim) const {
     return toString();
 }
 
-bool SPRAY::operator<(VariableId id1, VariableId id2) {
+bool CodeThorn::operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;
 }
-bool SPRAY::operator==(VariableId id1, VariableId id2) {
+bool CodeThorn::operator==(VariableId id1, VariableId id2) {
   return id1._id==id2._id;
 }
-bool SPRAY::operator!=(VariableId id1, VariableId id2) {
+bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
-VariableIdSet& SPRAY::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
+VariableIdSet& CodeThorn::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   for(VariableIdSet::iterator i=s2.begin();i!=s2.end();++i) {
     s1.insert(*i);
   }
@@ -763,7 +763,7 @@ VariableIdSet& SPRAY::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   * \author Markus Schordan
   * \date 2012.
  */
-size_t SPRAY::hash_value(const VariableId& vid) {
+size_t CodeThorn::hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 
@@ -871,7 +871,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         // obtain new variableid
         stringstream ss;
         ss<<prefix<<num++;
-        SPRAY::VariableId newVariableId=createAndRegisterNewVariableId(ss.str());
+        CodeThorn::VariableId newVariableId=createAndRegisterNewVariableId(ss.str());
         sgStringValueToVariableIdMapping[stringVal]=newVariableId;
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
         // the size of the memory region of a string is its length + 1 (for terminating 0).

@@ -132,6 +132,38 @@ ifeq (@(ENABLE_X10_ANALYSIS),yes)
 endif
 
 ########################################################################################################################
+# Minimal input code, depending on what language is supported. This is for testing since the test will fail if given
+# an input file for a language that's not supported.
+########################################################################################################################
+
+# Last setting wins
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.binary
+endif
+
+ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.py
+endif
+
+ifeq (@(ENABLE_PHP_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.php
+endif
+
+ifeq (@(ENABLE_JAVA_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.java
+endif
+
+ifeq (@(ENABLE_FORTRAN_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.f90
+endif
+
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.cpp
+endif
+
+
+########################################################################################################################
 # Software dependencies.
 #
 # Each software dependency "foo" has a corresponding @(WITH_FOO) configuration variable that is "no", "system", or the
@@ -381,13 +413,14 @@ ifneq (@(WITH_WT),no)
 	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
 	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
+
+    # The -lwthttp and -lwtfcgi libraries are intentionallly absent because its up to the application
+    # as to which one it should use.
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbopostgres
 
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbopostgres
 endif

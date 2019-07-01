@@ -373,6 +373,15 @@ endif()
 option(enable-java "Enable Java analysis" ON)
 if(enable-java)
   message(STATUS "Looking for JAVA ...")
+  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
+  # value of JAVA_ROOT that we can support is the empty string.
+  if("${JAVA_ROOT}" STREQUAL "")
+  elseif("${JAVA_ROOT}" STREQUAL "no")
+    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and enabled (-Denable-java=TRUE)")
+  else()
+    message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
+  endif()
+  
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
@@ -460,6 +469,7 @@ set(EDG_VERSION "4.9" CACHE STRING "major.minor version number for EDG (e.g. 3.3
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
 
+
 set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
 set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
 if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
@@ -479,11 +489,26 @@ if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
   endif()
 endif()
 
-# Check if we need to download the EDG binary tarball
+# Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
+option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
-  set(have_EDG_source TRUE)
+  message(STATUS "ROBB: EDG/CMakeLists.txt is found")
+  if(EDG_COMPILE)
+    message(STATUS "ROBB: EDG_COMPILE is true")
+    set(have_EDG_source TRUE)
+  else()
+    message(STATUS "ROBB: EDG_COMPILE is false")
+    set(have_EDG_source FALSE)
+  endif()
 else()
+  message(STATUS "ROBB: EDG/CMakeLists.txt is absent")
   set(have_EDG_source FALSE)
+  set(EDG_COMPILE FALSE)
+endif()
+
+# Check if we should download the EDG binary tarball. We only need to download it if we're not compiling the
+# EDG source code and ROSE is configured to analyze C (and C++).
+if(NOT have_EDG_source)
   set(BINARY_EDG 0)
   if(enable-c)
     set(BINARY_EDG 1)
@@ -496,7 +521,7 @@ else()
 	if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
 	  message(WARNING
 	    "At build time, CMake will attempt to download a required library tarball.\n"
-	    "Please note that EDG binary tarballs are generated upstream for only certain compilers.")
+	    "Please note that EDG binary tarballs are available for only certain configurations.")
 	endif()
 	include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
       endif()
@@ -631,39 +656,70 @@ endif()
 
 option(enable-poet "Enable POET support" OFF)
 
-option(enable-yices "Use the Yices satisfiability modulo theories (SMT) solver" OFF)
-if(enable-yices)
-  find_path(with-yices bin/yices DOC "The prefix used to install Yices")
-endif()
-
-# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=none
+# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=no
 include(FindBison)
 find_bison()
 
-# To use Z3, set Z3_ROOT to the Z3 installation prefix. To avoid Z3, use Z3_ROOT=none.
+# To use Z3, set Z3_ROOT to the Z3 installation prefix. To avoid Z3, use Z3_ROOT=no.
 include(FindZ3)
 find_z3()
 
-# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=none.
+# To use doxygen, set DOXYGEN_ROOT to the doxygen installation prefix. To avoid doxygen use DOXYGEN_ROOT=no
+include(FindDoxygen)
+find_doxygen()
+
+# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
 include(FindYamlcpp)
 find_yamlcpp()
 
-# To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=none.
+# To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=no
 include(FindDlib)
 find_dlib()
 
-# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=none.
+# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
 include(FindGcrypt)
 find_gcrypt()
 if(GCRYPT_FOUND)
-  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
+  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
   include(FindGpgError)
   find_gpgerror()
 endif()
 
+# To use libmagic, set MAGIC_ROOT to the libmagic installation prefix. To avoid libmagic set MAGIC_ROOT=no
+include(FindMagic)
+find_magic()
+
+# To use libpqxx, set PQXX_ROOT to the libpqxx installation prefix. To avoid libpqxx set PQXX_ROOT=no
+include(FindPqxx)
+find_pqxx()
+
+# To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
+include(FindQt)
+find_qt()
+
+# To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
+include(FindReadline)
+find_readline()
+
+# To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
+include(FindSpot)
+find_spot()
+
+# To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
+include(FindWt)
+find_wt()
+
+# To use Yices, set YICES_ROOT to the Yices installation prefix. To avoid Yices set YICES_ROOT=no
+include(FindYices)
+find_yices()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
+
+# DWARF library
+include(FindDwarf)
+find_dwarf()
 
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
@@ -678,7 +734,6 @@ endif()
 
 find_path(with-backstroke-ross ROSS DOC "Specify the path where ROSS is installed")
 find_path(with-backstroke-speedes SPEEDES DOC "Specify the path where SPEEDES is installed")
-find_library(with-dwarf dwarf DOC "Specify the path where libdwarf is installed")
 find_library(with-gomp_omp_runtime_library gomp_omp DOC "Specify the prefix where GOMP Runtime System is installed")
 find_path(with-GraphViz_include graphviz.h DOC "Specify the prefix where GraphViz include files are installed")
 find_path(with-GraphViz_libs GraphViz_libs DOC "Specify the prefix where GraphViz libraries are installed")
@@ -699,7 +754,6 @@ endif()
 
 find_path(with-QRose QRose DOC "prefix of QRose installation")
 
-option(with-roseQt "Build with roseQt" OFF)
 if(with-roseQt)
   find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
@@ -1150,6 +1204,7 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 # Recursion in CMake is not automatic. We have to tell it where the other CMakeList.txt files are located rather than
 # letting it find them automatically.
 
+add_subdirectory(LicenseInformation)
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(exampleTranslators)

@@ -34,6 +34,10 @@
     // Pei-Hung (06/16/2015) Sawyer is turned off for Mac OSX
     #define ROSE_ASSERT assert
     #define ROSE_ABORT  abort
+#elif defined(__sun)
+    // PP (05/16/19)
+    #define ROSE_ASSERT assert
+    #define ROSE_ABORT  abort
 #elif defined(ROSE_ASSERTION_BEHAVIOR)
     // ROSE_ASSERT should use Sawyer ASSERT macros which support various termination behaviors that are configurable at compile
     // time and can be overridden at runtime by the command-line or the Rose::Diagnostics API.  They also produce nicer output.

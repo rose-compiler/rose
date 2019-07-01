@@ -633,6 +633,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    SgIncludeDirectiveStatement* includeDirectiveStatement = new SgIncludeDirectiveStatement();
                                    ROSE_ASSERT(includeDirectiveStatement != NULL);
 
+                                // DQ (6/3/2019): To be consistant with other SgDeclarationStatement IR nodes, mark this as the defining declaration.
+                                   includeDirectiveStatement->set_definingDeclaration(includeDirectiveStatement);
+                                   ROSE_ASSERT(includeDirectiveStatement->get_definingDeclaration() != NULL);
+
                                 // DQ (9/18/2018): Adding the connection to the include file hierarchy as generated in the EDG/ROSE translation.
                                    includeDirectiveStatement->set_include_file_heirarchy(include_file);
 
@@ -707,7 +711,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    headerFileBody->get_endOfConstruct()  ->display("headerFileBody: endOfConstruct: debug");
 #endif
                                 // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
-                                   ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+                                   if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
+                                      {
+                                     // DQ (6/3/2019):Output a warning so we can look into this later.
+                                        printf ("WARNING: In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL \n");
+                                      }
+                                // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+
+                                // DQ (5/28/2019): debugging test2019_441.C.
+                                // printf ("Using OneBillion figure for end of construct line number \n");
 
                                    bool reset_start_index = false;
                                    iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber (targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
@@ -2146,9 +2158,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // DQ (3/4/2016): Klocworks reports a problem with "isSgClassDeclaration(n)->get_endOfConstruct() != NULL".
   // These used to be a problem, so we can continue to test these specific cases.
   // ROSE_ASSERT (isSgCaseOptionStmt(n)   == NULL || isSgCaseOptionStmt(n)->get_body()             != NULL);
+#if 0
      SgCaseOptionStmt* caseOptionStm = isSgCaseOptionStmt(n);
 
-#if 0
   // DQ (1/25/2019): A case option without a body is allowed, and comments should be allowed here..
   // DQ (11/25/2017): Added debugging info to support new switch implementation.
      if (caseOptionStm != NULL && caseOptionStm->get_body() == NULL)
@@ -2270,6 +2282,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             else
              {
             // handle the trivial case of a SgFile node being from it's own file
+
             // fileIdForOriginOfCurrentLocatedNode = currentFileNameId;
             // fileIdForOriginOfCurrentLocatedNode = sourceFile->get_file_info()->get_file_id();
 
@@ -2287,6 +2300,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
             // Use one billion as the max number of lines in a file
                const int OneBillion = 1000000000;
+
+            // DQ (5/28/2019): debugging test2019_441.C.
+            // printf ("Using OneBillion figure for lineOfClosingBrace \n");
 
                lineOfClosingBrace = OneBillion;
              }
@@ -2610,7 +2626,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             printf ("Case SgBasicBlock: lineOfClosingBrace = %d \n",lineOfClosingBrace);
                             printf ("Case SgBasicBlock: See if we can find a better target to attach these comments than %s \n",previousLocNodePtr->sage_class_name());
 #endif
-
+#if 0
+                            printf ("In case V_SgBasicBlock: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                          // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -2642,6 +2660,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             printf ("Case SgAggregateInitializer: Calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using locatedNode->get_file_info()->get_file_id() = %d \n",
                                  locatedNode->get_file_info()->get_file_id());
 #endif
+#if 0
+                            printf ("In case V_SgAggregateInitializer: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( target, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
@@ -2659,7 +2680,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                          // The following should always work since each statement is a located node
                             SgClassDeclaration* classDeclaration = dynamic_cast<SgClassDeclaration*>(n);
-
+#if 0
+                            printf ("In case V_SgClassDeclaration: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                          // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -2681,7 +2704,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                             SgTypedefDeclaration *typedefDeclaration = isSgTypedefDeclaration(n);
                             ROSE_ASSERT(typedefDeclaration != NULL);
-
+#if 0
+                            printf ("In case V_SgTypedefDeclaration: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,currentListOfAttributes );
@@ -2704,6 +2729,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             ROSE_ASSERT(variableDeclaration != NULL);
 #if 0
                             printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): variableDeclaration = %p \n",variableDeclaration);
+#endif
+#if 0
+                            printf ("In case V_SgVariableDeclaration: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -2728,6 +2756,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                             printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
 #endif
+#if 0
+                            printf ("In case V_SgInitializedName: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
@@ -2744,6 +2775,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                          //    ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after );
                          // printf ("Adding comment/directive to base of class definition \n");
+#if 0
+                            printf ("In case V_SgClassDefinition: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
                             bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                               ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
@@ -2861,6 +2895,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                          printf ("Case SgFunctionDefinition or SgFunctionDeclaration: Calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using locatedNode->get_file_info()->get_file_id() = %d \n",
                                  locatedNode->get_file_info()->get_file_id());
+#endif
+#if 0
+                         printf ("In case V_xxx: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): n = %p = %s \n",n,n->class_name().c_str());
 #endif
                       // DQ (3/11/2012): Added recursive call to insert comments.
                          bool reset_start_index = false;

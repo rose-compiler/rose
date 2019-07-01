@@ -5199,6 +5199,15 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+          // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
+          // case V_SgIncludeDirectiveStatement:
+             case V_SgIncludeFile:
+                  {
+                    printf ("NOTE: In AST Consistancy tests: TestParentPointersInMemoryPool::visit(): case SgIncludeFile: parent == NULL \n");
+                 // ROSE_ASSERT(support->get_parent() != NULL);
+                    break;
+                  }
+
                default:
                   {
                     if (support->get_parent() != NULL)

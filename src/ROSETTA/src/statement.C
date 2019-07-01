@@ -3541,39 +3541,75 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from IOStatement, this adds:
+  // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
      WriteStatement.setFunctionPrototype ( "HEADER_WRITE_STATEMENT", "../Grammar/Statement.code" );
      WriteStatement.setDataPrototype ( "SgExpression*", "format", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     WriteStatement.setDataPrototype ( "SgExpression*", "rec", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      WriteStatement.setDataPrototype ( "SgExpression*", "namelist", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      WriteStatement.setDataPrototype ( "SgExpression*", "advance", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // F2003 features
      WriteStatement.setDataPrototype ( "SgExpression*", "asynchronous", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "blank", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "decimal", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "delim", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "end", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "eor", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "id", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "pad", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "pos", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "rec", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "round", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "sign", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WriteStatement.setDataPrototype ( "SgExpression*", "size", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from IOStatement, this adds:
+  // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
      ReadStatement.setFunctionPrototype ( "HEADER_READ_STATEMENT", "../Grammar/Statement.code" );
      ReadStatement.setDataPrototype ( "SgExpression*", "format", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ReadStatement.setDataPrototype ( "SgExpression*", "rec", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ReadStatement.setDataPrototype ( "SgExpression*", "end", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ReadStatement.setDataPrototype ( "SgExpression*", "namelist", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ReadStatement.setDataPrototype ( "SgExpression*", "advance", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ReadStatement.setDataPrototype ( "SgExpression*", "size", "= NULL",
+     ReadStatement.setDataPrototype ( "SgExpression*", "asynchronous", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "blank", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "decimal", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "delim", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "end", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ReadStatement.setDataPrototype ( "SgExpression*", "eor", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // F2003 features
-     ReadStatement.setDataPrototype ( "SgExpression*", "asynchronous", "= NULL",
+     ReadStatement.setDataPrototype ( "SgExpression*", "id", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "pad", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "pos", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "rec", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "round", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "sign", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ReadStatement.setDataPrototype ( "SgExpression*", "size", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Derived from IOStatement, this adds (the most complex I/O statement):

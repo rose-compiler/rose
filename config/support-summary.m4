@@ -23,9 +23,10 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     # compiler used for C++ analysis, thus the variables printed for this section
     # of the summary are named "FRONTEND".
     ROSE_SUMMARY_HEADING([Compilers for ROSE source code])
-    echo "    C++ compiler                     ${FRONTEND_CXX_COMPILER_COMMAND:-none}"
-    echo "    C++ vendor                       ${FRONTEND_CXX_COMPILER_VENDOR:-unknown}"
-    echo "    C++ version                      ${FRONTEND_CXX_COMPILER_VERSION_TRIPLET:-unknown}"
+    echo "    C++ compiler                     ${CXX}"
+    echo "    C++ vendor                       ${HOST_CXX_VENDOR:-unknown}"
+    echo "    C++ version                      ${HOST_CXX_VERSION:-unknown}"
+    echo "    C++ language                     ${HOST_CXX_LANGUAGE:-unknown}"
     echo "    Bison version                    ${bison_version:-unknown}"
 
     #--------------------------------------------------------------------------------
@@ -72,6 +73,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX:-none}"
 	echo "    yices executable                 ${ROSE_YICES:-none}"
 	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"
+	echo "    z3 version                       ${Z3_VERSION:-unknown}"
 	echo "    z3 executable                    ${Z3:-none}"
 	echo "    z3 library                       ${Z3_LIBRARY_PATH:-none}"
     fi

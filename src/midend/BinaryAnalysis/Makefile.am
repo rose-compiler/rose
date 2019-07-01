@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification
 
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
@@ -46,6 +46,7 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/Specimen.C						\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\
+    Concolic/Utility.C						\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/ConcreteSemantics2.C			\
@@ -137,7 +138,8 @@ pkginclude_HEADERS =					\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
-    instructionSemantics/TraceSemantics2.h		
+    instructionSemantics/TraceSemantics2.h		\
+    Concolic/io-utility.h
 
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\

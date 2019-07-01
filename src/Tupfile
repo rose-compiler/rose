@@ -35,7 +35,9 @@ run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"
     ( \
         echo "# Things that the 'rose-config' tool can report"; \
         echo "ROSE_CC       = $(tool_CC)"; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = -I@(INSTALLATION_PREFIX)/include/rose $(CPPFLAGS)" ; \
         echo "ROSE_CFLAGS   = $(CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(CXXFLAGS)"; \
@@ -68,7 +70,9 @@ export SPOCK_EMPLOYED
         echo "ROSE_SOURCE   = `readlink -f @(ROSE_SOURCE)`"; \
         echo "ROSE_BUILD    = `readlink -f $(ROSE)`"; \
         echo "ROSE_CC       = $(tool_CC)" ; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = $(CPPFLAGS) -I@(INSTALLATION_PREFIX)/include @(LIBROSE_CPPFLAGS) @(TOOL_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
@@ -95,7 +99,9 @@ run $(public_header) --language=shell -o include rose-installed-make.cfg
         echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
         : no ROSE_PREFIX necessary for in-tree builds; \
         echo "ROSE_CC       = $(tool_CC)"; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
         echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
         echo "ROSE_CPPFLAGS = $(tool_CPPFLAGS)"; \
         echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
         echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \

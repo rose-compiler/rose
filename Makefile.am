@@ -16,7 +16,7 @@ EXTRA_DIST =
 # We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
 # ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
-SUBDIRS = libltdl config src python
+SUBDIRS = LicenseInformation libltdl config src python
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
@@ -42,8 +42,7 @@ testprojdir = ${datarootdir}/test-project
 testproj_DATA =						\
 	projects/MatrixTestingProject/Makefile		\
 	projects/MatrixTestingProject/README		\
-	projects/MatrixTestingProject/binary_specimen	\
-	projects/MatrixTestingProject/disassemble.C
+	projects/MatrixTestingProject/test-rose.C
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
@@ -92,7 +91,6 @@ tools:
 	$(MAKE) -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) -C $(top_builddir)/projects/autoTuning
-	$(MAKE) -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
@@ -116,7 +114,6 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) install -C $(top_builddir)/projects/autoTuning
-	$(MAKE) install -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
@@ -138,7 +135,6 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) check -C $(top_builddir)/projects/autoTuning
-	$(MAKE) check -C $(top_builddir)/projects/DataFaultTolerance
 	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
@@ -160,6 +156,7 @@ install-compass: install-core
 # don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
 install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
+	$(MAKE) -C $(top_builddir)/LicenseInformation install
 	cp rosePublicConfig.h $(pkgincludedir)
 	$(MAKE) -C $(top_builddir)/python install
 
@@ -180,35 +177,34 @@ rose-installer-rmc2: install-rose-library
 	rm -rf $@.tmp
 	mkdir  $@.tmp
 	$(top_srcdir)/scripts/mkinstaller --version
-	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
-		--create="$@"								\
-		--cc="$(C_VENDOR) $(C_VERSION)"						\
-		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
-		--contact="http://rosecompiler.org"					\
-		--os="$(RMC_OS_NAME)"							\
-		--prjnam=ROSE								\
-		--prjver=$(PACKAGE_VERSION)						\
-		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
-		$(prefix)/*								\
-		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
-		    $(BOOST_ROOT)							\
-		    $(CMAKE_ROOT)							\
-		    $(DLIB_ROOT)							\
-		    $(GNU_COMPILERS_ROOT)						\
-		    $(LIBBZ2_ROOT)							\
-		    $(LIBGCRYPT_ROOT)							\
-		    $(LIBGPG_ERROR_ROOT)						\
-		    $(LIBGRAPHICSMAGICK_ROOT)						\
-		    $(LIBJPEG_ROOT)							\
-		    $(LIBLCMS_ROOT)							\
-		    $(LIBLZMA_ROOT)							\
-		    $(LIBPNG_ROOT)							\
-		    $(LIBTIFF_ROOT)							\
-		    $(PYTHON_ROOT)							\
-		    $(SPOT_ROOT)							\
-		    $(WT_ROOT)								\
-		    $(YAMLCPP_ROOT)							\
-		    $(ZLIB_ROOT)							\
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
+		--create="$@"												\
+		--CC="$(CC) \
+		--CXX="$(CXX) \
+		--contact="http://rosecompiler.org"									\
+		--prjnam=ROSE												\
+		--prjver=$(PACKAGE_VERSION)										\
+		--postinstall-bin=$(top_srcdir)/projects/MatrixTesting/lib/matrix/container-scripts/post-install-script	\
+		$(prefix)/*												\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,								\
+		    $(BOOST_ROOT)											\
+		    $(CMAKE_ROOT)											\
+		    $(DLIB_ROOT)											\
+		    $(GNU_COMPILERS_ROOT)										\
+		    $(LIBBZ2_ROOT)											\
+		    $(LIBGCRYPT_ROOT)											\
+		    $(LIBGPG_ERROR_ROOT)										\
+		    $(LIBGRAPHICSMAGICK_ROOT)										\
+		    $(LIBJPEG_ROOT)											\
+		    $(LIBLCMS_ROOT)											\
+		    $(LIBLZMA_ROOT)											\
+		    $(LIBPNG_ROOT)											\
+		    $(LIBTIFF_ROOT)											\
+		    $(PYTHON_ROOT)											\
+		    $(SPOT_ROOT)											\
+		    $(WT_ROOT)												\
+		    $(YAMLCPP_ROOT)											\
+		    $(ZLIB_ROOT)											\
 		))
 	rm -rf $@.tmp
 
