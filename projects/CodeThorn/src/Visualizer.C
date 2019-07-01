@@ -328,7 +328,7 @@ string Visualizer::transitionGraphToDot() {
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
-    ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
+    ss <<estateToDotString((*j)->source)<< "->" <<estateToDotString((*j)->target);
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
