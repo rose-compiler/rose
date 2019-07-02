@@ -237,7 +237,7 @@ AddressUsers::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &b
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(insn, bblock);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
-    if (lb == users_.end() || lb->insn()->get_address() != insn->get_address()) {
+    if (lb == users_.end() || NULL == lb->insn() || lb->insn()->get_address() != insn->get_address()) {
         lb = users_.insert(lb, user);
     } else {
         lb->insertBasicBlock(bblock);
@@ -252,7 +252,7 @@ AddressUsers::insertDataBlock(const DataBlock::Ptr &db) {
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
     AddressUser user(db);
     std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
-    if (lb == users_.end() || !equalUnique(lb->dataBlock(), db, sortDataBlocks)) {
+    if (lb == users_.end() || NULL == lb->dataBlock() || !equalUnique(lb->dataBlock(), db, sortDataBlocks)) {
         // Wasn't present and list doesn't contain an equivalent data block, so add it
         lb = users_.insert(lb, AddressUser(db));
     }
@@ -282,7 +282,7 @@ AddressUsers::eraseInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr &bb
         ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle(insn, bb);
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
-        if (lb != users_.end() && lb->insn()->get_address() == insn->get_address()) {
+        if (lb != users_.end() && lb->insn() != NULL && lb->insn()->get_address() == insn->get_address()) {
             retval = lb->insn();
             lb->eraseBasicBlock(bb);
             if (lb->basicBlocks().empty())
@@ -300,7 +300,7 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
         ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isConsistent());
         AddressUser needle = AddressUser(dblock);
         std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), needle);
-        if (lb != users_.end() && equalUnique(lb->dataBlock(), dblock, sortDataBlocks)) {
+        if (lb != users_.end() && lb->dataBlock() != NULL && equalUnique(lb->dataBlock(), dblock, sortDataBlocks)) {
             retval = lb->dataBlock();
             users_.erase(lb);
         }

@@ -28,7 +28,8 @@ namespace Partitioner2 {
 /** Address usage item.
  *
  *  This struct represents one user for an address interval.  The user can be either an instruction with at least one valid
- *  basic block (since every instruction in the CFG belongs to at least one basic block in the CFG), or a data block. */
+ *  basic block (since every instruction in the CFG belongs to at least one basic block in the CFG), or a data block, but not
+ *  both. */
 class AddressUser {
     SgAsmInstruction *insn_;
     std::vector<BasicBlock::Ptr> bblocks_;              // sorted and unique
