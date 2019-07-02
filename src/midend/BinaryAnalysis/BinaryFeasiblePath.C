@@ -184,6 +184,7 @@ public:
                 break;
         }
         ASSERT_not_null(memory);
+        memory->set_byteOrder(partitioner->instructionProvider().defaultByteOrder());
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
         ops->fpAnalyzer_ = fpAnalyzer;
