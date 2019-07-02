@@ -259,7 +259,8 @@ BasicBlock::fallthroughVa() const {
 
 std::string
 BasicBlock::printableName() const {
-    return "basic block " + StringUtility::addrToString(address());
+    return "basic block " + StringUtility::addrToString(address()) +
+        (comment_.empty() ? "" : " \"" + StringUtility::cEscape(comment_) + "\"");
 }
 
 DataBlock::Ptr

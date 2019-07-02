@@ -342,7 +342,7 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
         partitioner = engine.loadPartitioner(rbaFile.name());
     }
 
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 void
