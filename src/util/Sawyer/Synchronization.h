@@ -160,9 +160,10 @@ SAWYER_EXPORT SAWYER_THREAD_TRAITS::RecursiveMutex& bigMutex();
 /** Thread-safe random number generator.
  *
  *  Generates uniformly distributed pseudo-random size_t values. The returned value is greater than zero and less than @p n,
- *  where @p n must be greater than zero.  This function uses the fastest available method for returning random numbers in a
- *  multi-threaded environment.  This function is thread-safe. */
-SAWYER_EXPORT size_t fastRandomIndex(size_t n);
+ *  where @p n must be greater than zero except when seeding the sequence. To seed the sequence, call with @p n equal to zero
+ *  and a non-zero @p seed; all other calls must supply a zero @p seed value. This function uses the fastest available method
+ *  for returning random numbers in a multi-threaded environment.  This function is thread-safe. */
+SAWYER_EXPORT size_t fastRandomIndex(size_t n, size_t seed = 0);
 
 /** Thread local data per object instance.
  *
