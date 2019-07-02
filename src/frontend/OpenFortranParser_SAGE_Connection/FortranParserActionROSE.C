@@ -5088,7 +5088,6 @@ void c_action_label(Token_t * lbl)
      * @param eos End of statement token.
      * @param count The number of dimension declarations.
      */
-// void c_action_dimension_stmt(Token_t * label, int count)
     void c_action_dimension_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
             int count)
     {
@@ -6593,7 +6592,7 @@ void c_action_label(Token_t * lbl)
         printf("In c_action_designator() hasSubstringRange = %s \n",
                 hasSubstringRange ? "true" : "false");
 
-#if 1 
+#if 0
             // Output debugging information about saved state (stack) information.
             outputState("At TOP in R603 c_action_designator()");
 #endif
@@ -6655,7 +6654,7 @@ void c_action_label(Token_t * lbl)
 
             astExpressionStack.push_front(arrayOfStringsArrayRef);
         }
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At Bottom of R603 c_action_designator()");
 #endif
@@ -7824,7 +7823,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param id The identifier (variable name in most cases (all?))
      * @param hasSelectionSubscriptList True if a selection-subscript-list is present
-     * @param hasImageSelector Ture if an image-selector is present
+     * @param hasImageSelector True if an image-selector is present
      */
     void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
     {
@@ -15085,7 +15084,6 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param hasPositionSpecList True if there is a position spec list. False is there is a file unit number.
      */
-// void c_action_rewind_stmt(Token_t * label, ofp_bool hasPositionSpecList)
     void c_action_rewind_stmt(Token_t *label, Token_t *rewindKeyword, Token_t *eos,
             ofp_bool hasPositionSpecList)
     {

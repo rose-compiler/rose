@@ -297,8 +297,12 @@ Grammar::setUpNodes ()
          UntypedForAllStatement,
          "UntypedStatement", "UntypedStatementTag", false);
 
+  // Rasmussen (06/13/2019): Added UntypedTableType for Jovial tables.
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
-     NEW_NONTERMINAL_MACRO (UntypedType, UntypedArrayType, "UntypedType", "UntypedTypeTag", false);
+     NEW_TERMINAL_MACRO (UntypedTableType, "UntypedTableType", "TEMP_UntypedTableType" );
+
+     NEW_NONTERMINAL_MACRO (UntypedType, UntypedArrayType | UntypedTableType,
+                            "UntypedType", "UntypedTypeTag", false);
 
      NEW_TERMINAL_MACRO (UntypedName,             "UntypedName",             "TEMP_UntypedName" );
      NEW_TERMINAL_MACRO (UntypedNameList,         "UntypedNameList",         "TEMP_UntypedNameList" );
@@ -1164,13 +1168,23 @@ Grammar::setUpNodes ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedArrayType.setFunctionPrototype ( "HEADER_UNTYPED_ARRAY_TYPE", "../Grammar/LocatedNode.code");
+     UntypedTableType.setFunctionPrototype ( "HEADER_UNTYPED_TABLE_TYPE", "../Grammar/LocatedNode.code");
 
-  // DQ (12/9/2015): Added array length expression.
   // Rasmussen (12/20/2017): Making SgUntypedArrayType better able to carry information to SgArrayType (removed array_length_expression)
      UntypedArrayType.setDataPrototype ("SgUntypedExprListExpression*", "dim_info" , "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      UntypedArrayType.setDataPrototype ("int", "rank" , "= 0",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (06/13/2019): Added UntypedTableType for Jovial tables.
+     UntypedTableType.setDataPrototype ("SgUntypedType*", "base_type", "= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
+     UntypedTableType.setDataPrototype ("SgUntypedExprListExpression*", "dim_info" , "= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     UntypedTableType.setDataPrototype ("int", "rank" , "= 0",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
+     UntypedTableType.setDataPrototype ("SgUntypedType::type_enum", "table_type_enum_id", "= SgUntypedType::e_unknown",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
 
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/LocatedNode.code");
@@ -1728,6 +1742,7 @@ Grammar::setUpNodes ()
 
      UntypedType.setFunctionSource      ( "SOURCE_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedArrayType.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_TYPE", "../Grammar/LocatedNode.code");
+     UntypedTableType.setFunctionSource ( "SOURCE_UNTYPED_TABLE_TYPE", "../Grammar/LocatedNode.code");
 
   // DQ (10/6/2008): Moved from SgSupport.
      RenamePair.setFunctionSource ( "SOURCE_RENAME_PAIR", "../Grammar/LocatedNode.code");

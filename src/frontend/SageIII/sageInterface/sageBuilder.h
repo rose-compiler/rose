@@ -1348,14 +1348,14 @@ ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& n
 //! Build a Jovial table declaration statement
 ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name, SgScopeStatement* scope=NULL);
 
+//! Build a Jovial table type with required class definition and defining and nondefining declarations.
+ ROSE_DLL_API SgJovialTableType * buildJovialTableType (const SgName& name, SgType* base_type, SgExprListExp* dim_info, SgScopeStatement* scope=NULL);
+
 //! Build a generic class declaration statement (SgClassDeclaration or subclass) with a
 //! class declaration and definition (creating both the defining and nondefining declarations as required.
 template <class DeclClass> ROSE_DLL_API
 DeclClass * buildClassDeclarationStatement_nfi(const SgName& name, SgClassDeclaration::class_types kind,
                                                SgScopeStatement* scope=NULL, SgClassDeclaration* nonDefiningDecl=NULL);
-
-//! Build a Jovial table declaration statement
-ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement_nfi(const SgName& name, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);
 
 //! Build an enum, It is also a declaration statement in SAGE III
 ROSE_DLL_API SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);

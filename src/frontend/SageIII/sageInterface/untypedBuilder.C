@@ -68,6 +68,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
 
    SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
    ROSE_ASSERT(modifiers);
+   SageInterface::setSourcePosition(modifiers);
 
    SgUntypedType* type = NULL;
 
@@ -264,6 +265,7 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
 
    SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
    ROSE_ASSERT(modifiers);
+   SageInterface::setSourcePosition(modifiers);
 
    SgUntypedArrayType* type = NULL;
 
@@ -379,48 +381,39 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
 }
 
 
-// Build an untyped Jovial table type from a base type (currently base type can only be an intrinsic type).
-// It would be better to have an SgUntypedTableType that contains a base type.
+// Build an untyped Jovial table type from a base type.
 //
-SgUntypedArrayType* buildJovialTableType (std::string name, SgUntypedType* base_type, SgUntypedExprListExpression* shape)
+SgUntypedTableType* buildJovialTableType (std::string name, SgUntypedType* base_type,
+                                          SgUntypedExprListExpression* shape, bool is_anonymous)
 {
    ROSE_ASSERT(language_enum == SgFile::e_Jovial_language);
 
    ROSE_ASSERT(base_type->get_is_intrinsic() == true);
 
-   bool has_kind = base_type->get_has_kind();
-   SgUntypedExpression* type_kind = base_type->get_type_kind();
-// If this changes then deleting the original base_type could be a problem
-   ROSE_ASSERT(type_kind == NULL);
-
-   bool is_literal = base_type->get_is_literal();
-   bool is_constant = base_type->get_is_constant();
-
-   std::string char_length;
-   bool char_length_is_string = base_type->get_char_length_is_string();
-   SgUntypedExpression* char_length_expr = base_type->get_char_length_expression();
-// If this changes then deleting the original base_type could be a problem
-   ROSE_ASSERT(char_length_expr == NULL);
-
-   bool is_intrinsic = base_type->get_is_intrinsic();
-   bool is_user_defined = base_type->get_is_user_defined();
-
-// This is the hack to allow a Table type to be table/array -like and possible be an intrinsic type
-// i.e., no body (structure components).  NOTE, is_intrinsic AND is_class may both be true
-   bool is_class = true;
-
-   SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression();
-   ROSE_ASSERT(modifiers);
-
-   SgUntypedArrayType* type = NULL;
-
+   SgUntypedTableType* type = NULL;
    int rank = shape->get_expressions().size();
-   SgUntypedType::type_enum type_enum = SgUntypedType::e_table;
 
-   type = new SgUntypedArrayType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
-                                 is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum,
-                                 shape, rank);
-   ROSE_ASSERT(type);
+   std::string table_type_name = name;
+
+   type = new SgUntypedTableType(table_type_name, base_type, shape, rank);
+   ROSE_ASSERT(type != NULL);
+
+   if (is_anonymous)
+      {
+      // This type is anonymous so create a unique name
+         char addr[64];
+         sprintf(addr, "%p", type);
+         table_type_name = "__anonymous_";
+         table_type_name.append(addr);
+         type->set_type_name(table_type_name);
+      }
+
+// This may not be needed: could set the default to this from e_unknown, could just use knowledge of the type itself
+// since we can't overload type_enum_id.  Actually should be have its own distnct from base type!
+   type->set_table_type_enum_id(SgUntypedType::e_table);
+   type->set_type_enum_id(SgUntypedType::e_table);
+
+   base_type->set_parent(type);
 
    return type;
 }
@@ -566,8 +559,7 @@ SgUntypedNullExpression* buildUntypedNullExpression()
 {
    SgUntypedNullExpression* expr = new SgUntypedNullExpression();
    ROSE_ASSERT(expr);
-
-   SageInterface::setOneSourcePositionForTransformation(expr);
+   SageInterface::setSourcePosition(expr);
 
    return expr;
 }

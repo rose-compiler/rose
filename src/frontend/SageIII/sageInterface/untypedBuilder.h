@@ -20,7 +20,8 @@ SgUntypedType* buildType (SgUntypedType::type_enum type_enum = SgUntypedType::e_
 SgUntypedArrayType* buildArrayType (SgUntypedType::type_enum type_enum, SgUntypedExprListExpression* shape, int rank);
 
 //! Build an untyped Jovial table type from a base type (currently base type can only be an intrinsic type)
-SgUntypedArrayType* buildJovialTableType (std::string name, SgUntypedType* base_type, SgUntypedExprListExpression* shape);
+SgUntypedTableType* buildJovialTableType (std::string name, SgUntypedType* base_type,
+                                          SgUntypedExprListExpression* shape, bool is_anonymous=false);
 
 //! Build an untyped initialized name for the given name and type.  The initializer may be a nullptr.
 SgUntypedInitializedName* buildInitializedName(const std::string & name, SgUntypedType* type, SgUntypedExpression* initializer = NULL);
