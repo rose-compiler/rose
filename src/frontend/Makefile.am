@@ -90,7 +90,6 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/ModulesPe.h		\
 	Partitioner2/ModulesPowerpc.h		\
 	Partitioner2/ModulesX86.h		\
-	Partitioner2/OwnedDataBlock.h		\
 	Partitioner2/Partitioner.h		\
 	Partitioner2/Reference.h		\
 	Partitioner2/Semantics.h		\
