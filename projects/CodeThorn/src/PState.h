@@ -54,7 +54,9 @@ namespace CodeThorn {
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    AbstractValueSet getVariableIds() const;
+    string toDotString(CodeThorn::VariableIdMapping* variableIdMapping) const;
+    std::string dotNodeIdString(AbstractValue av) const;
+    std::set<std::string> getDotNodeIdStrings() const;
     void writeTopToAllMemoryLocations();
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);
@@ -68,6 +70,7 @@ namespace CodeThorn {
     PState::const_iterator end() const;
     bool isApproximatedBy(CodeThorn::PState& other) const;
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
+    AbstractValueSet getVariableIds() const;
   private:
   };
   

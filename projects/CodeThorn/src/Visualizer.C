@@ -12,6 +12,7 @@
 #include "AstAnnotator.h"
 #include "AbstractValue.h"
 #include "Miscellaneous2.h"
+#include <sstream>
 
 #include "rose_config.h"
 
@@ -152,6 +153,9 @@ void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
+
+void Visualizer::setOptionMemorySubGraphs(bool flag) { optionMemorySubGraphs=flag; }
+bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
 
 /*! 
  * \author Marc Jasper
@@ -319,21 +323,72 @@ string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTrans
   return ss.str();
 }
 
+string Visualizer::dotEStateAddressString(const EState* estate) {
+  stringstream ss;
+  ss<<"s"<<estate;
+  return ss.str();
+}
+
+string Visualizer::dotEStateMemoryString(const EState* estate) {
+  return estate->pstate()->toDotString(variableIdMapping);
+}
+
+std::string Visualizer::dotClusterName(const EState* estate) {
+  return "cluster_"+this->dotEStateAddressString(estate);
+}
+
 string Visualizer::transitionGraphToDot() {
   tg1=true;
+  EStatePtrSet allEStates=transitionGraph->estateSet();
   stringstream ss;
+  ss<<"compound=true;"<<endl; // required for cluster edges to appear
   ss<<"node [shape=box style=filled color=lightgrey];"<<endl;
+  // generate all graph node ids with label strings
+  if(!getOptionMemorySubGraphs()) {
+    // default behavior
+    for(auto s : allEStates) {
+      ss<<dotEStateAddressString(s)<<" [label="<<estateToDotString(s)<<"];"<<endl;
+    }
+  } else {
+    // memory subgraphs visualization
+    // note: for empty clusters: DUMMY_0 [shape=point style=invis]
+    // note: minlen=1 on the edges necessary if clusters are only connected vertically (otherwise arrows are collapsed)
+    std::set<string> nodes;
+    for(auto s : allEStates) {
+      ss<<"subgraph "<<dotClusterName(s)<<" {"<<endl;
+      ss<<"style=filled; color=lightgrey; node [style=filled,color=white];"<<endl;
+      //ss<<"label=\"@"<<s<<"\";"<<endl;
+      ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
+
+      ss<<"{ rank = same; ";
+      auto idStringsSet=s->pstate()->getDotNodeIdStrings();
+      for(auto id : idStringsSet) {
+        ss<<"\""<<id<<"\""<<";"<<endl;
+      }
+      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
+      ss<< " }"<<endl;
+      ss<<dotEStateAddressString(s)<<endl; // hook for cluster edges
+      ss<<dotEStateMemoryString(s);
+      ss<<"}"<<endl; // end of subgraph
+    } 
+  }
+
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
-    ss <<estateToDotString((*j)->source)<< "->" <<estateToDotString((*j)->target);
+    ss <<dotEStateAddressString((*j)->source)<< "->"<<dotEStateAddressString((*j)->target);
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
     ss <<" color="<<(*j)->edge.color()<<" ";
     ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
+    if(getOptionMemorySubGraphs()) {
+      // change head and tail of arrows for clusters
+      ss<<" ltail="<<dotClusterName((*j)->source);
+      ss<<" lhead="<<dotClusterName((*j)->target);
+    }
     ss <<"]"<<";"<<endl;
   }
   tg1=false;

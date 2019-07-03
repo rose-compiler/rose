@@ -55,6 +55,42 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
+std::set<std::string> PState::getDotNodeIdStrings() const {
+  std::set<std::string> nodeIds;
+  for(PState::const_iterator j=begin();j!=end();++j) {
+    nodeIds.insert(dotNodeIdString((*j).first));
+  }
+  return nodeIds;
+}
+
+std::string PState::dotNodeIdString(AbstractValue av) const {
+  stringstream ss;
+  ss<<string("n")<<this<<av.toString();
+  return ss.str();
+}
+
+string PState::toDotString(VariableIdMapping* variableIdMapping) const {
+  stringstream ss;
+  for(PState::const_iterator j=begin();j!=end();++j) {
+    //    AbstractValue v1=(*j).first;
+    AbstractValue v2=(*j).second;
+    // this pointer is used to get unique names for all elements of a PState
+    if(v2.isPtr()) {
+      // nodes
+      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString((*j).second)<<"\";"<<endl; // target label intentionally not generated
+      // edge
+      ss <<"\""<<dotNodeIdString((*j).first)<<"\"";
+      ss<<"->";
+      ss<<"\""<<dotNodeIdString((*j).second)<<"\"";
+      ss<<";"<<endl;
+    } else {
+      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+    }
+  }  
+  return ss.str();
+}
+
 long PState::memorySize() const {
   long mem=0;
   for(PState::const_iterator i=begin();i!=end();++i) {

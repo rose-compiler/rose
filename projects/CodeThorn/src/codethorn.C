@@ -337,6 +337,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg1-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize estate-id.")
     ("tg1-estate-properties", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
+    ("tg1-estate-memory-subgraphs", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as memory graphs.")
     ("tg2-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize address.")
     ("tg2-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
@@ -1997,6 +1998,7 @@ int main( int argc, char * argv[] ) {
     Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
     if(args.getBool("viz")) {
       cout << "generating graphviz files:"<<endl;
+      visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
       string dotFile="digraph G {\n";
       dotFile+=visualizer.transitionGraphToDot();
       dotFile+="}\n";
