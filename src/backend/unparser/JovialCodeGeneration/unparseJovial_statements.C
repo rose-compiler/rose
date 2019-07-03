@@ -63,15 +63,15 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // module support
-          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);      break;
-          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);      break;
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);     break;
+          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);     break;
           case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
        // directives, define
 
-          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);    break;
-          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);    break;
+          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);   break;
+          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);   break;
 
        // declarations
 
@@ -740,8 +740,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ROSE_ASSERT(type);
 
-     cout << "--> unparse VarDecl: name is " << name << endl;
-
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -795,8 +793,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            ROSE_ASSERT(initializer != NULL);
            unparseExpression(initializer, info);
         }
-
-     cout << "--> unparse VarDecl FINISHED: name is " << name << endl;
 
      curprint(";\n");
    }

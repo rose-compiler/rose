@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -1275,13 +1275,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
    ROSE_ASSERT(decl_list);
 
-// A TableDeclaration will both define a type (array of items/struct) AND declare a variable of that type.
-// Note that the type will likely be anonymous unless a type name is given.  But I don't think we need an
-// official variable declaration, the Table/StructureDeclaration can stand in for the variable until Sage
-// translation.
+// A TableDeclaration is a variable declaration.  However, it may also (usually) define a type
+// as well, in which case the type will be anonymous, unless only a table type name if given.
 
-   SgUntypedType*   declared_type = NULL;
-   SgUntypedArrayType* array_type = NULL;
+   SgUntypedType* base_type = NULL;
+   SgUntypedTableType* table_type = NULL;
    SgUntypedVariableDeclaration* variable_decl = NULL;
 
    SgUntypedStructureDeclaration* table_decl = NULL;
@@ -1301,8 +1299,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
       ROSE_ASSERT(dim_info);
       setSourcePosition(dim_info, t_dim_list);
 
-      cout << ".x. created dim_info " << dim_info << ": expr kind is " << dim_info->get_expression_enum() << endl;
-
       if (ATmatch(t_name, "<str>", &table_name)) {
          // MATCHED TableName
       } else return ATfalse;
@@ -1317,14 +1313,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
          // MATCHED OptDimensionList
       } else return ATfalse;
 
-      cout << ".x. will traverse ArrayTableDescription for name " << table_name << endl;
-
    // The first form looks like an array as it doesn't have a table/structure body
-      if (traverse_ArrayTableDescription(t_table_desc, declared_type, attr_list, preset)) {
+      if (traverse_ArrayTableDescription(t_table_desc, base_type, attr_list, preset)) {
          // MATCHED TableDescription without a structure body
-         ROSE_ASSERT(preset);
-         ROSE_ASSERT(declared_type);
-         cout << ".x. did traverse ArrayTableDescription for name  " << table_name << endl;
+         ROSE_ASSERT(base_type);
       }
       else if (traverse_TableDescription(t_table_desc, table_desc)) {
          // MATCHED TableDescription with a structure body
@@ -1342,6 +1334,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
       std::string label = "";
       int rank = dim_info->get_expressions().size();
 
+   // This seems all wrong, we need a type with a body here (but could get the type from the declaration
+   // With the creation of SgUntypedTableType the dim_info isn't needed for the struct.
       table_decl = new SgUntypedStructureDeclaration(label, table_name, attr_list, dim_info, rank, table_desc);
       ROSE_ASSERT(table_decl);
       setSourcePosition(table_decl, term);
@@ -1349,19 +1343,24 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    // TODO
       ROSE_ASSERT(false);
    }
-   else if (declared_type != NULL) {
+   else if (base_type != NULL) {
       ROSE_ASSERT(dim_info != NULL);
 
-      // Create a new type by copying portions of the declared type
-      array_type = UntypedBuilder::buildJovialTableType(table_name, declared_type, dim_info);
-      ROSE_ASSERT(array_type != NULL);
-      delete declared_type;
-      declared_type = NULL;
+      // There is no table_desc thus no table body containing structure components
+      table_type = UntypedBuilder::buildJovialTableType("", base_type, dim_info, /*is_anonymous*/true);
+      ROSE_ASSERT(table_type != NULL);
 
       // Create the variable for the declaration
-      variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, array_type, attr_list, preset);
+      variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, table_type, attr_list, preset);
       ROSE_ASSERT(variable_decl);
       setSourcePosition(variable_decl, term);
+
+#if 0
+      cout << ".x.     dim_info is " << dim_info << ": " << dim_info->class_name() << endl;
+      Sg_File_Info* start = dim_info->get_startOfConstruct();
+      Sg_File_Info*   end = dim_info->get_endOfConstruct();
+      cout << ".x.   start:end are " << start << ": " << end << endl;
+#endif
    }
 
 // We must have a variable declaration; TableDeclaration is a variable declaration not a type declaration
@@ -1379,16 +1378,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    setSourcePosition(initialized_name, t_name);
 
 #if 0
-   std::cout << "TABLE DECLARATION " << table_decl << " : " << table_decl->class_name() << endl;
-   std::cout << "TABLE DECLARATION table_desc: " << table_desc << " : " << table_desc->class_name() << endl;
-#endif
-#if 1
    std::cout << "TABLE DECLARATION " << table_name << ", rank is " << dim_info->get_expressions().size() << endl;
    std::cout << "TABLE DECLARATION attr_list: " << attr_list << " dim_info: " << dim_info << endl;
    std::cout << "TABLE DECLARATION pushing onto list " << decl_list << " : " << decl_list->class_name() << endl;
-   ROSE_ASSERT(array_type);
-   std::cout << "TABLE DECLARATION declared_type: " << array_type << " : " << array_type->class_name() << endl;
-   std::cout << "TABLE DECLARATION name and enum: " << array_type->get_type_name() << " : " << array_type->get_type_enum_id() << endl;
+   ROSE_ASSERT(table_type);
+   std::cout << "TABLE DECLARATION     base_type: " << base_type << " : " << base_type->class_name() << endl;
+   std::cout << "TABLE DECLARATION     type name: " << base_type->get_type_name() << endl;
+   std::cout << "TABLE DECLARATION name and enum: " << table_type->get_type_name() << " : " << table_type->get_type_enum_id() << endl;
+#endif
+#if 0
+   std::cout << "TABLE DECLARATION " << table_decl << " : " << table_decl->class_name() << endl;
+   std::cout << "TABLE DECLARATION table_desc: " << table_desc << " : " << table_desc->class_name() << endl;
 #endif
 
    decl_list->get_decl_list().push_back(variable_decl);
@@ -1415,8 +1415,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ArrayTableDescription(ATerm term,
    preset = NULL;
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
-
-      cout << "\n.x. traverse_TableDescription without a body \n";
 
    // Look for an EntrySpecifier without a body first so that attributes aren't potentially handled twice
       if (traverse_EntrySpecifier(t_entry_spec, type, attr_list, preset)) {
@@ -1447,12 +1445,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ArrayTableDescription(ATerm term,
    }
    else return ATfalse;
 
-   std::cout << ".x. ArrayTableDescription finished matching \n";
-
    ROSE_ASSERT(type);
-   ROSE_ASSERT(preset);
-
-   std::cout << ".x. ArrayTableDescription type is " << type << " : " << type->class_name() << endl;
 
    return ATtrue;
 }
@@ -1509,7 +1502,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
    else return ATfalse;
 
    ROSE_ASSERT(table_desc);
-   ROSE_ASSERT(preset);
 
    table_desc->set_initializer(preset);
 
@@ -1673,8 +1665,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
 
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec, &t_item_desc, &t_preset)) {
 
- std::cout << ".x. matched OrdinaryEntrySpecifier \n";
-
       if (traverse_OptPackingSpecifier(t_pack_spec, attr_list)) {
          // MATCHED OptPackingSpecifier
       } else return ATfalse;
@@ -1689,10 +1679,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
    }
    else return ATfalse;
 
-   ROSE_ASSERT(preset);
    ROSE_ASSERT(type);
-
- std::cout << ".x. successfully finished OrdinaryEntrySpecifier \n";
 
    return ATtrue;
 }
@@ -1908,7 +1895,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifier(ATerm ter
    }
    else return ATfalse;
 
-   ROSE_ASSERT(preset);
    ROSE_ASSERT(type);
 
    return ATtrue;
@@ -1950,7 +1936,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedEntrySpecifierBody(ATerm
    }
    else return ATfalse;
 
-   ROSE_ASSERT(table_preset != NULL);
    table_desc->set_initializer(table_preset);
 
    return ATtrue;
@@ -2191,6 +2176,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
    std::string label = "";
 
    SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
+   ROSE_ASSERT(initialized_name != NULL);
    setSourcePosition(initialized_name, t_name);
 
    if (preset) {
@@ -2290,16 +2276,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_TablePreset(ATerm term, SgUntyped
 #endif
 
    ATerm t_preset_list;
-
    preset = NULL;
-
 
    if (ATmatch(term, "no-table-preset()")) {
       // MATCHED no-table-preset
-      int expr_enum = General_Language_Translation::e_struct_initializer;
-      preset = new SgUntypedExprListExpression(expr_enum);
-      ROSE_ASSERT(preset);
-      setSourcePosition(preset, term);
    }
    else if (ATmatch(term, "TablePreset(<term>)", &t_preset_list)) {
       int expr_enum = General_Language_Translation::e_struct_initializer;
@@ -3208,8 +3188,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionDeclaration(ATerm term, S
 
 // "body" portion of the procedure declaration so that we can pick up parameter declaration
    SgUntypedDeclarationStatementList* param_decl_list = NULL;
-   SgUntypedStatementList*            stmt_list = NULL;
-   SgUntypedFunctionDeclarationList*  func_list = NULL;
 
    if (ATmatch(term, "FunctionDeclaration(<term>,<term>)", &t_func_heading, &t_decl)) {
 

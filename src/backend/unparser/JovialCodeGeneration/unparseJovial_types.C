@@ -88,8 +88,17 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
 
      SgDeclarationStatement* type_decl = type->getAssociatedDeclaration();
      ROSE_ASSERT(type_decl);
-     cout << "--> unparse TableType (NOT SURE WE UNPARSE TYPE HERE): type_decl is " << type_decl << " : " << type_decl->class_name() << endl;
-     unparseStatement(type_decl, info);
+
+     SgExprListExp* dim_info = table_type->get_dim_info();
+     if (dim_info != NULL)
+        {
+           unparseDimInfo(dim_info, info);
+        }
+
+     SgType* base_type = table_type->get_base_type();
+     ROSE_ASSERT(base_type);
+
+     unparseType(base_type, info);
 }
 
 void

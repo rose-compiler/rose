@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "UntypedTraversal.h"
 
-#define DEBUG_UNTYPED_TRAVERSAL 1
+#define DEBUG_UNTYPED_TRAVERSAL 0
 
 using namespace Untyped;
 using std::cout;
