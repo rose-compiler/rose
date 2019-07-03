@@ -57,8 +57,8 @@ struct CtxAnalysis : DFAnalysisBase
       ctxTransfer(compTransfer, *this),
       ctxFactory(compAnalysis, compFactory)
     {
-      _initialElementFactory = &ctxFactory;
       _transferFunctions     = &ctxTransfer;
+      _transferFunctions->setInitialElementFactory(&ctxFactory);
     }
 
     void initializeExtremalValue(Lattice* element) ROSE_OVERRIDE
