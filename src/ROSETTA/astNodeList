@@ -820,6 +820,7 @@ SgUntypedToken
 SgUntypedTokenPair
 SgUntypedType
 SgUntypedArrayType
+SgUntypedTableType
 SgUntypedAttribute
 SgUntypedFile
 SgUntypedScope
