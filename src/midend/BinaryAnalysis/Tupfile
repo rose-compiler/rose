@@ -14,8 +14,8 @@ endif
 run $(librose_compile) $(SOURCES)
 
 run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h BinaryBestMapAddress.h BinaryCallingConvention.h \
-    BinaryCodeInserter.h BinaryControlFlow.h BinaryDataFlow.h BinaryDemangler.h BinaryDominance.h BinaryFeasiblePath.h \
-    BinaryFunctionCall.h BinaryFunctionSimilarity.h BinaryMagic.h BinaryMatrix.h BinaryNoOperation.h \
+    BinaryCodeInserter.h BinaryConcolic.h BinaryControlFlow.h BinaryDataFlow.h BinaryDemangler.h BinaryDominance.h \
+    BinaryFeasiblePath.h BinaryFunctionCall.h BinaryFunctionSimilarity.h BinaryMagic.h BinaryMatrix.h BinaryNoOperation.h \
     BinaryPointerDetection.h BinaryReachability.h BinaryReturnValueUsed.h BinarySmtCommandLine.h BinarySmtSolver.h \
     BinarySmtlibSolver.h BinaryStackDelta.h BinaryStackVariable.h BinaryString.h BinarySymbolicExpr.h \
     BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h BinaryYicesSolver.h BinaryZ3Solver.h \
