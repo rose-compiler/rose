@@ -27,6 +27,8 @@ public:
   CppExprEvaluator* getCppExprEvaluator();
   void setCppExprEvaluator(CodeThorn::CppExprEvaluator* expEval);
   void setSkipSelectedFunctionCalls(bool);
+  void initializeExtremalValue(Lattice& element);
+
 private:
   CodeThorn::CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;

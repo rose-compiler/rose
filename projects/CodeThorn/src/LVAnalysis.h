@@ -31,7 +31,7 @@ class LVAnalysis : public DFAnalysisBase {
  public:
   LVAnalysis();
   ~LVAnalysis();
-  virtual void initializeExtremalValue(Lattice* element); 
+  //virtual void initializeExtremalValue(Lattice* element); 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };

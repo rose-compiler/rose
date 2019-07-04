@@ -770,6 +770,68 @@ AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   return a.getIntValue()%b.getIntValue();
 }
 
+// static function, two arguments
+bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
+  if(val1.isBot()||val2.isTop()) {
+    // bot <= x, x <= top
+    return true;
+  } else if(val1.valueType==val2.valueType) {
+    switch(val1.valueType) {
+    case BOT: return true;
+    case INTEGER: return (val1.intValue==val2.intValue);
+    case FLOAT: return (val1.floatValue==val2.floatValue);
+    case PTR: return (val1.getVariableId()==val2.getVariableId());
+    case REF: return (val1.getVariableId()==val2.getVariableId());
+    case TOP: return true;
+    }
+  }
+  return false;
+}
+
+// static function, two arguments
+AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
+  if(val1.isTop()||val2.isTop()) {
+    return createTop();
+  } else if(val1.isBot()) {
+    return val2;
+  } else if(val2.isBot()) {
+    return val1;
+  } else if(val1.valueType==val2.valueType) {
+    switch(val1.valueType) {
+    case BOT: return val2;
+    case TOP: return val1;
+    case INTEGER: {
+      if(val1.intValue==val2.intValue) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case FLOAT: {
+      if(val1.floatValue==val2.floatValue) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case PTR: 
+    case REF: {
+      if(val1.getVariableId()==val2.getVariableId()) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    }
+  }
+  return createTop();
+}
+
+AbstractValue AbstractValue::createTop() {
+  CodeThorn::Top top;
+  return AbstractValue(top);
+}
+
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorAdd(a,b);
 }
@@ -792,3 +854,4 @@ AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& 
   }
   return s1;
 }
+
