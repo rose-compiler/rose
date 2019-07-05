@@ -764,13 +764,13 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     if (NULL == registers_) {
         registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
-        ASSERT_forbid(REG_PATH.is_valid());
+        ASSERT_require(REG_PATH.isEmpty());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
         registers_->insert("path", REG_PATH);
 
         // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
         // should be using the new calling convention analysis to detect these.
-        ASSERT_forbid(REG_RETURN_.is_valid());
+        ASSERT_require(REG_RETURN_.isEmpty());
         const RegisterDescriptor *r = NULL;
         if ((r = registers_->lookup("rax")) || (r = registers_->lookup("eax")) || (r = registers_->lookup("ax"))) {
             REG_RETURN_ = *r;
@@ -797,7 +797,7 @@ void
 FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
                               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
     ASSERT_not_null(cpu);
-    ASSERT_require(REG_PATH.is_valid());
+    ASSERT_forbid(REG_PATH.isEmpty());
 
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
@@ -811,16 +811,16 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Initialize instruction pointer register
     if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
+                           ops->undefined_(cpu->instructionPointerRegister().nBits()));
     } else {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(), pathsBeginVertex->value().address()));
+                           ops->number_(cpu->instructionPointerRegister().nBits(), pathsBeginVertex->value().address()));
     }
 
     // Initialize stack pointer register
     if (settings_.initialStackPtr) {
         const RegisterDescriptor REG_SP = cpu->stackPointerRegister();
-        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings_.initialStackPtr));
+        ops->writeRegister(REG_SP, ops->number_(REG_SP.nBits(), *settings_.initialStackPtr));
     }
 
     // Direction flag (DF) is always set
@@ -919,12 +919,12 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         retval = functionSummarizer_->returnValue(*this, summary, ops);
     } else {
         // Make the function return an unknown value
-        retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.get_nbits()));
+        retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.nBits()));
         ops->writeRegister(REG_RETURN_, retval);
 
         // Cause the function to return to the address stored at the top of the stack.
         RegisterDescriptor SP = cpu->stackPointerRegister();
-        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
+        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
         BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                                 ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
@@ -972,7 +972,7 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
             mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                         <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
             cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
-                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().get_nbits(),
+                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().nBits(),
                                                                               0x911 /*arbitrary, unlikely to be satisfied*/));
             ++pathInsnIndex;
     }
@@ -1034,7 +1034,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
     static const char *prefix = "      ";
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.get_nbits()));
+    BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.nBits()));
     if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
                                  <<" because settings().nonAddressIsFeasible is false\n";

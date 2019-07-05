@@ -2886,7 +2886,7 @@ public:
                                  " where timestamp >= " + boost::lexical_cast<std::string>(time(NULL) - 4*84600) +
                                  " order by name");
 
-        slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Slave account</b>"));
+        slaveGrid_->elementAt(0, 0)->addWidget(new Wt::WText("<b>Account</b>"));
         slaveGrid_->elementAt(0, 1)->addWidget(new Wt::WText("<b>Last report</b>"));
         slaveGrid_->elementAt(0, 2)->addWidget(new Wt::WText("<b>CPU load</b>"));
         slaveGrid_->elementAt(0, 2)->setContentAlignment(Wt::AlignRight);

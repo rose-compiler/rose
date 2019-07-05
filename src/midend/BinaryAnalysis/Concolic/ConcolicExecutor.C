@@ -211,7 +211,7 @@ public:
         // Extend the register set with an additional Boolean register named "path"
         RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
         regdict->insert(partitioner_.instructionProvider().registerDictionary());
-        ASSERT_forbid(REG_PATH.isValid());
+        ASSERT_require(REG_PATH.isEmpty());
         REG_PATH = RegisterDescriptor(regdict->firstUnusedMajor(), 0, 0, 1);
         regdict->insert("path", REG_PATH);
         regdict_ = regdict;

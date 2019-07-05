@@ -20,7 +20,7 @@ operator<<(std::ostream &o, const RegisterDictionary &dict)
 std::string
 RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const
 {
-    if (!rdesc.is_valid())
+    if (rdesc.isEmpty())
         return prefix + (prefix==""?"":"_") + "NONE";
 
     const RegisterDictionary *dict = dict_ ? dict_ : dflt_dict;
@@ -31,11 +31,11 @@ RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *di
     }
 
     std::ostringstream ss;
-    ss <<prefix <<rdesc.get_major() <<"." <<rdesc.get_minor();
-    if (show_offset>0 || (show_offset<0 && rdesc.get_offset()!=0))
-        ss <<offset_prefix <<rdesc.get_offset() <<offset_suffix;
-    if (show_size>0 || (show_size<0 && rdesc.get_offset()!=0))
-        ss <<size_prefix <<rdesc.get_nbits() <<size_suffix;
+    ss <<prefix <<rdesc.majorNumber() <<"." <<rdesc.minorNumber();
+    if (show_offset>0 || (show_offset<0 && rdesc.offset()!=0))
+        ss <<offset_prefix <<rdesc.offset() <<offset_suffix;
+    if (show_size>0 || (show_size<0 && rdesc.offset()!=0))
+        ss <<size_prefix <<rdesc.nBits() <<size_suffix;
     ss <<suffix;
     return ss.str();
 }
@@ -118,12 +118,12 @@ RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t m
     RegisterDescriptor retval;
     for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
         RegisterDescriptor reg = iter->second;
-        if (major == reg.get_major() && minor == reg.get_minor()) {
-            if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
+        if (major == reg.majorNumber() && minor == reg.minorNumber()) {
+            if (maxWidth > 0 && reg.nBits() > maxWidth) {
                 // ignore
-            } else if (!retval.is_valid()) {
+            } else if (retval.isEmpty()) {
                 retval = reg;
-            } else if (retval.get_nbits() < reg.get_nbits()) {
+            } else if (retval.nBits() < reg.nBits()) {
                 retval = reg;
             }
         }
@@ -136,7 +136,7 @@ RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
     const RegisterDescriptor *old_desc = lookup(name);
     ROSE_ASSERT(old_desc!=NULL);
     RegisterDescriptor new_desc = *old_desc;
-    new_desc.set_nbits(new_nbits);
+    new_desc.nBits(new_nbits);
     insert(name, new_desc);
 }
 
@@ -189,8 +189,8 @@ unsigned
 RegisterDictionary::firstUnusedMajor() const {
     std::vector<unsigned> used;
     BOOST_FOREACH (const Entries::value_type &entry, forward) {
-        if (used.empty() || used.back()!=entry.second.get_major())
-            used.push_back(entry.second.get_major());
+        if (used.empty() || used.back()!=entry.second.majorNumber())
+            used.push_back(entry.second.majorNumber());
     }
     return firstUnused(used);
 }
@@ -199,8 +199,8 @@ unsigned
 RegisterDictionary::firstUnusedMinor(unsigned majr) const {
     std::vector<unsigned> used;
     BOOST_FOREACH (const Entries::value_type &entry, forward) {
-        if (entry.second.get_major() == majr)
-            used.push_back(entry.second.get_minor());
+        if (entry.second.majorNumber() == majr)
+            used.push_back(entry.second.minorNumber());
     }
     return firstUnused(used);
 }

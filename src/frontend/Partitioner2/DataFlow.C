@@ -527,7 +527,7 @@ TransferFunction::initialState() const {
 #if 0 // [Robb Matzke 2015-01-14]
     regState->initialize_large();
 #else
-    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.get_nbits()), ops.get());
+    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
 #endif
     return newState;
 }
@@ -558,26 +558,26 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
             BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
-                ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
             }
             if (ccAnalysis.stackDelta())
-                stackDelta = ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta());
+                stackDelta = ops->number_(STACK_POINTER_REG.nBits(), *ccAnalysis.stackDelta());
 
         } else if (defaultCallingConvention_) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
             BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
-                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
+                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
             BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
-                    ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                    ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
@@ -604,7 +604,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             newStack = ops->add(origStackPtr, stackDelta);
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            newStack = ops->undefined_(STACK_POINTER_REG.nBits());
         }
         ASSERT_not_null(newStack);
         ops->writeRegister(STACK_POINTER_REG, newStack);

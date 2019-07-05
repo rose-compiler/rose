@@ -93,7 +93,7 @@ main(int argc, char *argv[]) {
         exit(1);
     }
     const RegisterDescriptor REG_IP = disassembler->instructionPointerRegister();
-    ASSERT_require2(REG_IP.is_valid(), "simulation must know what register serves as the instruction pointer");
+    ASSERT_forbid2(REG_IP.isEmpty(), "simulation must know what register serves as the instruction pointer");
 
     // Single-step the specimen natively in a debugger and show each instruction.
     size_t nSteps = 0;                                  // number of instructions executed

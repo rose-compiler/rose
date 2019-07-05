@@ -808,7 +808,7 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SValuePtr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
@@ -817,7 +817,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
 BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SValuePtr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->peekRegister(reg, sd(dflt)));
     return retval;
