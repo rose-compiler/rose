@@ -26,7 +26,10 @@ typedef ISBase::DispatcherPtr CpuPtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Semantic domain for concrete execution
+// Semantic domain for concrete execution.
+//
+// For now we're emulating instructions with the concrete semantic domain because this is the more general method, but the plan
+// is to replace this with native execution (e.g., single stepping in a debugger) where it can be supported.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef IS::ConcreteSemantics::SValue ConcreteValue;
@@ -199,11 +202,19 @@ private:
     const RegisterDictionary *regdict_;
     CpuPtr symbolicCpu_;
     CpuPtr concreteCpu_;
+    RegisterDescriptor REG_PATH;
 
 public:
     Semantics(const P2::Partitioner &partitioner)
-        : partitioner_(partitioner),
-          regdict_(partitioner_.instructionProvider().registerDictionary()) {
+        : partitioner_(partitioner) {
+
+        // Extend the register set with an additional Boolean register named "path"
+        RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
+        regdict->insert(partitioner_.instructionProvider().registerDictionary());
+        ASSERT_forbid(REG_PATH.isValid());
+        REG_PATH = RegisterDescriptor(regdict->firstUnusedMajor(), 0, 0, 1);
+        regdict->insert("path", REG_PATH);
+        regdict_ = regdict;
 
         // Symbolic semantics
         SymbolicOperatorsPtr symbolicOps = SymbolicOperators::instance(regdict_);
@@ -226,6 +237,10 @@ public:
         const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
         concreteOperators()->writeRegister(SP, concreteOperators()->number_(SP.nBits(), initialStackPointer));
         symbolicOperators()->writeRegister(SP, symbolicOperators()->number_(SP.nBits(), initialStackPointer));
+
+        // The PATH pseudo-register's initial value is true
+        concreteOperators()->writeRegister(REG_PATH, concreteOperators()->boolean_(true));
+        symbolicOperators()->writeRegister(REG_PATH, symbolicOperators()->boolean_(true));
     }
 
     SymbolicOperatorsPtr symbolicOperators() const {
