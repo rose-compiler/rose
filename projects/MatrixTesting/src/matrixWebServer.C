@@ -54,6 +54,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
+#include <Wt/WTextArea>
 #include <Wt/WTimer>
 #include <Wt/WVBoxLayout>
 
@@ -1077,6 +1078,220 @@ fillVersionComboBox(WComboBoxWithData<ComboBoxVersion> *comboBox, const std::str
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Shows a multi-line text value obtained from the database and possibly allows it to be edited.  The value can be edited only
+// if the canEdit property is true. Once the value is edited to a new value, the new value is displayed instead of the
+// database's value, and the isEdited property returns true and a valueChanged signal is emitted.
+class WDatabaseTextEdit: public Wt::WContainerWidget {
+    bool canEdit_;
+    std::string value_;
+    std::string placeholder_;
+    Wt::WText *text_;
+    Wt::WPushButton *editButton_;
+    Wt::WTextArea *edit_;
+    Wt::WPushButton *saveButton_, *cancelButton_;
+    Wt::Signal<> valueChanged_;
+
+public:
+    WDatabaseTextEdit(const std::string &value, const std::string &placeholder,
+                      Wt::WContainerWidget *parent = NULL)
+        : canEdit_(false), value_(value), placeholder_(placeholder) {
+
+        addWidget(text_ = new Wt::WText(value_.empty() ? placeholder_ : value_));
+        text_->setInline(false);
+
+        addWidget(editButton_ = new Wt::WPushButton(Wt::WString::fromUTF8("\u270e"))); // lower right pencil
+        editButton_->setToolTip("Edit");
+        editButton_->setStyleClass("edit-button");
+        editButton_->clicked().connect(this, &WDatabaseTextEdit::handleEditButton);
+
+        addWidget(edit_ = new Wt::WTextArea(value));
+        edit_->resize(Wt::WLength(100, Wt::WLength::Percentage),
+                      Wt::WLength(200, Wt::WLength::Pixel));
+        edit_->hide();
+
+        addWidget(saveButton_ = new Wt::WPushButton(Wt::WString::fromUTF8("\u2713"))); // checkmark
+        saveButton_->clicked().connect(this, &WDatabaseTextEdit::handleSaveButton);
+        saveButton_->setStyleClass("edit-button");
+        saveButton_->setToolTip("Save changes to database.");
+        saveButton_->hide();
+
+        addWidget(cancelButton_ = new Wt::WPushButton(Wt::WString::fromUTF8("\u2715"))); // X
+        cancelButton_->clicked().connect(this, &WDatabaseTextEdit::handleCancelButton);
+        cancelButton_->setStyleClass("edit-button");
+        cancelButton_->setToolTip("Cancel edits; show database value.");
+        cancelButton_->hide();
+
+        setCanEdit(canEdit_);
+    }
+
+    Wt::WText* textWidget() const {
+        return text_;
+    }
+    
+    void setDbText(const std::string &s) {
+        value_ = s;
+        text_->setText(s);
+    }
+
+    void setCanEdit(bool b) {
+        canEdit_ = b;
+        editButton_->setHidden(!canEdit_);
+        if (!canEdit_) {
+            text_->show();
+            edit_->hide();
+            saveButton_->hide();
+            cancelButton_->hide();
+        }
+    }
+
+    // Get the current text, preferring the edited text to the database text.
+    Wt::WString text() const {
+        return edit_->text();
+    }
+
+    // Cause the database value to be equal to the edited value.
+    void saveEdit() {
+        if (edit_->text() != value_) {
+            value_ = edit_->text().narrow();
+            text_->setText(value_);
+        }
+    }
+
+    Wt::Signal<>& valueChanged() {
+        return valueChanged_;
+    }
+    
+private:
+    // When the edit button is clicked, replace the WText with a WTextEdit and save and cancel buttons
+    void handleEditButton() {
+        text_->hide();
+        editButton_->hide();
+        edit_->show();
+        edit_->setText(value_);
+        saveButton_->show();
+        cancelButton_->show();
+    }
+
+    void handleSaveButton() {
+        std::string newValue = edit_->text().narrow();
+        text_->show();
+        editButton_->show();
+        edit_->hide();
+        saveButton_->hide();
+        cancelButton_->hide();
+
+        if (newValue != value_) {
+            text_->setText(edit_->text());
+            value_ = newValue;
+            valueChanged_.emit();
+        }
+    }
+
+    void handleCancelButton() {
+        text_->show();
+        editButton_->show();
+        edit_->hide();
+        saveButton_->hide();
+        cancelButton_->hide();
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Shows a text value obtained from the database and possibly allows it to be edited.  The value can be edited
+// only if the canEdit property is true. Once the value is edited to a new value, the new value is displayed
+// instead of the database's value, and the isEdited property returns true and a valueChanged signal is emitted.
+class WDatabaseInPlaceEdit: public Wt::WContainerWidget {
+    bool canEdit_;
+    std::string value_;
+    std::string placeholder_;
+    Wt::WText *text_;
+    Wt::WInPlaceEdit *edit_;
+    Wt::Signal<> valueChanged_;
+
+public:
+    WDatabaseInPlaceEdit(const std::string &value, const std::string &placeholder,
+                         Wt::WContainerWidget *parent = NULL)
+        : canEdit_(false), value_(value), placeholder_(placeholder) {
+        setInline(true);
+
+        addWidget(text_ = new Wt::WText(value_.empty() ? placeholder_ : linkify(value_)));
+        text_->setStyleClass("dashboard-software-value");
+
+        addWidget(edit_ = new Wt::WInPlaceEdit(value_));
+        edit_->valueChanged().connect(this, &WDatabaseInPlaceEdit::handleValueChanged);
+        edit_->lineEdit()->setMaxLength(200);
+        edit_->lineEdit()->setTextSize(50);
+        edit_->setPlaceholderText(placeholder);
+        edit_->setStyleClass("dashboard-software-edit");
+        edit_->saveButton()->setText(Wt::WString::fromUTF8("\u2713")); // checkmark
+        edit_->saveButton()->setStyleClass("edit-button");
+        edit_->cancelButton()->setText(Wt::WString::fromUTF8("\u2715")); // X
+        edit_->cancelButton()->setStyleClass("edit-button");
+
+        setCanEdit(canEdit_);
+    }
+
+    Wt::WInPlaceEdit* editWidget() {
+        return edit_;
+    }
+    
+    // Update text from database. If value is edited, then the edited value will continue to display instead
+    // of the database value.
+    void setDbText(const std::string &s) {
+        if (s != value_) {
+            if (edit_->text() == value_)
+                edit_->setText(s);
+            text_->setText(linkify(s));
+            value_ = s;
+        }
+    }
+
+    // Get the current text, preferring the edited text to the database text.
+    Wt::WString text() const {
+        return edit_->text();
+    }
+    
+    // Whether edits are allowed
+    bool canEdit() const {
+        return canEdit_;
+    }
+
+    void setCanEdit(bool b) {
+        canEdit_ = b;
+        text_->setHidden(canEdit_);
+        edit_->setHidden(!canEdit_);
+    }
+
+    // True if the value was edited and is now different than the database value.
+    bool isEdited() const {
+        return edit_->text() != value_;
+    }
+
+    // Cause the database value to be equal to the edited value.
+    void saveEdit() {
+        if (edit_->text() != value_) {
+            value_ = edit_->text().narrow();
+            text_->setText(linkify(value_));
+        }
+    }
+
+    // Cancel edits, showing database value again.
+    void cancelEdit() {
+        edit_->setText(value_);
+    }
+
+    // Emitted if the value is changed via edit.
+    Wt::Signal<>& valueChanged() {
+        return valueChanged_;
+    }
+
+private:
+    void handleValueChanged() {
+        valueChanged_.emit();
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Model of test results.  This is a two dimensional table. The rows of the table correspond to values of the major dependency
 // and the columns of the table correspond to values of the minor dependency.  If the minor dependency name is the empty string
 // then the various test names (database "status" column of the "test_results" table) are used. The major and/or minor values
@@ -1126,7 +1341,7 @@ private:
 
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_NONE), chartValueType_(CVT_PERCENT),
+        : Wt::WAbstractTableModel(parent), baselineType_(BASELINE_NONE), chartValueType_(CVT_COUNT),
           roundToInteger_(false), humanReadable_(false), depMajorName_("languages"), depMajorIsData_(false),
           depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
@@ -2014,7 +2229,7 @@ public:
         absoluteRelative_->addItem("pass / runs (%)");
         absoluteRelative_->addItem("ave warnings (#)");
         absoluteRelative_->addItem("ave duration (sec)");
-        absoluteRelative_->setCurrentIndex(1);
+        absoluteRelative_->setCurrentIndex(0);
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Combo box to choose a baseline for delta or conjunction
@@ -2420,31 +2635,78 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dashboard
+
 class WDashboard: public Wt::WContainerWidget {
-    Wt::WTable *languageGrid_, *slaveGrid_, *testArticleGrid_;
-    Wt::WText *notices_;
+    typedef Sawyer::Container::Map<std::string, size_t> LanguageCounts;
+
+    Session &session_;
+    WDatabaseTextEdit *notice_;
+    WDatabaseInPlaceEdit *testCommittish_, *testRepository_, *matrixCommittish_, *matrixRepository_;
+    WDatabaseInPlaceEdit *testOs_, *testEnvironmentVersion_, *testFlags_;
+    Wt::WPushButton *saveSoftwareStatus_, *cancelSoftwareStatus_;
+    Wt::WTable *languageGrid_, *slaveGrid_;
     WComboBoxWithData<ComboBoxVersion> *softwareVersions_;
     Wt::WCheckBox *restrictToSupported_;
     Wt::WTimer *timer_, *versionUpdateTimer_;
     static const size_t languageGridColumns_ = 4;
-
-    typedef Sawyer::Container::Map<std::string, size_t> LanguageCounts;
-
+    
+    
 public:
-    explicit WDashboard(Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent), languageGrid_(NULL), slaveGrid_(NULL), testArticleGrid_(NULL),
-          notices_(NULL), softwareVersions_(NULL), restrictToSupported_(NULL), timer_(NULL) {
+    explicit WDashboard(Session &session, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), session_(session), notice_(NULL), languageGrid_(NULL), slaveGrid_(NULL),
+          softwareVersions_(NULL), restrictToSupported_(NULL), timer_(NULL) {
 
         // Notices
-        addWidget(notices_ = new Wt::WText);
-        notices_->setInline(false);
-        notices_->setStyleClass("notice");
-        notices_->hide();
+        addWidget(notice_ = new WDatabaseTextEdit("", "No notices"));
+        notice_->textWidget()->setStyleClass("notice");
+        notice_->valueChanged().connect(this, &WDashboard::handleSaveNotice);
 
-        // Version information
+        // Software status
         addWidget(new Wt::WText("<h1>Software status</h1>"));
-        addWidget(testArticleGrid_ = new Wt::WTable);
+        addWidget(new Wt::WText("Testing software "));
+        addWidget(testCommittish_ = new WDatabaseInPlaceEdit("", "nothing"));
+        testCommittish_->setToolTip("This is the tag or commit that's currently being advertised to the tester "
+                                    "machines. It might not be the same as the version for which results are "
+                                    "displayed below.");
+        testCommittish_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText(" from "));
+        addWidget(testRepository_ = new WDatabaseInPlaceEdit("", "nowhere"));
+        testRepository_->setToolTip("Repository from whence to-be-tested software is obtained.");
+        testRepository_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText("<br/>"));
+        addWidget(new Wt::WText("Using tools "));
+        addWidget(matrixCommittish_ = new WDatabaseInPlaceEdit("", "none"));
+        matrixCommittish_->setToolTip("Tag or commit defining the version of the tools that are being used "
+                                      "to run these tests.");
+        matrixCommittish_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText(" from "));
+        addWidget(matrixRepository_ = new WDatabaseInPlaceEdit("", "nowhere"));
+        matrixRepository_->setToolTip("Repository from which to obtain the tools that are used for testing.");
+        matrixRepository_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText("<br/>"));
+        addWidget(new Wt::WText("Testing on "));
+        addWidget(testOs_ = new WDatabaseInPlaceEdit("", "nothing"));
+        testOs_->setToolTip("Space-separated operating system names in which tests are running.");
+        testOs_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText("<br/>"));
+        addWidget(new Wt::WText("Test environment "));
+        addWidget(testEnvironmentVersion_ = new WDatabaseInPlaceEdit("", "none"));
+        testEnvironmentVersion_->setToolTip("Version (usually a date) of the environment found in the Docker "
+                                            "containers in which the tests are running.");
+        testEnvironmentVersion_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText(" with "));
+        addWidget(testFlags_ = new WDatabaseInPlaceEdit("", "no flags"));
+        testFlags_->setToolTip("Command-line switches passed to the testing scripts.");
+        testFlags_->valueChanged().connect(this, &WDashboard::hideOrShowSoftwareButtons);
+        addWidget(new Wt::WText("<br/>"));
 
+        addWidget(saveSoftwareStatus_ = new Wt::WPushButton("Save"));
+        saveSoftwareStatus_->setToolTip("Save edits to database.");
+        saveSoftwareStatus_->clicked().connect(this, &WDashboard::handleSaveSoftwareStatus);
+        addWidget(cancelSoftwareStatus_ = new Wt::WPushButton("Cancel"));
+        cancelSoftwareStatus_->setToolTip("Cancel edits; use values from database.");
+        cancelSoftwareStatus_->clicked().connect(this, &WDashboard::handleCancelSoftwareStatus);
+        
         // Grid of languages being tested.
         addWidget(new Wt::WText("<h1>Language status</h1>"));
         addWidget(new Wt::WText("Results<sup>*</sup> for commit "));
@@ -2463,7 +2725,7 @@ public:
                                 "failures to install dependencies are not counted.</small>"));
 
         // Grid of slaves running
-        addWidget(new Wt::WText("<h1>Slave status</h1>"));
+        addWidget(new Wt::WText("<h1>Tester status</h1>"));
         addWidget(slaveGrid_ = new Wt::WTable);
         //slaveGrid_->setMinimumSize(Wt::WLength(100, Wt::WLength::Percentage), Wt::WLength());
 
@@ -2485,53 +2747,33 @@ public:
     // Update the contents of the dashboard by querying the database
     void update() {
         updateSoftwareVersions();
-        updateTestArticleGrid();
+        updateSoftwareStatus();
         updateLanguageGrid();
         updateSlaveGrid();
     }
     
-
     // Updates information about the version being tested
-    void updateTestArticleGrid() {
-        ASSERT_not_null(testArticleGrid_);
-        testArticleGrid_->clear();
-        notices_->hide();
-
-        // Slave configuration info
+    void updateSoftwareStatus() {
         SqlDatabase::StatementPtr q = gstate.tx->statement("select name, value from slave_settings");
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            if (row.get_str(0) == "TEST_COMMITTISH") {
-                if (row.get_str(1).empty()) {
-                    testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("Testing is paused"));
-                    testArticleGrid_->elementAt(0, 0)->setStyleClass("notice");
-                } else {
-                    testArticleGrid_->elementAt(0, 0)->addWidget(new Wt::WText("ROSE " + row.get_str(1)));
-                    testArticleGrid_->elementAt(0, 0)->setToolTip("This is the tag or commit that's currently being advertised to "
-                                                                  "the slaves for testing. It might not be the same as the version for "
-                                                                  "which results are presented below.");
-                }
-            } else if (row.get_str(0) == "TEST_REPOSITORY") {
-                testArticleGrid_->elementAt(1, 0)->addWidget(new Wt::WText("<b>Repository:</b> " + linkify(row.get_str(1))));
-                testArticleGrid_->elementAt(1, 0)->setToolTip("Repository from whence to-be-tested software is obtained.");
-            } else if (row.get_str(0) == "TEST_ENVIRONMENT_VERSION") {
-                testArticleGrid_->elementAt(2, 0)->addWidget(new Wt::WText("<b>Test environment:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(2, 0)->setToolTip("Version (usually a date) of the environment found in the Docker "
-                                                              "containers in which the tests are running.");
-            } else if (row.get_str(0) == "TEST_FLAGS") {
-                testArticleGrid_->elementAt(3, 0)->addWidget(new Wt::WText("<b>Parameters:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(3, 0)->setToolTip("Command-line switches passed to the testing scripts.");
-            } else if (row.get_str(0) == "TEST_OS") {
-                testArticleGrid_->elementAt(4, 0)->addWidget(new Wt::WText("<b>Operating systems:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(4, 0)->setToolTip("Operating system in which the tests are running.");
-            } else if (row.get_str(0) == "MATRIX_REPOSITORY") {
-                testArticleGrid_->elementAt(5, 0)->addWidget(new Wt::WText("<b>Tool repository:</b> " + linkify(row.get_str(1))));
-                testArticleGrid_->elementAt(5, 0)->setToolTip("Repository containing the testing tools.");
-            } else if (row.get_str(0) == "MATRIX_COMMITTISH") {
-                testArticleGrid_->elementAt(6, 0)->addWidget(new Wt::WText("<b>Tool version:</b> " + row.get_str(1)));
-                testArticleGrid_->elementAt(6, 0)->setToolTip("Tag or commit defining the version of the tools being used to run tests.");
-            } else if (row.get_str(0) == "NOTICE" && !row.get_str(1).empty()) {
-                notices_->setText("<b>Notice:</b> " + row.get_str(1));
-                notices_->show();
+            std::string name = row.get_str(0);
+            std::string value = row.get_str(1);
+            if ("TEST_COMMITTISH" == name) {
+                testCommittish_->setDbText(value);
+            } else if ("TEST_REPOSITORY" == name) {
+                testRepository_->setDbText(value);
+            } else if ("MATRIX_COMMITTISH" == name) {
+                matrixCommittish_->setDbText(value);
+            } else if ("MATRIX_REPOSITORY" == name) {
+                matrixRepository_->setDbText(value);
+            } else if ("TEST_OS" == name) {
+                testOs_->setDbText(value);
+            } else if ("TEST_ENVIRONMENT_VERSION" == name) {
+                testEnvironmentVersion_->setDbText(value);
+            } else if ("TEST_FLAGS" == name) {
+                testFlags_->setDbText(value);
+            } else if ("NOTICE" == name) {
+                notice_->setDbText(value);
             }
         }
     }
@@ -2708,7 +2950,95 @@ public:
         }
     }
 
+    void authenticationEvent() {
+        bool canEdit = session_.isPublisher(session_.currentUser());
+        testCommittish_->setCanEdit(canEdit);
+        testRepository_->setCanEdit(canEdit);
+        matrixCommittish_->setCanEdit(canEdit);
+        matrixRepository_->setCanEdit(canEdit);
+        testOs_->setCanEdit(canEdit);
+        testEnvironmentVersion_->setCanEdit(canEdit);
+        testFlags_->setCanEdit(canEdit);
+        notice_->setCanEdit(canEdit);
+        hideOrShowSoftwareButtons();
+    }
+
 private:
+    void handleSaveNotice() {
+        SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+        tx->statement("update slave_settings set value = ? where name = 'NOTICE'")
+            ->bind(0, notice_->text().narrow())
+            ->execute();
+        tx->commit();
+        notice_->saveEdit();
+    }
+
+    bool softwareValuesAreEdited() {
+        return (testCommittish_->isEdited() ||
+                testRepository_->isEdited() ||
+                matrixCommittish_->isEdited() ||
+                matrixRepository_->isEdited() ||
+                testOs_->isEdited() ||
+                testEnvironmentVersion_->isEdited() ||
+                testFlags_->isEdited());
+    }
+    
+    void handleSaveSoftwareStatus() {
+        bool canEdit = session_.isPublisher(session_.currentUser());
+        if (canEdit) {
+            SqlDatabase::TransactionPtr tx = gstate.tx->connection()->transaction();
+            tx->statement("update slave_settings set value = ? where name = 'TEST_COMMITTISH'")
+                ->bind(0, testCommittish_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'TEST_REPOSITORY'")
+                ->bind(0, testRepository_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'MATRIX_COMMITTISH'")
+                ->bind(0, matrixCommittish_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'MATRIX_REPOSITORY'")
+                ->bind(0, matrixRepository_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'TEST_OS'")
+                ->bind(0, testOs_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'TEST_ENVIRONMENT_VERSION'")
+                ->bind(0, testEnvironmentVersion_->text().narrow())
+                ->execute();
+            tx->statement("update slave_settings set value = ? where name = 'TEST_FLAGS'")
+                ->bind(0, testFlags_->text().narrow())
+                ->execute();
+
+            tx->commit();
+
+            testCommittish_->saveEdit();
+            testRepository_->saveEdit();
+            matrixCommittish_->saveEdit();
+            matrixRepository_->saveEdit();
+            testOs_->saveEdit();
+            testEnvironmentVersion_->saveEdit();
+            testFlags_->saveEdit();
+            hideOrShowSoftwareButtons();
+        }
+    }
+
+    void handleCancelSoftwareStatus() {
+        testCommittish_->cancelEdit();
+        testRepository_->cancelEdit();
+        matrixCommittish_->cancelEdit();
+        matrixRepository_->cancelEdit();
+        testOs_->cancelEdit();
+        testEnvironmentVersion_->cancelEdit();
+        testFlags_->cancelEdit();
+        hideOrShowSoftwareButtons();
+    }
+
+    void hideOrShowSoftwareButtons() {
+        bool canEdit = session_.isPublisher(session_.currentUser());
+        saveSoftwareStatus_->setHidden(!canEdit || !softwareValuesAreEdited());
+        cancelSoftwareStatus_->setHidden(!canEdit || !softwareValuesAreEdited());
+    }
+    
     std::string testResultsTable() {
         return restrictToSupported_->checkState() == Wt::Checked ? "supported_results" : "test_results";
     }
@@ -3500,6 +3830,9 @@ public:
         depNames_.push_back("rose");
         depLabels_.push_back("ROSE version");
 
+        depNames_.push_back("languages");
+        depLabels_.push_back("Analysis languages");
+
         depNames_.push_back("os");
         depLabels_.push_back("Operating system");
 
@@ -3508,9 +3841,6 @@ public:
 
         depNames_.push_back("boost");
         depLabels_.push_back("Boost version");
-
-        depNames_.push_back("languages");
-        depLabels_.push_back("Analysis languages");
 
         depNames_.push_back("edg");
         depLabels_.push_back("EDG version");
@@ -4584,6 +4914,10 @@ public:
         }
         styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
+        styleSheet().addRule(".edit-button",
+                             "padding: 4px;"
+                             "border-width: 1px;");
+
         // For the dashboard
         styleSheet().addRule(".language-status-box",
                              "border-radius: 15px;");
@@ -4593,6 +4927,10 @@ public:
                              "border-top: 2px solid black;"
                              "border-bottom: 2px solid black;"
                              "background-color: " + Rose::Color::RGB(1.00, 0.92, 0.18).toHtml() + ";");
+        styleSheet().addRule(".dashboard-software-value",
+                             "font-weight: bold;");
+        styleSheet().addRule(".dashboard-software-edit",
+                             "font-weight: bold;");
 
         // For the dependencies
         styleSheet().addRule(".table-header",
@@ -4621,7 +4959,7 @@ public:
         tabs_ = new Wt::WTabWidget();
         vbox->addWidget(tabs_);
         mlog[INFO] <<"creating tab: Dashboard\n";
-        tabs_->addTab(dashboard_ = new WDashboard, "Dashboard");
+        tabs_->addTab(dashboard_ = new WDashboard(session_), "Dashboard");
         mlog[INFO] <<"creating tab: Dependencies\n";
         tabs_->addTab(dependencies_ = new WDependencies(session_), "Dependencies");
         mlog[INFO] <<"creating tab: Configurations\n";
@@ -4663,6 +5001,7 @@ private:
         } else {
             showLoggedOutView();
         }
+        dashboard_->authenticationEvent();
         settings_->authenticationEvent();
         developers_->authenticationEvent();
         dependencies_->authenticationEvent();
@@ -4691,7 +5030,7 @@ private:
         tabs_->setTabHidden(tabs_->indexOf(developers_),                SHOW);
         tabs_->setTabHidden(tabs_->indexOf(dependencies_),              SHOW);
         tabs_->setTabHidden(tabs_->indexOf(setup_),                     HIDE);
-        tabs_->setCurrentIndex(tabs_->indexOf(resultsConstraints_));
+        tabs_->setCurrentIndex(tabs_->indexOf(dashboard_));
     }
 
     void showLoggedOutView() {
