@@ -33,6 +33,7 @@ namespace CodeThorn {
     bool isFailedAssertIO() const;
     bool isVerificationError() const;
     bool isNonIO() const;
+    bool isBot() const;
   };
   
   bool operator<(const InputOutput& c1, const InputOutput& c2);

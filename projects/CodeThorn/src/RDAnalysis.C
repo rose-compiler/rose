@@ -29,16 +29,16 @@ CodeThorn::RDPropertyStateFactory::~RDPropertyStateFactory() {
 
 CodeThorn::RDAnalysis::RDAnalysis() {
   _transferFunctions=new RDTransferFunctions();
-  _initialElementFactory=new RDPropertyStateFactory();
+  _transferFunctions->setInitialElementFactory(new RDPropertyStateFactory());
 }
 
 CodeThorn::RDAnalysis::~RDAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
+  delete _transferFunctions->getInitialElementFactory();
 }
+
 void CodeThorn::RDAnalysis::initializeExtremalValue(Lattice* element) {
-  RDLattice* rdElement=dynamic_cast<RDLattice*>(element);
-  rdElement->setEmptySet();
+  _transferFunctions->initializeExtremalValue(*element);
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
