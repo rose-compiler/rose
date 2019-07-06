@@ -31,6 +31,11 @@ run yum -y install wget tar cmake java-1.8.0-openjdk-devel python-devel graphviz
     fuse fuse-devel passwd fontconfig mesa-libGLU git pcre-devel patch glibc-static libstdc++-static \
     libstdc++-devel.i686 ncurses-devel.i686 sudo postgresql-devel
 
+# Some dependencies are part of the core CentOS distribution
+run yum -y install epel-release
+run yum -y update
+run yum -y install fcgi-devel
+
 ########################################################################################################################
 # Create user and groups
 ########################################################################################################################
