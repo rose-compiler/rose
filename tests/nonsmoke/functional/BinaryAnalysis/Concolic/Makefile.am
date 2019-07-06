@@ -120,6 +120,35 @@ testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
 	rm -f testExport.db
 
 
+TEST_TARGETS += testConnectNonExisting.passed
+
+testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnectNonExisting [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
+		ANS="yes" \
+		$< $@
+
+
+TEST_TARGETS += testCreateOverwrites.passed
+
+testCreateOverwrites.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testCreateOverwrites [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testCreateOverwrites.crsh" \
+		ANS="yes" \
+		$< $@
+
+TEST_TARGETS += testConnect.passed
+
+testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnect [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
+		ANS="yes" \
+		$< $@
+
+
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test concolic executor

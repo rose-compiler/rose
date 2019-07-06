@@ -3,6 +3,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#if defined(__linux__)
+  #include <unistd.h>
+#endif
+
 #include "crsh.hpp"
 
 #include "sage3basic.h"
@@ -29,6 +33,18 @@ extern char* yytext;
 extern int yylex (void);
 extern int yyparse(void);
 
+namespace bstfs = boost::filesystem;
+
+// stealing from LinuxExecutor.C
+namespace Rose { namespace BinaryAnalysis { namespace Concolic {
+  int executeBinary( const std::string& binary,
+                     const std::string& logout,
+                     const std::string& logerr,
+                     LinuxExecutor::Persona persona,
+                     std::vector<std::string> args,
+                     std::vector<std::string> envv
+                   );
+}}}
 
 //
 // InvocationDesc
@@ -47,6 +63,21 @@ struct InvocationDesc
 
 //
 // auxiliary functions
+
+std::string str(Crsh::expectation expct)
+{
+  std::string res;
+
+  switch (expct)
+  {
+    case Crsh::none:    res = "none";    break;
+    case Crsh::success: res = "success"; break;
+    case Crsh::failure: res = "failure"; break;
+    default: ROSE_ASSERT(false);
+  }
+
+  return res;
+}
 
 std::ostream& operator<<(std::ostream& os, Crsh::TestCase& test)
 {
@@ -83,9 +114,15 @@ std::string conv(const char* str)
 template <class T>
 static
 typename T::Ptr
-byName(Crsh::Database::Ptr& db, const std::string& s, Rose::BinaryAnalysis::Concolic::ObjectId<T> id)
+byName( Crsh::Database::Ptr& db,
+        const std::string& s,
+        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
+        bool createMissingEntry = true
+      )
 {
   if (id) return db->object(id);
+
+  if (!createMissingEntry) return typename T::Ptr();
 
   // if not in the database already, create it from a file
   typename T::Ptr obj = T::instance(s);
@@ -106,33 +143,148 @@ std::list<T>* enlist(std::list<T>* lst, const T* el)
   return lst;
 }
 
-
-void require_outcome(Crsh::expectation expct, Crsh::expectation outcome)
+bool isExecutable(const bstfs::path& p)
 {
-  if (expct == Crsh::none || expct == outcome)
-    return;
+#if defined(__linux__)
+  return access(p.c_str(), X_OK) == 0;
+#else
+  throw std::runtime_error("Non-Linux system");
+#endif /* __linux__ */
+}
+
+void validateExistance(const bstfs::path& p)
+{
+  if (!bstfs::exists(p))
+    std::runtime_error("executable does not exist: " + p.native());
+}
+
+void validateExecutability(const bstfs::path& p)
+{
+  if (!isExecutable(p))
+    std::runtime_error("cannot execute file: " + p.native());
+}
 
 
+bstfs::path
+findExecutable(const bstfs::path& exe, std::string searchpath)
+{
+  while (searchpath.size())
+  {
+    const size_t      sep  = searchpath.find_first_of(':');
+    const std::string cand = searchpath.substr(0, sep);
+    const bstfs::path full(cand + "/" + exe.native());
+
+    if (bstfs::exists(full) && isExecutable(full))
+      return full;
+
+    const size_t      remain = (sep == std::string::npos) ? searchpath.size()
+                                                          : sep+1
+                                                          ;
+
+    searchpath = searchpath.substr(remain);
+  }
+
+  // throw std::runtime_error("executable not found in path: " + exe.native());
+  return exe;
+}
+
+
+bstfs::path
+findExecutable(bstfs::path p)
+{
+  // if path is specified
+  if (p.parent_path() != "")
+  {
+    validateExistance(p);
+    validateExecutability(p);
+
+    return p;
+  }
+
+  // finds executable in path
+  return findExecutable(p, getenv("PATH"));
+}
+
+std::string
+findExecutable(const std::string& p)
+{
+  // finds executable in path
+  return findExecutable(p);
+}
+
+#if defined(__linux__)
+extern char **environ; /**< link to my environment. */
+#endif
+
+std::vector<std::string>
+currentEnvironment()
+{
+  std::vector<std::string> res;
+
+#if defined(__linux__)
+  char** envvar = environ;
+
+  while (*envvar)
+  {
+    res.push_back(*envvar);
+
+    ++envvar;
+  }
+#endif
+
+  return res;
 }
 
 
 //
 // Crsh implementation
 
-void Crsh::disconnect()
+void Crsh::closedb()
 {
   db = Sawyer::Nothing();
 }
 
-void Crsh::connect(const std::string& s)
+void Crsh::connectdb(const char* dburl, expectation exp)
 {
-  db = Database::instance(s);
+  std::string url   = conv(dburl);
+  expectation state = success;
+
+  try
+  {
+    db = Database::instance(url);
+  }
+  catch (...)
+  {
+    state = failure;
+  }
+
+  if ((exp != none) && (exp != state))
+  {
+    err() << "error when connecting to database: " << url << '\n'
+          << "  exited with " << str(state) << ", expected " << str(exp)
+          << std::endl;
+
+    exit(1);
+  }
+}
+
+void Crsh::createdb(const char* dburl)
+{
+  db = Database::create(conv(dburl));
+}
+
+void Crsh::createdb(const char* dburl, const char* testsuite)
+{
+  db = Database::create(conv(dburl), conv(testsuite));
+
+  // for now just clear the testsuite
+  db->testSuite(TestSuite::Ptr());
 }
 
 Crsh::TestSuite::Ptr
-Crsh::testSuite(const std::string& s)
+Crsh::testSuite(const std::string& s, bool createMissingEntry)
 {
-  return byName(db, s, db->testSuite(s));
+  return byName(db, s, db->testSuite(s), createMissingEntry);
 }
 
 Crsh::EnvValue*
@@ -162,12 +314,7 @@ Crsh::arg(const char* argument) const
   return new std::string(tmp);
 }
 
-void Crsh::echo(const char* what)
-{
-  out() << conv(what) << std::endl;
-}
-
-
+/*
 void Crsh::echo_var(const char* id)
 {
   std::string varid = conv(id);
@@ -181,6 +328,7 @@ void Crsh::echo_var(const char* id)
 
   out() << std::endl;
 }
+*/
 
 Crsh::expectation
 Crsh::annotate(const char* expect)
@@ -194,14 +342,14 @@ Crsh::annotate(const char* expect)
   exit(1);
 }
 
-char* Crsh::unquote_string(const char* str)
+char* Crsh::unquoteString(const char* str)
 {
   size_t len   = strlen(str)-1;
-  ROSE_ASSERT(len > 0 && str[0] == '\"');
+  ROSE_ASSERT(len > 0 && str[0] == '\"' && str[len] == '\"');
 
   char*  clone = static_cast<char*>(malloc(len));
-  strncpy(clone, str+1, len);
-  ROSE_ASSERT(clone[len] == 0);
+  strncpy(clone, str+1, len-1);
+  clone[len-1] = 0;
 
   free(const_cast<char*>(str));
   return clone;
@@ -222,9 +370,11 @@ Crsh::args(Arguments* arglst, const std::string* argument) const
 InvocationDesc*
 Crsh::invoke(const char* specimen, Arguments* args) const
 {
+  std::string              specimenname = conv(specimen);
   std::auto_ptr<Arguments> arguments(args);
 
-  return new InvocationDesc(conv(specimen), *args);
+  specimenname = findExecutable(bstfs::path(specimenname)).native();
+  return new InvocationDesc(specimenname, *args);
 }
 
 template <class T>
@@ -234,20 +384,6 @@ std::vector<T> mkVector(const std::list<T>& lst)
   return std::vector<T>(lst.begin(), lst.end());
 }
 
-std::string str(Crsh::expectation expct)
-{
-  std::string res;
-
-  switch (expct)
-  {
-    case Crsh::none:    res = "none";    break;
-    case Crsh::success: res = "success"; break;
-    case Crsh::failure: res = "failure"; break;
-    default: ROSE_ASSERT(false);
-  }
-
-  return res;
-}
 
 void
 Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, InvocationDesc* inv)
@@ -310,26 +446,57 @@ void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
   typedef Concolic::LinuxExecutor::Result ExecutionResult;
   typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
 
+  expectation                state    = failure;
+  int                        exitvalue = 0;
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
 
-  ROSE_ASSERT(testcase.getRawPointer());
-  err() << "***> " << *testcase << std::endl;
+  if (testcase.getRawPointer())
+  {
+    ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
 
-  ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
-  expectation          state = result->exitStatus() ? failure : success;
+    exitvalue = result->exitStatus();
+    db->insertConcreteResults(testcase, *result.get());
 
-  db->insertConcreteResults(testcase, *result.get());
+    if (exitvalue == 0) state = success;
+  }
 
   if ((expct != none) && (expct != state))
   {
     err() << "error in test: " << testcase->name() << '\n'
-          << "  exited with " << str(state) << ", expected " << str(expct)
+          << "  exited with " << str(state) << ", expected " << str(expct) << '\n'
+          << "  status: " << exitvalue
           << std::endl;
 
     exit(1);
   }
 }
+
+
+// immediately invokes the described program
+void Crsh::execute(InvocationDesc* invoc)
+{
+  using namespace Rose::BinaryAnalysis;
+
+  typedef Concolic::LinuxExecutor::Persona Persona;
+
+  std::auto_ptr<InvocationDesc> invguard(invoc);
+  const std::string             noredirect;
+  Persona                       nopersona;
+  std::vector<std::string>      args = mkVector(invoc->arguments);
+  std::vector<std::string>      envv = currentEnvironment();
+
+  int ec = Concolic::executeBinary( invoc->specimen,
+                                    noredirect,
+                                    noredirect,
+                                    nopersona,
+                                    args,
+                                    envv
+                                  );
+
+  if (ec) err() << "error: " << invoc->specimen << " exited with " << ec << std::endl;
+}
+
 
 
 /** Functor to run a new testcase.
@@ -351,7 +518,7 @@ struct TestCaseStarter
 };
 
 
-void Crsh::run(const char* testsuite, int num, expectation expct)
+void Crsh::runTest(const char* testsuite, int num, expectation expct)
 {
   TestSuite::Ptr suite;
 
@@ -359,8 +526,18 @@ void Crsh::run(const char* testsuite, int num, expectation expct)
 
   if (testsuite != NULL)
   {
-    suite = testSuite(conv(testsuite));
-    ROSE_ASSERT(suite);
+    std::string tsname = conv(testsuite);
+
+    suite = testSuite(tsname, false /* do not create new test suites */);
+
+    if (!suite.getRawPointer())
+    {
+      if (expct == failure) return;
+
+      err() << "unable to find testsuite: " << tsname << '\n'
+            << "  exited with " << str(failure) << ", expected " << str(expct)
+            << std::endl;
+    }
   }
 
   db->testSuite(suite);
@@ -459,6 +636,6 @@ int main(int argc, char** argv)
     parse_file(argv[1]);
   }
 
-  crsh().disconnect();
+  crsh().closedb();
   return 0;
 }

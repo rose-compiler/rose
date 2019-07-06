@@ -1590,31 +1590,40 @@ Database::instance(const std::string &url)
 }
 
 Database::Ptr
-Database::create(const std::string& url, const std::string& testSuiteName)
+Database::create(const std::string& url)
 {
   SqlConnectionPtr dbconn = connectToDB(url, overwriteExistingDB);
   DBTxGuard        dbtx(dbconn);
 
   // create tables
   initializeDB(dbtx.tx());
+  dbtx.commit();
+
+  Ptr              db(new Database);
+
+  db->dbconn_      = dbconn;
+  return db;
+}
+
+Database::Ptr
+Database::create(const std::string& url, const std::string& testSuiteName)
+{
+  Ptr         db = create(url);
+  DBTxGuard   dbtx(db->dbconn_);
 
   // insert new testsuite
   sqlPrepare(dbtx.tx(), QY_NEW_TESTSUITE, testSuiteName)
     ->execute();
 
-  // query testsuite's id
-  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName);
-  TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
-
+  // query id
+  TestSuiteId tsid(sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName)->execute_int());
   dbtx.commit();
-  ROSE_ASSERT(testSuiteid.get() == DBSQLITE_FIRST_ROWID); // first inserted suite
 
-  Ptr              db(new Database);
-
-  db->dbconn_      = dbconn;
-    db->testSuiteId_ = testSuiteid;
-    return db;
+  ROSE_ASSERT(tsid.get() == DBSQLITE_FIRST_ROWID); // first inserted suite
+  db->testSuiteId_ = tsid;
+  return db;
 }
+
 
 void
 Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)

@@ -374,6 +374,9 @@ public:
     /** Reference counting pointer to a @ref LinuxExecutor. */
     typedef Sawyer::SharedPointer<LinuxExecutor> Ptr;
 
+    /** Holds an optional personality-value (i.g., indicating if address randomization should be turned off). */
+    typedef Sawyer::Optional<unsigned long> Persona;
+
     /** Base class for user-defined Linux concrete execution results. */
     class Result: public ConcreteExecutor::Result {
     protected:
@@ -670,9 +673,12 @@ public:
      *  filesystem, but PostgreSQL databases need to be created through the DBMS. Throws an @ref Exception if the new database
      *  could not be created.
      *
-     *  Once the database is created, a new test suite with the given name is created. */
+     *  Once the database is created, a new test suite with the given name is created.
+     * @{
+     */
+    static Ptr create(const std::string &url);
     static Ptr create(const std::string &url, const std::string &testSuiteName);
-
+    /** @} */
     //------------------------------------------------------------------------------------------------------------------------
     // Test suites
     //------------------------------------------------------------------------------------------------------------------------

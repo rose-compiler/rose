@@ -252,7 +252,7 @@ std::string extract_filename(std::string url)
  */
 void testAll(std::string dburi)
 {
-  concolic::Database::Ptr db  = concolic::Database::instance(dburi);
+  concolic::Database::Ptr db  = concolic::Database::create(dburi);
 
   // add new file(s)
   concolic::SpecimenId              tst       = copyBinaryToDB(db, "testConcolicDB", concolic::Update::YES);
