@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
+#include <boost/lexical_cast.hpp>
 #include "io-utility.h"
 
 namespace Rose {
@@ -58,6 +59,18 @@ void
 Specimen::name(const std::string &s) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     name_ = s;
+}
+
+std::string
+Specimen::printableName(const Database::Ptr &db) {
+    std::string retval = "specimen";
+    if (db) {
+        if (SpecimenId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    if (!name().empty())
+        retval += " \"" + StringUtility::cEscape(name()) + "\"";
+    return retval;
 }
 
 void Specimen::content(std::vector<uint8_t> binary_data)

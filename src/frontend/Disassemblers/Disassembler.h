@@ -259,13 +259,13 @@ public:
 
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
-        ASSERT_require(REG_IP.is_valid());
+        ASSERT_forbid(REG_IP.isEmpty());
         return REG_IP;
     }
 
     /** Returns the register that points to the stack. */
     virtual RegisterDescriptor stackPointerRegister() const {
-        ASSERT_require(REG_SP.is_valid());
+        ASSERT_forbid(REG_SP.isEmpty());
         return REG_SP;
     }
 

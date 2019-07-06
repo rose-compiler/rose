@@ -1,6 +1,8 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
@@ -25,6 +27,18 @@ TestCase::name(const std::string& tcname) {
   //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   name_ = tcname;
+}
+
+std::string
+TestCase::printableName(const Database::Ptr &db) {
+    std::string retval = "test case";
+    if (db) {
+        if (TestCaseId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    if (!name().empty())
+        retval += " \"" + StringUtility::cEscape(name()) + "\"";
+    return retval;
 }
 
 Specimen::Ptr

@@ -166,9 +166,9 @@ BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
     RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
     BOOST_FOREACH (const RegisterState::RegPair &regpair, regs->get_stored_registers()) {
-        std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.get_nbits()) + " " +
+        std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.nBits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);
-        if (regpair.desc.get_nbits() > 64) {
+        if (regpair.desc.nBits() > 64) {
             out <<"/* " <<ctext <<"; -- not supported yet in ROSE source analysis */\n";
         } else {
             out <<ctext <<";\n";
@@ -296,7 +296,7 @@ BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Funct
 
     const RegisterDescriptor IP = disassembler_->instructionPointerRegister();
     out <<"void F_" <<StringUtility::addrToString(function->address()).substr(2) <<"("
-        <<"const " <<SValue::unsignedTypeNameForSize(IP.get_nbits()) <<" ret_va"
+        <<"const " <<SValue::unsignedTypeNameForSize(IP.nBits()) <<" ret_va"
         <<") {\n"
         <<"    while (" <<raisingOps_->registerVariableName(IP) <<" != ret_va) {\n"
         <<"        switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
@@ -331,13 +331,13 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     const RegisterDescriptor SP = disassembler_->stackPointerRegister();
     const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
     raisingOps_->reset();
-    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.get_nbits());
+    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.nBits());
     BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
                                                                     raisingOps_->peekRegister(SP, spDflt),
-                                                                    raisingOps_->undefined_(IP.get_nbits()),
+                                                                    raisingOps_->undefined_(IP.nBits()),
                                                                     raisingOps_->boolean_(true));
     emitEffects(out);
-    out <<"    " <<SValue::unsignedTypeNameForSize(IP.get_nbits()) <<" returnTarget = "
+    out <<"    " <<SValue::unsignedTypeNameForSize(IP.nBits()) <<" returnTarget = "
         <<SValue::promote(returnTarget)->ctext() <<";\n";
 
     // Emit the dispatch table
@@ -426,7 +426,7 @@ BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) 
 
     if (settings_.initialStackPointer) {
         const RegisterDescriptor reg = disassembler_->stackPointerRegister();
-        SValuePtr val = SValue::promote(raisingOps_->number_(reg.get_nbits(), *settings_.initialStackPointer));
+        SValuePtr val = SValue::promote(raisingOps_->number_(reg.nBits(), *settings_.initialStackPointer));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 

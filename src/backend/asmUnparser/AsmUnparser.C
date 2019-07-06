@@ -300,8 +300,8 @@ AsmUnparser::invalid_register(SgAsmInstruction *insn, RegisterDescriptor reg, co
     using namespace StringUtility;
     Stream warn(mlog[WARN]);
 
-    std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
-                         numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
+    std::string regstr = numberToString(reg.majorNumber()) + "." + numberToString(reg.minorNumber()) + "." +
+                         numberToString(reg.offset()) + "." + numberToString(reg.nBits());
     if (insn) {
         warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
     } else {

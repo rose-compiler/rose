@@ -1782,7 +1782,7 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().get_nbits() &&
+        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
         } else if (bv.isEqualToZero()) {

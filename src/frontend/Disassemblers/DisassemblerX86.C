@@ -425,7 +425,7 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    ASSERT_require(REG_IP.is_valid());
+    ASSERT_forbid(REG_IP.isEmpty());
     SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
     r->set_type(sizeToType(insnSize));
     return r;

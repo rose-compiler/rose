@@ -1517,7 +1517,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         BOOST_FOREACH (SgAsmIntegerValueExpression *ival, successors)
             bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
         if (!blockAst->get_successors_complete()) {
-            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().nBits();
             bblock->insertSuccessor(Semantics::SValue::instance_undefined(nbits));
         }
 
@@ -1900,7 +1900,7 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     } else if (1 == interruptVector.size()) {
         throw std::runtime_error("cannot determine interrupt vector size for architecture");
     } else {
-        size_t ptrSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t ptrSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
         ASSERT_require2(ptrSize % 8 == 0, "instruction pointer register size is strange");
         size_t bytesPerPointer = ptrSize / 8;
         size_t nPointers = interruptVector.size() / bytesPerPointer;
@@ -1942,7 +1942,7 @@ Engine::discoverBasicBlocks(Partitioner &partitioner) {
 
 Function::Ptr
 Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr_t &readVa /*in,out*/) {
-    const rose_addr_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    const rose_addr_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     ASSERT_require2(wordSize>0 && wordSize<=8, StringUtility::numberToString(wordSize)+"-byte words not implemented yet");
     const rose_addr_t maxaddr = partitioner.memoryMap()->hull().greatest();
 
@@ -2823,7 +2823,7 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
         }
 
         if (mayReturn) {
-            size_t nBits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            size_t nBits = partitioner.instructionProvider().instructionPointerRegister().nBits();
             partitioner.detachBasicBlock(bb);
             bb->insertSuccessor(bb->fallthroughVa(), nBits, E_CALL_RETURN, confidence);
             partitioner.attachBasicBlock(caller, bb);

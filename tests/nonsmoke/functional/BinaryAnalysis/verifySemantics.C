@@ -275,7 +275,7 @@ main(int argc, char *argv[]) {
     Disassembler *disassembler = engine.obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
-    size_t addrWidth = disassembler->stackPointerRegister().get_nbits();
+    size_t addrWidth = disassembler->stackPointerRegister().nBits();
     const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
     InstructionMap insns;
