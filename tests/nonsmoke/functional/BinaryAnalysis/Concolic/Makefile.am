@@ -39,89 +39,90 @@ testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 ## Commenting out a few tests temporarily because they're not portable yet. They assume that basic operating system
 ## commands are installed in /usr/bin, but on many popular Linux distributions they're in /bin. When these are
 ## fixed and de-commented, please also remove the two corresponding comments in Tupfile. [matzke 2019-07-02]
+## fixed PP (07/06/19)
 ##
-##TEST_TARGETS += testConcolicDB.passed
-##
-##testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
-##	@$(RTH_RUN) \
-##		TITLE="concolic database [$@]" \
-##		CMD="./testConcolicDB" \
-##		ANS="no" \
-##		$< $@
-##
-### b) test various executions
-##
-##TEST_TARGETS += testOpenDB.passed
-##
-##testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database openDB [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f openDB.db
-##
-##TEST_TARGETS += testDefineTests.passed
-##
-##testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database defineTests [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f defineTests.db
-##
-##TEST_TARGETS += testRun1.passed
-##
-##testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database run1 [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f run1.db
-##
-##
-##TEST_TARGETS += testRun10.passed
-##
-##testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database run10 [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f run10.db
-##
-##
-##TEST_TARGETS += testDefineFail.passed
-##
-##testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database defineFail [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f defineFail.db
-##
-##TEST_TARGETS += testCombined.passed
-##
-##testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
-##	@$(RTH_RUN) \
-##		TITLE="concolic database combined [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f combined.db
-##
-##TEST_TARGETS += testExport.passed
-##
-##testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
-##	@$(RTH_RUN) \
-##		TITLE="concolic database testExport [$@]" \
-##		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
-##		ANS="yes" \
-##		$< $@
-##	rm -f testExport.db
+TEST_TARGETS += testConcolicDB.passed
+
+testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
+	@$(RTH_RUN) \
+		TITLE="concolic database [$@]" \
+		CMD="./testConcolicDB" \
+		ANS="no" \
+		$< $@
+
+# b) test various executions
+
+TEST_TARGETS += testOpenDB.passed
+
+testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database openDB [$@]" \
+		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f openDB.db
+
+TEST_TARGETS += testDefineTests.passed
+
+testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database defineTests [$@]" \
+		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f defineTests.db
+
+TEST_TARGETS += testRun1.passed
+
+testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database run1 [$@]" \
+		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f run1.db
+
+
+TEST_TARGETS += testRun10.passed
+
+testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database run10 [$@]" \
+		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f run10.db
+
+
+TEST_TARGETS += testDefineFail.passed
+
+testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database defineFail [$@]" \
+		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f defineFail.db
+
+TEST_TARGETS += testCombined.passed
+
+testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database combined [$@]" \
+		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f combined.db
+
+TEST_TARGETS += testExport.passed
+
+testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
+	@$(RTH_RUN) \
+		TITLE="concolic database testExport [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
+		ANS="yes" \
+		$< $@
+	rm -f testExport.db
 
 
 TEST_TARGETS += testConnectNonExisting.passed
@@ -132,7 +133,6 @@ testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
 		ANS="yes" \
 		$< $@
-
 
 TEST_TARGETS += testCreateOverwrites.passed
 
