@@ -13,38 +13,47 @@ run $(support_compile_linkexe) sampleExecutable.C
 ## fixed and de-commented, please also remove the two corresponding comments in Makefile.am. [matzke 2019-07-02]
 ##
 ### a) test compiled programs
-##run $(tool_compile_linkexe) testConcolicDB.C
-##run $(test) testConcolicDB
+run $(tool_compile_linkexe) testConcolicDB.C
+run $(test) testConcolicDB
 ##
 ### b) test various executions
-##run $(test) ./crsh/crsh -o testOpenDB --answer=defaultcrsh.ans \
-##    --extra=openDB.db \
-##    ./crsh/crsh openDB.crsh
-##
-##run $(test) ./crsh/crsh -o testDefineTests --answer=defaultcrsh.ans \
-##    --extra=defineTests.db \
-##    ./crsh/crsh defineTests.crsh
-##
-##run $(test) ./crsh/crsh -o testRun1 --answer=defaultcrsh.ans \
-##    --extra=run1.db \
-##    ./crsh/crsh run1.crsh
-##
-##run $(test) ./crsh/crsh -o testRun10 --answer=defaultcrsh.ans \
-##    --extra=run10.db \
-##    ./crsh/crsh run10.crsh
-##
-##run $(test) ./crsh/crsh -o testDefineFail --answer=defaultcrsh.ans \
-##    --extra=defineFail.db \
-##    ./crsh/crsh defineFail.crsh
-##
-##run $(test) ./crsh/crsh -o testCombined --answer=defaultcrsh.ans \
-##    --extra=combined.db \
-##    ./crsh/crsh combined.crsh
-##
-##run $(test) ./crsh/crsh -o testExport --answer=defaultcrsh.ans \
-##    --input=sampleExecutable \
-##    --extra=testExport.db \
-##    ./crsh/crsh testExport.crsh
+run $(test) ./crsh/crsh -o testOpenDB --answer=defaultcrsh.ans \
+    --extra=openDB.db \
+    ./crsh/crsh openDB.crsh
+
+run $(test) ./crsh/crsh -o testDefineTests --answer=defaultcrsh.ans \
+    --extra=defineTests.db \
+    ./crsh/crsh defineTests.crsh
+
+run $(test) ./crsh/crsh -o testRun1 --answer=defaultcrsh.ans \
+    --extra=run1.db \
+    ./crsh/crsh run1.crsh
+
+run $(test) ./crsh/crsh -o testRun10 --answer=defaultcrsh.ans \
+    --extra=run10.db \
+    ./crsh/crsh run10.crsh
+
+run $(test) ./crsh/crsh -o testDefineFail --answer=defaultcrsh.ans \
+    --extra=defineFail.db \
+    ./crsh/crsh defineFail.crsh
+
+run $(test) ./crsh/crsh -o testCombined --answer=defaultcrsh.ans \
+    --extra=combined.db \
+    ./crsh/crsh combined.crsh
+
+run $(test) ./crsh/crsh -o testExport --answer=defaultcrsh.ans \
+    --input=sampleExecutable \
+    --extra=testExport.db \
+    ./crsh/crsh testExport.crsh
+
+run $(test) ./crsh/crsh -o testConnectNonExisting --answer=defaultcrsh.ans \
+    ./crsh/crsh testConnectNonExisting.crsh
+
+run $(test) ./crsh/crsh -o testCreateOverwrites --answer=defaultcrsh.ans \
+    ./crsh/crsh testCreateOverwrites.crsh
+
+run $(test) ./crsh/crsh -o testConnect --answer=defaultcrsh.ans \
+    ./crsh/crsh testConnect.crsh
 
 #------------------------------------------------------------------------------------------------------------------------
 # Concolic executor tests
