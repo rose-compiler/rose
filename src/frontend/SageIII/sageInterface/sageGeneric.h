@@ -758,7 +758,16 @@ namespace sg
     GEN_VISIT(SgAsmNode)
 #endif /* WITH_BINARY_ANALYSIS */
 
+    // Support nodes
+    GEN_VISIT(SgLocatedNodeSupport)
     GEN_VISIT(SgInitializedName)
+    GEN_VISIT(SgLambdaCapture)
+    GEN_VISIT(SgLambdaCaptureList)
+    GEN_VISIT(SgRenamePair)
+    GEN_VISIT(SgInterfaceBody)
+    GEN_VISIT(SgHeaderFileBody)
+
+    // - OMP Nodes
     GEN_VISIT(SgOmpOrderedClause)
     GEN_VISIT(SgOmpNowaitClause)
     GEN_VISIT(SgOmpUntiedClause)
@@ -781,10 +790,7 @@ namespace sg
     GEN_VISIT(SgOmpScheduleClause)
     GEN_VISIT(SgOmpDependClause)
     GEN_VISIT(SgOmpClause)
-    GEN_VISIT(SgRenamePair)
-    GEN_VISIT(SgInterfaceBody)
-    GEN_VISIT(SgLocatedNodeSupport)
-    GEN_VISIT(SgToken)
+
 
     //
     // Types
@@ -833,8 +839,11 @@ namespace sg
     GEN_VISIT(SgPointerType)
     GEN_VISIT(SgNamedType)
     GEN_VISIT(SgQualifiedNameType)
-   // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
+    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
+
+    // * token
+    GEN_VISIT(SgToken)
 
     RoseVisitor rv;
   };
