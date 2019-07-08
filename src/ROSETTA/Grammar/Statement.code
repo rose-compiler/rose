@@ -3097,26 +3097,11 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
-// #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
-
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-
-#if 0
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-#endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -3129,11 +3114,9 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
 
        // DQ (2/25/2018): This appears to be built as a function prototype by default, so I think we don't need this here (redundant).
        // DQ (2/25/2018): Added a specific version of the post_construction_initialization() function 
@@ -18109,7 +18092,6 @@ SgTemplateVariableDeclaration::post_construction_initialization()
    }
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_name, SgType *type, SgInitializer *initializer)
    : SgVariableDeclaration(var_name,type,initializer)
    {
@@ -18120,9 +18102,6 @@ SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_
   // printf ("Inside of SgTemplateVariableDeclaration constructor taking all parameters \n");
   // initializeData (NULL,var_name,type,initializer);
    }
-#endif
-
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18131,20 +18110,6 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
      return SgVariableDeclaration::compute_baseTypeDefiningDeclaration();
    }
-
-#else
-
-SgDeclarationStatement *
-SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-#endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -18162,7 +18127,6 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 #endif
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18174,23 +18138,6 @@ SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
   // return SgTypedefDeclaration::compute_baseTypeDefiningDeclaration();
      return NULL;
    }
-
-#else
-
-#error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
-
-SgDeclarationStatement *
-SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-
-#endif
 
 void
 SgTemplateTypedefDeclaration::post_construction_initialization()
