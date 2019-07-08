@@ -15,10 +15,10 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
 
-#ifdef REG_SP
-// \pp possibly defined on __sun
+// REG_PP possibly defined on __sun
+// REG_LINK possibly defined on Windows
 #undef REG_SP
-#endif /* REG_SP */
+#undef REG_LINK
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -100,7 +100,7 @@ private:
 
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF;  /**< Register descriptors initialized during construction. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
@@ -259,13 +259,13 @@ public:
 
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
-        ASSERT_require(REG_IP.is_valid());
+        ASSERT_forbid(REG_IP.isEmpty());
         return REG_IP;
     }
 
     /** Returns the register that points to the stack. */
     virtual RegisterDescriptor stackPointerRegister() const {
-        ASSERT_require(REG_SP.is_valid());
+        ASSERT_forbid(REG_SP.isEmpty());
         return REG_SP;
     }
 
@@ -280,6 +280,13 @@ public:
         return REG_SS;                                  // need not be valid
     }
 
+    /** Returns the register that holds the return address for a function.
+     *
+     *  If the architecture doesn't have such a register then a default constructed descriptor is returned. */
+    virtual RegisterDescriptor callReturnRegister() const {
+        return REG_LINK;                                // need not be valid
+    }
+    
     /** Return an instruction semantics dispatcher if possible.
      *
      *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher

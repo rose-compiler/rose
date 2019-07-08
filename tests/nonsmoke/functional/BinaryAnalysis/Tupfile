@@ -190,7 +190,8 @@ run $(test) testReadPastEOF --answer=testReadPastEOF.ans \
 ###############################################################################################################################
 ifneq (@(WITH_SQLITE),no)
 run $(tool_compile_linkexe) testLibraryDb.C
-run $(test) testLibraryDb
+run $(test) testLibraryDb -x test.db \
+    ./testLibraryDb
 endif
 
 ###############################################################################################################################

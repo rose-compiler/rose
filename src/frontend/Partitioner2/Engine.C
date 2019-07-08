@@ -1357,6 +1357,8 @@ Engine::createBarePartitioner() {
 
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    if (p.memoryMap() && p.memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+        p.memoryMap()->byteOrder(disassembler_->byteOrder());
     p.settings(settings_.partitioner.base);
     p.progress(progress_);
 
@@ -1422,7 +1424,7 @@ Engine::createBarePartitioner() {
                                             SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH));
     }
 
-    return p;
+    return boost::move(p);
 }
 
 Partitioner
@@ -1442,7 +1444,7 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-    return p;
+    return boost::move(p);
 }
 
 Partitioner
@@ -1454,7 +1456,7 @@ Engine::createTunedPartitioner() {
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
-        return p;
+        return boost::move(p);
     }
 
     if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
@@ -1470,14 +1472,14 @@ Engine::createTunedPartitioner() {
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         p.basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(p, settings_.partitioner.syscallHeader));
         p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-        return p;
+        return boost::move(p);
     }
 
     if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
-        return p;
+        return boost::move(p);
     }
 
     return createGenericPartitioner();
@@ -1515,7 +1517,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         BOOST_FOREACH (SgAsmIntegerValueExpression *ival, successors)
             bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
         if (!blockAst->get_successors_complete()) {
-            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().nBits();
             bblock->insertSuccessor(Semantics::SValue::instance_undefined(nbits));
         }
 
@@ -1545,7 +1547,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
         partitioner.attachFunction(function);
     }
 
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 Partitioner
@@ -1637,6 +1639,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
     if (interp_) {
         SAWYER_MESG(where) <<"naming imports\n";
         ModulesPe::nameImportThunks(partitioner, interp_);
+        ModulesPowerpc::nameImportThunks(partitioner, interp_);
     }
     if (settings_.partitioner.namingConstants) {
         SAWYER_MESG(where) <<"naming constants\n";
@@ -1692,7 +1695,7 @@ Engine::partition(const std::vector<std::string> &fileNames) {
             obtainDisassembler();
             Partitioner partitioner = createPartitioner();
             runPartitioner(partitioner);
-            return partitioner;
+            return boost::move(partitioner);
         }
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
@@ -1752,7 +1755,7 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 
     info <<"; took " <<timer << " seconds\n";
     map_ = partitioner.memoryMap();
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 
@@ -1897,7 +1900,7 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     } else if (1 == interruptVector.size()) {
         throw std::runtime_error("cannot determine interrupt vector size for architecture");
     } else {
-        size_t ptrSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t ptrSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
         ASSERT_require2(ptrSize % 8 == 0, "instruction pointer register size is strange");
         size_t bytesPerPointer = ptrSize / 8;
         size_t nPointers = interruptVector.size() / bytesPerPointer;
@@ -1939,7 +1942,7 @@ Engine::discoverBasicBlocks(Partitioner &partitioner) {
 
 Function::Ptr
 Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr_t &readVa /*in,out*/) {
-    const rose_addr_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    const rose_addr_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     ASSERT_require2(wordSize>0 && wordSize<=8, StringUtility::numberToString(wordSize)+"-byte words not implemented yet");
     const rose_addr_t maxaddr = partitioner.memoryMap()->hull().greatest();
 
@@ -2410,8 +2413,9 @@ Engine::attachSurroundedDataToFunctions(Partitioner &partitioner) {
 
         // Add the data block to all enclosing functions
         if (!enclosingFuncs.empty()) {
+            DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
+            dblock->comment("data encapsulated by function");
             BOOST_FOREACH (const Function::Ptr &function, enclosingFuncs) {
-                DataBlock::Ptr dblock = DataBlock::instanceBytes(interval.least(), interval.size());
                 dblock = partitioner.attachDataBlockToFunction(dblock, function);
                 insertUnique(retval, dblock, sortDataBlocks);
             }
@@ -2747,7 +2751,7 @@ Engine::CodeConstants::nextConstant(const Partitioner &partitioner) {
     while (!toBeExamined_.empty()) {
         inProgress_ = *toBeExamined_.begin();
         toBeExamined_.erase(inProgress_);
-        if (SgAsmInstruction *insn = partitioner.instructionExists(inProgress_).orDefault().insn()) {
+        if (SgAsmInstruction *insn = partitioner.instructionExists(inProgress_).insn()) {
 
             struct T1: AstSimpleProcessing {
                 std::set<rose_addr_t> constants;
@@ -2819,7 +2823,7 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
         }
 
         if (mayReturn) {
-            size_t nBits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            size_t nBits = partitioner.instructionProvider().instructionPointerRegister().nBits();
             partitioner.detachBasicBlock(bb);
             bb->insertSuccessor(bb->fallthroughVa(), nBits, E_CALL_RETURN, confidence);
             partitioner.attachBasicBlock(caller, bb);

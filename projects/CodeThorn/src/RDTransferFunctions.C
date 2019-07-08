@@ -28,7 +28,7 @@ bool hasDereferenceOperation(SgExpression* exp) {
 RDTransferFunctions::RDTransferFunctions() {
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -92,7 +92,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   //VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -105,7 +105,7 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   element.insertPair(lab,var);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -136,7 +136,7 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVa
   element.removeAllPairsWithVariableId(resVarId);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013, 2015.
  */
@@ -163,7 +163,7 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   }
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -182,4 +182,10 @@ void RDTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, 
   transferExpression(lab,node,element);
   VariableId resVarId=getResultVariableId();
   element.insertPair(lab,resVarId);
+}
+
+void RDTransferFunctions::initializeExtremalValue(Lattice& element) {
+  RDLattice* rdElement=dynamic_cast<RDLattice*>(&element);
+  rdElement->setEmptySet();
+  cout<<"INFO: initialized extremal value."<<endl;
 }

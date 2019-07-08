@@ -1,5 +1,5 @@
 #
-# Amrex Fortran to C++ Translator
+# AMReX Fortran to C++ Translator
 #
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
@@ -35,9 +35,10 @@ $(TEST_TARGETS):
 	@$(RTH_RUN) CMD="./$(@:.test=)" $(top_srcdir)/scripts/test_exit_status $@
 
 BIN_EXECUTABLES = \
-	f2cxx
+	      f2cxx
 
-f2cxx_SOURCES = src/f2cxx.cc \
+f2cxx_SOURCES = \
+        src/f2cxx.cc \
 				src/f2cxx_analyzer.cc \
 				src/f2cxx_translator.cc \
 				src/f2dot.cc

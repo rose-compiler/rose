@@ -30,7 +30,7 @@ public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
      *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
      * @{ */
-    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_CR, REG_CR0, REG_CTR;
+    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_XER_CA, REG_XER_OV, REG_XER_SO, REG_CR, REG_CR0, REG_CTR;
     /** @}*/
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -107,8 +107,8 @@ public:
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
     virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
@@ -116,6 +116,9 @@ public:
         return insn->get_kind();
     }
 
+    /** Update OV and SO bits of the XER register. Should be called before @ref record. */
+    void updateXerOverflow(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &carryOut);
+    
     /** Write status flags for result. */
     virtual void record(const BaseSemantics::SValuePtr &result);
 };

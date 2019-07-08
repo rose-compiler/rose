@@ -8,7 +8,6 @@
 #include <Sawyer/Synchronization.h>
 
 #include <boost/random/uniform_smallint.hpp>
-#include <boost/random/random_device.hpp>
 #if BOOST_VERSION >= 104700
     #include <boost/random/mersenne_twister.hpp>
     #define SAWYER_PRN_GENERATOR boost::random::mt11213b
@@ -43,30 +42,18 @@ bigMutex() {
 
 // thread-safe
 SAWYER_EXPORT size_t
-fastRandomIndex(size_t n) {
-    assert(n > 0);
+fastRandomIndex(size_t n, size_t seed) {
+    assert((n > 0 && 0 == seed) || (0 == n && 0 != seed));
 
     // FIXME[Robb Matzke 2015-12-08]: This leaks memory when threads that use this function are destroyed, but the common
     // denominator across compilers is that thread-local storage can only be applied to POD types.
     static SAWYER_THREAD_LOCAL SAWYER_PRN_GENERATOR *generator = NULL;
-    if (!generator) {
-#if defined(BOOST_WINDOWS)
-        // Seed the PRN generator with a random staring point.
-        boost::random_device seeder;
-        generator = new SAWYER_PRN_GENERATOR(seeder());
-#elif defined(__APPLE__) && defined(__MACH__)
-        // boost::random_device is not available on macOS, so seed the PRN generator with something that's maybe a tiny bit
-        // random.
-        generator = new SAWYER_PRN_GENERATOR(getpid());
-#elif 1
-        // FIXME[Robb Matzke 2019-01-25]: ROSE PolyOpt test in Jenkins uses its own list of libraries rather than ROSE
-        // libraries and is missing -lboost_random.
-        generator = new SAWYER_PRN_GENERATOR(getpid());
-#else
-        // Seed the PRN generator with a random staring point.
-        boost::random_device seeder;
-        generator = new SAWYER_PRN_GENERATOR(seeder());
-#endif
+    if (!generator)
+        generator = new SAWYER_PRN_GENERATOR;
+    if (seed != 0) {
+        generator->seed(seed);
+        if (0 == n)
+            return 0;
     }
     
     SAWYER_UNIFORM_SIZE_T distributor(0, n-1);

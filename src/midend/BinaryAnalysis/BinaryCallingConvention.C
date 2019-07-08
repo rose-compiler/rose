@@ -179,8 +179,8 @@ Definition::Ptr
 Definition::x86_cdecl(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "cdecl",
-                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
+    Ptr cc = instance(SP.nBits(), "cdecl",
+                      "x86-" + StringUtility::numberToString(SP.nBits()) + " cdecl",
                       regDict);
 
     // Stack characteristics
@@ -230,7 +230,7 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
-    Ptr cc = instance(SP.get_nbits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.get_nbits()) + " IBM", regDict);
+    Ptr cc = instance(SP.nBits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.nBits()) + " IBM", regDict);
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -331,8 +331,8 @@ Definition::Ptr
 Definition::x86_stdcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "stdcall",
-                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
+    Ptr cc = instance(SP.nBits(), "stdcall",
+                      "x86-" + StringUtility::numberToString(SP.nBits()) + " stdcall",
                       regDict);
 
     // Stack characteristics
@@ -380,8 +380,8 @@ Definition::Ptr
 Definition::x86_fastcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    static Ptr cc = instance(SP.get_nbits(), "fastcall",
-                             "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
+    static Ptr cc = instance(SP.nBits(), "fastcall",
+                             "x86-" + StringUtility::numberToString(SP.nBits()) + " fastcall",
                              regDict);
 
     // Stack characteristics
@@ -584,7 +584,7 @@ RegisterParts
 Definition::getUsedRegisterParts() const {
     RegisterParts retval = inputRegisterParts();
     retval |= outputRegisterParts();
-    if (stackPointerRegister_.is_valid())
+    if (!stackPointerRegister_.isEmpty())
         retval.insert(stackPointerRegister_);
     if (thisParameter_.type() == ParameterLocation::REGISTER)
         retval.insert(thisParameter_.reg());
@@ -620,7 +620,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
             case ORDER_UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
         }
 
-        if (stackPointerRegister_.is_valid()) {
+        if (!stackPointerRegister_.isEmpty()) {
             out <<" " <<regNames(stackPointerRegister_) <<"-based stack";
         } else {
             out <<" NO-STACK-REGISTER";
@@ -689,7 +689,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -768,7 +768,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     initialRegState->initialize_large();
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
-    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.get_nbits(), initialStackPointer),
+    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.nBits(), initialStackPointer),
                                    cpu_->get_operators().get());
 
     // Run data flow analysis
@@ -832,8 +832,8 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
     BOOST_FOREACH (RegisterDescriptor reg, finalRegs->findProperties(props)) {
-        SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
-        SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
+        SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+        SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
@@ -867,7 +867,7 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
     BOOST_FOREACH (const StackVariable &var, vars) {
@@ -884,8 +884,8 @@ Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalSt
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
-    SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+    SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
     if (stackDelta->is_number() && stackDelta->get_width()<=64) {
         stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);
@@ -959,9 +959,9 @@ Analysis::match(const Definition::Ptr &cc) const {
         return false;
     }
 
-    if (cc->wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
+    if (cc->wordWidth() != cpu_->stackPointerRegister().nBits()) {
         SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc->wordWidth() <<") != analysis word size ("
-                           <<cpu_->stackPointerRegister().get_nbits() <<")\n";
+                           <<cpu_->stackPointerRegister().nBits() <<")\n";
         return false;
     }
 

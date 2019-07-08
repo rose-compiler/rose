@@ -417,7 +417,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
                     BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
-                        (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
+                        (void) ops->readRegister(reg, ops->undefined_(reg.nBits()));
                 }
             }
         }

@@ -283,3 +283,10 @@ void CodeThorn::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool fla
   ROSE_ASSERT(getCppExprEvaluator());
   getCppExprEvaluator()->setSkipSelectedFunctionCalls(flag);
 }
+
+void CodeThorn::IntervalTransferFunctions::initializeExtremalValue(Lattice& element) {
+  CodeThorn::IntervalPropertyState* pstate=dynamic_cast<CodeThorn::IntervalPropertyState*>(&element);
+  pstate->setEmptyState();
+  //iElement->... init to empty state, not being bottom
+  cout<<"INFO: initialized extremal value."<<endl;
+}

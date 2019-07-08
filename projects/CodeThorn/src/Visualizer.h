@@ -51,7 +51,6 @@ class Visualizer {
   Visualizer();
   Visualizer(CodeThorn::Analyzer* analyzer);
   Visualizer(CodeThorn::IOLabeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
-  void setOptionTransitionGraphDotHtmlNode(bool);
   void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
   void setLabeler(CodeThorn::IOLabeler* x);
   void setFlow(CodeThorn::Flow* x);
@@ -59,6 +58,9 @@ class Visualizer {
   void setEStateSet(CodeThorn::EStateSet* x);
   void setTransitionGraph(CodeThorn::TransitionGraph* x);
   void createMappings();
+  void setOptionTransitionGraphDotHtmlNode(bool);
+  void setOptionMemorySubGraphs(bool flag);
+  bool getOptionMemorySubGraphs();
   std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
   std::string pstateToString(const CodeThorn::PState* pstate);
   std::string pstateToDotString(const CodeThorn::PState* pstate);
@@ -80,6 +82,10 @@ class Visualizer {
   std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
+  std::string dotEStateAddressString(const EState* estate);
+  std::string dotEStateMemoryString(const EState* estate);
+  void setMemorySubGraphsOption(bool flag);
+  std::string dotClusterName(const EState* estate);
  private:
   CodeThorn::IOLabeler* labeler;
   CodeThorn::VariableIdMapping* variableIdMapping;
@@ -97,7 +103,7 @@ class Visualizer {
   bool optionEStateId;
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
-
+  bool optionMemorySubGraphs;
 };
 
 #endif

@@ -65,10 +65,11 @@ DisassemblerPowerpc::init()
 {
     name("ppc");
     wordSizeBytes(4);
-    byteOrder(ByteOrder::ORDER_LSB);
+    byteOrder(ByteOrder::ORDER_MSB);
     registerDictionary(RegisterDictionary::dictionary_powerpc()); // only a default
     REG_IP = *registerDictionary()->lookup("iar");
     REG_SP = *registerDictionary()->lookup("r1");
+    REG_LINK = *registerDictionary()->lookup("lr");
     callingConventions(CallingConvention::dictionaryPowerpc());
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
     d->set_register_dictionary(registerDictionary());
@@ -221,12 +222,12 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
                     registerType = SageBuilderAsm::buildTypeU4();
                     break;
                 case powerpc_condreggranularity_bit: {
-                    /* each field has four bits with names. The full name of each bit is "crF*4+B" where "F" is the field
+                    /* each field has four bits with names. The full name of each bit is "crF.B" where "F" is the field
                      * number like above and "B" is the bit name. For instance, "cr0*4+eq". */
                     if (reg_number<0 || reg_number>=32)
                         throw ExceptionPowerpc("invalid condition register granularity bit", this);
                     static const char *bitname[] = {"lt", "gt", "eq", "so"};
-                    name += StringUtility::numberToString(reg_number/4) + "*4+" + bitname[reg_number%4];
+                    name += StringUtility::numberToString(reg_number/4) + "." + bitname[reg_number%4];
                     registerType = SageBuilderAsm::buildTypeU1();
                     break;
                 }

@@ -1,9 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
 
-SUBDIRS =
+SUBDIRS = crsh
 
-EXTRA_DIST = 
+EXTRA_DIST =
 
 # Forward declarations
 TEST_TARGETS=
@@ -13,65 +13,169 @@ PHONIES=
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-# Location of binary specimens
-#~ SPECIMEN_DIR = $(nonsmoke_specimens_binary_directory)
-
-# Corresponding smoke directory
-#~ SMOKE_BLDDIR = $(abspath $(top_builddir))/tests/smoke/functional/BinaryAnalysis
-#~ SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
-
 # To keep compile commands tidy, please ONLY put required include flags here.
-AM_CPPFLAGS = $(ROSE_INCLUDES) #-I$(top_srcdir)/src/midend/BinaryAnalysis/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-#~ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-#~ TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
-# this, this implementation needs review).  It might be better to prepend the information to the 
-# CC and CXX variables. I think that the purify support uses this approach.
-if ROSE_USE_SANITIZER
-VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
-else
-VALGRIND =
-endif
+########################################################################################################################
+# Tests
+########################################################################################################################
 
+#------------------------------------------------------------------------------------------------------------------------
+# Test concolic database operations
 
-###############################################################################################################################
-# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
-###############################################################################################################################
+# a) sample program to load and store in DB
+noinst_PROGRAMS += sampleExecutable
+sampleExecutable_SOURCES = sampleExecutable.C
+sampleExecutable_LDADD =
 
-#~ noinst_PROGRAMS += sampleExecutable
-#~ testBinaryConcolic_SOURCES = sampleExecutable.C
-#~ testBinaryConcolic_LDADD = 
-
-
+# a) test compiled programs
 noinst_PROGRAMS += testConcolicDB
-testConcolicDB_SOURCES = testConcolicDB.C
+testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
+## Commenting out a few tests temporarily because they're not portable yet. They assume that basic operating system
+## commands are installed in /usr/bin, but on many popular Linux distributions they're in /bin. When these are
+## fixed and de-commented, please also remove the two corresponding comments in Tupfile. [matzke 2019-07-02]
+## fixed PP (07/06/19)
+##
 TEST_TARGETS += testConcolicDB.passed
 
-testConcolicDB.passed: $(top_srcdir)/tests/nonsmoke/functional/BinaryAnalysis/Concolic/concolicDB.conf testConcolicDB # sampleExecutable
+testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
 	@$(RTH_RUN) \
-		TITLE="t[$@]" \
+		TITLE="concolic database [$@]" \
 		CMD="./testConcolicDB" \
 		ANS="no" \
 		$< $@
 
+# b) test various executions
+
+TEST_TARGETS += testOpenDB.passed
+
+testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database openDB [$@]" \
+		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f openDB.db
+
+TEST_TARGETS += testDefineTests.passed
+
+testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database defineTests [$@]" \
+		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f defineTests.db
+
+TEST_TARGETS += testRun1.passed
+
+testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database run1 [$@]" \
+		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f run1.db
+
+
+TEST_TARGETS += testRun10.passed
+
+testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database run10 [$@]" \
+		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f run10.db
+
+
+TEST_TARGETS += testDefineFail.passed
+
+testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database defineFail [$@]" \
+		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f defineFail.db
+
+TEST_TARGETS += testCombined.passed
+
+testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database combined [$@]" \
+		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f combined.db
+
+TEST_TARGETS += testExport.passed
+
+testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
+	@$(RTH_RUN) \
+		TITLE="concolic database testExport [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
+		ANS="no" \
+		$< $@
+	rm -f testExport.db
+
+
+TEST_TARGETS += testConnectNonExisting.passed
+
+testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnectNonExisting [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
+		ANS="no" \
+		$< $@
+
+TEST_TARGETS += testCreateOverwrites.passed
+
+testCreateOverwrites.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testCreateOverwrites [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testCreateOverwrites.crsh" \
+		ANS="no" \
+		$< $@
+
+TEST_TARGETS += testConnect.passed
+
+testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnect [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
+		ANS="no" \
+		$< $@
+
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Test concolic executor
+
+noinst_PROGRAMS += testConcolicExecutor
+testConcolicExecutor_SOURCES = testConcolicExecutor.C
+testConcolicExecutor_LDADD = $(ROSE_SEPARATE_LIBS)
+testConcolicExecutor_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/concolic-specimen-01
+testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)'
+
+TEST_TARGETS += testConcolicExecutor.passed
+
+testConcolicExecutor.passed: $(TEST_EXIT_STATUS) testConcolicExecutor $(testConcolicExecutor_specimen)
+	@$(RTH_RUN)												\
+	    TITLE="concolic executor [$@]"									\
+	    CMD="$$(pwd)/testConcolicExecutor $(testConcolicExecutor_flags) $(testConcolicExecutor_specimen)"	\
+	    $< $@
 
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
 
-if ROSE_BUILD_OS_IS_CYGWIN
-# DQ (3/21/2009): These tests don't appear to run under Cygwin.
-check-local:
-	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
-else
-# Binary analysis is enabled and supported
 check-local: $(TEST_TARGETS)
-endif
 else
 # Binary analysis is not enabled
 check-local:

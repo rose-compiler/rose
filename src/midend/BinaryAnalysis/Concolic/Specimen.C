@@ -1,23 +1,12 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 
+#include <boost/lexical_cast.hpp>
+#include "io-utility.h"
+
 namespace Rose {
 namespace BinaryAnalysis {
 
-namespace
-{
-  template <class ExceptionType>
-  static inline
-  void
-  throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
-  {
-    arg1.append(arg2);
-    arg1.append(arg3);
-
-    throw ExceptionType(arg1);
-  }
-}  
-  
 namespace Concolic {
 
 // class method
@@ -27,7 +16,7 @@ Specimen::instance(const boost::filesystem::path &executableName) {
 
     if (!executableName.empty())
         self->open(executableName);
-        
+
     self->name(executableName.string());
     return self;
 }
@@ -41,7 +30,7 @@ Specimen::instance() {
 void
 Specimen::open(const boost::filesystem::path &executableName) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    
+
     content_ = loadBinaryFile(executableName);
     empty_ = false;
 }
@@ -70,6 +59,18 @@ void
 Specimen::name(const std::string &s) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     name_ = s;
+}
+
+std::string
+Specimen::printableName(const Database::Ptr &db) {
+    std::string retval = "specimen";
+    if (db) {
+        if (SpecimenId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    if (!name().empty())
+        retval += " \"" + StringUtility::cEscape(name()) + "\"";
+    return retval;
 }
 
 void Specimen::content(std::vector<uint8_t> binary_data)

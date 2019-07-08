@@ -18,9 +18,10 @@ struct Settings {
     bool dryRun;                                        // if true, don't modify the database
     bool latestTests;                                   // operate only on the latest version of ROSE in the database
 
-    Settings()
+    Settings() 
+        :
 #ifdef DEFAULT_DATABASE
-        : databaseUri(DEFAULT_DATABASE),
+          databaseUri(DEFAULT_DATABASE),
 #endif
           dryRun(false), latestTests(false)
         {}
@@ -68,8 +69,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
               .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
-                   "variable. The default value is \"" + StringUtility::cEscape(settings.databaseUri) + "\"." +
-                   SqlDatabase::uriDocumentation()));
+                   "variable. " + SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("dry-run")
               .intrinsicValue(true, settings.dryRun)
@@ -221,6 +221,7 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^make: (.*): Command not found"         // GNU make
                       "|^Error:\\n  .*"                         // Tupfile user-defined error
                       "|^run-test: (.*): Result differs from precomputed answer" // Tup testing
+                      "|line [0-9]+:.*/\\.libs/lt-.*: Invalid argument" // intermittent libtool failure
 
                       "|\\merror: ?\n.*"                        // ROSE error on next line
                       //----- regular expressions end -----
@@ -322,6 +323,24 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                   " set first_error = first_error_staging,"
                   "     first_error_staging = null"
                   " where test.first_error_staging is not null and test.first_error_staging <> ''"
+                  " and " + sqlIdLimitation("test.id", testIds))
+        ->execute();
+
+    //---------------------------------------------------------------------------------------------------
+    // Step 4: Unrelated to above, populate the 'blacklisted' column
+    //---------------------------------------------------------------------------------------------------
+
+    std::string blacklistPrefixRe = "configure: error: blacklisted: ";
+    tx->statement("update test_results as test"
+                  " set blacklisted ="
+                  "   regexp_replace("
+                  "     coalesce(substring(att.content from '(?n)" + blacklistPrefixRe + ".*'), ''),"
+                  "     '" + blacklistPrefixRe + "',"
+                  "     '')"
+                  " from attachments as att " +
+                  sqlWhereClause(tx, settings, args) +
+                  " and test.id = att.test_id"
+                  " and att.name = 'Final output'"
                   " and " + sqlIdLimitation("test.id", testIds))
         ->execute();
 }
@@ -432,7 +451,14 @@ main(int argc, char *argv[]) {
     if (const char *dbUri = getenv("ROSE_MATRIX_DATABASE"))
         settings.databaseUri = dbUri;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    SqlDatabase::TransactionPtr tx;
+    try {
+        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
+    } catch (const SqlDatabase::Exception &e) {
+        mlog[FATAL] <<"cannot open database: " <<e.what();
+        exit(1);
+    }
+
     if (args.empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);

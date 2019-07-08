@@ -79,7 +79,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
                     if (rre->get_descriptor()==REG_IP) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue() + insn->get_address() + insn->get_size();
                         nBytesMatched_ = insn->get_size();
-                    } else if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
+                    } else if (rre->get_descriptor().majorNumber()==x86_regclass_gpr) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue();
                         nBytesMatched_ = insn->get_size();
                     }
@@ -440,6 +440,21 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             findPltFunctions(partitioner, isSgAsmElfFileHeader(fileHeader), functions);
     }
     return functions;
+}
+
+std::vector<SgAsmElfSection*>
+findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
+    std::vector<SgAsmElfSection*> retval;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            std::vector<SgAsmGenericSection*> sections = fileHeader->get_sections_by_name(name);
+            BOOST_FOREACH (SgAsmGenericSection *section, sections) {
+                if (SgAsmElfSection *elfSection = isSgAsmElfSection(section))
+                    retval.push_back(elfSection);
+            }
+        }
+    }
+    return retval;
 }
 
 void

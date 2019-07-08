@@ -77,6 +77,20 @@ insertUnique(Container &container, const Value &item, Comparator cmp) {
     return false;
 }
 
+// Insert an intem into a sorted continer, replacing any existing item that compares equal to it.
+template<class Container, class Value, class Comparator>
+void
+replaceOrInsert(Container &container, const Value &item, Comparator cmp) {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
+    typename Container::iterator lb = lowerBound(container, item, cmp);
+    if (lb == container.end() || !equalUnique(*lb, item, cmp)) {
+        container.insert(lb, item);
+    } else {
+        *lb = item;
+    }
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true));
+}
+
 // Erase an item from a sorted container if it doesn't exist yet in the container.  Returns true iff erased.
 template<class Container, class Value, class Comparator>
 bool

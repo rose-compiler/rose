@@ -454,6 +454,9 @@ SAWYER_EXPORT std::string thisExecutableName();
     TYPE *NAME = &(NAME##Vec_[0]);
 
 #elif defined(__sun)
+//--------------------------
+// Sun Solaris
+//--------------------------
 
 # define SAWYER_ATTR_UNUSED /*void*/
 # define SAWYER_ATTR_NORETURN /*void*/

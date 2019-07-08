@@ -461,7 +461,7 @@ public:
      *  Thread safety: This method is not thread safe. */
     AddressIntervalSet dataAddresses() const;
 
-    /** Determine if this basic block contains the specified data block, or equivalent.
+    /** Determine if this basic block contains the specified data block or equivalent data block.
      *
      *  If the basic block owns the specified data block or an equivalent data block then this method returns a pointer to the
      *  existing data block, otherwise it returns the null pointer.
@@ -469,14 +469,24 @@ public:
      *  Thread safety: This method is not thread safe. */
     DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
 
-    /** Make this basic block own the specified data block.
+    /** Make this basic block own the specified data block or equivalent data block.
      *
-     *  If the specified data block is not yet owned by this basic block, then this method adds the data block as a member of
-     *  this basic block and returns true, otherwise nothing is inserted and returns false.  A data block cannot be inserted
-     *  when this basic block is frozen.
+     *  If the specified data block is not yet owned by this basic block and the basic block contains no equivalent data block,
+     *  then the specified data block is added as a member of this basic block and this method returns true. Otherwise, this
+     *  basic block already contains the specified data block or an equivalent data block and the method returns false. A data
+     *  block cannot be inserted when this basic block is frozen.
      *
      *  Thread safety: This method is not thread safe. */
     bool insertDataBlock(const DataBlock::Ptr&);
+
+    /** Remove specified or equivalent data block from this basic block.
+     *
+     *  If this basic block is in a detached state (i.e., not part of the CFG/AUM) then the specified data block or equivalent
+     *  data block is removed from this basic block. Returns the data block that was erased, or null if none was erased.
+     *
+     *  It is an error to invoke this method on basic block that is attached to the CFG/AUM, for which @ref isFrozen returns
+     *  true. This method is a no-op if the specified data block is a null pointer. */
+    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
 
     /** Data blocks owned.
      *
@@ -626,6 +636,9 @@ private:
     void freeze() { isFrozen_ = true; semantics_.optionalPenultimateState = Sawyer::Nothing(); }
     void thaw() { isFrozen_ = false; }
     BasicBlockSemantics undropSemanticsNS(const Partitioner&);
+
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block.
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 } // namespace

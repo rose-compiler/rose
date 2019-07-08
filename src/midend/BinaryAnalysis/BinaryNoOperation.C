@@ -41,7 +41,7 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
         rstate->initialize_large();
 
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    state->writeRegister(IP, cpu->number_(IP.get_nbits(), insn->get_address()), cpu->get_operators().get());
+    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->get_operators().get());
 
     return state;
 }
@@ -130,7 +130,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -164,14 +164,14 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
         state = cpu_->currentState()->clone();
         state->clear();
         RegisterDescriptor IP = cpu_->instructionPointerRegister();
-        state->writeRegister(IP, cpu_->number_(IP.get_nbits(), insn->get_address()), cpu_->get_operators().get());
+        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->get_operators().get());
     }
 
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-        state->writeRegister(regSp, ops->number_(regSp.get_nbits(), *initialSp_), ops.get());
+        state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 
     return state;
@@ -234,7 +234,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.get_nbits(), insn->get_address()));
+            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");

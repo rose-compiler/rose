@@ -1962,7 +1962,7 @@ public:
      *
      *  @{ */
     virtual SValuePtr readRegister(RegisterDescriptor reg) {   // old subclasses can still override this if they want,
-        return readRegister(reg, undefined_(reg.get_nbits())); // but new subclasses should not override this method.
+        return readRegister(reg, undefined_(reg.nBits())); // but new subclasses should not override this method.
     }
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt); // new subclasses override this
     /** @} */
@@ -1990,7 +1990,7 @@ public:
      * @{ */
     virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
     SValuePtr peekRegister(RegisterDescriptor reg) {
-        return peekRegister(reg, undefined_(reg.get_nbits()));
+        return peekRegister(reg, undefined_(reg.nBits()));
     }
     /** @} */
 
@@ -2240,6 +2240,9 @@ public:
 
     /** Returns the stack pointer register. */
     virtual RegisterDescriptor stackPointerRegister() const = 0;
+
+    /** Returns the function call return address register. */
+    virtual RegisterDescriptor callReturnRegister() const = 0;
 
     /** Property: Reset instruction pointer register for each instruction.
      *

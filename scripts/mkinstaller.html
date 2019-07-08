@@ -12,7 +12,7 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.4.9)
+               mkinstaller (rev. 2.5.4)
             </nobr>
          </center>
       </h3>
@@ -143,10 +143,11 @@
             <blockquote>
                 <b><big><code>./banana-installer -v --prefix=/opt/banana</code></big></b>
             </blockquote>
-            Note that the <b><big><code>--prefix=</code></big></b><i>pathname</i> option isn't really optional,
-            it is required. Also note that use of the <b><big><code>-v</code></big></b> option (verbose mode)
-            is recommended as the generated installer normally produces no
-            output other than warnings and/or error messages.
+            Note that on UNIX-like hosts the <b><big><code>--prefix=</code></big></b><i>pathname</i> option isn't
+            really optional, it is required. Also note that use of the <b><big><code>-v</code></big></b>
+            option (verbose mode) is recommended as the generated installer
+            normally produces no output other than remarks, warnings, and/or
+            error messages.
          </blockquote>
          <b>Windows-like Host</b>
          <blockquote>
@@ -161,7 +162,7 @@
          </blockquote>
          <blockquote>
             The installation process on a Windows-like target system is done by
-            simply running the generated installer binary executable. Unlike the
+            simply running the generated installer binary executable. Unlike an
             installer produced for UNIX-like hosts, an installer for Windows-like
             hosts may perform the installation to a default location; the user's
             desktop:
@@ -219,34 +220,57 @@
 
             <b>--cc=</b><i>name</i>
             <blockquote>
-               The C compiler name that had been used in building the software
-               being installed. Do not use a pathname, use a simple name only.
-               For example:
-               <blockquote>
-                  --cc="gcc"
-               </blockquote>
-               Note that this option has been replaced by the <b><big><code>--CC=</code></big></b><i>name</i> and
-               <b><big><code>--CC-options=</code></big></b><i>string</i> options.
+               This option has been obsoleted. Use <b><big><code>CC=</code></big></b><i>name</i> and <b><big><code>CC-options=</code></big></b><i>string</i>
+               instead.
             </blockquote>
 
             <b>--cxx=</b><i>name</i>
             <blockquote>
-               The C++ compiler name that had been used in building the software
-               being installed. Do not use a pathname, se a simple name only.
-               For example:
-               <blockquote>
-                  --cxx="g++"
-               </blockquote>
-               Note that at this time only the C++ compiler name is used.
-               This option has been replaced by the <b><big><code>--CXX=</code></big></b><i>name</i> and <b><big><code>--CXX-options=</code></big></b><i>string</i> options.
+               This option has been obsoleted. Use <b><big><code>CXX=</code></big></b><i>name</i> and <b><big><code>CXX-options=</code></big></b><i>string</i>
+               instead.
             </blockquote>
 
             <b>CC=</b><i>name</i> <br>
-            <b>--CC=</b><i>name</i>
+            <b>CC=[</b><i>pathname</i><b>,</b><i>name</i><b>]</b> <br>
+            <b>--CC=</b><i>name</i> <br>
+            <b>--CC=[</b><i>pathname</i><b>,</b><i>name</i><b>]</b>
             <blockquote>
-               Used to specify the name of the C compiler used. If a pathname
-               is supplied, only the basename will be used. For historical
-               reasons the leading double-dash is optional.
+               Used to specify the name of the C compiler used. For historical
+               reasons the leading double-dashes are optional.
+            </blockquote>
+            <blockquote>
+               Note that there are 2 forms accepted for the option's argument:
+               <ol>
+                  <li> A simple C compiler name such as <i>gcc</i> or <i>icc</i>. This is the
+                       name of the C compiler that was used to produce the binaries
+                       to be installed. For example:
+                       <blockquote>
+                          <b><big><code>CC=gcc</code></big></b>
+                       </blockquote>
+                       In this case the <i>gcc</i> GNU C compiler was used to produce the
+                       binaries (executables and libraries). Note that if <i>name</i> has
+                       directory components only the basename will be used.
+                  </li>
+                  <li> A comma separated pair enclosed in square brackets. The first
+                       component is the actual pathname of the C compiler that was
+                       used to produce the binaries to be installed. The second
+                       component is a name by which the compiler will be considered.
+                       For example:
+                       <blockquote>
+                          <b><big><code>CC='[/usr/lib64/ccache/cc,gcc]'</code></big></b>
+                       </blockquote>
+                       In this case a C compiler with the pathname <b><big><code>/usr/lib64/ccache/cc</code></big></b>
+                       was actually used but consider it to be <i>gcc</i>.
+                  </li>
+               </ol>
+            </blockquote>
+            <blockquote>
+               The first form is really a special case where the basename of the
+               <i>pathname</i> is the same as the simple <i>name</i> of the C compiler.
+            </blockquote>
+            <blockquote>
+               This option almost always needs quoting as shown above since the
+               square-brackets are considered to have special meaning by the shell.
             </blockquote>
 
             <b>CC-options=</b><i>string</i> <br>
@@ -262,11 +286,46 @@
             </blockquote>
 
             <b>CXX=</b><i>name</i> <br>
-            <b>--CXX=</b><i>name</i>
+            <b>CXX=[</b><i>pathname</i><b>,</b><i>name</i><b>]</b> <br>
+            <b>--CXX=</b><i>name</i> <br>
+            <b>--CXX=[</b><i>pathname</i><b>,</b><i>name</i><b>]</b>
             <blockquote>
-               Used to specify the name of the C++ compiler used. If a pathname
-               is supplied, only the basename will be used. For historical
-               reasons the leading double-dash is optional.
+               Used to specify the name of the C++ compiler used. For historical
+               reasons the leading double-dashes are optional.
+            </blockquote>
+            <blockquote>
+               Note that there are 2 forms accepted for the option's argument:
+               <ol>
+                  <li> A simple C++ compiler name such as <i>g++</i> or <i>icpc</i>. This is the
+                       name of the C++ compiler that was used to produce the binaries
+                       to be installed. For example:
+                       <blockquote>
+                          <b><big><code>CXX=g++</code></big></b>
+                       </blockquote>
+                       In this case the <i>g++</i> GNU C++ compiler was used to produce the
+                       binaries (executables and libraries). Note that if <i>name</i> has
+                       directory components only the basename will be used.
+                  </li>
+                  <li> A comma separated pair enclosed in square brackets. The first
+                       component is the actual pathname of the C++ compiler that was
+                       used to produce the binaries to be installed. The second
+                       component is a name by which the compiler will be considered.
+                       For example:
+                       <blockquote>
+                          <b><big><code>CC='[/usr/lib64/ccache/c++,g++]'</code></big></b>
+                       </blockquote>
+                       In this case a C++ compiler with the pathname <b><big><code>/usr/lib64/ccache/c++</code></big></b>
+                       was actually used but consider it to be <i>g++</i>.
+                  </li>
+               </ol>
+            </blockquote>
+            <blockquote>
+               The first form is really a special case where the basename of the
+               <i>pathname</i> is the same as the simple <i>name</i> of the C++ compiler.
+            </blockquote>
+            <blockquote>
+               This option almost always needs quoting as shown above since the
+               square-brackets are considered to have special meaning by the shell.
             </blockquote>
 
             <b>CXX-options=</b><i>string</i> <br>
@@ -824,6 +883,7 @@ CXX=g++ \
                    consider its value as a directory pathname. If this pathname
                    exists and is a directory and is writable then temporary
                    files will be placed in this directory. Otherwise...
+               </li>
                <li>If <b><big><code>TMPDIR</code></big></b> is defined and is not empty then consider its
                    value as a directory pathname. If this pathname exists
                    and is a directory and is writable then temporary files
@@ -1080,14 +1140,14 @@ CXX=g++ \
             </blockquote>
             <b>Running the generated installer on a Windows target system:</b>
             <blockquote>
-               The default use of the generated installer will produce a
-               new directory on the user's desktop.
+               The default use of the generated installer will produce a new
+               directory on the user's desktop.
                <blockquote>
-                  <i>prompt</i>&gt; <b><big><code>installer.exe</code></big></b>
+                  circus> <b><big><code>installer.exe</code></big></b>
                </blockquote>
                A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
                <blockquote>
-                  <i>prompt</i>&gt; <b><big><code>installer.exe /D=E:\opt\banana</code></big></b>
+                  circus> <b><big><code>installer.exe /D=E:\opt\banana</code></big></b>
                </blockquote>
                Note that the prefix directory will be creates as necessary
                however the uninstaller will only (recursively) delete the
@@ -1097,7 +1157,8 @@ CXX=g++ \
             </blockquote>
             <blockquote>
                Note that the generated installer will pop-up a progress bar dialog
-               box to indicate the installation progress.
+               box to indicate the installation progress. The above examples were
+               run by bozo on circus.other.net
             </blockquote>
          </blockquote>
       </blockquote>
@@ -1128,11 +1189,11 @@ CXX=g++ \
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.4.9)
+               mkinstaller (rev. 2.5.4)
             </nobr>
          </center>
       </h3>
 
-      <i>This man page was generated by mkinstaller 2.4.9 using the <code>--html</code> option. Revised 12Apr2019 13:55:49z</i>
+      <i>This man page was generated by mkinstaller 2.5.4 using the <code>--html</code> option. Revised 21Jun2019,16:47:49z</i>
    </body>
 </html>

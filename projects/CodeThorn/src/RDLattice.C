@@ -7,14 +7,14 @@
 using namespace std;
 using namespace CodeThorn;
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 CodeThorn::RDLattice::RDLattice() {
   setBot();
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -39,28 +39,28 @@ void CodeThorn::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   }
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 CodeThorn::RDLattice::iterator CodeThorn::RDLattice::begin() {
   return rdSet.begin();
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 CodeThorn::RDLattice::iterator CodeThorn::RDLattice::end() {
   return rdSet.end();
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 size_t CodeThorn::RDLattice::size() {
   return rdSet.size();
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -69,7 +69,7 @@ void CodeThorn::RDLattice::insertPair(Label lab,VariableId var) {
   rdSet.insert(p);
   _bot=false;
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -77,7 +77,7 @@ void CodeThorn::RDLattice::erasePair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.erase(p);
 }
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -92,23 +92,23 @@ void CodeThorn::RDLattice::removeAllPairsWithVariableId(VariableId var) {
   }
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 bool CodeThorn::RDLattice::isBot() {
   return _bot;
-} 
-/*! 
+}
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
 void CodeThorn::RDLattice::setBot() {
   _bot=true;
-} 
+}
 
 #if 1
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -124,7 +124,7 @@ void CodeThorn::RDLattice::combine(Lattice& b) {
   _bot=false;
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -149,7 +149,7 @@ bool CodeThorn::RDLattice::approximatedBy(Lattice& b0) {
   return true;
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -157,7 +157,7 @@ bool CodeThorn::RDLattice::exists(pair<Label,VariableId> p) {
   return rdSet.find(p)!=end();
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */

@@ -161,8 +161,8 @@ public:
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
 
     virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);

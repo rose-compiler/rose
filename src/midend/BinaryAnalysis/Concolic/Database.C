@@ -4,18 +4,21 @@
 
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include "boost/tuple/tuple.hpp"
+#include <boost/tuple/tuple.hpp>
+#include <boost/lexical_cast.hpp>
 
 #ifdef ROSE_HAVE_SQLITE3
 // bypass intermediate layers for very large files (RBA)
   #ifndef WITH_DIRECT_SQLITE3
-  #define WITH_DIRECT_SQLITE3 1 
+  #define WITH_DIRECT_SQLITE3 1
   #endif
 #endif
 
 #if WITH_DIRECT_SQLITE3
 #include <sqlite3.h>
 #endif /* WITH_DIRECT_SQLITE3 */
+
+#include "io-utility.h"
 
 namespace bt = boost::tuples;
 
@@ -38,28 +41,43 @@ namespace BinaryAnalysis {
     static
     typename BidirectionalMap::Forward::Value
     _object(Database&, SqlDatabase::ConnectionPtr, ObjectId<IdTag>, Update::Flag, BidirectionalMap&);
-    
+
     template <class IdTag, class BidirectionalMap>
     static
     typename BidirectionalMap::Forward::Value
-    _object(Database&, SqlTransactionPtr, ObjectId<IdTag>, Update::Flag, BidirectionalMap&);    
-  }    
+    _object(Database&, SqlTransactionPtr, ObjectId<IdTag>, Update::Flag, BidirectionalMap&);
+  }
 
 
   namespace
   {
-    // convenience function for throwing exceptions
-    template <class ExceptionType>
-    static inline
-    void
-    throw_ex(std::string arg1, const std::string& arg2 = "", const std::string& arg3 = "")
+    std::pair<std::string, bool>
+    dbProperties(const std::string& url)
     {
-      arg1.append(arg2);
-      arg1.append(arg3);
+      static const std::string locator  = "sqlite3://";
+      static const std::string debugopt = "?debug";
 
-      throw ExceptionType(arg1);
+      if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
+
+      ROSE_ASSERT(SqlDatabase::Connection::guess_driver(url) == SqlDatabase::SQLITE3);
+
+      size_t limit = url.find_first_of('?', locator.size());
+      bool   with_debug = (  (limit != std::string::npos)
+                          && debugopt == url.substr(limit, limit + debugopt.size())
+                          );
+
+      return std::make_pair(url.substr(locator.size(), limit), with_debug);
     }
-    
+
+    static const size_t
+    DBSQLITE_FIRST_ROWID = 1;
+
+    static const double
+    NO_CONCRETE_RANK     = -99;
+
+    static const std::string
+    NO_CONCRETE_RANK_STR = "\"" + boost::lexical_cast<std::string>(NO_CONCRETE_RANK) + "\"";
+
     // type function to add types to the end of a boost::tuple
     //   generic case
     template <class L, class V>
@@ -67,113 +85,125 @@ namespace BinaryAnalysis {
     {
       typedef typename L::head_type                       head_type;
       typedef typename L::tail_type                       tail_type;
-            
-      typedef typename bt_append<tail_type, V>::type      new_tail_type;      
-      typedef typename bt::cons<head_type, new_tail_type> type;      
+
+      typedef typename bt_append<tail_type, V>::type      new_tail_type;
+      typedef typename bt::cons<head_type, new_tail_type> type;
     };
-    
+
     //   base case
     template <class V>
     struct bt_append<bt::null_type, V>
     {
       typedef typename bt::tuple<V>::inherited type;
     };
-    
+
     template <class L>
     struct bt_remove
     {};
-    
+
     template <class H, class T>
     struct bt_remove<bt::cons<H, T> >
     {
-      typedef bt::cons<H, typename bt_remove<T>::tuple_type> tuple_type;      
+      typedef bt::cons<H, typename bt_remove<T>::tuple_type> tuple_type;
       typedef typename bt_remove<T>::elem_type               elem_type;
     };
-    
+
     template <class H>
     struct bt_remove<bt::cons<H, bt::null_type> >
     {
       typedef bt::null_type tuple_type;
       typedef H             elem_type;
     };
-    
+
     //
     // Type-safe SQL queries
-    // 
+    //
     // Queries check for type agreements in their placeholder and bindings
-    
+
     // null value
     typedef void* SqlNullType;
-    
+
     // SQL placeholder types
     template <class V>
     struct SqlVar {};
-    
+
     typedef SqlVar<int>                   SqlInt;
     typedef SqlVar<std::string>           SqlString;
     typedef SqlVar<std::vector<uint8_t> > SqlBlob;
     typedef SqlVar<double>                SqlReal;
-    typedef SqlVar<bool>                  SqlBool;   
-    
+    typedef SqlVar<bool>                  SqlBool;
 
-    // a query holding a string containing |L| SQL placeholders       
+
+    struct SqlQueryBase
+    {
+      explicit
+      SqlQueryBase(const std::string& s)
+      : sql(s)
+      {}
+
+      std::string sql;
+    };
+
+    std::ostream& operator<<(std::ostream& os, const SqlQueryBase& sql)
+    {
+      return os << sql.sql;
+    }
+
+
+    // a query holding a string containing |L| SQL placeholders
     //   note, instead of directly using tuple<X,Y,Z>
     //         its representation is used cons<X, cons<Y, cons<Z, null_type> > >.
     //         the base can be obtained using tuple<X,Y,Z>::inherited .
     template <class L = bt::null_type >
-    struct SqlQuery
+    struct SqlQuery : SqlQueryBase
     {
       typedef typename bt_remove<L>::tuple_type ParentTuple;
       typedef typename bt_remove<L>::elem_type  VarType;
-      
+
       SqlQuery(const SqlQuery< ParentTuple >& p, const SqlVar< VarType >&)
-      : sql(p.sql + '?')
+      : SqlQueryBase(p.sql + '?')
       {}
-      
+
       SqlQuery(const SqlQuery<L>& p, const std::string& cont )
-      : sql(p.sql + cont)
+      : SqlQueryBase(p.sql + cont)
       {}
-      
+
       SqlQuery(const SqlQuery<L>& p, const char* cont)
-      : sql(p.sql + std::string(cont))
+      : SqlQueryBase(p.sql + std::string(cont))
       {}
-            
-      std::string sql;
     };
-    
+
     // a query w/o SQL placeholders
-    template <> 
-    struct SqlQuery<bt::null_type>
-    {      
+    template <>
+    struct SqlQuery<bt::null_type> : SqlQueryBase
+    {
       SqlQuery(const std::string& query)
-      : sql(query)
+      : SqlQueryBase(query)
       {}
-      
+
       SqlQuery(const char* query)
-      : sql(query)
+      : SqlQueryBase(query)
       {}
-      
-      std::string sql;
     };
-    
-    
-    // a prepared query with |L| unbound SQL placeholders 
+
+
+    // a prepared query with |L| unbound SQL placeholders
     template <class L>
     struct SqlQueryPrepared
     {
       typedef SqlQueryPrepared< typename L::tail_type > SqlQueryParentType;
-      
+
       explicit
       SqlQueryPrepared(const SqlStatementPtr& stmt)
       : sql(stmt)
       {}
-      
+
       SqlQueryParentType
       tail() const { return SqlQueryParentType(sql); }
-            
+
       SqlStatementPtr sql;
     };
-    
+
     // a prepared query w/o any unbound SQL placeholders
     template <>
     struct SqlQueryPrepared<bt::null_type>
@@ -182,10 +212,10 @@ namespace BinaryAnalysis {
       SqlQueryPrepared(const SqlStatementPtr& stmt)
       : sql(stmt)
       {}
-                  
+
       SqlStatementPtr sql;
     };
-    
+
 
     // concatenates a query of type L with a placeholder V
     // the resulting query has type L + V
@@ -194,27 +224,27 @@ namespace BinaryAnalysis {
     operator+(const SqlQuery<L>& lhs, const SqlVar<V>& rhs)
     {
       typedef SqlQuery<typename bt_append<L, V>::type > ResultType;
-      
+
       return ResultType(lhs, rhs);
     }
-    
+
     // concatenates a query of with a string
     //   does not change the queries type
     template <class L>
-    SqlQuery<L> 
+    SqlQuery<L>
     operator+(const SqlQuery<L>& lhs, const char* rhs)
     {
       return SqlQuery<L>(lhs, rhs);
-    } 
+    }
 
     // concatenates a query of with a string
-    //   does not change the queries type    
+    //   does not change the queries type
     template <class L>
-    SqlQuery<L> 
+    SqlQuery<L>
     operator+(const SqlQuery<L>& lhs, const std::string& rhs)
     {
       return SqlQuery<L>(lhs, rhs);
-    }    
+    }
 
     // concatenates a string with a SQL variable of type V.
     // the result type is an SqlQuery object with a single placeholder.
@@ -223,37 +253,51 @@ namespace BinaryAnalysis {
     operator+(const std::string& lhs, const SqlVar<V>& rhs)
     {
       typedef SqlQuery<typename bt::tuple<V>::inherited> ResultType;
-      
+
       return ResultType(SqlQuery<>(lhs), rhs);
     }
 
     // concatenates a string with a SQL variable of type V.
-    // the result type is an SqlQuery object with a single placeholder.    
+    // the result type is an SqlQuery object with a single placeholder.
     template <class V>
     SqlQuery<typename bt::tuple<V>::inherited>
     operator+(const char* lhs, const SqlVar<V>& rhs)
     {
       typedef SqlQuery<typename bt::tuple<V>::inherited> ResultType;
-      
+
       return ResultType(SqlQuery<>(lhs), rhs);
     }
 
     // binds NULL to an SQL placeholder at position @ref pos
-    template <class L>    
+    template <class L>
     static inline
-    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const SqlNullType&)
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const SqlNullType&)
     {
       stmt.sql->bind_null(pos);
     }
-    
+
     // binds a value to an SQL placeholder at position @ref pos
     template <class L>
     static inline
-    void sqlElemBind(SqlQueryPrepared<L>& stmt, int pos, const typename L::head_type& val)
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const typename L::head_type& val)
     {
       stmt.sql->bind(pos, val);
     }
-    
+
+    // binds optional values
+    template <class L>
+    static inline
+    void sqlBindVal(SqlQueryPrepared<L>& stmt, int pos, const Sawyer::Optional<typename L::head_type>& val)
+    {
+      if (val)
+      {
+        sqlBindVal(stmt, pos, val.get());
+        return;
+      }
+
+      sqlBindVal(stmt, pos, SqlNullType());
+    }
+
     // base case --> all palceholders are bound
     void sqlBind(SqlQueryPrepared<bt::null_type>, const bt::null_type&, int = 0) {}
 
@@ -261,21 +305,21 @@ namespace BinaryAnalysis {
     template<class L, class H, class T>
     void sqlBind(SqlQueryPrepared<L> stmt, const bt::cons<H,T>& args, int pos = 0)
     {
-      sqlElemBind(stmt, pos, args.get_head());
-      
-      sqlBind(stmt.tail(), args.get_tail(), pos+1);  
+      sqlBindVal(stmt, pos, args.get_head());
+
+      sqlBind(stmt.tail(), args.get_tail(), pos+1);
     }
-    
+
     // convenience function to bind all placeholders and return a prepared statement
     template <class BoostTypeList, class BoostTypeTuple>
     SqlStatementPtr
     sqlPrepareTuple(SqlQueryPrepared<BoostTypeList> stmt, const BoostTypeTuple& args)
     {
       sqlBind(stmt, args);
-      
+
       return stmt.sql;
     }
-    
+
     // function to create and return a statement and bind all its placeholders to values
     //   in @ref args
     template <class BoostTypeList, class BoostTypeTuple>
@@ -284,7 +328,7 @@ namespace BinaryAnalysis {
     {
       return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), args);
     }
-    
+
     // prepares a statement binds N variables to its paceholders.
     // @{
     SqlStatementPtr
@@ -292,71 +336,71 @@ namespace BinaryAnalysis {
     {
       return sqlPrepareTuple(SqlQueryPrepared<bt::null_type>(tx->statement(stmt.sql)), bt::make_tuple());
     }
-    
+
     template <class BoostTypeList, class V>
     SqlStatementPtr
     sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V& arg1)
     {
       return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1));
     }
-    
+
     template <class BoostTypeList, class V1, class V2>
     SqlStatementPtr
     sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V1& arg1, const V2& arg2)
     {
       return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1, arg2));
     }
-    
+
     template <class BoostTypeList, class V1, class V2, class V3>
     SqlStatementPtr
     sqlPrepare(SqlTransactionPtr tx, const SqlQuery<BoostTypeList>& stmt, const V1& arg1, const V2& arg2, const V3& arg3)
     {
       return sqlPrepareTuple(SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), bt::make_tuple(arg1, arg2, arg3));
     }
-    
+
     template <class BoostTypeList, class V1, class V2, class V3, class V4>
     SqlStatementPtr
-    sqlPrepare( SqlTransactionPtr tx, 
-                const SqlQuery<BoostTypeList>& stmt, 
+    sqlPrepare( SqlTransactionPtr tx,
+                const SqlQuery<BoostTypeList>& stmt,
                 const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4
               )
     {
-      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)),
                               bt::make_tuple(arg1, arg2, arg3, arg4)
                             );
     }
-    
+
     template <class BoostTypeList, class V1, class V2, class V3, class V4, class V5>
     SqlStatementPtr
-    sqlPrepare( SqlTransactionPtr tx, 
-                const SqlQuery<BoostTypeList>& stmt, 
+    sqlPrepare( SqlTransactionPtr tx,
+                const SqlQuery<BoostTypeList>& stmt,
                 const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4, const V5& arg5
               )
     {
-      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)),
                               bt::make_tuple(arg1, arg2, arg3, arg4, arg5)
                             );
     }
-    
+
     template <class BoostTypeList, class V1, class V2, class V3, class V4, class V5, class V6>
     SqlStatementPtr
-    sqlPrepare( SqlTransactionPtr tx, 
-                const SqlQuery<BoostTypeList>& stmt, 
+    sqlPrepare( SqlTransactionPtr tx,
+                const SqlQuery<BoostTypeList>& stmt,
                 const V1& arg1, const V2& arg2, const V3& arg3, const V4& arg4, const V5& arg5, const V6& arg6
               )
     {
-      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)), 
+      return sqlPrepareTuple( SqlQueryPrepared<BoostTypeList>(tx->statement(stmt.sql)),
                               bt::make_tuple(arg1, arg2, arg3, arg4, arg5, arg6)
                             );
-    }    
-    
+    }
+
     // @}
-    
-    
+
+
     //
     // SQL Queries
-    // 
-    
+    //
+
     // table makers
 
     static const
@@ -402,13 +446,13 @@ namespace BinaryAnalysis {
                             "  \"value\" varchar(256) NOT NULL,"
                             " CONSTRAINT \"uq_name_value\" UNIQUE (\"name\", \"value\")"
                             ");";
-                                        
+
     static const
     SqlQuery<>
     QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
                            "  \"testcase_id\" int UNIQUE NOT NULL,"
                            "  \"result\" Text,"
-                           "  \"concolic_run\" boolean NOT NULL,"
+                           "  \"concolic_run\" boolean,"
                            " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
                            ");";
 
@@ -438,11 +482,11 @@ namespace BinaryAnalysis {
                             "CREATE TABLE \"TestSuiteTestCases\" ("
                             "  \"testsuite_id\" int NOT NULL,"
                             "  \"testcase_id\" int NOT NULL,"
-                            " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestSuites\" (\"id\"),"
+                            " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testsuite_id\") REFERENCES \"TestSuites\" (\"id\"),"
                             " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
                             " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
                             ");";
-                                       
+
     static const
     SqlQuery<>
     QY_MK_RBA_FILES       = "CREATE TABLE \"RBAFiles\" ("
@@ -451,91 +495,99 @@ namespace BinaryAnalysis {
                             "  \"data\" Blob NOT NULL,"
                             " CONSTRAINT \"fk_specimen_rba\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
                             ");";
-  
+
     //
     // db queries
-  
+
     static const
     SqlQuery<>
-    QY_DB_INITIALIZED     = "SELECT count(*) FROM TestSuites;";  
-   
+    QY_DB_INITIALIZED     = "SELECT count(*) FROM TestSuites;";
+
     static const
     SqlQuery<>
     QY_ALL_TESTSUITES     = "SELECT rowid FROM TestSuites ORDER BY rowid;";
-    
+
     static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_TESTSUITE          = "SELECT name FROM TestSuites WHERE rowid = " + SqlInt() + ";";
-    
-    
+
+
     static const
-    SqlQuery<bt::tuple<std::string>::inherited >     
-    QY_TESTSUITE_BY_NAME  = "SELECT rowid FROM TestSuites WHERE name = " + SqlString() + ";";    
+    SqlQuery<bt::tuple<std::string>::inherited >
+    QY_TESTSUITE_BY_NAME  = "SELECT rowid FROM TestSuites WHERE name = " + SqlString() + ";";
 
     static const
     SqlQuery<>
     QY_ALL_SPECIMENS      = "SELECT rowid FROM Specimens ORDER BY rowid;";
 
     static const
-    SqlQuery<bt::tuple<int>::inherited > 
+    SqlQuery<bt::tuple<int>::inherited >
     QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
                             "  FROM TestCases"
                             " WHERE testsuite_id = " + SqlInt() + ";";
 
     static const
-    SqlQuery<bt::tuple<int>::inherited> 
+    SqlQuery<bt::tuple<int>::inherited>
     QY_SPECIMEN           = "SELECT name, binary FROM Specimens "
                             " WHERE rowid = " + SqlInt() + ";";
+
+    static const
+    SqlQuery<bt::tuple<std::string>::inherited>
+    QY_SPECIMEN_BY_NAME   = "SELECT rowid FROM Specimens "
+                            " WHERE name = " + SqlString() + ";";
 
     static const
     SqlQuery<>
     QY_ALL_TESTCASES      = "SELECT rowid FROM TestCases ORDER BY rowid;";
 
     static const
-    SqlQuery<bt::tuple<int>::inherited> 
+    SqlQuery<bt::tuple<int>::inherited>
     QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
                              "  FROM TestCases tc, TestSuiteTestCases tt"
                              " WHERE tc.rowid = tt.testcase_id"
                              "   AND tt.testsuite_id = " + SqlInt() + ";";
-                                        
-    static const                    
-    SqlQuery<bt::tuple<int, int>::inherited> 
+
+    static const
+    SqlQuery<bt::tuple<int, int>::inherited>
     QY_NEED_CONCOLIC      = "SELECT tc.rowid"
                             "  FROM TestCases tc, TestSuiteTestCases tt"
                             " WHERE tc.concolic_result = 0"
                             "   AND tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() + 
-                            " LIMIT " + SqlInt() + ";";  
-    
-    static const 
+                            "   AND tt.testsuite_id = " + SqlInt() +
+                            " LIMIT " + SqlInt() + ";";
+
+    static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_ALL_NEED_CONCOLIC  = "SELECT rowid"
                             "  FROM TestCases"
                             " WHERE concolic_result = 0"
-                            " LIMIT " + SqlInt() + ";";  
+                            " LIMIT " + SqlInt() + ";";
 
-    static const 
+    static const
+    std::string
+    HAS_CONCRETE_RESULTS  = " EXISTS"
+                            "    ( SELECT *"
+                            "        FROM ConcreteResults cr"
+                            "       WHERE cr.testcase_id = tc.rowid )";
+
+    static const
     SqlQuery<bt::tuple<int, int>::inherited>
     QY_NEED_CONCRETE      = "SELECT tc.rowid"
                             "  FROM TestCases tc, TestSuiteTestCases tt"
                             " WHERE tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() + 
+                            "   AND tt.testsuite_id = " + SqlInt() +
+                            "   AND NOT" + HAS_CONCRETE_RESULTS +
                             " ORDER BY tc.concrete_result ASC"
-                            " LIMIT " + SqlInt() + ";";  
-    
-    
-    static const 
-    SqlQuery<bt::tuple<int>::inherited>
-    QY_ALL_NEED_CONCRETE  = "SELECT rowid"
-                            "  FROM TestCases"
-                            " ORDER BY tc.concrete_result ASC"
-                            " LIMIT " + SqlInt() + ";";  
+                            " LIMIT " + SqlInt() + ";";
 
-    static const 
-    SqlQuery<>
-    QY_NEED_TESTING       = "SELECT count(*) FROM TestCases"
-                            " WHERE tc.concrete_result < 0"
-                            "    OR tc.concolic_result = 0;";
+    static const
+    SqlQuery<bt::tuple<int>::inherited>
+    QY_ALL_NEED_CONCRETE  = "SELECT tc.rowid"
+                            "  FROM TestCases tc"
+                            " WHERE NOT" + HAS_CONCRETE_RESULTS +
+                            " ORDER BY tc.concrete_result ASC"
+                            " LIMIT " + SqlInt() + ";";
+
     static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
@@ -590,11 +642,13 @@ namespace BinaryAnalysis {
     static const
     SqlQuery<bt::tuple<int, std::string, std::string>::inherited>
     QY_NEW_TESTCASE      = "INSERT INTO TestCases"
-                           "  (specimen_id, name, executor)"
-                           "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString() + ");";
+                           "  (specimen_id, name, executor, concrete_result)"
+                           "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString()
+                                       + ", " + NO_CONCRETE_RANK_STR +
+                                    ");";
 
     static const
-    SqlQuery<bt::tuple<int, std::string, std::string, double, bool, int>::inherited>  
+    SqlQuery<bt::tuple<int, std::string, std::string, double, bool, int>::inherited>
     QY_UPD_TESTCASE      = "UPDATE TestCases"
                            "   SET specimen_id = " + SqlInt() + ", name = " + SqlString() + ","
                            "       executor = " + SqlString() + ", concrete_result = " + SqlReal() + ","
@@ -652,33 +706,40 @@ namespace BinaryAnalysis {
     QY_NEW_CMDLINEARG    = "INSERT INTO CmdLineArgs"
                            "  (arg)"
                            "  VALUES(" + SqlString() + ");";
-    
-    static const                                    
+
+    static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_COUNT_RBAFILES    = "SELECT count(*) FROM RBAFiles"
+    QY_NUM_RBAFILES      = "SELECT count(*) FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
-                                        
+
     static const
     SqlQuery<bt::tuple<int, std::vector<uint8_t> >::inherited>
     QY_NEW_RBAFILE       = "INSERT INTO RBAFiles"
                            "  (specimen_id, data)"
                            "  VALUES(" + SqlInt() + "," + SqlBlob() + ");";
-    
+
     static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_RBAFILE           = "SELECT data FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
-                                       
+
     static const
     SqlQuery<bt::tuple<int>::inherited>
     QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
-                                       
+
+
+    static const
+    SqlQuery<bt::tuple<int, std::string>::inherited>
+    QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
+                           "  (testcase_id, result)"
+                           "  VALUES(" + SqlInt() + "," + SqlString() + ");";
+
     static const
     SqlQuery<>
     QY_LAST_ROW_SQLITE3  = "SELECT last_insert_rowid();";
-    
-    
+
+
     // returns the query associated with an object type
     // @{
 
@@ -693,19 +754,19 @@ namespace BinaryAnalysis {
     static
     const SqlQuery<bt::tuple<int>::inherited >&
     objQueryString(const SpecimenId&)  { return QY_SPECIMEN; }
-    
+
     // @}
 
 
     // prepares and binds a query for a given object type (@ref id)
     template <class IdTag>
     SqlStatementPtr
-    prepareObjQuery( const SqlDatabase::TransactionPtr& tx, 
+    prepareObjQuery( const SqlDatabase::TransactionPtr& tx,
                      const Concolic::ObjectId<IdTag>& id
                    )
     {
-      if (!id) throw_ex<std::logic_error>("ID not set");
-      
+      if (!id) throw std::logic_error("ID not set");
+
       return sqlPrepare(tx, objQueryString(id), id.get());
     }
 
@@ -729,27 +790,27 @@ namespace BinaryAnalysis {
     void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestCase& obj)
     {
       SqlIterator              it = stmt->begin();
-            
+
       obj.name(it.get_str(0));
       // obj.executor(it.get_str(1)));
       /* std::string exec = */ it.get_str(1);
-      
+
       // the SQLlite interface does not allow to test for NULL values
       double                   concreteTest = it.get_dbl(2);
-      Sawyer::Optional<double> concreteTest_opt = ( concreteTest >= 0 
+      Sawyer::Optional<double> concreteTest_opt = ( concreteTest >= 0
                                                      ? Sawyer::Optional<double>(concreteTest)
                                                      : Sawyer::Optional<double>()
-                                                  );  
+                                                  );
       obj.concreteRank(concreteTest_opt);
       obj.concolicTest(it.get_i32(3));
-                  
+
       ROSE_ASSERT((++it).at_eof());
     }
     // @}
 
     // family of functions that query dependent objects.
     //   (e.g., lists of associated objects)
-    
+
     void dependentObjQuery(Concolic::Database&, SqlTransactionPtr&, TestSuiteId, Concolic::TestSuite&)
     {
       // no dependent objects for test suites
@@ -817,7 +878,7 @@ namespace BinaryAnalysis {
       private:
         SqlIterator iter;
     };
-    
+
     // queries a sequence of dependent objects of type T
     //   by executing query @ref sql.
     template <class T>
@@ -825,16 +886,16 @@ namespace BinaryAnalysis {
     depObjQuery(SqlTransactionPtr& tx, const SqlQuery< bt::tuple<int>::inherited >& sql, TestCaseId id)
     {
       typedef TransformingIterator<T> ResultIterator;
-      
+
       SqlStatementPtr stmt = sqlPrepare(tx, sql, id.get());
       ResultIterator  start(stmt->begin());
       ResultIterator  limit(stmt->end());
       std::vector<T>  res;
-      
+
       std::copy(start, limit, std::back_inserter(res));
       return res;
     }
-    
+
     // queries dependencies of a TestCase object
     void dependentObjQuery( Concolic::Database& db,
                             SqlTransactionPtr& tx,
@@ -843,11 +904,11 @@ namespace BinaryAnalysis {
                           )
     {
       typedef Concolic::EnvValue             EnvValue;
-      
+
       // read command line arguments and environment settings
       tmp.args(depObjQuery<std::string>(tx, QY_TESTCASE_ARGS, id));
       tmp.env (depObjQuery<EnvValue>   (tx, QY_TESTCASE_ENV,  id));
-    
+
       // read specimen
       {
         SqlStatementPtr         stmt = sqlPrepare(tx, QY_TESTCASE_SPECIMEN, id.get());
@@ -862,7 +923,9 @@ namespace BinaryAnalysis {
 
 namespace Concolic {
 
-// responsible for commit handling of transactions
+//! Responsible for transaction handling
+//! It is the user's responsibility to explicitly commit any DB updates,
+//!   otherwise the TX is rolled back!.
 struct DBTxGuard
 {
     // creates a new database transaction
@@ -872,9 +935,20 @@ struct DBTxGuard
     {}
 
     // in case there was no explicit commit the tx is rolled back
+    // ( alternatively, the destructor could auto commit/rollback
+    //   depending on exception handling context. )
     ~DBTxGuard()
     {
-      if (tx_) tx_->rollback();
+      if (tx_)
+      {
+        tx_->rollback();
+
+        if (!std::uncaught_exception())
+        {
+          //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+          std::cerr << "ConcolicDB: TX uncommitted -> rollback" << std::endl;
+        }
+      }
     }
 
     SqlTransactionPtr tx() { return tx_; }
@@ -890,11 +964,11 @@ struct DBTxGuard
 
 
 // queries a vector of object IDs using @args to constrain the query.
-template <class IdTag, class BoostTypeList, class BoostTypeTuple> 
+template <class IdTag, class BoostTypeList, class BoostTypeTuple>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, 
-          const SqlQuery<BoostTypeList>& sql, 
-          const BoostTypeTuple& args           
+queryIds( SqlDatabase::ConnectionPtr dbconn,
+          const SqlQuery<BoostTypeList>& sql,
+          const BoostTypeTuple& args
         )
 {
   typedef Concolic::ObjectId<IdTag>     IdClass;
@@ -906,7 +980,7 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
   ResultIterator       start(stmt->begin());
   const ResultIterator limit(stmt->end());
   ResultVec            result;
-  
+
   std::copy(start, limit, std::back_inserter(result));
 
   dbtx.commit();
@@ -914,10 +988,10 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
 }
 
 // workaround for lack of function default template arguments in C++03.
-template <class IdTag, class BoostTypeList> 
+template <class IdTag, class BoostTypeList>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, const SqlQuery<BoostTypeList>& sql)
-{  
+queryIds( SqlDatabase::ConnectionPtr dbconn, const SqlQuery<BoostTypeList>& sql)
+{
   return queryIds<IdTag>(dbconn, sql, bt::null_type());
 }
 
@@ -926,14 +1000,14 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn, const SqlQuery<BoostTypeList>& sql
 // if @ref id is not set, all objects are queried (@ref full)
 template <class IdTag, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, 
-          TestSuiteId id, 
+queryIds( SqlDatabase::ConnectionPtr dbconn,
+          TestSuiteId id,
           const SqlQuery<>& full,
           const SqlQuery<BoostTypeList2>& restricted
         )
 {
   if (!id) return queryIds<IdTag>(dbconn, full);
-  
+
   return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get()));
 }
 
@@ -941,15 +1015,18 @@ queryIds( SqlDatabase::ConnectionPtr& dbconn,
 //   maximum number of rows returned
 template <class IdTag, class BoostTypeList1, class BoostTypeList2>
 std::vector<Concolic::ObjectId<IdTag> >
-queryIds( SqlDatabase::ConnectionPtr& dbconn, 
-          TestSuiteId id, 
+queryIds( SqlDatabase::ConnectionPtr dbconn,
+          TestSuiteId id,
           const SqlQuery<BoostTypeList1>& full,
           const SqlQuery<BoostTypeList2>& restricted,
           int limit
         )
 {
-  if (!id) queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
-  
+  if (!id)
+  {
+    return queryIds<IdTag>(dbconn, full, bt::make_tuple(limit));
+  }
+
   return queryIds<IdTag>(dbconn, restricted, bt::make_tuple(id.get(), limit));
 }
 
@@ -963,8 +1040,8 @@ Database::testSuites()
 TestSuite::Ptr
 Database::testSuite()
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   if (!testSuiteId_) return TestSuite::Ptr();
 
   return testSuites_.forward()[testSuiteId_];
@@ -974,13 +1051,47 @@ Database::testSuite()
 Database::TestSuiteId
 Database::testSuite(const TestSuite::Ptr& obj)
 {
-  Database::TestSuiteId res = id(obj);
-  
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  TestSuiteId res;
 
+  if (obj) res = id(obj);
+
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
   testSuiteId_ = res;
   return testSuiteId_;
 }
+
+
+template <class IdClass>
+IdClass getId(SqlIterator pos, SqlIterator end)
+{
+  if (pos == end) return IdClass();
+
+  return IdClass(pos.get_i32(0));
+}
+
+
+template <class IdClass>
+IdClass
+queryIdByName( SqlDatabase::ConnectionPtr& dbconn,
+               const SqlQuery<bt::tuple<std::string>::inherited>& sqlstmt,
+               const std::string& name
+             )
+{
+  DBTxGuard       dbtx(dbconn);
+  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), sqlstmt, name);
+  IdClass         id = getId<IdClass>(stmt->begin(), stmt->end());
+
+  dbtx.commit();
+  return id;
+}
+
+
+TestSuiteId
+Database::testSuite(const std::string& name)
+{
+  return queryIdByName<TestSuiteId>(dbconn_, QY_TESTSUITE_BY_NAME, name);
+}
+
 
 
 // specimens
@@ -988,12 +1099,20 @@ Database::testSuite(const TestSuite::Ptr& obj)
 std::vector<SpecimenId>
 Database::specimens()
 {
-  return queryIds<Specimen>( dbconn_, 
-                             testSuiteId_, 
+  return queryIds<Specimen>( dbconn_,
+                             testSuiteId_,
                              QY_ALL_SPECIMENS,     /* full */
                              QY_SPECIMENS_IN_SUITE /* restricted */
                            );
 }
+
+
+SpecimenId
+Database::specimen(const std::string& name)
+{
+  return queryIdByName<SpecimenId>(dbconn_, QY_SPECIMEN_BY_NAME, name);
+}
+
 
 //
 // test cases
@@ -1001,8 +1120,8 @@ Database::specimens()
 std::vector<TestCaseId>
 Database::testCases()
 {
-  return queryIds<TestCase>( dbconn_, 
-                             testSuiteId_, 
+  return queryIds<TestCase>( dbconn_,
+                             testSuiteId_,
                              QY_ALL_TESTCASES,     /* full */
                              QY_TESTCASES_IN_SUITE /* restricted */
                            );
@@ -1021,7 +1140,7 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
 
     res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
              ->execute_int();
-             
+
     dbtx.commit();
   }
   catch (SqlDatabase::Exception& ex)
@@ -1033,11 +1152,8 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
 
 
 static
-void initializeDB(SqlConnectionPtr dbconn)
+void initializeDB(SqlTransactionPtr tx)
 {
-  DBTxGuard         dbtx(dbconn);
-  SqlTransactionPtr tx = dbtx.tx();
-  
   sqlPrepare(tx, QY_MK_TESTSUITES)->execute();
   sqlPrepare(tx, QY_MK_SPECIMENS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASES)->execute();
@@ -1048,7 +1164,6 @@ void initializeDB(SqlConnectionPtr dbconn)
   sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
-  dbtx.commit();
 }
 
 
@@ -1120,14 +1235,14 @@ _object( Database& db,
        )
 {
   typedef typename BidirectionalMap::Forward::Value ResultType;
-  
+
   DBTxGuard  dbtx(dbconn);
   ResultType res = _object(db, dbtx.tx(), id, update, objmap);
-  
+
   dbtx.commit();
   return res;
 }
-  
+
 int sqlLastRowId(SqlTransactionPtr tx)
 {
   return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)
@@ -1138,7 +1253,7 @@ TestSuite::Ptr
 Database::object(TestSuiteId id, Update::Flag update)
 {
   // lock to protect this object's BiMap
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _object(*this, dbconn_, id, update, testSuites_);
 }
@@ -1146,7 +1261,7 @@ Database::object(TestSuiteId id, Update::Flag update)
 Specimen::Ptr
 Database::object(SpecimenId id, Update::Flag update)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _object(*this, dbconn_, id, update, specimens_);
 }
@@ -1154,7 +1269,7 @@ Database::object(SpecimenId id, Update::Flag update)
 TestCase::Ptr
 Database::object(TestCaseId id, Update::Flag update)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _object(*this, dbconn_, id, update, testCases_);
 }
@@ -1174,7 +1289,7 @@ insertDBObject(Concolic::Database&, SqlTransactionPtr tx, TestSuite::Ptr obj)
 {
   sqlPrepare(tx, QY_NEW_TESTSUITE, obj->name())
     ->execute();
-    
+
   return TestSuiteId(sqlLastRowId(tx));
 }
 
@@ -1183,7 +1298,7 @@ insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 {
   sqlPrepare(tx, QY_NEW_SPECIMEN, obj->name(), obj->content())
     ->execute();
-    
+
   return SpecimenId(sqlLastRowId(tx));
 }
 
@@ -1191,7 +1306,9 @@ insertDBObject(Concolic::Database&, SqlTransactionPtr tx, Specimen::Ptr obj)
 //
 // methods to insert/update new objects into the DB
 
-void deleteTestCaseElems(SqlTransactionPtr tx, const SqlQuery<bt::tuple<int>::inherited>& query, int tcid)
+typedef SqlQuery<bt::tuple<int>::inherited> SqlQueryInt;
+
+void deleteTestCaseElems( SqlTransactionPtr tx, const SqlQueryInt& query, int tcid)
 {
   sqlPrepare(tx, query, tcid)
     ->execute();
@@ -1258,7 +1375,7 @@ struct EnvVarInserter
   void operator()(const EnvValue& envvar)
   {
     int             envvarId = queryEnvVarId(envvar);
-    
+
     sqlPrepare(tx, QY_NEW_TESTCASE_EVAR, testcaseId, envvarId)
       ->execute();
   }
@@ -1290,10 +1407,10 @@ TestCaseId
 insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
   static const std::string exec = "linux";
-  
+
   const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
   SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec);
-  
+
   stmt->execute();
   const int       testcaseId  = sqlLastRowId(tx);
 
@@ -1313,22 +1430,25 @@ void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, Specimen::Ptr obj, SpecimenId id)
 {
   SqlStatementPtr stmt = sqlPrepare(tx, QY_UPD_SPECIMEN, obj->name(), obj->content(), id.get());
-  
+
   stmt->execute();
 }
 
 void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, TestCaseId id)
 {
-  const int                specId       = db.id_ns(tx, obj->specimen()).get();
+  // Update::NO: updating the specimen object for every update to a
+  //   testcase is excessive (i.e., copying the entire binary).
+  const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
-  /* use some negative number, since queries cannot test for nuln*/
-  double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */; 
+
+  // \todo use some negative number, since queries cannot test for null
+  double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */;
   bool                     hasConc      = obj->hasConcolicTest();
-    
+
   sqlPrepare(tx, QY_UPD_TESTCASE, specId, obj->name(), "linux", rank, hasConc, id.get())
      ->execute();
-  
+
   dependentObjUpdate(tx, id.get(), obj);
 }
 
@@ -1377,10 +1497,10 @@ _id( Concolic::Database& db,
    )
 {
   typedef typename BidirectionalMap::Reverse::Value ResultType;
-  
+
   DBTxGuard  dbtx(dbconn);
   ResultType res = _id(db, dbtx.tx(), obj, update, objmap);
-  
+
   dbtx.commit();
   return res;
 }
@@ -1389,7 +1509,7 @@ _id( Concolic::Database& db,
 TestSuiteId
 Database::id(const TestSuite::Ptr& pts, Update::Flag update)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _id(*this, dbconn_, pts, update, testSuites_);
 }
@@ -1397,7 +1517,7 @@ Database::id(const TestSuite::Ptr& pts, Update::Flag update)
 SpecimenId
 Database::id(const Specimen::Ptr& psp, Update::Flag update)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _id(*this, dbconn_, psp, update, specimens_);
 }
@@ -1405,196 +1525,146 @@ Database::id(const Specimen::Ptr& psp, Update::Flag update)
 TestCaseId
 Database::id(const TestCase::Ptr& ptc, Update::Flag update)
 {
-  SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   return _id(*this, dbconn_, ptc, update, testCases_);
 }
 
-TestSuiteId 
-Database::id_ns(SqlTransactionPtr tx, const TestSuite::Ptr& obj)
+TestSuiteId
+Database::id_ns(SqlTransactionPtr tx, const TestSuite::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, testSuites_);
+  return _id(*this, tx, obj, update, testSuites_);
 }
 
-TestCaseId 
-Database::id_ns(SqlTransactionPtr tx, const TestCase::Ptr& obj)
+TestCaseId
+Database::id_ns(SqlTransactionPtr tx, const TestCase::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, testCases_);
+  return _id(*this, tx, obj, update, testCases_);
 }
 
-SpecimenId 
-Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj)
+SpecimenId
+Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj, Update::Flag update)
 {
-  return _id(*this, tx, obj, Update::YES, specimens_);
+  return _id(*this, tx, obj, update, specimens_);
 }
 
 
+void failNonExistingDB(bool fileexists, const std::string& file)
+{
+  if (!fileexists)
+    throw std::runtime_error("Database file for url: " + file + "does not exist (cannot open).");
+}
+
+void overwriteExistingDB(bool fileexists, const std::string& file)
+{
+  if (fileexists)
+    boost::filesystem::remove(file);
+}
+
+template <class ExistingDBPolicy>
+SqlConnectionPtr
+connectToDB(const std::string& url, ExistingDBPolicy policy)
+{
+  std::pair<std::string, bool> dbinfo = dbProperties(url);
+
+  policy(boost::filesystem::exists(dbinfo.first), dbinfo.first);
+
+    SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
+
+  return SqlDatabase::Connection::create(url, dbdriver);
+}
 
 Database::Ptr
 Database::instance(const std::string &url)
 {
-    SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
-    SqlConnectionPtr    dbconn   = SqlDatabase::Connection::create(url, dbdriver);
-    Ptr                 db(new Database);
-
-    db->dbconn_ = dbconn;
+  SqlConnectionPtr dbconn = connectToDB(url, failNonExistingDB);
 
     if (!isDbInitialized(dbconn))
-      initializeDB(dbconn);
+    throw std::runtime_error("Database " + url + " is not a concolic DB.");
 
+  Ptr              db(new Database);
+
+  db->dbconn_ = dbconn;
     db->testSuites();
     return db;
 }
 
 Database::Ptr
+Database::create(const std::string& url)
+{
+  SqlConnectionPtr dbconn = connectToDB(url, overwriteExistingDB);
+  DBTxGuard        dbtx(dbconn);
+
+  // create tables
+  initializeDB(dbtx.tx());
+  dbtx.commit();
+
+  Ptr              db(new Database);
+
+  db->dbconn_      = dbconn;
+  return db;
+}
+
+Database::Ptr
 Database::create(const std::string& url, const std::string& testSuiteName)
 {
-    Ptr             db = instance("sqlite:" + url);  
-    DBTxGuard       dbtx(db->dbconn_);  
-    SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName);
-    TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
-    dbtx.commit();
-    
-    db->testSuiteId_ = testSuiteid;
-    return db;
+  Ptr         db = create(url);
+  DBTxGuard   dbtx(db->dbconn_);
+
+  // insert new testsuite
+  sqlPrepare(dbtx.tx(), QY_NEW_TESTSUITE, testSuiteName)
+    ->execute();
+
+  // query id
+  TestSuiteId tsid(sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName)->execute_int());
+  dbtx.commit();
+
+  ROSE_ASSERT(tsid.get() == DBSQLITE_FIRST_ROWID); // first inserted suite
+  db->testSuiteId_ = tsid;
+  return db;
 }
+
 
 void
 Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
-{  
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+{
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
   DBTxGuard       dbtx(dbconn_);
-  
+
   sqlPrepare(dbtx.tx(), QY_NEW_TESTSUITE_TESTCASE, testsuite.get(), testcase.get())
     ->execute();
 
   dbtx.commit();
 }
 
-
-std::vector<uint8_t> 
-loadBinaryFile(const boost::filesystem::path& path)
-{
-  typedef std::istreambuf_iterator<char> stream_iterator;
-  
-  std::vector<uint8_t> res;
-  std::ifstream        stream(path.string().c_str(), std::ios::in | std::ios::binary);
-
-  if (!stream.good())
-  {
-    throw_ex<std::runtime_error>("Unable to open ", path.string(), ".");
-  }
-
-  std::copy(stream_iterator(stream), stream_iterator(), std::back_inserter(res));
-  return res;
-}
-
-
-// https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
-template <class T, class CharT = char, class Traits = std::char_traits<CharT> >
-struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void, void, void>
-{
-  typedef std::basic_ostream<CharT, Traits> ostream_type;
-  typedef Traits                            traits_type;
-  typedef CharT                             char_type;
-
-  ostreambin_iterator(ostream_type& s) : stream(s) { }
-
-  ostreambin_iterator& operator=(const T& value)
-  {
-    stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
-    return *this;
-  }
-
-  ostreambin_iterator& operator*()     { return *this; }
-  ostreambin_iterator& operator++()    { return *this; }
-  ostreambin_iterator& operator++(int) { return *this; }
-
-  ostream_type& stream;
-};
-
-template <class T>
-struct FileSink
-{
-  typedef ostreambin_iterator<T> insert_iterator;
-
-  std::ostream& datastream;
-
-  FileSink(std::ostream& stream)
-  : datastream(stream)
-  {}
-
-  void reserve(size_t) {}
-
-  insert_iterator
-  inserter()
-  {
-    return insert_iterator(datastream);
-  }
-};
-
-void
-storeBinaryFile(const std::vector<uint8_t>& data, const boost::filesystem::path& binary)
-{
-  {
-    std::ofstream outfile(binary.string().c_str(), std::ofstream::binary);
-  
-    if (!outfile.good())
-    {
-      throw_ex<std::runtime_error>("Unable to open ", binary.string(), ".");
-    }
-
-    FileSink<char>              sink(outfile);
-  
-    sink.reserve(data.size());
-    std::copy(data.begin(), data.end(), sink.inserter());
-  }
-}
-
-#if WITH_DIRECT_SQLITE3  
-
-std::pair<std::string, bool>
-dbProperties(const std::string& url)
-{
-  static const std::string locator  = "sqlite3://";
-  static const std::string debugopt = "?debug";
-  
-  if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
-  
-  size_t limit = url.find_first_of('?', locator.size());
-  bool   with_debug = (  (limit != std::string::npos)
-                      && debugopt == url.substr(limit, limit + debugopt.size())
-                      );
-  
-  return std::make_pair(url.substr(locator.size(), limit), with_debug);
-}
+#if WITH_DIRECT_SQLITE3
 
 
 struct GuardedStmt;
 
 struct GuardedDB
 {
-    explicit  
-    GuardedDB(const std::string& url) 
+    explicit
+    GuardedDB(const std::string& url)
     : db_(NULL), dbg_(false)
     {
       std::pair<std::string, bool> properties = dbProperties(url);
-      
+
       sqlite3_open(properties.first.c_str(), &db_);
       dbg_ = properties.second;
     }
-    
+
     ~GuardedDB()
     {
       if (db_)
         sqlite3_close(db_);
     }
-    
+
     operator sqlite3* () { return db_; }
-    
+
     void debug(GuardedStmt&);
-  
+
   private:
     sqlite3* db_;
     bool     dbg_;
@@ -1603,41 +1673,41 @@ struct GuardedDB
 struct GuardedStmt
 {
     template <class T>
-    explicit  
-    GuardedStmt(const SqlQuery<T>& query) 
-    : sql_(query.sql), stmt_(NULL) 
+    explicit
+    GuardedStmt(const SqlQuery<T>& query)
+    : sql_(query.sql), stmt_(NULL)
     {}
-    
+
     ~GuardedStmt()
     {
       if (stmt_)
         sqlite3_finalize(stmt_);
     }
-    
-    sqlite3_stmt*& stmt()        { return stmt_; } 
-    const char*    c_str() const { return sql_.c_str(); } 
-      
+
+    sqlite3_stmt*& stmt()        { return stmt_; }
+    const char*    c_str() const { return sql_.c_str(); }
+
   private:
     std::string     sql_;
     sqlite3_stmt*   stmt_;
 };
 
-struct SqlLiteStringGuard
-{
-  explicit
-  SqlLiteStringGuard(const char* s)
-  : str(s)
-  {}
-  
-  ~SqlLiteStringGuard() 
-  { 
-    if (str) sqlite3_free(const_cast<char*>(str)); 
-  }
-  
-  operator const char*() { return str; }
-  
-  const char* const str;  
-};
+//~ struct SqlLiteStringGuard
+//~ {
+  //~ explicit
+  //~ SqlLiteStringGuard(const char* s)
+  //~ : str(s)
+  //~ {}
+
+  //~ ~SqlLiteStringGuard()
+  //~ {
+    //~ if (str) sqlite3_free(const_cast<char*>(str));
+  //~ }
+
+  //~ operator const char*() { return str; }
+
+  //~ const char* const str;
+//~ };
 
 
 void GuardedDB::debug(GuardedStmt& sql)
@@ -1646,32 +1716,34 @@ void GuardedDB::debug(GuardedStmt& sql)
 
   //~ Available since the pi release ( >= 3.14 )
   //~ SqlLiteStringGuard sqlstmt(sqlite3_expanded_sql(sql.stmt()));
-  SqlLiteStringGuard sqlstmt(NULL);
-  
-  std::cerr << sqlstmt << std::endl;  
+  //~ SqlLiteStringGuard sqlstmt(NULL);
+
+  //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+  std::cerr
+     << sql.c_str() << std::endl;
 }
 
 
 void checkSql(GuardedDB& db, int sql3code, int expected = SQLITE_OK)
 {
   if (sql3code != expected)
-    throw_ex<std::runtime_error>(sqlite3_errmsg(db));
+    throw std::runtime_error(sqlite3_errmsg(db));
 }
 
 template <class Iterator>
 void storeRBAFile(GuardedDB& db, SpecimenId id, Iterator start, Iterator limit)
 {
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
-  
+
   GuardedStmt  sql(QY_NEW_RBAFILE);
   const size_t sz = sizeof(value_type)*std::distance(start, limit);
-  
-  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );  
+
+  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );
   checkSql( db, sqlite3_bind_int(sql.stmt(), 1, id.get()) );
   checkSql( db, sqlite3_bind_blob(sql.stmt(), 2, &*start, sz, SQLITE_STATIC) );
-  
+
   db.debug(sql);
-  
+
   checkSql( db, sqlite3_step(sql.stmt()), SQLITE_DONE );
 }
 
@@ -1679,17 +1751,17 @@ template <class Sink>
 void retrieveRBAFile(GuardedDB& db, SpecimenId id, Sink sink)
 {
   GuardedStmt  sql(QY_RBAFILE);
-  
-  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );  
+
+  checkSql( db, sqlite3_prepare_v2(db, sql.c_str(), -1, &sql.stmt(), NULL) );
   checkSql( db, sqlite3_bind_int(sql.stmt(), 1, id.get()) );
   checkSql( db, sqlite3_step(sql.stmt()), SQLITE_ROW );
-  
+
   size_t      bytes = sqlite3_column_bytes(sql.stmt(), 0);
   const char* data  = reinterpret_cast<const char*>(sqlite3_column_blob(sql.stmt(), 0));
-  
-  sink.reserve(bytes);    
+
+  sink.reserve(bytes);
   std::copy(data, data+bytes, sink.inserter());
-  
+
   checkSql( db, sqlite3_step(sql.stmt()), SQLITE_DONE );
 }
 
@@ -1697,39 +1769,39 @@ void retrieveRBAFile(GuardedDB& db, SpecimenId id, Sink sink)
 
 
 bool
-Database::rbaExists(Database::SpecimenId id) 
+Database::rbaExists(Database::SpecimenId id)
 {
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   DBTxGuard dbtx(dbconn_);
-  int       res = sqlPrepare(dbtx.tx(), QY_COUNT_RBAFILES, id.get())
+  int       res = sqlPrepare(dbtx.tx(), QY_NUM_RBAFILES, id.get())
                     ->execute_int();
-  
-  dbtx.commit();  
+
+  dbtx.commit();
   ROSE_ASSERT(res == 0 || res == 1);
   return res == 1;
 }
 
 void
-Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId id) 
+Database::saveRbaFile(const boost::filesystem::path& path, Database::SpecimenId id)
 {
 #if WITH_DIRECT_SQLITE3
   namespace bstio = boost::iostreams;
 
   GuardedDB                 db(dbconn_->openspec());
   bstio::mapped_file_source binary(path);
-  
-  storeRBAFile(db, id, binary.begin(), binary.end()); 
+
+  storeRBAFile(db, id, binary.begin(), binary.end());
 #else
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
+  //~ // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   DBTxGuard            dbtx(dbconn_);
   std::vector<uint8_t> content = loadBinaryFile(path);
-  
+
   sqlPrepare(dbtx.tx(), QY_NEW_RBAFILE, id.get(), content)
     ->execute();
 
-  dbtx.commit();  
+  dbtx.commit();
 #endif /* WITH_DIRECT_SQLITE3 */
 }
 
@@ -1740,17 +1812,17 @@ Database::extractRbaFile(const boost::filesystem::path& path, Database::Specimen
   GuardedDB     db(dbconn_->openspec());
   // \todo consider using mapped_file_sink
   std::ofstream outfile(path.string().c_str(), std::ofstream::binary);
-  
-  if (!outfile.good()) 
-    throw_ex<std::runtime_error>("unable to open file: ", path.string());
-    
-  retrieveRBAFile(db, id, FileSink<char>(outfile));  
+
+  if (!outfile.good())
+    throw std::runtime_error("unable to open file: " + path.string());
+
+  retrieveRBAFile(db, id, FileSink<char>(outfile));
 #else
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   DBTxGuard       dbtx(dbconn_);
   SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_RBAFILE, id.get());
-  
+
   storeBinaryFile(stmt->execute_blob(), path);
   dbtx.commit();
 #endif /* WITH_DIRECT_SQLITE3 */
@@ -1758,14 +1830,14 @@ Database::extractRbaFile(const boost::filesystem::path& path, Database::Specimen
 
 void
 Database::eraseRba(Database::SpecimenId id) {
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
+  // SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
   DBTxGuard       dbtx(dbconn_);
-  
+
   sqlPrepare(dbtx.tx(), QY_RM_RBAFILE, id.get())
     ->execute();
-    
-  dbtx.commit();    
+
+  dbtx.commit();
 }
 
 
@@ -1784,21 +1856,128 @@ Database::needConcolicTesting(size_t num)
 bool
 Database::hasUntested() const
 {
-  DBTxGuard       dbtx(dbconn_);
-  SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_NEED_TESTING);
-  const int       num = stmt->execute_int();
-  
-  dbtx.commit();      
-  return num > 0;
+  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
 }
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+template <class T>
+static
+std::string xml(const T& o)
+{
+  std::stringstream            stream;
+  boost::archive::xml_oarchive oa(stream);
+
+  oa << BOOST_SERIALIZATION_NVP(o);
+  return stream.str();
+}
+
+template <class T>
+static
+std::string text(const T& o)
+{
+  std::stringstream             stream;
+  boost::archive::text_oarchive oa(stream);
+
+  oa << BOOST_SERIALIZATION_NVP(o);
+  return stream.str();
+}
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
-  id(testCase, Update::YES);
-  // \todo store results
+  std::string  detailtxt = "<error>requires BOOST serialization</error>";
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+  // was: detailtxt = xml(details);
+  //      BOOST serialization does not seem to pick up the polymorphic
+  //      type...
+  //      BOOST_CLASS_EXPORT_KEYs are defined in BinaryConcolic.h
+  //      BOOST_CLASS_EXPORT_IMPLEMENTs are defined in LinuxExecutor.C
+  const LinuxExecutor::Result* linuxres = dynamic_cast<const LinuxExecutor::Result*>(&details);
+
+  // \todo enable BOOST serialization polymorphism
+  detailtxt = linuxres ? xml(*linuxres) : xml(details);
+  //~ detailtxt = text(details);
+
+  std::cerr << "XML:" << detailtxt << std::endl;
+#else
+  //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
+  std::cerr
+    << "ConcolicDB: Boost::Serialization not available; result not serialized."
+    << std::endl;
+#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
+
+  {
+    DBTxGuard  dbtx(dbconn_);
+    TestCaseId tcid = id_ns(dbtx.tx(), testCase);
+
+    updateDBObject(*this, dbtx.tx(), testCase, tcid);
+
+    sqlPrepare(dbtx.tx(), QY_NEW_CONCRETE_RES, tcid.get(), detailtxt)
+      ->execute();
+
+    dbtx.commit();
+  }
 }
+
+void writeDBSchema(std::ostream& os)
+{
+  os << QY_MK_TESTSUITES         << "\n\n"
+     << QY_MK_SPECIMENS          << "\n\n"
+     << QY_MK_TESTCASES          << "\n\n"
+     << QY_MK_CMDLINEARGS        << "\n\n"
+     << QY_MK_ENVVARS            << "\n\n"
+     << QY_MK_TESTCASE_ARGS      << "\n\n"
+     << QY_MK_TESTCASE_EVAR      << "\n\n"
+     << QY_MK_TESTSUITE_TESTCASE << "\n\n"
+     << QY_MK_RBA_FILES          << "\n\n"
+     << QY_MK_CONCRETE_RES       ;
+}
+
+void writeSqlStmts(std::ostream& os)
+{
+  os << QY_DB_INITIALIZED         << "\n\n"
+     << QY_ALL_TESTSUITES         << "\n\n"
+     << QY_TESTSUITE              << "\n\n"
+     << QY_TESTSUITE_BY_NAME      << "\n\n"
+     << QY_ALL_SPECIMENS          << "\n\n"
+     << QY_SPECIMENS_IN_SUITE     << "\n\n"
+     << QY_SPECIMEN               << "\n\n"
+     << QY_SPECIMEN_BY_NAME       << "\n\n"
+     << QY_ALL_TESTCASES          << "\n\n"
+     << QY_TESTCASES_IN_SUITE     << "\n\n"
+     << QY_NEED_CONCOLIC          << "\n\n"
+     << QY_ALL_NEED_CONCOLIC      << "\n\n"
+     << QY_NEED_CONCRETE          << "\n\n"
+     << QY_ALL_NEED_CONCRETE      << "\n\n"
+     << QY_TESTCASE               << "\n\n"
+     << QY_TESTCASE_ARGS          << "\n\n"
+     << QY_TESTCASE_ENV           << "\n\n"
+     << QY_TESTCASE_SPECIMEN      << "\n\n"
+     << QY_NEW_TESTSUITE          << "\n\n"
+     << QY_UPD_TESTSUITE          << "\n\n"
+     << QY_NEW_SPECIMEN           << "\n\n"
+     << QY_UPD_SPECIMEN           << "\n\n"
+     << QY_NEW_TESTCASE           << "\n\n"
+     << QY_UPD_TESTCASE           << "\n\n"
+     << QY_RM_TESTCASE_EVAR       << "\n\n"
+     << QY_NEW_TESTCASE_EVAR      << "\n\n"
+     << QY_ENVVAR_ID              << "\n\n"
+     << QY_NEW_ENVVAR             << "\n\n"
+     << QY_RM_TESTCASE_CARG       << "\n\n"
+     << QY_NEW_TESTCASE_CARG      << "\n\n"
+     << QY_NEW_TESTSUITE_TESTCASE << "\n\n"
+     << QY_CMDLINEARG_ID          << "\n\n"
+     << QY_NEW_CMDLINEARG         << "\n\n"
+     << QY_NUM_RBAFILES           << "\n\n"
+     << QY_NEW_RBAFILE            << "\n\n"
+     << QY_RBAFILE                << "\n\n"
+     << QY_RM_RBAFILE             << "\n\n"
+     << QY_NEW_CONCRETE_RES       << "\n\n"
+     << QY_LAST_ROW_SQLITE3       ;
+}
+
 
 } // namespace
 } // namespace

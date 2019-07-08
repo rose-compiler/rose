@@ -488,6 +488,13 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Description of conditional branch BO constant.
+         *
+         *  Given a BO constant from a PowerPC conditional branch instruction, convert it to a description of the condition
+         *  that causes the branch to be taken. "BO" is the term used in the PowerPC documentation to denote the first argument
+         *  of the conditional instruction; it is a 5-bit integer constant. */
+        std::string conditionalBranchDescription() const;
+        
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;

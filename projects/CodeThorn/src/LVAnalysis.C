@@ -28,18 +28,12 @@ CodeThorn::LVPropertyStateFactory::~LVPropertyStateFactory() {
 
 CodeThorn::LVAnalysis::LVAnalysis() {
   _transferFunctions=new LVTransferFunctions();
-  _initialElementFactory=new LVPropertyStateFactory();
+  _transferFunctions->setInitialElementFactory(new LVPropertyStateFactory());
 }
 
 CodeThorn::LVAnalysis::~LVAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
-}
-void CodeThorn::LVAnalysis::initializeExtremalValue(Lattice* element) {
-  LVLattice* lvElement=dynamic_cast<LVLattice*>(element);
-  ROSE_ASSERT(lvElement);
-  lvElement->setEmptySet();
-  cout<<"INFO: initialized extremal value."<<endl;
+  delete _transferFunctions->getInitialElementFactory();
 }
 
 DFAstAttribute* CodeThorn::LVAnalysis::createDFAstAttribute(Lattice* elem) {

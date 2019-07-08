@@ -9,7 +9,7 @@
 
 namespace CodeThorn {
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */

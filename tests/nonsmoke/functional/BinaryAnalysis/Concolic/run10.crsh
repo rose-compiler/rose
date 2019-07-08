@@ -1,0 +1,17 @@
+create sqlite3://./run10.db
+
+ls-family :: t01
+  @ success
+{
+  ls -la
+}
+
+ls-family :: t02
+  @ success
+{
+  ls -l --author
+}
+
+ls-family::run 10
+
+! echo ok.
