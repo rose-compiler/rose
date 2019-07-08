@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 
@@ -393,6 +394,7 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
   std::auto_ptr<Environment>    envguard(env);
   std::auto_ptr<InvocationDesc> invguard(inv);
   expectation                   state = success;
+  std::string                   failureMessage;
 
   try
   {
@@ -413,6 +415,10 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
 
     db->assocTestCaseWithTestSuite(id, suite_id);
   }
+  catch (const Rose::BinaryAnalysis::Concolic::Exception &e) {
+    failureMessage = e.what();
+    state = failure;
+  }
   catch (...)
   {
     state = failure;
@@ -423,6 +429,8 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
     err() << "error in test: " << suitename << "::" << testname << '\n'
           << "  exited with " << str(state) << ", expected " << str(exp)
           << std::endl;
+    if (state == failure)
+        err() <<"  failure was: " <<(failureMessage.empty() ? "unknown" : failureMessage) <<"\n";
 
     exit(1);
   }
@@ -447,7 +455,7 @@ void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
   typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
 
   expectation                state    = failure;
-  int                        exitvalue = 0;
+  int                        processDisposition = 0; // disposition returned by waitpid
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
 
@@ -455,18 +463,29 @@ void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
   {
     ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
 
-    exitvalue = result->exitStatus();
+    processDisposition = result->exitStatus();
     db->insertConcreteResults(testcase, *result.get());
 
-    if (exitvalue == 0) state = success;
+    // exitValue is not the argument to the test's "exit" function, but rather the process disposition returned by
+    // waitpid. Therefore, success should be measured as the test having normal termination with an exit status of zero.
+    if (WIFEXITED(processDisposition) && WEXITSTATUS(processDisposition) == 0)
+        state = success;
   }
 
   if ((expct != none) && (expct != state))
   {
-    err() << "error in test: " << testcase->name() << '\n'
+    err() << "error in runTestcase: " << testcase->name() << '\n'
           << "  exited with " << str(state) << ", expected " << str(expct) << '\n'
-          << "  status: " << exitvalue
-          << std::endl;
+          << "  process disposition: ";
+    if (WIFEXITED(processDisposition)) {
+        err() <<"exit value " <<WEXITSTATUS(processDisposition) <<"\n";
+    } else if (WIFSIGNALED(processDisposition)) {
+        err() <<"death by signal " <<strsignal(WTERMSIG(processDisposition)) <<"\n";
+    } else if (WIFSTOPPED(processDisposition)) {
+        err() <<"process stopped by " <<strsignal(WSTOPSIG(processDisposition)) <<"\n";
+    } else if (WIFCONTINUED(processDisposition)) {
+        err() <<"process resumed\n";
+    }
 
     exit(1);
   }

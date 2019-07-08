@@ -100,6 +100,7 @@ void setPersonality(LinuxExecutor::Persona persona)
   if (persona) personality(persona.get());
 }
 
+// Returns the exit status as documented by waitpid[2], which is not the same as the argument to the child's exit[3] call.
 int executeBinary( const std::string& binary,
                    const std::string& logout,
                    const std::string& logerr,
@@ -142,9 +143,10 @@ int executeBinary( const std::string& binary,
 
   // execute the program
   const int errc = execvpe(args[0], &args[0], &envv[0]);
+  ASSERT_always_require(-1 == errc);
 
-  std::cerr << "*** got" << errc << std::endl;
-  exit(errc);
+  perror("exec failed");
+  exit(EXIT_FAILURE);
 }
 
 
@@ -232,11 +234,7 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 
   storeBinaryFile(specimen->content(), binary);
 
-#if BOOST_VERSION >= 105300
-  bstfs::permissions(binary, bstfs::owner_exe);
-#else
-  ROSE_ASSERT(false);
-#endif /* BOOST_VERSION */
+  bstfs::permissions(binary, bstfs::add_perms | bstfs::owner_read | bstfs::owner_exe);
 
   Persona persona;
 

@@ -3,13 +3,13 @@ create sqlite3://./combined.db
 ls :: t01
   @ success
 {
-  ls -la
+  ls -la /
 }
 
 ls :: t02
   @ success
 {
-  ls -l --author
+  ls -l --author /
 }
 
 

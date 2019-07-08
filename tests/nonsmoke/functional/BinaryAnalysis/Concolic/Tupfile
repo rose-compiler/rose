@@ -8,51 +8,47 @@ ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 # a) sample program to load and store in DB
 run $(support_compile_linkexe) sampleExecutable.C
 
-## Commenting out a few tests temporarily because they're not portable yet. They assume that basic operating system
-## commands are installed in /usr/bin, but on many popular Linux distributions they're in /bin. When these are
-## fixed and de-commented, please also remove the two corresponding comments in Makefile.am. [matzke 2019-07-02]
-##
-### a) test compiled programs
+# a) test compiled programs
 run $(tool_compile_linkexe) testConcolicDB.C
 run $(test) testConcolicDB
-##
-### b) test various executions
-run $(test) ./crsh/crsh -o testOpenDB --answer=defaultcrsh.ans \
+
+# b) test various executions
+run $(test) ./crsh/crsh -o testOpenDB \
     --extra=openDB.db \
     ./crsh/crsh openDB.crsh
 
-run $(test) ./crsh/crsh -o testDefineTests --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testDefineTests \
     --extra=defineTests.db \
     ./crsh/crsh defineTests.crsh
 
-run $(test) ./crsh/crsh -o testRun1 --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testRun1 \
     --extra=run1.db \
     ./crsh/crsh run1.crsh
 
-run $(test) ./crsh/crsh -o testRun10 --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testRun10 \
     --extra=run10.db \
     ./crsh/crsh run10.crsh
 
-run $(test) ./crsh/crsh -o testDefineFail --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testDefineFail \
     --extra=defineFail.db \
     ./crsh/crsh defineFail.crsh
 
-run $(test) ./crsh/crsh -o testCombined --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testCombined \
     --extra=combined.db \
     ./crsh/crsh combined.crsh
 
-run $(test) ./crsh/crsh -o testExport --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testExport \
     --input=sampleExecutable \
     --extra=testExport.db \
     ./crsh/crsh testExport.crsh
 
-run $(test) ./crsh/crsh -o testConnectNonExisting --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testConnectNonExisting \
     ./crsh/crsh testConnectNonExisting.crsh
 
-run $(test) ./crsh/crsh -o testCreateOverwrites --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testCreateOverwrites \
     ./crsh/crsh testCreateOverwrites.crsh
 
-run $(test) ./crsh/crsh -o testConnect --answer=defaultcrsh.ans \
+run $(test) ./crsh/crsh -o testConnect \
     ./crsh/crsh testConnect.crsh
 
 #------------------------------------------------------------------------------------------------------------------------

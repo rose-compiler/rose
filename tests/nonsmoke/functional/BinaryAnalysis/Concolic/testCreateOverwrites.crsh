@@ -3,13 +3,13 @@ create sqlite3://./testCreateOverwrites.db
 ls-family :: l01
   @success
 {
-  ls -la
+  ls -la /
 }
 
 ls-family :: l02
   @success
 {
-  ls -1
+  ls -1 /
 }
 
 close
@@ -19,7 +19,7 @@ create sqlite3://./testCreateOverwrites.db
 tail-family :: t03
   @ success
 {
-  tail Makefile
+  tail /etc/passwd
 }
 
 ls-family :: run 1 @failure

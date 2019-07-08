@@ -36,11 +36,6 @@ noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-## Commenting out a few tests temporarily because they're not portable yet. They assume that basic operating system
-## commands are installed in /usr/bin, but on many popular Linux distributions they're in /bin. When these are
-## fixed and de-commented, please also remove the two corresponding comments in Tupfile. [matzke 2019-07-02]
-## fixed PP (07/06/19)
-##
 TEST_TARGETS += testConcolicDB.passed
 
 testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
