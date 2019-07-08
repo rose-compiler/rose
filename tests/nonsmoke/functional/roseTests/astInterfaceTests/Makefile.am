@@ -136,6 +136,7 @@ generatedCodeExamples = \
   rose_inputisUpcPhaseLessSharedType.upc \
   rose_inputbuildLabelStatement.C \
   rose_inputbuildSizeOfOp.C \
+  abiStuffTest.passed \
   abiStuffTestUPC.passed \
   rose_inputbuildNullStatement.C \
   rose_inputbuildForStmt.C \
@@ -169,7 +170,8 @@ generatedCodeExamples = \
   rose_inputcreateAbstractHandles.C \
   buildJavaPackage.passed
 
-# DQ (7/7/2019): This is failing, and I can't debug it (need to discuss with Robb).
+# DQ (7/7/2019): This is failing for at least GNU 5.1, and I can't debug it 
+# (need to discuss with Robb, everything else appears to pass).
 #  abiStuffTest.passed 
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
