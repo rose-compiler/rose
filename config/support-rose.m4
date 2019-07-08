@@ -654,10 +654,6 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
 
-# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
-# TV (06/17/2013): Now always the case (EDG 4.7).
-AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
-
 # *****************************************************************
 
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).

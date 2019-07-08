@@ -762,10 +762,6 @@
 /* Defined if we're using a prebuilt EDG library */
 #cmakedefine BINARY_EDG
 
-/* Controls design of internal template declaration support within the ROSE
-   AST. */
-#cmakedefine TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-
 /* Build ROSE to support the Binary Analysis */
 #cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
