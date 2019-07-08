@@ -88,10 +88,11 @@ DESCRIPTION
 
            ./banana-installer -v --prefix=/opt/banana
 
-       Note that the --prefix=<pathname> option isn't really optional,
-       it is required. Also note that use of the -v option (verbose mode)
-       is recommended as the generated installer normally produces no
-       output other than warnings and/or error messages.
+       Note that on UNIX-like hosts the --prefix=<pathname> option isn't
+       really optional, it is required. Also note that use of the -v
+       option (verbose mode) is recommended as the generated installer
+       normally produces no output other than remarks, warnings, and/or
+       error messages.
 
     Windows-like host
 
@@ -104,7 +105,7 @@ DESCRIPTION
            https://sourceforge.net/projects/nsis
 
        The installation process on a Windows-like target system is done by
-       simply running the generated installer binary executable. Unlike the
+       simply running the generated installer binary executable. Unlike an
        installer produced for UNIX-like hosts, an installer for Windows-like
        hosts may perform the installation to a default location; the user's
        desktop:
@@ -150,32 +151,50 @@ OPTIONS
 
         --cc=<name>
 
-            The C compiler name that had been used in building the software
-            being installed. Do not use a pathname, a simple name only.
-            For example:
-
-                --cc="gcc"
-
-            Note that this option has been replaced by the --CC=<name> and
-            --CC-options=<string> options.
+            This option has been obsoleted. Use CC=<name> and CC-options=<string>
+            instead.
 
         --cxx=<name>
 
-            The C++ compiler name that had been used in building the software
-            being installed. Do not use a pathname, use a simple name only.
-            For example:
-
-                --cxx="g++"
-
-            This option has been replaced by the --CXX=<name> and
-            --CXX-options=<string> options.
+            This option has been obsoleted. Use CXX=<name> and CXX-options=<string>
+            instead.
 
         CC=<name>
+        CC=[<pathname>,<name>]
         --CC=<name>
+        --CC=[<pathname>,<name>]
 
-            Used to specify the name of the C compiler used. If a pathname
-            is supplied, only the basename will be used. For historical
-            reasons the leading double-dash is optional.
+            Used to specify the name of the C compiler used. For historical
+            reasons the leading double-dashes are optional.
+
+            Note that there are 2 forms accepted for the option's argument:
+
+            1) A simple compiler name such as "gcc" or "icc". This is the
+               name of the C compiler that was used to produce the binaries
+               to be installed. For example:
+
+                   CC=gcc
+
+               In this case the gcc GNU C compiler was used to produce the
+               binaries (executables and libraries). Note that if <name> has
+               directory components only the basename will be used.
+
+            2) A comma separated pair enclosed in square brackets. The first
+               component is the actual pathname of the C compiler that was
+               used to produce the binaries to be installed. The second
+               component is a name by which the compiler will be considered.
+               For example:
+
+                   CC='[/usr/lib64/ccache/cc,gcc]'
+
+               In this case a C compiler with the pathname "/usr/lib64/ccache/cc"
+               was actually used but consider it to be "gcc".
+
+            The first form is really a special case where the basename of the
+            pathname is the same as the simple name of the C compiler.
+
+            This option almost always needs quoting as shown above since the
+            square-brackets are considered to have special meaning by the shell.
 
         CC-options=<string>
         --CC-options=<string>
@@ -189,11 +208,41 @@ OPTIONS
             For historical reasons the leading double-dash is optional.
 
         CXX=<name>
+        CXX=[<pathname>,<name>]
         --CXX=<name>
+        --CXX=[<pathname>,<name>]
 
-            Used to specify the name of the C++ compiler used. If a pathname
-            is supplied, only the basename will be used. For historical
-            reasons the leading double-dash is optional.
+            Used to specify the name of the C++ compiler used. For historical
+            reasons the leading double-dashes are optional.
+
+            Note that there are 2 forms accepted for the option's argument:
+
+            1) A simple C++ compiler name such as "g++" or "icpc". This is the
+               name of the C++ compiler that was used to produce the binaries
+               to be installed. For example:
+
+                   CXX=g++
+
+               In this case the g++ GNU C++ compiler was used to produce the
+               binaries (executables and libraries). Note that if <name> has
+               directory components only the basename will be used.
+
+            2) A comma separated pair enclosed in square brackets. The first
+               component is the actual pathname of the C++ compiler that was
+               used to produce the binaries to be installed. The second
+               component is a simple name by which the compiler will be considered.
+               For example:
+
+                   CXX='[/usr/lib64/ccache/c++,g++]'
+
+               In this case a C++ compiler with the pathname "/usr/lib64/ccache/c++"
+               was actually used but consider it to be "g++".
+
+            The first form is really a special case where the basename of the
+            pathname is the same as the simple name of the C++ compiler.
+
+            This option almost always needs quoting as shown above since the
+            square-brackets are considered to have special meaning by the shell.
 
         CXX-options=<string>
         --CXX-options=<string>
@@ -838,14 +887,14 @@ DETAILS
 
        Running the generated installer on a Windows target system:
 
-          The default use of the generated installer will produce a
-          new directory on the user's desktop.
+          The default use of the generated installer will produce a new
+          directory on the user's desktop.
 
-             prompt> installer.exe
+             circus> installer.exe
 
           A different prefix may be specified using the /D option:
 
-             prompt> installer.exe /D=E:\opt\banana
+             circus> installer.exe /D=E:\opt\banana
 
           Note that the prefix directory will be creates as necessary
           however the uninstaller will only (recursively delete) the
@@ -854,7 +903,8 @@ DETAILS
           directory E:\opt will be left intact.
 
        Note that the generated installer will pop-up a progress bar dialog
-       box to indicate the installation progress.
+       box to indicate the installation progress. The above examples were
+       run by bozo on circus.other.net
 
 AUTHOR
     Jim Reus (jim.reus@gmail.com)
@@ -871,3 +921,4 @@ CONTACT
 
     Be sure to provide as much information as possible.
 
+    This man page was generated by mkinstaller 2.5.4 using the --help option. Revised 21Jun2019,16:47:49z

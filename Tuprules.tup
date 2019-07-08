@@ -717,6 +717,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/symbolicVal \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis/instructionSemantics \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis/libraryIdentification \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/ \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/bitvectorDataflow \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/CallGraphAnalysis \
@@ -756,6 +757,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src/astFileIO \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseExtensions/failSafe \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseExtensions/sqlite3x \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/graphs \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/support
 
