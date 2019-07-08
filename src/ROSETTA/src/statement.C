@@ -1541,6 +1541,15 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","is_constexpr","= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/25/2019): Record when a variable declaration is built associated with a variable that is used before it is declared.
+  // These variable declaration are marked as being built from a use (e.g. in a class declaration) and this allows
+  // them to be reused later when the variable declaration is seen.  See Cxx11_tests/test2019_121.C for an example
+  // of multiple variable declarations for the same varialbe (in different scopes).  And test2019_479.C for a case
+  // of a variable use triggering the varialbe declaration and the reuse of the variable declaration later when the 
+  // variable declaration is processed in the members of the class definition.
+     VariableDeclaration.setDataPrototype ( "bool", "builtFromUseOnly", "= false",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 

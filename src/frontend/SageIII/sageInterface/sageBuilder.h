@@ -927,8 +927,13 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 ROSE_DLL_API SgVariableDeclaration*
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
+// DQ (6/25/2019): Added support to force building the varialbe declaration from the variable use (e.g. within a class) 
+// instead of from a declaration.  Variable declaration built from a use are reused when the declaration is seen (later 
+// in processing of the class members).
+// ROSE_DLL_API SgVariableDeclaration*
+// buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 ROSE_DLL_API SgVariableDeclaration*
-buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
+buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope, bool builtFromUseOnly = false);
 
 //! Build variable definition
 ROSE_DLL_API SgVariableDefinition*

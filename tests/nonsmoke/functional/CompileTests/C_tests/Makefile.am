@@ -564,7 +564,23 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_64.c \
      test2018_67.c \
      rose-1391-a.c \
-     rose-1391-b.c
+     rose-1391-b.c \
+     test2019_01.c \
+     test2019_02.c \
+     test2019_03.c \
+     test2019_04.c \
+     test2019_05.c \
+     test2019_06.c \
+     test2019_07.c \
+     test2019_08.c \
+     test2019_09.c \
+     test2019_10.c \
+     test2019_11.c \
+     test2019_12.c \
+     test2019_13.c \
+     test2019_14.c \
+     test2019_15.c 
+
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \

@@ -2510,6 +2510,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& info)
    {
+#if 0
+     printf ("In unparseCompoundLiteral() \n");
+     curprint ("/* In unparseCompoundLiteral() */ \n");
+#endif
+
      SgCompoundLiteralExp* compoundLiteral = isSgCompoundLiteralExp(expr);
      ROSE_ASSERT(compoundLiteral != NULL);
 
@@ -2518,6 +2523,12 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
 
      SgInitializedName* initializedName = variableSymbol->get_declaration();
      ROSE_ASSERT(initializedName != NULL);
+
+     if (initializedName->get_initptr() == NULL)
+        {
+          printf ("Error: In unparseCompoundLiteral(): initializedName->get_initptr() == NULL: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+        }
+
      ROSE_ASSERT(initializedName->get_initptr() != NULL);
 
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
@@ -7185,7 +7196,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (3/12/2018): Rewrite this so that we can output the calue of "shared".
        // if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
           bool shares = (sharesSameStatement(aggr_init,aggr_init->get_type()) == true);
-#if 1
+#if 0
           printf ("In unparseAggrInit(): shares = %s \n",shares ? "true" : "false");
 #endif
           if (shares == true)

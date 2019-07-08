@@ -438,6 +438,9 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
        // DQ (7/19/2017): Adding support for new SgDeclarationScope, though it might be that we want the parent defining or non-defining declaration.
           case V_SgDeclarationScope:
 
+       // DQ (6/26/2019): Added rage-based for loop (see test2019_483.C).
+          case V_SgRangeBasedForStatement:
+
        // Some scopes don't have an associated declaration (return NULL in these cases).
        // Also missing some of the Fortran specific scopes.
           case V_SgGlobal:
@@ -5058,7 +5061,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TRAVERSE_TYPE
        // DQ (5/18/2019): Adding debugging info.
-          unparseInfoPointer->display("In NameQualificationTraversal::traverseType(): unparseInfoPointer \n");
+       // unparseInfoPointer->display("In NameQualificationTraversal::traverseType(): unparseInfoPointer \n");
 #endif
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
@@ -7594,6 +7597,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          associatedDeclaration = classDefinition->get_declaration();
                          ROSE_ASSERT(associatedDeclaration != NULL);
                        }
+                  }
+
+            // DQ (6/27/2019): Added more debugging support.
+               if (associatedDeclaration == NULL)
+                  {
+                    printf ("Note: unexpected IR node: originallyDeclaredInitializedName->get_parent() = %p = %s \n",
+                         originallyDeclaredInitializedName->get_parent(),originallyDeclaredInitializedName->get_parent()->class_name().c_str());
+                    printf (" --- originallyDeclaredInitializedName->get_name() = %s \n",originallyDeclaredInitializedName->get_name().str());
+                    originallyDeclaredInitializedName->get_file_info()->display("unexpected IR node");
                   }
                ROSE_ASSERT(associatedDeclaration != NULL);
 
@@ -11560,6 +11572,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      printf ("****************************************************** \n");
      printf ("Leaving NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
      printf ("******************************************************\n\n\n");
+#endif
+#if 0
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if (locatedNode != NULL)
         {
