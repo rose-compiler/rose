@@ -516,6 +516,13 @@ namespace sg
     GEN_VISIT(SgValueExp)
     GEN_VISIT(SgRangeExp)
     GEN_VISIT(SgMatrixTransposeOp)
+    GEN_VISIT(SgNonrealRefExp)
+    GEN_VISIT(SgAlignOfOp)
+    GEN_VISIT(SgNoexceptOp)
+    GEN_VISIT(SgLambdaExp)
+    GEN_VISIT(SgFunctionParameterRefExp)
+
+    // symbols
     GEN_VISIT(SgVariableSymbol)
     GEN_VISIT(SgFunctionTypeSymbol)
     GEN_VISIT(SgClassSymbol)
@@ -1238,6 +1245,7 @@ namespace sg
     {
       ++cnt;
 
+/*
 #if !defined(NDEBUG)
       if (n == NULL)
       {
@@ -1245,7 +1253,7 @@ namespace sg
         return;
       }
 #endif
-
+*/
       if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
     }
 

@@ -34,12 +34,12 @@ check-local: $(TEST_TARGETS)
 $(TEST_TARGETS):
 	@$(RTH_RUN) CMD="./$(@:.test=)" $(top_srcdir)/scripts/test_exit_status $@
 
-noinst_LTLIBRARIES = librajatracer.la
+lib_LTLIBRARIES = librajatracer.la
 
 librajatracer_la_SOURCES = \
-  src/tracer.cc
+  src/rajatracer.C
 
-librajatracer_la_LDFLAGS = -version-info 0:0:1
+#~ librajatracer_la_LDFLAGS = -version-info 0:0:1
 
 #~ classMemberVariablesInLambdas.test: classMemberVariablesInLambdas
 #~ 	./classMemberVariablesInLambdas -std=c++11 --edg:no_warnings -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx11_tests/classMemberVariablesInLambdas_test_01.C
