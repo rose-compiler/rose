@@ -2100,6 +2100,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_package = NULL;
      this->p_import_list = NULL;
      this->p_class_list = NULL;
+     this->p_associated_include_file = NULL;
 
      set_globalScope(NULL);
 
