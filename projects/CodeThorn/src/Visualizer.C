@@ -330,7 +330,8 @@ string Visualizer::dotEStateAddressString(const EState* estate) {
 }
 
 string Visualizer::dotEStateMemoryString(const EState* estate) {
-  return estate->pstate()->toDotString(variableIdMapping);
+  string prefix=dotClusterName(estate);
+  return estate->pstate()->toDotString(prefix,variableIdMapping);
 }
 
 std::string Visualizer::dotClusterName(const EState* estate) {
@@ -361,7 +362,8 @@ string Visualizer::transitionGraphToDot() {
       ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
 
       ss<<"{ rank = same; ";
-      auto idStringsSet=s->pstate()->getDotNodeIdStrings();
+      string prefix=dotClusterName(s);
+      auto idStringsSet=s->pstate()->getDotNodeIdStrings(prefix);
       for(auto id : idStringsSet) {
         ss<<"\""<<id<<"\""<<";"<<endl;
       }

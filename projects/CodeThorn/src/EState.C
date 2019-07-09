@@ -372,3 +372,6 @@ bool EState::isApproximatedBy(const EState* other) const {
   return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
 }
 
+std::string EState::labelString() const {
+  return "L"+label().toString();
+}

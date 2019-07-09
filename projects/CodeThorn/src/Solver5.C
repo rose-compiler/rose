@@ -96,7 +96,7 @@ void Solver5::run() {
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
+        //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -125,9 +125,6 @@ void Solver5::run() {
               }
             }
             
-            //cout<<"Analyzing: "<<_analyzer->programPositionInfo(newEState.label());
-
-  
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -136,6 +133,7 @@ void Solver5::run() {
                 switch(abstractionMode) {
                 case 0:
                   // no abstraction
+                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
                 case 1: {
@@ -146,7 +144,7 @@ void Solver5::run() {
                     if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
-                      // later. It may be an existing estate alread
+                      // later. It may be an existing estate already
                       // used in the state graph.
                       newEStatePtr=summaryEState; 
                     } else {
@@ -173,6 +171,8 @@ void Solver5::run() {
                   cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
                   exit(1);
                 }
+              } else {
+                //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
               }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }

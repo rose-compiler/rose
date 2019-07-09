@@ -27,6 +27,10 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
+size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
+  return _summaryStateMap.size();
+}
+
 std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
   SgNode* node=getLabeler()->getNode(lab);
   return SgNodeHelper::lineColumnNodeToString(node);
@@ -69,7 +73,9 @@ void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initi
   //  return;
   for(auto label:*getLabeler()) {
     // create bottom elements for each label
-    EState estate(label,initialPStateStored,emptycsetstored); // implicitly empty cs
+    InputOutput io;
+    io.recordBot();
+    EState estate(label,initialPStateStored,emptycsetstored,io); // implicitly empty cs
     const EState* bottomElement=processNewOrExisting(estate);
     setSummaryState(label,bottomElement);
   }
@@ -595,12 +601,14 @@ EState CodeThorn::Analyzer::createEStateInternal(Label label, PState pstate, Con
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
   EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
+  estate.io.recordNone();
   return estate;
 }
 
 EState CodeThorn::Analyzer::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset) {
   EState estate=createEStateInternal(label,pstate,cset);
   estate.callString=cs;
+  estate.io.recordNone(); // create NONE not bot by default
   return estate;
 }
 
@@ -811,6 +819,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         PState newPState=*currentEState.pstate();
         newPState.writeTopToMemoryLocation(initDeclVarId);
         ConstraintSet cset=*currentEState.constraints();
+        InputOutput io;
+        io.recordNone();
         return createEState(targetLabel,cs,newPState,cset);
       }
       
@@ -1378,7 +1388,8 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
-  SAWYER_MESG(logger[TRACE])<< "INIT: initial state(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  cout<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
@@ -1415,11 +1426,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
   }
 
-  const EState* currentEState=processNew(estate);
-  ROSE_ASSERT(currentEState);
-  variableValueMonitor.init(currentEState);
-  addToWorkList(currentEState);
-  // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  estate.io.recordNone(); // ensure that extremal value is different to bot
+  const EState* initialEState=processNew(estate);
+  ROSE_ASSERT(initialEState);
+  variableValueMonitor.init(initialEState);
+  addToWorkList(initialEState);
+  cout << "INIT: start state (extremal value): "<<initialEState->toString(&variableIdMapping)<<endl;
 
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);

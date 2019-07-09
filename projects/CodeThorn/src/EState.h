@@ -48,6 +48,7 @@ namespace CodeThorn {
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
+    std::string labelString() const;
     long memorySize() const;
     
     void setLabel(Label lab) { _label=lab; }
