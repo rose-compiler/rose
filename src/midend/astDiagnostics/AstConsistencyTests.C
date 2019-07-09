@@ -1204,13 +1204,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                     case V_SgPartialFunctionType:
                        {
                       // This case is only present in the new EDG/Sage interface (demonstrated by gzip.c)
                          break;
                        }
-#endif
                  // TV: these cases were guarded with EDG 4 condition (date from EDG 3)
                     case V_SgTypeInt:
                     case V_SgTemplateType:

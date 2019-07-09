@@ -545,9 +545,6 @@
 /* Whether to use the new EDG version 4.7 */
 #cmakedefine ROSE_USE_EDG_VERSION_4_7
 
-/* Whether to use the new interface to EDG */
-#cmakedefine ROSE_USE_NEW_EDG_INTERFACE
-
 /* Use Valgrind calls in ROSE */
 //AS Don't know what to do with this
 #undef ROSE_USE_VALGRIND
