@@ -1729,31 +1729,12 @@ Grammar::setUpStatements ()
      TemplateDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
      TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-  // TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/22/2011): Fix the access functions to properly handle references to list data structure.
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-  //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-  //            CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
   // they belong, thus the parent information is not sufficent to define the relationship of nested classes 

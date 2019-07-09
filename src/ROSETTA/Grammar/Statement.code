@@ -2931,10 +2931,8 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 
 // DQ (9/26/2012): We can't use these macros in the header files else they would require the rose_config.h 
 // file to be defined for all user source code (which we can't allow for portability reasons).
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
           virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
-// #endif
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
@@ -7907,13 +7905,8 @@ SOURCE_FUNCTION_TYPE_TABLE_STATEMENT_START
 
 // SgFunctionTypeTable::SgFunctionTypeTable( bool case_insensitive )
 SgFunctionTypeTable::SgFunctionTypeTable()
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated to avoid a filename of "" in the static filename tables.
    : SgStatement( Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode ())
-#else
-  // DQ (8/31/2006): Use an empty name for the fileInfo so that we can support testing for absolute paths for filenames.
-   : SgStatement( new Sg_File_Info ("",0,0) )
-#endif
    {
   // DQ (11/27/2010): Added support for case sensitive and insensitive matching (for C/C++ and Fortran, respectively).
   // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
@@ -7932,14 +7925,9 @@ SgFunctionTypeTable::SgFunctionTypeTable()
   // p_startOfConstruct->set_parent(this);
      this->get_startOfConstruct()->set_parent(this);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated.
      ROSE_ASSERT(get_endOfConstruct() == NULL);
      this->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
-#else
-  // DQ (11/3/2007): The internal test like to see that both the startOfConstruct and endOfConstruct are set!
-     this->set_endOfConstruct( new Sg_File_Info ("",0,0) );
-#endif
      this->get_endOfConstruct()->set_parent(this);
 
   // DQ (11/27/2010): In retrospect I think that should should always be false!
