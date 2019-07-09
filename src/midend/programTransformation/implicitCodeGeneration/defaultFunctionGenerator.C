@@ -2303,7 +2303,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
           printf ("ERROR: Not using the new API for template declaration\n");
           ROSE_ASSERT(false);
 
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
+          SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;// new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
           tempFunc->set_definingDeclaration(tempFunc);
           tempFunc->set_templateName(func_name);
           func = tempFunc;
