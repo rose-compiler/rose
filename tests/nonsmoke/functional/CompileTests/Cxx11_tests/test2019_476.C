@@ -1,3 +1,5 @@
+// This is one of three ROSE bugs specific to the SL application.
+// This and the test2019_477.C appear to be related issues.
 
 typedef unsigned long size_t;
 

@@ -1,3 +1,6 @@
+// This is one of three ROSE bugs specific to the SL application.
+// This and the test2019_476.C appear to be related issues.
+
 
 typedef unsigned long size_t;
 
@@ -35,6 +38,7 @@ class B : public A
 B::B()
    : myMap(VALUE)
    {
+  // Comment this out to simplify the reproducer.
      myMap.insert(A::VALUE,VALUE);
 
      getValue(A::VALUE);

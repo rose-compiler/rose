@@ -1592,6 +1592,9 @@ test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
 test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdir)/test2019_30.h 
 	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C 
 
+test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
+
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
