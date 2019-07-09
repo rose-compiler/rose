@@ -54,9 +54,9 @@ namespace CodeThorn {
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    string toDotString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    std::string dotNodeIdString(AbstractValue av) const;
-    std::set<std::string> getDotNodeIdStrings() const;
+    string toDotString(std::string prefix, CodeThorn::VariableIdMapping* variableIdMapping) const;
+    std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
+    std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     void writeTopToAllMemoryLocations();
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);

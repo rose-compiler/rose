@@ -55,21 +55,21 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
-std::set<std::string> PState::getDotNodeIdStrings() const {
+std::set<std::string> PState::getDotNodeIdStrings(std::string prefix) const {
   std::set<std::string> nodeIds;
   for(PState::const_iterator j=begin();j!=end();++j) {
-    nodeIds.insert(dotNodeIdString((*j).first));
+    nodeIds.insert(dotNodeIdString(prefix,(*j).first));
   }
   return nodeIds;
 }
 
-std::string PState::dotNodeIdString(AbstractValue av) const {
+std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const {
   stringstream ss;
-  ss<<string("n")<<this<<av.toString();
+  ss<<prefix<<string("n")<<this<<av.toString();
   return ss.str();
 }
 
-string PState::toDotString(VariableIdMapping* variableIdMapping) const {
+string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   for(PState::const_iterator j=begin();j!=end();++j) {
     //    AbstractValue v1=(*j).first;
@@ -77,15 +77,15 @@ string PState::toDotString(VariableIdMapping* variableIdMapping) const {
     // this pointer is used to get unique names for all elements of a PState
     if(v2.isPtr()) {
       // nodes
-      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString((*j).second)<<"\";"<<endl; // target label intentionally not generated
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\";"<<endl; // target label intentionally not generated
       // edge
-      ss <<"\""<<dotNodeIdString((*j).first)<<"\"";
+      ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
       ss<<"->";
-      ss<<"\""<<dotNodeIdString((*j).second)<<"\"";
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\"";
       ss<<";"<<endl;
     } else {
-      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
     }
   }  
   return ss.str();

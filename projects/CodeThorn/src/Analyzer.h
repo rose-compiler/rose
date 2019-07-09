@@ -420,6 +420,7 @@ namespace CodeThorn {
     // this is used in abstract mode to hold a pointer to the
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
+    size_t getSummaryStateMapSize();
   private:
     std::unordered_map<int,const EState*> _summaryStateMap;
   }; // end of class Analyzer
