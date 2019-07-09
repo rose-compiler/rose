@@ -60,7 +60,6 @@ class SP {
     SP( X *px )
    {
       T *np = dynamic_cast<T *>( px );
-      VERIFY2(np != 0, "Incompatible dumb pointer type.");
       p = np;
       r = new SPref;
    }
@@ -82,7 +81,6 @@ class SP {
    SP& operator=( X *px )
    {
       T *np = dynamic_cast<T *>( px );
-      VERIFY2(np != 0, "Incompatible smart pointer types.");
       return *this = np;
    }
 
@@ -102,7 +100,6 @@ class SP {
    {
       X *px = spx.p;
       T *np = dynamic_cast<T *>( px );
-      VERIFY2(np != 0, "Incompatible smart pointer types.");
       if (p == np) return *this;	// It could happen.
       detach();
       p = np;
