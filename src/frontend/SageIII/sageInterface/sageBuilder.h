@@ -750,15 +750,11 @@ ROSE_DLL_API SgFunctionRefExp * buildFunctionRefExp(SgFunctionSymbol* sym);
 
 SgFunctionRefExp * buildFunctionRefExp_nfi(SgFunctionSymbol* sym);
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 //! DQ (12/15/2011): Adding template declaration support to the AST.
 SgTemplateFunctionRefExp* buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym);
-// #endif
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 //! DQ (12/29/2011): Adding template declaration support to the AST.
 SgTemplateMemberFunctionRefExp* buildTemplateMemberFunctionRefExp_nfi(SgTemplateMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
-// #endif
 
 SgMemberFunctionRefExp * buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
 ROSE_DLL_API SgMemberFunctionRefExp * buildMemberFunctionRefExp(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
@@ -938,12 +934,10 @@ buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* ini
 // DQ (8/31/2012): Note that this macro can't be used in header files since it can only be set
 // after sage3.h has been read.  The reason is that this is a portability problem when "rose_config.h"
 // appears in header files of applications using ROSE's header files.
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/6/2011): Adding support for template declarations into the AST.
 // SgTemplateDeclaration*
 // SgVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 ROSE_DLL_API SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
-// #endif
 
 //!Build a typedef declaration, such as: typedef int myint;  typedef struct A {..} s_A;
 ROSE_DLL_API SgTypedefDeclaration*
