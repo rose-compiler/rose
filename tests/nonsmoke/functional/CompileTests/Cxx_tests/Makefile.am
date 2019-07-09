@@ -1592,6 +1592,10 @@ test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
 test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdir)/test2019_30.h 
 	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C 
 
+# DQ (7/9/2019): This test demonstrates a failing case for older versions of EDG (pre 5.0) 
+# when using at least GNU 5.1.  Not clear if we should worry about this since we are moving
+# to have EDG 5.0 be the default shortly.  This issue reproduces a problem that is only see
+# in one of the CFG tests.  It is not a problem with EDG 5.0, as I understand it.
 test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
 	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
 
