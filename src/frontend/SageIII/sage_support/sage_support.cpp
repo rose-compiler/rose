@@ -2100,6 +2100,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_package = NULL;
      this->p_import_list = NULL;
      this->p_class_list = NULL;
+     this->p_associated_include_file = NULL;
 
      set_globalScope(NULL);
 
@@ -5972,13 +5973,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                                   frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
                                                // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                                                // Any non-zero value indicates an error.
                                                   frontend_failed = (frontendErrorLevel != 0);
-#else
-                                               // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                                                  frontend_failed = (frontendErrorLevel > 3);
-#endif
                                                 }
                                            }
                                       }

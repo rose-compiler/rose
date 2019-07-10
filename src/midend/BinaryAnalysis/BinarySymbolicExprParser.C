@@ -879,13 +879,13 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
     if (NULL == regp)
         return SymbolicExpr::Ptr();
-    if (token.width()!=0 && token.width()!=regp->get_nbits()) {
+    if (token.width()!=0 && token.width()!=regp->nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
-                                ", actual=" + StringUtility::numberToString(regp->get_nbits()) + ")");
+                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
     }
     if (token.width2() != 0)
         throw token.syntaxError("register width must be scalar");
-    BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->get_nbits()), ops_.get());
+    BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
     return SymbolicSemantics::SValue::promote(regValue)->get_expression();
 }
 
@@ -920,7 +920,7 @@ SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) 
 
     if (NULL == regp)
         return SymbolicExpr::Ptr();
-    if (token.width() != 0 && token.width() != regp->get_nbits()) {
+    if (token.width() != 0 && token.width() != regp->nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
                                 ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
     }

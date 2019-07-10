@@ -575,7 +575,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
 
     // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
     if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {
-        BaseSemantics::SValuePtr st_top = ops->number_(REG_FPSTATUS_TOP->get_nbits(), 0);
+        BaseSemantics::SValuePtr st_top = ops->number_(REG_FPSTATUS_TOP->nBits(), 0);
         ops->writeRegister(*REG_FPSTATUS_TOP, st_top);
     }
 

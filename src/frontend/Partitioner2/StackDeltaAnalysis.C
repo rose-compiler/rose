@@ -55,7 +55,7 @@ BaseSemantics::SValuePtr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     BaseSemantics::SValuePtr retval;
-    size_t bitsPerWord = instructionProvider().stackPointerRegister().get_nbits();
+    size_t bitsPerWord = instructionProvider().stackPointerRegister().nBits();
 
     // If a stack delta is defined for this function then use it
     BaseSemantics::RiscOperatorsPtr ops = newOperators();

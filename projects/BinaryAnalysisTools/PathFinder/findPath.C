@@ -557,21 +557,21 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     // Initialize instruction pointer register
     if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
+                           ops->undefined_(cpu->instructionPointerRegister().nBits()));
     } else {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(), pathsBeginVertex->value().address()));
+                           ops->number_(cpu->instructionPointerRegister().nBits(), pathsBeginVertex->value().address()));
     }
 
     // Initialize stack pointer register
     if (settings.initialStackPtr) {
         const RegisterDescriptor REG_SP = cpu->stackPointerRegister();
-        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings.initialStackPtr));
+        ops->writeRegister(REG_SP, ops->number_(REG_SP.nBits(), *settings.initialStackPtr));
     }
 
     // Direction flag (DF) is always set
     const RegisterDescriptor REG_DF = *cpu->get_register_dictionary()->lookup("df");
-    ASSERT_require(REG_DF.is_valid());
+    ASSERT_forbid(REG_DF.isEmpty());
     ops->writeRegister(REG_DF, ops->boolean_(true));
 }
 
@@ -613,7 +613,7 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
     // Update the path constraint "register"
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
+    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
@@ -650,7 +650,7 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVer
         ops->pathInsnIndex(pathInsnIndex);
 
     // Make the function return an unknown value
-    SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN.get_nbits()));
+    SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN.nBits()));
     std::string comment = "return value from " + summary.name + "\n" +
                           "at path position #" + StringUtility::numberToString(ops->pathInsnIndex());
     ops->varComment(retval->get_expression()->isLeafNode()->toString(), comment);
@@ -658,7 +658,7 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVer
 
     // Cause the function to return to the address stored at the top of the stack.
     RegisterDescriptor SP = cpu->stackPointerRegister();
-    BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
+    BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
     BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                             ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
     ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
@@ -692,7 +692,7 @@ processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGrap
             PathFinder::mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                           <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
             cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
-                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().get_nbits(),
+                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().nBits(),
                                                                               0x911 /*arbitrary, unlikely to be satisfied*/));
             ++pathInsnIndex;
     }
@@ -859,13 +859,13 @@ public:
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
             return SymbolicExpr::Ptr();
-        if (token.width()!=0 && token.width()!=regp->get_nbits()) {
+        if (token.width()!=0 && token.width()!=regp->nBits()) {
             throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
-                                    ", actual=" + StringUtility::numberToString(regp->get_nbits()) + ")");
+                                    ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
         }
         if (token.width2() != 0)
             throw token.syntaxError("register width must be scalar");
-        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_->undefined_(regp->get_nbits()), ops_.get());
+        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
         return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
 };
@@ -971,7 +971,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
         RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
-        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
+        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
         if (ip->is_number()) {
             ASSERT_require(hasVirtualAddress(pathEdge->target()));
             if (ip->get_number() != virtualAddress(pathEdge->target())) {
@@ -1326,7 +1326,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge's incoming instruction pointer is concrete and is not equal to this edge's address then we already know
         // that this path isn't feasible.
         RegisterDescriptor IP = cpu->instructionPointerRegister();
-        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
+        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
         if (!abandonPrefix && ip->is_number() &&
             pathsEdge->target()->value().type() != P2::V_INDETERMINATE && // has no address
             ip->get_number() != pathsEdge->target()->value().address()) {
@@ -1550,7 +1550,7 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
 
     // The instruction pointer constraint to use values from s1, otherwise from s2.
     SymbolicSemantics::SValuePtr s1Constraint =
-        SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops->undefined_(REG_PATH.get_nbits()), ops.get()));
+        SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops->undefined_(REG_PATH.nBits()), ops.get()));
 
     Stream debug(PathFinder::mlog[DEBUG]);
     if (debug) {
@@ -1571,8 +1571,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
             // The register exists (at least partly) in both states, so merge its values.
             BaseSemantics::SValuePtr mergedVal =
                 ops->ite(s1Constraint,
-                         s1->readRegister(pair.desc, ops->undefined_(pair.desc.get_nbits()), ops.get()),
-                         s2->readRegister(pair.desc, ops->undefined_(pair.desc.get_nbits()), ops.get()));
+                         s1->readRegister(pair.desc, ops->undefined_(pair.desc.nBits()), ops.get()),
+                         s2->readRegister(pair.desc, ops->undefined_(pair.desc.nBits()), ops.get()));
             mergedReg->writeRegister(pair.desc, mergedVal, ops.get());
         } else {
             // The register exists only in the s2 state, so copy it.
@@ -1706,10 +1706,10 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
     if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
+                           ops->undefined_(cpu->instructionPointerRegister().nBits()));
     } else {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(), virtualAddress(pathsBeginVertex)));
+                           ops->number_(cpu->instructionPointerRegister().nBits(), virtualAddress(pathsBeginVertex)));
     }
 
     // Reverse depth-first visit starting at the end vertex and processing each vertex as we back out.  This ensures that the

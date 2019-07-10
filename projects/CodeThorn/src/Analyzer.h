@@ -62,6 +62,7 @@ namespace CodeThorn {
    * \author Markus Schordan
    * \date 2012.
    */
+
   class Analyzer {
     friend class Solver;
     friend class Solver5;
@@ -76,10 +77,6 @@ namespace CodeThorn {
     Analyzer();
     virtual ~Analyzer();
 
-  protected:
-    static Sawyer::Message::Facility logger;
-
-  public:
     static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
@@ -112,8 +109,8 @@ namespace CodeThorn {
     const EState* popWorkList();
     
     // initialize command line arguments provided by option "--cl-options" in PState
-    void initializeVariableIdMapping(SgProject*);
     void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeVariableIdMapping(SgProject*);
     void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(PState& initialPState);
 
@@ -184,6 +181,8 @@ namespace CodeThorn {
 
     void setStgTraceFileName(std::string filename);
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+    void setAbstractionMode(int mode) { _abstractionMode=mode; }
+    int getAbstractionMode() { return _abstractionMode; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
@@ -250,8 +249,17 @@ namespace CodeThorn {
 
     // temporary option
     bool optionStringLiteralsInState=false;
+    void reduceStg(function<bool(const EState*)> predicate);
 
+    void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
+    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab);
+    void setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate);
+    std::string programPositionInfo(CodeThorn::Label);
+
+    bool isApproximatedBy(const EState* es1, const EState* es2);
+    EState combine(const EState* es1, const EState* es2);
   protected:
+    static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
 
     std::string analyzerStateToString();
@@ -385,6 +393,7 @@ namespace CodeThorn {
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
+    int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
     bool _explicitArrays;
 
     int _iterations;
@@ -408,6 +417,12 @@ namespace CodeThorn {
     std::vector<string> _commandLineOptions;
     SgTypeSizeMapping _typeSizeMapping;
     bool _contextSensitiveAnalysis;
+    // this is used in abstract mode to hold a pointer to the
+    // *current* summary state (more than one may be created to allow
+    // to represent multiple summary states in the transition system)
+    size_t getSummaryStateMapSize();
+  private:
+    std::unordered_map<int,const EState*> _summaryStateMap;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

@@ -7,6 +7,7 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
 
@@ -314,6 +315,48 @@ bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
 
 bool DFTransferFunctions::isExternalFunctionCall(Label lab) {
   return _programAbstractionLayer->getLabeler()->isExternalFunctionCallLabel(lab);
+}
+
+void DFTransferFunctions::setInitialElementFactory(PropertyStateFactory* pf) {
+  _initialElementFactory=pf;
+}
+
+PropertyStateFactory* DFTransferFunctions::getInitialElementFactory() {
+  return _initialElementFactory;
+}
+
+void DFTransferFunctions::initializeExtremalValue(Lattice& element) {
+  // default empty function
+}
+
+Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
+  ROSE_ASSERT(root);
+  cout << "INFO: Initializing property state with global variables."<<endl;
+  VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,getVariableIdMapping());
+  VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,getVariableIdMapping());
+  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,getVariableIdMapping());
+  VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
+  //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
+  //        usedVarsInGlobalVarsInitializers.end());
+  cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
+  //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  Lattice* elem=_initialElementFactory->create();
+  this->initializeExtremalValue(*elem);
+  //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
+  list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
+    if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
+      //cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
+      transfer(getLabeler()->getLabel(*i),*elem);
+    } else {
+      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+    }
+  }
+  //cout << "INIT: initial state: ";
+  //elem->toStream(cout,getVariableIdMapping());
+  //cout<<endl;
+  return elem;
 }
 
 #endif

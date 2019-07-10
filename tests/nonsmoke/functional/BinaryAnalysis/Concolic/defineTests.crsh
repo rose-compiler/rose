@@ -1,9 +1,9 @@
-connect sqlite3://./defineTests.db
+create sqlite3://./defineTests.db
 
 ls-family :: t01
   @ success
 {
-  /usr/bin/ls -la
+  ls -la
 }
 
 ls-family :: t02
@@ -11,7 +11,7 @@ ls-family :: t02
 {
   export DESC = ThisIsASimpleTest
 
-  /usr/bin/ls -l --author *.o
+  ls -l --author
 }
 
-echo ok.
+! echo ok.

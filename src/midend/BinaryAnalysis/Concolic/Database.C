@@ -51,6 +51,27 @@ namespace BinaryAnalysis {
 
   namespace
   {
+    std::pair<std::string, bool>
+    dbProperties(const std::string& url)
+    {
+      static const std::string locator  = "sqlite3://";
+      static const std::string debugopt = "?debug";
+
+      if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
+
+      ROSE_ASSERT(SqlDatabase::Connection::guess_driver(url) == SqlDatabase::SQLITE3);
+
+      size_t limit = url.find_first_of('?', locator.size());
+      bool   with_debug = (  (limit != std::string::npos)
+                          && debugopt == url.substr(limit, limit + debugopt.size())
+                          );
+
+      return std::make_pair(url.substr(locator.size(), limit), with_debug);
+    }
+
+    static const size_t
+    DBSQLITE_FIRST_ROWID = 1;
+
     static const double
     NO_CONCRETE_RANK     = -99;
 
@@ -1131,11 +1152,8 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
 
 
 static
-void initializeDB(SqlConnectionPtr dbconn)
+void initializeDB(SqlTransactionPtr tx)
 {
-  DBTxGuard         dbtx(dbconn);
-  SqlTransactionPtr tx = dbtx.tx();
-
   sqlPrepare(tx, QY_MK_TESTSUITES)->execute();
   sqlPrepare(tx, QY_MK_SPECIMENS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASES)->execute();
@@ -1146,8 +1164,6 @@ void initializeDB(SqlConnectionPtr dbconn)
   sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
-
-  dbtx.commit();
 }
 
 
@@ -1533,35 +1549,81 @@ Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj, Update::Flag upd
 }
 
 
+void failNonExistingDB(bool fileexists, const std::string& file)
+{
+  if (!fileexists)
+    throw std::runtime_error("Database file for url: " + file + "does not exist (cannot open).");
+}
+
+void overwriteExistingDB(bool fileexists, const std::string& file)
+{
+  if (fileexists)
+    boost::filesystem::remove(file);
+}
+
+template <class ExistingDBPolicy>
+SqlConnectionPtr
+connectToDB(const std::string& url, ExistingDBPolicy policy)
+{
+  std::pair<std::string, bool> dbinfo = dbProperties(url);
+
+  policy(boost::filesystem::exists(dbinfo.first), dbinfo.first);
+
+    SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
+
+  return SqlDatabase::Connection::create(url, dbdriver);
+}
 
 Database::Ptr
 Database::instance(const std::string &url)
 {
-    SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
-    SqlConnectionPtr    dbconn   = SqlDatabase::Connection::create(url, dbdriver);
-    Ptr                 db(new Database);
-
-    db->dbconn_ = dbconn;
+  SqlConnectionPtr dbconn = connectToDB(url, failNonExistingDB);
 
     if (!isDbInitialized(dbconn))
-      initializeDB(dbconn);
+    throw std::runtime_error("Database " + url + " is not a concolic DB.");
 
+  Ptr              db(new Database);
+
+  db->dbconn_ = dbconn;
     db->testSuites();
     return db;
 }
 
 Database::Ptr
+Database::create(const std::string& url)
+{
+  SqlConnectionPtr dbconn = connectToDB(url, overwriteExistingDB);
+  DBTxGuard        dbtx(dbconn);
+
+  // create tables
+  initializeDB(dbtx.tx());
+  dbtx.commit();
+
+  Ptr              db(new Database);
+
+  db->dbconn_      = dbconn;
+  return db;
+}
+
+Database::Ptr
 Database::create(const std::string& url, const std::string& testSuiteName)
 {
-    Ptr             db = instance("sqlite:" + url);
-    DBTxGuard       dbtx(db->dbconn_);
-    SqlStatementPtr stmt = sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName);
-    TestSuiteId     testSuiteid = TestSuiteId(stmt->execute_int());
-    dbtx.commit();
+  Ptr         db = create(url);
+  DBTxGuard   dbtx(db->dbconn_);
 
-    db->testSuiteId_ = testSuiteid;
-    return db;
+  // insert new testsuite
+  sqlPrepare(dbtx.tx(), QY_NEW_TESTSUITE, testSuiteName)
+    ->execute();
+
+  // query id
+  TestSuiteId tsid(sqlPrepare(dbtx.tx(), QY_TESTSUITE_BY_NAME, testSuiteName)->execute_int());
+  dbtx.commit();
+
+  ROSE_ASSERT(tsid.get() == DBSQLITE_FIRST_ROWID); // first inserted suite
+  db->testSuiteId_ = tsid;
+  return db;
 }
+
 
 void
 Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
@@ -1577,22 +1639,6 @@ Database::assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite)
 }
 
 #if WITH_DIRECT_SQLITE3
-
-std::pair<std::string, bool>
-dbProperties(const std::string& url)
-{
-  static const std::string locator  = "sqlite3://";
-  static const std::string debugopt = "?debug";
-
-  if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
-
-  size_t limit = url.find_first_of('?', locator.size());
-  bool   with_debug = (  (limit != std::string::npos)
-                      && debugopt == url.substr(limit, limit + debugopt.size())
-                      );
-
-  return std::make_pair(url.substr(locator.size(), limit), with_debug);
-}
 
 
 struct GuardedStmt;

@@ -106,6 +106,7 @@ class AbstractValue {
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
   static AbstractValue createNullPtr();
+  static AbstractValue createTop();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
@@ -141,16 +142,17 @@ class AbstractValue {
   void setTypeSize(TypeSize valueSize);
   static void setTypeSizeMapping(CodeThorn::SgTypeSizeMapping* typeSizeMapping);
   static CodeThorn::SgTypeSizeMapping* getTypeSizeMapping();
+  static bool approximatedBy(AbstractValue val1, AbstractValue val2);
+  static AbstractValue combine(AbstractValue val1, AbstractValue val2);
  private:
   ValueType valueType;
   CodeThorn::VariableId variableId;
   // union required
   long long int intValue=0;
-  double floatValue=0.0;
+  long double floatValue=0.0;
 
   TypeSize typeSize=0;
   static CodeThorn::SgTypeSizeMapping* _typeSizeMapping;
-
 };
 
 // arithmetic operators

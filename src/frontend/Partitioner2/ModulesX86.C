@@ -232,7 +232,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor CX(x86_regclass_gpr, x86_gpr_cx, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *cxReg = isSgAsmDirectRegisterExpression(leaArgs[0]);
     if (!cxReg || cxReg->get_descriptor()!=CX)
         return false;
@@ -246,7 +246,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+                                partitioner.instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *bpReg = isSgAsmDirectRegisterExpression(sum->get_lhs());
     if (!bpReg || bpReg->get_descriptor()!=BP)
         return false;
@@ -270,7 +270,7 @@ matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
-    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.get_nbits());
+    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
         return false;
@@ -292,7 +292,7 @@ matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
         return false;
 
     const RegisterDescriptor DI(x86_regclass_gpr, x86_gpr_di, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
     if (!dst || dst->get_descriptor()!=DI)
         return false;
@@ -314,7 +314,7 @@ matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+                                partitioner.instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
         return false;
@@ -332,7 +332,7 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor SI(x86_regclass_gpr, x86_gpr_si, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=SI)
         return false;
@@ -509,7 +509,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
     AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
 

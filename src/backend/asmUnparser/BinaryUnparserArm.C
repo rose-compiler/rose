@@ -145,7 +145,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::str
         case V_SgAsmDirectRegisterExpression: {
             SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(expr);
             state.frontUnparser().emitRegister(out, rre->get_descriptor(), state);
-            if (rre->get_descriptor().get_major() == arm_regclass_psr && rre->get_psr_mask() !=0) {
+            if (rre->get_descriptor().majorNumber() == arm_regclass_psr && rre->get_psr_mask() !=0) {
                 out <<"_";
                 if (rre->get_psr_mask() & 1)
                     out <<"c";

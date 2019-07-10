@@ -198,7 +198,7 @@ RSIM_Process::load(int existingPid /*=-1*/) {
         disassembler_ = Disassembler::lookup(interpretation_)->clone();
         ASSERT_not_null(disassembler_);
     }
-    wordSize_ = disassembler_->instructionPointerRegister().get_nbits();
+    wordSize_ = disassembler_->instructionPointerRegister().nBits();
 
     // Initialize state: memory and registers. Stack initialization happens later.
     if (simulator->settings().nativeLoad) {

@@ -5,6 +5,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
+#include "Labeler.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"
@@ -25,6 +26,60 @@ using namespace std;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
+
+size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
+  return _summaryStateMap.size();
+}
+
+std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
+  SgNode* node=getLabeler()->getNode(lab);
+  return SgNodeHelper::lineColumnNodeToString(node);
+}
+
+bool CodeThorn::Analyzer::isApproximatedBy(const EState* es1, const EState* es2) {
+  return es1->isApproximatedBy(es2);
+}
+
+EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
+  ROSE_ASSERT(es1->label()==es2->label());
+  ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
+  PState ps1=*es1->pstate();
+  PState ps2=*es2->pstate();
+
+  InputOutput io;
+  if(es1->io.isBot()) {
+    io=es2->io;
+  } else if(es2->io.isBot()) {
+    io=es1->io;
+  } else {
+    ROSE_ASSERT(es1->io==es2->io);
+    io=es1->io;
+  }
+
+  return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
+}
+
+const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
+  return _summaryStateMap[lab.getId()];
+}
+
+void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate) {
+  ROSE_ASSERT(lab==estate->label());
+  _summaryStateMap[lab.getId()]=estate;
+}
+
+void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initialPStateStored, 
+                                                  const CodeThorn::ConstraintSet* emptycsetstored) {
+  //  return;
+  for(auto label:*getLabeler()) {
+    // create bottom elements for each label
+    InputOutput io;
+    io.recordBot();
+    EState estate(label,initialPStateStored,emptycsetstored,io); // implicitly empty cs
+    const EState* bottomElement=processNewOrExisting(estate);
+    setSummaryState(label,bottomElement);
+  }
+}
 
 void CodeThorn::Analyzer::setOptionContextSensitiveAnalysis(bool flag) {
   _contextSensitiveAnalysis=flag;
@@ -540,18 +595,20 @@ EState CodeThorn::Analyzer::createEStateInternal(Label label, PState pstate, Con
     //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0;
-    cset=cset0;
+    ConstraintSet cset0; 
+    cset=cset0; 
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
   EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
+  estate.io.recordNone();
   return estate;
 }
 
 EState CodeThorn::Analyzer::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset) {
   EState estate=createEStateInternal(label,pstate,cset);
   estate.callString=cs;
+  estate.io.recordNone(); // create NONE not bot by default
   return estate;
 }
 
@@ -762,6 +819,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         PState newPState=*currentEState.pstate();
         newPState.writeTopToMemoryLocation(initDeclVarId);
         ConstraintSet cset=*currentEState.constraints();
+        InputOutput io;
+        io.recordNone();
         return createEState(targetLabel,cs,newPState,cset);
       }
       
@@ -1329,7 +1388,8 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
-  SAWYER_MESG(logger[TRACE])<< "INIT: initial state(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  cout<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
@@ -1366,11 +1426,15 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
   }
 
-  const EState* currentEState=processNew(estate);
-  ROSE_ASSERT(currentEState);
-  variableValueMonitor.init(currentEState);
-  addToWorkList(currentEState);
-  // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  estate.io.recordNone(); // ensure that extremal value is different to bot
+  const EState* initialEState=processNew(estate);
+  ROSE_ASSERT(initialEState);
+  variableValueMonitor.init(initialEState);
+  addToWorkList(initialEState);
+  cout << "INIT: start state (extremal value): "<<initialEState->toString(&variableIdMapping)<<endl;
+
+  // initialize summary states map for abstract model checking mode
+  initializeSummaryStates(initialPStateStored,emptycsetstored);
 
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
@@ -1648,6 +1712,23 @@ void CodeThorn::Analyzer::swapStgWithBackup() {
   backupTransitionGraph = tTemp;
 }
 
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+
+#define FAST_GRAPH_REDUCE
+void CodeThorn::Analyzer::reduceStg(function<bool(const EState*)> predicate) {
+#ifdef FAST_GRAPH_REDUCE
+  // MS 3/17/2019: new faster implementation
+  transitionGraph.reduceEStates3(predicate);
+#else
+  _stgReducer.reduceStgToStatesSatisfying(predicate);
+#endif
+}
+
+
 /*! 
  * \author Marc Jasper
  * \date 2017.
@@ -1656,12 +1737,7 @@ void CodeThorn::Analyzer::reduceStgToInOutStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO();
   };
-#if 1
-  // MS 3/17/2019: new much faster implementation (linear complexity)
-  transitionGraph.reduceEStates3(predicate);
-#else
-  _stgReducer.reduceStgToStatesSatisfying(predicate);
-#endif
+  reduceStg(predicate);
 }
 
 /*! 
@@ -1672,7 +1748,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO() || s->io.isFailedAssertIO();
   };
-  _stgReducer.reduceStgToStatesSatisfying(predicate);
+  reduceStg(predicate);
 }
 
 /*! 
@@ -1683,7 +1759,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertErrStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO()  || s->io.isFailedAssertIO() || s->io.isStdErrIO();
   };
-  _stgReducer.reduceStgToStatesSatisfying(predicate);
+  reduceStg(predicate);
 }
 
 /*! 
@@ -1697,7 +1773,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertWorklistStates() {
     return s->io.isStdInIO() || s->io.isStdOutIO() 
     || s->io.isFailedAssertIO() || (worklistSet.find(s) != worklistSet.end());
   };
-  _stgReducer.reduceStgToStatesSatisfying(predicate);
+  reduceStg(predicate);
 }
 
 int CodeThorn::Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {

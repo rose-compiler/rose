@@ -4925,15 +4925,7 @@ SgDotStarOp::get_type() const
              }
           default:
              {
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-            // DQ (12/31/2008): This appears to be the correct fix for EDG version 4.0, 
-            // but it is unclear why this is not an issue for EDG 3.x previously.
-            // printf ("Using default case in SgDotStarOp::get_type() differently with EDG version 4.x someType = %s \n",someType->class_name().c_str());
                returnType = someType;
-#else
-               printf ("Error: default reached in In SgDotStarOp::get_type() someType = %s \n",someType->class_name().c_str());
-               ROSE_ASSERT(false);
-#endif
              }
         }
 
@@ -6044,54 +6036,6 @@ SgPointerDerefExp::get_type() const
                goto keepStripping;
              }
 
-// #ifndef ROSE_USE_EDG_VERSION_4
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
-       // Note also that calling the static createType() function, is the same as returning "someType".
-
-       // Liao (1/25/2008) SgTypeUnknown is used (abused ?) to specify a temporary InitializedName generated 
-       // in translation when the corresponding variable declaration is not yet available. SageBuilder::fixVariableReferences() 
-       // will fix this temporary inconsistence in AST after transformation is complete.
-          case V_SgTypeUnknown:
-             {
-            // DQ (8/17/2010): I think this is redundant.
-               returnType = SgTypeUnknown::createType();
-               printf ("Warning: I think we should be short circuiting redundant call to SgTypeUnknown::createType() \n");
-               break;
-             }
-
-       // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
-          case V_SgTypeString:
-             {
-            // DQ (8/17/2010): I think it is a bug to redundant to call SgTypeString::createType() here.
-            // returnType = SgTypeString::createType();
-               returnType = someType;
-
-            // Output a message about this in case I am wrong.
-               printf ("Short circuited redundant call to SgTypeString::createType() \n");
-               break;
-             }
-
-       // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
-          case V_SgTypeInt:
-             {
-            // DQ (8/17/2010): I think this is redundant.
-               returnType = SgTypeInt::createType();
-               if (SgProject::get_verbose() > 0) {
-                   printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
-               }
-               break;
-             }
-
-       // Liao, 8/28/2009
-          case V_SgTypeFloat:
-             {
-            // DQ (8/17/2010): I think that this is the correct handling of the return value generation.
-               returnType = someType;
-               break;
-             }
-#endif
-
        // DQ (9/27/2012): Added case to avoid falling through the default case (more template support).
           case V_SgTemplateType:
              {
@@ -6156,25 +6100,10 @@ SgPointerDerefExp::get_type() const
 
           default:
              {
-// #ifndef ROSE_USE_EDG_VERSION_4
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-            // DQ (12/31/2008): This is the old behavior from EDG version 3.x (which I don't want to change since it is stable)
-#if 1
-               printf ("Error: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
-               get_file_info()->display("location of error: debug");
-
-            // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
-               SgLocatedNode* locatedNode = isSgLocatedNode(get_parent());
-               if (locatedNode != NULL)
-                    locatedNode->get_file_info()->display("location of parent: debug");
-#endif
-               ROSE_ASSERT(false);
-#else
             // DQ (10/23/2016): Commented out message to avoid output spew.
             // DQ (12/31/2008): This is the new behavior for EDG version 4.x.
             // printf ("Warning: default reached in In SgPointerDerefExp::get_type() someType = %s \n",someType->class_name().c_str());
                returnType = someType;
-#endif
              }
         }
 
@@ -6876,30 +6805,6 @@ SgPntrArrRefExp::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-     // Liao (1/25/2008) SgTypeUnknown is used to specify a temporary symbol generated 
-     //during translation when the corresponding variable declaration is not yet declared.
-          case V_SgTypeUnknown:
-             {
-               returnType = SgTypeUnknown::createType();
-               break;
-             }
-
-          default:
-             {
-#if 1
-               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %p = %s \n",someType,someType->class_name().c_str());
-               get_file_info()->display("location of error: debug");
-
-            // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
-               SgLocatedNode* locatedNode = isSgLocatedNode(get_parent());
-               if (locatedNode != NULL)
-                    locatedNode->get_file_info()->display("location of parent: debug");
-#endif
-               printf ("Error: default reached in In SgPntrArrRefExp::get_type() someType = %p = %s \n",someType,someType->class_name().c_str());
-               ROSE_ASSERT(false);
-             }
-#else
        // DQ (12/31/2008): This is a better fit for the new EDG/ROSE translation interface.
           default:
              {
@@ -6908,7 +6813,6 @@ SgPntrArrRefExp::get_type() const
 #endif
                returnType = someType;
              }
-#endif
         }
 
      ROSE_ASSERT(returnType != NULL);

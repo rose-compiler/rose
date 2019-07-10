@@ -46,7 +46,7 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction, initialization, etc.
+// Constructors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Partitioner::Partitioner()
@@ -63,54 +63,150 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
     init(disassembler, map);
 }
 
-// FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
-// partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
-// things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
-// unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-// FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
-// after a while.
-Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
-    init(NULL, memoryMap_);                             // initialize just like default
-    *this = other;                                      // then delegate to the assignment operator
+#ifdef ROSE_PARTITIONER_MOVE
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Copy construction, assignment, destructor when move semantics are present
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// move constructor
+Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other) {
+    *this = boost::move(other);
 }
 
+// move assignment
 Partitioner&
-Partitioner::operator=(const Partitioner &other) {
+Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
+    // FIXME[Robb Matzke 2019-06-21]: Some of the data members don't support move semantics, so we copy those and then
+    // delete them from the source. The key thing we're trying to avoid is for other's destructor from doing anything
+    // that might interfere with the new object.
+
+    // FIXME[Robb Matzke 2019-06-21]: faked move semantics
     Sawyer::Attribute::Storage<>::operator=(other);
     settings_ = other.settings_;
     config_ = other.config_;
-    instructionProvider_ = other.instructionProvider_;
-    memoryMap_ = other.memoryMap_;
     cfg_ = other.cfg_;
-    vertexIndex_.clear();                               // initialized by init(other)
     aum_ = other.aum_;
-    solver_ = other.solver_;
+    vertexIndex_.clear();                               // initialized by init(other)
     functions_ = other.functions_;
-    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
-    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
     addressNames_ = other.addressNames_;
-    unparser_ = other.unparser_;
-    insnUnparser_ = other.insnUnparser_;
+
+    // FIXME[Robb Matzke 2019-06-21]: faked move semantics and no way to clear the source
     cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
     basicBlockCallbacks_ = other.basicBlockCallbacks_;
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
     functionPaddingMatchers_ = other.functionPaddingMatchers_;
+
+    // The rest are okay because they're PODs
+    instructionProvider_ = other.instructionProvider_;
+    other.instructionProvider_ = InstructionProvider::Ptr();
+
+    memoryMap_ = other.memoryMap_;
+    other.memoryMap_ = MemoryMap::Ptr();
+
+    solver_ = other.solver_;
+    other.solver_ = SmtSolver::Ptr();
+
+    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
 
+    unparser_ = other.unparser_;
+    other.unparser_ = Unparser::BasePtr();
+
+    insnUnparser_ = other.insnUnparser_;
+    other.insnUnparser_ = Unparser::BasePtr();
+
     {
-        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
+        cfgProgressTotal_ = other.cfgProgressTotal_;
+        progress_ = other.progress_;
+        other.progress_ = Progress::Ptr();
+    }
+
+    // Finish initializing the enew object before we totally wipe out the old one.
+    init(other);
+
+    // FIXME[Robb Matzke 2019-06-21]: For all the faked move semantics above, clear them now in other.
+    other.clearAttributes();
+    other.settings_ = BasePartitionerSettings();
+    other.config_ = Configuration();
+    other.cfg_ = ControlFlowGraph();
+    other.aum_ = AddressUsageMap();
+    other.functions_ = Functions();
+    other.addressNames_ = AddressNameMap();
+    
+    return *this;
+}
+
+Partitioner::~Partitioner() {
+    // Detaching all functions breaks any reference-counting pointer cycles
+    std::vector<Function::Ptr> list = functions();      // make a copy so we can modify while iterating
+    BOOST_FOREACH (const Function::Ptr &function, list)
+        detachFunction(function);
+}
+
+#else
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Copy construction, assignment, destructor when move semantics are absent
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Partitioner::Partitioner(const Partitioner &other) {
+    // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
+    // The only safe thing to do with the other partitioner is to delete it.
+    *this = other;
+}
+
+Partitioner&
+Partitioner::operator=(const Partitioner &other) {
+    // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
+    // The only safe thing to do with the other partitioner is to delete it.
+    Sawyer::Attribute::Storage<>::operator=(other);
+    settings_ = other.settings_;
+    config_ = other.config_;
+    cfg_ = other.cfg_;
+    aum_ = other.aum_;
+    vertexIndex_.clear();                               // initialized by init(other)
+    functions_ = other.functions_;
+    addressNames_ = other.addressNames_;
+
+    cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
+    basicBlockCallbacks_ = other.basicBlockCallbacks_;
+    functionPrologueMatchers_ = other.functionPrologueMatchers_;
+    functionPaddingMatchers_ = other.functionPaddingMatchers_;
+
+    instructionProvider_ = other.instructionProvider_;
+    memoryMap_ = other.memoryMap_;
+    solver_ = other.solver_;
+    autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+    assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+    stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
+    semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+    unparser_ = other.unparser_;
+    insnUnparser_ = other.insnUnparser_;
+
+    {
+        SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
         cfgProgressTotal_ = other.cfgProgressTotal_;
         progress_ = other.progress_;
     }
 
-    init(other);                                        // copies graph iterators, etc.
+    init(other);
     return *this;
 }
 
-Partitioner::~Partitioner() {}
+Partitioner::~Partitioner() {
+    // WARNING: Possible memory leaks here, but unsafe to clean up because we don't have move semantics.  The leaks are due to
+    // cycles in the reference counting between attached data blocks, which point to their basic block and function owners, and
+    // the attached owners that point back to the data blocks. We cannot safely break these references because they might be
+    // used by a *copied* partitioner since we don't have move semantics.
+}
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initializations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
@@ -495,13 +591,21 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         bblock = placeholder->value().bblock();
         placeholder->value().nullify();
         adjustPlaceholderEdges(placeholder);
+        bblock->thaw();
+
+        // Remove its instructions from the AUM if there are no other basic blocks owning the instruction.
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
             aum_.eraseInstruction(insn, bblock);
+
+        // Remove th basic block from all its data blocks' attached owners lists, and for any data blocks that no longer
+        // have attached owners, detach them from this partitioner.
         BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
-            if (0==dblock->decrementOwnerCount())
+            dblock->eraseOwner(bblock);
+            if (dblock->nAttachedOwners() == 0)
                 detachDataBlock(dblock);
         }
-        bblock->thaw();
+
+        // Run callbacks for detached basic blocks
         bblockDetached(bblock->address(), bblock);
     }
     return bblock;
@@ -557,8 +661,8 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
     // If the first instruction of this basic block already exists (in the middle of) some other basic blocks then the other
     // basic blocks are called "conflicting blocks".  This only applies for the first instruction of this block, but is used in
     // the termination conditions below.
-    AddressUser startVaOwners;
-    if (instructionExists(startVa).assignTo(startVaOwners))
+    AddressUser startVaOwners = instructionExists(startVa);
+    if (startVaOwners)
         ASSERT_forbid(startVaOwners.isBlockEntry());                    // handled in discoverBasicBlock
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
@@ -612,8 +716,8 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (findPlaceholder(successorVa)!=cfg_.vertices().end())        // case: successor is an existing block
             goto done;
 
-        AddressUser succVaOwners;
-        if (instructionExists(successorVa).assignTo(succVaOwners) &&    // case: successor is inside an existing block that
+        AddressUser succVaOwners = instructionExists(successorVa);
+        if (succVaOwners &&                                             // case: successor is inside an existing block that
             !isSupersetUnique(startVaOwners.basicBlocks(),              //       doesn't own startVa
                               succVaOwners.basicBlocks(),
                               sortBasicBlocksByAddress)) {
@@ -630,7 +734,7 @@ done:
         rose_addr_t finalInsnVa = retval->instructions().back()->get_address();
         if (config_.basicBlockFinalInstructionVa(startVa).orElse(finalInsnVa+1)==finalInsnVa) {
             retval->clearSuccessors();
-            size_t nBits = instructionProvider_->instructionPointerRegister().get_nbits();
+            size_t nBits = instructionProvider_->instructionPointerRegister().nBits();
             std::set<rose_addr_t> successorVas = config_.basicBlockSuccessorVas(startVa);
             BOOST_FOREACH (rose_addr_t successorVa, successorVas)
                 retval->insertSuccessor(successorVa, nBits);
@@ -671,8 +775,7 @@ ControlFlowGraph::VertexIterator
 Partitioner::insertPlaceholder(rose_addr_t startVa) {
     ControlFlowGraph::VertexIterator placeholder = findPlaceholder(startVa);
     if (placeholder == cfg_.vertices().end()) {
-        AddressUser addressUser;
-        if (instructionExists(startVa).assignTo(addressUser)) {
+        if (AddressUser addressUser = instructionExists(startVa)) {
             // This placeholder is in the middle of some other basic block(s), so we must truncate them.
             BOOST_FOREACH (const BasicBlock::Ptr &existingBlock, addressUser.basicBlocks()) {
                 ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(existingBlock->address());
@@ -785,19 +888,21 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
     BOOST_FOREACH (const VertexEdgePair &pair, successors)
         cfg_.insertEdge(placeholder, pair.first, pair.second);
 
-    // Insert the basic block instructions
+    // Insert the basic block instructions into the AUM
     placeholder->value().bblock(bblock);
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
         aum_.insertInstruction(insn, bblock);
-    }
     if (bblock->isEmpty())
         adjustNonexistingEdges(placeholder);
 
     // Insert the basic block static data. If the AUM contains an equivalent data block already, then use that one instead.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, bblock->dataBlocks()) {
         ASSERT_not_null(dblock);
-        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, bblock));
-        bblock->replaceOrInsertDataBlock(odb.dataBlock());
+        DataBlock::Ptr insertedDb = attachDataBlock(dblock);
+        ASSERT_not_null(insertedDb);
+        if (insertedDb != dblock)
+            bblock->replaceOrInsertDataBlock(insertedDb);
+        insertedDb->insertOwner(bblock);
     }
 
     if (basicBlockSemanticsAutoDrop())
@@ -880,9 +985,9 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
 #endif
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.get_nbits(), va))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
         if (!complete)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits()))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.nBits()))));
     }
 
     // We don't want parallel edges in the CFG, so remove duplicates.
@@ -984,15 +1089,15 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // Get initial and final stack pointer values
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         BaseSemantics::SValuePtr sp0 =
-            state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
+            state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
         BaseSemantics::SValuePtr spN =
-            stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
+            stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
 
         // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
         // value for the stack pointer.
         SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.nBits(), 0x8000); // arbitrary
         SymbolicExpr::Ptr spNExpr =
             Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
@@ -1051,9 +1156,9 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             if (!isInsnCall) {
                 const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
                 const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.get_nbits(), returnVa);
+                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.nBits(), returnVa);
                 BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.get_nbits());
+                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.nBits());
                 topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
                 BaseSemantics::SValuePtr z =
                     sem.operators->equalToZero(sem.operators->add(returnExpr,
@@ -1110,7 +1215,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                     // Did the callee return to somewhere other than caller's return address?
                     if (BaseSemantics::StatePtr calleeStateN = calleeBb->semantics().finalState()) {
                         BaseSemantics::SValuePtr ipN =
-                            calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.get_nbits()), sem.operators.get());
+                            calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.nBits()), sem.operators.get());
                         if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
                             allCalleesPopWithoutReturning = false;
                             break;
@@ -1191,21 +1296,21 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
                 isSgAsmIntegerValueExpression(x86insn->operand(0))) {
                 uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
                                   ->get_absoluteValue();
-                nbytes += REG_IP.get_nbits() / 8;       // size of return address
-                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), nbytes));
+                nbytes += REG_IP.nBits() / 8;       // size of return address
+                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), nbytes));
             }
         }
         if (!stackOffset) {
             // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
             // downward.
-            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), REG_IP.nBits()/8));
         }
         BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
         BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
 
         // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
         // pointer. If equal, then the basic block returns to the caller.
-        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.get_nbits());
+        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.nBits());
         retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
         BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
         BaseSemantics::SValuePtr isEqual =
@@ -1316,50 +1421,37 @@ Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
 
     // If this data block has attached owners, then this data block must already exist in the AUM.
     if (dblock->nAttachedOwners() > 0) {
-        ASSERT_require(aum_.dataBlockExists(dblock).dataBlock() == dblock);
+        ASSERT_require(aum_.dataBlockExists(dblock) == dblock);
         return dblock;
     }
-    
+
     // If any data block has the exact same extent as the specified data block, then return that already-existing, equivalent
     // data block.
-    OwnedDataBlock odb = aum_.dataBlockExists(dblock);
-    if (odb.isValid())
-        return odb.dataBlock();
-
-    return DataBlock::Ptr();
+    return aum_.dataBlockExists(dblock);
 }
 
 // Attach data block without any new owners.
 DataBlock::Ptr
-Partitioner::attachDataBlock(const DataBlock::Ptr &dblock) {
-    ASSERT_not_null(dblock);
-    return attachDataBlock(OwnedDataBlock(dblock)).dataBlock();
-}
-
-// attach data block with owners. This is private and doesn't check whether owners are attached. If the data block is already
-// attached then this function can be used to give it more owners.
-OwnedDataBlock
-Partitioner::attachDataBlock(const OwnedDataBlock &toInsert) {
-    ASSERT_require(toInsert.isValid());
-
-    OwnedDataBlock inserted = aum_.insertDataBlock(toInsert);
-    ASSERT_require(inserted.isValid());
-    inserted.dataBlock()->nAttachedOwners(inserted.nOwners());
-    inserted.dataBlock()->freeze();
+Partitioner::attachDataBlock(const DataBlock::Ptr &toInsert) {
+    ASSERT_not_null(toInsert);
+    DataBlock::Ptr inserted = aum_.insertDataBlock(toInsert).dataBlock();
+    ASSERT_not_null(inserted);
+    inserted->freeze();
     return inserted;
 }
 
-DataBlock::Ptr
+// Detach data block if it has no owners
+void
 Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
-    if (dblock!=NULL) {
-        if (dblock->nAttachedOwners()) {
+    if (dblock != NULL && dblock->isFrozen()) {
+        if (dblock->nAttachedOwners() > 0) {
             throw DataBlockError(dblock, dataBlockName(dblock) + " cannot be detached because it has " +
                                  StringUtility::plural(dblock->nAttachedOwners(), "basic block and/or function owners"));
         }
-        aum_.eraseDataBlock(dblock);
+        DataBlock::Ptr erased = aum_.eraseDataBlock(dblock);
+        ASSERT_always_require(erased == dblock);
         dblock->thaw();
     }
-    return dblock;
 }
 
 std::vector<DataBlock::Ptr>
@@ -1414,8 +1506,8 @@ Partitioner::findBestDataBlock(const AddressInterval &interval) const {
 // attachDataBlockToFunction and attachDataBlockToBasicBlock should have very similar semantics.
 DataBlock::Ptr
 Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Function::Ptr &function) {
-    ASSERT_not_null(function);
-    ASSERT_not_null(dblock);
+    ASSERT_not_null(function);                          // the function can be attached or detached
+    ASSERT_not_null(dblock);                            // the data block can be attached or detached
     DataBlock::Ptr canonicalDataBlock;
 
     if (DataBlock::Ptr existingDataBlock = function->dataBlockExists(dblock)) {
@@ -1427,11 +1519,9 @@ Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Funct
         // The specified data block (or equivalent) is not attached to the specified function yet, but the specified function
         // is already in the CFG/AUM. The AUM might already contain an equivalent data block that we should use instead, and if
         // so, that's the one we'll return.
-        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, function));
-        canonicalDataBlock = odb.dataBlock();
-        function->thaw();
+        canonicalDataBlock = attachDataBlock(dblock);
         function->replaceOrInsertDataBlock(canonicalDataBlock);
-        function->freeze();
+        canonicalDataBlock->insertOwner(function);
 
     } else if (DataBlock::Ptr existingDataBlock = function->dataBlockExists(dblock)) {
         // The function is not attached to the CFG/AUM, therefore we don't need to attach the specified dblock to the
@@ -1451,8 +1541,8 @@ Partitioner::attachDataBlockToFunction(const DataBlock::Ptr &dblock, const Funct
 // attachDataBlockToFunction and attachDataBlockToBasicBlock should have very similar semantics.
 DataBlock::Ptr
 Partitioner::attachDataBlockToBasicBlock(const DataBlock::Ptr &dblock, const BasicBlock::Ptr &bblock) {
-    ASSERT_not_null(bblock);
-    ASSERT_not_null(dblock);
+    ASSERT_not_null(bblock);                            // the basic block can be attached or detached
+    ASSERT_not_null(dblock);                            // the data block can be attached or detached
     DataBlock::Ptr canonicalDataBlock;
 
     if (DataBlock::Ptr existingDataBlock = bblock->dataBlockExists(dblock)) {
@@ -1464,9 +1554,9 @@ Partitioner::attachDataBlockToBasicBlock(const DataBlock::Ptr &dblock, const Bas
         // The specified data block (or equivalent) is not attached to the specified basic block yet, but the specified basic
         // block is already in the CFG/AUM. The AUM might already contain an equivalent data block that we should use instead,
         // and if so, that's the one we'll return.
-        OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, bblock));
-        canonicalDataBlock = odb.dataBlock();
+        canonicalDataBlock = attachDataBlock(dblock);
         bblock->replaceOrInsertDataBlock(canonicalDataBlock);
+        canonicalDataBlock->insertOwner(bblock);
 
     } else if (DataBlock::Ptr existingDataBlock = bblock->dataBlockExists(dblock)) {
         // The basic block is not attached to the CFG/AUM, therefore we don't need to attach the specified dblock to the
@@ -1566,7 +1656,7 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
             }
         } else {
             ASSERT_not_null(user.dataBlock());
-            BOOST_FOREACH (const Function::Ptr &function, user.dataBlockOwnership().owningFunctions())
+            BOOST_FOREACH (const Function::Ptr &function, user.dataBlock()->attachedFunctionOwners())
                 insertUnique(functions, function, sortFunctionsByAddress);
         }
     }
@@ -1704,8 +1794,11 @@ Partitioner::attachFunction(const Function::Ptr &function) {
         // Attach function data blocks. If the AUM contains an equivalent data block already, then use that one instead.
         BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
             ASSERT_not_null(dblock);
-            OwnedDataBlock odb = attachDataBlock(OwnedDataBlock(dblock, function));
-            function->replaceOrInsertDataBlock(odb.dataBlock());
+            DataBlock::Ptr insertedDb = attachDataBlock(dblock);
+            ASSERT_not_null(insertedDb);
+            if (insertedDb != dblock)
+                function->replaceOrInsertDataBlock(insertedDb);
+            insertedDb->insertOwner(function);
         }
 
         // Prevent the function connectivity from changing while the function is in the CFG.  Non-frozen functions
@@ -1872,8 +1965,8 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 
     // Unlink data block ownership, but do not detach data blocks from CFG/AUM unless ownership count hits zero.
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
-        ASSERT_not_null(dblock);
-        if (0==dblock->decrementOwnerCount())
+        dblock->eraseOwner(function);
+        if (dblock->nAttachedOwners() == 0)
             detachDataBlock(dblock);
     }
 
@@ -2189,7 +2282,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
     BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
-    size_t wordSize = SP.get_nbits() >> 3;              // word size in bytes
+    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
 
     // Run the data flow
     try {
@@ -2212,14 +2305,14 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
             BaseSemantics::RegisterStateGenericPtr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                if (kv.value->is_number() && kv.value->get_width() <= SP.nBits())
                     retval.insert(kv.value->get_number());
             }
 
             BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
                 BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
                                                                  ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.get_nbits())
+                if (value->is_number() && value->get_width() <= SP.nBits())
                     retval.insert(value->get_number());
             }
 
@@ -2227,7 +2320,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
                 if (var.isAddress()) {
                     BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
                                                                      ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                    if (value->is_number() && value->get_width() <= SP.nBits())
                         retval.insert(value->get_number());
                 }
             }
@@ -2347,8 +2440,7 @@ Partitioner::checkConsistency() const {
                 } else {
                     // Existing basic block
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                        static const AddressUser NO_USER;
-                        AddressUser insnAddrUser = aum_.instructionExists(insn->get_address()).orElse(NO_USER);
+                        AddressUser insnAddrUser = aum_.findInstruction(insn);
                         ASSERT_always_require2(insnAddrUser.insn() == insn,
                                                "instruction " + addrToString(insn->get_address()) + " in block " +
                                                addrToString(bb->address()) + " must be present in the AUM");
@@ -2771,11 +2863,11 @@ Partitioner::aum(const Function::Ptr &function) const {
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
                 retval.insertInstruction(insn, bb);
             BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
-                retval.insertDataBlock(OwnedDataBlock(dblock, bb));
+                retval.insertDataBlock(dblock);
         }
     }
     BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks())
-        retval.insertDataBlock(OwnedDataBlock(dblock, function));
+        retval.insertDataBlock(dblock);
     return retval;
 }
 

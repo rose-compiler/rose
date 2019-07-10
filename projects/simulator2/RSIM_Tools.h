@@ -338,12 +338,12 @@ public:
                 bool isTopValid = false;
                 SgAsmX86Instruction *call_insn = NULL;
                 try {
-                    if (REG_SP.get_nbits() == 32) {
+                    if (REG_SP.nBits() == 32) {
                         uint32_t top32 = 0;
                         isTopValid = 4 == process->mem_read(&top32, sp, 4);
                         top = top32;
                     } else {
-                        ASSERT_require(REG_SP.get_nbits() == 64);
+                        ASSERT_require(REG_SP.nBits() == 64);
                         isTopValid = 8 == process->mem_read(&top, sp, 8);
                     }
                     if (isTopValid) {

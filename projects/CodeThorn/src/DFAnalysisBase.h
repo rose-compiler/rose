@@ -32,7 +32,8 @@ class DFAnalysisBase {
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
-  virtual void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
+  virtual void initializeExtremalValue(Lattice* element);
+  virtual void initialize(SgProject* root, bool createCFG=true, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();
@@ -42,7 +43,6 @@ class DFAnalysisBase {
   // computes state for global variable initializations
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
-  virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
@@ -73,8 +73,9 @@ class DFAnalysisBase {
   void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
   CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
- protected:
+  ProgramAbstractionLayer* getProgramAbstractionLayer();
 
+ protected:
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
@@ -87,6 +88,7 @@ class DFAnalysisBase {
   vector<Lattice*> _analyzerDataPostInfo;
   WorkListSeq<Edge> _workList;
   void setInitialElementFactory(PropertyStateFactory*);
+  PropertyStateFactory* getInitialElementFactory();
 
   //typedef AnalyzerData::iterator iterator;
   typedef AnalyzerData::iterator iterator;
@@ -104,16 +106,15 @@ class DFAnalysisBase {
  public:
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
-  PropertyStateFactory* _initialElementFactory=nullptr;
   CodeThorn::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-
  private:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
   CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
   Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
+  bool _programAbstractionLayerOwner=true;
 };
 
 } // end of namespace

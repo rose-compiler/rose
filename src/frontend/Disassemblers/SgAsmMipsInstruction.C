@@ -109,7 +109,7 @@ SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> 
     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(args[0]);
     if (!rre)
         return false;
-    if (rre->get_descriptor().get_major()!=mips_regclass_gpr || rre->get_descriptor().get_minor()!=31)
+    if (rre->get_descriptor().majorNumber()!=mips_regclass_gpr || rre->get_descriptor().minorNumber()!=31)
         return false;
     return true; // this is a "JR ra" instruction.
 }

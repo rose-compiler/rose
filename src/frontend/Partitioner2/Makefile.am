@@ -32,7 +32,6 @@ libPartitioner_la_SOURCES =			\
 	ModulesPe.C				\
 	ModulesPowerpc.C			\
 	ModulesX86.C				\
-	OwnedDataBlock.C			\
 	Partitioner.C				\
 	Reference.C				\
 	Semantics.C				\

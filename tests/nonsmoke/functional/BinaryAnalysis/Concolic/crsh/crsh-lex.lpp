@@ -7,12 +7,14 @@ extern "C" int yywrap(void) { return 1; }
 %}
 
 %%
-"connect"                      return CONNECT;
+"create"                       return DBCREATE;
+"connect"                      return DBCONNECT;
+"close"                        return DBCLOSE;
 "export"                       return EXPORT;
 "run"                          return RUN;
-"echo"                         return ECHO;
 "exit"                         return EXIT;
 "::"                           return QUAL;
+!                              return SHELL;
 
 \"(\\.|[^"\\])*\"              {
                                  yylval.m_str = strdup(yytext);
@@ -37,7 +39,7 @@ extern "C" int yywrap(void) { return 1; }
                                  return STRING;
                                }
 
-\n                             /* ignore end of line */;
+\n                             /* return NL; */
 [ \t]+                         /* ignore whitespace */;
 "#".*                          /* ignore line comment */;
 %%
