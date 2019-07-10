@@ -4376,23 +4376,13 @@ Unparse_ExprStmt::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
      } else if (complex_val->get_real_value() == NULL) { // Pure imaginary
        curprint ("(");
        unparseValue(complex_val->get_imaginary_value(), info);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE 
-    // curprint (" * __I__)");
        curprint (" * 1.0i)");
-#else
-       curprint (" * _Complex_I)");
-#endif
      } else { // Complex number
        curprint ("(");
        unparseValue(complex_val->get_real_value(), info);
        curprint (" + ");
        unparseValue(complex_val->get_imaginary_value(), info);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE 
-    // curprint (" * __I__)");
        curprint (" * 1.0i)");
-#else
-       curprint (" * _Complex_I)");
-#endif
      }
    }
 

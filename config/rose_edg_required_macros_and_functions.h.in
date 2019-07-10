@@ -1,5 +1,4 @@
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
-/* #ifndef ROSE_USE_NEW_EDG_INTERFACE */
 /* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
    be defined along with lots of other Common Predefined Macros.
 */
@@ -345,14 +344,6 @@ typedef long double __float128;
  * and we undefine the __BLOCKS__ macro.
  */
 #undef __BLOCKS__
-
-/* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
- * so we define them to nothing here.  */
-#ifndef ROSE_USE_EDG_VERSION_4
-	#define __attribute__(x)
-	#define __dead2
-	#define __pure2
-#endif
 
 /* DQ (1/16/2017): define this for the mac since it does not have a builtin definition. */
 #define __builtin_va_arg(v,l) (l)(sizeof(l))
@@ -1877,16 +1868,6 @@ long double __builtin_powil (long double __builtin__x, int __builtin__y);
 #ifdef _GLIBCXX_ATOMIC_BUILTINS
 typedef int _Atomic_word;
 _Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
-#endif
-
-/* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
-/* #if ROSE_CPP_MODE */
-#if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
-/* These use C++ references and so can't be used in C mode (should not be used with EDG 4.3) */
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-int __sync_lock_test_and_set( int & v, int n );
-int __sync_lock_release( int & v );
-#endif
 #endif
 
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use 
@@ -8131,5 +8112,4 @@ int __frontend_specific_variable_to_provide_header_file_path;
 
 /* matching endif for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #endif
-
-#endif /* !ROSE_USE_NEW_EDG_INTERFACE */
+#endif
