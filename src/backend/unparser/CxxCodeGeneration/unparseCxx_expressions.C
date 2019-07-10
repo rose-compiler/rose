@@ -2510,6 +2510,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& info)
    {
+#if 0
+     printf ("In unparseCompoundLiteral() \n");
+     curprint ("/* In unparseCompoundLiteral() */ \n");
+#endif
+
      SgCompoundLiteralExp* compoundLiteral = isSgCompoundLiteralExp(expr);
      ROSE_ASSERT(compoundLiteral != NULL);
 
@@ -2518,6 +2523,12 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
 
      SgInitializedName* initializedName = variableSymbol->get_declaration();
      ROSE_ASSERT(initializedName != NULL);
+
+     if (initializedName->get_initptr() == NULL)
+        {
+          printf ("Error: In unparseCompoundLiteral(): initializedName->get_initptr() == NULL: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+        }
+
      ROSE_ASSERT(initializedName->get_initptr() != NULL);
 
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
@@ -3214,10 +3225,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #endif
      if (nodeReferenceToFunction != NULL)
         {
-#if 0
+#if MFuncRefSupport_DEBUG
           printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
+#if 0
+       // DQ (7/9/2019): This will cause the class specifier to be output.
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
           if (i != SgNode::get_globalTypeNameMap().end())
              {
@@ -3225,14 +3238,18 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                usingGeneratedNameQualifiedFunctionNameString = true;
 
                functionNameString = i->second.c_str();
-#if 0
+#if MFuncRefSupport_DEBUG
                printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
                     functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
 #endif
              }
-            else
+          else
+#else
+         // DQ (7/9/2019): Debugging test2019_493.C.
+         // printf ("In unparseMFuncRefSupport(): Don't use the globalTypeNameMap since it uses the class specifier! \n");
+#endif
              {
-#if 0
+#if MFuncRefSupport_DEBUG
                printf ("Could not find saved name qualified function name in globalTypeNameMap: using key: nodeReferenceToFunction = %p = %s \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
 #endif
 #if 0
@@ -3272,14 +3289,14 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                     usingGeneratedNameQualifiedFunctionNameString = true;
 
                     functionNameString = j->second.c_str();
-#if 0
+#if MFuncRefSupport_DEBUG
                     printf ("uuuuuuuuuuuuuuuuuuuu Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
                          functionNameString.c_str(),mfunc_ref,mfunc_ref->class_name().c_str());
 #endif
                   }
                  else
                   {
-#if 0
+#if MFuncRefSupport_DEBUG
                     printf ("Could not find saved name qualified function name in globalTypeNameMap: using key: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
 #endif
                   }
@@ -7175,7 +7192,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (3/12/2018): Rewrite this so that we can output the calue of "shared".
        // if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
           bool shares = (sharesSameStatement(aggr_init,aggr_init->get_type()) == true);
-#if 1
+#if 0
           printf ("In unparseAggrInit(): shares = %s \n",shares ? "true" : "false");
 #endif
           if (shares == true)
@@ -7709,6 +7726,12 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
      SgUnparse_Info newinfo(info);
      bool outputParenthisis = false;
 
+  // DQ (7/9/2019): Supress the class specifier.
+  // newinfo.set_SkipClassSpecifier();
+
+#if 0
+     printf ("In unparseConInit(): set SkipClassSpecifier() \n");
+#endif
 #if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("In unparseConInit(): con_init->get_need_name()                   = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
      printf ("In unparseConInit(): con_init->get_is_explicit_cast()            = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
