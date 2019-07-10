@@ -27,6 +27,9 @@
 // DQ (10/5/2014): We can't include this here.
 // #include "rose.h"
 
+#define SG_UNEXPECTED_NODE(X)       (sg::unexpected_node(X, __FILE__, __LINE__))
+#define SG_DEREF(X)                 (sg::deref(X, __FILE__, __LINE__))
+#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 
 namespace sg
 {
@@ -38,14 +41,6 @@ namespace sg
   template <class T>
   static inline
   void unused(const T&) {}
-
-/// \brief  dereferences an object (= checked dereference in debug mode)
-  template <class T>
-  T& deref(T* ptr)
-  {
-    assert(ptr);
-    return *ptr;
-  }
 
 /// \brief projects the constness of T1 on T2
   template <class T1, class T2>
@@ -63,60 +58,59 @@ namespace sg
   //
   // error reporting
 
-#define SG_UNEXPECTED_NODE(X) (sg::unexpected_node(X, __FILE__, __LINE__))
-
-  static inline
-  void report_error(std::string desc)
-  {
-    throw std::logic_error(desc);
-  }
-
-  static inline
-  void report_error_if(bool iserror, std::string desc)
-  {
-    if (!iserror) return;
-
-    report_error(desc);
-  }
-
-#if !defined(NDEBUG)
   /// converts object of type E to T via string conversion
   template <class T, class E>
   static inline
   T conv(const E& el)
   {
-    std::stringstream s;
     T                 res;
+#if !defined(NDEBUG)
+    std::stringstream s;
 
     s << el;
     s >> res;
+#endif /* NDEBUG */
     return res;
   }
-#endif
 
   static inline
-  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  void report_error(std::string desc, const char* file = 0, size_t ln = 0)
   {
-    sg::unused(n), sg::unused(file), sg::unused(ln);
-
-    std::string msg = "unexpected node-type: ";
-
-#if !defined(NDEBUG)
-    msg = msg + typeid(n).name();
-
     if (file)
     {
       const std::string at(" at ");
       const std::string sep(" : ");
       const std::string num(conv<std::string>(ln));
 
-      msg = msg + at + file + sep + num;
+      desc = desc + at + file + sep + num;
     }
 
-    std::cerr << msg << std::endl;
-#endif
+    std::cerr << desc << std::endl;
+    throw std::logic_error(desc);
+  }
 
-    report_error(msg);
+  static inline
+  void report_error_if(bool iserror, const std::string& desc, const char* file = 0, size_t ln = 0)
+  {
+    if (!iserror) return;
+
+    report_error(desc, file, ln);
+  }
+
+/// \brief  dereferences an object (= checked dereference in debug mode)
+  template <class T>
+  T& deref(T* ptr, const char* file = 0, size_t ln = 0)
+  {
+    report_error_if(!ptr, "null dereference ", file, ln);
+    return *ptr;
+  }
+
+  static inline
+  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  {
+    static const std::string msg = "unexpected node-type: ";
+
+    report_error(msg + typeid(n).name(), file, ln);
   }
 
   //
@@ -1073,7 +1067,6 @@ namespace sg
     size_t      loc_ln;
   };
 
-#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 
 /// \brief   asserts that n has type SageNode
 /// \details the ROSE assert in the following example holds b/c assert_sage_type
@@ -1094,6 +1087,27 @@ namespace sg
   {
     return sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), n);
   }
+
+/// \brief   asserts that n has type SageNode
+/// \details the ROSE assert in the following example holds b/c assert_sage_type
+///          aborts if the input node is not a SgStatement
+/// \code
+///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
+///   ROSE_ASSERT(stmt);
+/// \endcode
+  template <class SageNode>
+  SageNode& assert_sage_type(SgNode& n, const char* f = 0, size_t ln = 0)
+  {
+    return *sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), &n);
+  }
+
+/// \overload
+  template <class SageNode>
+  const SageNode& assert_sage_type(const SgNode& n, const char* f = 0, size_t ln = 0)
+  {
+    return *sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), &n);
+  }
+
 
 /// \brief swaps the parent pointer of two nodes
 /// \note  internal use
