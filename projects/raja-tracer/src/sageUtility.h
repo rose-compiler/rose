@@ -133,6 +133,15 @@ namespace {
   {
     if (!success) throw ErrorClass(a + b + c);
   }
+
+  static inline
+  SgType& skipTypeModifier(SgType& t)
+  {
+    SgModifierType* modty = isSgModifierType(&t);
+    if (!modty) return t;
+
+    return skipTypeModifier(SG_DEREF(modty->get_base_type()));
+  }
 } // anonymous namespace
 } // namespace SageUtil
 #endif
