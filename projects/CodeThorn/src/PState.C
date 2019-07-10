@@ -59,6 +59,11 @@ std::set<std::string> PState::getDotNodeIdStrings(std::string prefix) const {
   std::set<std::string> nodeIds;
   for(PState::const_iterator j=begin();j!=end();++j) {
     nodeIds.insert(dotNodeIdString(prefix,(*j).first));
+    if((*j).first.isPtr()) {
+      // need to insert also target if pointer value. Using set ensures no duplicates for shared targets.
+      if((*j).second.isPtr())
+        nodeIds.insert(dotNodeIdString(prefix,(*j).second)); 
+    }
   }
   return nodeIds;
 }
@@ -78,11 +83,12 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
     if(v2.isPtr()) {
       // nodes
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\";"<<endl; // target label intentionally not generated
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      //endl; // target label intentionally not generated
       // edge
       ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
       ss<<"->";
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\"";
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
       ss<<";"<<endl;
     } else {
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;

@@ -2064,7 +2064,7 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
 }
 
 bool CodeThorn::Analyzer::isFeasiblePathContext(CallString& cs,Label lab) {
-  return cs.isLastLabel(lab);
+  return cs.getLength()==0||cs.isLastLabel(lab);
 }
 
 std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, const EState* estate) {
@@ -2092,6 +2092,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
           //exit(1);
         }
         // definitely not feasible path, do not return a state
+        SAWYER_MESG(logger[TRACE])<<"definitly on non-feasable path at label (no next state)"<<functionCallLabel.toString()<<endl;
         std::list<EState> emptyList;
         return emptyList;
       }
