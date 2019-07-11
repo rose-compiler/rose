@@ -511,9 +511,11 @@ rose_fortran_LDADD        = $(ROSEBIN_LDADD)
 ########################################################################################################################
 # Test that a simple ROSE program can run, and as a side effect, print some version numbers.
 
-check-local: $(bin_PROGRAMS)
+check-boost:
 	@echo "  TEST     boost shared linkage [rose-compiler]"
 	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/rose-compiler >&2
+
+check-dynload:
 	@echo "  TEST     whether a trivial ROSE program runs [rose-compiler]"
 	${AM_V_at}if ! ./rose-compiler --version; then                                           \
 	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2; \
@@ -521,9 +523,13 @@ check-local: $(bin_PROGRAMS)
 	  echo "error: correct libraries (JVM, Boost, librose.so, etc.)" >&2;                    \
 	  exit 1;                                                                                \
 	fi
+
+check-config:
 	@echo "  TEST     ROSE configuration tool [rose-config]"
 	./rose-config --version
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+check-hello-c:
 	@echo "  TEST     ROSE C compiler [rose-cc]"
 	${AM_V_at}echo "#include <stdio.h>"                     >  hello-world.c
 	${AM_V_at}echo "int main() {"                           >> hello-world.c
@@ -532,6 +538,9 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	${AM_V_at}echo "}"                                      >> hello-world.c
 	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-hello-cxx:
 	@echo "  TEST     ROSE C++ compiler [rose-c++]"
 	${AM_V_at}echo "#include <iostream>"                                      >  hello-world.cpp
 	${AM_V_at}echo "int main() {"                                             >> hello-world.cpp
@@ -542,12 +551,27 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	${AM_V_at}./hello-world-cpp
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-hello-fortran:
 	@echo "  TEST     ROSE Fortran compiler [rose-fortran]"
 	${AM_V_at}echo "program hello"                            >  hello-world.f90
 	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
 	${AM_V_at}echo "end program hello"                        >> hello-world.f90
 	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
 	${AM_V_at}./hello-world-f90
+endif
+
+check-local: $(bin_PROGRAMS)
+	${AM_V_at}$(MAKE) check-boost
+	${AM_V_at}$(MAKE) check-dynload
+	${AM_V_at}$(MAKE) check-config
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-cxx
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-fortran
 endif
 
 ########################################################################################################################
