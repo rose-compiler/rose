@@ -66,6 +66,7 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
 
 
 JOVIAL_TESTCODES_WORKING_ON = \
+ rose-issue-2104.cpl                    \
  tiny.jov                               \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
