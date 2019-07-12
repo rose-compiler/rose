@@ -24,19 +24,25 @@ namespace
   struct TraversalBase
   {
     static
-    void _descend(SgNode& n, Derived& self)
-    {
-      self = sg::traverseChildren(self, n);
-    }
+    void _descend(SgNode& n, Derived&& self);
 
-    void descend(SgNode& n) { _descend(n, static_cast<Derived&>(*this)); }
+    void descend(SgNode& n) { _descend(n, std::move(static_cast<Derived&>(*this))); }
   };
 
-  bool setFunctionIf(bool cond, SgFunctionDeclaration& n, SgFunctionDeclaration*& f)
+
+  template <class Derived>
+  void TraversalBase<Derived>::_descend(SgNode& n, Derived&& self)
+  {
+    self = std::move(sg::traverseChildren(std::move(self), n));
+  }
+
+  template <class SageDecl>
+  bool setKeyDeclIf(bool cond, SageDecl& dcl, SageDecl*& var)
   {
     if (!cond) return false;
 
-    f = &su::keyDecl(n);
+    var = &su::keyDecl(dcl);
+    ROSE_ASSERT(var);
     return true;
   }
 
@@ -134,17 +140,8 @@ namespace
       AnyTransform& operator=(AnyTransform&& other) = default;
 
       // copy ctor + assignment
-      AnyTransform(const AnyTransform& other)
-      : tf(other.tf ? other.tf->clone() : nullptr)
-      {}
-
-      AnyTransform& operator=(const AnyTransform& other)
-      {
-        AnyTransform tmp(other);
-
-        swap(this->tf, tmp.tf);
-        return *this;
-      }
+      AnyTransform(const AnyTransform& other) = delete;
+      AnyTransform& operator=(const AnyTransform& other) = delete;
 
       // dtor
       ~AnyTransform() = default;
@@ -154,6 +151,18 @@ namespace
 
       std::unique_ptr<BaseTransform> tf;
     };
+
+    template <class U, class V>
+    bool equals(U, V)
+    {
+      return false;
+    }
+
+    template <class U>
+    bool equals(U lhs, U rhs)
+    {
+      return lhs == rhs;
+    }
 
     template <class SageNode, class Accessor>
     struct Wrapper
@@ -166,11 +175,12 @@ namespace
       void execute() const
       {
         SgExpression&  oldexp = accessor(astnode);
-        SgExpression&  newexp = sg::deref(si::deepCopy(&oldexp));
+        const bool     useold = &oldexp == &astnode;
+        SgExpression&  newexp = sg::deref( useold ? &oldexp : si::deepCopy(&oldexp) );
         SgExprListExp& args   = sg::deref(sb::buildExprListExp(&newexp));
         SgExpression&  wrpexp = sg::deref(sb::buildFunctionCallExp(&wrapperfn, &args));
 
-        si::replaceExpression( &oldexp, &wrpexp );
+        si::replaceExpression( &oldexp, &wrpexp, useold );
       }
 
       SageNode&     astnode;
@@ -228,33 +238,27 @@ namespace
         replmap(), replacements()
       {}
 
+      Explorer(Explorer&&) = default;
+      Explorer& operator=(Explorer&&) = default;
+
+      Explorer(const Explorer&) = delete;
+      Explorer& operator=(const Explorer&) = delete;
+
+      //
+      // auxiliary functions
       bool descendTrue(SgNode& n) { descend(n); return true; }
-
-      void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
-
-      // support nodes
-      void handle(SgProject& n)             { descend(n); }
-      void handle(SgFileList& n)            { descend(n); }
-      void handle(SgSourceFile& n)          { descend(n); }
-      void handle(SgInitializedName& n)     { descend(n); }
-      void handle(SgFunctionParameterList&) { /* skip; */ }
-
-      void handle(SgStatement& n)           { descend(n); }
-      //~ void handle(SgExpression& n)          { descend(n); }
-      void handle(SgLambdaCapture& n)       { descend(n); }
-      void handle(SgLambdaCaptureList& n)   { descend(n); }
 
       // picks
       bool tracerFunction(SgFunctionDeclaration& n)
       {
-        SgName funname = n.get_name();
+        SgName name = n.get_name();
 
         return matchFirstOf
-               || setFunctionIf(funname == "traceR",              n, trRead)
-               || setFunctionIf(funname == "traceW",              n, trWrite)
-               || setFunctionIf(funname == "traceRW",             n, trReadWrite)
-               || setFunctionIf(funname == "tracerMallocManaged", n, trCudaMallocManaged)
-               || setFunctionIf(funname == "malloc",              n, trMalloc)
+               || setKeyDeclIf(name == "traceR",              n, trRead)
+               || setKeyDeclIf(name == "traceW",              n, trWrite)
+               || setKeyDeclIf(name == "traceRW",             n, trReadWrite)
+               || setKeyDeclIf(name == "tracerMallocManaged", n, trCudaMallocManaged)
+               || setKeyDeclIf(name == "malloc",              n, trMalloc)
                ;
       }
 
@@ -268,6 +272,9 @@ namespace
       template <class Action>
       void record(const Action& action)
       {
+        if ((replacements.size() % 1024) == 0)
+          std::cerr << replacements.size() << std::endl;
+
         replacements.emplace_back(action);
       }
 
@@ -281,6 +288,25 @@ namespace
                ;
       }
 
+      void handleExpr(SgExpression& n);
+      void instrumentExpr(SgExpression& n);
+      bool skipExpr(SgExpression& n);
+
+      //
+      // handlers over AST
+
+      void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+
+      // support nodes
+      void handle(SgProject& n)              { descend(n); }
+      void handle(SgFileList& n)             { descend(n); }
+      void handle(SgSourceFile& n)           { descend(n); }
+      void handle(SgInitializedName& n)      { descend(n); }
+
+      void handle(SgFunctionParameterList&)  { /* skip; */ }
+
+      void handle(SgStatement& n)            { descend(n); }
+
       void handle(SgFunctionDeclaration& n)
       {
         matchFirstOf
@@ -291,8 +317,36 @@ namespace
         ;
       }
 
+      void handle(SgLambdaCapture& n)        { descend(n); }
+      void handle(SgLambdaCaptureList& n)    { descend(n); }
+      void handle(SgCudaKernelExecConfig& n) { descend(n); }
+
+      void handle(SgExpression& n)           { handleExpr(n); }
+      void handle(SgExprListExp& n)          { descend(n); }
+
+      void handle(SgConstructorInitializer& n)
+      {
+        SgMemberFunctionDeclaration* dcl = n.get_declaration();
+
+        // if (dcl) std::cerr << dcl->unparseToString() << std::endl;
+        if (!dcl || !dcl->get_type()) return;
+
+        descend(n);
+      }
+
+      void handle(SgArrowExp& n)
+      {
+        if (skipExpr(n)) return;
+
+        descend(instrument::lhs(n));
+
+        instrumentExpr(n);
+      }
+
       void handle(SgFunctionRefExp& n)
       {
+        if (skipExpr(n)) return;
+
         SgFunctionDeclaration*           fundecl = n.getAssociatedFunctionDeclaration();
         if (!fundecl) return;
 
@@ -305,37 +359,13 @@ namespace
         record( instrument::repl(n, sg::deref(sb::buildFunctionRefExp(pos->second))) );
       }
 
-      void instrumentRead(SgExpression& n)
-      {
-        if (n.isUsedAsLValue()) return;
-
-        ROSE_ASSERT(trRead);
-        record( instrument::wrap(n, sg::deref(sb::buildFunctionRefExp(trRead))) );
-      }
-/*
-      void handle(SgPointerDerefExp& n)
-      {
-        descend(n);
-
-        instrumentRead(n);
-      }
-
-      void handle(SgPntrArrRefExp& n)
-      {
-        descend(n);
-
-        instrumentRead(n);
-      }
-      void handle(SgInitializer& n)
-      {
-        std::cerr << typeid(n).name() << std::endl;
-        descend(n);
-      }
-*/
-
       void handle(SgAssignInitializer& n)
       {
-        descend(n);
+        if (skipExpr(n)) return;
+
+        // skip traversal of operand (mixed up lvalue handling)
+        ROSE_ASSERT(!isSgCudaKernelExecConfig(&instrument::operand(n)));
+        descend(instrument::operand(n));
 
         // instrument read operations:
         //   => all non-temporary values (l-values)
@@ -348,24 +378,36 @@ namespace
 
       void handle(SgVarRefExp& n)
       {
+        if (skipExpr(n)) return;
+
+        // skip over values
+        // \todo restrict to local variables
         if (!si::isReferenceType(&su::skipTypeModifier(sg::deref(n.get_type())))) return;
 
-        handle(static_cast<SgExpression&>(n));
+        handleExpr(n);
       }
 
-      void handle(SgExpression& n)
+      void handle(SgFunctionCallExp& n)
       {
-        descend(n);
+        if (skipExpr(n)) return;
 
-        // instrument read operations:
-        //   => all non-temporary values (l-values)
-        //      that are not used in a write context.
-        if (!n.isLValue() || n.isUsedAsLValue()) return;
+        // skip any calls to templates
+        //   lvalues for arguments cannot be resolved properly.
+        if (isSgNonrealRefExp(n.get_function())) return;
 
-        ROSE_ASSERT(trRead);
-        record( instrument::wrap(n, sg::deref(sb::buildFunctionRefExp(trRead))) );
+        // Only reference types can be Lvalues, so we can skip other calls
+        SgType& ty = su::skipTypeModifier(sg::deref(n.get_type()));
+
+        if (!si::isReferenceType(&ty))
+        {
+          descend(n);
+          return;
+        }
+
+        handleExpr(n);
       }
 
+/*
       void handle(SgAssignOp& n)
       {
         descend(n);
@@ -373,12 +415,24 @@ namespace
         ROSE_ASSERT(trWrite);
         record( instrument::wrap(n, instrument::lhs, sg::deref(sb::buildFunctionRefExp(trWrite))) );
       }
+*/
 
       void executeInstrumentation()
       {
+        size_t i = 0;
+
         for (instrument::AnyTransform& t : replacements)
+        {
           t.execute();
+
+          if ((i % 32) == 0)
+            std::cout << i << std::endl;
+
+          ++i;
+        }
       }
+
+      size_t numTransforms() const { return replacements.size(); }
 
     private:
       SgFunctionDeclaration* trRead;
@@ -394,6 +448,42 @@ namespace
       static constexpr bool matchFirstOf = /* do not change */ false;
   };
 
+  void Explorer::handleExpr(SgExpression& n)
+  {
+    // skip anything inside a template that does not have
+    //   a proper type.
+    if (skipExpr(n)) return;
+
+    descend(n);
+
+    instrumentExpr(n);
+  }
+
+  bool Explorer::skipExpr(SgExpression& n)
+  {
+    return isSgTypeUnknown(n.get_type());
+  }
+
+  void Explorer::instrumentExpr(SgExpression& n)
+  {
+    // instrument read operations:
+    //   => all non-temporary values (l-values)
+    //      that are not used in a write context.
+    if (!n.isLValue() || !isSgExpression(n.get_parent())) return;
+
+    if (!isSgExprListExp(n.get_parent()) && n.isUsedAsLValue())
+    {
+      ROSE_ASSERT(trWrite);
+      record( instrument::wrap(n, sg::deref(sb::buildFunctionRefExp(trWrite))) );
+    }
+    else
+    {
+      ROSE_ASSERT(trRead);
+      record( instrument::wrap(n, sg::deref(sb::buildFunctionRefExp(trRead))) );
+    }
+  }
+
+
 
   struct Raja : Rose::PluginAction
   {
@@ -401,9 +491,14 @@ namespace
     // Do actual work after ParseArgs();
     void process (SgProject* n) ROSE_OVERRIDE
     {
+      std::cerr << "RT traverses" << std::endl;
       Explorer expl = sg::traverseChildren(Explorer(), sg::deref(n));
+      std::cout << expl.numTransforms() << std::endl;
 
+      std::cerr << "RT transforms" << std::endl;
       expl.executeInstrumentation();
+
+      std::cerr << "RT done" << std::endl;
     } // end process()
   };
 }
