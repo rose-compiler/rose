@@ -1663,7 +1663,7 @@ context-free syntax
     RelationalFormula         -> RelationalExpression   {cons("RelationalExpression")}
 
   GeneralFormula              -> RelationalFormula
-  NumericFormula              -> RelationalFormula
+  NumericFormula              -> RelationalFormula      {prefer}
 
 %%FloatingFormula
 %%  RelationalOperator
