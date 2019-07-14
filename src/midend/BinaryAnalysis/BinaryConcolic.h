@@ -396,9 +396,10 @@ public:
     /** Base class for user-defined Linux concrete execution results. */
     class Result: public ConcreteExecutor::Result {
     protected:
-        int         exitStatus_;  /**< Exit status as returned by waitpid[2]. */
-        std::string capturedOut;   /**< Output written to STDOUT */
-        std::string capturedErr;   /**< Output written to STDERR */
+        int         exitStatus_;   /**< Exit status as returned by waitpid[2]. */
+        std::string exitKind_;     /**< Textual representation how the Result exited */
+        std::string capturedOut_;  /**< Output written to STDOUT */
+        std::string capturedErr_;  /**< Output written to STDERR */
 
     private:
         friend class boost::serialization::access;
@@ -412,8 +413,9 @@ public:
                                                 boost::serialization::base_object<ConcreteExecutor::Result>(*this)
                                               );
             s & BOOST_SERIALIZATION_NVP(exitStatus_);
-            s & BOOST_SERIALIZATION_NVP(capturedOut);
-            s & BOOST_SERIALIZATION_NVP(capturedErr);
+            s & BOOST_SERIALIZATION_NVP(exitKind_);
+            s & BOOST_SERIALIZATION_NVP(capturedOut_);
+            s & BOOST_SERIALIZATION_NVP(capturedErr_);
         }
 
     public:
@@ -430,18 +432,24 @@ public:
          *
          * @{ */
         int exitStatus() const { return exitStatus_; }
-        void exitStatus(int x) { exitStatus_ = x; }
+        void exitStatus(int x);
         /** @} */
 
         /** Property: Output to STDOUT and STDERR of the executable
          *
          * @{ */
-        std::string out() const             { return capturedOut; }
-        void out(const std::string& output) { capturedOut = output; }
+        std::string out() const             { return capturedOut_; }
+        void out(const std::string& output) { capturedOut_ = output; }
 
-        std::string err() const             { return capturedErr; }
-        void err(const std::string& output) { capturedErr = output; }
+        std::string err() const             { return capturedErr_; }
+        void err(const std::string& output) { capturedErr_ = output; }
         /** @} */
+
+        /** returns a textual description of how the test exited. */
+        /* @{ */
+        std::string exitKind() const                 { return exitKind_; }
+        void exitKind(const std::string& desc) const { exitKind_ = desc; }
+        /* @} */
     };
 
 protected:
@@ -463,8 +471,6 @@ public:
      *  better to turn off randomization for repeatable results, and it is therefore off by default.
      *
      * @{ */
-    // TO BE REMOVED BY PETER: When you "exec" the specimen, you'll need to use setarch -R to turn off ASLR. There's probably
-    // an equivalent C library function, but I don't know what it is.
     bool useAddressRandomization() const { return useAddressRandomization_; }
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
