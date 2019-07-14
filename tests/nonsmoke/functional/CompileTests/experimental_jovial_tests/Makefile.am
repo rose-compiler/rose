@@ -39,7 +39,6 @@ COMPOOL_TESTCODES = \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl
 
-
 # should finish formulas next
 #
 JOVIAL_TESTCODES_PASS_TRAVERSE = \
@@ -67,6 +66,7 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
 
 JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2104.cpl                    \
+ rose-issue-2105.jov                    \
  tiny.jov                               \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
