@@ -226,6 +226,7 @@ CaseSelectorFormula
 ElseClause
 OptElseClause
 ConditionalStatement
+RelationalFormula     %% nonstandard
 NumericFormula OptNumericFormula
 NumericFunctionCall
 NamedNumericConstant
@@ -1654,13 +1655,15 @@ context-free syntax
 
 %% 5.2.1 RELATIONAL EXPRESSIONS
 %%
-  NumericFormula
-    RelationalOperator
-    NumericFormula            -> RelationalExpression   {cons("RelationalExpression"), prefer}
 
-  GeneralFormula
+%% Nonstandard handling to remove ambiguities
+%%
+  RelationalFormula
     RelationalOperator
-    GeneralFormula            -> RelationalExpression   {cons("RelationalExpression")}
+    RelationalFormula         -> RelationalExpression   {cons("RelationalExpression")}
+
+  GeneralFormula              -> RelationalFormula
+  NumericFormula              -> RelationalFormula      {prefer}
 
 %%FloatingFormula
 %%  RelationalOperator
