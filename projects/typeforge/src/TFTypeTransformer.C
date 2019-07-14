@@ -4,7 +4,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "CppStdUtilities.h"
-#include "TFToolConfig.h"
+#include "ToolConfig.hpp"
 #include "TFHandles.h"
 using namespace std;
 
@@ -118,8 +118,7 @@ int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
 }
 
 int FileTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
-  if(fileName == "") return 0;//tt->writeConfig();
-  else tt->setConfigFile(fileName);
+  ToolConfig::input_file = fileName;
   return 0;  
 }
 
@@ -134,12 +133,12 @@ int Transformer::transform(){
     SgNode* node     = i->first;
     string  location = get<0>(i->second);
     SgType* type     = get<1>(i->second);
-    if(SgInitializedName* initName = isSgInitializedName(node)){
+    if (SgInitializedName* initName = isSgInitializedName(node)) {
       TFTypeTransformer::trace("Execution: Changing variable type @"+location+" to type "+type->unparseToString());
 
       initName->set_type(type);
 
-    } else if(SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)){
+    } else if (SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)) {
       TFTypeTransformer::trace("Execution: Changing return type @"+location+" to type "+type->unparseToString());
 
       SgFunctionType * old_ftype = funDecl->get_type();
@@ -147,7 +146,7 @@ int Transformer::transform(){
       SgFunctionType * new_ftype = SageBuilder::buildFunctionType(type, old_ftype->get_argument_list());
       funDecl->set_type(new_ftype);
 
-    } else if(SgCastExp* cast = isSgCastExp(node)){
+    } else if (SgCastExp* cast = isSgCastExp(node)) {
 //    TFTypeTransformer::trace("Execution: Changing cast type @"+location+" to type "+type->unparseToString());
 
       SgExprListExp * exprlist = isSgExprListExp(cast->get_parent());
@@ -217,15 +216,6 @@ int Transformer::addTransformation(string key, SgType* newType, SgNode* node){
   }
 }
 
-//Mangae config file if user specifies
-void TFTypeTransformer::setConfigFile(string fileName){
-  TFToolConfig::open(fileName);
-}
-
-void TFTypeTransformer::writeConfig(){
-  TFToolConfig::write();
-}
-
 //Changes mode to modify sets
 bool TFTypeTransformer::changeSetFlag(bool value){
   bool temp = _setFlag;
@@ -249,7 +239,7 @@ set<SgNode*>* TFTypeTransformer::getSet(SgNode* node, SgType* type){
       }
       project = isSgProject(parent);
     }
-    sets->variableSetAnalysis(project, type, true);
+    sets->variableSetAnalysis(project, type);
     typeSets[type] = sets;
   }
   return typeSets[type]->getSet(node);
@@ -260,32 +250,24 @@ void TFTypeTransformer::writeSets(SgProject* project, SgType* type, string toTyp
   type = type->stripType();
   if(typeSets.count(type) == 0){
     Analysis* sets = new Analysis();
-    sets->variableSetAnalysis(project, type, true);
+    sets->variableSetAnalysis(project, type);
     typeSets[type] = sets;
   }
   typeSets[type]->writeAnalysis(type, toTypeString);
 }
 
-//Returns the name of the file the specified node is part of
-string getNodeFileName(SgNode* node){
-  SgNode* currentNode = node;
-  SgSourceFile* file = nullptr;
-  while(file == nullptr && currentNode != nullptr){
-    file = isSgSourceFile(currentNode);
-    currentNode = currentNode->get_parent();
-  }
-  if(currentNode == nullptr) return "";
-  else return file->getFileName();
-}
-
 //Adds an entry in the config file
-void TFTypeTransformer::addToActionList(string varName, string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
+void TFTypeTransformer::addToActionList(string varName, SgNode * scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base){
+
   if(!fromType || !toType || !handleNode) return;
+
   if(varName == "") return;
-  string handle = TFHandles::getAbstractHandle(handleNode);
-  if(handle == "") return;
-  if(base) TFToolConfig::addChangeVarBaseType(handle, varName, scope, getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
-  else TFToolConfig::addChangeVarType(handle, varName, scope, getNodeFileName(handleNode), fromType->unparseToString(), toType->unparseToString()); 
+
+  if(base) {
+    ToolConfig::getGlobal()->addAction(handleNode, "change_var_basetype", varName, scope, fromType, toType); 
+  } else {
+    ToolConfig::getGlobal()->addAction(handleNode, "change_var_type",     varName, scope, fromType, toType);
+  }
 }
 
 void TFTypeTransformer::transformCommandLineFiles(SgProject* project) {
@@ -507,16 +489,16 @@ int TFTypeTransformer::changeType(SgInitializedName* varInitName, SgType* newTyp
   }else{
     baseType = newType;
   }
-  string scopeName = "global";
-  if(funDecl){
-    scopeName = funDecl->get_name();
-    scopeName = "function:<" + scopeName + ">";
-  }
   if(listing){
-    addToActionList(varName, scopeName, oldType, newType, handleNode, base);
+    addToActionList(varName, funDecl, oldType, newType, handleNode, base);
     return 0; 
   } 
   else{
+    string scopeName = "global";
+    if(funDecl){
+      scopeName = funDecl->get_name();
+      scopeName = "function:<" + scopeName + ">";
+    }
     TFTypeTransformer::trace("Analysis: Found declaration of variable "+varName+" in "+scopeName+".");// Change type to "+baseType->unparseToString());
     _transformer.addTransformation(scopeName+":"+varName,baseType,varInitName);
     if(_setFlag == true) return 1 + changeSet(handleNode, varInitName->get_type(), newType, base, listing);
@@ -682,7 +664,6 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
           replaceType = rebuildBaseType(funRetType, newType);
         }
         string funName = SgNodeHelper::getFunctionName(funDecl);
-
 #if DEBUG__TFTypeTransformer_changeVariableType
         std::cout << "   * funDecl      = " << funDecl << std::endl;
         std::cout << "       ->NAME()   = " << funName << std::endl;
@@ -691,7 +672,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
 #endif
 
         if(listing) {
-          addToActionList("$return", funName, fromType, replaceType, funDecl, base);
+          addToActionList("$return", funDecl, fromType, replaceType, funDecl, base);
         } else {
           TFTypeTransformer::trace("Analysis: Found return type "+((funName=="")? "" : "in "+funName)+".");
           int cnt=_transformer.addTransformation(funName+":$return",replaceType,funDecl);
