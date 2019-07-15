@@ -44,11 +44,6 @@
 
 #include <vector>
 
-// DQ (12/29/2011): These are now defined automatically in the configuration when EDG 4.3 is used.
-// DQ (12/22/2011): This is part of the new desgin for template declarations, namely that they are derived
-// from their associated declarations (e.g. SgTemplateClassDeclaration is derived from SgClassDeclaration).
-// #define TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS 1
-
 // using namespace std;
 
 // Switch to control whether CxxGrammarMetaProgram is noisy on standard output.

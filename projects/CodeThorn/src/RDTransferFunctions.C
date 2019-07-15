@@ -183,3 +183,9 @@ void RDTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, 
   VariableId resVarId=getResultVariableId();
   element.insertPair(lab,resVarId);
 }
+
+void RDTransferFunctions::initializeExtremalValue(Lattice& element) {
+  RDLattice* rdElement=dynamic_cast<RDLattice*>(&element);
+  rdElement->setEmptySet();
+  cout<<"INFO: initialized extremal value."<<endl;
+}

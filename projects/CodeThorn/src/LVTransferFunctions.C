@@ -140,3 +140,11 @@ void CodeThorn::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionD
   VariableId resVarId=getResultVariableId();
   element.removeVariableId(resVarId);
 }
+
+void CodeThorn::LVTransferFunctions::initializeExtremalValue(Lattice& element) {
+  LVLattice* lvElement=dynamic_cast<LVLattice*>(&element);
+  ROSE_ASSERT(lvElement);
+  lvElement->setEmptySet();
+  cout<<"INFO: initialized extremal value."<<endl;
+}
+

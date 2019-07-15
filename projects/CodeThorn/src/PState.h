@@ -9,6 +9,7 @@
 #include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
+#include "Lattice.h"
 
 typedef int PStateId;
 
@@ -53,7 +54,9 @@ namespace CodeThorn {
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    AbstractValueSet getVariableIds() const;
+    string toDotString(std::string prefix, CodeThorn::VariableIdMapping* variableIdMapping) const;
+    std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
+    std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     void writeTopToAllMemoryLocations();
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);
@@ -65,6 +68,9 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
+    bool isApproximatedBy(CodeThorn::PState& other) const;
+    static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
+    AbstractValueSet getVariableIds() const;
   private:
   };
   

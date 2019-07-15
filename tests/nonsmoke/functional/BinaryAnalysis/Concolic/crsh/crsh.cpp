@@ -1,7 +1,12 @@
 #include <vector>
 #include <iostream>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
+
+#if defined(__linux__)
+  #include <unistd.h>
+#endif
 
 #include "crsh.hpp"
 
@@ -9,6 +14,8 @@
 #include "BinaryConcolic.h"
 
 #include "crsh-parse.hpp"
+
+#include "../configDB.h"
 
 
 //
@@ -27,17 +34,60 @@ extern char* yytext;
 extern int yylex (void);
 extern int yyparse(void);
 
+namespace bstfs = boost::filesystem;
+
+// stealing from LinuxExecutor.C
+namespace Rose { namespace BinaryAnalysis { namespace Concolic {
+  int executeBinary( const std::string& binary,
+                     const std::string& logout,
+                     const std::string& logerr,
+                     LinuxExecutor::Persona persona,
+                     std::vector<std::string> args,
+                     std::vector<std::string> envv
+                   );
+}}}
+
+//
+// InvocationDesc
+
+//! InvocationDesc is opaque for other translation units
+
+struct InvocationDesc
+{
+  std::string specimen;
+  Arguments   arguments;
+
+  InvocationDesc(const std::string& sp, const Arguments& args)
+  : specimen(sp), arguments(args)
+  {}
+};
+
 //
 // auxiliary functions
+
+std::string str(Crsh::expectation expct)
+{
+  std::string res;
+
+  switch (expct)
+  {
+    case Crsh::none:    res = "none";    break;
+    case Crsh::success: res = "success"; break;
+    case Crsh::failure: res = "failure"; break;
+    default: ROSE_ASSERT(false);
+  }
+
+  return res;
+}
 
 std::ostream& operator<<(std::ostream& os, Crsh::TestCase& test)
 {
   std::vector<std::string> args(test.args());
 
-  os << test.name() << ":" << test.specimen()->name() << " ";
+  os << test.name() << ": " << test.specimen()->name();
 
   for (size_t i = 0; i < args.size(); ++i)
-    os << args.at(i);
+    os << ' ' << args.at(i);
 
   return os;
 }
@@ -65,9 +115,15 @@ std::string conv(const char* str)
 template <class T>
 static
 typename T::Ptr
-byName(Crsh::Database::Ptr& db, const std::string& s, Rose::BinaryAnalysis::Concolic::ObjectId<T> id)
+byName( Crsh::Database::Ptr& db,
+        const std::string& s,
+        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
+        bool createMissingEntry = true
+      )
 {
   if (id) return db->object(id);
+
+  if (!createMissingEntry) return typename T::Ptr();
 
   // if not in the database already, create it from a file
   typename T::Ptr obj = T::instance(s);
@@ -88,35 +144,148 @@ std::list<T>* enlist(std::list<T>* lst, const T* el)
   return lst;
 }
 
-
-//! InvocationDesc is opaque for other translation units
-struct InvocationDesc
+bool isExecutable(const bstfs::path& p)
 {
-  std::string specimen;
-  Arguments   arguments;
+#if defined(__linux__)
+  return access(p.c_str(), X_OK) == 0;
+#else
+  throw std::runtime_error("Non-Linux system");
+#endif /* __linux__ */
+}
 
-  InvocationDesc(const std::string& sp, const Arguments& args)
-  : specimen(sp), arguments(args)
-  {}
-};
+void validateExistance(const bstfs::path& p)
+{
+  if (!bstfs::exists(p))
+    std::runtime_error("executable does not exist: " + p.native());
+}
+
+void validateExecutability(const bstfs::path& p)
+{
+  if (!isExecutable(p))
+    std::runtime_error("cannot execute file: " + p.native());
+}
+
+
+bstfs::path
+findExecutable(const bstfs::path& exe, std::string searchpath)
+{
+  while (searchpath.size())
+  {
+    const size_t      sep  = searchpath.find_first_of(':');
+    const std::string cand = searchpath.substr(0, sep);
+    const bstfs::path full(cand + "/" + exe.native());
+
+    if (bstfs::exists(full) && isExecutable(full))
+      return full;
+
+    const size_t      remain = (sep == std::string::npos) ? searchpath.size()
+                                                          : sep+1
+                                                          ;
+
+    searchpath = searchpath.substr(remain);
+  }
+
+  // throw std::runtime_error("executable not found in path: " + exe.native());
+  return exe;
+}
+
+
+bstfs::path
+findExecutable(bstfs::path p)
+{
+  // if path is specified
+  if (p.parent_path() != "")
+  {
+    validateExistance(p);
+    validateExecutability(p);
+
+    return p;
+  }
+
+  // finds executable in path
+  return findExecutable(p, getenv("PATH"));
+}
+
+std::string
+findExecutable(const std::string& p)
+{
+  // finds executable in path
+  return findExecutable(p);
+}
+
+#if defined(__linux__)
+extern char **environ; /**< link to my environment. */
+#endif
+
+std::vector<std::string>
+currentEnvironment()
+{
+  std::vector<std::string> res;
+
+#if defined(__linux__)
+  char** envvar = environ;
+
+  while (*envvar)
+  {
+    res.push_back(*envvar);
+
+    ++envvar;
+  }
+#endif
+
+  return res;
+}
+
 
 //
 // Crsh implementation
 
-void Crsh::disconnect()
+void Crsh::closedb()
 {
   db = Sawyer::Nothing();
 }
 
-void Crsh::connect(const std::string& s)
+void Crsh::connectdb(const char* dburl, expectation exp)
 {
-  db = Database::instance(s);
+  std::string url   = conv(dburl);
+  expectation state = success;
+
+  try
+  {
+    db = Database::instance(url);
+  }
+  catch (...)
+  {
+    state = failure;
+  }
+
+  if ((exp != none) && (exp != state))
+  {
+    err() << "error when connecting to database: " << url << '\n'
+          << "  exited with " << str(state) << ", expected " << str(exp)
+          << std::endl;
+
+    exit(1);
+  }
+}
+
+void Crsh::createdb(const char* dburl)
+{
+  db = Database::create(conv(dburl));
+}
+
+void Crsh::createdb(const char* dburl, const char* testsuite)
+{
+  db = Database::create(conv(dburl), conv(testsuite));
+
+  // for now just clear the testsuite
+  db->testSuite(TestSuite::Ptr());
 }
 
 Crsh::TestSuite::Ptr
-Crsh::testSuite(const std::string& s)
+Crsh::testSuite(const std::string& s, bool createMissingEntry)
 {
-  return byName(db, s, db->testSuite(s));
+  return byName(db, s, db->testSuite(s), createMissingEntry);
 }
 
 Crsh::EnvValue*
@@ -146,6 +315,47 @@ Crsh::arg(const char* argument) const
   return new std::string(tmp);
 }
 
+/*
+void Crsh::echo_var(const char* id)
+{
+  std::string varid = conv(id);
+
+  if ("concolicdb" == varid)
+    Rose::BinaryAnalysis::Concolic::writeDBSchema(out());
+  else if ("concolicsql" == varid)
+    Rose::BinaryAnalysis::Concolic::writeSqlStmts(out());
+  else
+    out() << "unknown variable";
+
+  out() << std::endl;
+}
+*/
+
+Crsh::expectation
+Crsh::annotate(const char* expect)
+{
+  std::string note = conv(expect);
+
+  if ("success" == note) return success;
+  if ("failure" == note) return failure;
+
+  std::cerr << "unexpected note: " << note << std::endl;
+  exit(1);
+}
+
+char* Crsh::unquoteString(const char* str)
+{
+  size_t len   = strlen(str)-1;
+  ROSE_ASSERT(len > 0 && str[0] == '\"' && str[len] == '\"');
+
+  char*  clone = static_cast<char*>(malloc(len));
+  strncpy(clone, str+1, len-1);
+  clone[len-1] = 0;
+
+  free(const_cast<char*>(str));
+  return clone;
+}
+
 Arguments*
 Crsh::args() const
 {
@@ -161,9 +371,11 @@ Crsh::args(Arguments* arglst, const std::string* argument) const
 InvocationDesc*
 Crsh::invoke(const char* specimen, Arguments* args) const
 {
+  std::string              specimenname = conv(specimen);
   std::auto_ptr<Arguments> arguments(args);
 
-  return new InvocationDesc(conv(specimen), *args);
+  specimenname = findExecutable(bstfs::path(specimenname)).native();
+  return new InvocationDesc(specimenname, *args);
 }
 
 template <class T>
@@ -173,20 +385,6 @@ std::vector<T> mkVector(const std::list<T>& lst)
   return std::vector<T>(lst.begin(), lst.end());
 }
 
-std::string str(Crsh::expectation expct)
-{
-  std::string res;
-
-  switch (expct)
-  {
-    case Crsh::none:    res = "none";    break;
-    case Crsh::success: res = "success"; break;
-    case Crsh::failure: res = "failure"; break;
-    default: ROSE_ASSERT(false);
-  }
-
-  return res;
-}
 
 void
 Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, InvocationDesc* inv)
@@ -196,6 +394,7 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
   std::auto_ptr<Environment>    envguard(env);
   std::auto_ptr<InvocationDesc> invguard(inv);
   expectation                   state = success;
+  std::string                   failureMessage;
 
   try
   {
@@ -216,6 +415,10 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
 
     db->assocTestCaseWithTestSuite(id, suite_id);
   }
+  catch (const Rose::BinaryAnalysis::Concolic::Exception &e) {
+    failureMessage = e.what();
+    state = failure;
+  }
   catch (...)
   {
     state = failure;
@@ -226,6 +429,8 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
     err() << "error in test: " << suitename << "::" << testname << '\n'
           << "  exited with " << str(state) << ", expected " << str(exp)
           << std::endl;
+    if (state == failure)
+        err() <<"  failure was: " <<(failureMessage.empty() ? "unknown" : failureMessage) <<"\n";
 
     exit(1);
   }
@@ -242,44 +447,97 @@ Crsh::specimen(const std::string& specimen_name)
 
 /** Runs the testcase @ref testcaseId.
  */
-void Crsh::runTestcase(TestCaseId testcaseId)
+void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
 {
   using namespace Rose::BinaryAnalysis;
 
-  typedef Concolic::ConcreteExecutor::Result ExecutionResult;
-  typedef std::auto_ptr<ExecutionResult>     ExecutionResultGuard;
+  typedef Concolic::LinuxExecutor::Result ExecutionResult;
+  typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
 
+  expectation                state    = failure;
+  int                        processDisposition = 0; // disposition returned by waitpid
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
 
-  ROSE_ASSERT(testcase.getRawPointer());
-  out() << "***> " << *testcase << std::endl;
+  if (testcase.getRawPointer())
+  {
+    ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
 
-  ExecutionResultGuard       result(exec->execute(testcase));
+    processDisposition = result->exitStatus();
+    db->insertConcreteResults(testcase, *result.get());
 
-  db->insertConcreteResults(testcase, *result.get());
+    // exitValue is not the argument to the test's "exit" function, but rather the process disposition returned by
+    // waitpid. Therefore, success should be measured as the test having normal termination with an exit status of zero.
+    if (WIFEXITED(processDisposition) && WEXITSTATUS(processDisposition) == 0)
+        state = success;
+  }
+
+  if ((expct != none) && (expct != state))
+  {
+    err() << "error in runTestcase: " << testcase->name() << '\n'
+          << "  exited with " << str(state) << ", expected " << str(expct) << '\n'
+          << "  process disposition: ";
+    if (WIFEXITED(processDisposition)) {
+        err() <<"exit value " <<WEXITSTATUS(processDisposition) <<"\n";
+    } else if (WIFSIGNALED(processDisposition)) {
+        err() <<"death by signal " <<strsignal(WTERMSIG(processDisposition)) <<"\n";
+    } else if (WIFSTOPPED(processDisposition)) {
+        err() <<"process stopped by " <<strsignal(WSTOPSIG(processDisposition)) <<"\n";
+    } else if (WIFCONTINUED(processDisposition)) {
+        err() <<"process resumed\n";
+    }
+
+    exit(1);
+  }
 }
+
+
+// immediately invokes the described program
+void Crsh::execute(InvocationDesc* invoc)
+{
+  using namespace Rose::BinaryAnalysis;
+
+  typedef Concolic::LinuxExecutor::Persona Persona;
+
+  std::auto_ptr<InvocationDesc> invguard(invoc);
+  const std::string             noredirect;
+  Persona                       nopersona;
+  std::vector<std::string>      args = mkVector(invoc->arguments);
+  std::vector<std::string>      envv = currentEnvironment();
+
+  int ec = Concolic::executeBinary( invoc->specimen,
+                                    noredirect,
+                                    noredirect,
+                                    nopersona,
+                                    args,
+                                    envv
+                                  );
+
+  if (ec) err() << "error: " << invoc->specimen << " exited with " << ec << std::endl;
+}
+
 
 
 /** Functor to run a new testcase.
  */
 struct TestCaseStarter
 {
-  Crsh& crsh;
+    TestCaseStarter(Crsh& crshobj, Crsh::expectation expct)
+    : crsh(crshobj), expect(expct)
+    {}
 
-  explicit
-  TestCaseStarter(Crsh& crshobj)
-  : crsh(crshobj)
-  {}
+    void operator()(Crsh::TestCaseId id)
+    {
+      crsh.runTestcase(id, expect);
+    }
 
-  void operator()(Crsh::TestCaseId id)
-  {
-    crsh.runTestcase(id);
-  }
+  private:
+    Crsh&             crsh;
+    Crsh::expectation expect;
 };
 
 
-void Crsh::run(const char* testsuite, int num)
+void Crsh::runTest(const char* testsuite, int num, expectation expct)
 {
   TestSuite::Ptr suite;
 
@@ -287,14 +545,24 @@ void Crsh::run(const char* testsuite, int num)
 
   if (testsuite != NULL)
   {
-    suite = testSuite(conv(testsuite));
-    ROSE_ASSERT(suite);
+    std::string tsname = conv(testsuite);
+
+    suite = testSuite(tsname, false /* do not create new test suites */);
+
+    if (!suite.getRawPointer())
+    {
+      if (expct == failure) return;
+
+      err() << "unable to find testsuite: " << tsname << '\n'
+            << "  exited with " << str(failure) << ", expected " << str(expct)
+            << std::endl;
+    }
   }
 
   db->testSuite(suite);
   std::vector<TestCaseId> tests = db->needConcreteTesting(num);
 
-  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this));
+  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this, expct));
 }
 
 
@@ -372,6 +640,12 @@ Crsh& crsh()
 
 int main(int argc, char** argv)
 {
+  if (!TEST_CONCOLICDB)
+  {
+    std::cerr << "concolic DB testing is disabled." << std::endl;
+    return 0;
+  }
+
   if (argc == 1)
   {
     readEvalPrint(std::cin);
@@ -381,6 +655,6 @@ int main(int argc, char** argv)
     parse_file(argv[1]);
   }
 
-  crsh().disconnect();
+  crsh().closedb();
   return 0;
 }

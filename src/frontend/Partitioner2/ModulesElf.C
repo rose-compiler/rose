@@ -79,7 +79,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
                     if (rre->get_descriptor()==REG_IP) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue() + insn->get_address() + insn->get_size();
                         nBytesMatched_ = insn->get_size();
-                    } else if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
+                    } else if (rre->get_descriptor().majorNumber()==x86_regclass_gpr) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue();
                         nBytesMatched_ = insn->get_size();
                     }

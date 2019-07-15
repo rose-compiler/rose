@@ -1062,7 +1062,7 @@ BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
-    ASSERT_require(result!=NULL && result->get_width() == reg.get_nbits());
+    ASSERT_require(result!=NULL && result->get_width() == reg.nBits());
     return filterResult(result);
 }
 

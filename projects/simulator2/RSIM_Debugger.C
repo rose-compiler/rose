@@ -356,11 +356,11 @@ public:
             rose_addr_t simRegValue = thread->operators()->readRegister(*reg)->get_number();
             if (gdbRegValue != simRegValue) {
                 out_ <<"*** MISMATCH for \"" <<StringUtility::cEscape(regname) <<"\""
-                     <<" gdb=" <<StringUtility::toHex2(gdbRegValue, reg->get_nbits())
-                     <<" sim=" <<StringUtility::toHex2(simRegValue, reg->get_nbits()) <<"\n";
+                     <<" gdb=" <<StringUtility::toHex2(gdbRegValue, reg->nBits())
+                     <<" sim=" <<StringUtility::toHex2(simRegValue, reg->nBits()) <<"\n";
                 ++nMismatches;
                 if (fix)
-                    thread->operators()->writeRegister(*reg, thread->operators()->number_(reg->get_nbits(), gdbRegValue));
+                    thread->operators()->writeRegister(*reg, thread->operators()->number_(reg->nBits(), gdbRegValue));
             }
         }
         if (0==nMismatches)
@@ -387,7 +387,7 @@ public:
 
             if (cmd.size() > 1) {
                 rose_addr_t n = parseInteger(cmd[1]);
-                BaseSemantics::SValuePtr value = thread->operators()->number_(reg->get_nbits(), n);
+                BaseSemantics::SValuePtr value = thread->operators()->number_(reg->nBits(), n);
                 thread->operators()->writeRegister(*reg, value);
             }
 

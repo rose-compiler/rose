@@ -389,6 +389,9 @@ generateGraphOfIncludeFiles( SgProject* project, std::string filename )
      string dot_header = filename;
      filename += ".dot";
 
+  // DQ (6/15/2019): Output a message so that we can know the DOT file is being output.
+     printf ("In generateGraphOfIncludeFiles(SgProject*): filename = %s \n",filename.c_str());
+
 #if DEBUG_HEADER_GRAPH_SUPPPORT
      printf ("In generateGraphOfIncludeFiles(SgProject*): filename = %s \n",filename.c_str());
 #endif

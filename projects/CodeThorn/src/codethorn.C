@@ -337,12 +337,14 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg1-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize estate-id.")
     ("tg1-estate-properties", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
+    ("tg1-estate-memory-subgraphs", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as memory graphs.")
     ("tg2-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize address.")
     ("tg2-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
     ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations (.dot) outputs.")
+    ("viz-tg2", po::value< bool >()->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
     ;
 
   parallelProgramOptions.add_options()
@@ -399,6 +401,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
+    ("abstraction-mode",po::value< int >()->default_value(false)->implicit_value(true),"Perform abstract model checking.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
 
@@ -579,7 +582,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.5\n";
+    cout << "CodeThorn version 1.10.6\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -954,6 +957,10 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
       cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
+  }
+
+  if(args.count("abstraction-mode")) {
+    analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
   }
 
   if(args.count("max-transitions")) {
@@ -1643,6 +1650,9 @@ int main( int argc, char * argv[] ) {
       } else {
         analyzer->reduceStgToInOutStates();
       }
+      if(args.getBool("inf-paths-only")) {
+        analyzer->pruneLeaves();
+      }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
 
@@ -1988,6 +1998,7 @@ int main( int argc, char * argv[] ) {
     Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
     if(args.getBool("viz")) {
       cout << "generating graphviz files:"<<endl;
+      visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
       string dotFile="digraph G {\n";
       dotFile+=visualizer.transitionGraphToDot();
       dotFile+="}\n";
@@ -2015,6 +2026,11 @@ int main( int argc, char * argv[] ) {
       write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
+    }
+    if(args.getBool("viz-tg2")) {
+      string dotFile3=visualizer.foldedTransitionGraphToDot();
+      write_file("transitiongraph2.dot", dotFile3);
+      cout << "generated transitiongraph2.dot."<<endl;
     }
 
     if (args.count("dot-io-stg")) {

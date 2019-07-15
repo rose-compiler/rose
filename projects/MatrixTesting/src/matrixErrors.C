@@ -221,6 +221,7 @@ updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings, 
                       "|^make: (.*): Command not found"         // GNU make
                       "|^Error:\\n  .*"                         // Tupfile user-defined error
                       "|^run-test: (.*): Result differs from precomputed answer" // Tup testing
+                      "|line [0-9]+:.*/\\.libs/lt-.*: Invalid argument" // intermittent libtool failure
 
                       "|\\merror: ?\n.*"                        // ROSE error on next line
                       //----- regular expressions end -----

@@ -6119,7 +6119,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ROSE_ASSERT(enum_val != NULL);
 
-#if 0
+#define DEBUG_UNPARSE_ENUM_VAL 0
+
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
      printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
      printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
@@ -6165,7 +6167,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // global qualification even if it is not required with normal qualification.  That is that the specification 
                  // of qualification triggers possible (likely) over qualification.  Overqualification is generally the default
                  // this flag is sometime taken to mean that the "::" is required as well.
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
 #endif
                  // cur << "\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " << (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") << " */ \n";
@@ -6179,7 +6181,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // DQ (6/9/2011): Newest refactored support for name qualification.
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("In Unparse_ExprStmt::unparseEnumVal: nameQualifier = %s \n",nameQualifier.str());
 #endif
                  // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
@@ -6190,7 +6192,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          ROSE_ASSERT(nameQualifier.is_null() == true);
                        }
 #endif
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum value's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
 #endif
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
@@ -6207,7 +6209,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                printf ("Warning in Unparser::unparseEnumVal(): no associated enum declaration specificed for enum value = %s \n",enum_val->get_name().str());
              }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
        // printf ("In Unparse_ExprStmt::unparseEnumVal: classdefn = %s pointer \n",classdefn ? "VALID" : "NULL");
           printf ("In Unparse_ExprStmt::unparseEnumVal: enum_val->get_name().is_null() = %s \n",enum_val->get_name().is_null() ? "true" : "false");
 #endif
@@ -6221,7 +6223,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
           SgName enum_value_name = enum_val->get_name();
           SgName substring = enum_value_name.head(strlen("__anonymous_"));
           bool isGeneratedName = (substring == "__anonymous_");
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
           printf ("enum_value_name = %s \n",enum_value_name.str());
           printf ("substring = %s \n",substring.str());
           printf ("isGeneratedName = %s \n",isGeneratedName ? "true" : "false");
@@ -6265,7 +6267,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
              }
         }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
 #endif
 #if 0

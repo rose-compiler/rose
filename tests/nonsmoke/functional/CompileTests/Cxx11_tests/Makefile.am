@@ -22,7 +22,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_11.C \
    test2012_12.C \
    test2012_13.C \
-   test2012_14.C \
    test2012_15.C \
    test2012_16.C \
    test2012_17.C \
@@ -32,7 +31,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_21.C \
    test2012_22.C \
    test2012_25.C \
-   test2012_26.C \
    test2012_27.C \
    test2012_28.C \
    test2012_29.C \
@@ -253,14 +251,11 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2018_90.C \
    test2018_91.C \
    test2018_92.C \
-   test2018_93.C \
    test2018_94.C \
    test2018_95.C \
-   test2018_96.C \
    test2018_97.C \
    test2018_98.C \
    test2018_99.C \
-   test2018_105.C \
    test2018_107.C \
    test2018_108.C \
    test2018_109.C \
@@ -271,36 +266,29 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2018_114.C \
    test2018_115.C \
    test2018_116.C \
-   test2018_117.C \
-   test2018_118.C \
    test2018_119.C \
    test2018_120.C \
    test2018_121.C \
    test2018_124.C \
-   test2018_127.C \
    test2018_130.C \
    test2018_131.C \
    test2018_132.C \
    test2018_133.C \
    test2018_134.C \
    test2018_135.C \
-   test2018_136.C \
    test2018_137.C \
    ctor-list-init.C \
    rose-1379-a.C \
    rose-1379-b.C \
-   rose-1380.C \
    rose-1437-0.C \
    test2017_10.C \
    rose-1522-0.C \
-   rose-1774.C \
    rose-1763.C \
    rose-1863.C \
    rose-1973.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
-   test2019_04.C \
    test2019_05.C \
    test2019_06.C \
    test2019_07.C \
@@ -378,8 +366,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_91.C \
    test2019_92.C \
    test2019_93.C \
-   test2019_94.C \
-   test2019_95.C \
    test2019_96.C \
    test2019_97.C \
    test2019_98.C \
@@ -391,9 +377,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_106.C \
    test2019_107.C \
    test2019_108.C \
-   test2019_110.C \
-   test2019_111.C \
-   test2019_112.C \
    test2019_113.C \
    test2019_114.C \
    test2019_115.C \
@@ -485,8 +468,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_215.C \
    test2019_216.C \
    test2019_217.C \
-   test2019_218.C \
-   test2019_219.C \
    test2019_220.C \
    test2019_221.C \
    test2019_222.C \
@@ -497,8 +478,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_227.C \
    test2019_228.C \
    test2019_229.C \
-   test2019_230.C \
-   test2019_231.C \
    test2019_232.C \
    test2019_233.C \
    test2012_23.C \
@@ -547,7 +526,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_341.C \
    test2019_342.C \
    test2019_343.C \
-   test2019_344.C \
    test2019_347.C \
    test2019_349.C \
    test2019_350.C \
@@ -555,7 +533,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_352.C \
    test2019_353.C \
    test2019_354.C \
-   test2019_355.C \
    test2019_356.C \
    test2019_357.C \
    test2019_358.C \
@@ -567,7 +544,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_363.C \
    test2019_364.C \
    test2019_365.C \
-   test2019_367.C \
    test2019_368.C \
    test2019_369.C \
    test2019_370.C \
@@ -670,7 +646,20 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_472.C \
    test2019_473.C \
    test2019_474.C \
-   test2019_475.C
+   test2019_475.C \
+   test2019_476.C \
+   test2019_477.C \
+   test2019_478.C \
+   test2019_479.C \
+   test2019_480.C \
+   test2019_481.C \
+   test2019_482.C \
+   test2019_483.C \
+   test2019_484.C \
+   test2019_485.C \
+   test2019_486.C \
+   test2019_487.C \
+   test2019_493.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -777,7 +766,12 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_388.C \
    test2019_411.C \
    test2019_438.C \
-   test2019_453.C
+   test2019_453.C \
+   test2019_488.C \
+   test2019_489.C \
+   test2019_490.C \
+   test2019_491.C \
+   test2019_492.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -818,9 +812,6 @@ endif
 else
   TESTCODES_REQUIRED_TO_PASS += \
    test2012_08.C \
-   test2016_26.C \
-   test2016_27.C \
-   test2016_31.C \
    test2018_60.C \
    test2018_63.C \
    test2018_64.C \
@@ -830,22 +821,87 @@ else
    test2019_58.C \
    test2019_158.C \
    test2019_159.C \
-   test2019_161.C \
-   test2019_162.C 
-endif
-
-if ROSE_USE_EDG_VERSION_4_9
-  TESTCODES_REQUIRED_TO_PASS += 
+   test2019_161.C 
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+     test2016_26.C \
+     test2016_27.C \
+     test2016_31.C \
+     test2019_162.C
 else
-  TESTCODE_CURRENTLY_FAILING += 
+   TESTCODES_REQUIRED_TO_PASS += \
+     test2016_26.C \
+     test2016_27.C \
+     test2016_31.C \
+     test2019_162.C
+endif
 endif
 
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+     rose-1380.C \
+     rose-1774.C \
+     test2012_14.C \
+     test2012_26.C \
+     test2018_105.C \
+     test2018_117.C \
+     test2018_118.C \
+     test2018_127.C \
+     test2018_136.C \
+     test2018_93.C \
+     test2018_96.C \
+     test2019_04.C \
+     test2019_110.C \
+     test2019_111.C \
+     test2019_112.C \
+     test2019_218.C \
+     test2019_219.C \
+     test2019_230.C \
+     test2019_231.C \
+     test2019_344.C \
+     test2019_355.C \
+     test2019_367.C \
+     test2019_94.C \
+     test2019_95.C
+else
+   TESTCODES_REQUIRED_TO_PASS += \
+     rose-1380.C \
+     rose-1774.C \
+     test2012_14.C \
+     test2012_26.C \
+     test2018_105.C \
+     test2018_117.C \
+     test2018_118.C \
+     test2018_127.C \
+     test2018_136.C \
+     test2018_93.C \
+     test2018_96.C \
+     test2019_04.C \
+     test2019_110.C \
+     test2019_111.C \
+     test2019_112.C \
+     test2019_218.C \
+     test2019_219.C \
+     test2019_230.C \
+     test2019_231.C \
+     test2019_344.C \
+     test2019_355.C \
+     test2019_367.C \
+     test2019_94.C \
+     test2019_95.C
+endif
+
+if USING_INTEL_COMPILER
+  TESTCODE_CURRENTLY_FAILING += \
+   test2018_100.C 
+else
 if ROSE_USING_GCC_VERSION_LATER_4_9
   TESTCODES_REQUIRED_TO_PASS += \
    test2018_100.C 
 else
   TESTCODE_CURRENTLY_FAILING += \
    test2018_100.C 
+endif
 endif
 
 if OS_MACOSX

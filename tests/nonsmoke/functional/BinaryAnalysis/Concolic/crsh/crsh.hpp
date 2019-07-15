@@ -28,8 +28,10 @@ struct Crsh
     enum expectation { none, success, failure };
 
     // database
-    void connect(const std::string& s);
-    void disconnect();
+    void connectdb(const char* db, expectation);
+    void createdb(const char* db);
+    void createdb(const char* db, const char* testsuite);
+    void closedb();
 
     // environment
     EnvValue* envvar(const char* key, const char* value) const;
@@ -46,6 +48,9 @@ struct Crsh
     // invocation description
     InvocationDesc* invoke(const char*, Arguments* args) const;
 
+    // removes quotes from the string
+    char* unquoteString(const char* str);
+
     // test definition
     void test( const char*     suite,
                const char*     test,
@@ -54,8 +59,14 @@ struct Crsh
                InvocationDesc* invocation
              );
 
-    void runTestcase(TestCaseId testcaseId);
-    void run(const char* testsuitename, int cnt);
+    void runTestcase(TestCaseId testcaseId, expectation expct);
+    void runTest(const char* testsuitename, int cnt, expectation expct);
+
+    // immediately invokes the described program
+    void execute(InvocationDesc* invocation);
+
+    // converts a string into an annotation
+    expectation annotate(const char*);
 
     void parse();
 
@@ -64,7 +75,7 @@ struct Crsh
 
   private:
     Specimen::Ptr  specimen (const std::string& s);
-    TestSuite::Ptr testSuite(const std::string& s);
+    TestSuite::Ptr testSuite(const std::string& s, bool createMissingEntry = true);
 
   private:
     Database::Ptr db;

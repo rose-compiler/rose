@@ -126,6 +126,8 @@ void IOAnalyzer::removeInputInputTransitions() {
   * \date 2014.
  */
 void IOAnalyzer::pruneLeaves() {
+  cout<<"INFO: pruning leave nodes in transition graph."<<endl;
+  size_t numPrunedNodes=0;
   EStatePtrSet states=transitionGraph.estateSet();
   unordered_set<EState*> workset;
   //insert all states into the workset
@@ -141,9 +143,11 @@ void IOAnalyzer::pruneLeaves() {
         workset.insert(const_cast<EState*> (*iter));
       }
       transitionGraph.reduceEState2(current);
+      numPrunedNodes++;
     }
     workset.erase(current);
   }
+  cout<<"INFO: pruned leave nodes: "<<numPrunedNodes<<endl;
 }
 
 /*!

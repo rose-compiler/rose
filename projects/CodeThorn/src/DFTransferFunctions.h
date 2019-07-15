@@ -6,6 +6,7 @@
 #include "Flow.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
+#include "PropertyState.h"
 
 namespace CodeThorn {
 
@@ -45,9 +46,14 @@ public:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
   virtual void setSkipSelectedFunctionCalls(bool flag);
   virtual bool getSkipSelectedFunctionCalls();
+  virtual void initializeExtremalValue(Lattice& element);
+  virtual Lattice* initializeGlobalVariables(SgProject* root);
+  void setInitialElementFactory(PropertyStateFactory*);
+  PropertyStateFactory* getInitialElementFactory();
+
  protected:
   bool _skipSelectedFunctionCalls=false;
-
+  PropertyStateFactory* _initialElementFactory=nullptr;
  private:
   CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;

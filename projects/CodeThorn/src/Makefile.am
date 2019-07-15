@@ -123,14 +123,11 @@ libcodethorndf_la_SOURCES=\
  CtxLattice.h \
  CtxTransfer.h
 
-libcodethorn_la_LDFLAGS= -no-undefined
+#libcodethorn_la_LDFLAGS= -no-undefined
+libcodethorn_la_LDFLAGS=
 libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 libcodethorn_la_SOURCES=\
   AnalysisParameters.h             \
-  Analyzer.C                       \
-  Analyzer.h                       \
-  IOAnalyzer.C                     \
-  IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
   CallString.h \
@@ -272,7 +269,11 @@ libcodethorn_la_SOURCES=\
   Visualizer.C                     \
   Visualizer.h                     \
   AstTermRepresentation.h \
-  AstTermRepresentation.C
+  AstTermRepresentation.C \
+  Analyzer.C                       \
+  Analyzer.h                       \
+  IOAnalyzer.C                     \
+  IOAnalyzer.h
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files

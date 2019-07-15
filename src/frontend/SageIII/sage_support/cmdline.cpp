@@ -5870,11 +5870,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Communicate to the generated program that we are using ROSE (in case there are specific options that the user wants to to invoke.
      roseSpecificDefs.push_back("-DUSE_ROSE");
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) is in use.
-     roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-#endif
-
      ROSE_ASSERT(configDefs.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
@@ -6558,9 +6553,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
-  // #ifndef ROSE_USE_NEW_EDG_INTERFACE
      inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
-  // #endif
 
      if (get_C_only() == true)
         {
@@ -7039,15 +7032,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to
@@ -7060,15 +7044,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // Generate --upc_threads n
@@ -7791,15 +7766,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
-#endif
-
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-     if (get_C_only() || get_Cxx_only())
-        {
-       // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
-       // is in use to be properly passed on the compilation of the generated code.
-          compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-        }
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C

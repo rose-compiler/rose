@@ -1,1 +1,3 @@
-connect openDB.db
+create sqlite3://./openDB.db
+
+! echo ok.

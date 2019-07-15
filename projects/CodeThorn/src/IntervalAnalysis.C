@@ -12,19 +12,12 @@ using namespace std;
 
 CodeThorn::IntervalAnalysis::IntervalAnalysis() {
   _transferFunctions=new CodeThorn::IntervalTransferFunctions();
-  _initialElementFactory=new CodeThorn::IntervalPropertyStateFactory();
+  _transferFunctions->setInitialElementFactory(new CodeThorn::IntervalPropertyStateFactory());
 }
 
 CodeThorn::IntervalAnalysis::~IntervalAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
-}
-
-void CodeThorn::IntervalAnalysis::initializeExtremalValue(Lattice* element) {
-  CodeThorn::IntervalPropertyState* pstate=dynamic_cast<CodeThorn::IntervalPropertyState*>(element);
-  pstate->setEmptyState();
-  //iElement->... init to empty state, not being bottom
-  cout<<"INFO: initialized extremal value."<<endl;
+  delete _transferFunctions->getInitialElementFactory();
 }
 
 DFAstAttribute* CodeThorn::IntervalAnalysis::createDFAstAttribute(Lattice* elem) {

@@ -123,7 +123,7 @@ State::clear_memory() {
 
 SValuePtr
 State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->readRegister(desc, dflt, ops);
@@ -131,7 +131,7 @@ State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
 
 SValuePtr
 State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->peekRegister(desc, dflt, ops);
@@ -139,7 +139,7 @@ State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
 
 void
 State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
     registers_->writeRegister(desc, value, ops);
@@ -450,7 +450,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
 void
 Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     RegisterDescriptor ipReg = instructionPointerRegister();
-    size_t nBits = ipReg.get_nbits();
+    size_t nBits = ipReg.nBits();
     BaseSemantics::SValuePtr ipValue;
     if (!autoResetInstructionPointer_ && operators->currentState() && operators->currentState()->registerState()) {
         BaseSemantics::RegisterStateGenericPtr grState =
@@ -537,10 +537,10 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
         throw Exception(ss.str(), currentInstruction());
     }
 
-    if (nbits>0 && reg->get_nbits()!=nbits) {
+    if (nbits>0 && reg->nBits()!=nbits) {
         std::ostringstream ss;
         ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-           <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+           <<reg->nBits() <<" " <<(1==reg->nBits()?"byte":"bytes");
         throw Exception(ss.str(), currentInstruction());
     }
     return *reg;
@@ -557,10 +557,10 @@ Dispatcher::decrementRegisters(SgAsmExpression *e)
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() < 0) {
                     SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
-                    if (reg.get_nbits() <= 64) {
-                        adj = ops->unsignedExtend(adj, reg.get_nbits());  // truncate
+                    if (reg.nBits() <= 64) {
+                        adj = ops->unsignedExtend(adj, reg.nBits());  // truncate
                     } else {
-                        adj = ops->signExtend(adj, reg.get_nbits());      // extend
+                        adj = ops->signExtend(adj, reg.nBits());      // extend
                     }
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
                 }
@@ -580,7 +580,7 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() > 0) {
-                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
+                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
                 }
             }
@@ -652,10 +652,10 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         }
         size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
         RegisterDescriptor reg = re->get_descriptor();
-        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
-        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
-        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
-        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        reg.majorNumber(reg.majorNumber() + re->get_stride().majorNumber() * idx);
+        reg.minorNumber(reg.minorNumber() + re->get_stride().minorNumber() * idx);
+        reg.offset(reg.offset() + re->get_stride().offset() * idx);
+        reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
@@ -689,10 +689,10 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         }
         size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
         RegisterDescriptor reg = re->get_descriptor();
-        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
-        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
-        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
-        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        reg.majorNumber(reg.majorNumber() + re->get_stride().majorNumber() * idx);
+        reg.minorNumber(reg.minorNumber() + re->get_stride().minorNumber() * idx);
+        reg.offset(reg.offset() + re->get_stride().offset() * idx);
+        reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
