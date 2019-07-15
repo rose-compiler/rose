@@ -325,6 +325,14 @@ void addExplicitCast(SgProject* project) {
         SgType::STRIP_RVALUE_REFERENCE_TYPE |
         SgType::STRIP_TYPEDEF_TYPE
       );
+
+      if (isSgPointerType(lhs_t) && (
+            isSgTypeShort(rhs_t) || isSgTypeInt(rhs_t) || isSgTypeLong(rhs_t) || isSgTypeLongLong(rhs_t) ||
+            isSgTypeUnsignedShort(rhs_t) || isSgTypeUnsignedInt(rhs_t) || isSgTypeUnsignedLong(rhs_t) || isSgTypeUnsignedLongLong(rhs_t)
+      ) ) {
+        continue; // int cast to pointer types (think increasing pointer)
+      }
+
       if (rhs_t_s != lhs_t_s) {
         SgType * cast_type = lhs_t->stripType(
           SgType::STRIP_MODIFIER_TYPE  |
@@ -725,8 +733,9 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
 
     ROSE_ASSERT(varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs");
 
-    list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
-    for (auto varDecl: listOfGlobalVars) {
+    list<SgVariableDeclaration*> listOfVars = SgNodeHelper::listOfGlobalVars(project);
+    listOfVars.splice(listOfVars.end(), SgNodeHelper::listOfGlobalFields(project));
+    for (auto varDecl: listOfVars) {
       SgInitializedName * varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
       if (!node_can_be_changed(varInitName)) continue;
 #if DEBUG__TFTypeTransformer_changeVariableType
