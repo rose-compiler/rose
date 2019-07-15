@@ -1861,3 +1861,56 @@ std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragma
   ROSE_ASSERT(pragma);
   return pragma->get_pragma();
 }
+
+// Can a given node be changed? (aka transformed)
+
+template <typename N>
+bool SgNodeHelper::node_can_be_changed(N * node);
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
+  return ! SageInterface::insideSystemHeader(lnode) &&
+         ! lnode->isCompilerGenerated();
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNode>(lnode_s);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgStatement>(SgStatement * stmt) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNode>(stmt);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
+  return SgNodeHelper::node_can_be_changed<SgStatement>(decl);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
+  std::string fname = fdecl->get_name().getString();
+  return fname.find("__builtin_") != 0 && SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(fdecl);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
+  return SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(vdecl);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope) {
+  return SgNodeHelper::node_can_be_changed<SgStatement>(scope);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn) {
+  return SgNodeHelper::node_can_be_changed<SgScopeStatement>(fdefn);
+}
+
+template <>
+bool SgNodeHelper::node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
+}
+
