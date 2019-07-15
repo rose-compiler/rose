@@ -3358,9 +3358,19 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // if (associatedFunctionDeclarationFromSymbol->get_name() == functionDeclarationFromSymbol->get_name())
                                    if (associatedFunctionDeclarationFromSymbol_mangled_name == functionDeclarationFromSymbol_mangled_name)
                                       {
-                                        printf ("Error: we have two mangled names from two symbols in the same scope using the same mangled name (investigate this) \n");
+                                        printf ("Note: we have two mangled names from two symbols in the same scope using the same mangled name (investigate this) \n");
                                         printf ("   --- functionDeclarationFromSymbol_mangled_name           = %s \n",functionDeclarationFromSymbol_mangled_name.str());
                                         printf ("   --- associatedFunctionDeclarationFromSymbol_mangled_name = %s \n",associatedFunctionDeclarationFromSymbol_mangled_name.str());
+                                        printf ("   --- functionDeclarationFromSymbol           = %p = %s \n",functionDeclarationFromSymbol,functionDeclarationFromSymbol->class_name().c_str());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol = %p = %s \n",associatedFunctionDeclarationFromSymbol,associatedFunctionDeclarationFromSymbol->class_name().c_str());
+                                        printf ("   --- functionDeclarationFromSymbol->get_name()           = %s \n",functionDeclarationFromSymbol->get_name().str());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol->get_name() = %s \n",associatedFunctionDeclarationFromSymbol->get_name().str());
+
+                                        printf ("   --- functionDeclarationFromSymbol           = %p first non-defining = %p defining = %p \n",functionDeclarationFromSymbol,
+                                             functionDeclarationFromSymbol->get_firstNondefiningDeclaration(),functionDeclarationFromSymbol->get_definingDeclaration());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol = %p first non-defining = %p defining = %p \n",associatedFunctionDeclarationFromSymbol,
+                                             associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration(),associatedFunctionDeclarationFromSymbol->get_definingDeclaration());
+
 #if 0
                                         printf ("functionDeclarationFromSymbol->get_name() = %s \n",functionDeclarationFromSymbol->get_name().str());
                                         SgNode* parent_functionDeclarationFromSymbol = functionDeclarationFromSymbol->get_parent();

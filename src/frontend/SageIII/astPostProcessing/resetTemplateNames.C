@@ -743,10 +743,21 @@ void resetTemplateNames( SgNode* node )
        // in this case this make the traversal about 30% faster, since we visit such a small subset 
        // of IR nodes.
           ResetTemplateNamesOnMemoryPool t;
-
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationDecl \n");
+#endif
           SgTemplateInstantiationDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationFunctionDecl \n");
+#endif
           SgTemplateInstantiationFunctionDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationMemberFunctionDecl \n");
+#endif
           SgTemplateInstantiationMemberFunctionDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("DONE: Calling memory pool traversal on template instantiations \n");
+#endif
 #endif
         }
        else
