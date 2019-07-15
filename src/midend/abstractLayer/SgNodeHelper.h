@@ -460,7 +460,39 @@ namespace SgNodeHelper {
 
  
   } // end of namespace Pattern
-  
+
+  // Can a given node be changed? (aka transformed)
+
+  template <typename N>
+  bool node_can_be_changed(N * node);
+
+  template <>
+  bool node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode);
+
+  template <>
+  bool node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s);
+
+  template <>
+  bool node_can_be_changed<SgStatement>(SgStatement * stmt);
+
+  template <>
+  bool node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl); 
+
+  template <>
+  bool node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl);
+
+  template <>
+  bool node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl);
+
+  template <>
+  bool node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope);
+
+  template <>
+  bool node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn);
+
+  template <>
+  bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname);
+
 } // end of namespace SgNodeHelper
 
 #endif

@@ -23,11 +23,45 @@ SgType* getBaseType(SgType* type){
   return nullptr;
 }
 
+#define DEBUG__isArrayPointerType 0
+
 //returns true if the type contains a pointer or array
-bool isArrayPointerType(SgType* type){
+bool isArrayPointerType(SgType* type) {
   if(type == nullptr) return false;
+
+#if DEBUG__isArrayPointerType
+  std::cout << "isArrayPointerType(" << type->class_name() << " * type = " << type << ")" << std::endl;
+#endif
+
+  if (SgClassType * xtype = isSgClassType(type)) {
+    SgDeclarationStatement * decl_stmt = xtype->get_declaration();
+    assert(decl_stmt != nullptr);
+
+#if DEBUG__isArrayPointerType
+  std::cout << "  decl_stmt = " << decl_stmt << " (" << decl_stmt->class_name() << ")" << std::endl;
+#endif
+
+    SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
+    if (ti_decl == nullptr) return false;
+
+#if DEBUG__isArrayPointerType
+  std::cout << "  ti_decl   = " << ti_decl << " (" << ti_decl->class_name() << ")" << std::endl;
+#endif
+ 
+    SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
+    assert(td_decl != nullptr);
+
+#if DEBUG__isArrayPointerType
+  std::cout << "  td_decl   = " << td_decl << " (" << td_decl->class_name() << ")" << std::endl;
+  std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
+#endif
+
+    return td_decl->get_qualified_name() == "::std::vector";
+  }
+
   if(isSgArrayType(type)) return true;
   if(isSgPointerType(type)) return true;
+
   return isArrayPointerType(getBaseType(type));
 }
 
@@ -76,27 +110,61 @@ set<SgNode*>* copySet(set<SgNode*>* oldSet){
   return newSet;
 }
 
+#define DEBUG__Analysis__variableSetAnalysis DEBUG__Analysis
+
 //searches for locations where types may be connected through assignment, passing as argument and returns
 //then passes the associated node along with the expression to link variables.
 int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
+#if DEBUG__Analysis__variableSetAnalysis
+  std::cout << "Analysis::variableSetAnalysis" << std::endl;
+  std::cout << "  project   = " << project << std::endl;
+  if (matchType != nullptr) {
+    std::cout << "  matchType = " << matchType << " ( " << matchType->class_name() << " ) = " << matchType->unparseToString() << std::endl;
+  }
+#endif
+
   RoseAst wholeAST(project);
 
-  list<SgVariableDeclaration*> listOfGlobalVars = SgNodeHelper::listOfGlobalVars(project);
-  for (auto varDec : listOfGlobalVars) {
+  list<SgVariableDeclaration*> listOfVars = SgNodeHelper::listOfGlobalVars(project);
+  listOfVars.splice(listOfVars.end(), SgNodeHelper::listOfGlobalFields(project));
+#if DEBUG__Analysis__variableSetAnalysis
+  std::cout << "  listOfVars.size() = " << listOfVars.size() << std::endl;
+#endif
+  for (auto varDec : listOfVars) {
+    if (!SgNodeHelper::node_can_be_changed(varDec)) {
+      continue;
+    }
+
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "    varDec   = " << varDec << " ( " << varDec->class_name() << " )" << std::endl;
+#endif
+
     SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
     if (initName == nullptr) {
       continue;
     }
+
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "    initName = " << initName << " ( " << initName->class_name() << " ) = " << initName->get_name() << std::endl;
+#endif
 
     SgInitializer* init = initName->get_initializer();
     if (init == nullptr) {
       continue;
     }
 
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "    init = " << init << " ( " << init->class_name() << " ) = " << init->unparseToString() << std::endl;
+#endif
+
     SgType* keyType = initName->get_type();
     if (keyType == nullptr || !sameType(keyType, matchType)) {
       continue;
     }
+
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "    keyType = " << keyType << " ( " << keyType->class_name() << " ) = " << keyType->unparseToString() << std::endl;
+#endif
 
     if (!isArrayPointerType(keyType)) {
       continue;
@@ -108,25 +176,81 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
   }
 
   list<SgFunctionDefinition*> listOfFunctionDefinitions = SgNodeHelper::listOfFunctionDefinitions(project);
+#if DEBUG__Analysis__variableSetAnalysis
+  std::cout << "  listOfFunctionDefinitions.size() = " << listOfFunctionDefinitions.size() << std::endl;
+#endif
+
   for (auto funDef : listOfFunctionDefinitions) {
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "    funDef   = " << funDef << " ( " << funDef->class_name() << " )" << std::endl;
+#endif
+
     RoseAst ast(funDef);
-    for (RoseAst::iterator i = ast.begin(); i!=ast.end(); i++) {
+    for (auto n : ast) {
+#if DEBUG__Analysis__variableSetAnalysis
+//    std::cout << "      n       = " << n << " ( " << n->class_name() << " )" << std::endl;
+#endif
       SgNode* key = nullptr;
       SgType* keyType = nullptr;
       SgExpression* exp = nullptr;
-      if (SgAssignOp* assignOp = isSgAssignOp(*i)) {
-        SgExpression* lhs = assignOp->get_lhs_operand();
+      if (SgAssignOp * assignOp = isSgAssignOp(n)) {
+        SgExpression * lhs = assignOp->get_lhs_operand();
+#if DEBUG__Analysis__variableSetAnalysis
+        std::cout << "      lhs     = " << lhs << " ( " << (lhs ? lhs->class_name() : "") << " )" << std::endl;
+#endif
+
+        SgDotExp * dotexp = isSgDotExp(lhs);
+        SgArrowExp * arrexp = isSgArrowExp(lhs);
+        while (dotexp || arrexp) {
+#if DEBUG__Analysis__variableSetAnalysis
+          if (dotexp) std::cout << "      dotexp  = " << dotexp << " ( " << (dotexp ? dotexp->class_name() : "") << " )" << std::endl;
+          if (arrexp) std::cout << "      arrexp  = " << arrexp << " ( " << (arrexp ? arrexp->class_name() : "") << " )" << std::endl;
+#endif
+          if (dotexp) lhs = dotexp->get_rhs_operand_i();
+          if (arrexp) lhs = arrexp->get_rhs_operand_i();
+
+          dotexp = isSgDotExp(lhs);
+          arrexp = isSgArrowExp(lhs);
+        }
+
         if (SgVarRefExp* varRef = isSgVarRefExp(lhs)) {
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      varRef  = " << varRef << " ( " << (varRef ? varRef->class_name() : "") << " )" << std::endl;
+#endif
+
           keyType = varRef->get_type();
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      keyType = " << keyType << " ( " << (keyType ? keyType->class_name() : "") << " )" << std::endl;
+#endif
+
           if (!isArrayPointerType(keyType)) {
             continue;
           }
 
           SgVariableSymbol* varSym = varRef->get_symbol();
+          assert(varSym != nullptr);
 	  key = varSym->get_declaration()->get_declaration();
         }
+
+        if (SgFunctionRefExp * fref = isSgFunctionRefExp(lhs)) {
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      fref    = " << fref << " ( " << (fref ? fref->class_name() : "") << " )" << std::endl;
+#endif
+          keyType = fref->get_type();
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      keyType = " << keyType << " ( " << (keyType ? keyType->class_name() : "") << " )" << std::endl;
+#endif
+          if (!isArrayPointerType(keyType)) {
+            continue;
+          }
+
+          SgFunctionSymbol * fsym = fref->get_symbol();
+          assert(fsym != nullptr);
+	  key = fsym->get_declaration();
+        }
+
         exp = assignOp->get_rhs_operand();
-      } else if (SgVariableDeclaration* varDec = isSgVariableDeclaration(*i)) {
+      } else if (SgVariableDeclaration* varDec = isSgVariableDeclaration(n)) {
         SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
         if(!initName) {
           continue;
@@ -141,14 +265,20 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
         if (!isArrayPointerType(keyType)) {
           continue;
         }
+#if DEBUG__Analysis__variableSetAnalysis
+        std::cout << "      keyType = " << keyType << " ( " << keyType->class_name() << " )" << std::endl;
+#endif
 
         key = initName->get_declaration();
         exp = init;
-      } else if (SgFunctionCallExp* callExp = isSgFunctionCallExp(*i)) {
+      } else if (SgFunctionCallExp* callExp = isSgFunctionCallExp(n)) {
         SgFunctionDefinition* funDef = SgNodeHelper::determineFunctionDefinition(callExp);
         if (!funDef) {
           continue;
         }
+#if DEBUG__Analysis__variableSetAnalysis
+        std::cout << "      funDef  = " << funDef << " ( " << funDef->class_name() << " )" << std::endl;
+#endif
 
         SgInitializedNamePtrList& initNameList = SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
         SgExpressionPtrList& expList = callExp->get_args()->get_expressions();
@@ -165,7 +295,7 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
           ++initIter;
           ++expIter;
         }
-      } else if(SgReturnStmt* ret = isSgReturnStmt(*i)) {
+      } else if(SgReturnStmt* ret = isSgReturnStmt(n)) {
         exp = ret->get_expression();
         keyType = exp->get_type();
         if (!isArrayPointerType(keyType)) {
@@ -174,6 +304,15 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
 
         key = funDef->get_declaration();
       }
+
+#if DEBUG__Analysis__variableSetAnalysis
+      if (key)
+        std::cout << "      key     = " << key     << " ( " << key->class_name() << " )" << std::endl;
+      if (keyType)
+        std::cout << "      keyType = " << keyType << " ( " << keyType->class_name() << " )" << std::endl;
+      if (exp)
+        std::cout << "      exp     = " << exp     << " ( " << exp->class_name() << " )" << std::endl;
+#endif
 
       if (!sameType(keyType, matchType)) {
         continue;

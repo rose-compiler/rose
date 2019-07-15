@@ -8,11 +8,27 @@
 #include "TFHandles.h"
 using namespace std;
 
+#define DEBUG__TFTypeTransformer 0
+#define DEBUG__SgNodeHelper 0
+
 namespace SgNodeHelper {
+
+#define DEBUG__SgNodeHelper__isTypeBasedOn DEBUG__SgNodeHelper
 
 bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type = false) {
   ROSE_ASSERT(type != NULL);
   ROSE_ASSERT(base != NULL);
+
+#if DEBUG__SgNodeHelper__isTypeBasedOn
+  std::cout << "SgNodeHelper::isTypeBasedOn" << std::endl;
+  std::cout << "  type      = " << type << " ( " << type->class_name() << "): " << type->unparseToString() << "" << std::endl;
+  std::cout << "  base      = " << base << " ( " << base->class_name() << "): " << base->unparseToString() << "" << std::endl;
+#endif
+
+  SgTypedefType * td_type = isSgTypedefType(type);
+  if (td_type != nullptr) {
+    return isTypeBasedOn(td_type->get_base_type(), base, strip_type);
+  }
 
   if (strip_type) {
     type = type->stripType(
@@ -22,16 +38,54 @@ bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type = false) {
       SgType::STRIP_REFERENCE_TYPE |
       SgType::STRIP_RVALUE_REFERENCE_TYPE
     );
+
+    SgClassType * xtype = isSgClassType(type);
+    if (xtype != nullptr) {
+      SgDeclarationStatement * decl_stmt = xtype->get_declaration();
+      assert(decl_stmt != nullptr);
+
+#if DEBUG__SgNodeHelper__isTypeBasedOn
+      std::cout << "  decl_stmt = " << decl_stmt << " ( " << decl_stmt->class_name() << "): " << decl_stmt->unparseToString() << "" << std::endl;
+#endif
+
+      SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
+      if (ti_decl != nullptr) {
+#if DEBUG__SgNodeHelper__isTypeBasedOn
+        std::cout << "      ->get_qualified_name() = " << ti_decl->get_qualified_name() << std::endl;
+        std::cout << "      ->get_name()           = " << ti_decl->get_name() << std::endl;
+#endif
+
+        SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
+        assert(td_decl != nullptr);
+
+#if DEBUG__SgNodeHelper__isTypeBasedOn
+        std::cout << "  td_decl   = " << td_decl << " ( " << td_decl->class_name() << "): " << td_decl->unparseToString() << "" << std::endl;
+        std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
+#endif
+
+        if (td_decl->get_qualified_name() == "::std::vector") {
+          auto tpl_args = ti_decl->get_templateArguments();
+          assert(tpl_args.size() > 0);
+
+          SgType * tpl_type_arg = tpl_args[0]->get_type();
+          assert(tpl_type_arg != nullptr);
+
+          type = tpl_type_arg;
+        }
+      }
+    }
   }
 
-  if (type == base) return true;
-
-  SgTypedefType * td_type = isSgTypedefType(type);
-  if (td_type != NULL) {
-    return isTypeBasedOn(td_type->get_base_type(), base, strip_type);
-  } else {
-    return false;
+  td_type = isSgTypedefType(type);
+  if (td_type != nullptr) {
+    return isTypeBasedOn(td_type->get_base_type(), base, false);
   }
+
+  if (type == base) {
+    return true;
+  }
+
+  return false;
 }
 
 }
@@ -369,65 +423,138 @@ void TFTypeTransformer::transformCastsInCommandLineFiles(SgProject* project) {
   _castTransformer.transformCommandLineFiles(project);
 }
 
+#define DEBUG__TFTypeTransformer__rebuildBaseType DEBUG__TFTypeTransformer
+
 //returns a new type with same structure as root but with newBaseType as a base
-SgType* TFTypeTransformer::rebuildBaseType(SgType* root, SgType* newBaseType){
-  //handle array type
-  if(SgArrayType* arrayType = isSgArrayType(root)){
+SgType * TFTypeTransformer::rebuildBaseType(SgType* root, SgType* newBaseType) {
+
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "TFTypeTransformer::rebuildBaseType" << std::endl;
+  std::cout << "  root        = " << root        << " ( " << root->class_name()        << "): " << root->unparseToString()        << "" << std::endl;
+  std::cout << "  newBaseType = " << newBaseType << " ( " << newBaseType->class_name() << "): " << newBaseType->unparseToString() << "" << std::endl;
+#endif
+
+  SgType * new_type = nullptr;
+
+  if (SgArrayType* arrayType = isSgArrayType(root)) {
+    // handle array type
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "> array" << std::endl;
+#endif
     SgType* base = rebuildBaseType(arrayType->get_base_type(), newBaseType);
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "< array" << std::endl;
+#endif
     SgExpression* index = arrayType->get_index();
     SgExprListExp* dim_info = arrayType->get_dim_info();
-    if(dim_info != nullptr){
-      return SageBuilder::buildArrayType(base, dim_info);
+    if (dim_info != nullptr) {
+      new_type = SageBuilder::buildArrayType(base, dim_info);
+    } else if(index != nullptr) {
+      new_type = SageBuilder::buildArrayType(base, index);
+    } else {
+      new_type = SageBuilder::buildArrayType(base);
     }
-    else if(index != nullptr){
-      return SageBuilder::buildArrayType(base, index);
-    }
-    else{
-      return SageBuilder::buildArrayType(base);
-    }
-  }
-  //handle pointer type
-  else if(SgPointerType* pointerType = isSgPointerType(root)){
+
+  } else if(SgPointerType* pointerType = isSgPointerType(root)) {
+    // handle pointer type
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "> pointer" << std::endl;
+#endif
     SgType* base = rebuildBaseType(pointerType->get_base_type(), newBaseType);
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "< pointer" << std::endl;
+#endif
     SgPointerType* newPointer = SageBuilder::buildPointerType(base);
-    return newPointer;
-  }
-  //handle typedef, does not build new typedef. builds type around structure defined in typedef
-  else if(SgTypedefType* defType = isSgTypedefType(root)){
-    return rebuildBaseType(defType->get_base_type(), newBaseType);
-  }
-  //handle reference type
-  else if(SgReferenceType* refType = isSgReferenceType(root)){
+    new_type = newPointer;
+
+  } else if(SgTypedefType* defType = isSgTypedefType(root)) {
+    //  handle typedef, does not build new typedef. builds type around structure defined in typedef
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "> typedef" << std::endl;
+#endif
+    new_type = rebuildBaseType(defType->get_base_type(), newBaseType);
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "< typedef" << std::endl;
+#endif
+
+  } else if(SgReferenceType* refType = isSgReferenceType(root)) {
+    //  handle reference type
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "> reference" << std::endl;
+#endif
     SgType* base = rebuildBaseType(refType->get_base_type(), newBaseType);
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "< reference" << std::endl;
+#endif
     SgReferenceType* newReference = SageBuilder::buildReferenceType(base);
-    return newReference;
-  }
-  //handle type modifiers(const, restrict, volatile)
-  else if(SgModifierType* modType = isSgModifierType(root)){
+    new_type = newReference;
+
+  } else if(SgModifierType* modType = isSgModifierType(root)) {
+    // handle type modifiers(const, restrict, volatile)
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "> modifier" << std::endl;
+#endif
     SgType* base =  rebuildBaseType(modType->get_base_type(), newBaseType);
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "< modifier" << std::endl;
+#endif
     SgTypeModifier modifier = modType->get_typeModifier();
-    SgModifierType* newMod;
-    if(modifier.isRestrict()){
-      newMod = SageBuilder::buildRestrictType(base);
-    }
-    else{
+    if (modifier.isRestrict()) {
+      new_type = SageBuilder::buildRestrictType(base);
+    } else {
       SgConstVolatileModifier cmod = modifier.get_constVolatileModifier();
-      if(cmod.isConst()){
-        newMod = SageBuilder::buildConstType(base);
-      }
-      else if(cmod.isVolatile()){
-        newMod = SageBuilder::buildVolatileType(base);
-      }
-      else{
-        newMod = SageBuilder::buildModifierType(base);
+      if (cmod.isConst()) {
+        new_type = SageBuilder::buildConstType(base);
+      } else if(cmod.isVolatile()) {
+        new_type = SageBuilder::buildVolatileType(base);
+      } else {
+        new_type = SageBuilder::buildModifierType(base);
       }
     }
-    return newMod;
+
+  } else if (SgClassType * xtype = isSgClassType(root)) {
+    SgDeclarationStatement * decl_stmt = xtype->get_declaration();
+    assert(decl_stmt != nullptr);
+
+    SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
+    assert(ti_decl != nullptr);
+
+    SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
+    assert(td_decl != nullptr);
+
+    assert(td_decl->get_qualified_name() == "::std::vector");
+
+//  std:ostringstream oss; oss << "vector< " << newBaseType->unparseToString() << ; SgName new_inst_name(oss.str());
+    SgName new_inst_name("vector");
+
+    std::vector<SgTemplateArgument *> tpl_args = ti_decl->get_templateArguments();
+    assert(tpl_args.size() > 0);
+    assert(tpl_args[0] != nullptr);
+    tpl_args[0]->set_type(newBaseType);
+    tpl_args.erase(tpl_args.begin()+1, tpl_args.end());
+
+    SgClassDeclaration * new_xdecl = SageBuilder::buildNondefiningClassDeclaration_nfi(
+        new_inst_name, ti_decl->get_class_type(), ti_decl->get_scope(), true, &tpl_args
+    );
+
+    SgTemplateInstantiationDecl * new_ti_decl = isSgTemplateInstantiationDecl(new_xdecl);
+    assert(new_ti_decl != nullptr);
+
+    assert(new_ti_decl->get_type() != nullptr);
+
+    new_type = new_ti_decl->get_type();
+  } else {
+    // reached base so return new base instead
+    new_type = newBaseType;
   }
-  //reached base so return new base instead
-  else{
-    return newBaseType;
-  }
+
+  assert(new_type != nullptr);
+
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+  std::cout << "  new_type    = " << new_type << " ( " << new_type->class_name() << "): " << new_type->unparseToString() << "" << std::endl;
+#endif
+
+  return new_type;
 }
 
 //Changes the type of an a node. Likly came from resolving a handle
@@ -540,56 +667,6 @@ int TFTypeTransformer::changeTypeIfFromTypeMatches(SgInitializedName* varInitNam
   return foundVar;
 }
 
-template <typename N>
-bool node_can_be_changed(N * node);
-
-template <>
-bool node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
-  return ! SageInterface::insideSystemHeader(lnode) &&
-         ! lnode->isCompilerGenerated();
-}
-
-template <>
-bool node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
-  return node_can_be_changed<SgLocatedNode>(lnode_s);
-}
-
-template <>
-bool node_can_be_changed<SgStatement>(SgStatement * stmt) {
-  return node_can_be_changed<SgLocatedNode>(stmt);
-}
-
-template <>
-bool node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
-  return node_can_be_changed<SgStatement>(decl);
-}
-
-template <>
-bool node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
-  std::string fname = fdecl->get_name().getString();
-  return fname.find("__builtin_") != 0 && node_can_be_changed<SgDeclarationStatement>(fdecl);
-}
-
-template <>
-bool node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
-  return node_can_be_changed<SgDeclarationStatement>(vdecl);
-}
-
-template <>
-bool node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope) {
-  return node_can_be_changed<SgStatement>(scope);
-}
-
-template <>
-bool node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn) {
-  return node_can_be_changed<SgScopeStatement>(fdefn);
-}
-
-template <>
-bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
-  return node_can_be_changed<SgLocatedNodeSupport>(iname);
-}
-
 #define DEBUG__TFTypeTransformer_changeVariableType 0
 
 //will search for variables to change. first by type if fromtype is provided then by name if it is not.
@@ -611,7 +688,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
 
   // Process type changes inside of a function
   if (funDecl != NULL) {
-    if (!node_can_be_changed(funDecl)) return 0;
+    if (!SgNodeHelper::node_can_be_changed(funDecl)) return 0;
 
 #define EXPERIMENTAL_CALL_SITE_UPDATES__CAST_ARGUMENT 0
 #if EXPERIMENTAL_CALL_SITE_UPDATES__CAST_ARGUMENT
@@ -679,8 +756,8 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
         std::cout << "     replace with = " << replaceType << " ( " << replaceType->unparseToString() << " )" << std::endl;
 #endif
 
-        if(listing) {
-          addToActionList("$return", funDecl, fromType, replaceType, funDecl, base);
+        if (listing) {
+          addToActionList("$return", funDecl, fromType, newType, funDecl, base);
         } else {
           TFTypeTransformer::trace("Analysis: Found return type "+((funName=="")? "" : "in "+funName)+".");
           int cnt=_transformer.addTransformation(funName+":$return",replaceType,funDecl);
@@ -701,7 +778,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
 
     if(funDef != NULL && varNameToFind != "TYPEFORGEret" && varNameToFind != "TYPEFORGEargs") {
 
-      if (!node_can_be_changed(funDef)) return 0;
+      if (!SgNodeHelper::node_can_be_changed(funDef)) return 0;
 
 #if DEBUG__TFTypeTransformer_changeVariableType
       std::cout << " SCAN function body" << std::endl;
@@ -711,7 +788,7 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
       for(RoseAst::iterator i = ast.begin(); i != ast.end(); ++i) {
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           SgInitializedName * varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-          if (!node_can_be_changed(varInitName)) continue;
+          if (!SgNodeHelper::node_can_be_changed(varInitName)) continue;
 
 #if DEBUG__TFTypeTransformer_changeVariableType
           std::cout << "   * varInitName    = " << std::hex << varInitName << " (" << varInitName->class_name() << ")" << std::endl;
@@ -737,13 +814,13 @@ int TFTypeTransformer::changeVariableType(SgProject * project, SgFunctionDeclara
     listOfVars.splice(listOfVars.end(), SgNodeHelper::listOfGlobalFields(project));
     for (auto varDecl: listOfVars) {
       SgInitializedName * varInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      if (!node_can_be_changed(varInitName)) continue;
+      if (!SgNodeHelper::node_can_be_changed(varInitName)) continue;
 #if DEBUG__TFTypeTransformer_changeVariableType
       std::cout << "   * varInitName    = " << std::hex << varInitName << " (" << varInitName->class_name() << ")" << std::endl;
       std::cout << "       ->get_name() = " << varInitName->get_name() << std::endl;
 #endif
 
-      if (!node_can_be_changed(varInitName)) continue;
+      if (!SgNodeHelper::node_can_be_changed(varInitName)) continue;
 
       if (fromType != nullptr) {
         foundVar += changeTypeIfFromTypeMatches(varInitName, project, newType, fromType, base, varDecl, listing);
