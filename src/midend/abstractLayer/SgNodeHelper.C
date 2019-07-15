@@ -346,6 +346,17 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgProject* project) 
   return globalVarDeclList;
 }
 
+#if __cplusplus > 199711L
+list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalFields(SgProject* project) {
+  list<SgVariableDeclaration*> globalFieldDeclList;
+  list<SgGlobal*> globalList=SgNodeHelper::listOfSgGlobal(project);
+  for(list<SgGlobal*>::iterator i=globalList.begin();i!=globalList.end();++i) {
+    list<SgVariableDeclaration*> varDeclList=SgNodeHelper::listOfGlobalFields(*i);
+    globalFieldDeclList.splice(globalFieldDeclList.end(),varDeclList); // we are *moving* objects (not copying)
+  }
+  return globalFieldDeclList;
+}
+#endif
 
 /*! 
   * \author Markus Schordan
@@ -415,6 +426,26 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgGlobal* global) {
   return varDeclList;
 }
 
+#if __cplusplus > 199711L
+list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalFields(SgGlobal* global) {
+  list<SgVariableDeclaration*> fields;
+  auto s_decls = global->get_declarations();
+  for(auto s : s_decls) {
+    SgClassDeclaration * xdecl = isSgClassDeclaration(s);
+    SgClassDefinition * xdefn = xdecl ? xdecl->get_definition() : nullptr;
+    if (xdefn != nullptr) {
+      auto v_decls = xdefn->getDeclarationList();
+      for (auto v : v_decls) {
+        SgVariableDeclaration * vdecl = isSgVariableDeclaration(v);
+        if (vdecl != nullptr) {
+          fields.push_back(vdecl);
+        }
+      }
+    }
+  }
+  return fields;
+}
+#endif
 
 /*! 
   * \author Markus Schordan
