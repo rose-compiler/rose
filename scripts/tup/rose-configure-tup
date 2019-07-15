@@ -88,6 +88,12 @@ makefile_value() {
     sed -n "/^${variable}[ \t]*=/ { s/^${variable}[ \t]*=[ \t]*//p; q }" <"$makefile"
 }
 
+# Given a C preprocessor include search path argument of the form "-Ifoo/include" return "foo".
+prefix_from_include() {
+    echo "$1" |\
+	sed -n 's/^[ \t]*-I[ \t]*\(.*\)\/include/\1/p'
+}
+
 # Given VALUE, YES, and NO
 #   if VALUE is empty, "no", "none", or "ambivalent" return NO
 #   otherwise return YES
@@ -286,6 +292,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     PYTHON_VERSION="$(makefile_value PYTHON_VERSION_MM Makefile)" \
     WITH_QT="$(value_or_no "$(exe_prefix "$(makefile_value MOC Makefile)")" "$(config_switch --with-qt "$@")")" \
     WITH_READLINE="$(value_or_no "$(makefile_value LIBREADLINE_INSTALL_PATH Makefile)")" \
+    WITH_SQLITE="$(value_or_no "$(prefix_from_include "$(makefile_value SQLITE3_CFLAGS Makefile)")")" \
     WITH_TIFF="$(value_or_no "$LIBTIFF_ROOT")" \
     WITH_WT="$(value_or_no "$(makefile_value WT_PREFIX Makefile)")" \
     WITH_YAMLCPP="$(value_or_no "$(makefile_value ROSE_YAML_PREFIX Makefile)")" \

@@ -3618,6 +3618,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           SgInitializedName* variable = *i;
           ROSE_ASSERT(variable != NULL);
 
+#error "DEAD CODE"
+
        // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
        // if (variable->get_prev_decl_item() != NULL)
           if (variable->get_scope() == scope)
@@ -3635,6 +3637,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
             // I think there is nothing to do in this case
             // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
              }
+
+#error "DEAD CODE"
 
           i++;
         }
@@ -22764,11 +22768,13 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
     string buildtree_str2 = string("include-staging/g++_HEADERS");
     string installtree_str1 = string("include/edg/gcc_HEADERS"); 
     string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    string system_headers = string("/usr/include"); 
     // if the file name has a sys header path of either source or build tree
     if ((fname.find (buildtree_str1, 0) != string::npos) ||
         (fname.find (buildtree_str2, 0) != string::npos) ||
         (fname.find (installtree_str1, 0) != string::npos) ||
-        (fname.find (installtree_str2, 0) != string::npos)
+        (fname.find (installtree_str2, 0) != string::npos) ||
+        (fname.find (system_headers, 0) != string::npos)
        )
       rtval = true;
   }

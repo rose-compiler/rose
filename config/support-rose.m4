@@ -654,10 +654,6 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
 
-# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
-# TV (06/17/2013): Now always the case (EDG 4.7).
-AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
-
 # *****************************************************************
 
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
@@ -1919,41 +1915,16 @@ AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
@@ -2498,7 +2469,6 @@ tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
-tools/fortranTranslation/Makefile
 tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile

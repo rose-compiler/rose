@@ -3,17 +3,20 @@
 
 // DQ (4/21/2009): If this is not set then set it here.
 // For most of ROSE usage this is set in sage3.h, but initial
-// construction or ROSETTA used to generate ROSE requires 
+// construction or ROSETTA used to generate ROSE requires
 // it as well.
 #if !defined(_FILE_OFFSET_BITS)
    #define _FILE_OFFSET_BITS 64
 #endif
 
+// PP (7/1/19): Solaris in 32bit uses _FILE_OFFSET_BITS 32
+#if !defined(__sun)
 // DQ (4/21/2009): This must be set before sys/stat.h is included by any other header file.
 // Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to control the size of "struct stat"
 #if !(defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
    #error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
 #endif
+#endif /* __sun */
 
 #include <string>
 #include "rosedll.h"
