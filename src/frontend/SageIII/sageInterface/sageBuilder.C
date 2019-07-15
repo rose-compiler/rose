@@ -1549,9 +1549,11 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
              {
                printf ("In buildVariableDeclaration_nfi(): this is a later reference to this variable (after the initial variable declaration and symbol): initializedName = %p name = %s \n",initializedName,name.str());
             // varDecl->set_builtFromUseOnly(true);
-
+#if 0
+            // DQ (7/12/2019): This may be overly conservative when used by the outlining to a seperate file.
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
+#endif
              }
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
@@ -15461,7 +15463,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // AST for transformations after construction of the AST from an typical input file.
      EDG_ROSE_Translation::suppress_detection_of_transformations = true;
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFile(): EDG_ROSE_Translation::suppress_detection_of_transformations = %s \n",EDG_ROSE_Translation::suppress_detection_of_transformations ? "true" : "false");
 #endif
 
@@ -15486,6 +15488,17 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 #if 0
      printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+
+  // DQ (7/14/2019): I think we need to call the astPostProcessing at this point.
+#if 0
+     printf ("In SageBuilder::buildFile(): calling astPostProcessing() \n");
+#endif
+
+     AstPostProcessing(result);
+
+#if 0
+     printf ("In SageBuilder::buildFile(): DONE: calling astPostProcessing() \n");
 #endif
 
 #if 0
@@ -15520,7 +15533,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 1
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+          project,project->get_fileList_ptr()->get_listOfFiles().size());
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif

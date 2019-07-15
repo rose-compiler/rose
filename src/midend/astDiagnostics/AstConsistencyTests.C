@@ -1945,8 +1945,26 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                       // DQ (2/12/2012): Implemented some diagnostics (fails for test2004_35.C).
                          if (templateInstantiation->get_nameResetFromMangledForm() == false)
                             {
+                              printf ("In AST Consistancy test: templateInstantiation = %p = %s \n",templateInstantiation,templateInstantiation->class_name().c_str());
                               printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
-                              SageInterface::whereAmI(templateInstantiation);
+                              printf ("In AST Consistancy test: templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
+                           // SageInterface::whereAmI(templateInstantiation);
+
+                           // DQ (7/14/2019): Reset the name to see how it would be changed (for debugging)
+                           // The fix was to force the new file built in SageBuilder::buildFile() to call the astPostProcessing() 
+                           // function which will internally reset the template names.
+
+                           // This function will reset nameResetFromMangledForm to true, so we want to force the failure below.
+                           // templateInstantiation->resetTemplateName();
+
+                           // Re-output the template name.
+                           // printf ("In AST Consistancy test: (after resetTemplateName()): templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+                           // printf ("In AST Consistancy test: (after resetTemplateName()): templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
+#if 0
+                           // Force this to fail since the function call above we set nameResetFromMangledForm to true.
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
                             }
                          ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
                        }
