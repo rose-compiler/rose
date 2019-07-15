@@ -89,14 +89,17 @@ struct CtxAnalysis : DFAnalysisBase
     }
 */
 
+/*
     // shadows non-virtual function in base class
     void initialize(SgProject* root, bool variableIdForEachArrayElement = false) ROSE_OVERRIDE
+    void initialize(SgProject* root, bool createCFG=true, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false)
     {
       base::initialize(root, variableIdForEachArrayElement);
 
       // \todo do we need to initialize component?
       subAnalysis.initialize(root, variableIdForEachArrayElement);
     }
+*/
 
     //! retrieves the lattice from the call site
     const CtxLattice<CallContext>&
