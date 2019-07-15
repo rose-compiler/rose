@@ -16,7 +16,7 @@
 #include "TFTypeTransformer.h"
 #include "SpecFrontEnd.h"
 #include "Analysis.h"
-#include "TFToolConfig.h"
+#include "ToolConfig.hpp"
 
 //preparation for using the Sawyer command line parser
 //#define USE_SAWYER_COMMANDLINE
@@ -102,7 +102,7 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("version")) {
-    cout<<toolName<<" version 0.8.4"<<endl;
+    cout<<toolName<<" version 0.8.5"<<endl;
     return 0;
   }
 
@@ -123,25 +123,12 @@ int main (int argc, char* argv[])
   if(!args.count("compile")) argvList.push_back("-rose:skipfinalCompileStep");
   //for(auto str : argvList) cout<<str<<"\n";
   SgProject* sageProject=frontend (argvList); 
-  TFTypeTransformer tt;
-
-  if(args.isUserProvided("typeforge-out")){
-    TFToolConfig::open(args["typeforge-out"].as<string>());
-  }
-
-  if(args.isUserProvided("set-analysis")){
-    Analysis analysis;
-    analysis.variableSetAnalysis(sageProject, SageBuilder::buildDoubleType(), true);
-    analysis.writeAnalysis(SageBuilder::buildDoubleType(), "float");    
-    analysis.writeGraph("dotGraph.gv");
-    TFToolConfig::write();    
-  }
 
   if(args.isUserProvided("explicit")) {
+    TFTypeTransformer tt;
     tt.makeAllCastsExplicit(sageProject);
     cout<<"Converted all implicit casts to explicit casts."<<endl;
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
 
   if(args.isUserProvided("cast-stats")) {
@@ -152,10 +139,10 @@ int main (int argc, char* argv[])
   }
 
   if(args.isUserProvided("annotate")) {
+    TFTypeTransformer tt;
     tt.annotateImplicitCastsAsComments(sageProject);
     cout<<"Annotated program with comments."<<endl;
-    backend(sageProject);
-    return 0;
+    return backend(sageProject);
   }
 
 #if 0  
@@ -170,8 +157,16 @@ int main (int argc, char* argv[])
   }
 #endif
 
-  if(args.isUserProvided("trace")) {
-    tt.setTraceFlag(true);
+  if(args.isUserProvided("typeforge-out")){
+    ToolConfig::output_file = args["typeforge-out"].as<string>();
+  }
+
+  std::vector<Analysis *> analysis;
+  if (args.isUserProvided("set-analysis")) {
+    Analysis * set_analysis = new Analysis();
+    analysis.push_back(set_analysis);
+    set_analysis->variableSetAnalysis(sageProject, nullptr);
+    set_analysis->toDot("set_analysis.dot"); // FIXME conditional
   }
   
   vector<string> plugins;
@@ -186,6 +181,11 @@ int main (int argc, char* argv[])
   }
 
   if(plugins.size() > 0 && !objectFiles) {
+    TFTypeTransformer tt;
+    if(args.isUserProvided("trace")) {
+      tt.setTraceFlag(true);
+    }
+
     //Setup phase
     TFTransformation tfTransformation;
     tfTransformation.trace=tt.getTraceFlag();
@@ -217,13 +217,16 @@ int main (int argc, char* argv[])
                                   tt,
                                   tfTransformation);
     }
-  
-    TFToolConfig::write();    
-    return backend(sageProject);
   }
-  else{
-    return backend(sageProject);
+
+  if (ToolConfig * tc_g = ToolConfig::getGlobal()) {
+    for (auto a: analysis) {
+      a->appendAnalysis(tc_g);
+    }
+    ToolConfig::writeGlobal();
   }
+
+  return backend(sageProject);
 
   return 0;
 }
