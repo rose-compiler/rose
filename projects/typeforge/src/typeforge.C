@@ -157,8 +157,8 @@ int main (int argc, char* argv[])
   }
 #endif
 
-  if(args.isUserProvided("typeforge-out")){
-    ToolConfig::output_file = args["typeforge-out"].as<string>();
+  if (args.isUserProvided("typeforge-out")) {
+    ToolConfig::filename = args["typeforge-out"].as<string>();
   }
 
   std::vector<Analysis *> analysis;

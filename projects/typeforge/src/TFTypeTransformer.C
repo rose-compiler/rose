@@ -172,7 +172,7 @@ int HandleTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
 }
 
 int FileTransformDirective::run(SgProject* project, TFTypeTransformer* tt){
-  ToolConfig::input_file = fileName;
+//ToolConfig::filename = fileName;
   return 0;  
 }
 

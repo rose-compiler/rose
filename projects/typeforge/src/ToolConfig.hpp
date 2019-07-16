@@ -78,8 +78,7 @@ public:
     static ToolConfig * getGlobal();
     static void writeGlobal();
 
-    static std::string input_file;
-    static std::string output_file;
+    static std::string filename;
 
 private:
     static ToolConfig * global_config;

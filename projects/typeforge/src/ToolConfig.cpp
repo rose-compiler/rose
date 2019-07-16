@@ -269,13 +269,19 @@ void from_json(const json& j, ToolAction& a) {
 //////////////
 
 ToolConfig * ToolConfig::global_config{nullptr};
-std::string ToolConfig::input_file;
-std::string ToolConfig::output_file;
+std::string ToolConfig::filename;
+
+#define DEBUG_ToolConfig__static 0
 
 ToolConfig * ToolConfig::getGlobal() {
+#if DEBUG_ToolConfig__static
+  std::cout << "ToolConfig::getGlobal()" << std::endl;
+  std::cout << "  ToolConfig::global_config = " << ToolConfig::global_config << std::endl;
+  std::cout << "  ToolConfig::filename      = " << ToolConfig::filename << std::endl;
+#endif
   if (ToolConfig::global_config == nullptr) {
     try {
-      ToolConfig::global_config = new ToolConfig(ToolConfig::input_file);
+      ToolConfig::global_config = new ToolConfig(ToolConfig::filename);
     } catch (...) {
       ToolConfig::global_config = new ToolConfig();
     }
@@ -285,8 +291,15 @@ ToolConfig * ToolConfig::getGlobal() {
 }
 
 void ToolConfig::writeGlobal() {
-  if (ToolConfig::global_config != nullptr && !ToolConfig::output_file.empty()) {
-    ToolConfig::global_config->saveConfig(ToolConfig::output_file);
+#if DEBUG_ToolConfig__static
+  std::cout << "ToolConfig::writeGlobal()" << std::endl;
+  std::cout << "  ToolConfig::global_config = " << ToolConfig::global_config << std::endl;
+  std::cout << "  ToolConfig::filename      = " << ToolConfig::filename << std::endl;
+#endif
+  if (ToolConfig::global_config != nullptr && !ToolConfig::filename.empty()) {
+    if (!ToolConfig::global_config->saveConfig(ToolConfig::filename)) {
+      std::cerr << "[typeforge] Could not save the configuration!" << std::endl;
+    }
   }
 }
 
@@ -298,8 +311,8 @@ ToolConfig::ToolConfig() {
     this->actions = {};
 }
 
-ToolConfig::ToolConfig(std::string fileName) {
-    std::ifstream in(fileName);
+ToolConfig::ToolConfig(std::string fname) {
+    std::ifstream in(fname);
     json config;
     in >> config;
     from_json(config, *this);
@@ -343,7 +356,11 @@ void ToolConfig::addAction(SgNode * source, std::string action_tag, std::string 
 
     std::string handle = TFHandles::getAbstractHandle(source);
     assert(handle != "");
-    assert(actions.find(handle) == actions.end());
+
+    if (actions.find(handle) != actions.end()) {
+      std::cerr << "[typeforge] WARNING: Cannot add another action for an existing handle! (" << handle << ")" << std::endl;
+      return;
+    }
 
 //  std::cout << "scope = " << scope << " ( " << (scope != nullptr ? scope->class_name() : "") << " )" << std::endl;
     if (SgFunctionDefinition * fdefn = isSgFunctionDefinition(scope)) {
@@ -390,14 +407,16 @@ void ToolConfig::addAction(SgNode * source, std::string action_tag, std::string 
 #define DEBUG__ToolConfig__addLabel DEBUG__ToolConfig
 
 void ToolConfig::addLabel(SgNode * node, std::string const & label) {
+#if DEBUG__ToolConfig__addLabel
+    std::cout << "ToolConfig::addLabel" << std::endl;
+    std::cout << "  node    = " << node << " ( " << (node != nullptr ? node->class_name() : "") << " )" << std::endl;
+    std::cout << "  label   = " << label  << std::endl;
+#endif
     std::string handle = TFHandles::getAbstractHandle(node);
     assert(handle != "");
 
 #if DEBUG__ToolConfig__addLabel
-    std::cout << "ToolConfig::addLabel" << std::endl;
-    std::cout << "  node    = " << node << " ( " << (node != nullptr ? node->class_name() : "") << " )" << std::endl;
     std::cout << "  handle  = " << handle << std::endl;
-    std::cout << "  label   = " << label  << std::endl;
 #endif
 
     if (actions.find(handle) != actions.end()) {
@@ -409,8 +428,8 @@ std::map<std::string, ToolAction> & ToolConfig::getActions() {
     return actions;
 }
 
-bool ToolConfig::saveConfig(std::string fileName) {
-    std::ofstream out(fileName);
+bool ToolConfig::saveConfig(std::string fname) {
+    std::ofstream out(fname, std::ofstream::out | std::ofstream::trunc);
     if (!out.is_open()) {
         return false;
     }

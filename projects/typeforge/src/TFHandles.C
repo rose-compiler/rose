@@ -10,7 +10,7 @@ using namespace AbstractHandle;
 namespace TFHandles {
 
 string getAbstractHandle(SgNode* node){
- if (isSgTemplateInstantiationFunctionDecl(node) != nullptr) return "";
+//if (isSgTemplateInstantiationFunctionDecl(node) != nullptr) return "";
  abstract_node* anode = buildroseNode(node);
  abstract_handle ahandle(anode);
  return ahandle.toString();
