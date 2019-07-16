@@ -3,14 +3,6 @@
 #include "ROSETTA_macros.h"
 #include "AstNodeClass.h"
 
-#if 0
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS IS defined and should NOT BE..."
-#else
-   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS is NOT defined and SHOULD BE..."
-#endif
-#endif
-
 
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should 
@@ -121,11 +113,6 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (GotoStatement,             "GotoStatement",             "GOTO_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
-
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-  #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
-#endif
-
   // DQ (10/14/2014): Added template typedef as part of C++11 support.
   // NEW_TERMINAL_MACRO (TypedefDeclaration,        "TypedefDeclaration",        "TYPEDEF_STMT" );
      NEW_TERMINAL_MACRO (TemplateTypedefDeclaration, "TemplateTypedefDeclaration",    "TEMPLATE_TYPEDEF_DECL_STMT" );
@@ -155,33 +142,17 @@ Grammar::setUpStatements ()
   // NEW_TERMINAL_MACRO (TemplateFunctionDeclaration, "TemplateFunctionDeclaration", "TEMPLATE_FUNCTION_DECL_STMT" );
      NEW_TERMINAL_MACRO (TemplateMemberFunctionDeclaration, "TemplateMemberFunctionDeclaration", "TEMPLATE_MEMBER_FUNCTION_DECL_STMT" );
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      NEW_TERMINAL_MACRO (TemplateFunctionDeclaration, "TemplateFunctionDeclaration", "TEMPLATE_FUNCTION_DECL_STMT" );
-#else
-     NEW_NONTERMINAL_MACRO (TemplateFunctionDeclaration, TemplateMemberFunctionDeclaration, "TemplateFunctionDeclaration",  "TEMPLATE_FUNCTION_DECL_STMT", true );
-#endif
 
   // DQ (12/6/2011): Adding support for template variables (static data members).
      NEW_TERMINAL_MACRO (TemplateVariableDeclaration, "TemplateVariableDeclaration",    "TEMPLATE_VARIABLE_DECL_STMT" );
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): This is the newer design, we want template declaration to act just like functions and classes since they are used as such in the AST 
   // representation of the template declaration.  In this case a template function declaration is more like a function declaration than a template declaration.
      NEW_TERMINAL_MACRO (TemplateDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT");
-#else
-  // DQ (12/21/2011): This was the first design, but it is problematic for the representation of template function and template class declarations in the AST.
-  // In this case a template function declaration is more like a template declaration than a function declaration.
-     NEW_NONTERMINAL_MACRO (TemplateDeclaration,
-          TemplateClassDeclaration | TemplateFunctionDeclaration | TemplateVariableDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT", true);
-#endif
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): Newer version of code.
      NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration,      "VariableDeclaration",       "VAR_DECL_STMT", true );
-#else
-  // DQ (12/21/2011): Older version of code.
-     NEW_TERMINAL_MACRO (VariableDeclaration,       "VariableDeclaration",       "VAR_DECL_STMT" );
-#endif
 
   // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
   // NEW_TERMINAL_MACRO (TemplateInstantiationDirective,    "TemplateInstantiationDirective",    "TEMPLATE_INST_DIRECTIVE_STMT" );
@@ -289,12 +260,8 @@ Grammar::setUpStatements ()
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
-  // Rasmussen (11/12/2018): Support for Jovial Compool modules
+  // Rasmussen (11/12/2018): Support for Jovial IR nodes
      NEW_TERMINAL_MACRO (JovialCompoolStatement, "JovialCompoolStatement", "JOVIAL_COMPOOL_STATEMENT" );
-
-  // Rasmussen (03/26/2019): Support for Jovial directives and define declarations
-     NEW_TERMINAL_MACRO (JovialDefineDeclaration,  "JovialDefineDeclaration",  "JOVIAL_DEFINE_DECLARATION" );
-     NEW_TERMINAL_MACRO (JovialDirectiveStatement, "JovialDirectiveStatement", "JOVIAL_DIRECTIVE_STATEMENT" );
 
   // Rasmussen (10/22/2018): Node specific to Jovial for statements with a then construct.
      NEW_TERMINAL_MACRO (JovialForThenStatement, "JovialForThenStatement", "JOVIAL_FOR_THEN_STATEMENT");
@@ -371,9 +338,6 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (EquivalenceStatement,      "EquivalenceStatement",       "TEMP_Equivalence_Statement" );
      NEW_TERMINAL_MACRO (DerivedTypeStatement,      "DerivedTypeStatement",       "TEMP_Derived_Type_Statement" );
 
-  // Rasmussen (3/18/2019): Added new IR node for Jovial support
-     NEW_TERMINAL_MACRO (JovialTableStatement,      "JovialTableStatement",       "TEMP_Jovia_Table_Statement" );
-
   // DQ (9/4/2007): Added DIMENSION statement (for array declaration support)
   // These are the type attributes: ALLOCATABLE, DIMENSION, EXTERNAL, INTENT, INTRINSIC, OPTIONAL, PARAMETER, POINTER, SAVE, TARGET
   // These are the ones that have associated statements: ALLOCATE, DIMENSION, EXTERNAL, INTRINSIC, OPTIONAL, PARAMETER, POINTER, SAVE, TARGET
@@ -437,16 +401,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (TemplateClassDefinition,          "TemplateClassDefinition",    "TEMPLATE_CLASS_DEF_STMT" );
      NEW_TERMINAL_MACRO (TemplateFunctionDefinition,       "TemplateFunctionDefinition", "TEMPLATE_FUNCTION_DEF_STMT" );
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
-     NEW_NONTERMINAL_MACRO (ClassDeclaration,
-          TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration | JovialTableStatement,
-          "ClassDeclaration", "CLASS_DECL_STMT", true );
-#else
-     NEW_NONTERMINAL_MACRO (ClassDeclaration,
-          TemplateInstantiationDecl                            | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration | JovialTableStatement,
-          "ClassDeclaration", "CLASS_DECL_STMT", true );
-#endif
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration, "ClassDeclaration", "CLASS_DECL_STMT", true );
   // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
      NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
 
@@ -466,24 +422,14 @@ Grammar::setUpStatements ()
           "ScopeStatement","SCOPE_STMT", false);
 
   // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as AstNodeClass)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration, TemplateMemberFunctionDeclaration | TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
-#else
-     NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration,TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
-#endif
 
   // DQ (3/20/2007): ProgramHeaderStatement and ProcedureHeaderStatement are derived from FunctionDeclaration
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (FunctionDeclaration,
           TemplateFunctionDeclaration | MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement | ProcedureHeaderStatement | EntryStatement,
           "FunctionDeclaration","FUNC_DECL_STMT", true);
-#else
-     NEW_NONTERMINAL_MACRO (FunctionDeclaration,
-          MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement | ProcedureHeaderStatement | EntryStatement,
-          "FunctionDeclaration","FUNC_DECL_STMT", true);
-#endif
 
 #if 0
   // DQ (11/23/2008): Note that we could have F77 and F90 stype comments here, but we are not separating out comments as IR nodes.
@@ -567,8 +513,8 @@ Grammar::setUpStatements ()
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
-          JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          NonrealDecl                             | EmptyDeclaration        /*| ClassPropertyList |*/,
+          JovialCompoolStatement                  | NonrealDecl               | EmptyDeclaration
+        /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -1552,6 +1498,15 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("bool","is_constexpr","= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/25/2019): Record when a variable declaration is built associated with a variable that is used before it is declared.
+  // These variable declaration are marked as being built from a use (e.g. in a class declaration) and this allows
+  // them to be reused later when the variable declaration is seen.  See Cxx11_tests/test2019_121.C for an example
+  // of multiple variable declarations for the same varialbe (in different scopes).  And test2019_479.C for a case
+  // of a variable use triggering the varialbe declaration and the reuse of the variable declaration later when the 
+  // variable declaration is processed in the members of the class definition.
+     VariableDeclaration.setDataPrototype ( "bool", "builtFromUseOnly", "= false",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1783,31 +1738,12 @@ Grammar::setUpStatements ()
      TemplateDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
      TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-  // TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/22/2011): Fix the access functions to properly handle references to list data structure.
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-  //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-  //            CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
   // they belong, thus the parent information is not sufficent to define the relationship of nested classes 
@@ -1838,7 +1774,6 @@ Grammar::setUpStatements ()
   // TemplateClassDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
@@ -1849,51 +1784,7 @@ Grammar::setUpStatements ()
   // DQ (9/12/2012): Added template name support to distinguish from the other "name" which can have template specialization arguments.
      TemplateClassDeclaration.setDataPrototype ( "SgName", "templateName", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDeclaration::class_types", "class_type", "= SgTemplateClassDeclaration::e_class",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // TemplateClassDeclaration.setDataPrototype ( "SgClassDeclaration::class_types", "class_type", "= SgClassDeclaration::e_class",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (12/12/2011): SgTemplateType IR nodes were never used in the EDG 3.3 connection. They are only used in the newer EDG 4.3 connection.
-  // DQ (11/20/2011): OLD INCORRECT COMMENT: Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
-  // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
-  // TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     TemplateClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
-
-     TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // This is a redundant data member.
-  // TemplateClassDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     TemplateClassDeclaration.setDataPrototype ( "SgDeclarationStatement::template_specialization_enum", "specialization", "= SgDeclarationStatement::e_no_specialization",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     TemplateClassDeclaration.setDataPrototype ( "bool", "fixupScope", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     TemplateClassDeclaration.setDataPrototype ( "bool", "isUnNamed", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     TemplateClassDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-#error "DEAD CODE!"
-
-  // DQ (11/20/2011): This is not used (as I recall it is part of an older support for name qualification).
-     TemplateClassDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
-  // DQ (11/20/2011): This is not used (as I recall it is part of an older support for name qualification).
-     TemplateClassDeclaration.setDataPrototype("bool","global_qualification_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      TemplateClassDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
@@ -1909,7 +1800,6 @@ Grammar::setUpStatements ()
   // DQ (11/23/2011): Added matching function data members to TemplateFunctionDeclaration as in FunctionDeclaration
   // **************************************************************************************************************
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
@@ -1931,89 +1821,6 @@ Grammar::setUpStatements ()
      TemplateFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-#else
-
-#error "DEAD CODE!"
-
-     TemplateFunctionDeclaration.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     TemplateFunctionDeclaration.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
-     TemplateFunctionDeclaration.editSubstitute   ( "LIST_NAME", "args" );
-     TemplateFunctionDeclaration.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
-     TemplateFunctionDeclaration.editSubstitute   ( "LIST_FUNCTION_NAME", "arg" );
-
-     TemplateFunctionDeclaration.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
-
-  // TemplateFunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // This exists in the TemplateDeclaration base class.
-  // TemplateFunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionModifier", "functionModifier", "",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateFunctionDeclaration.setDataPrototype ( "SgSpecialFunctionModifier", "specialFunctionModifier", "",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/23/2011): We want this to be a SgTemplateFunctionDefinition, but to match the template support 
-  // in the build functions it must be SgFunctionDefinition to match the signature of SgFunctionDeclaration.
-  // TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // This is a redundant data member.
-  // TemplateFunctionDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (12/4/2007): Added support for GNU attributes
-     TemplateFunctionDeclaration.setDataPrototype ("std::string", "gnu_extension_section", "= \"\"",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateFunctionDeclaration.setDataPrototype ("std::string", "gnu_extension_alias", "= \"\"",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateFunctionDeclaration.setDataPrototype ("SgDeclarationStatement::gnu_extension_visability_attribute_enum", "gnu_extension_visability", "= SgDeclarationStatement::e_gnu_attribute_visability_unspecified",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-#if 0
-  // DQ (6/11/2015): These are supported in the function declaration node (I think).
-
-  // DQ (5/13/2011): Added support for name qualification.
-     TemplateFunctionDeclaration.setDataPrototype ("int", "name_qualification_length", "= 0",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/13/2011): Added information required for new name qualification support.
-     TemplateFunctionDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/13/2011): Added information required for new name qualification support.
-     TemplateFunctionDeclaration.setDataPrototype("bool","global_qualification_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/15/2011): Added support for name qualification.
-     TemplateFunctionDeclaration.setDataPrototype ("int", "name_qualification_length_for_return_type", "= 0",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/15/2011): Added information required for new name qualification support.
-     TemplateFunctionDeclaration.setDataPrototype("bool","type_elaboration_required_for_return_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/15/2011): Added information required for new name qualification support.
-     TemplateFunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-  // DQ (11/26/2011): Added to define uniform support in templated functions to build the SgFunctionDeclaration and SgTemplateFunctionDeclaration.
-  // driscoll6 (7/14/11) support for python decorators
-     TemplateFunctionDeclaration.setDataPrototype ("SgExprListExp*", "decoratorList", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      TemplateFunctionDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
@@ -2030,7 +1837,6 @@ Grammar::setUpStatements ()
   // DQ (11/23/2011): Added matching function data members to TemplateMemberFunctionDeclaration as in MemberFunctionDeclaration
   // **************************************************************************************************************************
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
@@ -2043,22 +1849,6 @@ Grammar::setUpStatements ()
   // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
      TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-#else
-
-#error "DEAD CODE!"
-
-     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
-     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
-     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_NAME", "ctor_initializer" );
-     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
-
-     TemplateMemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TemplateMemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      TemplateMemberFunctionDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
@@ -2074,17 +1864,12 @@ Grammar::setUpStatements ()
 
      TemplateVariableDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      TemplateVariableDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateVariableDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateVariableDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     TemplateVariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      TemplateVariableDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
@@ -2196,14 +1981,9 @@ Grammar::setUpStatements ()
   // the traversal so that we try to visit IR nodes only once if possible.
   // TemplateInstantiationDecl.setDataPrototype ( "SgTemplateDeclaration*",
   //      "templateDeclaration", "= NULL",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/22/2011): This is required by the new design to support SgTemplateClassDeclaration derived from SgClassDeclaration.
      TemplateInstantiationDecl.setDataPrototype ( "SgTemplateClassDeclaration*",
           "templateDeclaration", "= NULL",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     TemplateInstantiationDecl.setDataPrototype ( "SgTemplateDeclaration*",
-          "templateDeclaration", "= NULL",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (10/15/2004): Modified to include in traversal (didn't work, need to make the TemplateArgumentPtrList a new IR node in Sage III)
   // DQ (2/29/2004): Should this be changed to contain a list
@@ -2244,14 +2024,9 @@ Grammar::setUpStatements ()
   // copied were it wwas structyreally represented in the original AST.
   // TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/22/2011): This is required by the new design to support SgTemplateClassDeclaration derived from SgClassDeclaration.
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateFunctionDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
-                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
                                                   CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2289,14 +2064,9 @@ Grammar::setUpStatements ()
   // copied were it wwas structyreally represented in the original AST.
   // TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
   // DQ (12/22/2011): This is required by the new design to support SgTemplateClassDeclaration derived from SgClassDeclaration.
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateMemberFunctionDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
-                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
                                                   CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -3724,9 +3494,6 @@ Grammar::setUpStatements ()
      AssignedGotoStatement.setFunctionPrototype      ("HEADER_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
-  // Rasmussen (3/18/2019): Added new IR node for Jovial support
-     JovialTableStatement.setFunctionPrototype       ("HEADER_JOVIAL_TABLE_STATEMENT",  "../Grammar/Statement.code" );
-
   // DQ (7/21/2007): More IR nodes required for Fortran support
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3788,12 +3555,6 @@ Grammar::setUpStatements ()
   // DerivedTypeStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DerivedTypeStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Rasmussen (3/18/2019): Added new IR node for Jovial support
-     JovialTableStatement.setDataPrototype ( "SgExpression*", "table_entry_size", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JovialTableStatement.setDataPrototype ( "bool", "has_table_entry_size", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/11/2007): Added support for new IR nodes, but have not added the correct data members yet!
@@ -3918,20 +3679,6 @@ Grammar::setUpStatements ()
      C_StyleCommentStatement.setDataPrototype     ( "std::string"   , "dummyString2", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 #endif
-
-  // Rasmussen (03/26/2019): Added support for Jovial directives and define declarations.
-
-     JovialDirectiveStatement.setFunctionPrototype ( "HEADER_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
-     JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
-     JovialDirectiveStatement.setDataPrototype     ( "std::string", "content_string", "= \"\"",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_compool",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     JovialDefineDeclaration.setFunctionPrototype  ( "HEADER_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
-     JovialDefineDeclaration.setFunctionSource     ( "SOURCE_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
-     JovialDefineDeclaration.setDataPrototype      ( "std::string", "define_string", "= \"\"",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/23/2008): Added support for CPP directives as IR nodes.
      C_PreprocessorDirectiveStatement.setFunctionPrototype ( "HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -4407,9 +4154,6 @@ Grammar::setUpStatements ()
      ComputedGotoStatement.setFunctionSource      ("SOURCE_COMPUTED_GOTO_STATEMENT", "../Grammar/Statement.code" );
      AssignedGotoStatement.setFunctionSource      ("SOURCE_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
-
-  // Rasmussen (3/18/2019): Added new IR node for Jovial support
-     JovialTableStatement.setFunctionSource       ("SOURCE_JOVIAL_TABLE_STATEMENT", "../Grammar/Statement.code" );
 
      NamelistStatement.setFunctionSource          ("SOURCE_NAMELIST_STATEMENT", "../Grammar/Statement.code" );
      ImportStatement.setFunctionSource            ("SOURCE_IMPORT_STATEMENT", "../Grammar/Statement.code" );
