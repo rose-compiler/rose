@@ -17,9 +17,9 @@ struct CtxPropertyStateFactory : PropertyStateFactory
     typedef CallContext           context_t;
     typedef CtxLattice<context_t> context_lattice_t;
 
-    //~ explicit
-    CtxPropertyStateFactory(DFAnalysisBase& dfa, PropertyStateFactory& compFac)
-    : compAnalysis(dfa), compFactory(compFac)
+    explicit
+    CtxPropertyStateFactory(PropertyStateFactory& compFac)
+    : compFactory(compFac)
     {}
 
     context_lattice_t* create() ROSE_OVERRIDE
@@ -33,7 +33,6 @@ struct CtxPropertyStateFactory : PropertyStateFactory
     }
 
   private:
-    DFAnalysisBase&       compAnalysis;
     PropertyStateFactory& compFactory;
 };
 
@@ -47,20 +46,21 @@ struct CtxAnalysis : DFAnalysisBase
     typedef CallContext           context_t;
     typedef CtxLattice<context_t> context_lattice_t;
 
-    //
-    CtxAnalysis( DFAnalysisBase&       compAnalysis,
-                 DFTransferFunctions&  compTransfer,
-                 PropertyStateFactory& compFactory
-               )
-    : base(),
-      subAnalysis(compAnalysis),
-      ctxTransfer(compTransfer, *this),
-      ctxFactory(compAnalysis, compFactory)
+    CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer)
+    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this)
     {
-      _transferFunctions     = &ctxTransfer;
+      _transferFunctions = &ctxTransfer;
       _transferFunctions->setInitialElementFactory(&ctxFactory);
     }
 
+    CtxAnalysis(PropertyStateFactory& compFactory, DFTransferFunctions& compTransfer, const context_lattice_t& init)
+    : base(), ctxFactory(compFactory), ctxTransfer(compTransfer, *this, init)
+    {
+      _transferFunctions = &ctxTransfer;
+      _transferFunctions->setInitialElementFactory(&ctxFactory);
+    }
+
+/*
     void initializeExtremalValue(Lattice* element) ROSE_OVERRIDE
     {
       ROSE_ASSERT(element);
@@ -70,9 +70,10 @@ struct CtxAnalysis : DFAnalysisBase
       Lattice*           sub = lat.componentFactory().create();
 
       ROSE_ASSERT(lat.isBot());
-      subAnalysis.initializeExtremalValue(sub);
+      // subAnalysis.initializeExtremalValue(sub);
       lat[context_t()] = sub;
     }
+
 
     void initializeTransferFunctions() ROSE_OVERRIDE
     {
@@ -81,7 +82,6 @@ struct CtxAnalysis : DFAnalysisBase
       subAnalysis.initializeTransferFunctions();
     }
 
-/*
     Lattice* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
     {
       // subAnalysis.initializeGlobalVariables(root);
@@ -101,17 +101,30 @@ struct CtxAnalysis : DFAnalysisBase
     }
 */
 
-    //! retrieves the lattice from the call site
-    const CtxLattice<CallContext>&
-    getCallSiteLattice(Labeler& labeler, Label lblret)
+    /// retrieves the lattice from the call site
+    const CtxLattice<CallContext>& getCallSiteLattice(const SgCallExpression& exp)
     {
-      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret));
-
-      Label    lblcall = labeler.functionCallLabel(astNode(labeler, lblret));
+      Labeler& labeler = *getLabeler();
+      Label    lblcall = labeler.functionCallLabel(const_cast<SgCallExpression*>(&exp));
       Lattice* lattice = _analyzerDataPreInfo.at(lblcall.getId());
 
       return sg::deref(dynamic_cast<const CtxLattice<CallContext> *>(lattice));
     }
+
+    /// retrieves the lattice from the call site
+    const CtxLattice<CallContext>&
+    getCallSiteLattice(Label lblret)
+    {
+      Labeler&          labeler = *getLabeler();
+      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret));
+
+      SgCallExpression* call = SG_ASSERT_TYPE(SgCallExpression, astNode(labeler, lblret));
+      return getCallSiteLattice(*call);
+    }
+
+
+    CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
+    CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
 
   protected:
     CtxAttribute<CallContext>*
@@ -123,9 +136,8 @@ struct CtxAnalysis : DFAnalysisBase
     }
 
   private:
-    DFAnalysisBase&                    subAnalysis;
-    CtxTransfer<context_t>             ctxTransfer;
     CtxPropertyStateFactory<context_t> ctxFactory;
+    CtxTransfer<context_t>             ctxTransfer;
 };
 
 } // namespace CodeThorn
