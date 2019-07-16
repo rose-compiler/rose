@@ -571,10 +571,12 @@ SageInterface::whereAmI(SgNode* node)
   // Don't traverse past the SgFile level.
      while (parent != NULL && isSgFileList(parent) == NULL)
         {
-//          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+       // DQ (7/14/2019): These were commented out, but they are intended for debugging, so
+       // if someone does not need thi output then the function should not have been called.
+          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
 
           ROSE_ASSERT(parent->get_file_info() != NULL);
-//          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
 
           parent = parent->get_parent();
         }

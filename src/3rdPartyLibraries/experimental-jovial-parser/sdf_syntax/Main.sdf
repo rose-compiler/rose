@@ -1910,8 +1910,8 @@ context-free syntax
   IntrinsicFunctionCall       -> FunctionCall
   MachineSpecificFunctionCall -> FunctionCall
 
-  FunctionName                                                %% AMBIGUOUS with NamedConstant
-    OptActualParameterList    -> UserDefinedFunctionCall      {cons("UserDefinedFunctionCall"), reject}
+  FunctionName
+    ActualParameterList       -> UserDefinedFunctionCall      {cons("UserDefinedFunctionCall")}
 
   LocFunction                 -> IntrinsicFunctionCall
   NextFunction                -> IntrinsicFunctionCall

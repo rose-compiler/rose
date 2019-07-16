@@ -75,74 +75,101 @@ bool SpecFrontEnd::readJSONFile(string fileName){
   }
 
   ToolConfig* config = new ToolConfig(fileName);
-  vector<ToolAction>& actions = config->getActions();
+  map<std::string, ToolAction>& actions = config->getActions();
   for(auto act: actions){
-    string handle = act.getHandle();
-    string action = act.getActionType();
-    bool base = false;
+    string handle = act.second.getHandle();
+    string action = act.second.getActionType();
     bool deprecatedBase    = ((action == "replace_varbasetype") || (action == "change_varbasetype") || (action == "replace_basetype") || (action == "change_basetype") || (action == "list_basereplacements"));
+    bool base = (
+      action == CHANGE_VAR_BASE ||
+      action == CHANGE_EVERY_BASE ||
+      action == LIST_CHANGES_BASE ||
+      action == SET_CHANGES_BASE ||
+      action == CHANGE_SET_BASE ||
+      deprecatedBase
+    );
+
     bool deprecatedVar     = ((action == "replace_vartype") || (action == "replace_varbasetype") || (action == "change_vartype") || (action == "change_varbasetype"));
     bool deprecatedEvery   = ((action == "replace_type") || (action == "replace_basetype") || (action == "change_type") || (action == "change_basetype"));
     bool deprecatedList    = ((action == "list_replacements") || (action == "list_basereplacements"));
     bool deprecatedInclude = ((action == "introduce_include"));
-    if(action == CHANGE_VAR_BASE || action == CHANGE_EVERY_BASE || action == LIST_CHANGES_BASE || action == SET_CHANGES_BASE || action == CHANGE_SET_BASE || deprecatedBase) base = true;
-    if(action == CHANGE_VAR_TYPE || action == CHANGE_VAR_BASE || deprecatedVar){
-      if(handle != ""){
-        commandList.addHandleCommand(handle, act.getToType(), base, false);
-      }else{
-        commandList.addVarTypeCommand(act.getName(), act.getScope(), act.getToType(), base, false);
+
+    if (
+      action == CHANGE_VAR_TYPE ||
+      action == CHANGE_VAR_BASE ||
+      deprecatedVar
+    ) {
+      if (handle != "") {
+        commandList.addHandleCommand(handle, act.second.getToType(), base, false);
+      } else {
+        commandList.addVarTypeCommand(act.second.getName(), act.second.getScope(), act.second.getToType(), base, false);
       }
-    }
-    else if(action == CHANGE_EVERY_TYPE || action == CHANGE_EVERY_BASE || deprecatedEvery){
+    } else if (
+      action == CHANGE_EVERY_TYPE ||
+      action == CHANGE_EVERY_BASE ||
+      deprecatedEvery
+    ) {
       string functionName = "$global";
       std::vector<std::string> functionConstructSpecList = {""};
       std::vector<std::string> functionSpecSplit;
-      if(act.getScope() != "$global") {
-        functionSpecSplit=CppStdUtilities::splitByRegex(act.getScope(),":");
-        if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier "<<act.getScope()<<endl; exit(1);}
+      if(act.second.getScope() != "$global") {
+        functionSpecSplit=CppStdUtilities::splitByRegex(act.second.getScope(),":");
+        if(functionSpecSplit.size()!=2) { cerr<<"Error: wrong function specifier "<<act.second.getScope()<<endl; exit(1);}
         functionName=functionSpecSplit[0];
         functionConstructSpecList=CppStdUtilities::splitByRegex(functionSpecSplit[1],",");
       } 
       for(auto functionConstructSpec : functionConstructSpecList) {
-        commandList.addTypeCommand(functionConstructSpec, functionName, act.getToType(), act.getFromType(), base, false);
+        commandList.addTypeCommand(functionConstructSpec, functionName, act.second.getToType(), act.second.getFromType(), base, false);
       }
-    }
-    else if(action == CHANGE_SET_TYPE || action == CHANGE_SET_BASE){
-      commandList.addSetTypeCommand(act.getName(), act.getScope(), act.getToType(), act.getHandle(), base);
-    }
-    else if(action == TRANSFORM){
-      commandList.addTransformCommand(act.getScope(), act.getFromType(), act.getName());
-    }
-    else if(action == AD_INST){
-      commandList.addTransformCommand(act.getScope(), act.getFromType(), action);
-    } 
-    else if(action == LIST_CHANGES_TYPE || action == LIST_CHANGES_BASE || deprecatedList){
-      string scope = act.getScope();
-      commandList.addFileCommand(act.getName());
+    } else if (
+      action == CHANGE_SET_TYPE ||
+      action == CHANGE_SET_BASE
+    ) {
+      commandList.addSetTypeCommand(act.second.getName(), act.second.getScope(), act.second.getToType(), act.second.getHandle(), base);
+    } else if (
+      action == TRANSFORM
+    ) {
+      commandList.addTransformCommand(act.second.getScope(), act.second.getFromType(), act.second.getName());
+    } else if (
+      action == AD_INST
+    ) {
+      commandList.addTransformCommand(act.second.getScope(), act.second.getFromType(), action);
+    } else if (
+      action == LIST_CHANGES_TYPE ||
+      action == LIST_CHANGES_BASE ||
+      deprecatedList
+    ) {
+      string scope = act.second.getScope();
+      commandList.addFileCommand(act.second.getName());
       if(scope == "" || scope == "$global"){
         if(scope == "") scope = "*";
-        commandList.addTypeCommand("", "$global", act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("", "$global", act.second.getToType(), act.second.getFromType(), base, true);
       }
       if(scope != "$global"){
-        commandList.addTypeCommand("body", scope, act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("args", scope, act.getToType(), act.getFromType(), base, true);
-        commandList.addTypeCommand("ret", scope, act.getToType(), act.getFromType(), base, true);
+        commandList.addTypeCommand("body", scope, act.second.getToType(), act.second.getFromType(), base, true);
+        commandList.addTypeCommand("args", scope, act.second.getToType(), act.second.getFromType(), base, true);
+        commandList.addTypeCommand("ret", scope, act.second.getToType(), act.second.getFromType(), base, true);
       }
       commandList.addFileCommand("");
-    }
-    else if(action == SET_CHANGES_TYPE || action == SET_CHANGES_BASE){
-      commandList.addListSetsCommand(act.getFromType(), act.getToType(), base);
-    }
-    else if(action == ADD_INCLUDE || deprecatedInclude){
-      commandList.addIncludeCommand(act.getScope(), act.getName());
-    }
-    else if(action == REPLACE_PRAGMA){
-      commandList.addPragmaCommand(act.getFromType(), act.getToType());
-    }
-    else if(action == ADD_SPEC){
-      parse(act.getName());
-    }
-    else{
+    } else if (
+      action == SET_CHANGES_TYPE ||
+      action == SET_CHANGES_BASE
+    ) {
+      commandList.addListSetsCommand(act.second.getFromType(), act.second.getToType(), base);
+    } else if (
+      action == ADD_INCLUDE ||
+      deprecatedInclude
+    ) {
+      commandList.addIncludeCommand(act.second.getScope(), act.second.getName());
+    } else if (
+      action == REPLACE_PRAGMA
+    ) {
+      commandList.addPragmaCommand(act.second.getFromType(), act.second.getToType());
+    } else if (
+      action == ADD_SPEC
+    ) {
+      parse(act.second.getName());
+    } else {
       cout<<"Error: Unrecognized Action "<<action<<endl;
       return true;
     }
