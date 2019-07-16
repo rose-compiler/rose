@@ -1521,7 +1521,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     listOfNodesWithoutValidFileInfo.sort();
                     listOfNodesWithoutValidFileInfo.unique();
+#if 0
                     list<SgNode*>::iterator i = listOfNodesWithoutValidFileInfo.begin();
+#endif
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                          printf ("\n     List of %ld IR nodes in the AST with default information in their file info objects: \n",(long)listOfNodesWithoutValidFileInfo.size());
 
