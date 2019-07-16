@@ -1069,23 +1069,29 @@ HEADER_DECLARATION_STATEMENT_POSTDECLARATION_START
 // we put it in the POSTDECLARATION.
 
 #if 1
+// DQ (6/15/2019): Renamed function parameter to make code more clear for debugging.
+// Note: Rose_STL_Container<Elemtype*> will be either an STL vector of SgStatement* or SgDeclarationStatement*.
+
 // DQ (12/30/2009): This has been moved to the header file since it was a used in
 // several places and could not be supported in the source file now that we 
 // support the generation of smaller and more numerous files by ROSETTA.
+// template <class Elemtype> inline bool 
+// StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
+//                        SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
 template <class Elemtype> 
 inline bool
-StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
+StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& statement_or_declaration_container,  SgStatement *target, 
                           SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
    {
   // DQ (4/3/2012): Simple globally visible function to call (used for debugging in ROSE).
   // void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In StatementListInsertChild: l.size() = %" PRIuPTR " \n",l.size());
-     printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
-     printf ("In StatementListInsertChild: parent   = %p \n",parent);
-     printf ("In StatementListInsertChild: target   = %p \n",target);
-     printf ("In StatementListInsertChild: n        = %p \n",n);
+     printf ("In StatementListInsertChild: statement_or_declaration_container.size() = %" PRIuPTR " \n",statement_or_declaration_container.size());
+     printf ("In StatementListInsertChild: inFront                                   = %s \n",inFront ? "true" : "false");
+     printf ("In StatementListInsertChild: parent                                    = %p \n",parent);
+     printf ("In StatementListInsertChild: target                                    = %p \n",target);
+     printf ("In StatementListInsertChild: n                                         = %p \n",n);
 #endif
 
      ROSE_ASSERT(parent != NULL);
@@ -1096,24 +1102,24 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
   // This function's name is misleading and could be more clear.
   // ROSE_ASSERT(n != NULL);
 
-     bool targetLocated = find(l.begin(),l.end(),target) != l.end();
+     bool targetLocated = find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end();
      if (targetLocated == false)
         {
           printf ("Error: target statement = %p not found in list of statements provided. \n",target);
           ROSE_ASSERT(false);
         }
-  // ROSE_ASSERT (find(l.begin(),l.end(),target) != l.end());
+  // ROSE_ASSERT (find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end());
 
-     unsigned int size = l.size();
+     unsigned int size = statement_or_declaration_container.size();
      for (unsigned int p = 0; p < size; ++p)
         {
-       // printf ("Looping through the list of statements! p = %p \n",l[p]);
-          if ( l[p] == target )
+       // printf ("Looping through the list of statements! p = %p \n",statement_or_declaration_container[p]);
+          if ( statement_or_declaration_container[p] == target )
              {
                if (removeCurrent)
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
-                    l.erase(l.begin() + p);
+                    statement_or_declaration_container.erase(statement_or_declaration_container.begin() + p);
 #if 0
                     if (SgProject::get_verbose() >= 1)
                        {
@@ -1222,7 +1228,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                          ROSE_ASSERT(parentScope != NULL);
                       // n->set_scope(parentScope);
 
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(n));
+                         statement_or_declaration_container.insert(statement_or_declaration_container.begin() + p, static_cast<Elemtype*>(n));
 #if 0
                          if (SgProject::get_verbose() >= 1)
                             {
@@ -1261,7 +1267,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                          ROSE_ASSERT(parentScope != NULL);
                       // n->set_scope(parentScope);
 
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
+                         statement_or_declaration_container.insert(statement_or_declaration_container.begin() + p, static_cast<Elemtype*>(stmt));
 #if 0
                          if (SgProject::get_verbose() >= 1)
                             {
@@ -2932,10 +2938,8 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 
 // DQ (9/26/2012): We can't use these macros in the header files else they would require the rose_config.h 
 // file to be defined for all user source code (which we can't allow for portability reasons).
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
           virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
-// #endif
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
@@ -3099,26 +3103,11 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
-// #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
-
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-
-#if 0
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-#endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -3131,11 +3120,9 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
 
        // DQ (2/25/2018): This appears to be built as a function prototype by default, so I think we don't need this here (redundant).
        // DQ (2/25/2018): Added a specific version of the post_construction_initialization() function 
@@ -4257,18 +4244,40 @@ SgStatement::set_pragma()
 bool 
 SgStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractListFromBasicBlock)
    {
-     printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
+     printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",this->class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(target != NULL);
+     printf (" --- target = %p = %s \n",target,target->class_name().c_str());
+     ROSE_ASSERT(newstmt != NULL);
+     printf (" --- newstmt = %p = %s \n",newstmt,newstmt->class_name().c_str());
+     printf (" --- extractListFromBasicBlock = %s \n",extractListFromBasicBlock ? "true" : "false");
+
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
-     newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
+     newstmt->get_file_info()->display("called from $CLASSNAME::replace_child()");
      ROSE_ASSERT(false);
 
      return false;
    }
- 
+
 bool
 SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractListFromBasicBlock)
    {
-     printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
+     printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",this->class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(target != NULL);
+     printf (" --- target = %p = %s \n",target,target->class_name().c_str());
+     SgNode* target_parent = target->get_parent();
+     printf (" --- target_parent = %p \n",target_parent);
+     if (target_parent != NULL)
+        {
+          printf (" --- target_parent = %p = %s \n",target_parent,target_parent->class_name().c_str());
+        }
+     ROSE_ASSERT(newstmt != NULL);
+     printf (" --- newstmt = %p = %s \n",newstmt,newstmt->class_name().c_str());
+     printf (" --- inFront = %s extractListFromBasicBlock = %s \n",inFront ? "true" : "false",extractListFromBasicBlock ? "true" : "false");
+
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
      ROSE_ASSERT(false);
@@ -4284,7 +4293,20 @@ int
 SgStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
    {
      printf ("Error: base class of virtual SgStatement::replace_expression called by mistake for statement: %s \n",class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(original_expression != NULL);
+     printf (" --- original_expression = %p = %s \n",original_expression,original_expression->class_name().c_str());
+     ROSE_ASSERT(new_expression != NULL);
+     printf (" --- new_expression = %p = %s \n",new_expression,new_expression->class_name().c_str());
+
+     ROSE_ASSERT(original_expression->get_file_info() != NULL);
+     original_expression->get_file_info()->display("called from $CLASSNAME::replace_expression()");
+     ROSE_ASSERT(new_expression->get_file_info() != NULL);
+     new_expression->get_file_info()->display("called from $CLASSNAME::replace_expression()");
+
      ROSE_ASSERT(false);
+
      return 0;
    }
 
@@ -6607,6 +6629,11 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
   // We have only debugged this case so far
   // ROSE_ASSERT (atTop == true);
 
+#if 0
+     printf ("SgScopeStatement::insertStatementInScope(): newTransformationStatement = %p = %s atTop = %s \n",
+          newTransformationStatement,newTransformationStatement->class_name().c_str(),atTop ? "true" : "false");
+#endif
+
      bool inFront = (atTop == true);
      SgScopeStatement* currentScope = this;
      if (atTop == true)
@@ -6780,6 +6807,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(newTransformationStatement->get_parent() != NULL);
    }
+
 
 // DQ (7/17/2002) Added to support rewrite mechanism some scopes can only contain
 // SgDeclarationStmt while others can contain any kind of SgStatement
@@ -7972,13 +8000,8 @@ SOURCE_FUNCTION_TYPE_TABLE_STATEMENT_START
 
 // SgFunctionTypeTable::SgFunctionTypeTable( bool case_insensitive )
 SgFunctionTypeTable::SgFunctionTypeTable()
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated to avoid a filename of "" in the static filename tables.
    : SgStatement( Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode ())
-#else
-  // DQ (8/31/2006): Use an empty name for the fileInfo so that we can support testing for absolute paths for filenames.
-   : SgStatement( new Sg_File_Info ("",0,0) )
-#endif
    {
   // DQ (11/27/2010): Added support for case sensitive and insensitive matching (for C/C++ and Fortran, respectively).
   // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
@@ -7997,14 +8020,9 @@ SgFunctionTypeTable::SgFunctionTypeTable()
   // p_startOfConstruct->set_parent(this);
      this->get_startOfConstruct()->set_parent(this);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated.
      ROSE_ASSERT(get_endOfConstruct() == NULL);
      this->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
-#else
-  // DQ (11/3/2007): The internal test like to see that both the startOfConstruct and endOfConstruct are set!
-     this->set_endOfConstruct( new Sg_File_Info ("",0,0) );
-#endif
      this->get_endOfConstruct()->set_parent(this);
 
   // DQ (11/27/2010): In retrospect I think that should should always be false!
@@ -18172,7 +18190,6 @@ SgTemplateVariableDeclaration::post_construction_initialization()
    }
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_name, SgType *type, SgInitializer *initializer)
    : SgVariableDeclaration(var_name,type,initializer)
    {
@@ -18183,9 +18200,6 @@ SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_
   // printf ("Inside of SgTemplateVariableDeclaration constructor taking all parameters \n");
   // initializeData (NULL,var_name,type,initializer);
    }
-#endif
-
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18194,20 +18208,6 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
      return SgVariableDeclaration::compute_baseTypeDefiningDeclaration();
    }
-
-#else
-
-SgDeclarationStatement *
-SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-#endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -18225,7 +18225,6 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 #endif
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18237,23 +18236,6 @@ SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
   // return SgTypedefDeclaration::compute_baseTypeDefiningDeclaration();
      return NULL;
    }
-
-#else
-
-#error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
-
-SgDeclarationStatement *
-SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-
-#endif
 
 void
 SgTemplateTypedefDeclaration::post_construction_initialization()

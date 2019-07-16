@@ -139,7 +139,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
                    <<StringUtility::plural(wordSize, "bytes") <<"\n";
@@ -279,7 +279,7 @@ PeDescrambler::nameKeyAddresses(Partitioner &partitioner) {
 bool
 PeDescrambler::operator()(bool chain, const Args &args) {
     if (!checkedPreconditions_) {
-        if (args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() != 32)
+        if (args.partitioner.instructionProvider().instructionPointerRegister().nBits() != 32)
             throw std::runtime_error("PeDescrambler module only works on 32-bit specimens");
         checkedPreconditions_ = true;
     }

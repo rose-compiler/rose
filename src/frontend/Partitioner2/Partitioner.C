@@ -734,7 +734,7 @@ done:
         rose_addr_t finalInsnVa = retval->instructions().back()->get_address();
         if (config_.basicBlockFinalInstructionVa(startVa).orElse(finalInsnVa+1)==finalInsnVa) {
             retval->clearSuccessors();
-            size_t nBits = instructionProvider_->instructionPointerRegister().get_nbits();
+            size_t nBits = instructionProvider_->instructionPointerRegister().nBits();
             std::set<rose_addr_t> successorVas = config_.basicBlockSuccessorVas(startVa);
             BOOST_FOREACH (rose_addr_t successorVa, successorVas)
                 retval->insertSuccessor(successorVa, nBits);
@@ -985,9 +985,9 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
 #endif
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.get_nbits(), va))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
         if (!complete)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.get_nbits()))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.nBits()))));
     }
 
     // We don't want parallel edges in the CFG, so remove duplicates.
@@ -1089,15 +1089,15 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // Get initial and final stack pointer values
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         BaseSemantics::SValuePtr sp0 =
-            state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
+            state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
         BaseSemantics::SValuePtr spN =
-            stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.get_nbits()), sem.operators.get());
+            stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
 
         // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
         // value for the stack pointer.
         SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.get_nbits(), 0x8000); // arbitrary
+        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.nBits(), 0x8000); // arbitrary
         SymbolicExpr::Ptr spNExpr =
             Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
@@ -1156,9 +1156,9 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             if (!isInsnCall) {
                 const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
                 const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.get_nbits(), returnVa);
+                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.nBits(), returnVa);
                 BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.get_nbits());
+                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.nBits());
                 topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
                 BaseSemantics::SValuePtr z =
                     sem.operators->equalToZero(sem.operators->add(returnExpr,
@@ -1215,7 +1215,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                     // Did the callee return to somewhere other than caller's return address?
                     if (BaseSemantics::StatePtr calleeStateN = calleeBb->semantics().finalState()) {
                         BaseSemantics::SValuePtr ipN =
-                            calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.get_nbits()), sem.operators.get());
+                            calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.nBits()), sem.operators.get());
                         if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
                             allCalleesPopWithoutReturning = false;
                             break;
@@ -1296,21 +1296,21 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
                 isSgAsmIntegerValueExpression(x86insn->operand(0))) {
                 uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
                                   ->get_absoluteValue();
-                nbytes += REG_IP.get_nbits() / 8;       // size of return address
-                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), nbytes));
+                nbytes += REG_IP.nBits() / 8;       // size of return address
+                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), nbytes));
             }
         }
         if (!stackOffset) {
             // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
             // downward.
-            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), REG_IP.nBits()/8));
         }
         BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
         BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
 
         // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
         // pointer. If equal, then the basic block returns to the caller.
-        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.get_nbits());
+        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.nBits());
         retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
         BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
         BaseSemantics::SValuePtr isEqual =
@@ -2282,7 +2282,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
     BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
-    size_t wordSize = SP.get_nbits() >> 3;              // word size in bytes
+    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
 
     // Run the data flow
     try {
@@ -2305,14 +2305,14 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
             BaseSemantics::RegisterStateGenericPtr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                if (kv.value->is_number() && kv.value->get_width() <= SP.nBits())
                     retval.insert(kv.value->get_number());
             }
 
             BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
                 BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
                                                                  ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.get_nbits())
+                if (value->is_number() && value->get_width() <= SP.nBits())
                     retval.insert(value->get_number());
             }
 
@@ -2320,7 +2320,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
                 if (var.isAddress()) {
                     BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
                                                                      ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                    if (value->is_number() && value->get_width() <= SP.nBits())
                         retval.insert(value->get_number());
                 }
             }

@@ -15,6 +15,7 @@ public:
   void transferFunctionCallReturn(CodeThorn::Label lab, CodeThorn::VariableId lhsVarId, SgFunctionCallExp* callExp, CodeThorn::Lattice& element);
   void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, CodeThorn::Lattice& element);
   void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, CodeThorn::VariableIdSet& localVariablesInFunction, CodeThorn::Lattice& element);
+  void initializeExtremalValue(CodeThorn::Lattice& element);
 };
 
 #endif

@@ -53,7 +53,7 @@ testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database openDB [$@]" \
 		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f openDB.db
 
@@ -63,7 +63,7 @@ testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database defineTests [$@]" \
 		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f defineTests.db
 
@@ -73,7 +73,7 @@ testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database run1 [$@]" \
 		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f run1.db
 
@@ -84,7 +84,7 @@ testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database run10 [$@]" \
 		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f run10.db
 
@@ -95,7 +95,7 @@ testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database defineFail [$@]" \
 		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f defineFail.db
 
@@ -105,7 +105,7 @@ testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 	@$(RTH_RUN) \
 		TITLE="concolic database combined [$@]" \
 		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f combined.db
 
@@ -115,9 +115,37 @@ testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testExport [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
-		ANS="yes" \
+		ANS="no" \
 		$< $@
 	rm -f testExport.db
+
+
+TEST_TARGETS += testConnectNonExisting.passed
+
+testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnectNonExisting [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
+		ANS="no" \
+		$< $@
+
+TEST_TARGETS += testCreateOverwrites.passed
+
+testCreateOverwrites.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testCreateOverwrites [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testCreateOverwrites.crsh" \
+		ANS="no" \
+		$< $@
+
+TEST_TARGETS += testConnect.passed
+
+testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+	@$(RTH_RUN) \
+		TITLE="concolic database testConnect [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
+		ANS="no" \
+		$< $@
 
 
 

@@ -32,7 +32,9 @@ void AstPostProcessing (SgNode* node)
      ROSE_ASSERT(node != NULL);
 
 #if 0
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("Inside of AstPostProcessing(node = %p = %s) \n",node,node->class_name().c_str());
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
@@ -196,11 +198,6 @@ void postProcessingSupport (SgNode* node)
 #endif
 #endif
 
-  // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
-  // interface is being used (it should produce correct, complete ASTs on its
-  // own and do its own fixups)
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-
   // Only do AST post-processing for C/C++
   // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
   // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
@@ -363,6 +360,11 @@ void postProcessingSupport (SgNode* node)
              {
                printf ("Calling fixupTemplateInstantiations() \n");
              }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
        // **********************************************************************
        // DQ (4/29/2012): Added some of the template fixup support for EDG 4.3 work.
@@ -610,7 +612,6 @@ void postProcessingSupport (SgNode* node)
 #endif
           return;
         }
-#endif // ROSE_USE_NEW_EDG_INTERFACE -- do postprocessing unconditionally when the old EDG interface is used
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
   // TimingPerformance timer ("AST Fixup: time (sec) = ");

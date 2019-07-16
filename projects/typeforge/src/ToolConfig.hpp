@@ -11,6 +11,10 @@
 
 #define newVersion "1.0"
 
+class SgNode;
+class SgType;
+class SgScopeStatement;
+
 namespace Typeforge {
 
 using json = nlohmann::json;
@@ -43,6 +47,9 @@ public:
     std::string getToType();
     void setToType(std::string type);
 
+    std::vector<std::string> & getLabels();
+    std::vector<std::string> const & getLabels() const;
+
     double getError();
     void setError(double error);
 
@@ -57,6 +64,7 @@ private:
     std::string sourceInfo;
     std::string fromType;
     std::string toType;
+    std::vector<std::string> labels;
     double error;
     long assignments;
 };
@@ -67,16 +75,24 @@ void from_json(const json& j, ToolAction& a);
 class ToolConfig
 {
 public:
+    static ToolConfig * getGlobal();
+    static void writeGlobal();
+
+    static std::string input_file;
+    static std::string output_file;
+
+private:
+    static ToolConfig * global_config;
+
+public:
     ToolConfig();
     ToolConfig(std::string fileName);
 
-    void addAction(ToolAction action);
+    void addAction(SgNode * source, std::string action_tag, std::string var_name, SgNode * scope, SgType * fromType, SgType * toType);
+    void addLabel(SgNode * node, std::string const & label);
 
-    void addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
-    void addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType);
+//  void addLinks(SgNode * node, std::string label, const std::set<SgNode *> & targets);
 
-    void addReplaceVarType(std::string handle, std::string var_name, double error, long assignments);
-    void addReplaceVarBaseType(std::string handle, std::string var_name, double error, long assignments);
 
     std::vector<std::string>& getSourceFiles();
 
@@ -89,15 +105,16 @@ public:
     std::string getVersion();
     void setVersion(std::string v);
 
-    std::vector<ToolAction>& getActions();
+    std::map<std::string, ToolAction> & getActions();
 
     bool saveConfig(std::string fileName);
+
 private:
     std::vector<std::string> sourceFiles;
     std::string executable;
     std::string toolID;
     std::string version;
-    std::vector<ToolAction> actions;
+    std::map<std::string, ToolAction> actions;
 };
 
 void to_json(json &j, const ToolConfig &a);

@@ -3,8 +3,9 @@
 
 // ROSE headers
 #include <Diagnostics.h>
-#include <rose_isnan.h>
 #include <Partitioner2/BasicTypes.h>
+#include <rose_isnan.h>
+#include <rose_strtoull.h>
 #include <RoseException.h>
 #include <SqlDatabase.h>
 
@@ -22,11 +23,12 @@
 #include <boost/archive/xml_oarchive.hpp>
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+#include <boost/numeric/conversion/cast.hpp>
+#include <memory>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Synchronization.h>
-#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -118,7 +120,7 @@ typedef Sawyer::SharedPointer<LinuxExitStatus> LinuxExitStatusPtr;
  *
  *  The speciment represents the thing that is to be tested, but not how to test it.  In other words, a specimen might be an
  *  executable, but not any specifics about how to run the executable such as which arguments to give it. */
-class Specimen: public Sawyer::SharedObject {
+class Specimen: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Specimen> {
 public:
     /** Referenc-counting pointer to a @ref Specimen. */
     typedef Sawyer::SharedPointer<Specimen> Ptr;
@@ -180,7 +182,7 @@ public:
     /** Property: Specimen name.
      *
      *  This should be a printable name, such as a file name. It's used mostly for informational purposes such as
-     *  debugging. There is no requirement that names be unique or non-empty.
+     *  debugging. There is no requirement that names be unique or non-empty or contain only printable characters.
      *
      *  Thread safety: This methods is thread-safe.
      *
@@ -188,6 +190,13 @@ public:
     std::string name() const;                           // value return is intentional for thread safety
     void name(const std::string&);
     /** @} */
+
+    /** Returns printable name of specimen for diagnostic output.
+     *
+     *  Returns a string suitable for printing to a terminal, containing the word "specimen", the database ID if appropriate,
+     *  and the specimen name using C-style double-quoted string literal syntax if not empty.  The database ID is shown if a
+     *  non-null database is specified and this specimen exists in that database. */
+    std::string printableName(const DatabasePtr &db = DatabasePtr());
 
     /** Property: Specimen content.
      *
@@ -209,7 +218,7 @@ typedef std::pair<std::string, std::string> EnvValue;
 /** Information about how to run a specimen.
  *
  *  This object points to a specimen and also contains all the information necessary to run the specimen. */
-class TestCase: public Sawyer::SharedObject {
+class TestCase: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TestCase> {
 public:
     /** Reference counting pointer to a @ref TestCase. */
     typedef Sawyer::SharedPointer<TestCase> Ptr;
@@ -248,6 +257,13 @@ public:
     std::string name() const;                           // value return is intentional for thread safety
     void name(const std::string&);
     /** @} */
+
+    /** Returns printable name of test case for diagnostic output.
+     *
+     *  Returns a string suitable for printing to a terminal, containing the words "test case", the database ID if appropriate,
+     *  and the test case name using C-style double-quoted string literal syntax if not empty.  The database ID is shown if a
+     *  non-null database is specified and this test case exists in that database. */
+    std::string printableName(const DatabasePtr &db = DatabasePtr());
 
     /** Property: Specimen.
      *
@@ -373,6 +389,9 @@ class LinuxExecutor: public ConcreteExecutor {
 public:
     /** Reference counting pointer to a @ref LinuxExecutor. */
     typedef Sawyer::SharedPointer<LinuxExecutor> Ptr;
+
+    /** Holds an optional personality-value (i.g., indicating if address randomization should be turned off). */
+    typedef Sawyer::Optional<unsigned long> Persona;
 
     /** Base class for user-defined Linux concrete execution results. */
     class Result: public ConcreteExecutor::Result {
@@ -529,7 +548,7 @@ private:
  *  suite based on "/bin/grep" and another test suite running "/bin/cat".  Or it might have two test suites both running
  *  "/bin/grep" but one always using "--extended-regexp" and the other always using "--basic-regexp".  Or it might have two
  *  test suites both running "/bin/cat" but one measures exit status and the other measures code coverage. */
-class TestSuite: public Sawyer::SharedObject {
+class TestSuite: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TestSuite> {
 public:
     /** Reference counting pointer to @ref TestSuite. */
     typedef Sawyer::SharedPointer<TestSuite> Ptr;
@@ -556,11 +575,84 @@ public:
     std::string name() const;                           // value return is intentional for thread safety
     void name(const std::string&);
     /** @} */
+
+    /** Returns printable name of test suite for diagnostic output.
+     *
+     *  Returns a string suitable for printing to a terminal, containing the words "test suite", the database ID if
+     *  appropriate, and the test suite name using C-style double-quoted string literal syntax if not empty.  The database ID
+     *  is shown if a non-null database is specified and this test suite exists in that database. */
+    std::string printableName(const DatabasePtr &db = DatabasePtr());
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Databases
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// FIXME[Robb Matzke 2019-07-03]: All public classes and all their public members should be documented with doxygen comments.
+template <class Tag>
+class ObjectId: public Sawyer::Optional<int> {
+public:
+    typedef Sawyer::Optional<int> Super;
+    typedef int                   Value;                // FIXME[Robb Matzke 2019-07-03]: negative values are allowed?!
+    typedef Tag                   Object;               /**< Type of object to which this ID refers. */
+
+    ObjectId() {}
+
+    explicit
+    ObjectId(const Value& v)
+        : Super(v) {}
+
+    ObjectId(const ObjectId& rhs)
+        : Super(rhs) {}
+
+    /** Construct by parsing a string.
+     *
+     * This constructor creates an object ID by parsing it from a string. The string should consist of optional white space,
+     * followed by a non-negative integer in C-style syntax (an optional radix prefix "0x", "0b", or "0", followed by digits
+     * followed by optional additional white space. Syntactically incorrect input will result in throwing an @ref Exception. */
+    explicit ObjectId(const std::string &s) {
+        char *rest = NULL;
+        uint64_t id = rose_strtoull(s.c_str(), &rest, 0);
+        while (*rest && isspace(*rest)) ++rest;
+        if (*rest)
+            throw Exception("invalid syntax for object ID: \"" + StringUtility::cEscape(s) + "\"");
+        try {
+            *this = boost::numeric_cast<Value>(id);
+        } catch (const boost::bad_numeric_cast&) {
+            throw Exception("parsed object ID out of range: \"" + StringUtility::cEscape(s) + "\"");
+        }
+    }
+
+    ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs) {
+        this->Super::operator=(lhs);
+        return *this;
+    }
+
+    ObjectId<Tag>& operator=(const Value& v) {
+        this->Super::operator=(v);
+        return *this;
+    }
+
+    template<class _Tag>
+    friend
+    bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
+};
+
+template<class Tag>
+inline
+bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
+{
+    static const int noid = -1;
+
+    const int lhsid = lhs.orElse(noid);
+    const int rhsid = rhs.orElse(noid);
+
+    return lhsid < rhsid;
+}
+
+typedef ObjectId<TestSuite> TestSuiteId;                /**< Database ID for test suite objects. */
+typedef ObjectId<Specimen>  SpecimenId;                 /**< Database ID for specimen objects. */
+typedef ObjectId<TestCase>  TestCaseId;                 /**< Database ID for test case objects. */
 
 /** Database.
  *
@@ -574,60 +666,6 @@ public:
  *  Objects within a database have an ID number, and these ID numbers are type-specific. When an object is inserted (copied)
  *  into a database a new ID number is returned. The @ref Database object memoizes the association between object IDs and
  *  objects. */
-
-template <class Tag>
-struct ObjectId : Sawyer::Optional<int>
-{
-  typedef Sawyer::Optional<int> Super;
-  typedef int                   Value;
-
-  ObjectId() : Super() {}
-
-  explicit
-  ObjectId(const Value& v)
-  : Super(v)
-  {}
-
-  ObjectId(const ObjectId& rhs)
-  : Super(rhs)
-  {}
-
-  ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs)
-  {
-    this->Super::operator=(lhs);
-
-    return *this;
-  }
-
-  ObjectId<Tag>& operator=(const Value& v)
-  {
-    this->Super::operator=(v);
-
-    return *this;
-  }
-
-  template<class _Tag>
-  friend
-  bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
-};
-
-  template<class Tag>
-  inline
-  bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
-  {
-    static const int noid = -1;
-
-    const int lhsid = lhs.orElse(noid);
-    const int rhsid = rhs.orElse(noid);
-
-    return lhsid < rhsid;
-  }
-
-
-typedef ObjectId<TestSuite> TestSuiteId;
-typedef ObjectId<Specimen>  SpecimenId;
-typedef ObjectId<TestCase>  TestCaseId;
-
 class Database: public Sawyer::SharedObject, boost::noncopyable {
 public:
     /** Reference counting pointer to @ref Database. */
@@ -670,9 +708,12 @@ public:
      *  filesystem, but PostgreSQL databases need to be created through the DBMS. Throws an @ref Exception if the new database
      *  could not be created.
      *
-     *  Once the database is created, a new test suite with the given name is created. */
+     *  Once the database is created, a new test suite with the given name is created.
+     * @{
+     */
+    static Ptr create(const std::string &url);
     static Ptr create(const std::string &url, const std::string &testSuiteName);
-
+    /** @} */
     //------------------------------------------------------------------------------------------------------------------------
     // Test suites
     //------------------------------------------------------------------------------------------------------------------------
@@ -809,25 +850,25 @@ public:
      */
    void assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite);
 
-   /** returns @ref n testcases without concrete results.
+   /** Returns @p n test cases without concrete results.
     *
     * Thread safety: thread safe
     */
    std::vector<Database::TestCaseId> needConcreteTesting(size_t);
 
-   /** returns @ref n testcases without concolic results.
+   /** Returns @p n test cases without concolic results.
     *
     * Thread safety: thread safe
     */
    std::vector<Database::TestCaseId> needConcolicTesting(size_t);
 
-   /** updates a testcase and its results.
+   /** Updates a test case and its results.
     *
     * Thread safety: thread safe
     */
    void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
 
-   /** tests if there are more test cases that require testing.
+   /** Tests if there are more test cases that require testing.
     *
     * Thread safety: thread safe
     */

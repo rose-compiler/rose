@@ -53,17 +53,15 @@ namespace
 }
 
 
-typedef Sawyer::Optional<unsigned long> Persona;
-
 LinuxExecutor::Result::Result(int exitStatus)
     : ConcreteExecutor::Result(0.0), exitStatus_(exitStatus) {
     // FIXME[Robb Matzke 2019-04-15]: probably want a better ranking that 0.0, such as a ranking that depends on the exit status.
 }
 
 std::vector<std::string>
-conv_to_string_vector(std::vector<EnvValue> env)
+convToStringVector(std::vector<EnvValue> env)
 {
-  std::vector<std::string>  res;
+  std::vector<std::string> res;
 
   res.reserve(env.size());
   std::transform(env.begin(), env.end(), std::back_inserter(res), to_std_string);
@@ -72,7 +70,7 @@ conv_to_string_vector(std::vector<EnvValue> env)
 }
 
 #if 0 /* after boost 1.65 and C++11 */
-int execute_binary( const boost::filesystem::path& binary,
+int executeBinary( const boost::filesystem::path& binary,
                     const boost::filesystem::path& logout,
                     const boost::filesystem::path& logerr,
                     TestCase::Ptr tc
@@ -87,12 +85,29 @@ int execute_binary( const boost::filesystem::path& binary,
   return ec.value();
 }
 #else
-int execute_binary( const boost::filesystem::path& binary,
-                    const boost::filesystem::path& logout,
-                    const boost::filesystem::path& logerr,
-                    Persona persona,
-                    TestCase::Ptr tc
-                  )
+
+void redirectStream(const std::string& ofile, int num)
+{
+  if (ofile.size() == 0) return;
+
+  int outstream = open(ofile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+
+  if (outstream) dup2(outstream, num);
+}
+
+void setPersonality(LinuxExecutor::Persona persona)
+{
+  if (persona) personality(persona.get());
+}
+
+// Returns the exit status as documented by waitpid[2], which is not the same as the argument to the child's exit[3] call.
+int executeBinary( const std::string& binary,
+                   const std::string& logout,
+                   const std::string& logerr,
+                   LinuxExecutor::Persona persona,
+                   std::vector<std::string> arguments,
+                   std::vector<std::string> environment
+                 )
 {
   int pid = fork();
 
@@ -108,34 +123,47 @@ int execute_binary( const boost::filesystem::path& binary,
   }
 
   // child process
-  int outstream = open(logout.string().c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-  int errstream = open(logerr.string().c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+  redirectStream(logout, STDOUT_FILENO);
+  redirectStream(logerr, STDERR_FILENO);
+  setPersonality(persona);
 
-  dup2(outstream, STDOUT_FILENO);
-  dup2(errstream, STDERR_FILENO);
-
-  if (persona) personality(persona.get());
-
-  std::string              tc_binary    = binary.string();
-  std::vector<std::string> tc_arguments = tc->args(); // holds arguments
   std::vector<char*>       args;  // points to arguments
-
-  // set up arguments
-  args.reserve(2 /* program name + delimiter */ + tc_arguments.size());
-  args.push_back(const_cast<char*>(tc_binary.c_str()));
-  std::transform(tc_arguments.begin(), tc_arguments.end(), std::back_inserter(args), c_str_ptr);
-  args.push_back(NULL);
-
-  std::vector<std::string> env_strings = conv_to_string_vector(tc->env()); // holds environment strings
   std::vector<char*>       envv;        // points to environment strings
 
-  envv.reserve(1 /* delimiter */ + env_strings.size());
-  std::transform(env_strings.begin(), env_strings.end(), std::back_inserter(envv), c_str_ptr);
+  // set up arguments
+  args.reserve(2 /* program name + delimiter */ + arguments.size());
+  args.push_back(const_cast<char*>(binary.c_str()));
+  std::transform(arguments.begin(), arguments.end(), std::back_inserter(args), c_str_ptr);
+  args.push_back(NULL);
+
+  // set up env
+  envv.reserve(1 /* delimiter */ + environment.size());
+  std::transform(environment.begin(), environment.end(), std::back_inserter(envv), c_str_ptr);
   envv.push_back(NULL);
 
   // execute the program
-  /* const int err = */ execvpe(args[0], &args[0], &envv[0]);
-  exit(0);
+  const int errc = execvpe(args[0], &args[0], &envv[0]);
+  ASSERT_always_require(-1 == errc);
+
+  perror("exec failed");
+  exit(EXIT_FAILURE);
+}
+
+
+int executeBinary( const boost::filesystem::path& binary,
+                   const boost::filesystem::path& logout,
+                   const boost::filesystem::path& logerr,
+                   LinuxExecutor::Persona persona,
+                   TestCase::Ptr tc
+                 )
+{
+  return executeBinary( binary.native(),
+                        logout.native(),
+                        logerr.native(),
+                        persona,
+                        tc->args(),
+                        convToStringVector(tc->env())
+                      );
 }
 #endif /* after boost 1.65 and C++11 */
 
@@ -206,17 +234,13 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 
   storeBinaryFile(specimen->content(), binary);
 
-#if BOOST_VERSION >= 105300
-  bstfs::permissions(binary, bstfs::owner_exe);
-#else
-  ROSE_ASSERT(false);
-#endif /* BOOST_VERSION */
+  bstfs::permissions(binary, bstfs::add_perms | bstfs::owner_read | bstfs::owner_exe);
 
   Persona persona;
 
   if (!useAddressRandomization_) persona = Persona(ADDR_NO_RANDOMIZE);
 
-  const int   errcode = execute_binary(binary, logout, logerr, persona, tc);
+  const int   errcode = executeBinary(binary, logout, logerr, persona, tc);
   std::string outstr  = loadTextFile(logout);
   std::string errstr  = loadTextFile(logerr);
 

@@ -1,12 +1,41 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
 #include <Sawyer/CommandLine.h>
+#include <boost/filesystem.hpp>
 
 #include "configDB.h"
 
 #if TEST_CONCOLICDB
 
 namespace concolic = Rose::BinaryAnalysis::Concolic;
+
+// Get the components of the $PATH environment variable.
+static std::vector<boost::filesystem::path>
+executionPaths() {
+    if (const char *PATH = getenv("PATH")) {
+        std::vector<std::string> parts = Rose::StringUtility::split(":", PATH);
+        return std::vector<boost::filesystem::path>(parts.begin(), parts.end());
+    }
+    return std::vector<boost::filesystem::path>();
+}
+
+// Given a file name, try to find the file in one of the specified directories. But if an absolute name was specified, look
+// only for the specified name. If the name exists (as a file, directory, link, etc) then return its path, otherwise return
+// an empty path.
+static boost::filesystem::path
+findFile(const boost::filesystem::path &name, const std::vector<boost::filesystem::path> &directories) {
+    if (name.is_absolute()) {
+        return boost::filesystem::exists(name) ? name : boost::filesystem::path();
+    } else {
+        BOOST_FOREACH (const boost::filesystem::path &dir, directories) {
+            boost::filesystem::path fullName = dir / name;
+            if (boost::filesystem::exists(fullName))
+                return fullName;
+        }
+    }
+
+    return boost::filesystem::path();
+}
 
 /** creates a new Specimen object from the (binary) file @ref executableName
  *  and copies it over to the DB.
@@ -140,20 +169,27 @@ createTestCase( concolic::Database::Ptr db,
 /** creates a new TestCase object for specimen @ref specimenId,
  *  name @ref n, and command line argument @ref arg.
  *  The testcase object is also stored in the database @ref db.
+ *  A missing argument is distinct from a present argument whose value is an empty string.
  */
 concolic::TestCaseId
-createTestCase( concolic::Database::Ptr db,
-                concolic::SpecimenId specimenId,
-                std::string n,
-                std::string arg = ""
-              )
-{
-  std::vector<std::string> args;
-
-  if (arg.size() != 0) args.push_back(arg);
-  return createTestCase(db, specimenId, n, args);
+createTestCase(concolic::Database::Ptr db, concolic::SpecimenId specimenId, std::string n) {
+    return createTestCase(db, specimenId, n, std::vector<std::string>());
+}
+    
+concolic::TestCaseId
+createTestCase(concolic::Database::Ptr db, concolic::SpecimenId specimenId, std::string n,
+                const std::string &arg) {
+    return createTestCase(db, specimenId, n, std::vector<std::string>(1, arg));
 }
 
+concolic::TestCaseId
+createTestCase(concolic::Database::Ptr db, concolic::SpecimenId specimenId, std::string n,
+               const std::string &arg0, const std::string &arg1) {
+    std::vector<std::string> args;
+    args.push_back(arg0);
+    args.push_back(arg1);
+    return createTestCase(db, specimenId, n, args);
+}
 
 /** Makes testcase @ref tc a member of the testsuite @ref tc.
  *  The relationship is stored in the database @ref db.
@@ -252,25 +288,26 @@ std::string extract_filename(std::string url)
  */
 void testAll(std::string dburi)
 {
-  concolic::Database::Ptr db  = concolic::Database::instance(dburi);
+  concolic::Database::Ptr db  = concolic::Database::create(dburi);
 
   // add new file(s)
   concolic::SpecimenId              tst       = copyBinaryToDB(db, "testConcolicDB", concolic::Update::YES);
-  concolic::SpecimenId              ls_bin    = copyBinaryToDB(db, "/usr/bin/ls",        concolic::Update::YES);
+  concolic::SpecimenId              ls_bin    = copyBinaryToDB(db, findFile("ls", executionPaths()), concolic::Update::YES);
   if (!ls_bin) ls_bin = concolic::SpecimenId(2); // in case the db alreay existed
 
-  concolic::SpecimenId              ls2_bin   = copyBinaryToDB(db, "/usr/bin/ls",        concolic::Update::YES);
-  concolic::SpecimenId              grep_bin  = copyBinaryToDB(db, "/usr/bin/grep",      concolic::Update::NO );
-  concolic::SpecimenId              more_bin  = copyBinaryToDB(db, "/usr/bin/more",      concolic::Update::YES);
+  concolic::SpecimenId              ls2_bin   = copyBinaryToDB(db, findFile("ls", executionPaths()), concolic::Update::YES);
+  concolic::SpecimenId              grep_bin  = copyBinaryToDB(db, findFile("grep", executionPaths()), concolic::Update::NO );
+  concolic::SpecimenId              more_bin  = copyBinaryToDB(db, findFile("more", executionPaths()), concolic::Update::YES);
   if (!more_bin) more_bin = concolic::SpecimenId(3); // in case the db alreay existed
 
-  concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz",       concolic::Update::YES);
+  ASSERT_forbid(boost::filesystem::exists("/usr/bin/xyz"));
+  concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz", concolic::Update::YES);
 
   // define test cases
-  concolic::TestCaseId              ls_tst    = createTestCase(db, ls_bin, "ls");
+  concolic::TestCaseId              ls_tst    = createTestCase(db, ls_bin, "ls", "/");
   if (!ls_tst) ls_tst = concolic::TestCaseId(1); // in case the db already existed
 
-  concolic::TestCaseId              ls_la_tst = createTestCase(db, ls_bin, "ls -la", "-la");
+  concolic::TestCaseId              ls_la_tst = createTestCase(db, ls_bin, "ls -la", "-la", "/");
   if (!ls_la_tst) ls_la_tst = concolic::TestCaseId(2); // in case the db already existed
 
   concolic::TestCaseId              more_tst = createTestCase(db, ls_bin, "more", "y.txt");
@@ -311,7 +348,7 @@ void testAll(std::string dburi)
     std::cout << "dbtest: erased rba" << std::endl;
   }
 
-  db->saveRbaFile("/usr/bin/more", more_bin);
+  db->saveRbaFile(findFile("more", executionPaths()), more_bin);
   std::cout << "dbtest: stored rba" << std::endl;
 }
 

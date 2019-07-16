@@ -66,7 +66,7 @@ demangleFunctionNames(const Partitioner &p) {
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
-        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
         BOOST_FOREACH (rose_addr_t successorVa, args.partitioner.basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }

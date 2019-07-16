@@ -326,9 +326,6 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
           case V_SgQualifiedNameType:
        // case V_SgTemplateType:
-#ifndef ROSE_USE_NEW_EDG_INTERFACE 
-          case V_SgPartialFunctionType:
-#endif
           case V_SgPartialFunctionModifierType:
           // case V_SgUnknownMemberFunctionType:
              {
@@ -396,10 +393,8 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeVoid:
           case V_SgTypeWchar:
           case V_SgTypeCAFTeam:
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:
-#endif
        // TV (04/16/2018): Ignore non-real type for now
           case V_SgNonrealType:
           case V_SgAutoType:

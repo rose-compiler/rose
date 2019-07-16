@@ -1,4 +1,4 @@
-connect sqlite3://./testExport.db
+create sqlite3://./testExport.db
 
 exp :: e01
   @success
@@ -54,6 +54,6 @@ exp2 :: run 10 @failure
 
 exp :: run 10 @success
 
-echo ok.
+! echo ok.
 
 

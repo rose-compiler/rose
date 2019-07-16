@@ -2305,8 +2305,6 @@ SgType::handledUsingLocalTable(SgType* t)
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
 //  This function was designed to work with C/C++ and Fortran frontends to generate AST.
-//  For C/C++: a global variable curr_sg_scope is used 
-//  For Fortran: a stack is used 
 //  So code has to be conditionized with proper #ifdef ..#endf around the use of the variable or stack.
 //  
 //  Now we allow users to build types during AST transformation. This function will be called and scope can be NULL
@@ -2332,24 +2330,9 @@ SgType::getCurrentScope()
 
   // Liao 8/3/2010, pass fortran only test
 // #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-# ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // DQ (3/15/2012): Adding support for specification of scope for new C++ support (new EDG 4.x support).
-  // extern SgScopeStatement* SageBuilder::topScopeStack();
-
-  // This is what is used to test when we can use the AST Builder function (above).
-  // extern bool SageBuilder::emptyScopeStack();
-# else
-#  ifndef ROSE_USE_CLANG_FRONTEND
-  // DQ (7/23/2010): This is defined in the EDG/Sage connection.
-     extern SgScopeStatement* curr_sg_scope;
-#  endif
-# endif
-#endif
 
 // Liao 8/4/2010, support enable-only-c
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT || ROSE_USE_NEW_EDG_INTERFACE
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
@@ -2357,11 +2340,8 @@ SgType::getCurrentScope()
      extern bool emptyFortranStateStack();
 #endif
 
-  // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
-  // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
      if (SageBuilder::emptyScopeStack() == false)
         {
        // C/C++ AST being generated (using new connection to EDG 4.x).
@@ -2369,19 +2349,6 @@ SgType::getCurrentScope()
           ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
         }
        else
-#else
-#ifdef ROSE_USE_CLANG_FRONTEND
-  // TV (03/01/2012): Clang Frontend use the scope stack from SageBuilder...
-     SgScopeStatement * curr_sg_scope = SageBuilder::topScopeStack();
-#endif
-     if (curr_sg_scope != NULL)
-        {
-       // C/C++ AST being generated
-          currentScope = curr_sg_scope;
-          ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
-        }
-       else
-#endif
 #endif
         {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
