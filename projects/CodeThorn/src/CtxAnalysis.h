@@ -102,23 +102,32 @@ struct CtxAnalysis : DFAnalysisBase
 */
 
     /// retrieves the lattice from the call site
-    const CtxLattice<CallContext>& getCallSiteLattice(const SgCallExpression& exp)
+    const CtxLattice<CallContext>&
+    getCallSiteLattice(const SgStatement& stmt)
     {
-      Labeler& labeler = *getLabeler();
-      Label    lblcall = labeler.functionCallLabel(const_cast<SgCallExpression*>(&exp));
-      Lattice* lattice = _analyzerDataPreInfo.at(lblcall.getId());
+      SgStatement& call    = const_cast<SgStatement&>(stmt);
+      Labeler&     labeler = *getLabeler();
+      Label        lblcall = labeler.functionCallLabel(&call);
+      Lattice*     lattice = _analyzerDataPreInfo.at(lblcall.getId());
 
       return sg::deref(dynamic_cast<const CtxLattice<CallContext> *>(lattice));
     }
 
     /// retrieves the lattice from the call site
     const CtxLattice<CallContext>&
+    getCallSiteLattice(const SgCallExpression& exp)
+    {
+      return getCallSiteLattice(sg::ancestor<SgStatement>(exp));
+    }
+
+    /// retrieves the lattice from the call site
+    const CtxLattice<CallContext>&
     getCallSiteLattice(Label lblret)
     {
-      Labeler&          labeler = *getLabeler();
+      Labeler&     labeler = *getLabeler();
       ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret));
 
-      SgCallExpression* call = SG_ASSERT_TYPE(SgCallExpression, astNode(labeler, lblret));
+      SgStatement* call = SG_ASSERT_TYPE(SgStatement, astNode(labeler, lblret));
       return getCallSiteLattice(*call);
     }
 

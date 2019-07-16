@@ -123,7 +123,6 @@ void DFAnalysisBase::initializeExtremalValue(Lattice* element) {
 }
 
 Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
-  ROSE_ASSERT(root);
   ROSE_ASSERT(_transferFunctions);
   Lattice* elem=_transferFunctions->initializeGlobalVariables(root);
   _globalVariablesState=elem;
@@ -250,9 +249,12 @@ DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
 
 void
 DFAnalysisBase::run() {
+  ROSE_ASSERT(_globalVariablesState);
   // initialize work list with extremal labels
+  cerr << "INFO: " << &_extremalLabels << " " << _extremalLabels.size() << std::endl;
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
+    cerr << "INFO: extremal-label-id = " << i->getId() << std::endl;
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
     // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
     _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);

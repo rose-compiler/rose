@@ -515,6 +515,7 @@ namespace sg
     GEN_VISIT(SgNoexceptOp)
     GEN_VISIT(SgLambdaExp)
     GEN_VISIT(SgFunctionParameterRefExp)
+    GEN_VISIT(SgCompoundLiteralExp)
 
     // symbols
     GEN_VISIT(SgVariableSymbol)
@@ -1253,7 +1254,7 @@ namespace sg
     {
       ++cnt;
 
-#if !defined(NDEBUG)
+#if 0
       if (n == NULL)
       {
         std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;

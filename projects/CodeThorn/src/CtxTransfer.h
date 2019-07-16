@@ -72,8 +72,6 @@ namespace
   CtxLattice<CallContext>&
   mkCtxLattice(CtxAnalysis<CallContext>& ctxanalysis, const CtxLattice<CallContext>& init)
   {
-    ROSE_ASSERT(!init.isBot());
-
     return sg::deref(cloneLattice(ctxanalysis.factory(), init));
   }
 
@@ -156,6 +154,18 @@ struct CtxTransfer : DFTransferFunctions
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
       lat.combine(const_cast<ctx_lattice_t&>(initialElement));
+    }
+
+    /// overrides behavior from base function for cases where
+    ///   root = nullptr, indicating a nested analysis that must not
+    ///   reinitialize global state.
+    ctx_lattice_t* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
+    {
+      if (!root) return cloneLattice(analysis.factory(), initialElement);
+
+      Lattice* elem = base::initializeGlobalVariables(root);
+
+      return dynamic_cast<ctx_lattice_t*>(elem);
     }
 
 
