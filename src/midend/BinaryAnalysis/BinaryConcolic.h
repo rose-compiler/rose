@@ -445,10 +445,10 @@ public:
         void err(const std::string& output) { capturedErr_ = output; }
         /** @} */
 
-        /** returns a textual description of how the test exited. */
-        /* @{ */
-        std::string exitKind() const                 { return exitKind_; }
-        void exitKind(const std::string& desc) const { exitKind_ = desc; }
+        /** returns a textual description of how the test exited.
+         * @{ */
+        std::string exitKind() const            { return exitKind_; }
+        void exitKind(const std::string& desc)  { exitKind_ = desc; }
         /* @} */
     };
 

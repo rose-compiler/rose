@@ -212,16 +212,16 @@ std::string nameCompletionStatus(int processDisposition)
   } else if (WIFSIGNALED(processDisposition)) {
       res = "signal";
   } else if (WIFSTOPPED(processDisposition)) {
-      res = "stopped"
+      res = "stopped";
   } else if (WIFCONTINUED(processDisposition)) {
-      res = "resumed"
+      res = "resumed";
   }
 
   return res;
 }
 
 
-void LinuxExecutor::exitStatus(int x)
+void LinuxExecutor::Result::exitStatus(int x)
 {
   exitStatus_ = x;
   exitKind_   = nameCompletionStatus(x);
