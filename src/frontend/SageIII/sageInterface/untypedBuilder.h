@@ -38,6 +38,11 @@ SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name,
 //! Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildStructureDefinition();
 
+//! Build an untyped StructureDefinition. This version has a type name and body/scope (default is NULL).
+//! If the has_body flag is true and the scope is NULL, a scope will be created.
+//! Source position for the initializer and table description should be set after construction.
+SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_name, bool has_body=false, SgUntypedScope* scope=NULL);
+
 //! Build an untyped JovialTableDescription. This version has a body and thus a scope.
 //! Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildJovialTableDescription();

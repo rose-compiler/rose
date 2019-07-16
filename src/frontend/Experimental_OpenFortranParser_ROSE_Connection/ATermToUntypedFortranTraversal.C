@@ -1318,6 +1318,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
    std::string label, struct_name, end_stmt_name, end_stmt_label, eos;
 
    SgUntypedStructureDeclaration* struct_decl = NULL;
+   SgUntypedStructureDefinition*  struct_def  = NULL;
    SgUntypedExprListExpression*     attr_list = NULL;
    SgUntypedExprListExpression*      dim_info = NULL;
 
@@ -1351,13 +1352,15 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
 
          // if there is an end_stmt_name the names must match
          if (end_stmt_name.length() > 0) {
-            cout << "... traverse_DerivedTypeDef struct name is " << struct_name << " : end_stmt_name is " << end_stmt_name << endl;
             ROSE_ASSERT(struct_name == end_stmt_name);
          }
 
       } else return ATfalse;
 
-      SgUntypedScope* struct_scope = UntypedBuilder::buildScope<SgUntypedScope>(label);
+      struct_def = UntypedBuilder::buildStructureDefinition(struct_name, /*has_body*/true, /*scope*/NULL);
+      ROSE_ASSERT(struct_def);
+
+      SgUntypedScope* struct_scope = struct_def->get_scope();
       ROSE_ASSERT(struct_scope);
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
@@ -1367,7 +1370,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // This won't be used for Fortran
       dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
       ROSE_ASSERT(dim_info);
-      setSourcePositionUnknown(dim_info);
+      SageInterface::setSourcePosition(dim_info);
 
 // TODO
       std::cout << "...TODO... TypeParamNameList not implemented \n";
@@ -1399,10 +1402,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // t_private, can this be added to the attr_list?
       // t_type_bound
 
-// TODO - use new StructionDefinition for scope.
-#if 0
-      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, 0/*rank*/, struct_scope);
-#endif
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, /*rank*/0, struct_def);
       ROSE_ASSERT(struct_decl);
       setSourcePosition(struct_decl, term);
    }
@@ -1887,6 +1887,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
 
    // TODO: The builder should probably be based on the declared (or base) type
       *array_type = UntypedBuilder::buildArrayType(base_type->get_type_enum_id(),dim_info,rank);
+      cout << ".x. in ArraySpec type is " << *array_type << " : " << (*array_type)->class_name() << endl;
    }
    else {
       return ATfalse;

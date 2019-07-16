@@ -480,62 +480,51 @@ buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntype
 // Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildStructureDefinition()
 {
-   int expr_enum;
-   std::string label, type_name;
-   bool has_body = true;
-   bool has_type_name = false;
+   SgUntypedStructureDefinition* struct_def = buildStructureDefinition("", /*has_body*/true, /*scope*/NULL);
+   ROSE_ASSERT(struct_def);
 
-   SgUntypedStructureDefinition* table_desc = NULL;
+   ROSE_ASSERT(struct_def->get_has_body() == true);
+   ROSE_ASSERT(struct_def->get_scope() != NULL);
 
-   expr_enum = General_Language_Translation::e_struct_modifier_list;
-   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression(expr_enum);
-   ROSE_ASSERT(attr_list);
-   SageInterface::setSourcePosition(attr_list);
-
-   expr_enum = General_Language_Translation::e_struct_initializer;
-   SgUntypedExprListExpression* preset = new SgUntypedExprListExpression(expr_enum);
-   ROSE_ASSERT(preset);
-   SageInterface::setSourcePosition(preset);
-
-   SgUntypedScope* scope = UntypedBuilder::buildScope<SgUntypedScope>(label);
-
-   table_desc = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, preset, attr_list, scope);
-   ROSE_ASSERT(table_desc);
-   SageInterface::setSourcePosition(table_desc);
-
-   return table_desc;
+   return struct_def;
 }
 
 
-// Build an untyped StructureDefinition. This version has a type name and no body.
+// Build an untyped StructureDefinition. This version has a type name and body/scope (default is NULL).
+// If the has_body flag is true and the scope is NULL, a scope will be created.
 // Source position for the initializer and table description should be set after construction.
-SgUntypedStructureDefinition* buildStructureDefinition(std::string type_name)
+SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_name, bool has_body, SgUntypedScope* scope)
 {
    int expr_enum;
-   bool has_body = false;
    bool has_type_name = true;
+   SgUntypedStructureDefinition* struct_def = NULL;
 
-   SgUntypedScope* scope = NULL;
-   SgUntypedStructureDefinition* struct_desc = NULL;
+   if (type_name.length() == 0)
+      {
+         has_type_name = false;
+      }
+
+   if (has_body == true && scope == NULL)
+      {
+         scope = UntypedBuilder::buildScope<SgUntypedScope>();
+         ROSE_ASSERT(scope != NULL);
+      }
 
    expr_enum = General_Language_Translation::e_struct_modifier_list;
-   SgUntypedExprListExpression* attr_list = new SgUntypedExprListExpression(expr_enum);
-   ROSE_ASSERT(attr_list);
-   SageInterface::setSourcePosition(attr_list);
+   SgUntypedExprListExpression* modifier_list = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(modifier_list);
+   SageInterface::setSourcePosition(modifier_list);
 
    expr_enum = General_Language_Translation::e_struct_initializer;
-   SgUntypedExprListExpression* preset = new SgUntypedExprListExpression(expr_enum);
-   ROSE_ASSERT(preset);
-   SageInterface::setSourcePosition(preset);
+   SgUntypedExprListExpression* struct_init = new SgUntypedExprListExpression(expr_enum);
+   ROSE_ASSERT(struct_init);
+   SageInterface::setSourcePosition(struct_init);
 
-   struct_desc = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, preset, attr_list, scope);
-   ROSE_ASSERT(struct_desc);
-   SageInterface::setSourcePosition(struct_desc);
+   struct_def = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, struct_init, modifier_list, scope);
+   ROSE_ASSERT(struct_def);
+   SageInterface::setSourcePosition(struct_def);
 
-   std::cout << "-x- build StructureDefinition " << struct_desc << std::endl;
-   std::cout << "-x-       scope is " << struct_desc->get_scope() << std::endl;
-
-   return struct_desc;
+   return struct_def;
 }
 
 
@@ -551,7 +540,7 @@ SgUntypedStructureDefinition* buildJovialTableDescription()
 // Source position for the initializer and table description should be set after construction.
 SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name)
 {
-   return buildStructureDefinition(type_name);
+   return buildStructureDefinition(type_name, /*has_body*/false, /*scope*/NULL);
 }
 
 

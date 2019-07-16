@@ -380,7 +380,15 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
 SgType*
 UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
 {
+   int type_enum;
    SgType* sg_type = NULL;
+   SgUntypedType* ut_base_type = NULL;
+   SgUntypedExprListExpression* dim_info = NULL;
+   SgExprListExp* sg_dim_info = NULL;
+
+   bool is_table_type = false;
+   bool is_array_type = false;
+   bool has_dim_info  = false;
 
 #if 0
    cout << "--- convertUntypedType: ut_type is " << ut_type << " : " << ut_type->class_name() << endl;
@@ -428,13 +436,47 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
          delete ut_kind;
       }
 
-   int type_enum = ut_type->get_type_enum_id();
+// Jovial tables and Fortran arrays should be handled first and in a similar manner
+// as they both have a base type and dimension information.
+
+// This is the default but may be changed to the enum of the base type
+   type_enum = ut_type->get_type_enum_id();
+
+// Consider Jovial table instance
    if (type_enum == SgUntypedType::e_table)
       {
       // Use the base type to access the underlying type of the table
          SgUntypedTableType* ut_table_type = isSgUntypedTableType(ut_type);
-         SgUntypedType* ut_base_type = ut_table_type->get_base_type();
+         ROSE_ASSERT(ut_table_type != NULL);
+
+         dim_info = ut_table_type->get_dim_info();
+         ROSE_ASSERT(dim_info != NULL);
+
+         ut_base_type = ut_table_type->get_base_type();
+         ROSE_ASSERT(ut_base_type != NULL);
+
+         is_table_type = true;
+         has_dim_info  = true;
+
+         type_enum = ut_base_type->get_type_enum_id();
+      }
+
+// Consider Fortran array instance
+   else if (isSgUntypedArrayType(ut_type) != NULL)
+      {
+         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_type);
+         ROSE_ASSERT(ut_array_type != NULL);
+
+         dim_info = ut_array_type->get_dim_info();
+         ROSE_ASSERT(dim_info != NULL);
+
+      // The base type is the type (unlike Sage array nodes)
+         ut_base_type = ut_type;
          ROSE_ASSERT(ut_base_type);
+
+         is_array_type = true;
+         has_dim_info  = true;
+
          type_enum = ut_base_type->get_type_enum_id();
       }
 
@@ -503,18 +545,20 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
          kindExpression->set_parent(sg_type);
       }
 
-   if (ut_type->get_type_enum_id() == SgUntypedType::e_table)
+   if (has_dim_info)
       {
-         SgType* sg_base_type = sg_type;
+      // Must go south here!!!
+      // sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
+         sg_dim_info = convertSgUntypedExprListExpression(dim_info,/*delete*/false);
+         ROSE_ASSERT(sg_dim_info != NULL);
+      }
 
+   if (is_table_type)
+      {
          SgUntypedTableType* ut_table_type = isSgUntypedTableType(ut_type);
          ROSE_ASSERT(ut_table_type != NULL);
-         SgUntypedExprListExpression* dim_info = ut_table_type->get_dim_info();
-         ROSE_ASSERT(dim_info != NULL);
 
-// Must go south here!!!
-//       SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
-         SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(dim_info,/*delete*/false);
+         SgType* sg_base_type = sg_type;
 
          SgJovialTableType* sg_table_type = SageBuilder::buildJovialTableType(ut_table_type->get_type_name(), sg_base_type, sg_dim_info, scope);
          ROSE_ASSERT(sg_table_type != NULL);
@@ -534,7 +578,22 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
                ROSE_ASSERT(classDeclaration != NULL);
             }
 #endif
+      }
 
+   else if (is_array_type)
+      {
+         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_type);
+         ROSE_ASSERT(ut_array_type != NULL);
+
+         SgType* sg_base_type = sg_type;
+
+         SgArrayType* sg_array_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
+         ROSE_ASSERT(sg_array_type != NULL);
+
+         sg_type = sg_array_type;
+
+      // TODO: There needs to be a declaration but can't do it here because declaration context is probably calling
+      // this function
       }
 
    ROSE_ASSERT(sg_type != NULL);
@@ -548,8 +607,10 @@ UntypedConverter::convertSgUntypedType (SgUntypedInitializedName* ut_name, SgSco
    SgType* sg_type = NULL;
    SgUntypedType* ut_type = ut_name->get_type();
 
-#if 1
-   cout << "--- convertSgUntypedType: ut_type is " << ut_type << " name is " << ut_name->get_name() << " ut_name is " << ut_name << endl;
+#if 0
+   cout << "--- convertSgUntypedType: ut_type is " << ut_type << " : " << ut_type->class_name() << endl;
+   cout << "--- convertSgUntypedType: name is " << ut_name->get_name() << " ut_name is " << ut_name << endl;
+   cout << "--- convertSgUntypedType:  t_enum is " << ut_type->get_type_enum_id() << endl;
    cout << "--- convertSgUntypedType:  delete is " << delete_ut_type << endl;
 #endif
 
@@ -558,6 +619,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedInitializedName* ut_name, SgSco
       // TODO - create function to determine implicit type, for now pick real
       // Change the type enum to an explicit type based on the variable name
       // WARNING: Temporary HACK ATTACK
+         cout << "--- convertSgUntypedType: Fortran type is implicit, NEED to set type by name " << endl;
          ut_type->set_type_enum_id(SgUntypedType::e_float);
       }
 
@@ -585,7 +647,6 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
    cout << "--- convertSgUntypedInitializedName:    name is " << ut_name->get_name() << endl;
    cout << "--- convertSgUntypedInitializedName:  b_type is " << sg_base_type << ": " << sg_base_type->class_name() << endl;
    cout << "--- convertSgUntypedInitializedName: ut_type is " << ut_name->get_type() << ": "
-                                                              << ut_name->get_type()->class_name() << endl;
 #endif
 
 // TODO - This needs to be combined/eliminated with convertSgUntypedType
@@ -1015,8 +1076,6 @@ UntypedConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclar
 
    // TODO - suffix
       printf ("...TODO... convert suffix\n");
-
-printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name().c_str());
 
       buildProcedureSupport(ut_function, subroutineDeclaration, scope);
 
@@ -1756,9 +1815,16 @@ UntypedConverter::convertSgUntypedInitializedNameListDeclaration (SgUntypedIniti
               SgExprListExp* param_list = sg_decl->get_parameter_list();
               SgUntypedInitializedNamePtrList ut_init_names = ut_decl->get_variables()->get_name_list();
 
+
+              // Why not convert initialized name
+              // SgInitializedNamePtrList* convertSgUntypedInitializedNameList (SgUntypedInitializedNameList* ut_name_list, SgType* sg_base_type);
+
+
               BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_init_names)
                  {
                     SgName name = ut_init_name->get_name();
+
+                    cout << "-x- dimension statement name is " << name << endl;
 
                  // First assume easy case where variable hasn't been declared yet
                     SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
@@ -1768,18 +1834,19 @@ UntypedConverter::convertSgUntypedInitializedNameListDeclaration (SgUntypedIniti
                     SgType * base_type = SageBuilder::buildFortranImplicitType(name);
                     ROSE_ASSERT(base_type != NULL);
 
+#if 0
+                    SgUntypedType* ut_type = ut_init_name->get_type();
+                    ROSE_ASSERT(ut_type);
+                    cout << "--- DIMENSION:: name is " << name << std::endl;
+                    cout << "--- DIMENSION:: init name " << ut_init_name << endl;
+                    cout << "--- DIMENSION:: found ut_type " << ut_type << " : " << ut_type->class_name() << std::endl;
+                    cout << "--- DIMENSION:: found symbol " << variableSymbol << std::endl;
+#endif
+
                     SgType* sg_type = convertSgUntypedType(ut_init_name, scope, /*delete_ut_type*/true);
 
                  // A Fortran DIMENSION statement must be an array type
                     ROSE_ASSERT(isSgArrayType(sg_type));
-#if 0
-                    SgUntypedType* ut_type = ut_init_name->get_type();
-                    cout << "... DIMENSION:: name is " << name << std::endl;
-                    cout << "... DIMENSION:: init name " << ut_init_name << endl;
-                    cout << "... DIMENSION:: found symbol " << variableSymbol << std::endl;
-                    cout << "... DIMENSION:: found ut_type " << ut_type << std::endl;
-                    cout << "... DIMENSION:: sg_type " << sg_type << " " << sg_type->class_name() << endl;
-#endif
 
                     SgVariableDeclaration* sg_var_decl = SageBuilder::buildVariableDeclaration(name, sg_type, NULL, scope);
                     ROSE_ASSERT(sg_var_decl != NULL);
@@ -3324,8 +3391,6 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
 
-     cout << "-x- buildProcedureSupport: scope is " << scope << ": " << scope->class_name() << endl;
-
    // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
       SgUntypedExprListExpression* modifiers = ut_function->get_modifiers();
       convertFunctionPrefix(modifiers, procedureDeclaration);
@@ -3456,7 +3521,9 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
         {
            SgName arg_name = ut_name->get_name();
 
+#if 0
            cout << "In buildProcedureSupport(): building function parameter name " << arg_name << endl;
+#endif
 
         // The argument could be an alternate-return dummy argument
            SgInitializedName* initializedName = NULL;
