@@ -165,7 +165,7 @@ int main (int argc, char* argv[])
   if (args.isUserProvided("set-analysis")) {
     Analysis * set_analysis = new Analysis();
     analysis.push_back(set_analysis);
-    set_analysis->variableSetAnalysis(sageProject, nullptr);
+    set_analysis->variableSetAnalysis(sageProject, SageBuilder::buildDoubleType());
     set_analysis->toDot("set_analysis.dot"); // FIXME conditional
   }
   

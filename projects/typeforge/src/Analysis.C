@@ -229,7 +229,22 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
 
           SgVariableSymbol* varSym = varRef->get_symbol();
           assert(varSym != nullptr);
-	  key = varSym->get_declaration()->get_declaration();
+
+          SgInitializedName * iname = varSym->get_declaration();
+          assert(iname != nullptr);
+
+          if (!SgNodeHelper::node_can_be_changed(iname)) {
+            continue;
+          }
+
+          if (!SgNodeHelper::node_can_be_changed(iname)) {
+            continue;
+          }
+
+	  key = iname->get_declaration(); // get variable decl if exist
+          if (key == nullptr) {
+            key = iname; // case of a function parameter (or non-type template parameter)
+          }
         }
 
         if (SgFunctionRefExp * fref = isSgFunctionRefExp(lhs)) {
@@ -246,6 +261,11 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
 
           SgFunctionSymbol * fsym = fref->get_symbol();
           assert(fsym != nullptr);
+
+          if (!SgNodeHelper::node_can_be_changed(fsym->get_declaration())) {
+            continue;
+          }
+
 	  key = fsym->get_declaration();
         }
 
@@ -253,6 +273,10 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
       } else if (SgVariableDeclaration* varDec = isSgVariableDeclaration(n)) {
         SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
         if(!initName) {
+          continue;
+        }
+
+        if (!SgNodeHelper::node_can_be_changed(initName)) {
           continue;
         }
 
@@ -285,12 +309,14 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
         auto initIter = initNameList.begin();
         auto expIter  = expList.begin(); 
         while (initIter != initNameList.end()) {
-          if (isArrayPointerType((*initIter)->get_type())) {
-            if (sameType(matchType, (*initIter)->get_type())) {
+          if (
+              SgNodeHelper::node_can_be_changed(*initIter) &&
+              isArrayPointerType((*initIter)->get_type()) &&
+              sameType(matchType, (*initIter)->get_type())
+          ) {
               assert(stack.empty());
               linkVariables((*initIter), (*initIter)->get_type(), (*expIter));
               assert(stack.empty());
-            }
           }
           ++initIter;
           ++expIter;
@@ -299,6 +325,10 @@ int Analysis::variableSetAnalysis(SgProject* project, SgType * matchType) {
         exp = ret->get_expression();
         keyType = exp->get_type();
         if (!isArrayPointerType(keyType)) {
+          continue;
+        }
+
+        if (!SgNodeHelper::node_can_be_changed(funDef->get_declaration())) {
           continue;
         }
 
@@ -406,20 +436,80 @@ void Analysis::appendAnalysis(ToolConfig * tc) {
   }
 }
 
+#define DEBUG__getNodeLabel 0
+
 static std::string getNodeLabel(SgNode * n) {
-  std::ostringstream oss;
+#if DEBUG__getNodeLabel
+  std::cout << "getNodeLabel(" << n->class_name() << " * n = " << n << "):" << std::endl;
+#endif
+
+  std::string name;
+  SgScopeStatement * scope = nullptr;
   if (isSgVariableDeclaration(n)) {
     SgInitializedName * iname = SgNodeHelper::getInitializedNameOfVariableDeclaration((SgVariableDeclaration*)n);
     assert(iname != nullptr);
-    oss << iname->get_name();
+    name = iname->get_qualified_name().getString();
+    scope = iname->get_scope();
   } else if (isSgInitializedName(n)) {
-    oss << ((SgInitializedName*)    n)->get_name();
+    name = ((SgInitializedName*)n)->get_qualified_name().getString();
+    scope = ((SgInitializedName*)n)->get_scope();
   } else if (isSgFunctionDeclaration(n)) {
-    oss << ((SgFunctionDeclaration*)n)->get_name();
+    name = ((SgFunctionDeclaration*)n)->get_qualified_name().getString();
   } else {
+    std::ostringstream oss;
     oss << "(" << n->class_name() << "*)" << n;
+    name = oss.str();
   }
-  return oss.str();
+
+#if DEBUG__getNodeLabel
+  std::cout << "  name  = " << name << std::endl;
+  std::cout << "  scope = " << scope << " (" << ( scope ? scope->class_name() : "") << ")" << std::endl;
+#endif
+
+  while (scope != nullptr) {
+    SgFunctionDefinition * fdefn = isSgFunctionDefinition(scope);
+    SgClassDefinition * xdefn = isSgClassDefinition(scope);
+    SgNamespaceDefinitionStatement * ndefn = isSgNamespaceDefinitionStatement(scope);
+    SgGlobal * glob = isSgGlobal(scope);
+    if (fdefn != nullptr) {
+      name = fdefn->get_declaration()->get_qualified_name() + "::" + name;
+      scope = nullptr;
+    } else if (glob != nullptr) {
+//    name = scope + "::" + name;
+      scope = nullptr;
+    } else if (xdefn != nullptr) {
+//    name = xdefn->get_declaration()->get_qualified_name() + "::" + name;
+      scope = nullptr;
+    } else if (ndefn != nullptr) {
+//    name = ndefn->get_declaration()->get_qualified_name() + "::" + name;
+      scope = nullptr;
+    } else {
+      scope = scope->get_scope();
+    }
+
+#if DEBUG__getNodeLabel
+    if (scope != nullptr) {
+      std::cout << "  - scope = " << scope << " (" << scope->class_name() << ")" << std::endl;
+    }
+#endif
+  }
+
+  std::string cname = n->class_name();
+
+  std::string label;
+  SgLocatedNode * lnode = isSgLocatedNode(n);
+  if (lnode != nullptr) {
+    std::ostringstream oss;
+    oss << "\\n"  << lnode->get_endOfConstruct()->get_raw_line() << ":" << lnode->get_endOfConstruct()->get_raw_col();
+//  oss << "\\n" << lnode->get_endOfConstruct()->get_filenameString() << ":"  << lnode->get_endOfConstruct()->get_raw_line() << ":" << lnode->get_endOfConstruct()->get_raw_col();
+    label = oss.str();
+  }
+
+#if DEBUG__getNodeLabel
+  std::cout << "  label = " << label << std::endl;
+#endif
+
+  return name + "\\n" + cname + label;
 }
 
 void Analysis::toDot(std::string const & fileName) const {
@@ -427,6 +517,7 @@ void Analysis::toDot(std::string const & fileName) const {
   dotfile.open(fileName, ios::out | ios::trunc);
 
   dotfile << "digraph {" << std::endl;
+  dotfile << "  ranksep=5;" << std::endl;
 
   for (auto n: nodes) {
     assert(n != nullptr);
@@ -439,6 +530,7 @@ void Analysis::toDot(std::string const & fileName) const {
         auto t = target_stack.first;
         auto stacks = target_stack.second;
         dotfile << "    n_" << n << " -> n_" << t << "[label=\"";
+#if 0
         for (auto stack__: stacks) {
           for (auto s: stack__) {
             assert(s != nullptr);
@@ -446,6 +538,7 @@ void Analysis::toDot(std::string const & fileName) const {
           }
           dotfile << "";
         }
+#endif
         dotfile << "\"];" << std::endl;
       }
     }
