@@ -319,6 +319,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
      test2019_derived_type.f90 \
+     test2019_class_var_decl.f90 \
      test2019_write_io_control_spec.f90 \
      test2019_recursive_function.f90 \
      test2019_derived_type_name_conflict.f90 \

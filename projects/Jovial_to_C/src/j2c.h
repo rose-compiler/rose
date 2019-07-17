@@ -18,19 +18,24 @@
 namespace Jovial_to_C 
 {
     void translateFileName(SgFile*);
-    void translateProgramHeaderStatement(SgProgramHeaderStatement*);
-    void translateStopOrPauseStatement(SgStopOrPauseStatement*);
-    //    void updateVariableDeclaration(SgVariableDeclaration*);
-    //    void fixJovialSymbolTable(SgNode*, bool);
+    void translateJovialCompoolStatement (SgJovialCompoolStatement*);
+    void translateProgramHeaderStatement (SgProgramHeaderStatement*);
+    void translateJovialTableStatement   (SgJovialTableStatement*);
+    void translateStopOrPauseStatement   (SgStopOrPauseStatement*);
 
-    //    std::string emulateParameterValue(SgExpression*, SgExpression**);
+    void translateInitializedName(SgInitializedName*);
 
-    //    SgType* translateType(SgType*);
+ // SgType* translateType(SgType*);
     void translateDoubleVal(SgFloatVal*);
 
-    //    void replaceScalarArgs(std::vector<SgInitializedName*> & list, SgNode* root);
+    PreprocessingInfo* translateJovialDefineDeclaration (SgJovialDefineDeclaration*);
 
-    //    SgExpression* foldBinaryOp(SgExpression*);
+    PreprocessingInfo* attachIncludeDeclaration(SgLocatedNode* target, const std::string & content,
+                                                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
+
+ // void replaceScalarArgs(std::vector<SgInitializedName*> & list, SgNode* root);
+ // std::string emulateParameterValue(SgExpression*, SgExpression**);
+ // SgExpression* foldBinaryOp(SgExpression*);
 }
 
 #endif  //_JOVIAL_TO_C_H
