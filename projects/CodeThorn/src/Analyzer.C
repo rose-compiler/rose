@@ -2792,14 +2792,17 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       if(lhsPointerValue.isNullPtr()) {
         getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estate->label());
         // no state can follow, return estateList (may be empty)
+        // TODO: create error state here
         return estateList;
-      }
-      if(lhsPointerValue.isTop()) {
-        // special case. Expr evaluates to top (should be dereferenced)
+      } else if(lhsPointerValue.isTop()) {
+        getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estate->label());
+        // specific case a pointer expr evaluates to top. Dereference operation
+        // potentially modifies any memory location in the state.
         PState pstate2=*(estate->pstate());
+        // iterate over all elements of the state and merge with rhs value
+        pstate2.combineValueAtAllMemoryLocations((*i).result);
         estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
-      }
-      if(!(lhsPointerValue.isPtr())) {
+      } else if(!(lhsPointerValue.isPtr())) {
         if(lhsPointerValue.isUndefined() && getIgnoreUndefinedDereference()) {
           //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
           PState pstate2=*(estate->pstate());

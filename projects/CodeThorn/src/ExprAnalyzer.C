@@ -789,8 +789,15 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
             exit(1);
           }
         } else {
-          cerr<<"Error: pointer variable does not exist in PState."<<endl  ;
-          exit(1);
+          //cerr<<"Error: pointer variable does not exist in PState: "<<arrayVarId->toString()<<endl  ;
+          // TODO PRECISION 2
+          // variable may have been not written because abstraction is too coarse (subsummed in write to top)
+          // => reading from anywhere, returning any value
+          res.result=CodeThorn::Top();
+          recordPotentialNullPointerDereferenceLocation(estate.label());
+          recordPotentialOutOfBoundsAccessLocation(estate.label());
+          resultList.push_back(res);
+          return resultList;
         }
       } else {
         cerr<<"Error: unknown type of array or pointer."<<endl;
@@ -811,9 +818,16 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         return resultList;
       }
       if(pstate->varExists(arrayPtrValue)) {
+        // required for the following index computation (nothing to do here)
       } else {
         if(arrayPtrValue.isTop()) {
-          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction too coarse."<<endl;
+          //logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction too coarse."<<endl;
+          // TODO: PRECISION 1
+          res.result=CodeThorn::Top();
+          recordPotentialNullPointerDereferenceLocation(estate.label());
+          recordPotentialOutOfBoundsAccessLocation(estate.label());
+          resultList.push_back(res);
+          return resultList;
         } else {
           logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": ";
           logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state. array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
@@ -889,8 +903,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       }
     } else {
-      cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
-      cerr<<"expr: "<<arrayExpr->unparseToString()<<endl;
+      cerr<<"Error: array-access uses expr for denoting the array (not supported yet) ";
+      cerr<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
+      cerr<<"expr: "<<arrayExpr->unparseToString()<<" ";
       cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
       exit(1);
     }
