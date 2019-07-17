@@ -98,6 +98,8 @@ add_dependencies(sage3 rosetta_generated)
 
 ########### install files ###############
 
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
+
 install(
   FILES
     sage3.h sage3basic.h rose_attributes_list.h attachPreprocessingInfo.h
@@ -107,7 +109,6 @@ install(
     omp_lib_kinds.h omp_lib.h rosedll.h fileoffsetbits.h rosedefs.h
     sage3basic.hhh sage_support/cmdline.h sage_support/sage_support.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarSerialization.h
-    atermSupport.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_Grammar.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarMemoryPoolSupport.h
     ${CMAKE_CURRENT_BINARY_DIR}/Cxx_GrammarTreeTraversalAccessEnums.h
