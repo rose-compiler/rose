@@ -1662,8 +1662,9 @@ context-free syntax
     RelationalOperator
     RelationalFormula         -> RelationalExpression   {cons("RelationalExpression")}
 
-  GeneralFormula              -> RelationalFormula
   NumericFormula              -> RelationalFormula      {prefer}
+  GeneralFormula              -> RelationalFormula
+  BitFormula                  -> RelationalFormula
 
 %%FloatingFormula
 %%  RelationalOperator

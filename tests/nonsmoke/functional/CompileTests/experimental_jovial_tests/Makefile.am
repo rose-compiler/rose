@@ -67,6 +67,7 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
 JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2100.jov                    \
  rose-issue-2101.jov                    \
+ rose-issue-2102.jov                    \
  rose-issue-2104.jov                    \
  rose-issue-2105.jov                    \
  rose-issue-2106.jov                    \
