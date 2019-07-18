@@ -13352,7 +13352,6 @@ void c_action_label(Token_t * lbl)
             expression->set_parent(openStatement);
         }
 
-        openStatement->set_unit(expression);
         expression->set_parent(openStatement);
 
         astScopeStack.front()->append_statement(openStatement);
