@@ -2336,7 +2336,8 @@ SgType::getCurrentScope()
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
-  // This function is used to test for when we can use the fortran specific function above.
+  // These functions are used to test if we can use the fortran specific function above.
+     extern bool emptyFortranStateStack();
      extern bool emptyFortranScopeStack();
 #endif
 
@@ -2357,8 +2358,11 @@ SgType::getCurrentScope()
        // Changed check for emptyFortranStateStack to emptyFortranScopeStack. An error can occur
        // when the state stack is not empty but the scope stack is. This error was found when
        // running tests in the experimental_frontend_tests directory. Perhaps junk was left in the
-       // Fortran state stack from tests run earlier in the parent Fortran test directory [Rasmussen 2019-7-17].
-          if (emptyFortranScopeStack() == false)
+       // Fortran state stack from tests run earlier in the parent Fortran test directory.
+       // WARNING, the following relies on short circuiting and emptyFortranStateStack() == false
+       // must be checked before emptyFortranScopeStack() == false.
+       // Apparently Java is also examining the Fortran stack! [Rasmussen 2019-7-18].
+          if (SageInterface::is_Fortran_language() && emptyFortranStateStack() == false && emptyFortranScopeStack() == false)
              {
             // Fortran AST being generated
                currentScope = getTopOfScopeStack();
