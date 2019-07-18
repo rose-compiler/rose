@@ -1507,6 +1507,11 @@ void c_action_label(Token_t * lbl)
         DeclAttributes.setDeclAttrSpecs();
         DeclAttributes.reset();
 
+        // Pei-Hung (07/17/2019) Derived type can only be PUBLIC in the specification part of a module 
+        // SgAccessModifier has default as public and will cause issue in test2019_accessibility_attribute.f90
+        // Changed the access attribute to unknown to avoid unparser generating "PUBLIC" attribute
+        derivedTypeStatement->get_declarationModifier().get_accessModifier().setUndefined();
+        
      // DQ (3/4/2013): Also set the access privilege level for the nondefining declaration to be consistant (now enforced in new edg4x branch).
         ROSE_ASSERT(derivedTypeStatement->get_firstNondefiningDeclaration() != NULL);
         derivedTypeStatement->get_firstNondefiningDeclaration()->get_declarationModifier().get_accessModifier().set_modifier(derivedTypeStatement->get_declarationModifier().get_accessModifier().get_modifier());
