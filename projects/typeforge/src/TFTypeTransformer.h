@@ -106,7 +106,7 @@ class TFTypeTransformer {
   int getTotalNumChanges();
   void generateCsvTransformationStats(std::string fileName,int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
   void printTransformationStats(int numTypeReplace,TFTypeTransformer& tt, TFTransformation& tfTransformation);
-  void addToActionList(std::string varName, std::string scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
+  void addToActionList(std::string varName, SgNode * scope, SgType* fromType, SgType* toType, SgNode* handleNode, bool base);
   void setConfigFile(std::string fileName);
   void writeConfig();
   int  changeHandleType(SgNode* handle, SgType* newType, bool base, bool listing);

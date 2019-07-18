@@ -1,37 +1,61 @@
+
+#include "sage3basic.h"
+#include "SgNodeHelper.h"
+
 #include "ToolConfig.hpp"
+
+#include "TFHandles.h"
 #include <unistd.h>
 #include <iostream>
 
 #define MAXPATHLEN 255
+
+#define DEBUG__ToolConfig 0
+
+namespace SgNodeHelper {
+  //Returns the name of the file the specified node is part of
+  std::string getNodeFileName(SgNode* node){
+    SgNode* currentNode = node;
+    SgSourceFile* file = nullptr;
+    while(file == nullptr && currentNode != nullptr){
+      file = isSgSourceFile(currentNode);
+      currentNode = currentNode->get_parent();
+    }
+    if(currentNode == nullptr) return "";
+    else return file->getFileName();
+  }
+}
 
 namespace Typeforge {
 
 //////////////
 //ToolAction//
 //////////////
-ToolAction::ToolAction(std::string actionType) {
-    action = actionType;
-    name = "";
-    handle = "";
-    scope = "";
-    sourceInfo = "";
-    fromType = "";
-    toType = "";
-    error = -1;
-    assignments = -1;
-}
+ToolAction::ToolAction(std::string actionType) :
+  action(actionType),
+  name(""),
+  handle(""),
+  scope(""),
+  sourceInfo(""),
+  fromType(""),
+  toType(""),
+  labels(),
+  error(-1),
+  assignments(-1)
+{}
 
-ToolAction::ToolAction() {
-    action = "None";
-    name = "";
-    handle = "";
-    scope = "";
-    sourceInfo = "";
-    fromType = "";
-    toType = "";
-    error = -1;
-    assignments = -1;
-}
+ToolAction::ToolAction() :
+  action("None"),
+  name(""),
+  handle(""),
+  scope(""),
+  sourceInfo(""),
+  fromType(""),
+  toType(""),
+  labels(),
+  error(-1),
+  assignments(-1)
+{}
 
 //actionType
 std::string ToolAction::getActionType() {
@@ -94,6 +118,16 @@ std::string ToolAction::getToType() {
 
 void ToolAction::setToType(std::string type) {
     toType = type;
+}
+
+// labels
+
+std::vector<std::string> const & ToolAction::getLabels() const {
+  return labels;
+}
+
+std::vector<std::string> & ToolAction::getLabels() {
+  return labels;
 }
 
 //error
@@ -160,6 +194,8 @@ void to_json(json& j, const ToolAction& a) {
     if (temp.getAssignments() != -1) {
         j["dynamic_assignments"] = temp.getAssignments();
     }
+
+    j["labels"] = temp.getLabels();
 }
 
 void from_json(const json& j, ToolAction& a) {
@@ -223,12 +259,37 @@ void from_json(const json& j, ToolAction& a) {
     } catch(...) {
         a.setAssignments(-1);
     }
+
+    // TODO read labels
 }
 
 
 //////////////
 //ToolConfig//
 //////////////
+
+ToolConfig * ToolConfig::global_config{nullptr};
+std::string ToolConfig::input_file;
+std::string ToolConfig::output_file;
+
+ToolConfig * ToolConfig::getGlobal() {
+  if (ToolConfig::global_config == nullptr) {
+    try {
+      ToolConfig::global_config = new ToolConfig(ToolConfig::input_file);
+    } catch (...) {
+      ToolConfig::global_config = new ToolConfig();
+    }
+    ToolConfig::global_config->setToolID("typeforge");
+  }
+  return ToolConfig::global_config;
+}
+
+void ToolConfig::writeGlobal() {
+  if (ToolConfig::global_config != nullptr && !ToolConfig::output_file.empty()) {
+    ToolConfig::global_config->saveConfig(ToolConfig::output_file);
+  }
+}
+
 ToolConfig::ToolConfig() {
     this->version = newVersion;
     this->sourceFiles = {};
@@ -276,54 +337,75 @@ void ToolConfig::setVersion(std::string v) {
     this->version = v;
 }
 
-//actions
-void ToolConfig::addAction(ToolAction action) {
-    actions.push_back(action);
+#define DEBUG__ToolConfig__addAction DEBUG__ToolConfig
+
+void ToolConfig::addAction(SgNode * source, std::string action_tag, std::string var_name, SgNode * scope, SgType * fromType, SgType * toType) {
+
+    std::string handle = TFHandles::getAbstractHandle(source);
+    assert(handle != "");
+    assert(actions.find(handle) == actions.end());
+
+//  std::cout << "scope = " << scope << " ( " << (scope != nullptr ? scope->class_name() : "") << " )" << std::endl;
+    if (SgFunctionDefinition * fdefn = isSgFunctionDefinition(scope)) {
+      scope = fdefn->get_declaration();
+//    std::cout << "scope = " << scope << " ( " << (scope != nullptr ? scope->class_name() : "") << " )" << std::endl;
+    }
+
+    std::string scope_name;
+    if (scope == nullptr || isSgGlobal(scope)) {
+      scope_name = "global";
+    } else if (SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(scope)) {
+      scope_name = fdecl->get_name();
+      scope_name = "function:<" + scope_name + ">";
+    }
+    assert(scope_name != "");
+
+    std::string src_info  = SgNodeHelper::getNodeFileName(source);
+    std::string from_type = fromType->unparseToString();
+    std::string to_type   = toType->unparseToString();
+
+#if DEBUG__ToolConfig__addAction
+    std::cout << "ToolConfig::addAction" << std::endl;
+    std::cout << "  source     = " << source     << " ( " << (source != nullptr ? source->class_name() : "") << " )" << std::endl;
+    std::cout << "  action_tag = " << action_tag << std::endl;
+    std::cout << "  handle     = " << handle     << std::endl;
+    std::cout << "  var_name   = " << var_name   << std::endl;
+    std::cout << "  scope_name = " << scope_name << std::endl;
+    std::cout << "  src_info   = " << src_info   << std::endl;
+    std::cout << "  from_type  = " << from_type  << std::endl;
+    std::cout << "  to_type    = " << to_type    << std::endl;
+#endif
+
+    ToolAction action(action_tag);
+      action.setHandle(handle);
+      action.setName(var_name);
+      action.setScope(scope_name);
+      action.setSourceInfo(src_info);
+      action.setFromType(fromType->unparseToString());
+      action.setToType(toType->unparseToString());
+
+    actions.insert(std::pair<std::string, ToolAction>(handle, action));
 }
 
-//TF
-void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
-    ToolAction action("change_var_type");
-    action.setHandle(handle);
-    action.setName(var_name);
-    action.setScope(scope);
-    action.setSourceInfo(source);
-    action.setFromType(fromType);
-    action.setToType(toType);
-    addAction(action);
+#define DEBUG__ToolConfig__addLabel DEBUG__ToolConfig
+
+void ToolConfig::addLabel(SgNode * node, std::string const & label) {
+    std::string handle = TFHandles::getAbstractHandle(node);
+    assert(handle != "");
+
+#if DEBUG__ToolConfig__addLabel
+    std::cout << "ToolConfig::addLabel" << std::endl;
+    std::cout << "  node    = " << node << " ( " << (node != nullptr ? node->class_name() : "") << " )" << std::endl;
+    std::cout << "  handle  = " << handle << std::endl;
+    std::cout << "  label   = " << label  << std::endl;
+#endif
+
+    if (actions.find(handle) != actions.end()) {
+      actions[handle].getLabels().push_back(label);
+    }
 }
 
-void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, std::string scope, std::string source, std::string fromType, std::string toType) {
-    ToolAction action("change_var_basetype");
-    action.setHandle(handle);
-    action.setName(var_name);
-    action.setScope(scope);
-    action.setSourceInfo(source);
-    action.setFromType(fromType);
-    action.setToType(toType);
-    addAction(action);
-}
-
-//AdaPT
-void ToolConfig::addReplaceVarType(std::string handle, std::string var_name, double error, long assignments) {
-    ToolAction action("change_var_type");
-    action.setError(error);
-    action.setAssignments(assignments);
-    action.setHandle(handle);
-    action.setName(var_name);
-    addAction(action);
-}
-
-void ToolConfig::addReplaceVarBaseType(std::string handle, std::string var_name, double error, long assignments) {
-    ToolAction action("change_var_basetype");
-    action.setError(error);
-    action.setAssignments(assignments);
-    action.setHandle(handle);
-    action.setName(var_name);
-    addAction(action);
-}
-
-std::vector<ToolAction>& ToolConfig::getActions() {
+std::map<std::string, ToolAction> & ToolConfig::getActions() {
     return actions;
 }
 
@@ -356,9 +438,9 @@ void to_json(json &j, const ToolConfig &a) {
     j["tool_id"] = temp.getToolID();
     j["version"] = temp.getVersion();
 
-    std::vector<ToolAction>& actions = temp.getActions();
-    if(actions.size() > 0) {
-        j["actions"] = actions;
+    std::map<std::string, ToolAction> & actions = temp.getActions();
+    for (auto act: temp.getActions()) {
+        j["actions"].push_back(act.second);
     }
 }
 
@@ -388,12 +470,14 @@ void from_json(const json& j, ToolConfig& a) {
         a.setVersion(newVersion);
     }
 
-    std::vector<ToolAction>& actions = a.getActions();
+    std::map<std::string, ToolAction> & actions = a.getActions();
     try {
-        actions = j.at("actions").get<std::vector<ToolAction>>();
-    } catch (...) {
-        actions = {};
-    }
+        std::vector<ToolAction> action_vect = j.at("actions").get<std::vector<ToolAction>>();
+        for (auto act: action_vect) {
+          actions.insert(std::pair<std::string, ToolAction>(act.getHandle(), act));
+        }
+    } catch (...) {}
+
 }
 
 }

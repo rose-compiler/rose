@@ -326,7 +326,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
             // proto_i->set_firstNondefiningDeclaration (prototype);
                if (proto_i->get_firstNondefiningDeclaration() != NULL)
                   {
-#if 1
+#if 0
                     printf ("In insertGlobalPrototype(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
                     printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration() = %p = %s \n",proto_i->get_firstNondefiningDeclaration(),proto_i->get_firstNondefiningDeclaration()->class_name().c_str());
                     printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() = %p = %s \n",
@@ -458,7 +458,7 @@ static
 bool
 isProtPriv (const SgDeclarationStatement* decl)
    {
-#if 1
+#if 0
      printf ("Inside of isProtPriv(): decl = %p \n",decl);
 #endif
 
@@ -466,7 +466,7 @@ isProtPriv (const SgDeclarationStatement* decl)
         {
           SgDeclarationStatement* decl_tmp = const_cast<SgDeclarationStatement *> (decl);
 
-#if 1
+#if 0
           printf ("Inside of isProtPriv(): decl     = %p = %s \n",decl,decl->class_name().c_str());
           if (decl_tmp != NULL)
              {
@@ -483,16 +483,17 @@ isProtPriv (const SgDeclarationStatement* decl)
 
           ROSE_ASSERT (decl_tmp);
           const SgAccessModifier& decl_access_mod = decl_tmp->get_declarationModifier ().get_accessModifier ();
-#if 1
+#if 0
           printf ("decl_access_mod.isPrivate()   = %s \n",decl_access_mod.isPrivate()   ? "true" : "false");
           printf ("decl_access_mod.isProtected() = %s \n",decl_access_mod.isProtected() ? "true" : "false");
 #endif
           return decl && (decl_access_mod.isPrivate () || decl_access_mod.isProtected ());
         }
 
-#if 1
+#if 0
      printf ("Leaving isProtPriv(): return false \n");
 #endif
+
      return false;
    }
 
@@ -504,31 +505,31 @@ static
 SgClassDefinition *
 isProtPrivMember (SgVarRefExp* v)
    {
-#if 1
+#if 0
      printf ("Inside of isProtPrivMember(): v = %p \n",v);
 #endif
      if (v)
         {
           SgVariableSymbol* sym = v->get_symbol ();
-#if 1
+#if 0
           printf ("Inside of isProtPrivMember(): sym = %p \n",sym);
 #endif
           if (sym)
              {
                SgInitializedName* name = sym->get_declaration();
                ROSE_ASSERT (name != NULL);
-#if 1
+#if 0
                SgScopeStatement* scope = name->get_scope();
                ROSE_ASSERT(scope != NULL);
                printf ("Inside of isProtPrivMember(): scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
                SgClassDefinition* cl_def = isSgClassDefinition (name->get_scope ());
-#if 1
+#if 0
                printf ("Inside of isProtPrivMember(): cl_def = %p \n",cl_def);
 #endif
                if (cl_def != NULL)
                   {
-#if 1
+#if 0
                     printf ("Inside of isProtPrivMember(): cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
                     printf (" --- name = %p name->get_name() = %s \n",name,name->get_name().str());
                     printf (" --- name->get_declaration() = %p = %s \n",name->get_declaration(),name->get_declaration()->class_name().c_str());
@@ -537,21 +538,21 @@ isProtPrivMember (SgVarRefExp* v)
 
                if (cl_def && isProtPriv(name->get_declaration()))
                   {
-#if 1
+#if 0
                     printf ("Inside of isProtPrivMember(): isProtPriv() returned valid pointer: cl_def = %p \n",cl_def);
 #endif
                     return cl_def;
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("Inside of isProtPrivMember(): isProtPriv() returned FALSE \n");
 #endif
                   }
              }
         }
 
-#if 1
+#if 0
      printf ("Inside of isProtPrivMember(): returning NULL \n");
 #endif
 
@@ -622,7 +623,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
                    SgGlobal* scope,
                    FuncDeclList_t& friends)
 {
-#if 1
+#if 0
      printf ("In insertFriendDecls(): func = %p = %s name = %s \n",func,func->class_name().c_str(),func->get_name().str());
      printf ("In insertFriendDecls(): scope = %p = %s \n",scope,scope->class_name().c_str());
      printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
@@ -630,7 +631,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
 
   if (func && scope)
     {
-#if 1
+#if 0
       printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
 #endif
 
@@ -646,10 +647,10 @@ insertFriendDecls (SgFunctionDeclaration* func,
         {
           SgVarRefExp* v_ref = isSgVarRefExp (*v);
           SgClassDefinition* cl_def = isProtPrivMember (v_ref);
-#if 1
+#if 0
           printf ("In insertFriendDecls(): after isProtPrivMember(): cl_def = %p \n",cl_def);
 #endif
-#if 1
+#if 0
           SgVariableSymbol* variableSymbol = v_ref->get_symbol();
           ROSE_ASSERT(variableSymbol != NULL);
           SgInitializedName* initializedName = variableSymbol->get_declaration();
@@ -660,12 +661,12 @@ insertFriendDecls (SgFunctionDeclaration* func,
        // if (!cl_def)
           if (cl_def == NULL)
              {
-#if 1
+#if 0
                ROSE_ASSERT(v_ref->get_type() != NULL);
                printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
 #endif
                cl_def = isProtPrivType (v_ref->get_type());
-#if 1
+#if 0
                printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
 #endif
              }
@@ -673,7 +674,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
        // if (cl_def)
           if (cl_def != NULL)
              {
-#if 1
+#if 0
                printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
 #endif
                classes.insert (cl_def);
@@ -689,7 +690,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
           SgClassDefinition* cl_def = isProtPrivMember (f_ref);
           if (cl_def)
              {
-#if 1
+#if 0
                printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
 #endif
                classes.insert (cl_def);
@@ -702,7 +703,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
           ROSE_ASSERT (*c);
           SgFunctionDeclaration* friend_decl = insertFriendDecl (func, scope, *c);
           ROSE_ASSERT (friend_decl != NULL);
-#if 1
+#if 0
           printf ("+++++++++++++++++++ friend_decl = %p = %s \n",friend_decl,friend_decl->class_name().c_str());
 #endif
        // DQ (2/23/2009): Added assertion.
