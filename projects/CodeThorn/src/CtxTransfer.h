@@ -42,7 +42,7 @@ namespace
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(object, sg::deref(p.second));
+        component.transfer(object, SG_DEREF(p.second));
       }
 
     private:
@@ -72,14 +72,14 @@ namespace
   CtxLattice<CallContext>&
   mkCtxLattice(CtxAnalysis<CallContext>& ctxanalysis, const CtxLattice<CallContext>& init)
   {
-    return sg::deref(cloneLattice(ctxanalysis.factory(), init));
+    return SG_DEREF(cloneLattice(ctxanalysis.factory(), init));
   }
 
   template <class CallContext>
   CtxLattice<CallContext>&
   mkCtxLattice(CtxAnalysis<CallContext>& ctxanalysis, DFTransferFunctions& component)
   {
-    CtxLattice<CallContext>& elem = sg::deref(ctxanalysis.factory().create());
+    CtxLattice<CallContext>& elem = SG_DEREF(ctxanalysis.factory().create());
     Lattice*                 sub  = elem.componentFactory().create();
 
     ROSE_ASSERT(elem.isBot() && sub->isBot());
@@ -182,7 +182,7 @@ struct CtxTransfer : DFTransferFunctions
 template <class CallContext>
 void CtxTransfer<CallContext>::transfer(Label lbl, ctx_lattice_t& lat)
 {
-  CodeThorn::Labeler& labeler = sg::deref(getLabeler());
+  CodeThorn::Labeler& labeler = SG_DEREF(getLabeler());
 
   // we are only interested in Call context modifications
   if (!isCallContextModifier(labeler, lbl)) return;

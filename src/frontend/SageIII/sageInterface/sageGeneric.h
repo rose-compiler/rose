@@ -30,6 +30,7 @@
 #define SG_UNEXPECTED_NODE(X)       (sg::unexpected_node(X, __FILE__, __LINE__))
 #define SG_DEREF(X)                 (sg::deref(X, __FILE__, __LINE__))
 #define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
+#define SG_ERROR_IF(ERR, COND, MSG) (sg::report_error_if<ERR>(COND, MSG, __FILE__, __LINE__))
 
 namespace sg
 {
@@ -73,6 +74,7 @@ namespace sg
     return res;
   }
 
+  template <class ErrorClass = std::logic_error>
   static inline
   void report_error(std::string desc, const char* file = 0, size_t ln = 0)
   {
@@ -86,15 +88,16 @@ namespace sg
     }
 
     std::cerr << desc << std::endl;
-    throw std::logic_error(desc);
+    throw ErrorClass(desc);
   }
 
+  template <class ErrorClass = std::logic_error>
   static inline
   void report_error_if(bool iserror, const std::string& desc, const char* file = 0, size_t ln = 0)
   {
     if (!iserror) return;
 
-    report_error(desc, file, ln);
+    report_error<ErrorClass>(desc, file, ln);
   }
 
 /// \brief  dereferences an object (= checked dereference in debug mode)
