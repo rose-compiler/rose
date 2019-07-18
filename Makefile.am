@@ -179,8 +179,8 @@ rose-installer-rmc2: install-rose-library
 	$(top_srcdir)/scripts/mkinstaller --version
 	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
 		--create="$@"												\
-		--CC="$(CC) \
-		--CXX="$(CXX) \
+		--CC="$(CC)"												\
+		--CXX="$(CXX)"												\
 		--contact="http://rosecompiler.org"									\
 		--prjnam=ROSE												\
 		--prjver=$(PACKAGE_VERSION)										\
