@@ -72,11 +72,11 @@ private:
 void to_json(json &j, const ToolAction &a);
 void from_json(const json& j, ToolAction& a);
 
-class ToolConfig
-{
+class ToolConfig {
 public:
     static ToolConfig * getGlobal();
     static void writeGlobal();
+    static void appendAnalysis();
 
     static std::string filename;
 
@@ -87,11 +87,8 @@ public:
     ToolConfig();
     ToolConfig(std::string fileName);
 
-    void addAction(SgNode * source, std::string action_tag, std::string var_name, SgNode * scope, SgType * fromType, SgType * toType);
+    void addAction(SgNode * node, SgType * toType, std::string action_tag);
     void addLabel(SgNode * node, std::string const & label);
-
-//  void addLinks(SgNode * node, std::string label, const std::set<SgNode *> & targets);
-
 
     std::vector<std::string>& getSourceFiles();
 

@@ -4,13 +4,24 @@
 
 #include "ToolConfig.hpp"
 
-#include "TFHandles.h"
+#include "Analysis.h"
 #include <unistd.h>
 #include <iostream>
 
 #define MAXPATHLEN 255
 
-#define DEBUG__ToolConfig 0
+#ifndef DEBUG__ToolConfig
+#  define DEBUG__ToolConfig 1
+#endif
+#ifndef DEBUG__ToolConfig__statics
+#  define DEBUG__ToolConfig__statics    DEBUG__ToolConfig
+#endif
+#ifndef DEBUG__ToolConfig__addAction
+#  define DEBUG__ToolConfig__addAction DEBUG__ToolConfig
+#endif
+#ifndef DEBUG__ToolConfig__addLabel
+#  define DEBUG__ToolConfig__addLabel  DEBUG__ToolConfig
+#endif
 
 namespace SgNodeHelper {
   //Returns the name of the file the specified node is part of
@@ -271,10 +282,8 @@ void from_json(const json& j, ToolAction& a) {
 ToolConfig * ToolConfig::global_config{nullptr};
 std::string ToolConfig::filename;
 
-#define DEBUG_ToolConfig__static 0
-
 ToolConfig * ToolConfig::getGlobal() {
-#if DEBUG_ToolConfig__static
+#if DEBUG__ToolConfig__statics
   std::cout << "ToolConfig::getGlobal()" << std::endl;
   std::cout << "  ToolConfig::global_config = " << ToolConfig::global_config << std::endl;
   std::cout << "  ToolConfig::filename      = " << ToolConfig::filename << std::endl;
@@ -291,7 +300,7 @@ ToolConfig * ToolConfig::getGlobal() {
 }
 
 void ToolConfig::writeGlobal() {
-#if DEBUG_ToolConfig__static
+#if DEBUG__ToolConfig__statics
   std::cout << "ToolConfig::writeGlobal()" << std::endl;
   std::cout << "  ToolConfig::global_config = " << ToolConfig::global_config << std::endl;
   std::cout << "  ToolConfig::filename      = " << ToolConfig::filename << std::endl;
@@ -299,6 +308,22 @@ void ToolConfig::writeGlobal() {
   if (ToolConfig::global_config != nullptr && !ToolConfig::filename.empty()) {
     if (!ToolConfig::global_config->saveConfig(ToolConfig::filename)) {
       std::cerr << "[typeforge] Could not save the configuration!" << std::endl;
+    }
+  }
+}
+
+void ToolConfig::appendAnalysis() {
+  if (ToolConfig::global_config != nullptr) {
+    for (auto e: ::Typeforge::typechain.edges) {
+      auto key = e.first;
+      std::ostringstream oss; oss << "set-analysis:" << key;
+      std::string label = oss.str();
+      ToolConfig::global_config->addLabel(key, label);
+      for (auto target_stack: e.second) {
+        auto target = target_stack.first;
+//      auto stack = target_stack.second;
+        ToolConfig::global_config->addLabel(target, label);
+      }
     }
   }
 }
@@ -350,23 +375,45 @@ void ToolConfig::setVersion(std::string v) {
     this->version = v;
 }
 
-#define DEBUG__ToolConfig__addAction DEBUG__ToolConfig
+void ToolConfig::addAction(SgNode * node, SgType * toType, std::string action_tag) {
+    assert(node != nullptr);
+    assert(toType != nullptr);
 
-void ToolConfig::addAction(SgNode * source, std::string action_tag, std::string var_name, SgNode * scope, SgType * fromType, SgType * toType) {
+#if DEBUG__ToolConfig__addAction
+    std::cout << "ToolConfig::addAction" << std::endl;
+    std::cout << "  node       = " << node       << " ( " << node->class_name()   << " )" << std::endl;
+    std::cout << "  toType     = " << toType     << " ( " << toType->class_name() << " ) : " << toType->unparseToString() << std::endl;
+    std::cout << "  action_tag = " << action_tag << std::endl;
+#endif
 
-    std::string handle = TFHandles::getAbstractHandle(source);
+    std::string handle = ::Typeforge::typechain.getHandle(node);
     assert(handle != "");
+
+#if DEBUG__ToolConfig__addAction
+    std::cout << "  handle     = " << handle     << std::endl;
+#endif
 
     if (actions.find(handle) != actions.end()) {
       std::cerr << "[typeforge] WARNING: Cannot add another action for an existing handle! (" << handle << ")" << std::endl;
       return;
     }
 
-//  std::cout << "scope = " << scope << " ( " << (scope != nullptr ? scope->class_name() : "") << " )" << std::endl;
-    if (SgFunctionDefinition * fdefn = isSgFunctionDefinition(scope)) {
-      scope = fdefn->get_declaration();
-//    std::cout << "scope = " << scope << " ( " << (scope != nullptr ? scope->class_name() : "") << " )" << std::endl;
-    }
+    ToolAction action(action_tag);
+    action.setHandle(handle);
+    action.setName(handle);
+    action.setToType(toType->unparseToString());
+
+    SgType * fromType = ::Typeforge::typechain.getType(node);
+    assert(fromType != nullptr);
+#if DEBUG__ToolConfig__addAction
+    std::cout << "  fromType   = " << fromType   << " ( " << fromType->class_name() << " ) : " << fromType->unparseToString() << std::endl;
+#endif
+    action.setFromType(fromType->unparseToString());
+
+    SgNode * scope = ::Typeforge::typechain.getScope(node);
+#if DEBUG__ToolConfig__addAction
+    std::cout << "  scope      = " << scope      << " ( " << (scope    != nullptr ? scope->class_name()    : "") << " )" << std::endl;
+#endif
 
     std::string scope_name;
     if (scope == nullptr || isSgGlobal(scope)) {
@@ -376,35 +423,19 @@ void ToolConfig::addAction(SgNode * source, std::string action_tag, std::string 
       scope_name = "function:<" + scope_name + ">";
     }
     assert(scope_name != "");
-
-    std::string src_info  = SgNodeHelper::getNodeFileName(source);
-    std::string from_type = fromType->unparseToString();
-    std::string to_type   = toType->unparseToString();
-
 #if DEBUG__ToolConfig__addAction
-    std::cout << "ToolConfig::addAction" << std::endl;
-    std::cout << "  source     = " << source     << " ( " << (source != nullptr ? source->class_name() : "") << " )" << std::endl;
-    std::cout << "  action_tag = " << action_tag << std::endl;
-    std::cout << "  handle     = " << handle     << std::endl;
-    std::cout << "  var_name   = " << var_name   << std::endl;
     std::cout << "  scope_name = " << scope_name << std::endl;
-    std::cout << "  src_info   = " << src_info   << std::endl;
-    std::cout << "  from_type  = " << from_type  << std::endl;
-    std::cout << "  to_type    = " << to_type    << std::endl;
 #endif
+    action.setScope(scope_name);
 
-    ToolAction action(action_tag);
-      action.setHandle(handle);
-      action.setName(var_name);
-      action.setScope(scope_name);
-      action.setSourceInfo(src_info);
-      action.setFromType(fromType->unparseToString());
-      action.setToType(toType->unparseToString());
+    std::string src_info = ::Typeforge::typechain.getPosition(node);
+#if DEBUG__ToolConfig__addAction
+    std::cout << "  src_info   = " << src_info   << std::endl;
+#endif
+    action.setSourceInfo(src_info);
 
     actions.insert(std::pair<std::string, ToolAction>(handle, action));
 }
-
-#define DEBUG__ToolConfig__addLabel DEBUG__ToolConfig
 
 void ToolConfig::addLabel(SgNode * node, std::string const & label) {
 #if DEBUG__ToolConfig__addLabel
@@ -412,7 +443,7 @@ void ToolConfig::addLabel(SgNode * node, std::string const & label) {
     std::cout << "  node    = " << node << " ( " << (node != nullptr ? node->class_name() : "") << " )" << std::endl;
     std::cout << "  label   = " << label  << std::endl;
 #endif
-    std::string handle = TFHandles::getAbstractHandle(node);
+    std::string handle = ::Typeforge::typechain.getHandle(node);
     assert(handle != "");
 
 #if DEBUG__ToolConfig__addLabel
@@ -457,7 +488,6 @@ void to_json(json &j, const ToolConfig &a) {
     j["tool_id"] = temp.getToolID();
     j["version"] = temp.getVersion();
 
-    std::map<std::string, ToolAction> & actions = temp.getActions();
     for (auto act: temp.getActions()) {
         j["actions"].push_back(act.second);
     }

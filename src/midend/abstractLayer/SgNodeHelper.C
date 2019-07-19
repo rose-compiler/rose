@@ -362,9 +362,9 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalFields(SgProject* project
   * \author Markus Schordan
   * \date 2012.
  */
-list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* project) {
+list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgNode* node) {
   list<SgFunctionDefinition*> funDefList;
-  RoseAst ast(project);
+  RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
       funDefList.push_back(funDef);
@@ -378,9 +378,9 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* p
   * \author Tristan Vanderbruggen
   * \date 2019.
  */
-list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgProject* project) {
+list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgNode* node) {
   list<SgFunctionDeclaration*> funDeclList;
-  RoseAst ast(project);
+  RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgFunctionDeclaration * funDecl = isSgFunctionDeclaration(*i);
     if (funDecl == NULL) continue;

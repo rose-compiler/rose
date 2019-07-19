@@ -16,7 +16,7 @@ AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/typeforge/src -g -rdynam
 
 typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C SpecFrontEnd.C ToolConfig.cpp CommandList.C Analysis.C TFHandles.C
+typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C SpecFrontEnd.C ToolConfig.cpp CommandList.C Analysis.C
 
 CHECK_DEFAULT=check-typeforge
 
@@ -55,7 +55,7 @@ docs:
 	cd "$(srcdir)" && doxygen
 
 clean-local:
-	rm craft_initial.json 
+	rm -f craft_initial.json 
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg
