@@ -3619,6 +3619,9 @@ void c_action_label(Token_t * lbl)
             // inside the derived type
             initializedName = variableSymbol->get_declaration();
             ROSE_ASSERT(initializedName != NULL);
+
+            SgType* variableType = initializedName->get_type();
+
             if(isSgDerivedTypeStatement(currentScope->get_parent()) != NULL && currentScope != initializedName->get_scope())
             {
               initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);            
@@ -3640,6 +3643,17 @@ void c_action_label(Token_t * lbl)
                       functionType->set_return_type(entityType);
                       functionType->set_orig_return_type(entityType);
                   }
+                  // Pei-Hung (07/19/2019) In test2019_common_block_name.f90,
+                  // array dimension info can be specified in common block before the type specification
+                  if(isSgArrayType(variableType) != NULL)
+                  {
+                    SgArrayType* arrayType = isSgArrayType(variableType);
+                    ROSE_ASSERT(arrayType != NULL);
+                    SgExprListExp* dimInfo = arrayType->get_dim_info();
+                    entityAttr.setDimExp(dimInfo);
+                    entityAttr.setHasDimension(true);
+                    entityType = entityAttr.computeEntityType();
+                  }
                   initializedName->set_type(entityType);
               }
               else
@@ -3647,7 +3661,20 @@ void c_action_label(Token_t * lbl)
                   if (currentScope != initializedName->get_scope())
                   initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
                   else
-                  initializedName->set_type(entityType);
+                  {
+                    // Pei-Hung (07/19/2019) In test2019_common_block_name.f90,
+                    // array dimension info can be specified in common block before the type specification
+                    if(isSgArrayType(variableType) != NULL)
+                    {
+                      SgArrayType* arrayType = isSgArrayType(variableType);
+                      ROSE_ASSERT(arrayType != NULL);
+                      SgExprListExp* dimInfo = arrayType->get_dim_info();
+                      entityAttr.setDimExp(dimInfo);
+                      entityAttr.setHasDimension(true);
+                      entityType = entityAttr.computeEntityType();
+                    }
+                    initializedName->set_type(entityType);
+                  }
               }
             }
             ROSE_ASSERT(initializedName != NULL);
@@ -6561,6 +6588,29 @@ void c_action_label(Token_t * lbl)
             // Now verify that it is present.
             variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,astScopeStack.front());
             ROSE_ASSERT(variableSymbol != NULL);
+            // Pei-Hung (07/19/2019) implicit variable can also have array specification
+            // See example in test2019_common_block_name.f90.
+            if (hasShapeSpecList == true)
+            {
+             // There must be a scalar variable declaration for this symbol because we found a symbol and
+             // there is a shape-spec-list (the array specification can't be in two places).  Thus the
+             // common-block-object acts like a dimension statement and the variable type should be
+             // converted into an array type (see c_action_dimension_decl) [Rasmussen, 2019.06.19].
+
+             // We need to get the declaration of the variable
+                SgInitializedName* arrayVariable = variableSymbol->get_declaration();
+                ROSE_ASSERT(arrayVariable != NULL);
+
+                SgType* arrayVariableBaseType = arrayVariable->get_type();
+                ROSE_ASSERT(arrayVariableBaseType != NULL);
+
+                DeclAttributes.setBaseType(arrayVariableBaseType);
+                SgExprListExp* dimInfo = DeclAttributes.buildDimensionInfo();
+                ROSE_ASSERT(dimInfo);
+                SgArrayType* arrayVariableType = DeclAttributes.buildArrayType(dimInfo);
+                arrayVariable->set_type(arrayVariableType);
+                DeclAttributes.reset();
+            }
 
             constructedReference = new SgVarRefExp(variableSymbol);
             setSourcePosition(constructedReference, id);
