@@ -3613,29 +3613,42 @@ void c_action_label(Token_t * lbl)
         if (variableSymbol != NULL)
         {
             ROSE_ASSERT(entityType != NULL);
+
+            // Pei-Hung (07/19/2019) a variable inside a derived type can have the same name as other varible
+            // in other scope.  If the case happens, we should build the initialized name for the variable
+            // inside the derived type
             initializedName = variableSymbol->get_declaration();
             ROSE_ASSERT(initializedName != NULL);
-            ROSE_ASSERT(initializedName->get_scope() != NULL);
-            SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
-            if (functionDefinition != NULL)
+            if(isSgDerivedTypeStatement(currentScope->get_parent()) != NULL && currentScope != initializedName->get_scope())
             {
-                SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
-                ROSE_ASSERT(functionDeclaration != NULL);
-                if (functionDeclaration->get_result_name() == initializedName)
-                {
-                    SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
-                    ROSE_ASSERT(functionType != NULL);
-                    functionType->set_return_type(entityType);
-                    functionType->set_orig_return_type(entityType);
-                }
-                initializedName->set_type(entityType);
+              initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);            
             }
             else
             {
-                if (currentScope != initializedName->get_scope())
-                initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
-                else
-                initializedName->set_type(entityType);
+              initializedName = variableSymbol->get_declaration();
+              ROSE_ASSERT(initializedName != NULL);
+              ROSE_ASSERT(initializedName->get_scope() != NULL);
+              SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
+              if (functionDefinition != NULL)
+              {
+                  SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
+                  ROSE_ASSERT(functionDeclaration != NULL);
+                  if (functionDeclaration->get_result_name() == initializedName)
+                  {
+                      SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+                      ROSE_ASSERT(functionType != NULL);
+                      functionType->set_return_type(entityType);
+                      functionType->set_orig_return_type(entityType);
+                  }
+                  initializedName->set_type(entityType);
+              }
+              else
+              {
+                  if (currentScope != initializedName->get_scope())
+                  initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
+                  else
+                  initializedName->set_type(entityType);
+              }
             }
             ROSE_ASSERT(initializedName != NULL);
         }
