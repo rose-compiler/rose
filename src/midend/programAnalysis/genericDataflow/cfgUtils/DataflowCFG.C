@@ -131,6 +131,11 @@ top:
                        //!isSgExprStatement(cn.getNode()) &&
                        !(isSgInitializedName(cn.getNode()) && cn.getIndex()==0)) 
                        ||
+                    // The line breaks in the following logic clause make it look like the author intended to write
+                    //    (isSgIfStmt(..) && (cn.getIndex()==1 || cn.getIndex==2))
+                    // but it is being parsed as
+                    //    ((isSgIfStmt(..) && cn.getIndex()==1) || cn.getIndex==2)
+                    // [Robb Matzke 2019-07-10]
                        (isSgIfStmt(cn.getNode()) &&
                         cn.getIndex()==1 || cn.getIndex()==2);
         }

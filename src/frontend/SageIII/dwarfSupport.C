@@ -3048,7 +3048,10 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
      SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
      SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
+#if 0
+  // I think this is redundant code
      SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
+#endif
      
      returnAddress = lowerBound->second;
 
