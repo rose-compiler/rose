@@ -131,6 +131,12 @@ struct CtxAnalysis : DFAnalysisBase
       return getCallSiteLattice(*call);
     }
 
+    const CtxLattice<CallContext>&
+    getCtxLattice(Label lbl)
+    {
+      return dynamic_cast<CtxLattice<CallContext>&>(SG_DEREF(getPreInfo(lbl)));
+    }
+
 
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }

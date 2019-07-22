@@ -123,8 +123,15 @@ struct CtxTransfer : DFTransferFunctions
       ROSE_ASSERT(pal);
 
       base::setProgramAbstractionLayer(pal);
-
       component.setProgramAbstractionLayer(pal);
+    }
+
+    void setPointerAnalysis(PointerAnalysisInterface* pai) ROSE_OVERRIDE
+    {
+      ROSE_ASSERT(pai);
+
+      base::setPointerAnalysis(pai);
+      component.setPointerAnalysis(pai);
     }
 
     /// actual transfer function.
