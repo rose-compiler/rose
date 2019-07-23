@@ -74,7 +74,6 @@ namespace sg
     return res;
   }
 
-  template <class ErrorClass = std::logic_error>
   static inline
   void report_error(std::string desc, const char* file = 0, size_t ln = 0)
   {
@@ -88,16 +87,15 @@ namespace sg
     }
 
     std::cerr << desc << std::endl;
-    throw ErrorClass(desc);
+    throw std::logic_error(desc);
   }
 
-  template <class ErrorClass = std::logic_error>
   static inline
   void report_error_if(bool iserror, const std::string& desc, const char* file = 0, size_t ln = 0)
   {
     if (!iserror) return;
 
-    report_error<ErrorClass>(desc, file, ln);
+    report_error(desc, file, ln);
   }
 
 /// \brief  dereferences an object (= checked dereference in debug mode)
