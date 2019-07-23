@@ -1069,23 +1069,29 @@ HEADER_DECLARATION_STATEMENT_POSTDECLARATION_START
 // we put it in the POSTDECLARATION.
 
 #if 1
+// DQ (6/15/2019): Renamed function parameter to make code more clear for debugging.
+// Note: Rose_STL_Container<Elemtype*> will be either an STL vector of SgStatement* or SgDeclarationStatement*.
+
 // DQ (12/30/2009): This has been moved to the header file since it was a used in
 // several places and could not be supported in the source file now that we 
 // support the generation of smaller and more numerous files by ROSETTA.
+// template <class Elemtype> inline bool 
+// StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
+//                        SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
 template <class Elemtype> 
 inline bool
-StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,  SgStatement *target, 
+StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& statement_or_declaration_container,  SgStatement *target, 
                           SgStatement *n, bool inFront, bool extractFromBasicBlock, bool removeCurrent)
    {
   // DQ (4/3/2012): Simple globally visible function to call (used for debugging in ROSE).
   // void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In StatementListInsertChild: l.size() = %" PRIuPTR " \n",l.size());
-     printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
-     printf ("In StatementListInsertChild: parent   = %p \n",parent);
-     printf ("In StatementListInsertChild: target   = %p \n",target);
-     printf ("In StatementListInsertChild: n        = %p \n",n);
+     printf ("In StatementListInsertChild: statement_or_declaration_container.size() = %" PRIuPTR " \n",statement_or_declaration_container.size());
+     printf ("In StatementListInsertChild: inFront                                   = %s \n",inFront ? "true" : "false");
+     printf ("In StatementListInsertChild: parent                                    = %p \n",parent);
+     printf ("In StatementListInsertChild: target                                    = %p \n",target);
+     printf ("In StatementListInsertChild: n                                         = %p \n",n);
 #endif
 
      ROSE_ASSERT(parent != NULL);
@@ -1096,24 +1102,24 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
   // This function's name is misleading and could be more clear.
   // ROSE_ASSERT(n != NULL);
 
-     bool targetLocated = find(l.begin(),l.end(),target) != l.end();
+     bool targetLocated = find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end();
      if (targetLocated == false)
         {
           printf ("Error: target statement = %p not found in list of statements provided. \n",target);
           ROSE_ASSERT(false);
         }
-  // ROSE_ASSERT (find(l.begin(),l.end(),target) != l.end());
+  // ROSE_ASSERT (find(statement_or_declaration_container.begin(),statement_or_declaration_container.end(),target) != statement_or_declaration_container.end());
 
-     unsigned int size = l.size();
+     unsigned int size = statement_or_declaration_container.size();
      for (unsigned int p = 0; p < size; ++p)
         {
-       // printf ("Looping through the list of statements! p = %p \n",l[p]);
-          if ( l[p] == target )
+       // printf ("Looping through the list of statements! p = %p \n",statement_or_declaration_container[p]);
+          if ( statement_or_declaration_container[p] == target )
              {
                if (removeCurrent)
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
-                    l.erase(l.begin() + p);
+                    statement_or_declaration_container.erase(statement_or_declaration_container.begin() + p);
 #if 0
                     if (SgProject::get_verbose() >= 1)
                        {
@@ -1222,7 +1228,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                          ROSE_ASSERT(parentScope != NULL);
                       // n->set_scope(parentScope);
 
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(n));
+                         statement_or_declaration_container.insert(statement_or_declaration_container.begin() + p, static_cast<Elemtype*>(n));
 #if 0
                          if (SgProject::get_verbose() >= 1)
                             {
@@ -1261,7 +1267,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                          ROSE_ASSERT(parentScope != NULL);
                       // n->set_scope(parentScope);
 
-                         l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
+                         statement_or_declaration_container.insert(statement_or_declaration_container.begin() + p, static_cast<Elemtype*>(stmt));
 #if 0
                          if (SgProject::get_verbose() >= 1)
                             {
@@ -4190,18 +4196,40 @@ SgStatement::set_pragma()
 bool 
 SgStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractListFromBasicBlock)
    {
-     printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
+     printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",this->class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(target != NULL);
+     printf (" --- target = %p = %s \n",target,target->class_name().c_str());
+     ROSE_ASSERT(newstmt != NULL);
+     printf (" --- newstmt = %p = %s \n",newstmt,newstmt->class_name().c_str());
+     printf (" --- extractListFromBasicBlock = %s \n",extractListFromBasicBlock ? "true" : "false");
+
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
-     newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
+     newstmt->get_file_info()->display("called from $CLASSNAME::replace_child()");
      ROSE_ASSERT(false);
 
      return false;
    }
- 
+
 bool
 SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractListFromBasicBlock)
    {
-     printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
+     printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",this->class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(target != NULL);
+     printf (" --- target = %p = %s \n",target,target->class_name().c_str());
+     SgNode* target_parent = target->get_parent();
+     printf (" --- target_parent = %p \n",target_parent);
+     if (target_parent != NULL)
+        {
+          printf (" --- target_parent = %p = %s \n",target_parent,target_parent->class_name().c_str());
+        }
+     ROSE_ASSERT(newstmt != NULL);
+     printf (" --- newstmt = %p = %s \n",newstmt,newstmt->class_name().c_str());
+     printf (" --- inFront = %s extractListFromBasicBlock = %s \n",inFront ? "true" : "false",extractListFromBasicBlock ? "true" : "false");
+
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
      ROSE_ASSERT(false);
@@ -4217,7 +4245,20 @@ int
 SgStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
    {
      printf ("Error: base class of virtual SgStatement::replace_expression called by mistake for statement: %s \n",class_name().c_str());
+
+  // DQ (6/15/2019): Output more information when this error occures.
+     ROSE_ASSERT(original_expression != NULL);
+     printf (" --- original_expression = %p = %s \n",original_expression,original_expression->class_name().c_str());
+     ROSE_ASSERT(new_expression != NULL);
+     printf (" --- new_expression = %p = %s \n",new_expression,new_expression->class_name().c_str());
+
+     ROSE_ASSERT(original_expression->get_file_info() != NULL);
+     original_expression->get_file_info()->display("called from $CLASSNAME::replace_expression()");
+     ROSE_ASSERT(new_expression->get_file_info() != NULL);
+     new_expression->get_file_info()->display("called from $CLASSNAME::replace_expression()");
+
      ROSE_ASSERT(false);
+
      return 0;
    }
 
@@ -6540,6 +6581,11 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
   // We have only debugged this case so far
   // ROSE_ASSERT (atTop == true);
 
+#if 0
+     printf ("SgScopeStatement::insertStatementInScope(): newTransformationStatement = %p = %s atTop = %s \n",
+          newTransformationStatement,newTransformationStatement->class_name().c_str(),atTop ? "true" : "false");
+#endif
+
      bool inFront = (atTop == true);
      SgScopeStatement* currentScope = this;
      if (atTop == true)
@@ -6713,6 +6759,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(newTransformationStatement->get_parent() != NULL);
    }
+
 
 // DQ (7/17/2002) Added to support rewrite mechanism some scopes can only contain
 // SgDeclarationStmt while others can contain any kind of SgStatement

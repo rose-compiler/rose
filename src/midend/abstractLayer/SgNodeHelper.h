@@ -296,10 +296,16 @@ namespace SgNodeHelper {
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgProject* project);
+#endif
   /*! identifies the list of global variables
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgGlobal* global);
+#endif
 
   std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* project);
   std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgProject* project);

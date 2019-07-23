@@ -30,6 +30,7 @@
 #define SG_UNEXPECTED_NODE(X)       (sg::unexpected_node(X, __FILE__, __LINE__))
 #define SG_DEREF(X)                 (sg::deref(X, __FILE__, __LINE__))
 #define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
+#define SG_ERROR_IF(ERR, COND, MSG) (sg::report_error_if<ERR>(COND, MSG, __FILE__, __LINE__))
 
 namespace sg
 {
@@ -523,6 +524,7 @@ namespace sg
     GEN_VISIT(SgNoexceptOp)
     GEN_VISIT(SgLambdaExp)
     GEN_VISIT(SgFunctionParameterRefExp)
+    GEN_VISIT(SgCompoundLiteralExp)
 
     // symbols
     GEN_VISIT(SgVariableSymbol)
@@ -800,7 +802,6 @@ namespace sg
     GEN_VISIT(SgOmpDependClause)
     GEN_VISIT(SgOmpClause)
 
-
     //
     // Types
     GEN_VISIT(SgTypeUnknown)
@@ -848,7 +849,7 @@ namespace sg
     GEN_VISIT(SgPointerType)
     GEN_VISIT(SgNamedType)
     GEN_VISIT(SgQualifiedNameType)
-    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
+   // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
 
     // * token
@@ -872,6 +873,7 @@ namespace sg
     return vis.rv;
   }
 
+#if __cplusplus >= 201103L
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -884,7 +886,7 @@ namespace sg
     n->accept(vis);
     return std::move(vis).rv;
   }
-
+#endif /* C++11 */
 
 /// \brief    uncovers the type of SgNode and passes it to an
 ///           overloaded function handle in RoseVisitor.
@@ -955,6 +957,7 @@ namespace sg
     return _dispatch(rv, n);
   }
 
+#if __cplusplus >= 201103L
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -962,6 +965,7 @@ namespace sg
   {
     return _dispatch(std::move(rv), n);
   }
+#endif /* c++11 */
 
 
 /// \overload
@@ -1284,11 +1288,9 @@ namespace sg
   template <class GVisitor>
   struct DispatchHelper
   {
-
 #if __cplusplus < 201103L
     explicit
     DispatchHelper(GVisitor gv, SgNode* p)
-    //~ : gvisitor(std::move(gv)), parent(p), cnt(0)
     : gvisitor(gv), parent(p), cnt(0)
     {}
 #else
@@ -1302,16 +1304,19 @@ namespace sg
     {
       ++cnt;
 
-/*
-#if !defined(NDEBUG)
+#if 0
       if (n == NULL)
       {
         std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
         return;
       }
 #endif
-*/
+
+#if __cplusplus < 201103L
+      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
+#else
       if (n != NULL) gvisitor = sg::dispatch(std::move(gvisitor), n);
+#endif /* C++11 */
     }
 
 #if __cplusplus < 201103L
