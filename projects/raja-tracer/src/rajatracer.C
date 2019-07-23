@@ -175,12 +175,11 @@ namespace
       void execute() const
       {
         SgExpression&  oldexp = accessor(astnode);
-        const bool     useold = &oldexp == &astnode;
-        SgExpression&  newexp = sg::deref( useold ? &oldexp : si::deepCopy(&oldexp) );
+        SgExpression&  newexp = sg::deref( si::deepCopy(&oldexp) );
         SgExprListExp& args   = sg::deref(sb::buildExprListExp(&newexp));
         SgExpression&  wrpexp = sg::deref(sb::buildFunctionCallExp(&wrapperfn, &args));
 
-        si::replaceExpression( &oldexp, &wrpexp, useold );
+        si::replaceExpression( &oldexp, &wrpexp, false /* do not keep */ );
       }
 
       SageNode&     astnode;
@@ -262,7 +261,7 @@ namespace
                ;
       }
 
-      bool skipInstrumentation(SgFunctionDeclaration&)
+      bool skipInstrumentation(const SgDeclarationStatement&)
       {
         // delay descending into function bodies until the main
         //   instrumentation functions have been identified.
@@ -273,7 +272,7 @@ namespace
       void record(const Action& action)
       {
         if ((replacements.size() % 1024) == 0)
-          std::cerr << replacements.size() << std::endl;
+          std::cerr << '\r' << replacements.size() << "  ";
 
         replacements.emplace_back(action);
       }
@@ -307,12 +306,19 @@ namespace
 
       void handle(SgStatement& n)            { descend(n); }
 
+      void handle(SgDeclarationStatement& n)
+      {
+        if (skipInstrumentation(n)) return;
+
+        descend(n);
+      }
+
       void handle(SgFunctionDeclaration& n)
       {
         matchFirstOf
-        || tracerFunction(n)
-        || mallocFunction(n)
+        || tracerFunction(n)       /* needs to be ordered before skipInstrumentation. */
         || skipInstrumentation(n)
+        || mallocFunction(n)
         || descendTrue(n)
         ;
       }
@@ -417,7 +423,7 @@ namespace
       }
 */
 
-      void executeInstrumentation()
+      void executeTransformation()
       {
         size_t i = 0;
 
@@ -426,7 +432,7 @@ namespace
           t.execute();
 
           if ((i % 32) == 0)
-            std::cout << i << std::endl;
+            std::cerr << '\r' << i << "   ";
 
           ++i;
         }
@@ -491,14 +497,15 @@ namespace
     // Do actual work after ParseArgs();
     void process (SgProject* n) ROSE_OVERRIDE
     {
-      std::cerr << "RT traverses" << std::endl;
+      std::cerr << "\nRT traverses..." << std::endl;
       Explorer expl = sg::traverseChildren(Explorer(), sg::deref(n));
-      std::cout << expl.numTransforms() << std::endl;
+      std::cerr << '\r' << expl.numTransforms() << " transformations found." << std::endl;
 
-      std::cerr << "RT transforms" << std::endl;
-      expl.executeInstrumentation();
+      std::cerr << "\nRT transforms..." << std::endl;
+      expl.executeTransformation();
+      std::cerr << '\r' << expl.numTransforms() << " transformations executed." << std::endl;
 
-      std::cerr << "RT done" << std::endl;
+      std::cerr << "\nRT done." << std::endl;
     } // end process()
   };
 }

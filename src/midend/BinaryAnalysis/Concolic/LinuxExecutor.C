@@ -203,6 +203,30 @@ typedef atomic_counter<int> atomic_counter_t;
 static atomic_counter_t versioning(0);
 
 
+std::string nameCompletionStatus(int processDisposition)
+{
+  std::string res = "unknown";
+
+  if (WIFEXITED(processDisposition)) {
+      res = "exit";
+  } else if (WIFSIGNALED(processDisposition)) {
+      res = "signal";
+  } else if (WIFSTOPPED(processDisposition)) {
+      res = "stopped";
+  } else if (WIFCONTINUED(processDisposition)) {
+      res = "resumed";
+  }
+
+  return res;
+}
+
+
+void LinuxExecutor::Result::exitStatus(int x)
+{
+  exitStatus_ = x;
+  exitKind_   = nameCompletionStatus(x);
+}
+
 LinuxExecutor::Result*
 createLinuxResult(int errcode, std::string outstr, std::string errstr)
 {

@@ -1462,26 +1462,41 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 // could have two declarations for a same variable
 // extern int i;
 //  int i;
+// SgVariableDeclaration* SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope, bool builtFromUseOnly)
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope, bool builtFromUseOnly)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
    {
+
+#define DEBUG_BUILD_VARIABLE_DECLARATION 0
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+     printf ("In SageBuilder::buildVariableDeclaration_nfi(): name = %s scope = %p varInit = %p \n",name.str(),scope,varInit);
+     if (scope != NULL)
+        {
+          printf (" --- scope = %p = %s \n",scope,scope->class_name().c_str());
+        }
+#endif
+
      if (scope == NULL)
         {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+          printf ("Scope determined from the SageBuilder::topScopeStack() \n");
+#endif
           scope = SageBuilder::topScopeStack();
         }
 
      ROSE_ASSERT (scope != NULL);
      ROSE_ASSERT(type != NULL);
 
-#if 0
-     SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
-#else
+  // DQ (6/27/20`19): Older simpler version of code.
+  // SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
+
   // DQ (7/18/2012): Added debugging code (should fail for test2011_75.C).
      SgVariableSymbol* variableSymbol = scope->lookup_variable_symbol(name);
   // ROSE_ASSERT(variableSymbol == NULL);
 
-#if 0
+#if DEBUG_BUILD_VARIABLE_DECLARATION
      printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol = %p \n",variableSymbol);
 #endif
 
@@ -1490,13 +1505,28 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
      if (variableSymbol == NULL)
         {
           varDecl = new SgVariableDeclaration(name, type, varInit);
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+          SgInitializedName* tmp_initializedName = getFirstInitializedName(varDecl);
+          ROSE_ASSERT(tmp_initializedName != NULL);
+          printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol == NULL: varDecl = %p: initializedName = %p = %s \n",varDecl,tmp_initializedName,tmp_initializedName->get_name().str());
+          printf (" --- tmp_initializedName->get_initptr() = %p \n",tmp_initializedName->get_initptr());
+#endif
+       // DQ (6/25/2019): This ia new feature to input the builtFromUseOnly function optional parameter.
+          if (builtFromUseOnly == true)
+             {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               printf ("In buildVariableDeclaration_nfi(): this is the first reference to this variable: building a new SgVariableDeclaration: varDecl = %p name = %s \n",varDecl,name.str());
+#endif
+               varDecl->set_builtFromUseOnly(true);
+             }
         }
        else
         {
           SgInitializedName* initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
           SgVariableDeclaration* associatedVariableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-#if 0
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_parent() = %p \n",initializedName->get_parent());
           if (initializedName->get_parent() != NULL)
              {
@@ -1504,23 +1534,225 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
              }
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): associatedVariableDeclaration = %p \n",associatedVariableDeclaration);
 #endif
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+       // DQ (6/24/2019): If this has been previously built as part of a variable use (in a class declaration),
+       // then it should not be attached to the class definition as a variable declaration yet, and we should reuse it.
+          if (associatedVariableDeclaration != NULL && associatedVariableDeclaration->get_parent() != NULL)
+             {
+               printf ("In SageBuilder::buildVariableDeclaration_nfi(): associatedVariableDeclaration->get_parent() = %p = %s \n",
+                    associatedVariableDeclaration->get_parent(),associatedVariableDeclaration->get_parent()->class_name().c_str());
+             }
+#endif
+       // DQ (6/25/2019): This is a new feature to input the builtFromUseOnly function optional parameter.
+          if (builtFromUseOnly == true)
+             {
+               printf ("In buildVariableDeclaration_nfi(): this is a later reference to this variable (after the initial variable declaration and symbol): initializedName = %p name = %s \n",initializedName,name.str());
+            // varDecl->set_builtFromUseOnly(true);
+#if 0
+            // DQ (7/12/2019): This may be overly conservative when used by the outlining to a seperate file.
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+          printf ("associatedVariableDeclaration = %p \n",associatedVariableDeclaration);
           if (associatedVariableDeclaration != NULL)
+             {
+               printf ("associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
+             }
+#endif
+
+       // DQ (6/25/2019): Trigger the reuse of the available variable declaration.
+       // bool reuseTheAssociatedVariableDeclaration = associatedVariableDeclaration->get_builtFromUseOnly();
+          bool reuseTheAssociatedVariableDeclaration = ((associatedVariableDeclaration != NULL) && (associatedVariableDeclaration->get_builtFromUseOnly() == true));
+       // if (associatedVariableDeclaration != NULL)
+       // if (reuseTheAssociatedVariableDeclaration == true && associatedVariableDeclaration != NULL)
+          if (reuseTheAssociatedVariableDeclaration == true)
              {
             // Build a seperate SgVariableDeclaration so that we can avoid sharing the SgInitializedName
             // (and it's possible initializer which would be an error for the secondary declaration
             // (the declaration in the class for the case of a static declaration))
-               varDecl = new SgVariableDeclaration(name, type, varInit);
+
+               ROSE_ASSERT(associatedVariableDeclaration != NULL);
+
+            // DQ (6/24/2019): Fix this to use the associatedVariableDeclaration.
+            // varDecl = new SgVariableDeclaration(name, type, varInit);
+               varDecl = associatedVariableDeclaration;
+
+            // DQ (6/25/2019): Mark this variable declaration so that it will not be reused again.
+               varDecl->set_builtFromUseOnly(false);
+
+            // DQ (6/24/2019): Set the parent to NULL, since we are reusing this variable declaration and it would not have been set correctly before.
+               varDecl->set_parent(NULL);
+
+            // DQ (6/24/2019): this veriable declaration that is being reused, should not have had an initializer (check this).
+               SgInitializedName* variable = getFirstInitializedName(varDecl);
+               ROSE_ASSERT(variable != NULL);
+
+            // DQ (6/25/2019): See Cxx11_tests/test2019_121.C and Cxx11_tests/test2019_482.C.
+            // ROSE_ASSERT(variable->get_initptr() == NULL);
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               if (variable->get_initptr() != NULL)
+                  {
+                    printf ("Found initializer associated with variable declaration being reused: variable = %p name = %s \n",variable,variable->get_name().str());
+                  }
+#endif
+            // DQ (7/3/2019): Reuse in a conditional will have a valid initializer.
+            // ROSE_ASSERT(variable->get_initptr() == NULL);
              }
             else
              {
-            // If there is not an associated SgVariableDeclaration then reuse the existing SgInitializedName.
-               varDecl = new SgVariableDeclaration(initializedName);
+            // DQ (6/25/2019): We can't reuse the existing SgInitializedName, because it could have been initialized in the other SgVariableDeclaration.
+#if 0
+               printf ("In SageBuilder::buildVariableDeclaration_nfi(): We can't reuse the existing SgInitializedName: initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+               printf (" --- initializedName->get_initptr() = %p \n",initializedName->get_initptr());
+#endif
+            // DQ (6/26/2019): Added assertion.
+               ROSE_ASSERT(reuseTheAssociatedVariableDeclaration == false);
 
+            // DQ (6/27/2019): If the SgInitializedName was generated from the convert_variable_use() function in the
+            // EDG/ROSE translation, then where was not associated SgVariableDeclaration built (an inconsistancy).
+            // So we want to check for the parent being a scope statement (e.g. SgIfStmt or other statement that can
+            // accept a conditional expression where in C++ it can alternatively declare a variable.
+               if (associatedVariableDeclaration == NULL)
+                  {
+                    ROSE_ASSERT(initializedName->get_parent() != NULL);
+                    SgScopeStatement* scopeStatement = isSgScopeStatement(initializedName->get_parent());
+                    if (scopeStatement != NULL)
+                       {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+                         printf ("scopeStatement = %p = %s \n",scopeStatement,scopeStatement->class_name().c_str());
+#endif
+                       }
+                      else
+                       {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+                         printf ("initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+                       }
+                  }
+
+            // DQ (6/27/2019): In some case we want to reuse the associated SgInitializedName node.
+            // For example: variable declarations in conditionals (e.g. SgIfStmt, and other scope statements).
+            // DQ (6/26/2019): Build an additional variable to support another reference to the original variable.
+            // Note: we need another one because either one can have an initializer that cannot be shared in the AST.
+            // SgInitializedName* additional_variable = buildInitializedName_nfi(name,type,varInit);
+               SgInitializedName* additional_variable = NULL;
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_scope()     = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+#endif
+               SgScopeStatement* scopeStatement = isSgScopeStatement(initializedName->get_parent());
+            // ROSE_ASSERT(additional_variable->get_scope() != NULL);
+               if (scopeStatement != NULL)
+                  {
+                    additional_variable = initializedName;
+
+                 // DQ (6/28/2019): Support case when the borrowed SgInitializedName has a valid initializer.
+                 // DQ (6/26/2019): Adding the initializer.
+                 // ROSE_ASSERT(additional_variable->get_initptr() == NULL);
+                 // additional_variable->set_initptr(varInit);
+                    if (additional_variable->get_initptr() != NULL)
+                       {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+                         printf ("In SageBuilder::buildVariableDeclaration_nfi(): borrowed SgInitializedName is alread initialized \n");
+                         printf (" --- additional_variable->get_initptr() = %p \n",additional_variable->get_initptr());
+                         printf (" --- varInit = %p \n",varInit);
+#endif
+                      // DQ (6/28/2019): when this is assertion is false, we have constructed a redundant initializer (debugging this).
+                         // PP (7/22/2019) faults in CUDA code
+                         // ROSE_ASSERT(varInit == NULL);
+                       }
+                      else
+                       {
+                         additional_variable->set_initptr(varInit);
+                       }
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION || 0
+                    printf (" --- additional_variable->get_scope() = %p = %s \n",additional_variable->get_scope(),additional_variable->get_scope()->class_name().c_str());
+                    printf (" --- Reusing the SgInitializedName (not associated with a previous SgVariableDeclaration where the parent is a SgScopeStatement) \n");
+#endif
+                  }
+                 else
+                  {
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+                    printf (" --- Building a new SgInitializedName \n");
+#endif
+                    additional_variable = buildInitializedName_nfi(name,type,varInit);
+                  }
+
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               ROSE_ASSERT(initializedName->get_scope() != NULL);
+#endif
+            // DQ (6/26/2019): Set the scopes to be the same (a symbol already exists at this point).
+            // additional_variable->set_scope(initializedName->get_scope());
+            // initializedName->set_scope(additional_variable->get_scope());
+            // additional_variable->set_scope(initializedName->get_scope());
+
+            // DQ (6/26/2019): Set the pointer to the original version of this variable (unless we reused the SgInitializedName above).
+               if (additional_variable != initializedName)
+                  {
+                    additional_variable->set_prev_decl_item(initializedName);
+                  }
+
+            // If there is not an associated SgVariableDeclaration then reuse the existing SgInitializedName.
+            // varDecl = new SgVariableDeclaration(initializedName);
+               varDecl = new SgVariableDeclaration(additional_variable);
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               ROSE_ASSERT(initializedName->get_parent() != NULL);
+               printf ("initializedName->get_parent()     = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+               ROSE_ASSERT(additional_variable->get_parent() != NULL);
+               printf ("additional_variable->get_parent() = %p = %s \n",additional_variable->get_parent(),additional_variable->get_parent()->class_name().c_str());
+#endif
+            // DQ (6/26/2019): Set the parent of the first SgInitializedName to that of the second SgInitializedName.
+            // This is an issue for the range for initialization: see test2019_483.C.
+            // initializedName->set_parent(additional_variable->get_parent());
+
+#if 0
+               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(additional_variable->get_parent());
+               if (variableDeclaration != NULL)
+                  {
+#if 0
+                    printf ("Found SgVariableDeclaration at additional_variable->get_parent() \n");
+                    ROSE_ASSERT(variableDeclaration->get_parent() != NULL);
+                    printf ("  --- variableDeclaration->get_parent() = %p = %s \n",variableDeclaration->get_parent(),variableDeclaration->get_parent()->class_name().c_str());
+#endif
+                    SgRangeBasedForStatement* rangeBasedForStatement = isSgRangeBasedForStatement(variableDeclaration->get_parent());
+                    if (rangeBasedForStatement != NULL)
+                       {
+#if 0
+                         printf ("Found SgRangeBasedForStatement at variableDeclaration->get_parent(): set scope of initializedName \n");
+#endif
+                         initializedName->set_scope(rangeBasedForStatement);
+                       }
+                  }
+#endif
+            // DQ (6/26/2019): Adding assertion after setting of the SgRangeBasedForStatement before processing the children.
+               ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+            // DQ (6/26/2019): Set the pointer to the original version of this variable (unless we reused the SgInitializedName above).
+               if (additional_variable != initializedName)
+                  {
+                    additional_variable->set_scope(initializedName->get_scope());
+                  }
+#if 0
+            // DQ (6/25/2019): This step overwrites the non-null pointer to the initializer with a null pointer to the initializer in Cxx11_tests/test2019_482.C.
+               if (initializedName->get_initptr() != NULL && varInit == NULL)
+                  {
+                    printf ("ERROR: This step overwrites the non-null pointer to the initializer with a null pointer to the initializer in Cxx11_tests/test2019_482.C \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
             // DQ (7/14/2014): Set the variable initialized (see test2014_107.C, also required for boost for_each support)).
-               initializedName->set_initptr(varInit);
+            // initializedName->set_initptr(varInit);
+#if DEBUG_BUILD_VARIABLE_DECLARATION
+               printf ("In SageBuilder::buildVariableDeclaration_nfi(): After sharing the exisitng SgInitializedName: initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+               printf (" --- initializedName->get_initptr()     = %p \n",initializedName->get_initptr());
+               printf (" --- additional_variable->get_initptr() = %p \n",additional_variable->get_initptr());
+#endif
              }
         }
-#endif
 
   // DQ (11/3/2012): The SgInitializedName inside the SgVariableDeclaration must have valid source position object (even if default initialized).
      SgInitializedName* variable = getFirstInitializedName(varDecl);
@@ -1547,7 +1779,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
        // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
 
-#if 0
+#if DEBUG_BUILD_VARIABLE_DECLARATION
        // DQ (6/25/2018): I think this is incorrect for test2018_109.C.
           SgScopeStatement* current_scope = topScopeStack();
           printf ("  --- Setting parent using topScopeStack() = %p = %s = %s \n",current_scope,current_scope->class_name().c_str(),SageInterface::get_name(current_scope).c_str());
@@ -1564,7 +1796,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
      if (initName->get_scope() == NULL)
         {
        // Make this a warning for the few places where this fails.
-#if 0
+#if DEBUG_BUILD_VARIABLE_DECLARATION
           printf ("WARNING: Note in buildVariableDeclaration_nfi(): initName->get_scope() == NULL \n");
 #endif
         }
@@ -1610,12 +1842,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (6/25/2018): Added assertion.
      ROSE_ASSERT(varDecl != NULL);
 
-#if 0
+#if DEBUG_BUILD_VARIABLE_DECLARATION
      printf ("Leaving buildVariableDeclaration_nfi(): varDecl = %p varDecl->get_parent() = %p \n",varDecl,varDecl->get_parent());
 #endif
 
      return varDecl;
    }
+
 
 SgVariableDefinition*
 SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init)
@@ -8981,8 +9214,13 @@ SageBuilder::buildRangeBasedForStatement_nfi(
      SgExpression*          not_equal_expression, SgExpression*          increment_expression,
      SgStatement*           body)
    {
-     ROSE_ASSERT(initializer != NULL);
-     ROSE_ASSERT(range       != NULL);
+  // DQ (6/26/2019): Commented these out so that we could build the SgRangeBasedForStatement before
+  // building the children, since the scope of the chldren will be the SgRangeBasedForStatement and
+  // it must exist before the children are constructed.
+  // ROSE_ASSERT(initializer != NULL);
+  // ROSE_ASSERT(range       != NULL);
+
+  // DQ (6/26/2019): This was already commented out.
   // ROSE_ASSERT(body        != NULL);
 
      SgRangeBasedForStatement* result = new SgRangeBasedForStatement(initializer, range, begin_declaration, end_declaration, not_equal_expression, increment_expression, body);
@@ -15184,7 +15422,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // AST for transformations after construction of the AST from an typical input file.
      EDG_ROSE_Translation::suppress_detection_of_transformations = true;
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFile(): EDG_ROSE_Translation::suppress_detection_of_transformations = %s \n",EDG_ROSE_Translation::suppress_detection_of_transformations ? "true" : "false");
 #endif
 
@@ -15209,6 +15447,17 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 #if 0
      printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+
+  // DQ (7/14/2019): I think we need to call the astPostProcessing at this point.
+#if 0
+     printf ("In SageBuilder::buildFile(): calling astPostProcessing() \n");
+#endif
+
+     AstPostProcessing(result);
+
+#if 0
+     printf ("In SageBuilder::buildFile(): DONE: calling astPostProcessing() \n");
 #endif
 
 #if 0
@@ -15243,7 +15492,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 1
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+          project,project->get_fileList_ptr()->get_listOfFiles().size());
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif

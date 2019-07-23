@@ -32,7 +32,9 @@ void AstPostProcessing (SgNode* node)
      ROSE_ASSERT(node != NULL);
 
 #if 0
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("Inside of AstPostProcessing(node = %p = %s) \n",node,node->class_name().c_str());
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
@@ -358,6 +360,11 @@ void postProcessingSupport (SgNode* node)
              {
                printf ("Calling fixupTemplateInstantiations() \n");
              }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
        // **********************************************************************
        // DQ (4/29/2012): Added some of the template fixup support for EDG 4.3 work.

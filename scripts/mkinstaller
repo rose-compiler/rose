@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "4";
+$mkinstaller_ver_build = "6";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.4";
-$mkinstaller_ver_time  = "21Jun2019,16:47:49z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.4 - 21Jun2019,16:47:49z";
+$mkinstaller_ver_name  = "2.5.6";
+$mkinstaller_ver_time  = " 6Jul2019,12:52:49z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.6 -  6Jul2019,12:52:49z";
 
 #{------------------------------------------------------------------------------
 #
@@ -12855,13 +12855,16 @@ EOF67
          if ($ProjectName ne "") {
             if ($ProjectVer ne "") {
          print OSCRIPT "InstallDir            \$DESKTOP\\$ProjectName-$ProjectVer\n";
+         print OSCRIPT "DirText               \"The ".$ProjectName." ".$ProjectVer." installer. Choose an installation prefix directory\"\n";
             }
             else {
          print OSCRIPT "InstallDir            \$DESKTOP\\$ProjectName\n";
+         print OSCRIPT "DirText               \"The ".$ProjectName." installer. Choose an installation prefix directory\"\n";
             }
          }
          else {
          print OSCRIPT "InstallDir            \$DESKTOP\\$scriptName\n";
+         print OSCRIPT "DirText               \"Choose an installation prefix directory\"\n";
          }
          print OSCRIPT "RequestExecutionLevel user\n";
          print OSCRIPT "SetCompressor         /SOLID /FINAL lzma\n";
@@ -19385,8 +19388,18 @@ sub help {
    |
    |          banana-installer.exe
    |
-   |       To specify an installation prefix the /D=<pathname> option may be
-   |       used:
+   |       The installer executable puts-up a dialog box resembling:
+   |
+   |                       [ see installer-dialog.gif ]
+   |
+   |                      Typical installation dialog box
+   |
+   |       The installation dialog box allows the user to specify the installation
+   |       "prefix" directory by replacing the default pathname with the desired
+   |       pathname or using the browser button to locate and select a pathname.
+   |
+   |       To specify an installation prefix on the command line the /D=<pathname>
+   |       option may be used: 
    |
    |          banana-installer.exe /D=E:\\opt\\banana
    |
@@ -20394,7 +20407,21 @@ sub html {
    |            <blockquote>
    |              <b><big><code>banana-installer.exe</code></big></b>
    |            </blockquote>
-   |            To specify an installation prefix the <b><big><code>/D=</code></big></b><i>pathname</i> option may be used:
+   |            When run the installer executable puts-up a dialog box resembling:
+   |            <blockquote>
+   |               <center>
+   |                  <img src="../../images/mkinstaller/installer-dialog.png">
+   |                  <p>
+   |                     Typical installation dialog box
+   |               </center>
+   |            </blockquote>
+   |            The installation dialog box allows the user to specify the installation
+   |            "prefix" directory by replacing the default pathname with the desired
+   |            pathname or using the browser button to locate and select a pathname.
+   |         </blockquote>
+   |         <blockquote>
+   |            To specify an installation prefix on the command line the <b><big><code>/D=</code></big></b><i>pathname</i>
+   |            option may be used:
    |            <blockquote>
    |              <b><big><code>banana-installer.exe /D=E:\\opt\\banana</code></big></b>
    |            </blockquote>
