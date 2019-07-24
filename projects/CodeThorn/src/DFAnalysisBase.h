@@ -33,7 +33,11 @@ class DFAnalysisBase {
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
   virtual void initializeExtremalValue(Lattice* element);
-  virtual void initialize(SgProject* root, bool createCFG=true, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
+
+  // \todo maybe split into initialize(root,variableIdForEachArrayElement)
+  //       and initialize(ProgramAbstractionLayer*).
+  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
+
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();
@@ -60,7 +64,7 @@ class DFAnalysisBase {
   CFAnalysis* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   FunctionIdMapping* getFunctionIdMapping();
-  Flow* getFlow() { return &_flow; }
+  Flow* getFlow() const { return _flow; }
   Lattice* getPreInfo(Label lab);
   Lattice* getPostInfo(Label lab);
   void attachInInfoToAst(string attributeName);
@@ -73,15 +77,14 @@ class DFAnalysisBase {
   void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
   CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
-  ProgramAbstractionLayer* getProgramAbstractionLayer();
+  ProgramAbstractionLayer* getProgramAbstractionLayer() { return _programAbstractionLayer; }
 
  protected:
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
-  CFAnalysis* _cfanalyzer=nullptr;
   LabelSet _extremalLabels;
-  Flow _flow;
+  Flow* _flow;
   // following members are initialized by function initialize()
   long _numberOfLabels=0;
   vector<Lattice*> _analyzerDataPreInfo;

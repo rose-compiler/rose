@@ -4,6 +4,8 @@
 #include "FunctionIdMapping.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
+#include "CFAnalysis.h"
+#include "Flow.h"
 
 class SgProject;
 
@@ -24,6 +26,8 @@ namespace CodeThorn {
     bool getNormalizationLevel();
     void setInliningOption(bool flag);
     bool getInliningOption();
+    Flow* getFlow(bool backwardflow = false);
+    CFAnalysis* getCFAnalyzer();
   private:
     bool _modeArrayElementVariableId=false;
     Labeler* _labeler=nullptr;
@@ -32,6 +36,11 @@ namespace CodeThorn {
     bool _normalizationLevel=1;
     bool _inliningOption=false;
     SgProject* _root=nullptr;
+
+    // PP (07/15/19) moved flow generation from DFAnalysisBase
+    CFAnalysis* _cfanalyzer = nullptr;
+    Flow        _fwFlow;
+    Flow        _bwFlow;
   };
 
 } // end of namespace CodeThorn
