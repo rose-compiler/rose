@@ -275,8 +275,10 @@ AX_COMPILER_VENDOR
 rose_use_edg_quad_float=no
 if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
 if test $edg_major_version_number -ge 5; then
+if test "x$build_vendor" != "xsun"; then
   rose_use_edg_quad_float=yes
   AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
 fi
 fi
 AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
