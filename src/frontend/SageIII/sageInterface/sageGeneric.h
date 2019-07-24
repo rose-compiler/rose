@@ -30,7 +30,7 @@
 #define SG_UNEXPECTED_NODE(X)       (sg::unexpected_node(X, __FILE__, __LINE__))
 #define SG_DEREF(X)                 (sg::deref(X, __FILE__, __LINE__))
 #define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
-#define SG_ERROR_IF(ERR, COND, MSG) (sg::report_error_if<ERR>(COND, MSG, __FILE__, __LINE__))
+#define SG_ERROR_IF(COND, MSG)      (sg::report_error_if(COND, MSG, __FILE__, __LINE__))
 
 namespace sg
 {
@@ -886,7 +886,8 @@ namespace sg
     n->accept(vis);
     return std::move(vis).rv;
   }
-#endif /* C++11 */
+#endif
+
 
 /// \brief    uncovers the type of SgNode and passes it to an
 ///           overloaded function handle in RoseVisitor.
@@ -957,17 +958,6 @@ namespace sg
     return _dispatch(rv, n);
   }
 
-#if __cplusplus >= 201103L
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  dispatch(RoseVisitor&& rv, SgNode* n)
-  {
-    return _dispatch(std::move(rv), n);
-  }
-#endif /* c++11 */
-
-
 /// \overload
   template <class RoseVisitor>
   inline
@@ -976,6 +966,25 @@ namespace sg
   {
     return _dispatch(rv, const_cast<SgNode*>(n));
   }
+
+#if __cplusplus >= 201103L
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  dispatch(RoseVisitor&& rv, SgNode* n)
+  {
+    return _dispatch(std::move(rv), n);
+  }
+
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  dispatch(RoseVisitor&& rv, const SgNode* n)
+  {
+    return _dispatch(std::move(rv), const_cast<SgNode*>(n));
+  }
+#endif /* c++11 */
+
 
   template <class SageNode>
   struct DefaultHandler
@@ -1094,12 +1103,14 @@ namespace sg
 
     TypeRecoveryHandler(TypeRecoveryHandler&&) = default;
     TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = delete;
+
+    operator SageNode* ()&& { return res; }
+#else
+    operator SageNode* () { return res; }
 #endif /* C++ */
 
     void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
     void handle(SageNode& n)   { res = &n; }
-
-    operator SageNode* () { return res; }
 
     SageNode*   res;
     const char* loc;
