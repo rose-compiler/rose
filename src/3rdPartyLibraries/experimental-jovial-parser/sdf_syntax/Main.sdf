@@ -814,7 +814,7 @@ context-free syntax
     EntrySpecifier           -> TableDescription         {cons("TableDescription")}
 
   TableTypeName
-    OptTablePreset ';'       -> TableDescription         {prefer, cons("TableDescriptionT")} %% removes ambiguity with other production of TableDescription
+    OptTablePreset ';'       -> TableDescription         {prefer, cons("TableDescriptionName")} %% removes ambiguity with other production of TableDescription
 
   OrdinaryEntrySpecifier     -> EntrySpecifier
   SpecifiedEntrySpecifier    -> EntrySpecifier
@@ -864,7 +864,7 @@ context-free syntax
 
   OptPackingSpecifier
     OptTablePreset ';'
-    OrdinaryTableBody          -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifierT")}
+    OrdinaryTableBody          -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifierBody")}
 
   'N'                          -> PackingSpecifier       {cons("PackingSpecifierN")}
   'M'                          -> PackingSpecifier       {cons("PackingSpecifierM")}
@@ -881,7 +881,7 @@ context-free syntax
   'ITEM' TableItemName
     ItemTypeDescription
     OptPackingSpecifier
-    OptTablePreset             -> OrdinaryTableItemDeclaration {cons("OrdinaryTableItemDeclaration")}
+    OptTablePreset         ';' -> OrdinaryTableItemDeclaration {cons("OrdinaryTableItemDeclaration")}
 
   Name                         -> TableItemName
 
@@ -897,7 +897,7 @@ context-free syntax
 
   WordsPerEntry
     OptTablePreset ';'
-    SpecifiedTableBody           -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifierT")}
+    SpecifiedTableBody           -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifierBody")}
 
   'W' OptEntrySize               -> WordsPerEntry            {cons("WordsPerEntryW")}
   'V'                            -> WordsPerEntry            {cons("WordsPerEntryV")}
@@ -1059,7 +1059,7 @@ context-free syntax
     EntrySpecifier                -> TableTypeSpecifier    {cons("TableTypeSpecifier")}
   
   OptDimensionList
-    TableTypeName ';'             -> TableTypeSpecifier    {cons("TableTypeSpecifier")}
+    TableTypeName ';'             -> TableTypeSpecifier    {cons("TableTypeSpecifierName")}
 
   Name                            -> TableTypeName         {cons("Name")}
 
