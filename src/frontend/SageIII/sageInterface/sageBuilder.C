@@ -50,8 +50,8 @@ using namespace SageInterface;
 
 namespace EDG_ROSE_Translation
    {
-  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations 
-  // that this checking will fail on because it is for the typical case of checking the 
+  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations
+  // that this checking will fail on because it is for the typical case of checking the
   // AST for transformations after construction of the AST from an typical input file.
 #if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
   // DQ (6/3/2019): Use the definition in the EDG edgRose.C file if C/C++ support IS defined.
@@ -588,7 +588,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
              {
                i++;
-               continue; 
+               continue;
              }
 
           if (need_separator)
@@ -1177,7 +1177,7 @@ SageBuilder::setTemplateArgumentsInDeclaration( SgDeclarationStatement* decl, Sg
      ROSE_ASSERT(templateArgumentsList_input != NULL);
 
   // DQ (2/19/2018): Need to modify this function to take templated typedefs.
-  // 
+  //
   //    Do this in the morning...
   //
 
@@ -1535,7 +1535,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): associatedVariableDeclaration = %p \n",associatedVariableDeclaration);
 #endif
 #if DEBUG_BUILD_VARIABLE_DECLARATION
-       // DQ (6/24/2019): If this has been previously built as part of a variable use (in a class declaration), 
+       // DQ (6/24/2019): If this has been previously built as part of a variable use (in a class declaration),
        // then it should not be attached to the class definition as a variable declaration yet, and we should reuse it.
           if (associatedVariableDeclaration != NULL && associatedVariableDeclaration->get_parent() != NULL)
              {
@@ -1611,9 +1611,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
             // DQ (6/26/2019): Added assertion.
                ROSE_ASSERT(reuseTheAssociatedVariableDeclaration == false);
 
-            // DQ (6/27/2019): If the SgInitializedName was generated from the convert_variable_use() function in the 
+            // DQ (6/27/2019): If the SgInitializedName was generated from the convert_variable_use() function in the
             // EDG/ROSE translation, then where was not associated SgVariableDeclaration built (an inconsistancy).
-            // So we want to check for the parent being a scope statement (e.g. SgIfStmt or other statement that can 
+            // So we want to check for the parent being a scope statement (e.g. SgIfStmt or other statement that can
             // accept a conditional expression where in C++ it can alternatively declare a variable.
                if (associatedVariableDeclaration == NULL)
                   {
@@ -1661,7 +1661,8 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
                          printf (" --- varInit = %p \n",varInit);
 #endif
                       // DQ (6/28/2019): when this is assertion is false, we have constructed a redundant initializer (debugging this).
-                         ROSE_ASSERT(varInit == NULL);
+                         // PP (7/22/2019) faults in CUDA code
+                         // ROSE_ASSERT(varInit == NULL);
                        }
                       else
                        {
@@ -2519,9 +2520,9 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
   // DQ (2/25/2018): Not clear if we want to use the template name with arguments.
   // Calling: SgTemplateInstantiationTypedefDeclaration(SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, SgTemplateArgumentPtrList)
      SgTypedefType* typedefType = NULL;
-  // SgTemplateInstantiationTypedefDeclaration* type_decl = 
+  // SgTemplateInstantiationTypedefDeclaration* type_decl =
   //      new SgTemplateInstantiationTypedefDeclaration(name, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
-     SgTemplateInstantiationTypedefDeclaration* type_decl = 
+     SgTemplateInstantiationTypedefDeclaration* type_decl =
           new SgTemplateInstantiationTypedefDeclaration(nameWithTemplateArguments, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
      ROSE_ASSERT(type_decl != NULL);
 
@@ -2580,7 +2581,7 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      printf ("AFTER: type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
 #endif
 
-  // DQ (4/15/2018): I don't think we want to reset the template name and certainly not to a name that 
+  // DQ (4/15/2018): I don't think we want to reset the template name and certainly not to a name that
   // includes template arguments (which is inconsistant with all other usage).
   // type_decl->set_templateName(type_decl->get_name());
 
@@ -6966,11 +6967,11 @@ SgNonrealDecl * SageBuilder::buildNonrealDecl(const SgName & name, SgDeclaration
 #if DEBUG_BUILD_NONREAL_DECL
   printf("  --- child_scope = %p (provided)\n", name.str(), child_scope);
 #endif
-    
+
   }
   child_scope->set_parent(nrdecl);
   nrdecl->set_nonreal_decl_scope(child_scope);
-  
+
 #if DEBUG_BUILD_NONREAL_DECL
   printf("LEAVE SageBuilder::buildNonrealDecl\n");
 #endif
@@ -7658,7 +7659,7 @@ SageBuilder::buildConstructorInitializer_nfi(
 
 // DQ (11/15/2016):Adding support for braced initializer (required for template support).
 //! Build an braced initializer
-SgBracedInitializer* 
+SgBracedInitializer*
 SageBuilder::buildBracedInitializer(SgExprListExp * initializers, SgType * expression_type )
    {
      SgBracedInitializer* result = new SgBracedInitializer(initializers, expression_type);
@@ -8641,9 +8642,14 @@ SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * ker
 #if 0
           printf ("Error: SageBuilder::buildCudaKernelCallExp_nfi(): kernel = %p = %s \n",kernel,kernel->class_name().c_str());
 #endif
-          std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
-          ROSE_ASSERT(false);
+          std::cerr << "SgCudaKernelCallExp accept only direct reference to a function. Got, " << typeid(*kernel).name()
+                    << " with, " << kernel->unparseToString() << std::endl;
+
+          // PP (7/1/19): experimental support for RAJA/CUDA Lulesh codes (producing SgNonrealRefExp) **1
+          // was: ROSE_ASSERT(false);
         }
+
+    else // was not here (**1)
 
   // DQ (1/19/2016): Adding template function ref support.
   // if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel()))
@@ -9201,15 +9207,15 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
 
 // DQ (3/26/2018): Adding support for range based for statement.
 // SgRangeBasedForStatement* SageBuilder::buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body)
-SgRangeBasedForStatement* 
+SgRangeBasedForStatement*
 SageBuilder::buildRangeBasedForStatement_nfi(
-     SgVariableDeclaration* initializer,          SgVariableDeclaration* range, 
-     SgVariableDeclaration* begin_declaration,    SgVariableDeclaration* end_declaration, 
+     SgVariableDeclaration* initializer,          SgVariableDeclaration* range,
+     SgVariableDeclaration* begin_declaration,    SgVariableDeclaration* end_declaration,
      SgExpression*          not_equal_expression, SgExpression*          increment_expression,
      SgStatement*           body)
    {
-  // DQ (6/26/2019): Commented these out so that we could build the SgRangeBasedForStatement before 
-  // building the children, since the scope of the chldren will be the SgRangeBasedForStatement and 
+  // DQ (6/26/2019): Commented these out so that we could build the SgRangeBasedForStatement before
+  // building the children, since the scope of the chldren will be the SgRangeBasedForStatement and
   // it must exist before the children are constructed.
   // ROSE_ASSERT(initializer != NULL);
   // ROSE_ASSERT(range       != NULL);
@@ -13244,7 +13250,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #if DEBUG_CLASS_DECLARATION
                printf ("In SageBuilder::buildClassDeclaration_nfi(): Build SgTemplateInstantiationDecl: nondefdecl = %p \n",nondefdecl);
 #endif
-            // DQ (2/27/2018): Added assertion now that we have implemented more consistant semantics 
+            // DQ (2/27/2018): Added assertion now that we have implemented more consistant semantics
             // for template instantiations (types are not generated in the constructor calls).
                ROSE_ASSERT(nondefdecl->get_type() == NULL);
                ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl) != NULL);
@@ -13592,7 +13598,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // defdecl = new SgTemplateInstantiationDecl (name,kind,NULL,classDef,NULL,emptyList);
           defdecl = new SgTemplateInstantiationDecl (nameWithTemplateArguments,kind,NULL,classDef,NULL,emptyList);
 
-       // DQ (2/27/2018): Added assertion now that we have implemented more consistant semantics 
+       // DQ (2/27/2018): Added assertion now that we have implemented more consistant semantics
        // for template instantiations (types are not generated in the constructor calls).
           ROSE_ASSERT(defdecl->get_type() == NULL);
           ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl) != NULL);
@@ -14155,7 +14161,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
 
 #if 0
        // DQ (3/4/2018): relax this requirement for SgTemplateInstantiationClassDeclaration.
-       // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to 
+       // DQ (2/27/2018): Enforce that this is not already set (should be set after the constructor to
        // simplify how derived classes (e.g. SgTemplateInstantiationClassDeclaration statements) work.
           if (nondefdecl->get_type() != NULL)
              {
@@ -15411,8 +15417,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 #endif
 
-  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations 
-  // that this checking will fail on because it is for the typical case of checking the 
+  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations
+  // that this checking will fail on because it is for the typical case of checking the
   // AST for transformations after construction of the AST from an typical input file.
      EDG_ROSE_Translation::suppress_detection_of_transformations = true;
 
@@ -15428,7 +15434,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (6/5/2019): Record what is marked as isModified() and then reset these IR nodes to be isModified after the new file has been processed.
   // This is required because the modified IR nodes will be reset in this AST associated with the new file, and IR nodes that are common
   // across the two AST's will be reset (shared IR nodes, which are also not marked as shared).  The solution is to compute the list of IR nodes
-  // which are marked as isModified, and then build the new file (which will reset them for the new file's AST (plus any shared nodes visited in 
+  // which are marked as isModified, and then build the new file (which will reset them for the new file's AST (plus any shared nodes visited in
   // the traversal) and then afterward reset the set of isModified IR nodes to isModified.  By isolating the fix in this function we can eliminate
   // the complexity of it being seen from the outside (outside of this abstraction).  Note that the function:
   // SageInterface::collectModifiedLocatedNodes() has previously been implemented and used for debugging.
@@ -15544,9 +15550,9 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
 
      ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
 
-     // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
+     // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable.
      attachPreprocessingInfo (sourceFile);
-     
+
      return sourceFile;
 }
 

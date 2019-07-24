@@ -101,16 +101,21 @@ struct CtxAnalysis : DFAnalysisBase
     }
 */
 
+    const CtxLattice<CallContext>&
+    getCtxLattice(Label lbl)
+    {
+      return dynamic_cast<CtxLattice<CallContext>&>(SG_DEREF(getPreInfo(lbl)));
+    }
+
     /// retrieves the lattice from the call site
     const CtxLattice<CallContext>&
     getCallSiteLattice(const SgStatement& stmt)
     {
       SgStatement& call    = const_cast<SgStatement&>(stmt);
       Labeler&     labeler = *getLabeler();
-      Label        lblcall = labeler.functionCallLabel(&call);
-      Lattice*     lattice = _analyzerDataPreInfo.at(lblcall.getId());
 
-      return sg::deref(dynamic_cast<const CtxLattice<CallContext> *>(lattice));
+      std::cerr << call.unparseToString() << std::endl;
+      return getCtxLattice( labeler.functionCallLabel(&call) );
     }
 
     /// retrieves the lattice from the call site
@@ -129,12 +134,6 @@ struct CtxAnalysis : DFAnalysisBase
 
       SgStatement* call = SG_ASSERT_TYPE(SgStatement, astNode(labeler, lblret));
       return getCallSiteLattice(*call);
-    }
-
-    const CtxLattice<CallContext>&
-    getCtxLattice(Label lbl)
-    {
-      return dynamic_cast<CtxLattice<CallContext>&>(SG_DEREF(getPreInfo(lbl)));
     }
 
 

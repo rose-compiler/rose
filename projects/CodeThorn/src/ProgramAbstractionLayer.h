@@ -23,7 +23,7 @@ namespace CodeThorn {
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
     void setNormalizationLevel(unsigned int level);
-    bool getNormalizationLevel();
+    unsigned int getNormalizationLevel();
     void setInliningOption(bool flag);
     bool getInliningOption();
     Flow* getFlow(bool backwardflow = false);
@@ -33,7 +33,7 @@ namespace CodeThorn {
     Labeler* _labeler=nullptr;
     VariableIdMapping* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
-    bool _normalizationLevel=1;
+    unsigned int _normalizationLevel=2;
     bool _inliningOption=false;
     SgProject* _root=nullptr;
 
