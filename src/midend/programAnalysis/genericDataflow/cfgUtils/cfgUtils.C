@@ -1,3 +1,5 @@
+#include <sage3basic.h>
+
 #include "cfgUtils.h"
 #include <stdlib.h>
 #include <time.h>
@@ -1218,13 +1220,8 @@ string cfgUtils::genUniqueName()
     // while our chosen "unique" name conflicts with the current SgInitializedName
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
     //          printf("SgInitializedName: name<%s> == curName->get_name().getString()<%s> = %d\n", name.c_str(), curName->get_name().getString().c_str(), name == curName->get_name().getString());
-    while(name == curName->get_name().getString())
-    {
-      char num[2];
-      num[0] = '0'+rand()%10;
-      num[1] = 0;                       
-      name = name + num;
-    }
+    if (name == curName->get_name().getString())
+        name += Rose::StringUtility::numberToString(rand() % 10);
   }
 
   Rose_STL_Container<SgNode*> funcDecls = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
@@ -1236,12 +1233,8 @@ string cfgUtils::genUniqueName()
     // while our chosen "unique" name conflicts with the current SgFunctionDeclaration
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
     //          printf("SgFunctionDeclaration: name<%s> == curDecl->get_name().getString()<%s> = %d\n", name.c_str(), curDecl->get_name().getString().c_str(), name == curDecl->get_name().getString());
-    while(name == curDecl->get_name().getString())
-    {
-      char num[2];
-      snprintf(num, 2, "%s", (char*)(rand()%10));
-      name = name + num;
-    }
+    if (name == curDecl->get_name().getString())
+        name += Rose::StringUtility::numberToString(rand() % 10);
   }
   return name;
 }
