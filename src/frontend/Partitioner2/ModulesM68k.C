@@ -197,7 +197,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU16();
     SgAsmType *tableType = SageBuilderAsm::buildTypeVector(tableIdx, tableEntryType);
     DataBlock::Ptr offsetTable = DataBlock::instance(startOfOffsetTable, tableType);
-    offsetTable->comment("m68k \"switch\" statement's \"case\" address table");
+    offsetTable->comment("m68k 'switch' statement's 'case' address table");
     args.bblock->insertDataBlock(offsetTable);
 
     return chain;
