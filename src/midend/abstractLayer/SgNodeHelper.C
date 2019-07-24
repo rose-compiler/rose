@@ -380,6 +380,12 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgNode* node
  */
 list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgNode* node) {
   list<SgFunctionDeclaration*> funDeclList;
+
+  if (node == nullptr) {
+    node = SageInterface::getProject();
+  }
+  assert(node != nullptr);
+
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgFunctionDeclaration * funDecl = isSgFunctionDeclaration(*i);
@@ -1862,55 +1868,68 @@ std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragma
   return pragma->get_pragma();
 }
 
-// Can a given node be changed? (aka transformed)
+namespace SgNodeHelper {
 
 template <typename N>
-bool SgNodeHelper::node_can_be_changed(N * node);
+bool node_can_be_changed(N * node);
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
+bool node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
   return ! SageInterface::insideSystemHeader(lnode) &&
          ! lnode->isCompilerGenerated();
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
+bool node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNode>(lnode_s);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgStatement>(SgStatement * stmt) {
+bool node_can_be_changed<SgStatement>(SgStatement * stmt) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNode>(stmt);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
+bool node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
   return SgNodeHelper::node_can_be_changed<SgStatement>(decl);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
+bool node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
   std::string fname = fdecl->get_name().getString();
   return fname.find("__builtin_") != 0 && SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(fdecl);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
+bool node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
   return SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(vdecl);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope) {
+bool node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope) {
   return SgNodeHelper::node_can_be_changed<SgStatement>(scope);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn) {
+bool node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn) {
   return SgNodeHelper::node_can_be_changed<SgScopeStatement>(fdefn);
 }
 
 template <>
-bool SgNodeHelper::node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
+bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
+}
+
+
+bool nodeCanBeChanged(SgLocatedNode * lnode) {
+  // TODO big switch statement...
+  SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
+  if (fdecl != nullptr) {
+    return SgNodeHelper::node_can_be_changed(fdecl);
+  } else {
+    return SgNodeHelper::node_can_be_changed(lnode);
+  }
+}
+
 }
 

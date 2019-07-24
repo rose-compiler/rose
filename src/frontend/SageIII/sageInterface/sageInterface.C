@@ -8466,20 +8466,23 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
+          bool ambiguityDetected = false;
+
           SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-          ROSE_ASSERT(definingDeclarationStatement != NULL);
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-          ROSE_ASSERT(classDeclaration != NULL);
-          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
+          if (definingDeclarationStatement != NULL) {
+            SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+            ROSE_ASSERT(classDeclaration != NULL);
+            SgClassDefinition* classDefinition =  classDeclaration->get_definition();
 
-       // This works for any SgName and SgSymbol, so it need not be specific to variables.
-          bool ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+         // This works for any SgName and SgSymbol, so it need not be specific to variables.
+            ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+            printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
 #endif
+          }
 
           if (ambiguityDetected == true)
              {
