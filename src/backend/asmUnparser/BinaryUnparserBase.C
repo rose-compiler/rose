@@ -877,6 +877,7 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_ENTRY_POINT,  "program entry point");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_IMPORT,       "import");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK,        "thunk");
+        addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK_TARGET, "thunk target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_EXPORT,       "export");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_TARGET,  "function call target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_INSN,    "possible function call target");

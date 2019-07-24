@@ -3451,6 +3451,7 @@ void Grammar::setUpBinaryInstructions() {
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
+                FUNC_THUNK_TARGET= 0x00004000,  /**< Function is the target of a thunk. */
                 FUNC_EXCEPTION_HANDLER
                                  = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
