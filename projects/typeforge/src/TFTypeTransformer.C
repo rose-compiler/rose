@@ -9,10 +9,10 @@
 using namespace std;
 
 #ifndef DEBUG__statics__addExplicitCast
-#  define DEBUG__statics__addExplicitCast 1
+#  define DEBUG__statics__addExplicitCast 0
 #endif
 #ifndef DEBUG__TFTypeTransformer
-#  define DEBUG__TFTypeTransformer 1
+#  define DEBUG__TFTypeTransformer 0
 #endif
 #ifndef DEBUG__TFTypeTransformer__rebuildBaseType
 #  define DEBUG__TFTypeTransformer__rebuildBaseType DEBUG__TFTypeTransformer
@@ -325,7 +325,20 @@ void TFTypeTransformer::execute() {
       SgFunctionType * old_ftype = funDecl->get_type();
       assert(old_ftype != NULL);
 
-      funDecl->set_type(SageBuilder::buildFunctionType(type, old_ftype->get_argument_list()));
+      SgFunctionType * ftype = SageBuilder::buildFunctionType(type, old_ftype->get_argument_list());
+      assert(ftype != NULL);
+
+      std::set<SgFunctionDeclaration *> fdecls; // Really inefficient
+      fdecls.insert(funDecl);
+      for (auto fdecl : SgNodeHelper::listOfFunctionDeclarations(nullptr)) {
+        SgFunctionDeclaration * fd = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+        if (fd == funDecl) {
+          fdecls.insert(fdecl);
+        }
+      }
+      for (auto fdecl : fdecls) {
+        fdecl->set_type(ftype);
+      }
 
     } else {
       cerr << "Error: attempted to apply changes to an unknown node " << node->class_name() <<endl;

@@ -24,7 +24,7 @@ class Analysis {
       std::string cname;
       std::string position;
 
-      SgScopeStatement * scope;
+      SgNode * scope;
       SgType * type;
     };
 
@@ -41,7 +41,11 @@ class Analysis {
     // Compute link
 
     void traverse(SgGlobal * g);
-    void linkVariables(SgNode* key, SgType* type, SgExpression* exp);
+    void traverseVariableDeclarations(SgGlobal * g);
+    void traverseFunctionDeclarations(SgGlobal * g);
+    void traverseFunctionDefinitions(SgGlobal * g);
+
+    void linkVariables(SgNode * key, SgExpression * exp);
 
   public:
     void initialize(SgProject * p = nullptr);
@@ -52,22 +56,27 @@ class Analysis {
     std::string getHandle(SgNode * n) const;
 
     std::string getClass(SgNode * n) const;
-    std::string getClass(std::string const & h) const;
 
     std::string getPosition(SgNode * n) const;
-    std::string getPosition(std::string const & h) const;
 
     SgType * getType(SgNode * n) const;
-    SgType * getType(std::string const & h) const;
 
-    SgScopeStatement * getScope(SgNode * n) const;
-    SgScopeStatement * getScope(std::string const & h) const;
+    SgNode * getScope(SgNode * n) const;
 
     std::vector<SgNode *> const & getEdgeIn(SgNode * n) const;
 
+    //
+
+    void getGlobals    ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getLocals     ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getFields     ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getFunctions  ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
+    void getMethods    ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
+    void getParameters ( std::vector<SgInitializedName     *> & decls, std::string const & location) const;
+
     // Generate the graph of the model
 
-    void toDot(std::string const & fileName) const;
+    void toDot(std::string const & fileName, SgType * base = nullptr) const;
 
   friend ::Typeforge::ToolConfig;
 };

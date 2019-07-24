@@ -11,7 +11,7 @@
 #define MAXPATHLEN 255
 
 #ifndef DEBUG__ToolConfig
-#  define DEBUG__ToolConfig 1
+#  define DEBUG__ToolConfig 0
 #endif
 #ifndef DEBUG__ToolConfig__statics
 #  define DEBUG__ToolConfig__statics    DEBUG__ToolConfig
@@ -305,10 +305,8 @@ void ToolConfig::writeGlobal() {
   std::cout << "  ToolConfig::global_config = " << ToolConfig::global_config << std::endl;
   std::cout << "  ToolConfig::filename      = " << ToolConfig::filename << std::endl;
 #endif
-  if (ToolConfig::global_config != nullptr && !ToolConfig::filename.empty()) {
-    if (!ToolConfig::global_config->saveConfig(ToolConfig::filename)) {
-      std::cerr << "[typeforge] Could not save the configuration!" << std::endl;
-    }
+  if (!ToolConfig::getGlobal()->saveConfig(ToolConfig::filename)) {
+    std::cerr << "[typeforge] Could not save the configuration!" << std::endl;
   }
 }
 
@@ -418,8 +416,11 @@ void ToolConfig::addAction(SgNode * node, SgType * toType, std::string action_ta
     std::string scope_name;
     if (scope == nullptr || isSgGlobal(scope)) {
       scope_name = "global";
+    } else if (SgClassDeclaration * xdecl = isSgClassDeclaration(scope)) {
+      scope_name = xdecl->get_qualified_name();
+      scope_name = "class:<" + scope_name + ">";
     } else if (SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(scope)) {
-      scope_name = fdecl->get_name();
+      scope_name = fdecl->get_qualified_name();
       scope_name = "function:<" + scope_name + ">";
     }
     assert(scope_name != "");

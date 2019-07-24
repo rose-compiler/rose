@@ -8,13 +8,16 @@
 #include "ToolConfig.hpp"
 
 #ifndef DEBUG__statics__isArrayPointerType
-#  define DEBUG__statics__isArrayPointerType 1
+#  define DEBUG__statics__isArrayPointerType 0
 #endif
 #ifndef DEBUG__statics__getNodeLabel
-#  define DEBUG__statics__getNodeLabel 1
+#  define DEBUG__statics__getNodeLabel 0
+#endif
+#ifndef DEBUG__ignoreNode
+#  define DEBUG__ignoreNode 0
 #endif
 #ifndef DEBUG__Analysis
-#  define DEBUG__Analysis 1
+#  define DEBUG__Analysis 0
 #endif
 #ifndef DEBUG__Analysis__variableSetAnalysis
 #  define DEBUG__Analysis__variableSetAnalysis DEBUG__Analysis
@@ -114,6 +117,16 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
   type(nullptr)
 {
 
+  // This object is used to unparse type properly
+  SgUnparse_Info * uinfo = new SgUnparse_Info();
+      uinfo->set_SkipComments();
+      uinfo->set_SkipWhitespaces();
+      uinfo->set_SkipEnumDefinition();
+      uinfo->set_SkipClassDefinition();
+      uinfo->set_SkipFunctionDefinition();
+      uinfo->set_SkipBasicBlock();
+      uinfo->set_isTypeFirstPart();
+
 #if DEBUG__statics__getNodeLabel
   std::cout << "Analysis::node_tuple_t::node_tuple_t(" << n->class_name() << " * n = " << n << "):" << std::endl;
 #endif
@@ -139,58 +152,148 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
   SgInitializedName * iname = isSgInitializedName(n);
   SgVariableDeclaration * vdecl = isSgVariableDeclaration(n);
   SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(n);
-  if (vdecl != nullptr) {
-    iname = SgNodeHelper::getInitializedNameOfVariableDeclaration(vdecl);
-  }
+  SgClassDeclaration * xdecl = isSgClassDeclaration(n);
+  SgNamespaceDeclarationStatement * ndecl = isSgNamespaceDeclarationStatement(n);
 
   if (expr != nullptr) {
-    handle = "?z<" + position + ">";
+    handle = "?<" + position + ">";
     type = expr->get_type();
-    scope = iname->get_scope();
+    scope = nullptr; // FIXME do we want to prepend the scope of the expression?
+
+  } else if (ndecl != nullptr) {
+    type = ndecl->get_type();
+    handle = ndecl->get_qualified_name().getString();
+    scope = nullptr;
+    ndecl = nullptr;
+
   } else if (iname != nullptr) {
-    handle = iname->get_qualified_name().getString();
-    scope = iname->get_scope();
+    SgFunctionParameterList * fplst = isSgFunctionParameterList(iname->get_parent());
+    assert(fplst != nullptr);
+    fdecl = isSgFunctionDeclaration(fplst->get_parent());
+    assert(fdecl != nullptr);
+
+    auto it = std::find(fplst->get_args().begin(), fplst->get_args().end(), iname);
+    assert(it != fplst->get_args().end());
+    auto pos = it - fplst->get_args().begin();
+
+    std::ostringstream oss;
+    oss << pos;
+    handle = oss.str();
     type = iname->get_type();
+    scope = nullptr;
+
+  } else if (xdecl != nullptr) {
+    type = xdecl->get_type();
+    handle = xdecl->get_qualified_name().getString();
+    scope = nullptr;
+    fdecl = nullptr;
+
   } else if (fdecl != nullptr) {
-    type = fdecl->get_type();
-    handle = fdecl->get_qualified_name().getString();
+    type = fdecl->get_type()->get_return_type();
+    std::ostringstream oss;
+    oss << fdecl->get_qualified_name().getString() << "(";
+    for (auto t : fdecl->get_type()->get_argument_list()->get_arguments()) {
+      oss << globalUnparseToString(t, uinfo) << " ";
+    }
+    oss << ")" << handle;
+    handle = oss.str();
+    scope = nullptr;
+    fdecl = nullptr;
+
+  } else if (vdecl != nullptr) {
+    iname = SgNodeHelper::getInitializedNameOfVariableDeclaration(vdecl);
+
+    handle = iname->get_name().getString();
+    type = iname->get_type();
+    scope = vdecl->get_scope();
+    assert(scope != nullptr);
+
   } else {
     assert(false);
   }
 
 #if DEBUG__statics__getNodeLabel
-  std::cout << "  handle   = " << handle << std::endl;
-  std::cout << "  scope    = " << scope << " (" << ( scope ? scope->class_name() : "") << ")" << std::endl;
   std::cout << "  type     = " << type  << " (" << ( type  ? type->class_name()  : "") << ") : " << ( type  ? type->unparseToString()  : "") << std::endl;
+  std::cout << "  scope    = " << scope << " (" << ( scope ? scope->class_name() : "") << ")" << std::endl;
 #endif
 
-  while (scope != nullptr) {
-    SgFunctionDefinition * fdefn = isSgFunctionDefinition(scope);
-    SgClassDefinition * xdefn = isSgClassDefinition(scope);
-    SgNamespaceDefinitionStatement * ndefn = isSgNamespaceDefinitionStatement(scope);
-    SgGlobal * glob = isSgGlobal(scope);
-    if (fdefn != nullptr) {
-      handle = fdefn->get_declaration()->get_qualified_name() + "::" + handle;
-      scope = nullptr;
-    } else if (glob != nullptr) {
-//    handle = scope + "::" + handle;
-      scope = nullptr;
-    } else if (xdefn != nullptr) {
-//    handle = xdefn->get_declaration()->get_qualified_name() + "::" + handle;
-      scope = nullptr;
-    } else if (ndefn != nullptr) {
-//    handle = ndefn->get_declaration()->get_qualified_name() + "::" + handle;
-      scope = nullptr;
-    } else {
-      scope = scope->get_scope();
-    }
+  SgScopeStatement * ascope = isSgScopeStatement(scope);
+  assert(scope == nullptr || ascope != nullptr);
+
+  while ( ascope && !isSgFunctionDefinition(ascope) && !isSgClassDefinition(ascope) && !isSgNamespaceDefinitionStatement(ascope) && !isSgGlobal(ascope) ) {
 
 #if DEBUG__statics__getNodeLabel
-    if (scope != nullptr) {
-      std::cout << "  - scope  = " << scope << " (" << scope->class_name() << ")" << std::endl;
-    }
+    std::cout << "  -> ascope  = " << ascope << " (" << ascope->class_name() << ")" << std::endl;
 #endif
+
+    SgScopeStatement * pscope = ascope->get_scope();
+
+#if DEBUG__statics__getNodeLabel
+    std::cout << "  -> pscope  = " << pscope << " (" << ( pscope ? pscope->class_name() : "" ) << ")" << std::endl;
+#endif
+
+#define DEBUG__build_qualname_for_non_named_scopes 0
+#if DEBUG__build_qualname_for_non_named_scopes
+    SgFunctionDefinition * pfdefn = isSgFunctionDefinition(pscope);
+    SgClassDefinition * pxdefn = isSgClassDefinition(pscope);
+    SgNamespaceDefinitionStatement * pndefn = isSgNamespaceDefinitionStatement(pscope);
+    SgGlobal * pglob = isSgGlobal(pscope);
+#endif
+    SgBasicBlock * pbb = isSgBasicBlock(pscope);
+    std::ostringstream oss;
+    if (pbb != nullptr) {
+      auto stmts = pbb->getStatementList();
+      auto it = std::find(stmts.begin(), stmts.end(), ascope);
+      assert(it != stmts.end());
+      auto pos = it - stmts.begin();
+      oss << pos << "::";
+#if DEBUG__build_qualname_for_non_named_scopes
+    } else if (pfdefn != nullptr) {
+      oss << "{}::";
+    } else if (pxdefn != nullptr) {
+      oss << "##::";
+    } else if (pndefn != nullptr) {
+      oss << "$$::";
+    } else if (pglob != nullptr) {
+      oss << "@@::";
+    } else {
+      oss << "--::";
+#endif
+    }
+    handle = oss.str() + handle;
+    ascope = pscope;
   }
+
+  if (SgClassDefinition * xdefn = isSgClassDefinition(ascope)) {
+    xdecl = xdefn->get_declaration();
+    scope = xdecl;
+  } else if (SgFunctionDefinition * fdefn = isSgFunctionDefinition(ascope)) {
+    fdecl = fdefn->get_declaration();
+    scope = fdecl;
+  } else if (SgNamespaceDefinitionStatement * ndefn = isSgNamespaceDefinitionStatement(ascope)) {
+    ndecl = ndefn->get_namespaceDeclaration();
+    scope = ndecl;
+  }
+
+  if (ndecl != nullptr) {
+    handle = ndecl->get_qualified_name().getString() + "::" + handle;
+  } else if (xdecl != nullptr) {
+    handle = xdecl->get_qualified_name().getString() + "::" + handle;
+  } else if (fdecl != nullptr) {
+    std::ostringstream oss;
+    oss << fdecl->get_qualified_name().getString() << "(";
+    for (auto t : fdecl->get_type()->get_argument_list()->get_arguments()) {
+      oss << globalUnparseToString(t, uinfo) << " ";
+    }
+    oss << ")::" << handle;
+    handle = oss.str();
+  }
+
+#if DEBUG__statics__getNodeLabel
+  std::cout << "  handle   = " << handle << std::endl;
+#endif
+
+  delete uinfo;
 }
 
 void Analysis::initialize(SgProject * p) {
@@ -205,62 +308,105 @@ void Analysis::initialize(SgProject * p) {
   }
 }
 
-void Analysis::traverse(SgGlobal * g) {
+static bool ignoreNode(SgNode * n) {
+  assert(n != nullptr);
+#if DEBUG__ignoreNode
+  std::cout << "::ignoreNode()" << std::endl;
+  std::cout << "  n = " << n << " ( " << n->class_name() << " )" << std::endl;
+#endif
+
+  bool ignore = true;
+
+  SgLocatedNode * lnode = isSgLocatedNode(n);
+  if (lnode != nullptr) {
+    ignore = !SgNodeHelper::nodeCanBeChanged(lnode);
+  }
+
+#if DEBUG__ignoreNode
+  std::cout << "  => " << ignore << std::endl;
+#endif
+
+  return ignore;
+}
+
+void Analysis::traverseVariableDeclarations(SgGlobal * g) {
 #if DEBUG__Analysis__variableSetAnalysis
-  std::cout << "Analysis::variableSetAnalysis" << std::endl;
+  std::cout << "Analysis::traverseVariableDeclarations" << std::endl;
   std::cout << "  g   = " << g << std::endl;
 #endif
 
-  RoseAst wholeAST(g);
-
-  list<SgVariableDeclaration*> listOfVars = SgNodeHelper::listOfGlobalVars(g);
+  std::list<SgVariableDeclaration *> listOfVars = SgNodeHelper::listOfGlobalVars(g);
   listOfVars.splice(listOfVars.end(), SgNodeHelper::listOfGlobalFields(g));
-#if DEBUG__Analysis__variableSetAnalysis
-  std::cout << "  listOfVars.size() = " << listOfVars.size() << std::endl;
-#endif
   for (auto varDec : listOfVars) {
-
-#if DEBUG__Analysis__variableSetAnalysis
-    std::cout << "    varDec   = " << varDec << " ( " << varDec->class_name() << " )" << std::endl;
-#endif
-
+    if (ignoreNode(varDec)) {
+      continue;
+    }
     SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
     if (initName == nullptr) {
       continue;
     }
-
-#if DEBUG__Analysis__variableSetAnalysis
-    std::cout << "    initName = " << initName << " ( " << initName->class_name() << " ) = " << initName->get_name() << std::endl;
-#endif
-
     addNode(varDec);
+  }
+  for (auto varDec : listOfVars) {
+    SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
+    if (initName == nullptr) {
+      continue;
+    }
 
     SgInitializer* init = initName->get_initializer();
     if (init == nullptr) {
       continue;
     }
 
-#if DEBUG__Analysis__variableSetAnalysis
-    std::cout << "    init = " << init << " ( " << init->class_name() << " ) = " << init->unparseToString() << std::endl;
-#endif
-
     SgType* keyType = initName->get_type();
     if (keyType == nullptr) {
       continue;
     }
 
+    linkVariables(varDec, init);
+  }
+}
+
+void Analysis::traverseFunctionDeclarations(SgGlobal * g) {
 #if DEBUG__Analysis__variableSetAnalysis
-    std::cout << "    keyType = " << keyType << " ( " << keyType->class_name() << " ) = " << keyType->unparseToString() << std::endl;
+  std::cout << "Analysis::traverseFunctionDeclarations" << std::endl;
+  std::cout << "  g   = " << g << std::endl;
 #endif
 
-    if (!isArrayPointerType(keyType)) {
+  std::set<SgFunctionDeclaration *> fdecls;
+  for (auto fdecl : SgNodeHelper::listOfFunctionDeclarations(g)) {
+    if (ignoreNode(fdecl)) {
+      continue;
+    }
+    if (isSgTemplateFunctionDeclaration(fdecl) || isSgTemplateMemberFunctionDeclaration(fdecl)) {
       continue;
     }
 
-    assert(stack.empty());
-    linkVariables(varDec, keyType, init);
-    assert(stack.empty());
+    SgFunctionDeclaration * fd = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+    assert(fd != nullptr);
+    fdecls.insert(fd);
   }
+  for (auto fdecl : fdecls) {
+#if DEBUG__Analysis__variableSetAnalysis
+    std::cout << "  fdecl = " << fdecl << " (" << fdecl->class_name() << ")" << std::endl;
+#endif
+    addNode(fdecl);
+
+    SgFunctionDeclaration * pfdecl = isSgFunctionDeclaration(fdecl->get_definingDeclaration());
+    if (pfdecl == nullptr) {
+      pfdecl = fdecl;
+    }
+    for (auto iname : pfdecl->get_args()) {
+      addNode(iname);
+    }
+  }
+}
+
+void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
+#if DEBUG__Analysis__variableSetAnalysis
+  std::cout << "Analysis::traverseFunctionDefinitions" << std::endl;
+  std::cout << "  g   = " << g << std::endl;
+#endif
 
   list<SgFunctionDefinition*> listOfFunctionDefinitions = SgNodeHelper::listOfFunctionDefinitions(g);
 #if DEBUG__Analysis__variableSetAnalysis
@@ -268,18 +414,27 @@ void Analysis::traverse(SgGlobal * g) {
 #endif
 
   for (auto funDef : listOfFunctionDefinitions) {
+    if (ignoreNode(funDef))
+      continue;
+    if (isSgTemplateFunctionDefinition(funDef))
+      continue;
+
 #if DEBUG__Analysis__variableSetAnalysis
     std::cout << "    funDef   = " << funDef << " ( " << funDef->class_name() << " )" << std::endl;
 #endif
 
     RoseAst ast(funDef);
-    for (auto n : ast) {
+    for (auto i = ast.begin(); i != ast.end(); ++i) {
+      auto n = *i;
+
+      if (ignoreNode(n)) {
+        continue;
+      }
+
 #if DEBUG__Analysis__variableSetAnalysis
-//    std::cout << "      n       = " << n << " ( " << n->class_name() << " )" << std::endl;
+      std::cout << "      n       = " << n << " ( " << n->class_name() << " )" << std::endl;
 #endif
-      SgNode* key = nullptr;
-      SgType* keyType = nullptr;
-      SgExpression* exp = nullptr;
+
       if (SgAssignOp * assignOp = isSgAssignOp(n)) {
         SgExpression * lhs = assignOp->get_lhs_operand();
 #if DEBUG__Analysis__variableSetAnalysis
@@ -304,127 +459,147 @@ void Analysis::traverse(SgGlobal * g) {
 #if DEBUG__Analysis__variableSetAnalysis
           std::cout << "      varRef  = " << varRef << " ( " << (varRef ? varRef->class_name() : "") << " )" << std::endl;
 #endif
-
-          keyType = varRef->get_type();
-#if DEBUG__Analysis__variableSetAnalysis
-          std::cout << "      keyType = " << keyType << " ( " << (keyType ? keyType->class_name() : "") << " )" << std::endl;
-#endif
-
-          if (!isArrayPointerType(keyType)) {
-            continue;
-          }
-
           SgVariableSymbol* varSym = varRef->get_symbol();
           assert(varSym != nullptr);
 
           SgInitializedName * iname = varSym->get_declaration();
           assert(iname != nullptr);
-
-	  key = iname->get_declaration(); // get variable decl if exist
-          if (key == nullptr) {
-            key = iname; // case of a function parameter (or non-type template parameter)
-          }
-        }
-
-        if (SgFunctionRefExp * fref = isSgFunctionRefExp(lhs)) {
-#if DEBUG__Analysis__variableSetAnalysis
-          std::cout << "      fref    = " << fref << " ( " << (fref ? fref->class_name() : "") << " )" << std::endl;
-#endif
-          keyType = fref->get_type();
-#if DEBUG__Analysis__variableSetAnalysis
-          std::cout << "      keyType = " << keyType << " ( " << (keyType ? keyType->class_name() : "") << " )" << std::endl;
-#endif
-          if (!isArrayPointerType(keyType)) {
+          if (ignoreNode(iname)) {
             continue;
           }
 
+	  SgVariableDeclaration * vdecl = isSgVariableDeclaration(iname->get_declaration());
+          if (vdecl != nullptr && ignoreNode(vdecl)) {
+            continue;
+          }
+
+          if (vdecl != nullptr) {
+            linkVariables(vdecl, assignOp->get_rhs_operand());
+          } else {
+            linkVariables(iname, assignOp->get_rhs_operand());
+          }
+        } else if (SgFunctionRefExp * fref = isSgFunctionRefExp(lhs)) {
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      fref    = " << fref << " ( " << (fref ? fref->class_name() : "") << " )" << std::endl;
+#endif
           SgFunctionSymbol * fsym = fref->get_symbol();
           assert(fsym != nullptr);
 
-	  key = fsym->get_declaration();
-        }
+          SgFunctionDeclaration * fdecl = fsym->get_declaration();
+          assert(fdecl != nullptr);
 
-        exp = assignOp->get_rhs_operand();
+          if (ignoreNode(fdecl)) {
+            continue;
+          }
+
+          fdecl = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+          assert(fdecl != nullptr);
+
+          linkVariables(fdecl, assignOp->get_rhs_operand());
+        } else {
+          // TODO other cases such as operation + * / ...
+        }
       } else if (SgVariableDeclaration* varDec = isSgVariableDeclaration(n)) {
         SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDec);
-        if(!initName) {
+        if (initName == nullptr) {
           continue;
         }
+
+        SgLocatedNode * lnode = isSgLocatedNode(n);
+        if (lnode != nullptr && ignoreNode(lnode)) {
+          continue;
+        }
+
+        addNode(varDec);
 
         SgInitializer* init = initName->get_initializer();
         if (!init) {
           continue;
         }
 
-        keyType = initName->get_type();
-        if (!isArrayPointerType(keyType)) {
-          continue;
-        }
-#if DEBUG__Analysis__variableSetAnalysis
-        std::cout << "      keyType = " << keyType << " ( " << keyType->class_name() << " )" << std::endl;
-#endif
+        linkVariables(varDec, init);
 
-        key = initName->get_declaration();
-        exp = init;
       } else if (SgFunctionCallExp* callExp = isSgFunctionCallExp(n)) {
-        SgFunctionDefinition* funDef = SgNodeHelper::determineFunctionDefinition(callExp);
-        if (!funDef) {
-          continue;
+        SgExpression * callee = callExp->get_function();
+        assert(callee != nullptr);
+        SgFunctionRefExp * fref = isSgFunctionRefExp(callee);
+        SgMemberFunctionRefExp * mfref = isSgMemberFunctionRefExp(callee);
+        while (callee != nullptr && fref == nullptr && mfref == nullptr) {
+#if DEBUG__Analysis__variableSetAnalysis
+          std::cout << "      callee = " << callee << " ( " << callee->class_name() << " )" << std::endl;
+#endif
+          SgBinaryOp * bop = isSgBinaryOp(callee);
+          if (bop != nullptr) {
+            callee = bop->get_rhs_operand_i();
+          } else {
+            assert(false);
+          }
+          fref = isSgFunctionRefExp(callee);
+          mfref = isSgMemberFunctionRefExp(callee);
         }
 #if DEBUG__Analysis__variableSetAnalysis
-        std::cout << "      funDef  = " << funDef << " ( " << funDef->class_name() << " )" << std::endl;
+        std::cout << "      fref  = " << fref  << " ( " << ( fref  ? fref->class_name()  : "" ) << " )" << std::endl;
+        std::cout << "      mfref = " << mfref << " ( " << ( mfref ? mfref->class_name() : "" ) << " )" << std::endl;
 #endif
+        SgFunctionSymbol * fsym = nullptr;
+        if (fref != nullptr) {
+          fsym = fref->get_symbol_i();
+        } else if (mfref != nullptr) {
+          fsym = mfref->get_symbol_i();
+        } else {
+          continue;
+        }
+        assert(fsym != nullptr);
 
-        SgInitializedNamePtrList& initNameList = SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-        SgExpressionPtrList& expList = callExp->get_args()->get_expressions();
+        SgFunctionDeclaration * fdecl = fsym->get_declaration();
+        assert(fdecl != nullptr);
+
+        SgFunctionDeclaration * dfdecl = isSgFunctionDeclaration(fdecl->get_definingDeclaration());
+        if (dfdecl == nullptr) {
+          dfdecl = fdecl;
+        }
+
+	if (ignoreNode(dfdecl)) {
+          continue;
+        }
+
+        auto const & initNameList = dfdecl->get_parameterList()->get_args();
+        auto const & expList = callExp->get_args()->get_expressions();
         auto initIter = initNameList.begin();
         auto expIter  = expList.begin(); 
         while (initIter != initNameList.end()) {
           addNode(*initIter);
-          if ( isArrayPointerType((*initIter)->get_type()) ) {
-            assert(stack.empty());
-            linkVariables((*initIter), (*initIter)->get_type(), (*expIter));
-            assert(stack.empty());
-          }
+          linkVariables(*initIter, *expIter);
           ++initIter;
           ++expIter;
         }
       } else if(SgReturnStmt* ret = isSgReturnStmt(n)) {
-        exp = ret->get_expression();
-        keyType = exp->get_type();
-        if (!isArrayPointerType(keyType)) {
-          continue;
-        }
-
-        key = funDef->get_declaration();
-      }
-
-#if DEBUG__Analysis__variableSetAnalysis
-      if (key)
-        std::cout << "      key     = " << key     << " ( " << key->class_name() << " )" << std::endl;
-      if (keyType)
-        std::cout << "      keyType = " << keyType << " ( " << keyType->class_name() << " )" << std::endl;
-      if (exp)
-        std::cout << "      exp     = " << exp     << " ( " << exp->class_name() << " )" << std::endl;
-#endif
-      if (key) {
-        addNode(key);
-      }
-
-      if (key && keyType && exp) {
-        assert(stack.empty());
-        linkVariables(key, keyType, exp);
-        assert(stack.empty());
+        SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(funDef->get_declaration()->get_firstNondefiningDeclaration());
+        assert(fdecl != nullptr);
+        addNode(fdecl);
+        linkVariables(fdecl, ret->get_expression());
       }
     }
   }
 }
 
+void Analysis::traverse(SgGlobal * g) {
+#if DEBUG__Analysis__variableSetAnalysis
+  std::cout << "Analysis::traverse" << std::endl;
+  std::cout << "  g   = " << g << std::endl;
+#endif
+
+  traverseVariableDeclarations(g);
+  traverseFunctionDeclarations(g);
+  traverseFunctionDefinitions(g);
+}
+
 // Searches through the expression for variables of the given type then links them with the key node provided
-void Analysis::linkVariables(SgNode * key, SgType * type, SgExpression * expression) {
+//   TODO traverse expression instead: we need the full path (stack is not enough for complex expressions)
+void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
 #if DEBUG__Analysis__linkVariables
-  std::cout << "Analysis::linkVariables( key = " << key << " (" << (key != nullptr ? key->class_name() : "") << ")" << std::endl;
-  std::cout << "  type       = " << type       << " ( " << (type       != nullptr ? type->class_name()       : "") << " ) = " << type->unparseToString()       << std::endl;
+  std::cout << "Analysis::linkVariables():" << std::endl;
+  std::cout << "  key        = " << key << " (" << (key != nullptr ? key->class_name() : "") << ")" << std::endl;
   std::cout << "  expression = " << expression << " ( " << (expression != nullptr ? expression->class_name() : "") << " ) = " << expression->unparseToString() << std::endl;
   std::cout << "  STACK = [ " << std::endl;
   for (auto i: stack) {
@@ -438,50 +613,47 @@ void Analysis::linkVariables(SgNode * key, SgType * type, SgExpression * express
   RoseAst ast(expression);
   for (auto i = ast.begin(); i != ast.end(); ++i) {
     if (SgExpression * exp = isSgExpression(*i)) {
-      SgType * etype = exp->get_type();
-      if (etype && sameType(etype, type)) {
-        if (exp != expression) {
-          stack.push_back(exp);
-        }
+      if (exp != expression) {
+        stack.push_back(exp);
+      }
 
-        if (SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)) {
-          SgFunctionDeclaration* funDec = funCall->getAssociatedFunctionDeclaration();
-          SgFunctionDefinition* funDef = SgNodeHelper::determineFunctionDefinition(funCall);
-          // TV: FIXME:
-          //     - why do we need a definition?
-          //     - what happen to the expressions used as argument of the function? (they are never seen because of the `skip`)
-          if(funDef) {
-            funDec = funDef->get_declaration();
-            if (key != funDec) {
-              addNode(funDec);
-              addEdge(key, funDec);
-            }
-            i.skipChildrenOnForward();
-          }
-        } else if(SgVarRefExp* varRef = isSgVarRefExp(exp)) {
-          SgVariableSymbol* varSym = varRef->get_symbol();
-          if (varSym) {
-            SgInitializedName * refInitName = varSym->get_declaration();
-            SgNode * target = refInitName;
-            if (!SgNodeHelper::isFunctionParameterVariableSymbol(varSym)) {
-              target = refInitName->get_declaration();
-            }
-            if (target && key != target) {
-              addNode(target);
-              addEdge(key, target);
-            }
-          }
-        } else if(SgPntrArrRefExp* refExp = isSgPntrArrRefExp(exp)) {
-          linkVariables(key, refExp->get_lhs_operand()->get_type(), refExp->get_lhs_operand());
-          i.skipChildrenOnForward(); // FIXME what about the RHS? (aka index)
-        } else if(SgPointerDerefExp* refExp = isSgPointerDerefExp(exp)) {
-          linkVariables(key, refExp->get_operand()->get_type(), refExp->get_operand());
-          i.skipChildrenOnForward();
-        }
+      if (SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)) {
+        SgFunctionDeclaration* funDec = funCall->getAssociatedFunctionDeclaration();
+        assert(funDec != nullptr);
 
-        if (exp != expression) {
-          stack.pop_back();
+        funDec = isSgFunctionDeclaration(funDec->get_firstNondefiningDeclaration());
+        assert(funDec != nullptr);
+
+        addNode(funDec);
+        addEdge(key, funDec);
+
+        i.skipChildrenOnForward(); // TODO: expressions used as argument of the function? (they are never seen because of the `skip`)
+      } else if (SgVarRefExp* varRef = isSgVarRefExp(exp)) {
+        SgVariableSymbol* varSym = varRef->get_symbol();
+        if (varSym) {
+          SgInitializedName * refInitName = varSym->get_declaration();
+          SgNode * target = refInitName;
+          if (!SgNodeHelper::isFunctionParameterVariableSymbol(varSym)) {
+            target = refInitName->get_declaration();
+          }
+          if (target != nullptr) {
+            addNode(target);
+            addEdge(key, target);
+          }
         }
+      } else if (SgPntrArrRefExp* refExp = isSgPntrArrRefExp(exp)) {
+        linkVariables(key, refExp->get_lhs_operand());
+        i.skipChildrenOnForward(); // FIXME what about the RHS? (aka index)
+      } else if (SgPointerDerefExp* refExp = isSgPointerDerefExp(exp)) {
+        linkVariables(key, refExp->get_operand());
+        i.skipChildrenOnForward();
+      } else if (SgCommaOpExp* commaExp = isSgCommaOpExp(exp)) {
+        linkVariables(key, commaExp->get_rhs_operand());
+        i.skipChildrenOnForward();
+      }
+
+      if (exp != expression) {
+        stack.pop_back();
       }
     }
   }
@@ -638,8 +810,8 @@ SgType * Analysis::getType(SgNode * n) const {
   return t;
 }
 
-SgScopeStatement * Analysis::getScope(SgNode * n) const {
-  SgScopeStatement * s = nullptr;
+SgNode * Analysis::getScope(SgNode * n) const {
+  SgNode * s = nullptr;
 
 #if DEBUG__Analysis__getScope
   std::cout << "Analysis::getScope:" << std::endl;
@@ -658,7 +830,16 @@ SgScopeStatement * Analysis::getScope(SgNode * n) const {
   return s;
 }
 
-void Analysis::toDot(std::string const & fileName) const {
+void Analysis::toDot(std::string const & fileName, SgType * base) const {
+  SgUnparse_Info* uinfo = new SgUnparse_Info();
+      uinfo->set_SkipComments();
+      uinfo->set_SkipWhitespaces();
+      uinfo->set_SkipEnumDefinition();
+      uinfo->set_SkipClassDefinition();
+      uinfo->set_SkipFunctionDefinition();
+      uinfo->set_SkipBasicBlock();
+      uinfo->set_isTypeFirstPart();
+
   fstream dotfile;
   dotfile.open(fileName, ios::out | ios::trunc);
 
@@ -667,20 +848,26 @@ void Analysis::toDot(std::string const & fileName) const {
 
   for (auto n: node_map) {
     assert(n.first != nullptr);
+    assert(n.second.type != nullptr);
+
+    if ( !sameType(n.second.type, base) ) continue;
 
     dotfile << "  n_" << n.first << " [label=\"" << n.second.handle << "\\n" << n.second.cname << "\\n" << n.second.position;
-    if (n.second.type != nullptr) {
-      dotfile << "\\n" << n.second.type->unparseToString();
-    }
-    dotfile << "\"];" << std::endl;
+    dotfile << "\\n" << globalUnparseToString(n.second.type, uinfo) << "\"];" << std::endl;
 
     auto edges__ = edges.find(n.first);
     if (edges__ != edges.end()) {
       for (auto target_stack: edges__->second) {
         auto t = target_stack.first;
-        auto stacks = target_stack.second;
-        dotfile << "    n_" << n.first << " -> n_" << t << "[label=\"";
+        auto i = node_map.find(t);
+        assert(i != node_map.end());
+
+//      if ( !sameType(i->second.type, base) ) continue;
+
+        dotfile << "    n_" << n.first << " -> n_" << t;
 #if 0
+        auto stacks = target_stack.second;
+        dotfile << "[label=\"";
         for (auto stack__: stacks) {
           for (auto s: stack__) {
             assert(s != nullptr);
@@ -688,8 +875,9 @@ void Analysis::toDot(std::string const & fileName) const {
           }
           dotfile << "";
         }
+        dotfile << "\"];";
 #endif
-        dotfile << "\"];" << std::endl;
+        dotfile << std::endl;
       }
     }
   }
@@ -697,6 +885,81 @@ void Analysis::toDot(std::string const & fileName) const {
   dotfile << "}" << std::endl;
 
   dotfile.close();
+
+  delete uinfo;
+}
+
+void Analysis::getGlobals(std::vector<SgVariableDeclaration *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgVariableDeclaration * vdecl = isSgVariableDeclaration(n);
+    if (vdecl != nullptr && isSgGlobal(vdecl->get_scope())) {
+      decls.push_back(vdecl);
+    }
+  }
+}
+
+void Analysis::getLocals(std::vector<SgVariableDeclaration *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgVariableDeclaration * vdecl = isSgVariableDeclaration(n);
+    if (vdecl != nullptr) {
+      decls.push_back(vdecl); // TODO compare `location`
+    }
+  }
+}
+
+void Analysis::getFields(std::vector<SgVariableDeclaration *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgVariableDeclaration * vdecl = isSgVariableDeclaration(n);
+    if (vdecl != nullptr && false) {
+      decls.push_back(vdecl); // TODO compare `location`
+    }
+  }
+}
+
+void Analysis::getFunctions(std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(n);
+    SgMemberFunctionDeclaration * mdecl = isSgMemberFunctionDeclaration(n);
+    if (fdecl != nullptr && mdecl == nullptr) {
+      decls.push_back(fdecl); // TODO compare `location`
+    }
+  }
+}
+
+void Analysis::getMethods(std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgMemberFunctionDeclaration * mdecl = isSgMemberFunctionDeclaration(n);
+    if (mdecl != nullptr) {
+      decls.push_back(mdecl); // TODO compare `location`
+    }
+  }
+}
+
+void Analysis::getParameters(std::vector<SgInitializedName *> & decls, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgInitializedName * iname = isSgInitializedName(n);
+    if (iname != nullptr) {
+      decls.push_back(iname);
+    }
+  }
 }
 
 SgProject * project;

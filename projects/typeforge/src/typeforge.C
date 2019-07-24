@@ -56,7 +56,7 @@ int main (int argc, char* argv[]) {
   }
   ::Typeforge::typechain.initialize(frontend(rose_args));
   if (args.isUserProvided("set-analysis")) {
-    ::Typeforge::typechain.toDot("set_analysis.dot");
+    ::Typeforge::typechain.toDot("set_analysis.dot", SageBuilder::buildDoubleType());
   }
 
   // [ALTERNATIVE] "--cast-stats": display statistics about casts operations in the program TODO This should be a simple query to the model.
