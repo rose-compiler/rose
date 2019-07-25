@@ -21,6 +21,7 @@ SageBuilder::buildUntypedFile(SgUntypedGlobalScope* scope)
    {
      SgUntypedFile* returnNode = new SgUntypedFile();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      returnNode->set_scope(scope);
 
@@ -28,8 +29,6 @@ SageBuilder::buildUntypedFile(SgUntypedGlobalScope* scope)
         {
           scope->set_parent(returnNode);
         }
-
-     setSourcePosition(returnNode);
 
      return returnNode;
    }
@@ -58,10 +57,6 @@ void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationStatementList* d
         {
           function_list->set_parent(scopeNode);
         }
-
-  // Not clear what to do with the source position information.
-  // Since a SgUntypedNode is a SgLocatedNode we internally have a place to store source position information.
-     setSourcePosition(scopeNode);
    }
 
 SgUntypedScope*
@@ -72,8 +67,13 @@ SageBuilder::buildUntypedScope()
       SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
       ROSE_ASSERT(decl_list && stmt_list && func_list);
 
+      setSourcePosition(decl_list);
+      setSourcePosition(stmt_list);
+      setSourcePosition(func_list);
+
       SgUntypedScope* returnNode = buildUntypedScope(decl_list, stmt_list, func_list);
       ROSE_ASSERT(returnNode != NULL);
+      setSourcePosition(returnNode);
 
       return returnNode;
    }
@@ -83,6 +83,7 @@ SageBuilder::buildUntypedScope(SgUntypedDeclarationStatementList* declaration_li
    {
      SgUntypedScope* returnNode = new SgUntypedScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -95,6 +96,7 @@ SageBuilder::buildUntypedGlobalScope(SgUntypedDeclarationStatementList* declarat
    {
      SgUntypedGlobalScope* returnNode = new SgUntypedGlobalScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -107,6 +109,7 @@ SageBuilder::buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declar
    {
      SgUntypedFunctionScope* returnNode = new SgUntypedFunctionScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -118,6 +121,7 @@ SageBuilder::buildUntypedModuleScope(SgUntypedDeclarationStatementList* declarat
    {
      SgUntypedModuleScope* returnNode = new SgUntypedModuleScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -135,6 +139,7 @@ SageBuilder::buildUntypedBlockStatement(std::string label_string, SgUntypedScope
 
       returnNode = new SgUntypedBlockStatement(label_string, scope);
       ROSE_ASSERT(returnNode != NULL);
+      setSourcePosition(returnNode);
 
       scope->set_parent(returnNode);
 
@@ -171,10 +176,6 @@ void setupMembers(SgUntypedFunctionDeclaration* functionNode, SgUntypedInitializ
         {
           end_statement->set_parent(functionNode);
         }
-     
-  // Not clear what to do with the source position information.
-  // Since a SgUntypedNode is a SgLocatedNode we internally have a place to store source position information.
-     setSourcePosition(functionNode);
    }
 
 SgUntypedFunctionDeclaration*
@@ -182,6 +183,7 @@ SageBuilder::buildUntypedFunctionDeclaration(std::string name, SgUntypedInitiali
    {
      SgUntypedFunctionDeclaration* returnNode = new SgUntypedFunctionDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
@@ -193,6 +195,7 @@ SageBuilder::buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedIni
    {
      SgUntypedProgramHeaderDeclaration* returnNode = new SgUntypedProgramHeaderDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
@@ -204,6 +207,7 @@ SageBuilder::buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitia
    {
      SgUntypedSubroutineDeclaration* returnNode = new SgUntypedSubroutineDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
@@ -223,6 +227,7 @@ SageBuilder::buildUntypedIfStatement(std::string label, SgUntypedExpression* con
 
       SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement(label,statement_enum,conditional,true_body,false_body);
       ROSE_ASSERT(if_stmt);
+      setSourcePosition(if_stmt);
 
       conditional->set_parent(if_stmt);
       true_body->set_parent(if_stmt);

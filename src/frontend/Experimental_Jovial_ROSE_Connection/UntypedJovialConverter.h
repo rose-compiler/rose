@@ -23,7 +23,8 @@ class UntypedJovialConverter : public UntypedConverter
    // Declaration statements
    //
 
-    virtual SgDeclarationStatement* convertUntypedJovialCompoolStatement(SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
+    virtual SgDeclarationStatement* convertUntypedJovialCompoolStatement(SgUntypedNameListDeclaration*  ut_decl, SgScopeStatement* scope);
+    virtual SgDeclarationStatement* convertUntypedStructureDeclaration  (SgUntypedStructureDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //
