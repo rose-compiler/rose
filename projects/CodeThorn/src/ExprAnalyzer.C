@@ -764,8 +764,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   } else {
     if(SgVarRefExp* varRefExp=isSgVarRefExp(arrayExpr)) {
       AbstractValue arrayPtrValue=arrayExprResult.result;
-      const PState* pstate=estate.pstate();
-      PState pstate2=*pstate; // also removes constness
+      const PState* const_pstate=estate.pstate();
+      PState pstate2=*const_pstate; // also removes constness
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
@@ -780,7 +780,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         SAWYER_MESG(SAWYER_MESG(logger[DEBUG]))<<"pointer-array access."<<endl;
-        if(pstate->varExists(arrayVarId)) {
+        if(pstate2.varExists(arrayVarId)) {
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
@@ -817,7 +817,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         resultList.push_back(res);
         return resultList;
       }
-      if(pstate->varExists(arrayPtrValue)) {
+      if(pstate2.varExists(arrayPtrValue)) {
         // required for the following index computation (nothing to do here)
       } else {
         if(arrayPtrValue.isTop()) {
@@ -829,13 +829,17 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         } else {
+          logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
+          logger[ERROR]<<estate.toString()<<endl;
           logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": ";
-          logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state. array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
-          logger[ERROR]<<" access out of allocated memory bounds."<<endl;
+          logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state."<<endl;
+          logger[ERROR]<<"array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<"::"<<arrayPtrValue.toString()<<endl;
+          logger[ERROR]<<"access out of allocated memory bounds."<<endl;
+          logger[ERROR]<<"member check: "<<pstate2.varExists(arrayPtrValue)<<endl;
         }
         exit(1);
       }
-      if(pstate->varExists(arrayPtrPlusIndexValue)) {
+      if(pstate2.varExists(arrayPtrPlusIndexValue)) {
         // address of denoted memory location
         switch(mode) {
         case MODE_VALUE:
@@ -851,7 +855,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else {
         SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-        SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<pstate->toString(_variableIdMapping)<<endl;
+        SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
         if(mode==MODE_ADDRESS) {
           cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
@@ -1380,7 +1384,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
       return listify(res);
     } else {
       res.result=CodeThorn::Top();
-      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      Label lab=estate.label();
+      cerr << "WARNING: at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
   }
