@@ -378,6 +378,7 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgNode* node
   * \author Tristan Vanderbruggen
   * \date 2019.
  */
+#if __cplusplus > 199711L
 list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgNode* node) {
   list<SgFunctionDeclaration*> funDeclList;
 
@@ -394,6 +395,7 @@ list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgNode* no
   }
   return funDeclList;
 }
+#endif
 
 
 /*! 
@@ -1921,6 +1923,7 @@ bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
 }
 
 
+#if __cplusplus > 199711L
 bool nodeCanBeChanged(SgLocatedNode * lnode) {
   // TODO big switch statement...
   SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
@@ -1930,6 +1933,7 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
     return SgNodeHelper::node_can_be_changed(lnode);
   }
 }
+#endif
 
 }
 

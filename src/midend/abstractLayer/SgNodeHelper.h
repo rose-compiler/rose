@@ -308,7 +308,9 @@ namespace SgNodeHelper {
 #endif
 
   std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgNode* node);
+#if __cplusplus > 199711L
   std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgNode* node);
+#endif
   std::list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope
@@ -461,8 +463,10 @@ namespace SgNodeHelper {
  
   } // end of namespace Pattern
 
+#if __cplusplus > 199711L
   // Can a given node be changed? (aka transformed)
   bool nodeCanBeChanged(SgLocatedNode * lnode);
+#endif
 
 } // end of namespace SgNodeHelper
 
