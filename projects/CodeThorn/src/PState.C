@@ -59,6 +59,11 @@ std::set<std::string> PState::getDotNodeIdStrings(std::string prefix) const {
   std::set<std::string> nodeIds;
   for(PState::const_iterator j=begin();j!=end();++j) {
     nodeIds.insert(dotNodeIdString(prefix,(*j).first));
+    if((*j).first.isPtr()) {
+      // need to insert also target if pointer value. Using set ensures no duplicates for shared targets.
+      if((*j).second.isPtr())
+        nodeIds.insert(dotNodeIdString(prefix,(*j).second)); 
+    }
   }
   return nodeIds;
 }
@@ -78,11 +83,12 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
     if(v2.isPtr()) {
       // nodes
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\";"<<endl; // target label intentionally not generated
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      //endl; // target label intentionally not generated
       // edge
       ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
       ss<<"->";
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\"";
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
       ss<<";"<<endl;
     } else {
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
@@ -177,6 +183,17 @@ AbstractValue PState::varValue(AbstractValue varId) const {
 void PState::writeTopToAllMemoryLocations() {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeValueToAllMemoryLocations(val);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
+  for(PState::iterator i=begin();i!=end();++i) {
+    AbstractValue memLoc=(*i).first;
+    combineAtMemoryLocation(memLoc,val);
+  }
 }
 
 /*! 
@@ -318,6 +335,13 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
   operator[](abstractMemLoc)=abstractValue;
 }
 
+void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue) {
+  AbstractValue currentValue=operator[](abstractMemLoc);
+  AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
+  operator[](abstractMemLoc)=newValue;
+}
+
 size_t PState::stateSize() const {
   return this->size();
 }
@@ -365,7 +389,7 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
     auto iter=p2.find(elem1.first);
     if(iter!=p2.end()) {
       // same memory location in both states: elem.first==(*iter).first
-      // merge values elem.second and (*iter).second
+      // combine values elem.second and (*iter).second
 
       res.writeToMemoryLocation(elem1.first,AbstractValue::combine(elem1.second,(*iter).second));
       numMatched++;
