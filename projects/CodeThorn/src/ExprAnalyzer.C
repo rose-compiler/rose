@@ -1486,8 +1486,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       estate.io.recordVerificationError();
       return listify(res);
     } else {
-      logger[ERROR]<<"function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<endl;
-      exit(1);
+      if(getSkipSelectedFunctionCalls()) {
+        return evalFunctionCallArguments(funCall,estate);
+      } else {
+        logger[ERROR]<<"function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<endl;
+        exit(1);
+      }
     }
   }
   if(getSkipSelectedFunctionCalls()) {
