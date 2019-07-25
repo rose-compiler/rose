@@ -193,7 +193,7 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
     std::ostringstream oss;
     oss << fdecl->get_qualified_name().getString() << "(";
     for (auto t : fdecl->get_type()->get_argument_list()->get_arguments()) {
-      oss << globalUnparseToString(t, uinfo) << " ";
+      oss << globalUnparseToString(t, uinfo) << ",";
     }
     oss << ")" << handle;
     handle = oss.str();
@@ -283,7 +283,7 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
     std::ostringstream oss;
     oss << fdecl->get_qualified_name().getString() << "(";
     for (auto t : fdecl->get_type()->get_argument_list()->get_arguments()) {
-      oss << globalUnparseToString(t, uinfo) << " ";
+      oss << globalUnparseToString(t, uinfo) << ",";
     }
     oss << ")::" << handle;
     handle = oss.str();
@@ -618,14 +618,33 @@ void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
       }
 
       if (SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)) {
-        SgFunctionDeclaration* funDec = funCall->getAssociatedFunctionDeclaration();
-        assert(funDec != nullptr);
+        SgFunctionDeclaration* fdecl = funCall->getAssociatedFunctionDeclaration();
+        assert(fdecl != nullptr);
 
-        funDec = isSgFunctionDeclaration(funDec->get_firstNondefiningDeclaration());
-        assert(funDec != nullptr);
+        fdecl = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+        assert(fdecl != nullptr);
 
-        addNode(funDec);
-        addEdge(key, funDec);
+        SgTemplateInstantiationFunctionDecl * ti_fdecl = isSgTemplateInstantiationFunctionDecl(fdecl);
+        if (ti_fdecl != nullptr) {
+          SgTemplateFunctionDeclaration * t_fdecl = ti_fdecl->get_templateDeclaration();
+          assert(t_fdecl != nullptr);
+          SgFunctionType * ftype = t_fdecl->get_type();
+          assert(ftype != nullptr);
+          SgType * r_ftype = ftype->get_return_type();
+          assert(r_ftype != nullptr);
+          SgNonrealType * nrtype = isSgNonrealType(r_ftype->stripType());
+          if (nrtype != nullptr) {
+            fdecl = nullptr;
+          }
+        }
+
+        if (fdecl != nullptr) {
+          addNode(fdecl);
+          addEdge(key, fdecl);
+        } else {
+          addNode(funCall);
+          addEdge(key, funCall);
+        }
 
         i.skipChildrenOnForward(); // TODO: expressions used as argument of the function? (they are never seen because of the `skip`)
       } else if (SgVarRefExp* varRef = isSgVarRefExp(exp)) {
