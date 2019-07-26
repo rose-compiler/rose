@@ -361,14 +361,20 @@ string Visualizer::transitionGraphToDot() {
       //ss<<"label=\"@"<<s<<"\";"<<endl;
       ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
 
-      ss<<"{ rank = same; ";
+      // deactivated because putting all cluster nodes at the same
+      // rank triggers a dot assertion to fail when a node is shared.
+#if 0
+      
+      ss<<"{ rank = same; "; // rank start
       string prefix=dotClusterName(s);
       auto idStringsSet=s->pstate()->getDotNodeIdStrings(prefix);
       for(auto id : idStringsSet) {
         ss<<"\""<<id<<"\""<<";"<<endl;
       }
       ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
-      ss<< " }"<<endl;
+      ss<< " }"<<endl; // rank end
+#endif
+      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
       ss<<dotEStateAddressString(s)<<endl; // hook for cluster edges
       ss<<dotEStateMemoryString(s);
       ss<<"}"<<endl; // end of subgraph
@@ -391,6 +397,7 @@ string Visualizer::transitionGraphToDot() {
       ss<<" ltail="<<dotClusterName((*j)->source);
       ss<<" lhead="<<dotClusterName((*j)->target);
     }
+    ss<<" penwidth=3.0 weight=1.0"; // bold cfg edges
     ss <<"]"<<";"<<endl;
   }
   tg1=false;

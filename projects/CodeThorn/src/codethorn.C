@@ -377,8 +377,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
-    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
@@ -582,7 +582,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.6\n";
+    cout << "CodeThorn version 1.10.7\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }

@@ -58,9 +58,12 @@ namespace CodeThorn {
     std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
     std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     void writeTopToAllMemoryLocations();
+    void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
+    void combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                 AbstractValue abstractValue);  
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
     size_t stateSize() const;

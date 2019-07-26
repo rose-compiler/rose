@@ -338,7 +338,7 @@ void FiniteContext::callReturn( const CtxLattice<FiniteContext>& src,
                                 Label lbl
                               )
 {
-  const CtxLattice<FiniteContext>& pre  = analysis.getCallSiteLattice(labeler, lbl);
+  const CtxLattice<FiniteContext>& pre  = analysis.getCallSiteLattice(lbl);
   PropertyStateFactory&            fact = tgt.componentFactory();
 
   std::for_each( src.begin(), src.end(),
