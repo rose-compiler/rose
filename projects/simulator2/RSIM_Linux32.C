@@ -4116,7 +4116,7 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
 
         case 9: /*FUTEX_WAIT_BITSET*/
             timeout_va = t->syscall_arg(3);
-            assert(0==timeout_va); // NOT HANDLED YET
+            ASSERT_always_require(0 == timeout_va); // NOT HANDLED YET
             val3 = t->syscall_arg(5);
             result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;

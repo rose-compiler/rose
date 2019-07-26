@@ -21385,6 +21385,7 @@ bool SageInterface::getForLoopInformations(
   SgExpression * rhs_exp = bin_test->get_rhs_operand_i();
   while (isSgCastExp(rhs_exp)) rhs_exp = ((SgCastExp *)rhs_exp)->get_operand_i();
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
+#ifndef NDEBUG
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
 // DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
@@ -21394,6 +21395,7 @@ bool SageInterface::getForLoopInformations(
 // value.  Since these are boolean typed values we can use "a != b", directly.
 // assert(lhs_it xor rhs_it);
   assert(lhs_it != rhs_it);
+#endif
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 
@@ -21436,24 +21438,30 @@ bool SageInterface::getForLoopInformations(
     case V_SgPlusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgMinusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgAssignOp:
     {
       SgAssignOp * assign_op = (SgAssignOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * inc_assign_lhs = isSgVarRefExp(assign_op->get_lhs_operand_i());
       assert(inc_assign_lhs != NULL && inc_assign_lhs->get_symbol() == iterator);
+#endif
       SgBinaryOp * inc_assign_rhs = isSgBinaryOp(assign_op->get_rhs_operand_i());
       assert(inc_assign_rhs != NULL);
       SgVarRefExp * inc_assign_rhs_lhs = isSgVarRefExp(inc_assign_rhs->get_lhs_operand_i());
