@@ -1384,12 +1384,14 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   initializeCommandLineArgumentsInState(initialPState);
   if(optionStringLiteralsInState) {
     initializeStringLiteralsInState(initialPState);
-    cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
+    if(args.getBool("status")) {
+      cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
+    }
   }
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  cout<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
@@ -1431,7 +1433,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   ROSE_ASSERT(initialEState);
   variableValueMonitor.init(initialEState);
   addToWorkList(initialEState);
-  cout << "INIT: start state (extremal value): "<<initialEState->toString(&variableIdMapping)<<endl;
+  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(&variableIdMapping)<<endl;
 
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);

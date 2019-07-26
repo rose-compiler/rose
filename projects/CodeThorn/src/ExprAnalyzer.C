@@ -1597,6 +1597,7 @@ int ExprAnalyzer::getMemoryRegionElementSize(CodeThorn::AbstractValue ptrToRegio
   return size;
 }
 
+/* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate) {
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
@@ -1626,8 +1627,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     int copyRegionElementSizeTarget=getMemoryRegionElementSize(memcpyArgs[0]);
     int copyRegionElementSizeSource=getMemoryRegionElementSize(memcpyArgs[1]);
     
-    cout<<"DEBUG: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
-    cout<<"DEBUG: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
 
     int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
     // check if size to copy is either top
@@ -1649,10 +1650,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     int copyRegionLengthValue=memcpyArgs[2].getIntValue();
 
     // the copy function length argument is converted here into number of elements. This needs to be adapted if the repsentation of size is changed.
+    if(copyRegionElementSize==0) {
+      cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
+      return listify(res);
+    }
     int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
 
-    cout<<"DEBUG: copyRegionNumElements: "<<copyRegionNumElements<<endl;
-    cout<<"DEBUG: copyRegionElementSize: "<<copyRegionElementSize<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: copyRegionNumElements: "<<copyRegionNumElements<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: copyRegionElementSize: "<<copyRegionElementSize<<endl;
 
     if(memRegionSizeSource<copyRegionNumElements) {
       if(memRegionSizeSource==0) {
@@ -1727,6 +1733,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
     while(1) {
       AbstractValue AbstractPos=AbstractValue(pos);
       AbstractValue currentPos=(stringPtr+AbstractPos);
+      SAWYER_MESG(logger[DEBUG])<<"DEBUG: currentPos "<<currentPos.toString(_variableIdMapping)<<endl;
 #if 0
       // TODO: not working yet because the memory region of strings are not properly registered with size yet
       // check bounds of string's memory region
@@ -1735,15 +1742,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
         break;
       }
 #endif
-      AbstractValue cmpResult=((estate.pstate()->readFromMemoryLocation(currentPos))==AbstractValue(0));
+      AbstractValue currentPosValue=estate.pstate()->readFromMemoryLocation(currentPos);
+      SAWYER_MESG(logger[DEBUG])<<"currentPosValue: "<<currentPosValue.toString(_variableIdMapping)<<endl;
+      // if the memory location that is read, does not exist, it is an out-of-bounds access
+      if(currentPosValue.isBot()) {
+        recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        break;
+      }
+      AbstractValue cmpResult=(currentPosValue==AbstractValue(0));
+      SAWYER_MESG(logger[DEBUG])<<"cmpResult: "<<cmpResult.toString(_variableIdMapping)<<endl;
       if(cmpResult.isTrue()) {
         // found 0
         AbstractValue finalResult=AbstractValue(pos);
         res.init(estate,finalResult);
-        SAWYER_MESG(logger[TRACE])<<"evaluating semantic function for strlen finished: "<<funCall->unparseToString()<<" result: "<<finalResult.toString()<<endl;
+        SAWYER_MESG(logger[TRACE])<<"evaluating semantic function for strlen finished (found 0): "<<funCall->unparseToString()<<" result: "<<finalResult.toString()<<endl;
         return listify(res);
       } else if(cmpResult.isFalse()) {
         pos++;
+        SAWYER_MESG(logger[DEBUG])<<"DEBUG: incrementing position."<<endl;
       } else {
         // top or bot
         break;
@@ -1783,12 +1799,12 @@ ProgramLocationsReport ExprAnalyzer::getOutOfBoundsAccessLocations() {
 
 void ExprAnalyzer::recordDefinitiveOutOfBoundsAccessLocation(Label label) {
   _outOfBoundsAccessLocations.recordDefinitiveLocation(label);
-  cout<<"Error detected: definitive out of bounds access at "<<label.toString()<<endl;
+  cout<<"Error detected: definitive out of bounds access at label "<<label.toString()<<endl;
 }
 
 void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
   _outOfBoundsAccessLocations.recordPotentialLocation(label);
-  cout<<"Error detected: potential out of bounds access at "<<label.toString()<<endl;
+  cout<<"Error detected: potential out of bounds access at label "<<label.toString()<<endl;
 }
 
 bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
