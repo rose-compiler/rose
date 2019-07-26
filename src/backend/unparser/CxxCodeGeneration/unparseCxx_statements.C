@@ -5477,8 +5477,10 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
    {
      SgTemplateFunctionDefinition *stmt = isSgTemplateFunctionDefinition(stmt_);
      assert(stmt!=NULL);
+#ifndef NDEBUG
      SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
      assert(declstmt!=NULL);
+#endif
       
      //unparseTemplateFunctionDeclStmt(declstmt, info); // we should not go back to parent declaration and unparse it. bad logic and cause recursion.
 
