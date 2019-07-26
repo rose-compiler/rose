@@ -1130,7 +1130,9 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         }
        else
         {
+#if 0
           printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
+#endif
 
 #if 0
        // DQ (11/12/2018): Initial test problem should not permit a transformation! 
@@ -1202,7 +1204,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 1
+#if 0
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1375,6 +1377,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
                name = isSgClassDeclaration(declaration)->get_name().str();
                break;
 

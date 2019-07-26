@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_General_Language_Support
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 AM_CPPFLAGS += $(JAVA_JVM_INCLUDE)
