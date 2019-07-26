@@ -1847,8 +1847,10 @@ NewVar( const AstNodeType& _type, const string& name, bool makeunique,
   SgExpression* e = 0;
   if (_init != AST_NULL) e = ToExpression( *impl, (SgNode*)_init.get_ptr());
   SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, delayInsert, e, scope);
+#ifndef NDEBUG
   SgInitializedName* def = sb->get_declaration();
   assert(def != 0 && !HasNullParent(def));
+#endif
 
   if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   SgName n =  sb->get_name();
