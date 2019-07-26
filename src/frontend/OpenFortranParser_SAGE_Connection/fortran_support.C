@@ -2988,7 +2988,20 @@ isImplicitNoneScope()
                     j++;
                   }
              }
-
+          // Pei-Hung (07/25/2019) search for implicit statement in modules
+          SgClassDefinition* classDefinition = isSgClassDefinition(*i);
+          if (classDefinition != NULL)
+             {
+               SgDeclarationStatementPtrList& declStmtList = classDefinition->get_members();
+               SgDeclarationStatementPtrList::const_iterator j = declStmtList.begin();
+               while (j != declStmtList.end())
+               {
+                 SgImplicitStatement* implicitStatement = isSgImplicitStatement(*j);
+                 if (implicitStatement != NULL && implicitStatement->get_implicit_none() == true)
+                   isImplicitNoneScope = true;
+                 j++;
+               }
+             }
           i++;
         }
 
