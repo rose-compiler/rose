@@ -155,124 +155,6 @@ TypeCommand::TypeCommand(string loc, string fun, string toType, string fromType,
   newType  = toType;
   oldType  = fromType;
 }
-
-static void changeVariableType(
-  SgType * toType,
-  SgFunctionDeclaration * funDecl,
-  std::string location,
-  bool base,
-  SgType * fromType,
-  bool listing
-) {
-#if DEBUG__TypeCommand_changeVariableType
-  std::cout << "ENTER TypeCommand::changeVariableType" << std::endl;
-  std::cout << "    $ funDecl       = " << funDecl << " (" << ( funDecl != nullptr ? funDecl->class_name() : "" ) << ")" << std::endl;
-  std::cout << "    $ location      = " << location << std::endl;
-  std::cout << "    $ toType        = " << toType  << " (" << ( toType != nullptr ? toType->class_name() : "" ) << ")" << std::endl;
-  std::cout << "    $ base          = " << base << std::endl;
-  std::cout << "    $ fromType      = " << fromType << " (" << ( fromType != nullptr ? fromType->class_name() : "" ) << ")" << std::endl;
-  std::cout << "    $ listing       = " << listing << std::endl;
-#endif
-
-  assert(location.find("TYPEFORGE::") == 0);
-  assert(fromType != nullptr);
-
-  // Process type changes inside of a function
-
-  if (funDecl != nullptr) {
-    if (!SgNodeHelper::nodeCanBeChanged(funDecl)) return;
-
-    if (funDecl->get_definingDeclaration() != nullptr) {
-      funDecl = isSgFunctionDeclaration(funDecl->get_definingDeclaration());
-    }
-    assert(funDecl != nullptr);
-
-    // Function Parameter
-
-    if (location == "TYPEFORGE::args") {
-#if DEBUG__TypeCommand_changeVariableType
-      std::cout << " SCAN function parameters" << std::endl;
-#endif
-      SgFunctionDeclaration * dfdecl = isSgFunctionDeclaration(funDecl->get_definingDeclaration());
-      if (dfdecl == nullptr) {
-        dfdecl = funDecl;
-      }
-      for (auto varInitName : dfdecl->get_args()) {
-#if DEBUG__TypeCommand_changeVariableType
-        std::cout << "   * varInitName    = " << std::hex << varInitName << " (" << varInitName->class_name() << ")" << std::endl;
-        std::cout << "       ->get_name() = " << varInitName->get_name() << std::endl;
-#endif
-        if (Typeforge::isTypeBasedOn(::Typeforge::typechain.getType(varInitName), fromType, base)) {
-          ::Typeforge::transformer.changeType(varInitName, toType, base, listing);
-        }
-      }
-    }
-
-    /////////////////////////////////////
-    // Return Type                     //
-    /////////////////////////////////////
-
-    if (location == "TYPEFORGE::ret") {
-#if DEBUG__TypeCommand_changeVariableType
-      std::cout << " SCAN return type" << std::endl;
-#endif
-
-      funDecl = isSgFunctionDeclaration(funDecl->get_firstNondefiningDeclaration());
-      assert(funDecl != nullptr);
-
-      SgFunctionType * funType = funDecl->get_type();
-      SgType * funRetType = funType->get_return_type();
-      if (Typeforge::isTypeBasedOn(funRetType, fromType, base)) {
-        ::Typeforge::transformer.changeType(funDecl, toType, base, listing);
-      }
-    }
-
-    /////////////////////////////////////
-    // Function definition             //
-    /////////////////////////////////////
-
-    SgFunctionDefinition* funDef = funDecl->get_definition();
-
-    if (funDef != NULL && location == "TYPEFORGE::body") {
-
-      if (!SgNodeHelper::nodeCanBeChanged(funDef)) return;
-
-#if DEBUG__TypeCommand_changeVariableType
-      std::cout << " SCAN function body" << std::endl;
-#endif
-
-      RoseAst ast(funDef);
-      for (RoseAst::iterator i = ast.begin(); i != ast.end(); ++i) {
-        if (SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-          if (isSgTemplateVariableDeclaration(varDecl) || !SgNodeHelper::nodeCanBeChanged(varDecl)) continue;
-
-          if (Typeforge::isTypeBasedOn(::Typeforge::typechain.getType(varDecl), fromType, base)) {
-            ::Typeforge::transformer.changeType(varDecl, toType, base, listing);
-          }
-        }
-      }
-    }
-  } else if (location == "TYPEFORGE::global") {
-
-    /////////////////////////////////////
-    // Change type of global variables //
-    /////////////////////////////////////
-
-#if DEBUG__TypeCommand_changeVariableType
-    std::cout << " SCAN global variables" << std::endl;
-#endif
-
-    list<SgVariableDeclaration*> listOfVars = SgNodeHelper::listOfGlobalVars(::Typeforge::project);
-    listOfVars.splice(listOfVars.end(), SgNodeHelper::listOfGlobalFields(::Typeforge::project));
-    for (auto varDecl: listOfVars) {
-      if (isSgTemplateVariableDeclaration(varDecl) || !SgNodeHelper::nodeCanBeChanged(varDecl)) continue;
-
-      if (Typeforge::isTypeBasedOn(::Typeforge::typechain.getType(varDecl), fromType, base)) {
-        ::Typeforge::transformer.changeType(varDecl, toType, base, listing);
-      }
-    }
-  }
-}
  
 int TypeCommand::run(RoseAst completeAst, TFTransformation & tfTransformation) {
 #if DEBUG__TypeCommand__run
@@ -286,7 +168,6 @@ int TypeCommand::run(RoseAst completeAst, TFTransformation & tfTransformation) {
     std::cout << "TRACE: TypeCommand::run started." << std::endl;
   }
 
-#if 1
   SgGlobal* glob = ::Typeforge::project->get_globalScopeAcrossFiles();
   SgType* otype = buildTypeFromStringSpec(oldType, glob);
   SgType* ntype = buildTypeFromStringSpec(newType, glob);
@@ -327,39 +208,9 @@ int TypeCommand::run(RoseAst completeAst, TFTransformation & tfTransformation) {
     }
   }
 
+  // TODO SgFunctionCallExp
+
   return false;
-#else
-  if (funName == "$global") {
-    SgGlobal* globalScope = ::Typeforge::project->get_globalScopeAcrossFiles();
-    SgType* oldBuiltType = buildTypeFromStringSpec(oldType, globalScope);
-    SgType* newBuiltType = buildTypeFromStringSpec(newType, globalScope);
-    changeVariableType(newBuiltType, nullptr, "TYPEFORGE::global", base, oldBuiltType, listing);
-    return false;
-  } else {
-    list<SgFunctionDeclaration*> listOfFunctionDeclarations;
-    if(funName=="*") {
-      listOfFunctionDeclarations=SgNodeHelper::listOfFunctionDeclarations(::Typeforge::project);
-    } else {
-      listOfFunctionDeclarations=completeAst.findFunctionDeclarationsByName(funName);
-      if(listOfFunctionDeclarations.empty()) {
-        cerr<<"Error: Command "<<commandNumber<<": function "<<funName<<" does not exist."<<endl;
-        return true;
-      }
-    }
-    for (auto funDecl : listOfFunctionDeclarations) {
-      SgType* oldBuiltType=buildTypeFromStringSpec(oldType,funDecl->get_scope());
-      SgType* newBuiltType=buildTypeFromStringSpec(newType,funDecl->get_scope());
-      if (::Typeforge::transformer.getTraceFlag()) {
-        std::cout << "TRACE: TypeCommand::run : adding type transformation to list: " << oldBuiltType->unparseToString() << " ==> " << newBuiltType->unparseToString() << std::endl;
-      }
-      if (funDecl->get_firstNondefiningDeclaration()) {
-        funDecl = isSgFunctionDeclaration(funDecl->get_firstNondefiningDeclaration());
-      }
-      changeVariableType(newBuiltType, funDecl, "TYPEFORGE::" + location, base, oldBuiltType, listing);
-    }
-    return false;
-  }
-#endif
 }
 
 //Replaces the type of the variable specified by the handlde with newType
