@@ -107,6 +107,64 @@ static bool isArrayPointerType(SgType* type) {
   return isArrayPointerType(getBaseType(type));
 }
 
+SgType * stripType(SgType * type, bool strip_std_vector) {
+  assert(type != NULL);
+
+#if DEBUG__isTypeBasedOn
+  std::cout << "Typeforge::stripType" << std::endl;
+  std::cout << "  type      = " << type << " ( " << type->class_name() << "): " << type->unparseToString() << "" << std::endl;
+#endif
+
+  type = type->stripType(
+    SgType::STRIP_ARRAY_TYPE     |
+    SgType::STRIP_POINTER_TYPE   |
+    SgType::STRIP_MODIFIER_TYPE  |
+    SgType::STRIP_REFERENCE_TYPE |
+    SgType::STRIP_RVALUE_REFERENCE_TYPE
+  );
+
+  SgTypedefType * td_type = isSgTypedefType(type);
+  SgClassType * xtype = isSgClassType(type);
+  if (td_type != nullptr) {
+    type = stripType(td_type->get_base_type(), strip_std_vector);
+  } else if (strip_std_vector && xtype != nullptr) {
+    SgDeclarationStatement * decl_stmt = xtype->get_declaration();
+    assert(decl_stmt != nullptr);
+
+#if DEBUG__isTypeBasedOn
+    std::cout << "  decl_stmt = " << decl_stmt << " ( " << decl_stmt->class_name() << "): " << decl_stmt->unparseToString() << "" << std::endl;
+#endif
+
+    SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
+    if (ti_decl != nullptr) {
+#if DEBUG__isTypeBasedOn
+      std::cout << "      ->get_qualified_name() = " << ti_decl->get_qualified_name() << std::endl;
+      std::cout << "      ->get_name()           = " << ti_decl->get_name() << std::endl;
+#endif
+
+      SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
+      assert(td_decl != nullptr);
+
+#if DEBUG__isTypeBasedOn
+      std::cout << "  td_decl   = " << td_decl << " ( " << td_decl->class_name() << "): " << td_decl->unparseToString() << "" << std::endl;
+      std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
+#endif
+
+      if (td_decl->get_qualified_name() == "::std::vector") {
+        auto tpl_args = ti_decl->get_templateArguments();
+        assert(tpl_args.size() > 0);
+
+        SgType * tpl_type_arg = tpl_args[0]->get_type();
+        assert(tpl_type_arg != nullptr);
+
+        type = stripType(tpl_type_arg, false);
+      }
+    }
+  }
+
+  return type;
+}
+
 bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type) {
   if (base == nullptr) return true;
 
@@ -118,67 +176,11 @@ bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type) {
   std::cout << "  base      = " << base << " ( " << base->class_name() << "): " << base->unparseToString() << "" << std::endl;
 #endif
 
-  SgTypedefType * td_type = isSgTypedefType(type);
-  if (td_type != nullptr) {
-    return isTypeBasedOn(td_type->get_base_type(), base, strip_type);
-  }
-
   if (strip_type) {
-    type = type->stripType(
-      SgType::STRIP_ARRAY_TYPE     |
-      SgType::STRIP_POINTER_TYPE   |
-      SgType::STRIP_MODIFIER_TYPE  |
-      SgType::STRIP_REFERENCE_TYPE |
-      SgType::STRIP_RVALUE_REFERENCE_TYPE
-    );
-
-    SgClassType * xtype = isSgClassType(type);
-    if (xtype != nullptr) {
-      SgDeclarationStatement * decl_stmt = xtype->get_declaration();
-      assert(decl_stmt != nullptr);
-
-#if DEBUG__isTypeBasedOn
-      std::cout << "  decl_stmt = " << decl_stmt << " ( " << decl_stmt->class_name() << "): " << decl_stmt->unparseToString() << "" << std::endl;
-#endif
-
-      SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
-      if (ti_decl != nullptr) {
-#if DEBUG__isTypeBasedOn
-        std::cout << "      ->get_qualified_name() = " << ti_decl->get_qualified_name() << std::endl;
-        std::cout << "      ->get_name()           = " << ti_decl->get_name() << std::endl;
-#endif
-
-        SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
-        assert(td_decl != nullptr);
-
-#if DEBUG__isTypeBasedOn
-        std::cout << "  td_decl   = " << td_decl << " ( " << td_decl->class_name() << "): " << td_decl->unparseToString() << "" << std::endl;
-        std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
-#endif
-
-        if (td_decl->get_qualified_name() == "::std::vector") {
-          auto tpl_args = ti_decl->get_templateArguments();
-          assert(tpl_args.size() > 0);
-
-          SgType * tpl_type_arg = tpl_args[0]->get_type();
-          assert(tpl_type_arg != nullptr);
-
-          type = tpl_type_arg;
-        }
-      }
-    }
+    type = stripType(type, true);
   }
 
-  td_type = isSgTypedefType(type);
-  if (td_type != nullptr) {
-    return isTypeBasedOn(td_type->get_base_type(), base, false);
-  }
-
-  if (type == base) {
-    return true;
-  }
-
-  return false;
+  return type == base;
 }
 
 Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
@@ -713,7 +715,7 @@ void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
         stack.push_back(exp);
       }
 
-      if (SgFunctionCallExp* funCall = isSgFunctionCallExp(exp)) {
+      if (SgFunctionCallExp * funCall = isSgFunctionCallExp(exp)) {
         SgFunctionDeclaration* fdecl = funCall->getAssociatedFunctionDeclaration();
         assert(fdecl != nullptr);
 
@@ -728,9 +730,13 @@ void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
           assert(ftype != nullptr);
           SgType * r_ftype = ftype->get_return_type();
           assert(r_ftype != nullptr);
-          SgNonrealType * nrtype = isSgNonrealType(r_ftype->stripType());
+          SgNonrealType * nrtype = isSgNonrealType(::Typeforge::stripType(r_ftype, true));
           if (nrtype != nullptr) {
-            fdecl = nullptr;
+            SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
+            assert(nrdecl != nullptr);
+            if (nrdecl->get_is_template_param()) {
+              fdecl = nullptr;
+            }
           }
         }
 
@@ -1184,7 +1190,19 @@ void Analysis::getParameters(std::vector<SgInitializedName *> & decls, std::stri
 
     SgInitializedName * iname = isSgInitializedName(n);
     if (iname != nullptr) {
-      decls.push_back(iname);
+      decls.push_back(iname); // TODO compare `location`
+    }
+  }
+}
+
+void Analysis::getCallExp(std::vector<SgFunctionCallExp *> & exprs, std::string const & location) const {
+  for (auto p : node_map) {
+    auto n = p.first;
+    auto d = p.second;
+
+    SgFunctionCallExp * expr = isSgFunctionCallExp(n);
+    if (expr != nullptr) {
+      exprs.push_back(expr); // TODO compare `location`
     }
   }
 }

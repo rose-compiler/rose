@@ -7,6 +7,7 @@
 
 namespace Typeforge {
 
+SgType * stripType(SgType * type, bool strip_std_vector = true);
 bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type = false);
 
 class ToolConfig;
@@ -77,6 +78,7 @@ class Analysis {
     void getFunctions  ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
     void getMethods    ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
     void getParameters ( std::vector<SgInitializedName     *> & decls, std::string const & location) const;
+    void getCallExp    ( std::vector<SgFunctionCallExp     *> & exprs, std::string const & location) const;
 
     // Create Clusters
 

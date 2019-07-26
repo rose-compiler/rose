@@ -208,7 +208,15 @@ int TypeCommand::run(RoseAst completeAst, TFTransformation & tfTransformation) {
     }
   }
 
-  // TODO SgFunctionCallExp
+  std::vector<SgFunctionCallExp *> calls;
+  ::Typeforge::typechain.getCallExp(calls, location);
+  for (auto n : calls) {
+    if (!SgNodeHelper::nodeCanBeChanged(n)) continue;
+
+    if (Typeforge::isTypeBasedOn(::Typeforge::typechain.getType(n), otype, base)) {
+      ::Typeforge::transformer.changeType(n, ntype, base, listing);
+    }
+  }
 
   return false;
 }
@@ -234,7 +242,7 @@ int HandleCommand::run(RoseAst completeAst, TFTransformation& tfTransformation) 
   std::cout << "  n      = " << n << " ( " << n->class_name() << ")" << std::endl;
 #endif
 
-  if(SgVariableDeclaration* varDec = isSgVariableDeclaration(n)) {
+  if (SgVariableDeclaration* varDec = isSgVariableDeclaration(n)) {
     SgScopeStatement * scope = varDec->get_scope();
     SgType * newBuiltType = buildTypeFromStringSpec(newType, scope);
     ::Typeforge::transformer.addTransformation(varDec, newBuiltType, base);
@@ -244,10 +252,17 @@ int HandleCommand::run(RoseAst completeAst, TFTransformation& tfTransformation) 
     SgType * newBuiltType = buildTypeFromStringSpec(newType, scope);
     ::Typeforge::transformer.addTransformation(initName, newBuiltType, base);
 
-  } else if(SgFunctionDeclaration* funDec = isSgFunctionDeclaration(n)) {
+  } else if (SgFunctionDeclaration* funDec = isSgFunctionDeclaration(n)) {
     SgFunctionDefinition * funDef = funDec->get_definition();
     SgType * newBuiltType = buildTypeFromStringSpec(newType, funDef);
     ::Typeforge::transformer.addTransformation(funDec, newBuiltType, base);
+
+  } else if (SgExpression * expr = isSgExpression(n)) {
+    SgScopeStatement * scope = SageInterface::getScope(expr);
+    assert(scope != nullptr);
+    SgType * newBuiltType = buildTypeFromStringSpec(newType, scope);
+    ::Typeforge::transformer.addTransformation(expr, newBuiltType, base);
+
   } else {
     assert(false);
   }
