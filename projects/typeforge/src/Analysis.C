@@ -49,6 +49,9 @@
 #ifndef DEBUG__Analysis__getNode
 #  define DEBUG__Analysis__getNode DEBUG__Analysis
 #endif
+#ifndef DEBUG__isTypeBasedOn
+#  define DEBUG__isTypeBasedOn DEBUG__Analysis
+#endif
 
 namespace Typeforge {
 
@@ -62,11 +65,6 @@ static SgType * getBaseType(SgType* type){
   if(SgReferenceType* refType = isSgReferenceType(type)) return refType->get_base_type();
   if(SgModifierType* modType = isSgModifierType(type)) return modType->get_base_type();
   return nullptr;
-}
-
-//Method to compare if two types could be interconnected currently just looks at base type
-static bool sameType(SgType* typeOne, SgType* typeTwo){
-  return typeOne == nullptr || typeTwo == nullptr || typeOne == typeTwo || typeOne->findBaseType() == typeTwo->findBaseType();
 }
 
 //returns true if the type contains a pointer or array
@@ -107,6 +105,80 @@ static bool isArrayPointerType(SgType* type) {
   if(isSgPointerType(type)) return true;
 
   return isArrayPointerType(getBaseType(type));
+}
+
+bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type) {
+  if (base == nullptr) return true;
+
+  assert(type != NULL);
+
+#if DEBUG__isTypeBasedOn
+  std::cout << "Typeforge::isTypeBasedOn" << std::endl;
+  std::cout << "  type      = " << type << " ( " << type->class_name() << "): " << type->unparseToString() << "" << std::endl;
+  std::cout << "  base      = " << base << " ( " << base->class_name() << "): " << base->unparseToString() << "" << std::endl;
+#endif
+
+  SgTypedefType * td_type = isSgTypedefType(type);
+  if (td_type != nullptr) {
+    return isTypeBasedOn(td_type->get_base_type(), base, strip_type);
+  }
+
+  if (strip_type) {
+    type = type->stripType(
+      SgType::STRIP_ARRAY_TYPE     |
+      SgType::STRIP_POINTER_TYPE   |
+      SgType::STRIP_MODIFIER_TYPE  |
+      SgType::STRIP_REFERENCE_TYPE |
+      SgType::STRIP_RVALUE_REFERENCE_TYPE
+    );
+
+    SgClassType * xtype = isSgClassType(type);
+    if (xtype != nullptr) {
+      SgDeclarationStatement * decl_stmt = xtype->get_declaration();
+      assert(decl_stmt != nullptr);
+
+#if DEBUG__isTypeBasedOn
+      std::cout << "  decl_stmt = " << decl_stmt << " ( " << decl_stmt->class_name() << "): " << decl_stmt->unparseToString() << "" << std::endl;
+#endif
+
+      SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
+      if (ti_decl != nullptr) {
+#if DEBUG__isTypeBasedOn
+        std::cout << "      ->get_qualified_name() = " << ti_decl->get_qualified_name() << std::endl;
+        std::cout << "      ->get_name()           = " << ti_decl->get_name() << std::endl;
+#endif
+
+        SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
+        assert(td_decl != nullptr);
+
+#if DEBUG__isTypeBasedOn
+        std::cout << "  td_decl   = " << td_decl << " ( " << td_decl->class_name() << "): " << td_decl->unparseToString() << "" << std::endl;
+        std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
+#endif
+
+        if (td_decl->get_qualified_name() == "::std::vector") {
+          auto tpl_args = ti_decl->get_templateArguments();
+          assert(tpl_args.size() > 0);
+
+          SgType * tpl_type_arg = tpl_args[0]->get_type();
+          assert(tpl_type_arg != nullptr);
+
+          type = tpl_type_arg;
+        }
+      }
+    }
+  }
+
+  td_type = isSgTypedefType(type);
+  if (td_type != nullptr) {
+    return isTypeBasedOn(td_type->get_base_type(), base, false);
+  }
+
+  if (type == base) {
+    return true;
+  }
+
+  return false;
 }
 
 Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
@@ -304,8 +376,32 @@ void Analysis::initialize(SgProject * p) {
   assert(::Typeforge::project != nullptr);
 
   for (auto g : SgNodeHelper::listOfSgGlobal(project)) {
-    Analysis::traverse(g);
+    traverse(g);
   }
+}
+
+template <class T> 
+bool is_not_disjoint(std::set<T> const & set1, std::set<T> const & set2) {
+    if (set1.empty() || set2.empty()) return false;
+
+    auto it1 = set1.begin();
+    auto it1End = set1.end();
+    auto it2 = set2.begin();
+    auto it2End = set2.end();
+
+    if (*it1 > *set2.rbegin() || *it2 > *set1.rbegin()) return false;
+
+    while (it1 != it1End && it2 != it2End) {
+        if (*it1 == *it2)
+          return true;
+
+        if (*it1 < *it2)
+          it1++;
+        else
+          it2++;
+    }
+
+    return false;
 }
 
 static bool ignoreNode(SgNode * n) {
@@ -849,6 +945,63 @@ SgNode * Analysis::getScope(SgNode * n) const {
   return s;
 }
 
+void Analysis::buildChildSets(std::map<SgNode *, std::set<SgNode *> > & childsets, SgType * base) const {
+  for (auto e: edges) {
+    auto s = e.first;
+
+    if (base != nullptr) {
+      auto i = node_map.find(s);
+      if (i != node_map.end()) {
+        if ( !isTypeBasedOn(i->second.type, base, true) ) continue;
+      }
+    }
+    childsets[s].insert(s);
+    for (auto i : e.second) {
+      auto t = i.first;
+      childsets[t].insert(s);
+    }
+  }
+}
+
+template < typename T, typename S=std::set<T> >
+void computeClustering(std::map<T, S> const & childsets, std::vector<S> & clusters) {
+  using P = std::pair< S , S >;
+  std::vector<P> clustering;
+  for (auto p : childsets) {
+    clustering.push_back(P({p.first},p.second));
+  }
+
+  while (clustering.size() > 0) {
+    auto & nodeset = clustering[0].first;
+    auto & tagset = clustering[0].second;
+    bool has_changed = true;
+    while (has_changed) {
+      has_changed = false;
+      size_t i = 1;
+      while (i < clustering.size()) {
+        if (is_not_disjoint(tagset, clustering[i].second)) {
+          nodeset.insert(clustering[i].first.begin(), clustering[i].first.end());
+          tagset.insert(clustering[i].second.begin(), clustering[i].second.end());
+          clustering.erase(clustering.begin() + i);
+          if (i > 1) {
+            has_changed = true;
+          }
+        } else {
+          ++i;
+        }
+      }
+    }
+    clusters.push_back(nodeset);
+    clustering.erase(clustering.begin());
+  }
+}
+
+void Analysis::buildClusters(std::vector<std::set<SgNode *> > & clusters, SgType * base) const {
+  std::map<SgNode *, std::set<SgNode *> > childsets;
+  buildChildSets(childsets, base);
+  computeClustering(childsets, clusters);
+}
+
 void Analysis::toDot(std::string const & fileName, SgType * base) const {
   SgUnparse_Info* uinfo = new SgUnparse_Info();
       uinfo->set_SkipComments();
@@ -859,49 +1012,104 @@ void Analysis::toDot(std::string const & fileName, SgType * base) const {
       uinfo->set_SkipBasicBlock();
       uinfo->set_isTypeFirstPart();
 
+  std::map<std::string, std::string> node_color_map = {
+    { "SgInitializedName",                         "lightsalmon"    },
+    { "SgVariableDeclaration",                     "cyan"  },
+    { "SgFunctionDeclaration",                     "mediumpurple"   },
+    { "SgMemberFunctionDeclaration",               "wheat"          },
+    { "SgTemplateInstantiationFunctionDecl",       "palegreen"      },
+    { "SgTemplateInstantiationMemberFunctionDecl", "lightcoral"     },
+    { "SgClassDeclaration",                        "palevioletred"  },
+    { "SgFunctionCallExp",                         "lightsteelblue" }
+  };
+
   fstream dotfile;
   dotfile.open(fileName, ios::out | ios::trunc);
 
   dotfile << "digraph {" << std::endl;
   dotfile << "  ranksep=5;" << std::endl;
 
-  for (auto n: node_map) {
-    assert(n.first != nullptr);
-    assert(n.second.type != nullptr);
 
-    if ( !sameType(n.second.type, base) ) continue;
+  std::vector< std::set<SgNode *> > clusters;
+  buildClusters(clusters, base);
 
-    dotfile << "  n_" << n.first << " [label=\"" << n.second.handle << "\\n" << n.second.cname << "\\n" << n.second.position;
-    dotfile << "\\n" << globalUnparseToString(n.second.type, uinfo) << "\"];" << std::endl;
+  for (size_t i = 0; i < clusters.size(); ++i) {
+    auto C = clusters[i];
+    dotfile << "  subgraph cluster_" << i << " {" << std::endl;
 
-    auto edges__ = edges.find(n.first);
-    if (edges__ != edges.end()) {
-      for (auto target_stack: edges__->second) {
-        auto t = target_stack.first;
-        auto i = node_map.find(t);
-        assert(i != node_map.end());
+    std::set<SgNode *> seen;
+    for (auto n: C) {
+      assert(n != nullptr);
 
-//      if ( !sameType(i->second.type, base) ) continue;
+      auto d = node_map.find(n);
+      assert(d != node_map.end());
 
-        dotfile << "    n_" << n.first << " -> n_" << t;
-#if 0
-        auto stacks = target_stack.second;
-        dotfile << "[label=\"";
-        for (auto stack__: stacks) {
-          for (auto s: stack__) {
-            assert(s != nullptr);
-            dotfile << s->unparseToString() << " - ";
+      auto edges__ = edges.find(n);
+      if (edges__ != edges.end()) {
+        for (auto target_stack: edges__->second) {
+          auto t = target_stack.first;
+          auto i = node_map.find(t);
+          assert(i != node_map.end());
+
+          seen.insert(n);
+          seen.insert(t);
+
+#if 1
+          dotfile << "    n_" << n << " -> n_" << t << ";" << std::endl;
+#else
+// TODO make so that one can choose to expand the stacks (nodes)
+//   Following code only unparse the stacks in the edge's labels (not readable)
+          auto stacks = target_stack.second;
+          dotfile << "[label=\"";
+          for (auto stack__: stacks) {
+            for (auto s: stack__) {
+              assert(s != nullptr);
+              dotfile << s->unparseToString() << " - ";
+            }
+            dotfile << "";
           }
-          dotfile << "";
-        }
-        dotfile << "\"];";
+          dotfile << "\"];" << std::endl;
 #endif
-        dotfile << std::endl;
+        }
       }
     }
+
+    // TODO get paths through:
+    //  - automated: analyze all positions in graph [eventually]
+    //  - cmd-line [good first step]
+    //  - environment [I don't like that one much]
+    std::vector<std::string> paths{
+      "/workspace/pipeline-tests/typeforge-tests/",
+      "/opt/rose/vanderbrugge1/typeforge/native/release/install/include/edg/g++_HEADERS/hdrs7/"
+    };
+    for (auto n : seen) {
+      auto d = node_map.find(n);
+      assert(d != node_map.end());
+
+      auto position = d->second.position;
+      for (auto p : paths) {
+        auto i = position.find(p);
+        if (i == 0) {
+          position = position.substr(p.size());
+        }
+      }
+
+      dotfile << "    n_" << n << " [label=\"" << d->second.handle;
+//      dotfile << "\\n" << d->second.cname;
+        dotfile << "\\n" << position;
+        dotfile << "\\n" << globalUnparseToString(d->second.type, uinfo);
+      dotfile << "\"";
+      dotfile << ", fillcolor=" << node_color_map[d->second.cname] << ", style=filled";
+      if ( isTypeBasedOn(d->second.type, base, true) ) {
+        dotfile << ", penwidth=3";
+      }
+      dotfile << "];" << std::endl;
+    }
+
+    dotfile << "}" << std::endl; // end cluster
   }
 
-  dotfile << "}" << std::endl;
+  dotfile << "}" << std::endl; // end graph
 
   dotfile.close();
 

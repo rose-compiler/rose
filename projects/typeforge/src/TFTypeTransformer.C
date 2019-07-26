@@ -328,7 +328,7 @@ void TFTypeTransformer::execute() {
       SgFunctionType * ftype = SageBuilder::buildFunctionType(type, old_ftype->get_argument_list());
       assert(ftype != NULL);
 
-      std::set<SgFunctionDeclaration *> fdecls; // Really inefficient
+      std::set<SgFunctionDeclaration *> fdecls; // FIXME That way of building this set is really inefficient
       fdecls.insert(funDecl);
       for (auto fdecl : SgNodeHelper::listOfFunctionDeclarations(nullptr)) {
         SgFunctionDeclaration * fd = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
