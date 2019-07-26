@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <cstdio>
 #include <cstring>
 
@@ -15,6 +16,8 @@
 #endif
 
 namespace Typeforge {
+
+std::vector<std::string> parse_args(int argc, char* argv[]);
 
 class CommandLineOptions 
 #ifdef USE_SAWYER_COMMANDLINE

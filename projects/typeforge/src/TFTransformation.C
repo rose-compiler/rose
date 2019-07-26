@@ -5,7 +5,7 @@
 #include "AstTerm.h"
 #include "CppStdUtilities.h"
 #include <boost/algorithm/string.hpp>
-#include "TFHandles.h"
+#include "Analysis.h"
 
 namespace Typeforge {
 
@@ -57,11 +57,7 @@ int ReadWriteTransformation::run(SgProject* project, RoseAst ast, TFTransformati
   return 0;
 }
 
-string getHandle(SgNode* node){
- return TFHandles::getAbstractHandle(node); 
-}
-
-SgScopeStatement* getNextScope(SgNode* node){
+static SgScopeStatement* getNextScope(SgNode* node){
   node = node->get_parent();
   while(node){
     if(SgScopeStatement* scope = isSgScopeStatement(node)){
@@ -73,7 +69,7 @@ SgScopeStatement* getNextScope(SgNode* node){
   return nullptr;
 }
 
-string getHandleFromName(SgNode* node, string name){
+static string getHandleFromName(SgNode* node, string name){
   SgScopeStatement* scope = getNextScope(node);
   while(scope){
     RoseAst ast(scope);
@@ -85,7 +81,7 @@ string getHandleFromName(SgNode* node, string name){
           if(varSym){
             string varName = SgNodeHelper::symbolToString(varSym);
             if(varName == name){
-              return getHandle(varDec);
+              return ::Typeforge::typechain.getHandle(varDec);
             }
           }
         }
@@ -182,8 +178,8 @@ void TFTransformation::appendNode(SgNode* node, string newCode){
   }
 }
 
-void TFTransformation::transformationAnalyze(SgProject* project){
-  RoseAst ast(project);
+void TFTransformation::transformationAnalyze(){
+  RoseAst ast(::Typeforge::project);
 
   for(auto spec : _transformationList){
     spec->run(project, ast, this);
@@ -460,9 +456,9 @@ string getVarRefHandle(SgVarRefExp* varRef){
   SgInitializedName* varInit = varSym->get_declaration();
   SgDeclarationStatement* varDec = varInit->get_declaration();
   if(isSgVariableDeclaration(varDec)){
-    return getHandle(varDec);
+    return::Typeforge::typechain.getHandle(varDec);
   }else{
-    return getHandle(varInit);
+    return::Typeforge::typechain.getHandle(varInit);
   }
 }
 
@@ -477,7 +473,7 @@ int TFTransformation::instrumentADDecleration(SgInitializer* init){
       if(SgVariableDeclaration* varDec = isSgVariableDeclaration(initName->get_parent())){
         SgSymbol* varSym = SgNodeHelper::getSymbolOfInitializedName(initName);
         string varName   = SgNodeHelper::symbolToString(varSym); 
-        string handle    = getHandle(varDec);
+        string handle    = ::Typeforge::typechain.getHandle(varDec);
         if(handle == "") return 1; 
 
         string sourceInfo = initName->get_file_info()->get_filenameString() +
@@ -530,7 +526,7 @@ void TFTransformation::instrumentADIntermediate(SgNode* root) {
         SgVariableSymbol* varRefExpSymbol=varRefExp->get_symbol();
         string varHandle = getVarRefHandle(varRefExp);
         //To group by assignment instead get the handle for the assignment
-        //varHandle = getHandle(assignOp);
+        //varHandle = ::Typeforge::typechain.getHandle(assignOp);
         if(varHandle == "") continue;
         if(varRefExpSymbol) {
           SgName varName=varRefExpSymbol->get_name();
@@ -580,7 +576,7 @@ void TFTransformation::instrumentADGlobals(SgProject* project, RoseAst ast){
             if(varInit->get_initializer() != nullptr){
               if(varSym){
                 string varName = SgNodeHelper::symbolToString(varSym);
-                string handle = getHandle(varDecl);
+                string handle = ::Typeforge::typechain.getHandle(varDecl);
                 if(handle == "") continue;
                 instString += "AD_intermediate("+varName+",\""+handle+"\", SOURCE_INFO);\n";
                 adIntermediateTransformations++;

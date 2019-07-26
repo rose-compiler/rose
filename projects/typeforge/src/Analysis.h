@@ -1,5 +1,6 @@
+
 #ifndef TYPEFORGE_ANALYSIS_H
-#define TYPEFORGE_ANALYSIS_H
+#  define TYPEFORGE_ANALYSIS_H
 
 #include "sage3basic.h"
 #include "AstTerm.h"
@@ -9,36 +10,79 @@ namespace Typeforge {
 class ToolConfig;
 
 class Analysis {
-  public:
-    int variableSetAnalysis(SgProject * project, SgType * matchType);
-    void toDot(std::string const & fileName) const;
-    void appendAnalysis(ToolConfig * tc);
-
-// OLD
-
-    void writeAnalysis(SgType* type, std::string toTypeString);
-    void writeGraph(std::string fileName);
-    std::set<SgNode*> * getSet(SgNode * node);
-
   private:
-    typedef std::vector<SgExpression *> stack_t;
 
+    typedef std::vector<SgExpression *> stack_t;
     stack_t stack;
 
-    void linkVariables(SgNode* key, SgType* type, SgExpression* exp);
+    // Nodes
 
-    std::set< SgNode * > nodes;
-    void addNode(SgNode * n);
+    struct node_tuple_t {
+      node_tuple_t(SgNode*);
+
+      std::string handle;
+      std::string cname;
+      std::string position;
+
+      SgNode * scope;
+      SgType * type;
+    };
+
+    std::map< SgNode * , node_tuple_t > node_map;
+    std::map< std::string , SgNode * > handle_map;
+
+    std::string addNode(SgNode * n);
+
+    // Edge
 
     std::map< SgNode *, std::map< SgNode *, std::vector<stack_t> > > edges;
     void addEdge(SgNode * s, SgNode * t);
 
-// OLD
+    // Compute link
 
-    void addToMap(SgNode* originNode, SgNode* targetNode);
-    std::list< std::set<SgNode*> > listSets;
-    std::map< SgNode *, std::set<SgNode *> > setMap;
+    void traverse(SgGlobal * g);
+    void traverseVariableDeclarations(SgGlobal * g);
+    void traverseFunctionDeclarations(SgGlobal * g);
+    void traverseFunctionDefinitions(SgGlobal * g);
+
+    void linkVariables(SgNode * key, SgExpression * exp);
+
+  public:
+    void initialize(SgProject * p = nullptr);
+
+    // Accessors
+
+    SgNode * getNode(std::string const & h) const;
+    std::string getHandle(SgNode * n) const;
+
+    std::string getClass(SgNode * n) const;
+
+    std::string getPosition(SgNode * n) const;
+
+    SgType * getType(SgNode * n) const;
+
+    SgNode * getScope(SgNode * n) const;
+
+    std::vector<SgNode *> const & getEdgeIn(SgNode * n) const;
+
+    //
+
+    void getGlobals    ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getLocals     ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getFields     ( std::vector<SgVariableDeclaration *> & decls, std::string const & location) const;
+    void getFunctions  ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
+    void getMethods    ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
+    void getParameters ( std::vector<SgInitializedName     *> & decls, std::string const & location) const;
+
+    // Generate the graph of the model
+
+    void toDot(std::string const & fileName, SgType * base = nullptr) const;
+
+  friend ::Typeforge::ToolConfig;
 };
+
+extern SgProject * project;
+extern Analysis typechain;
 
 }
 
