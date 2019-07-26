@@ -479,6 +479,9 @@ void Analysis::traverseFunctionDeclarations(SgGlobal * g) {
     if (isSgTemplateFunctionDeclaration(fdecl) || isSgTemplateMemberFunctionDeclaration(fdecl)) {
       continue;
     }
+    if (fdecl->get_qualified_name() == "::SQRT" || fdecl->get_qualified_name() == "::FABS" || fdecl->get_qualified_name() == "::CBRT") {
+      continue;
+    }
 
     SgFunctionDeclaration * fd = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
     assert(fd != nullptr);
@@ -651,6 +654,10 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
 
         SgFunctionDeclaration * fdecl = fsym->get_declaration();
         assert(fdecl != nullptr);
+
+        if (fdecl->get_qualified_name() == "::SQRT" || fdecl->get_qualified_name() == "::FABS" || fdecl->get_qualified_name() == "::CBRT") {
+          continue;
+        }
 
         SgFunctionDeclaration * dfdecl = isSgFunctionDeclaration(fdecl->get_definingDeclaration());
         if (dfdecl == nullptr) {
