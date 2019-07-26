@@ -533,4 +533,11 @@ run $(test) testPeekRegister
 run $(tool_compile_linkexe) testDataBlockOwnership.C
 run $(test) testDataBlockOwnership ./testDataBlockOwnership $(ROSE)/tests/nonsmoke/specimens/binary/x86-64-nologin
 
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSRecords.C
+run $(test) testSRecords
+
 endif

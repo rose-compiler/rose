@@ -1558,6 +1558,23 @@ testDataBlockOwnership.passed: $(top_srcdir)/scripts/test_exit_status testDataBl
 		CMD="$$(pwd)/testDataBlockOwnership $(testDataBlockOwnership_specimen)"	\
 		$< $@
 
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+noinst_PROGRAMS += testSRecords
+testSRecords_SOURCES = testSRecords.C
+testSRecords_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSRecords.passed
+testSRecords.passed: $(top_srcdir)/scripts/test_exit_status testSRecords
+	@$(RTH_RUN)						\
+		TITLE="test S-Record parsing/unparsing [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSRecords"			\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
