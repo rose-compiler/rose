@@ -3438,7 +3438,8 @@ SgAssociateStatement::cfgIndexForEnd() const {
 std::vector<CFGEdge> SgAssociateStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
-    case 0: makeEdge(CFGNode(this, idx), this->get_variable_declaration()->cfgForBeginning(), result); break;
+    case 0: ROSE_ASSERT (!"No longer support, having SgDeclarationStatementPtrList instead"); break; 
+           // makeEdge(CFGNode(this, idx), this->get_variable_declaration()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: {
       makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
@@ -3454,7 +3455,8 @@ std::vector<CFGEdge> SgAssociateStatement::cfgInEdges(unsigned int idx) {
   addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_variable_declaration()->cfgForEnd(), CFGNode(this, idx), result); break;
+    case 1: ROSE_ASSERT (!"No longer support, having SgDeclarationStatementPtrList instead"); break;
+            // makeEdge(this->get_variable_declaration()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
     default: ROSE_ASSERT (!"Bad index for SgAssociateStatement");
   }

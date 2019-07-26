@@ -11614,11 +11614,42 @@ void c_action_label(Token_t * lbl)
                 scopeParent);
         ROSE_ASSERT(associateStatement != NULL);
 
-        SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(
-                astNodeStack.front());
-        ROSE_ASSERT(variableDeclaration != NULL);
-        associateStatement->set_variable_declaration(variableDeclaration);
-        variableDeclaration->set_parent(associateStatement);
+        // Pei-Hung (07/24/2019) Change to support multiple associates
+
+        // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(
+        //         astNodeStack.front());
+        // ROSE_ASSERT(variableDeclaration != NULL);
+        // associateStatement->set_variable_declaration(variableDeclaration);
+
+        do {
+          SgScopeStatement* currentScope = getTopOfScopeStack();
+          SgInitializedName* initializedName = isSgInitializedName(astNodeStack.front());
+          ROSE_ASSERT(initializedName != NULL);
+          SgName variableName = initializedName->get_name();
+
+          SgVariableDeclaration* variableDeclaration = new SgVariableDeclaration();
+          ROSE_ASSERT(variableDeclaration != NULL);
+          setSourcePosition(variableDeclaration);
+          variableDeclaration->set_parent(currentScope);
+          variableDeclaration->set_definingDeclaration(variableDeclaration);
+          variableDeclaration->set_variableDeclarationContainsBaseTypeDefiningDeclaration(false);
+
+          variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
+
+          initializedName->set_declptr(variableDeclaration);
+
+          initializedName->set_scope(astScopeStack.front());
+          SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+          astScopeStack.front()->insert_symbol(initializedName->get_name(),variableSymbol);
+          ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+
+          associateStatement->prepend_associate(variableDeclaration);
+
+          ROSE_ASSERT(astNodeStack.empty() == false);
+          astNodeStack.pop_front();
+        } 
+        while(astNodeStack.empty() == false);
+
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -11673,7 +11704,9 @@ void c_action_label(Token_t * lbl)
 
         // DQ (11/30/2007): The current implementation only handles the case of a single associate variable.
         // Later we need to extend this to handle a list of variable declarations.
-        ROSE_ASSERT(count == 1);
+
+        // Pei-Hung (07/24/2019) Change implementation to handle multiple associate variables
+        // ROSE_ASSERT(count == 1);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -11746,26 +11779,28 @@ void c_action_label(Token_t * lbl)
         setSourcePosition(associateVariable, id);
 
         // printf ("Calling buildVariableDeclaration in c_action_association() \n");
-        bool buildingImplicitVariable = false;
-        SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,
-                buildingImplicitVariable);
-        // printf ("DONE: Calling buildVariableDeclaration in c_action_association() \n");
-        ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
-
-        ROSE_ASSERT(associateVariable->get_scope() != NULL);
-        ROSE_ASSERT(associateVariable->get_scope() == currentScope);
-
-        astNodeStack.push_front(variableDeclaration);
+         
+        // Pei-Hung (07/24/2019) changed for supporting multiple associates
+        // bool buildingImplicitVariable = false;
+        // SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,
+        //         buildingImplicitVariable);
+        // // printf ("DONE: Calling buildVariableDeclaration in c_action_association() \n");
+        // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+        //
+        // ROSE_ASSERT(associateVariable->get_scope() != NULL);
+        // ROSE_ASSERT(associateVariable->get_scope() == currentScope);
+        //
+        // astNodeStack.push_front(variableDeclaration);
 
         // Clean up the stacks
-        // astTypeStack.pop_front();
+         astTypeStack.pop_front();
         // astInitializerStack.pop_front();
 
         // This takes a name off of the name stack and puts a variable reference onto the astExpressionStack
         // (building a declaration if required) types are computed using implicit type rules.
         // c_action_data_ref(0);
 
-#if 0
+#if 1
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R818 c_action_association()");
 #endif

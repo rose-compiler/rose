@@ -330,6 +330,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_doconstruct.f90 \
      test2019_OpenStmt_Unit.f90 \
      test2019_common_block_name.f90 \
+     test2019_multi_associate.f90 \
      canonicalExample.f90 
 
 # Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
