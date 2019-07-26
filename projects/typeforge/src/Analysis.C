@@ -1042,13 +1042,21 @@ void Analysis::toDot(std::string const & fileName, SgType * base) const {
   dotfile << "digraph {" << std::endl;
   dotfile << "  ranksep=5;" << std::endl;
 
-
   std::vector< std::set<SgNode *> > clusters;
   buildClusters(clusters, base);
+
+  size_t num_nodes = 0;
+  for (auto C : clusters) {
+    num_nodes += C.size();
+  }
+
+  dotfile << "  title=\"" << clusters.size() << " clusters with " << num_nodes << " possible transformations.\";" << std::endl;
 
   for (size_t i = 0; i < clusters.size(); ++i) {
     auto C = clusters[i];
     dotfile << "  subgraph cluster_" << i << " {" << std::endl;
+
+    dotfile << "    title=\"Cluster #" << i << " with " << C.size() << " possible transformations.\";" << std::endl;
 
     std::set<SgNode *> seen;
     for (auto n: C) {

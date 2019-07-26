@@ -66,7 +66,7 @@ std::vector<std::string> parse_args(int argc, char* argv[]) {
   }
 
   if (args.isUserProvided("version")) {
-    cout << "typeforge version 0.8.7" << endl;
+    cout << "typeforge version 0.8.8" << endl;
     exit(0);
   }
 

@@ -310,16 +310,24 @@ void ToolConfig::writeGlobal() {
   }
 }
 
-void ToolConfig::appendAnalysis() {
+void ToolConfig::appendAnalysis(SgType * type) {
   if (ToolConfig::global_config != nullptr) {
-    for (auto e: ::Typeforge::typechain.edges) {
-      auto key = e.first;
-      std::ostringstream oss; oss << "set-analysis:" << key;
+    std::vector<std::set<SgNode *> > clusters;
+    ::Typeforge::typechain.buildClusters(clusters, type);
+    for (size_t s = 0; s < clusters.size(); ++s) {
+      std::ostringstream oss; oss << "typechain:cluster=" << s;
       std::string label = oss.str();
-      ToolConfig::global_config->addLabel(key, label);
+      for (auto n : clusters[s]) {
+        ToolConfig::global_config->addLabel(n, label);
+      }
+    }
+
+    for (auto e: ::Typeforge::typechain.edges) {
+      auto h = ::Typeforge::typechain.getHandle(e.first);
+      std::ostringstream oss; oss << "typechain:address=" << h;
+      std::string label = oss.str();
       for (auto target_stack: e.second) {
         auto target = target_stack.first;
-//      auto stack = target_stack.second;
         ToolConfig::global_config->addLabel(target, label);
       }
     }

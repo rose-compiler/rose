@@ -130,7 +130,7 @@ int main (int argc, char* argv[]) {
     //   FIXME race-condition: parallel make (see above)
 
     if (args.isUserProvided("typeforge-out")) {
-      ::Typeforge::ToolConfig::appendAnalysis();
+      ::Typeforge::ToolConfig::appendAnalysis(SageBuilder::buildDoubleType());
       ::Typeforge::ToolConfig::writeGlobal();
     }
 
