@@ -5455,6 +5455,67 @@ isPubliclyAccessible( SgSymbol* symbol )
                ROSE_ASSERT(false);
              }
         }
+       
+        // Pei-Hung (07/26/2019)  Check if access attribute is given in SgAttributeSpecificationStatement
+        // Test case avaiable in test2019_private_attribute.f90 & test2019_private_attribute2.f90 
+        SgScopeStatement* scope = symbol->get_scope();
+        SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
+        if (functionDefinition != NULL)
+           {
+             std::vector<SgStatement*>::iterator j = functionDefinition->get_body()->get_statements().begin();
+             while ( j != functionDefinition->get_body()->get_statements().end() )
+                {
+               // Look for the access attribute in SgAttributeSpecificationStatement
+                  SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(*j);
+                  if (attributeStmt != NULL)
+                  {
+                      SgStringList& nameList = attributeStmt->get_name_list();
+                      SgStringList::iterator i = nameList.begin();
+                      while(i != nameList.end())
+                      {
+                         if((*i).compare(symbol->get_name().str()) == 0)
+                         {
+                           if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_private)
+                              returnValue = false;
+                           else if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_public)
+                              returnValue = true;
+                         }
+                         i++;
+                      }
+                  }
+                  j++;
+                }
+           }
+        // Pei-Hung (07/25/2019) search for implicit statement in modules
+        SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+        if (classDefinition != NULL)
+           {
+             SgDeclarationStatementPtrList& declStmtList = classDefinition->get_members();
+             SgDeclarationStatementPtrList::const_iterator j = declStmtList.begin();
+             while (j != declStmtList.end())
+               {
+               // Look for the access attribute in SgAttributeSpecificationStatement
+                  SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(*j);
+                  if (attributeStmt != NULL)
+                  {
+                      SgStringList& nameList = attributeStmt->get_name_list();
+                      SgStringList::iterator i = nameList.begin();
+                      while(i != nameList.end())
+                      {
+                         if((*i).compare(symbol->get_name().str()) == 0)
+                         {
+                           if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_private)
+                              returnValue = false;
+                           else if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_public)
+                              returnValue = true;
+                         }
+                         i++;
+                      }
+                  }
+                  j++;
+               }
+           }
+        
 
      return returnValue;
    }
