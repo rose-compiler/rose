@@ -308,28 +308,65 @@ void TFTypeTransformer::addTransformation(SgNode * node, SgType * type, bool bas
   transformations[node] = type;
 }
 
+void getAllDeclarations(SgFunctionDeclaration * fdecl_ref, std::set<SgFunctionDeclaration *> & fdecls) {
+  // FIXME That way of building this set is really inefficient
+  fdecl_ref = isSgFunctionDeclaration(fdecl_ref->get_firstNondefiningDeclaration());
+  fdecls.insert(fdecl_ref);
+  for (auto fdecl : SgNodeHelper::listOfFunctionDeclarations(nullptr)) {
+    SgFunctionDeclaration * nd_fdecl = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+    if (nd_fdecl == fdecl_ref) {
+      fdecls.insert(fdecl);
+    }
+  }
+}
+
 void TFTypeTransformer::execute() {
   for (auto i = transformations.begin(); i != transformations.end(); i++){
     SgNode * node = i->first;
     SgType * t_type = i->second;
     SgType * n_type = rebuildBaseType(::Typeforge::typechain.getType(node), t_type);
 
-//  std::cout << "t_type  = " << t_type->unparseToString()  << std::endl;
-//  std::cout << "n_type  = " << n_type->unparseToString()  << std::endl;
-
     string  location = ::Typeforge::typechain.getHandle(node);
     if (SgInitializedName * iname = isSgInitializedName(node)) {
       TFTypeTransformer::trace("Execution: Changing variable type @"+location+" to type "+n_type->unparseToString());
 
-      iname->set_type(n_type);
+      SgFunctionParameterList * params_lst = isSgFunctionParameterList(iname->get_parent());
+      assert(params_lst != nullptr);
+      SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(params_lst->get_parent());
+      assert(fdecl != nullptr);
+
+      SgFunctionType * otype = fdecl->get_type();
+      assert(otype != NULL);
+
+      auto params = params_lst->get_args();
+      auto it = std::find(params.begin(), params.end(), iname);
+      assert(it != params.end());
+      size_t pos = it - params.begin();
+
+      std::set<SgFunctionDeclaration *> fdecls;
+      getAllDeclarations(fdecl, fdecls);
+      for (auto fdecl : fdecls) {
+        params = fdecl->get_parameterList()->get_args();
+        iname = params[pos];
+        iname->set_type(n_type);
+
+        if (fdecl->get_parameterList_syntax()) {
+          params = fdecl->get_parameterList_syntax()->get_args();
+          iname = params[pos];
+          iname->set_type(n_type);
+        }
+      }
 
     } else if (SgVariableDeclaration * vdecl = isSgVariableDeclaration(node)) {
       TFTypeTransformer::trace("Execution: Changing variable type @"+location+" to type "+n_type->unparseToString());
 
-      SgNodeHelper::getInitializedNameOfVariableDeclaration(vdecl)->set_type(n_type);
+      SgInitializedName * iname = SgNodeHelper::getInitializedNameOfVariableDeclaration(vdecl);
+      iname->set_type(n_type);
 
     } else if (SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)) {
       TFTypeTransformer::trace("Execution: Changing return type @"+location+" to type "+n_type->unparseToString());
+
+      funDecl = isSgFunctionDeclaration(funDecl->get_firstNondefiningDeclaration());
 
       SgFunctionType * old_ftype = funDecl->get_type();
       assert(old_ftype != NULL);
@@ -337,14 +374,8 @@ void TFTypeTransformer::execute() {
       SgFunctionType * ftype = SageBuilder::buildFunctionType(n_type, old_ftype->get_argument_list());
       assert(ftype != NULL);
 
-      std::set<SgFunctionDeclaration *> fdecls; // FIXME That way of building this set is really inefficient
-      fdecls.insert(funDecl);
-      for (auto fdecl : SgNodeHelper::listOfFunctionDeclarations(nullptr)) {
-        SgFunctionDeclaration * fd = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
-        if (fd == funDecl) {
-          fdecls.insert(fdecl);
-        }
-      }
+      std::set<SgFunctionDeclaration *> fdecls;
+      getAllDeclarations(funDecl, fdecls);
       for (auto fdecl : fdecls) {
         fdecl->set_type(ftype);
       }
@@ -384,8 +415,6 @@ void TFTypeTransformer::execute() {
       int pos = nrdecl->get_template_parameter_position() - 1; // starts at 1 (0 means that it is not a template argument)
       assert(pos >= 0);
 
-//    std::cout << "pos = " << pos << std::endl;
-
       SgTemplateArgumentPtrList * tpl_args = new SgTemplateArgumentPtrList();
       size_t i = 0;
       for (auto arg : ti_fdecl->get_templateArguments()) {
@@ -413,9 +442,6 @@ void TFTypeTransformer::execute() {
         ++i;
       }
 
-//    std::cout << "t_fdecl->get_name()  = " << t_fdecl->get_name()  << std::endl;
-//    std::cout << "ti_fdecl->get_name() = " << ti_fdecl->get_name() << std::endl;
-
       ti_fdecl = isSgTemplateInstantiationFunctionDecl(SageBuilder::buildNondefiningFunctionDeclaration(
         t_fdecl->get_name(),
         n_type,
@@ -430,8 +456,6 @@ void TFTypeTransformer::execute() {
       ti_fdecl->set_template_argument_list_is_explicit(true);
 
       SageInterface::setSourcePositionForTransformation(ti_fdecl);
-
-//    std::cout << "ti_fdecl->get_name() = " << ti_fdecl->get_name() << std::endl;
 
       SgSymbol * sym = ti_fdecl->search_for_symbol_from_symbol_table();
       assert(sym != nullptr);
