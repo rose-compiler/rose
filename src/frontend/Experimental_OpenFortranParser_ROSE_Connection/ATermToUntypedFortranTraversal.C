@@ -1402,7 +1402,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // t_private, can this be added to the attr_list?
       // t_type_bound
 
-      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, /*rank*/0, struct_def);
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, struct_def);
       ROSE_ASSERT(struct_decl);
       setSourcePosition(struct_decl, term);
    }

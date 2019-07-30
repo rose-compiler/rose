@@ -81,64 +81,131 @@ UntypedJovialConverter::convertUntypedJovialCompoolStatement(SgUntypedNameListDe
 SgDeclarationStatement*
 UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
 {
-      SgName name = ut_struct->get_name();
+   SgName type_name = ut_struct->get_name();
 
-      SgUntypedStructureDefinition* ut_table_def = ut_struct->get_definition();
-      ROSE_ASSERT(ut_table_def);
+   SgUntypedStructureDefinition* ut_table_def = ut_struct->get_definition();
+   ROSE_ASSERT(ut_table_def);
 
-#if 1
+   bool has_body      = ut_table_def->get_has_body();
+   bool has_type_name = ut_table_def->get_has_type_name();
+   bool has_base_type = (has_type_name == false && has_body == false);
+
+   SgType* sg_base_type = NULL;
+   SgUntypedType* ut_base_type  = ut_table_def->get_base_type();
+   if (has_base_type)
+      {
+         ROSE_ASSERT(ut_base_type != NULL);
+         sg_base_type = convertUntypedType(ut_base_type, scope);
+      }
+
+#if 0
       cout << "\n-x- convertUntypedStructureDeclaration: specialization for Jovial \n";
-      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
-      cout << ut_table_def->get_scope()->get_declaration_list()->get_decl_list().size();
+      //      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
+      //      cout << ut_table_def->get_scope()->get_declaration_list()->get_decl_list().size();
+      cout << "-x- table def scope is " << ut_table_def->get_scope() << endl;
+      cout << "-x- has_type_name " << has_type_name << endl;
+      cout << "-x- has_body " << has_body << endl;
+      cout << "-x- has_base_type " << has_base_type << endl;
+
+      if (has_base_type) cout << "-x- ut_base_type " << ut_base_type << " : " << ut_base_type->class_name() << endl;
+      if (has_base_type) cout << "-x- sg_base_type " << sg_base_type << " : " << sg_base_type->class_name() << endl;
+      cout << "-x- size of modifier list is " << ut_table_def->get_modifiers()->get_expressions().size() << endl;
+
       cout << "..........\n\n";
-      cout << "-x- creating SgClassDeclaration (or is this a variable) for name " << name << endl;
-      cout << "    size of modifier list is " << ut_struct->get_modifiers()->get_expressions().size()
-           << endl;
+      cout << "-x- creating SgClassDeclaration (or is this a variable) for name " << type_name << endl;
 #endif
 
    // This function builds a class declaration and definition with both the defining and nondefining declarations as required
-      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(name, scope);
+      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(type_name, scope);
       ROSE_ASSERT(table_decl);
       setSourcePositionFrom(table_decl, ut_struct);
 
       cout << "-x- created SgClassDeclaration " << table_decl << endl;
 
-   // A Jovial table may have array dimensions, set this information in the type
-      SgType* type = table_decl->get_type();
-      ROSE_ASSERT(type);
+      SgType* sg_type = table_decl->get_type();
+      ROSE_ASSERT(sg_type);
 
-      SgJovialTableType* table_type = isSgJovialTableType(type);
-      ROSE_ASSERT(table_type);
+      SgJovialTableType* sg_table_type = isSgJovialTableType(sg_type);
+      ROSE_ASSERT(sg_table_type);
 
-      cout << "-x- found type " << table_type << endl;
+#if 0
+      cout << "-x- sg_table_type " << sg_table_type << endl;
+      cout << "-x-  base_type " << sg_table_type->get_base_type() << endl;
       cout << "-x- ut_dim_info " << ut_struct->get_dim_info() << endl;
       cout << "-x- found dim_info expr kind is " << ut_struct->get_dim_info()->get_expression_enum() << endl;
+#endif
 
-      int rank = ut_struct->get_rank();
+   // Transfer type information
+      sg_table_type->set_base_type(sg_base_type);
+
+   // A Jovial table may have array dimensions, set this information in the type
+
 // delete this when possible after ROSETTA change (also delete in Fortran; or delete in parent destructor???)
-//    SgExprListExp* dim_info = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/true);
-      SgExprListExp* dim_info = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/false);
-      ROSE_ASSERT(dim_info);
+//    SgExprListExp* shape = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/true);
+      SgExprListExp* shape = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/false);
+      ROSE_ASSERT(shape);
 
-      table_type->set_rank(rank);
-      table_type->set_dim_info(dim_info);
+      sg_table_type->set_dim_info(shape);
+      sg_table_type->set_rank(shape->get_expressions().size());
 
-      cout << "-x- has rank " << rank << endl;
+      cout << "-x- has rank " << sg_table_type->get_rank() << endl;
 
-      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
+      if (ut_table_def->get_modifiers()->get_expressions().size() > 0)
          {
-            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
-            ROSE_ASSERT(sg_expr_list);
+            ROSE_ASSERT(ut_table_def->get_modifiers()->get_expressions().size() == 1);
 
-            ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+            cout << "-x- found modifiers: " << ut_table_def->get_modifiers() << " : size is " << ut_table_def->get_modifiers()->get_expressions().size() << endl;
 
-         // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
-            table_decl->set_has_table_entry_size(true);
-            table_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+            SgUntypedExpression* words_per_entry = ut_table_def->get_modifiers()->get_expressions()[0];
+            ROSE_ASSERT(words_per_entry != NULL);
+            cout << "-x- found words_per_entry: " << words_per_entry << " : " << words_per_entry->class_name() << endl;
+
+            if (words_per_entry->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_v)
+               {
+               // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+                  table_decl->set_has_table_entry_size(true);
+                  table_decl->set_table_entry_size(NULL);
+                  ROSE_ASSERT(isSgUntypedOtherExpression(words_per_entry));
+                  delete words_per_entry;
+               }
+
+            else if (words_per_entry->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_w)
+               {
+                  SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_table_def->get_modifiers(),/*delete*/false);
+                  ROSE_ASSERT(sg_expr_list);
+                  ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+
+                  table_decl->set_has_table_entry_size(true);
+                  table_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+               }
          }
 
       SgClassDefinition* table_def = table_decl->get_definition();
       ROSE_ASSERT(table_def);
+
+// If there is a (base class) type name, a base class for inheritance needs to be created
+   if (has_type_name)
+      {
+         std::string base_type_name = ut_table_def->get_type_name();
+         SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(base_type_name, scope);
+
+         if (class_symbol == NULL)
+            {
+               cout << "--- convertUntypedStructureDeclaration class_symbol is NULL for table base type name " << base_type_name << endl;
+               ROSE_ASSERT(false);
+            }
+
+         cout << "-x- class_symbol is " << class_symbol << " : " << class_symbol->class_name() << " : base class name is " << class_symbol->get_name() << endl;
+
+         SgClassDeclaration* base_class_decl = class_symbol->get_declaration();
+         ROSE_ASSERT(base_class_decl != NULL);
+
+         cout << "-x- base_class_decl " << base_class_decl << " : " << base_class_decl->class_name() << endl;
+
+         // class decl (NO) and def (YES) are from the base class
+         SgBaseClass* base_class = SageBuilder::buildBaseClass(base_class_decl, table_def, /*isVirtual*/false, /*isDirect*/true);
+         ROSE_ASSERT(base_class);
+      }
 
    // Jovial is insensitive to case
    // TODO: src/midend/astDiagnostics/AstConsistencyTests.C, line 6406
@@ -148,28 +215,42 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       SgScopeStatement* table_scope = table_def->get_scope();
       ROSE_ASSERT(table_scope);
 
+#if 1
+   // How to decide?  THIS IS NOT A VARIABLE DECLARATION!!!
+      cout << "--- TABLE: skipping variable declaration \n";
+      SageInterface::appendStatement(table_decl, scope);
+#else
+
    // TODO: Need to create a variable for (possibly) anonymous type
    // TODO: First make sure this isn't just a type declaration
-      SgVariableDeclaration* var_decl = SageBuilder::buildVariableDeclaration(name, table_type, NULL, scope);
+      SgVariableDeclaration* var_decl = SageBuilder::buildVariableDeclaration(type_name, table_type, NULL, scope);
 
       SageInterface::setBaseTypeDefiningDeclaration(var_decl, table_decl);
 
    // The type or variable declaration should be added (NEED TO DECIDE WHICH)
    // SageInterface::appendStatement(table_decl, scope);
       SageInterface::appendStatement(var_decl, scope);
+#endif
+
+   // delete untyped structure members that aren't traversed
+   //
+      if (ut_table_def->get_modifiers()) delete ut_table_def->get_modifiers(); ut_table_def->set_modifiers(NULL);
 
    // The table description (SgUntypedStructureDefinition) will be traversed and table items added to the table_scope
       SageBuilder::pushScopeStack(table_def);
 
-#if 1
+#if 0
       cout << "--- TABLE \n";
-      cout << "---        var_decl is " << var_decl << ": " << var_decl->class_name() << endl;
+//    cout << "---        var_decl is " << var_decl << ": " << var_decl->class_name() << endl;
       cout << "---      table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
       cout << "---       table_def is " << table_def << ": " << table_def->class_name() << endl;
-      cout << "---      table_type is " << table_type << ": " << table_type->class_name() << endl;
+      cout << "---      table_type is " << sg_table_type << ": " << sg_table_type->class_name() << endl;
+      cout << "---      table rank is " << sg_table_type->get_rank() << endl;
+      cout << "--- table base type is " << sg_table_type->get_base_type() << endl;
+      if (has_base_type) cout << "--- table base type is " << sg_table_type->get_base_type()->class_name() << endl;
 #endif
 
-      return var_decl;
+      return table_decl;
 }
 
 SgStatement*

@@ -520,7 +520,7 @@ SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_na
    ROSE_ASSERT(struct_init);
    SageInterface::setSourcePosition(struct_init);
 
-   struct_def = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, struct_init, modifier_list, scope);
+   struct_def = new SgUntypedStructureDefinition(type_name, has_type_name, has_body, struct_init, modifier_list, /*base_type*/NULL, scope);
    ROSE_ASSERT(struct_def);
    SageInterface::setSourcePosition(struct_def);
 
@@ -536,11 +536,59 @@ SgUntypedStructureDefinition* buildJovialTableDescription()
 }
 
 
-// Build an untyped JovialTableDescription. This version has a type name and no body.
+// Build an untyped JovialTableDescription. This version has a type name and body/scope (default is NULL).
+// If the has_body flag is true and the scope is NULL, a scope will be created.
 // Source position for the initializer and table description should be set after construction.
-SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name)
+SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name, bool has_body, SgUntypedScope* scope)
 {
-   return buildStructureDefinition(type_name, /*has_body*/false, /*scope*/NULL);
+   return buildStructureDefinition(type_name, has_body, scope);
+}
+
+
+// Build an untyped JovialTableDeclaration with associated JovialTableDescription. This version has a body and thus a scope.
+// Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string table_type_name)
+{
+   SgUntypedStructureDeclaration* table_decl = NULL;
+   SgUntypedStructureDefinition*  table_desc = NULL;
+   SgUntypedExprListExpression*    modifiers = NULL;
+   SgUntypedExprListExpression*        shape = NULL;
+
+// Create a default definition that can be filled in later as more information arrives.
+// For example, the table description/definition may not be a named type.
+   std::string table_desc_name = "";
+
+   table_desc = buildJovialTableDescription(table_desc_name);
+   ROSE_ASSERT(table_desc);
+   SageInterface::setSourcePosition(table_desc);
+
+   modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+   ROSE_ASSERT(modifiers);
+   SageInterface::setSourcePosition(modifiers);
+
+   shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   std::string label = "";
+   table_decl = new SgUntypedStructureDeclaration(label, table_type_name, modifiers, shape, table_desc);
+   ROSE_ASSERT(table_decl);
+   SageInterface::setSourcePosition(table_decl);
+
+   return table_decl;
+}
+
+
+// Build an untyped directive declaration statement (SgUntypedDirectiveDeclaration)
+SgUntypedDirectiveDeclaration* buildDirectiveDeclaration(std::string directive_string)
+{
+   int statement_enum = General_Language_Translation::e_define_directive_stmt;
+
+   SgUntypedDirectiveDeclaration* define_decl = new SgUntypedDirectiveDeclaration(statement_enum, directive_string);
+   ROSE_ASSERT(define_decl);
+   SageInterface::setSourcePosition(define_decl);
+
+   return define_decl;
 }
 
 

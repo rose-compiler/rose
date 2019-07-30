@@ -680,44 +680,71 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
       SgJovialTableType* table_type = isSgJovialTableType(type);
       ROSE_ASSERT(table_type);
 
+      curprint("TYPE ");
+      curprint(table_name);
+      curprint(" TABLE ");
+
    // Table DimensionList
       SgExprListExp* dim_info = table_type->get_dim_info();
-      if (table_type->get_rank() > 0)
-         {
-            bool first = true;
-            curprint(" (");
-            BOOST_FOREACH(SgExpression* expr, dim_info->get_expressions())
-               {
-                  SgSubscriptExpression* subscript = isSgSubscriptExpression(expr);
-                  ROSE_ASSERT(subscript);
-                  if (first) first = false;
-                  else       curprint(",");
-                  unparseSubscriptExpr(subscript, info);
-               }
-            curprint(")");
-         }
+     if (dim_info != NULL)
+        {
+           unparseDimInfo(dim_info, info);
+        }
 
   // WordsPerEntry
      if (table_decl->get_has_table_entry_size())
         {
-           curprint(" W ");
-           unparseExpression(table_decl->get_table_entry_size(), info);
+        // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+           if (table_decl->get_table_entry_size() != NULL)
+              {
+                 curprint("W ");
+                 unparseExpression(table_decl->get_table_entry_size(), info);
+              }
+           else curprint("V");
+        }
+
+  // Unparse base type or base class name if present
+  //
+     SgType* table_base_type = table_type->get_base_type();
+     bool has_base_type  = (table_base_type != NULL);
+
+     SgBaseClassPtrList base_class_list = table_def->get_inheritances();
+     bool has_base_class = (base_class_list.size() > 0);
+
+     if (has_base_type)
+        {
+           unparseType(table_base_type, info);
+        }
+     else if (has_base_class)
+        {
+           ROSE_ASSERT (base_class_list.size() == 1);
+           SgBaseClass* base_class = base_class_list[0];
+           ROSE_ASSERT(base_class != NULL);
+           SgClassDeclaration* base_class_decl = base_class->get_base_class();
+           ROSE_ASSERT(base_class_decl != NULL);
+
+           curprint(base_class_decl->get_name());
         }
 
      curprint(";");
      unp->cur.insert_newline(1);
 
-     curprint("BEGIN");
-     unp->cur.insert_newline(1);
-
-     BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+  // Unparse body if present
+     if (table_def->get_members().size() > 0)
+ //  if (has_base_type == false && has_base_class == false)
         {
-           unparseVarDeclStmt(item_decl, info);
-        }
+           curprint("BEGIN");
+           unp->cur.insert_newline(1);
 
-     unp->cur.insert_newline(1);
-     curprint("END");
-     unp->cur.insert_newline(1);
+           BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+              {
+                 unparseVarDeclStmt(item_decl, info);
+              }
+
+           unp->cur.insert_newline(1);
+           curprint("END");
+           unp->cur.insert_newline(1);
+        }
    }
 
 void
