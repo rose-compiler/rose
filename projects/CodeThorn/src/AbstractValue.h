@@ -128,7 +128,11 @@ class AbstractValue {
   ValueType getValueType() const;
   int getIntValue() const;
   std::string getFloatValueString() const;
+
+  // returns index value if it is an integer
   int getIndexIntValue() const;
+  // returns index value (can be top)
+  AbstractValue getIndexValue() const;
   CodeThorn::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
   void setValue(long long int ival);

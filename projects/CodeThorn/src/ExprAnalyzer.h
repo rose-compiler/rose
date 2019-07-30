@@ -55,6 +55,10 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
+  enum InterpretationMode { IM_ABSTRACT, IM_CONCRETE };
+  // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
+  enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
+
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -86,8 +90,14 @@ namespace CodeThorn {
     bool stdFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
+
+    bool getPrintDetectedViolations();
+    void setPrintDetectedViolations(bool flag);
     
+    // deprecated (superseded by checkMemoryAccessBounds
     bool accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex);
+    // supersedes accessIsWithinArrayBounds
+    enum MemoryAccessBounds checkMemoryAccessBounds(AbstractValue address);
     
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
@@ -103,6 +113,9 @@ namespace CodeThorn {
     bool definitiveErrorDetected();
     bool potentialErrorDetected();
 
+    void setOptionOutputWarnings(bool flag);
+    bool getOptionOutputWarnings();
+
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
@@ -116,6 +129,10 @@ namespace CodeThorn {
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);
+
+    enum InterpretationMode getInterpretationMode();
+    void setInterpretationMode(enum InterpretationMode);
+
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
@@ -280,6 +297,9 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
 
+    // supported functions to be executed (interpreter mode)
+    list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
+
     // utilify functions
     int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
@@ -296,6 +316,9 @@ namespace CodeThorn {
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
     Analyzer* _analyzer;
+    bool _printDetectedViolations=false;
+    enum InterpretationMode _interpretationMode=IM_ABSTRACT;
+    bool _optionOutputWarnings=false;
   public:
     StructureAccessLookup structureAccessLookup;
   };
