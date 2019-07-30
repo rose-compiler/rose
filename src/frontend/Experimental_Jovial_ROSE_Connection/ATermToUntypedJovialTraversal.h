@@ -217,6 +217,7 @@ ATbool traverse_CaseIndex       (ATerm term, SgUntypedExpression* & case_index);
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_ActualParameterList    (ATerm term, SgUntypedExprListExpression* arg_list);
+ATbool traverse_ActualOutputParameters (ATerm term, SgUntypedExprListExpression* param_list);
 
 // 4.6 RETURN STATEMENTS
 ATbool traverse_ReturnStatement (ATerm term, SgUntypedStatementList* stmt_list);
@@ -249,6 +250,7 @@ ATbool traverse_ExponentiationOp(ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_BitFormula             (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_OptLogicalContinuation (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_LogicalContinuation    (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_LogicalComponent       (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_LogicalOperand         (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_BitPrimary             (ATerm term, SgUntypedExpression* & expr);
 
@@ -302,6 +304,15 @@ ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression* & expr);
 
 // 8.3.4 POINTER LITERAL
 ATbool traverse_PointerLiteral (ATerm term, SgUntypedExpression* & expr);
+
+// 9.0 DIRECTIVES
+ATbool traverse_DirectiveList  (ATerm term, SgUntypedDeclarationStatementList* dir_list);
+ATbool traverse_Directive      (ATerm term, SgUntypedDirectiveDeclaration* dir);
+
+// 9.1 COMPOOL DIRECTIVES
+ATbool traverse_CompoolDirective    (ATerm term, SgUntypedDirectiveDeclaration* dir);
+ATbool traverse_CompoolDirectiveList(ATerm term, SgUntypedDirectiveDeclaration* dir);
+
 
 }; // class ATermToUntypedJovialTraversal
 }  // namespace Jovial

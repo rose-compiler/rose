@@ -47,9 +47,17 @@ SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_na
 //! Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildJovialTableDescription();
 
-//! Build an untyped JovialTableDescription. This version has a type name and no body.
+//! Build an untyped JovialTableDescription. This version has a type name and body/scope (default is NULL).
+//! If the has_body flag is true and the scope is NULL, a scope will be created.
 //! Source position for the initializer and table description should be set after construction.
-SgUntypedStructureDefinition* buildJovialTableDescription(std::string type_name);
+SgUntypedStructureDefinition* buildJovialTableDescription(std::string table_type_name, bool has_body=false, SgUntypedScope* scope=NULL);
+
+//! Build an untyped JovialTableDeclaration with associated JovialTableDescription. This version has a body and thus a scope.
+//! Source position for the initializer and modifier lists and table description should be set after construction.
+SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string type_name);
+
+//! Build an untyped directive declaration statement (SgUntypedDirectiveDeclaration)
+SgUntypedDirectiveDeclaration* buildDirectiveDeclaration(std::string directive_string);
 
 //! Build a null expression, set file info as the default one
 ROSE_DLL_API SgUntypedNullExpression* buildUntypedNullExpression();
