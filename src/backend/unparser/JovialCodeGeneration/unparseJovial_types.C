@@ -96,6 +96,13 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
         }
 
      SgType* base_type = table_type->get_base_type();
+
+     if (base_type == NULL)
+        {
+           cout << "--> unparse TableType: base type is NULL \n";
+           return;
+        }
+
      ROSE_ASSERT(base_type);
 
      unparseType(base_type, info);

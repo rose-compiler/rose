@@ -313,6 +313,10 @@ Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
                {
                   unparseAsteriskShapeExpr(expr, info);
                }
+            else
+               {
+                  unparseExpression(expr, info);
+               }
          }
 
       curprint(") ");
