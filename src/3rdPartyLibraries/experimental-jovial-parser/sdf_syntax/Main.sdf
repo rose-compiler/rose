@@ -32,7 +32,7 @@ CompoolFileName
 CompoolDeclaredName
 OptCompoolFileName
 CompoolDirectiveList
-OrderDirective
+OrderDirective                %% Needed
 InitializeDirective
 RearrangeDirective
 LeftrightDirective
@@ -45,7 +45,7 @@ ListinvDirective
 EjectDirective
 ListDirective
 NolistDirective
-ReducibleDirective
+ReducibleDirective            %% Needed
 InterferenceDirective
 TraceDirective
 LinkageDirective
@@ -54,7 +54,7 @@ BeginDirective
 SkipDirective
 CopyDirective
 Directive
-CompoolDirective
+CompoolDirective              %% Needed
 OptNumber
 OptExponent
 FractionalForm
