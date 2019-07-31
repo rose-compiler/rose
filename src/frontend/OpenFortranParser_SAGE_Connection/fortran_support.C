@@ -2221,23 +2221,36 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                SgGlobal* globalScope = isSgGlobal(scope);
                ROSE_ASSERT(globalScope != NULL);
 
+               // Pei-Hung (07/18/2019) Set the scope to the module scope if a module exists.
+               // There is a case in test2019_module_1_file.f90 and test2019_module_2_file.f90
+               // that the function symbol lookup found the wrong function due to function name conflict
+               SgScopeStatement* tempScope = currentScope;
+               SgClassDefinition* moduleScope = NULL;
+               // Set the scope to closest module scope if it exists
+               while(moduleScope == NULL && tempScope != globalScope)
+               {
+                  moduleScope = isSgClassDefinition(tempScope);
+                  tempScope = tempScope->get_scope();
+               }
+               scope = (moduleScope == NULL) ? isSgScopeStatement(globalScope) : isSgScopeStatement(moduleScope);
+
             // Set the scope to be global scope since we have not yet seen the function definition!
             // If it was from a module, then the module should have been included. If we were in a 
             // module then this should be fixed up at the end of the module scope (and we will have 
             // seen the function definition by then).  If this needs to be fixed up in global scope 
             // then we will see the function definition by then (at the end of the translation unit).
-               functionDeclaration->set_scope(globalScope);
+               functionDeclaration->set_scope(scope);
 
             // We also have to set the first non-defining declaration.
                functionDeclaration->set_firstNondefiningDeclaration(functionDeclaration);
 
             // We also have to set the parent...
                ROSE_ASSERT(functionDeclaration->get_parent() == NULL);
-               functionDeclaration->set_parent(globalScope);
+               functionDeclaration->set_parent(scope);
                ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
 
             // printf ("Adding function name = %s to the global scope (even though we have not seen the definition yet) \n",name.str());
-               globalScope->insert_symbol(name,functionSymbol);
+               scope->insert_symbol(name,functionSymbol);
 
             // Add this function to the list of unresolved functions so that we can fixup the AST afterward (close of module scope or close of global scope).
                astUnresolvedFunctionsList.push_front(functionDeclaration);
@@ -2975,7 +2988,20 @@ isImplicitNoneScope()
                     j++;
                   }
              }
-
+          // Pei-Hung (07/25/2019) search for implicit statement in modules
+          SgClassDefinition* classDefinition = isSgClassDefinition(*i);
+          if (classDefinition != NULL)
+             {
+               SgDeclarationStatementPtrList& declStmtList = classDefinition->get_members();
+               SgDeclarationStatementPtrList::const_iterator j = declStmtList.begin();
+               while (j != declStmtList.end())
+               {
+                 SgImplicitStatement* implicitStatement = isSgImplicitStatement(*j);
+                 if (implicitStatement != NULL && implicitStatement->get_implicit_none() == true)
+                   isImplicitNoneScope = true;
+                 j++;
+               }
+             }
           i++;
         }
 
@@ -5429,6 +5455,67 @@ isPubliclyAccessible( SgSymbol* symbol )
                ROSE_ASSERT(false);
              }
         }
+       
+        // Pei-Hung (07/26/2019)  Check if access attribute is given in SgAttributeSpecificationStatement
+        // Test case avaiable in test2019_private_attribute.f90 & test2019_private_attribute2.f90 
+        SgScopeStatement* scope = symbol->get_scope();
+        SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
+        if (functionDefinition != NULL)
+           {
+             std::vector<SgStatement*>::iterator j = functionDefinition->get_body()->get_statements().begin();
+             while ( j != functionDefinition->get_body()->get_statements().end() )
+                {
+               // Look for the access attribute in SgAttributeSpecificationStatement
+                  SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(*j);
+                  if (attributeStmt != NULL)
+                  {
+                      SgStringList& nameList = attributeStmt->get_name_list();
+                      SgStringList::iterator i = nameList.begin();
+                      while(i != nameList.end())
+                      {
+                         if((*i).compare(symbol->get_name().str()) == 0)
+                         {
+                           if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_private)
+                              returnValue = false;
+                           else if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_public)
+                              returnValue = true;
+                         }
+                         i++;
+                      }
+                  }
+                  j++;
+                }
+           }
+        // Pei-Hung (07/25/2019) search for implicit statement in modules
+        SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+        if (classDefinition != NULL)
+           {
+             SgDeclarationStatementPtrList& declStmtList = classDefinition->get_members();
+             SgDeclarationStatementPtrList::const_iterator j = declStmtList.begin();
+             while (j != declStmtList.end())
+               {
+               // Look for the access attribute in SgAttributeSpecificationStatement
+                  SgAttributeSpecificationStatement* attributeStmt = isSgAttributeSpecificationStatement(*j);
+                  if (attributeStmt != NULL)
+                  {
+                      SgStringList& nameList = attributeStmt->get_name_list();
+                      SgStringList::iterator i = nameList.begin();
+                      while(i != nameList.end())
+                      {
+                         if((*i).compare(symbol->get_name().str()) == 0)
+                         {
+                           if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_private)
+                              returnValue = false;
+                           else if(attributeStmt->get_attribute_kind() == SgAttributeSpecificationStatement::e_accessStatement_public)
+                              returnValue = true;
+                         }
+                         i++;
+                      }
+                  }
+                  j++;
+               }
+           }
+        
 
      return returnValue;
    }
