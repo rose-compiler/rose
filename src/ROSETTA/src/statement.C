@@ -3069,8 +3069,15 @@ Grammar::setUpStatements ()
   // DQ (11/30/2007): Added Associate statement
      AssociateStatement.setFunctionPrototype ( "HEADER_ASSOCIATE_STATEMENT", "../Grammar/Statement.code" );
   // The AssociateStatement has a variable declaration and a body, the AssociateStatement is a scope
-     AssociateStatement.setDataPrototype     ( "SgVariableDeclaration*", "variable_declaration", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // Pei-Hung (07/24/2019): added DeclarationStatement list for multiple associates
+     AssociateStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AssociateStatement.editSubstitute       ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
+     AssociateStatement.editSubstitute       ( "LIST_NAME", "associates" );
+     AssociateStatement.editSubstitute       ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AssociateStatement.editSubstitute       ( "LIST_FUNCTION_NAME", "associate" );
+     AssociateStatement.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
+     AssociateStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "associates"   , "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AssociateStatement.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 

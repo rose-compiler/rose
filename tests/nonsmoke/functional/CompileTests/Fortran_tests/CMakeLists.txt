@@ -127,7 +127,8 @@ set(F90_TESTCODES
   test2019_rewind.f90
   test2019_renameList.f90
   test2019_designator.f90
-  test2019_contiguous_attr.f90 
+  test2019_contiguous_attr.f90
+  test2019_doconstruct.f90 
   canonicalExample.f90)
 
 if("${gfortran_version}" VERSION_LESS "4.5")
