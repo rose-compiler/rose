@@ -19,6 +19,7 @@
 
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 #include "Timer.h"
 #include "AstTerm.h"
@@ -54,7 +55,7 @@ namespace CodeThorn {
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
-  enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+  /* not used */ enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class SpotConnection;
 
@@ -160,6 +161,8 @@ namespace CodeThorn {
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool);
     bool getIgnoreUndefinedDereference();
+    void setIgnoreFunctionPointers(bool);
+    bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }
@@ -180,9 +183,16 @@ namespace CodeThorn {
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
 
     void setStgTraceFileName(std::string filename);
-    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+
+    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; } // not used
     void setAbstractionMode(int mode) { _abstractionMode=mode; }
     int getAbstractionMode() { return _abstractionMode; }
+    void setInterpretationMode(CodeThorn::InterpretationMode mode);
+    CodeThorn::InterpretationMode getInterpretationMode();
+
+    bool getPrintDetectedViolations();
+    void setPrintDetectedViolations(bool flag);
+
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
@@ -258,6 +268,9 @@ namespace CodeThorn {
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);
+
+    void setOptionOutputWarnings(bool flag);
+    bool getOptionOutputWarnings();
   protected:
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
