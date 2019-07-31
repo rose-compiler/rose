@@ -1938,39 +1938,44 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
     ROSE_ASSERT(formalParameterName);
     // test formal parameter (instead of argument type) to allow for expressions in arguments
     VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
+    AbstractValue evalResultValue;
     if(variableIdMapping.hasClassType(formalParameterVarId)) {
-      logger[ERROR]<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters not supported."<<endl;
-      exit(1);
-    }
-    // VariableName varNameString=name->get_name();
-    SgExpression* actualParameterExpr=*j;
-    ROSE_ASSERT(actualParameterExpr);
-    // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
-    // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
-    VariableId actualParameterVarId;
-    ROSE_ASSERT(actualParameterExpr);
+      if(getOptionOutputWarnings()) {
+        cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top)."<<endl;
+      }
+      evalResultValue=AbstractValue::createTop();
+    } else {
+      // VariableName varNameString=name->get_name();
+      SgExpression* actualParameterExpr=*j;
+      ROSE_ASSERT(actualParameterExpr);
+      // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
+      // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
+      VariableId actualParameterVarId;
+      ROSE_ASSERT(actualParameterExpr);
 #if 0
-    if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
-      // propagate constraint from actualParamterVarId to formalParameterVarId
-      cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
-    }
+      if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
+        // propagate constraint from actualParamterVarId to formalParameterVarId
+        cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
+      }
 #endif
-    // general case: the actual argument is an arbitrary expression (including a single variable)
-    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
-    if(evalResultList.size()==0) {
-      cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
-      cerr<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
-      cerr<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
-      exit(1);
-    }
-    list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
-    SingleEvalResultConstInt evalResult=*resultListIter;
-    if(evalResultList.size()>1) {
-      logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
-      exit(1);
+      // general case: the actual argument is an arbitrary expression (including a single variable)
+      list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
+      if(evalResultList.size()==0) {
+        cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+        cerr<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+        cerr<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+        exit(1);
+      }
+      list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+      SingleEvalResultConstInt evalResult=*resultListIter;
+      if(evalResultList.size()>1) {
+        logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
+        exit(1);
+      }
+      evalResultValue=evalResult.value();
     }
     // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
-    newPState.writeToMemoryLocation(formalParameterVarId,evalResult.value());
+    newPState.writeToMemoryLocation(formalParameterVarId,evalResultValue);
     ++i;++j;
   }
   // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -2758,8 +2763,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-                logger[ERROR] <<"Error: unsupported feature: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
-                exit(1);
+                if(getOptionOutputWarnings()) 
+                  cout<<"Warning: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
               }
               // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
             } else {

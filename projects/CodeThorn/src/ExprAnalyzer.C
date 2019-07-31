@@ -1312,8 +1312,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
           SAWYER_MESG(logger[DEBUG])<<"arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           // convert integer to VariableId
           if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-            logger[ERROR] <<"unsupported language construct:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
-            exit(1);
+            if(getOptionOutputWarnings())
+              cout <<"Warning: array index is top or bot:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<"."<<endl;
           }
           // SAWYER_MESG(logger[DEBUG])<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
         } else {
