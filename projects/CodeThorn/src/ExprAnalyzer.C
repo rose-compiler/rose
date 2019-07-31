@@ -76,6 +76,14 @@ bool ExprAnalyzer::getIgnoreUndefinedDereference() {
   return _ignoreUndefinedDereference;
 }
 
+void ExprAnalyzer::setIgnoreFunctionPointers(bool skip) {
+  _ignoreFunctionPointers=skip;
+}
+
+bool ExprAnalyzer::getIgnoreFunctionPointers() {
+  return _ignoreFunctionPointers;
+}
+
 void ExprAnalyzer::setSVCompFunctionSemantics(bool flag) {
   _svCompFunctionSemantics=flag;
 }
@@ -449,13 +457,21 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   }
   case V_SgNullExpression: {
     list<SingleEvalResultConstInt> resultList;
-    SingleEvalResultConstInt anyResult;
-    resultList.push_front(anyResult);
+    res.result=AbstractValue::createTop();
+    resultList.push_front(res);
     return resultList;
   }
   case V_SgFunctionRefExp: {
-    logger[ERROR]<<"function pointers are not supported yet: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
-    exit(1);
+    if(getIgnoreFunctionPointers()) {
+      // just ignore the call (this is unsound and only for testing)
+      list<SingleEvalResultConstInt> resultList;
+      res.result=AbstractValue::createTop();
+      resultList.push_front(res);
+      return resultList;
+    } else {
+      logger[ERROR]<<"function pointers are not supported yet: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      exit(1);
+    }
   }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
@@ -1139,7 +1155,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),newValue);
   return listify(res);
-  }
+}
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change) {
   // TODO change from precomp to postcomp

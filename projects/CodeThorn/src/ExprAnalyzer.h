@@ -84,6 +84,8 @@ namespace CodeThorn {
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool skip);
     bool getIgnoreUndefinedDereference();
+    void setIgnoreFunctionPointers(bool skip);
+    bool getIgnoreFunctionPointers();
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
     // deprecated
@@ -315,6 +317,7 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
+    bool _ignoreFunctionPointers=false;
     Analyzer* _analyzer;
     bool _printDetectedViolations=false;
     enum InterpretationMode _interpretationMode=IM_ABSTRACT;

@@ -104,6 +104,14 @@ void CodeThorn::Analyzer::setPrintDetectedViolations(bool flag) {
   exprAnalyzer.setPrintDetectedViolations(flag);
 }
 
+void CodeThorn::Analyzer::setIgnoreFunctionPointers(bool skip) {
+  exprAnalyzer.setIgnoreFunctionPointers(skip);
+}
+
+bool CodeThorn::Analyzer::getIgnoreFunctionPointers() {
+  return exprAnalyzer.getIgnoreFunctionPointers();
+}
+
 void CodeThorn::Analyzer::setInterpretationMode(CodeThorn::InterpretationMode mode) {
   exprAnalyzer.setInterpretationMode(mode);
 }

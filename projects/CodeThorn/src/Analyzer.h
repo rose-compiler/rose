@@ -161,6 +161,8 @@ namespace CodeThorn {
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool);
     bool getIgnoreUndefinedDereference();
+    void setIgnoreFunctionPointers(bool);
+    bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
     int getIterations() { return _iterations; }

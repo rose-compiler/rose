@@ -399,6 +399,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
+    ("ignore-function-pointers",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
     ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
@@ -406,6 +407,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
+    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
     ;
 
   rersOptions.add_options()
@@ -1165,11 +1167,24 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
+    if(args.getInt("testing-options-set")==1) {
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",true);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+    }
+
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
+    analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
+
     analyzerSetup(analyzer, logger);
-   
+
     switch(int mode=args.getInt("interpretation-mode")) {
     case 0: analyzer->setInterpretationMode(IM_ABSTRACT); break;
     case 1: analyzer->setInterpretationMode(IM_CONCRETE); break;
@@ -1302,7 +1317,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")) {
+    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
       lowering.normalizeAst(sageProject,2);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
