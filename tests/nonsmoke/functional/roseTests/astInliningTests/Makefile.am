@@ -39,15 +39,15 @@ inlineEverything_specimens =			\
 	specimen19_1.C				\
 	specimen20_1.C				\
 	specimen21_1.C				\
-	specimen22_1.C  \
+	specimen22_1.C   \
 	specimen25_1.C 
 # current failing 	
 #        specimen23_1.C
-#specimen24_1.C
+#        specimen24_1.C  
 
 #Liao, new set of tests with C++11 lambda expressions, not yet supported
-#inlineEverything_cpp11_specimens =			\
-#        simplest_raja.C
+inlineEverything_cpp11_specimens =			\
+        simplest_raja.C
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
@@ -77,7 +77,7 @@ $(inlineEverything_test_tokenStreamUnparsing_targets): inlineEverything_%.passed
 
 # TODO: this rule does not work yet
 inlineEverything_test_cpp11_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_cpp11_specimens)))
-TEST_TARGETS += $(inlineEverything_test_cpp11_targets)
+# TEST_TARGETS += $(inlineEverything_test_cpp11_targets)
 $(inlineEverything_test_cpp11_targets): inlineEverything_%.passed: % inlineEverything inlineEverything.conf
 	@$(RTH_RUN)												\
 		TITLE="inlineEverything $< [$@]"								\
@@ -88,6 +88,7 @@ $(inlineEverything_test_cpp11_targets): inlineEverything_%.passed: % inlineEvery
 
 #------------------------------------------------------------------------------------------------------------------------
 # additional tests not executed by "make check"
+check-raja:$(inlineEverything_test_cpp11_targets)
 
 EXTRA_DIST += test1.conf test1A.C test1B.C
 test1.passed: test1A.C test1B.C
