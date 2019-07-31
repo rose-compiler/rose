@@ -1055,7 +1055,6 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
-
 HEADER_BASIC_BLOCK_END
 
 
@@ -3925,6 +3924,7 @@ HEADER_IMPORT_STATEMENT_END
 
 
 HEADER_ASSOCIATE_STATEMENT_START
+HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
@@ -20143,6 +20143,7 @@ SgImportStatement::get_import_list()
 SOURCE_IMPORT_STATEMENT_END
 
 SOURCE_ASSOCIATE_STATEMENT_START
+
 void
 SgAssociateStatement::post_construction_initialization()
    {}
@@ -20153,6 +20154,21 @@ SgAssociateStatement::get_mangled_name(void) const
      return SgName ("__associate__");
    }
 
+void
+SgAssociateStatement::prepend_associate(SgDeclarationStatement *what)
+   {
+     get_associates().insert(get_associates().begin(), what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
+
+void
+SgAssociateStatement::append_associate(SgDeclarationStatement *what)
+   {
+     get_associates().push_back(what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
 SOURCE_ASSOCIATE_STATEMENT_END
 
 
