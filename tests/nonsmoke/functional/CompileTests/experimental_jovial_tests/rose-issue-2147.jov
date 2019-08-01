@@ -1,0 +1,14 @@
+START
+DEF TABLE TABLE'1 W 9;
+  BEGIN
+    ITEM TABLE'ITEM'1 B 17 POS(0,0);
+  END
+
+DEF PROC PROC'1 RENT;
+  BEGIN
+    FOR I : 0 BY 1 WHILE I < 10;
+        BEGIN
+          BIT(TABLE'ITEM'1, I, 1) = 1;
+        END
+  END
+TERM
