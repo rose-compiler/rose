@@ -1112,6 +1112,7 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(!astExpressionStack.empty());
         SgValueExp * realValue = isSgValueExp(astExpressionStack.front());
+        ROSE_ASSERT(realValue != NULL);
         astExpressionStack.pop_front();
 
         SgValueExp * complexValue = new SgComplexVal(realValue, imaginaryValue, realValue->get_type(), "");
