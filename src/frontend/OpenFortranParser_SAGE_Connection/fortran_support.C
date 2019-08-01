@@ -2233,6 +2233,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                   tempScope = tempScope->get_scope();
                }
                scope = (moduleScope == NULL) ? isSgScopeStatement(globalScope) : isSgScopeStatement(moduleScope);
+               ROSE_ASSERT(scope);
 
             // Set the scope to be global scope since we have not yet seen the function definition!
             // If it was from a module, then the module should have been included. If we were in a 
