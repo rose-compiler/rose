@@ -139,7 +139,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
+    const size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
                    <<StringUtility::plural(wordSize, "bytes") <<"\n";
@@ -183,7 +183,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         }
         
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize!=partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
+        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }
