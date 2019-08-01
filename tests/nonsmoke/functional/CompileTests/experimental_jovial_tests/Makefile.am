@@ -74,6 +74,7 @@ JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2105.jov                    \
  rose-issue-2106.jov                    \
  rose-issue-2107.jov                    \
+ rose-issue-2150.jov                    \
  tiny.jov                               \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
