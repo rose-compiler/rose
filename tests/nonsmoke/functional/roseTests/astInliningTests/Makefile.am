@@ -39,11 +39,12 @@ inlineEverything_specimens =			\
 	specimen19_1.C				\
 	specimen20_1.C				\
 	specimen21_1.C				\
-	specimen22_1.C   \
-	specimen25_1.C 
+	specimen22_1.C                          \
+	specimen25_1.C
 # current failing 	
-#        specimen23_1.C
-#        specimen24_1.C  
+#	specimen26_1.C , with system header, failing postprocessing 
+#        specimen23_1.C   \
+#        specimen24_1.C   \ #asdfsa
 
 #Liao, new set of tests with C++11 lambda expressions, not yet supported
 inlineEverything_cpp11_specimens =			\
