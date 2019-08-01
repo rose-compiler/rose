@@ -47,7 +47,7 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     /* Process in order from largest to smallest */
     for (std::map<size_t, std::vector<size_t> >::reverse_iterator szi=sorted.rbegin(); szi!=sorted.rend(); ++szi) {
         size_t sz = (*szi).first;
-        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi<(*szi).second.end(); ++idxi) {
+        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi!=(*szi).second.end(); ++idxi) {
             size_t idx = *idxi;
             
             /* Are any instructions in this range already marked as no-ops?  If so, then skip this one. */
@@ -948,7 +948,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             addr_fmt = strdup("");
         }
 
-        tmp_fmt.addr_fmt = addr_fmt;
+        tmp_fmt.addr_fmt = addr_fmt ? addr_fmt : "";
         if (!tmp_fmt.multiline)
             args.output <<tmp_fmt.prefix;
 
