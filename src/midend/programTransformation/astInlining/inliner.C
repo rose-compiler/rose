@@ -249,7 +249,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
         return false; 
       // check if the file is within include-staging/ header directories
       if (insideSystemHeader(funcall))
-	return false;
+        return false;
     }
 
      SgExpression* funname = funcall->get_function();
