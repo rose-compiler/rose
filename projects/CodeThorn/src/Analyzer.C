@@ -27,10 +27,6 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
-size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
-  return _summaryStateMap.size();
-}
-
 std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
   SgNode* node=getLabeler()->getNode(lab);
   return SgNodeHelper::lineColumnNodeToString(node);
@@ -74,26 +70,52 @@ EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
   return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
 }
 
-const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
-  return _summaryStateMap[lab.getId()];
+size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
+  return _summaryCSStateMap.size();
 }
 
-void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate) {
+const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+  // cs not used yet
+  //return _summaryStateMap[lab.getId()];
+  pair<int,CallString> p(lab.getId(),cs);
+  if(_summaryCSStateMap.find(p)==_summaryCSStateMap.end()) {
+    return getBottomSummaryState(lab,cs);
+  } else {
+    return _summaryCSStateMap[p];
+  }
+}
+
+void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, CodeThorn::EState const* estate) {
   ROSE_ASSERT(lab==estate->label());
-  _summaryStateMap[lab.getId()]=estate;
+  ROSE_ASSERT(cs==estate->callString);
+  pair<int,CallString> p(lab.getId(),cs);
+  _summaryCSStateMap[p]=estate;
+}
+
+
+const EState* CodeThorn::Analyzer::getBottomSummaryState(Label lab, CallString cs) {
+  InputOutput io;
+  io.recordBot();
+  EState estate(lab,cs,_initialPStateStored,_emptycsetstored,io);
+  const EState* bottomElement=processNewOrExisting(estate);
+  return bottomElement;
 }
 
 void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initialPStateStored, 
                                                   const CodeThorn::ConstraintSet* emptycsetstored) {
-  //  return;
+  _initialPStateStored=initialPStateStored;
+  _emptycsetstored=emptycsetstored;
+#if 0
   for(auto label:*getLabeler()) {
     // create bottom elements for each label
     InputOutput io;
     io.recordBot();
-    EState estate(label,initialPStateStored,emptycsetstored,io); // implicitly empty cs
-    const EState* bottomElement=processNewOrExisting(estate);
-    setSummaryState(label,bottomElement);
+    CallString cs; // empty callstring
+    EState estate(label,cs,initialPStateStored,emptycsetstored,io); // implicitly empty cs
+    const EState* bottomElement=processNewOrExisting(getBottomSummaryState());
+    setSummaryState(label,estate.callString,bottomElement);
   }
+#endif
 }
 
 bool CodeThorn::Analyzer::getPrintDetectedViolations() {
