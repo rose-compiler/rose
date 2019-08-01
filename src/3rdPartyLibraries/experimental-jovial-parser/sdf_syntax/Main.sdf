@@ -657,7 +657,7 @@ context-free syntax
 %%
 
   IntegerItemDescription      -> IntegerTypeDescription
-  IntegerTypeName             -> IntegerTypeDescription  {reject} %% Using ItemTypeName
+  IntegerTypeName             -> IntegerTypeDescription
 
 %%  'S'
   SignedTypeDesc
@@ -673,7 +673,7 @@ context-free syntax
   IntegerSize                 -> OptIntegerSize
   % empty %                   -> OptIntegerSize          {cons("no-item-size")}
 
-  ItemTypeName                -> IntegerTypeName         {cons("IntegerTypeName")}
+  ItemTypeName                -> IntegerTypeName         {cons("TypeName")} %% using general cons for conversion traversal purposes
 
 
 %% 2.1.1.2 FLOATING TYPE DESCRIPTIONS
@@ -1885,7 +1885,7 @@ context-free syntax
 
   Dereference                 -> ItemDereference
 
-  Dereference                 -> TableDereference
+  Dereference                 -> TableDereference      {prefer}
 
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
   '@' '(' GeneralFormula ')'  -> Dereference           {cons("Dereference")}
@@ -1901,6 +1901,11 @@ context-free syntax
   GeneralFormula              -> Index
 
   'BIT' '(' BitVariable ','
+            Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable"), prefer}
+
+%% Added production of BitFunctionVariable with BitFormula inside
+%% to allow variables with parentheses to be used
+  'BIT' '(' BitFormula ','
             Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
 %%'BYTE'
@@ -1995,10 +2000,10 @@ context-free syntax
 %% 6.3.3 BIT FUNCTION
 %%
   'BIT' '(' BitFormula ','
-    Fbit ',' Nbit ')'         -> BitFunction          {cons("BitFunction"), prefer}
+    Fbit ',' Nbit ')'         -> BitFunction          {cons("BitFunction")}
 
   NumericFormula              -> Fbit                 {cons("Fbit")}
-  NumericFormula              -> Nbit                 {cons("Fbit")}
+  NumericFormula              -> Nbit                 {cons("Nbit")}
 
 %% 6.3.4 BYTE FUNCTION
 %%
@@ -2094,9 +2099,20 @@ context-free syntax
   BitTypeName                 -> BitTypeConversion
   'B'                         -> BitTypeConversion    {cons("BitTypeConversionB")}
 
+%%  '(*'
+%%    IntegerTypeDescription
+%%                         '*)' -> IntegerConversion    {cons("IntegerConversion")}
+%% Replacing above with two productions of IntegerTypeDescription during IntegerConversion
+%% here to allow for distinction while traversing between conversions
+%% that are unambiguously IntegerConversion and conversions that are
+%% using IntegerTypeName to parse but could be other type conversions
+
   '(*'
-    IntegerTypeDescription
+    IntegerItemDescription
                          '*)' -> IntegerConversion    {cons("IntegerConversion")}
+  '(*'
+    IntegerTypeName
+                         '*)' -> IntegerConversion    {cons("GeneralConversion")}
   IntegerTypeName             -> IntegerConversion
   'S'                         -> IntegerConversion    {cons("IntegerConversionS")}
   'U'                         -> IntegerConversion    {cons("IntegerConversionU")}
@@ -2119,7 +2135,7 @@ context-free syntax
   'C'                         -> CharacterConversion  {cons("CharacterConversionC")}
 
   '(*'
-    StatusTypeDescription
+    StatusTypeName
                          '*)' -> StatusConversion     {cons("StatusConversion")}
   StatusTypeName              -> StatusConversion
 
@@ -2311,7 +2327,7 @@ context-free syntax
   '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
 
       Name                      -> CompoolDeclaredName
-  '(' Name ')'                  -> CompoolDeclaredName      {cons("CompoolDeclaredName")}
+  '(' Name ')'                  -> CompoolDeclaredName      {cons("Name")}
 
   CharacterLiteral              -> CompoolFileName
 
