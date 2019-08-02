@@ -140,15 +140,32 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(stmt);
      ROSE_ASSERT(directive);
 
-     int directive_type  = directive->get_directive_type();
      std::string content = directive->get_content_string();
 
-  // TODO - implement other directives
-     ROSE_ASSERT(directive_type == SgJovialDirectiveStatement::e_compool);
-
-     curprint("!COMPOOL ");
-     curprint(content);
-     curprint(";\n");
+     switch (directive->get_directive_type())
+        {
+        case SgJovialDirectiveStatement::e_compool:
+           {
+              curprint("!COMPOOL (");
+              curprint(content);
+              curprint(");\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_reducible:
+           {
+              curprint("!REDUCIBLE;\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_order:
+           {
+              curprint("!ORDER;\n");
+              break;
+           }
+        default:
+           {
+              cout << "Warning: SgJovialDirectiveStmt directive type not handled is " << directive->get_directive_type() << endl;
+           }
+        }
    }
 
 void
