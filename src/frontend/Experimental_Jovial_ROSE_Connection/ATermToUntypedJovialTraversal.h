@@ -77,7 +77,7 @@ ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList*
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType* & type);
-ATbool traverse_OptTypeName            (ATerm term);
+ATbool traverse_OptTypeName            (ATerm term, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -283,6 +283,7 @@ ATbool traverse_NamedConstant        (ATerm term, SgUntypedExpression* & var);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 ATbool traverse_IntegerConversion    (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_GeneralConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_FloatingConversion   (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_FixedConversion      (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_CharacterConversion  (ATerm term, SgUntypedExpression* & expr);
@@ -306,13 +307,17 @@ ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_PointerLiteral (ATerm term, SgUntypedExpression* & expr);
 
 // 9.0 DIRECTIVES
-ATbool traverse_DirectiveList  (ATerm term, SgUntypedDeclarationStatementList* dir_list);
-ATbool traverse_Directive      (ATerm term, SgUntypedDirectiveDeclaration* dir);
+ATbool traverse_DirectiveList     (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_Directive         (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 9.1 COMPOOL DIRECTIVES
-ATbool traverse_CompoolDirective    (ATerm term, SgUntypedDirectiveDeclaration* dir);
-ATbool traverse_CompoolDirectiveList(ATerm term, SgUntypedDirectiveDeclaration* dir);
+ATbool traverse_CompoolDirective  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 9.6 REDUCIBLE DIRECTIVES
+ATbool traverse_ReducibleDirective(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// 9.11 ALLOCATION ORDER DIRECTIVES
+ATbool traverse_OrderDirective    (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 }; // class ATermToUntypedJovialTraversal
 }  // namespace Jovial

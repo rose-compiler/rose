@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "UntypedConverter.h"
 #include "general_language_translation.h"
+#include "Jovial_to_ROSE_translation.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 #define DEBUG_SOURCE_POSITION   0
@@ -737,6 +738,57 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
               define_decl->set_parent(scope);
 
               sg_stmt = define_decl;
+              break;
+           }
+        case Jovial_ROSE_Translation::e_compool_directive_stmt:
+           {
+              std::string compool_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* compool_stmt = new SgJovialDirectiveStatement(compool_string, SgJovialDirectiveStatement::e_compool);
+              ROSE_ASSERT(compool_stmt);
+              setSourcePositionFrom(compool_stmt, ut_stmt);
+
+           // The first nondefining declaration must be set
+              compool_stmt->set_firstNondefiningDeclaration(compool_stmt);
+
+              SageInterface::appendStatement(compool_stmt, scope);
+              compool_stmt->set_parent(scope);
+
+              sg_stmt = compool_stmt;
+              break;
+           }
+        case  Jovial_ROSE_Translation::e_reducible_directive_stmt:
+           {
+              std::string dir_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* reducible_stmt = new SgJovialDirectiveStatement(dir_string, SgJovialDirectiveStatement::e_reducible);
+              ROSE_ASSERT(reducible_stmt);
+              setSourcePositionFrom(reducible_stmt, ut_stmt);
+
+              // The first nondefining declaration must be set
+              reducible_stmt->set_firstNondefiningDeclaration(reducible_stmt);
+
+              SageInterface::appendStatement(reducible_stmt, scope);
+              reducible_stmt->set_parent(scope);
+
+              sg_stmt = reducible_stmt;
+              break;
+           }
+        case  Jovial_ROSE_Translation::e_order_directive_stmt:
+           {
+              std::string dir_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* order_stmt = new SgJovialDirectiveStatement(dir_string, SgJovialDirectiveStatement::e_order);
+              ROSE_ASSERT(order_stmt);
+              setSourcePositionFrom(order_stmt, ut_stmt);
+
+              // The first nondefining declaration must be set
+              order_stmt->set_firstNondefiningDeclaration(order_stmt);
+
+              SageInterface::appendStatement(order_stmt, scope);
+              order_stmt->set_parent(scope);
+
+              sg_stmt = order_stmt;
               break;
            }
         default:
