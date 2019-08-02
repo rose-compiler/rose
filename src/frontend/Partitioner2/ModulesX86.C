@@ -366,7 +366,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
-        rose_addr_t tableEntryVa = actualStartVa + nSkippedEntries + tableEntries.size() * tableEntrySize;
+        rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySize;
         if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize))) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
             break;
