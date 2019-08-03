@@ -385,16 +385,6 @@ ROSE_UTIL_API std::string untab(const std::string &str, size_t tabstops=8, size_
  *  if it was non-empty and unique. This happened when it was not followed by a line-feed. */
 ROSE_UTIL_API std::string removeRedundantSubstrings(const std::string&);
 
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removeRedundentSubstrings(std::string);
-
-/** Remove redundant lines containing special substrings of form string#. */
-ROSE_UTIL_API std::string removePseudoRedundantSubstrings(const std::string&);
-
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removePseudoRedundentSubstrings(std::string);
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
