@@ -683,7 +683,17 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_485.C \
    test2019_486.C \
    test2019_487.C \
-   test2019_493.C 
+   test2019_493.C \
+   test2019_494.C \
+   test2019_495.C \
+   test2019_496.C \
+   test2019_497.C \
+   test2019_498.C \
+   test2019_499.C \
+   test2019_500.C \
+   test2019_501.C \
+   test2019_502.C \
+   test2019_503.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \

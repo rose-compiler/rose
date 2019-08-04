@@ -278,9 +278,42 @@ void postProcessingSupport (SgNode* node)
                printf ("Calling topLevelResetParentPointer() \n");
              }
 
+
+#if 0
+       // DQ (8/2/2019): Adding output graph before resetParent traversal (because the AST in each appears to be different, debugging this).
+       // Output an optional graph of the AST (just the tree, when active)
+          printf ("In astPostprocessing(): Generating a dot file... (SgFile only) \n");
+          SgProject* projectNode = isSgProject(node);
+          if (projectNode != NULL)
+             {
+               generateDOT ( *projectNode, "_astPostprocessing");
+             }
+       // generateAstGraph(project, 2000);
+          printf ("DONE: In astPostprocessing(): Generating a dot file... (SgFile only) \n");
+#endif
+#if 0
+          printf ("In astPostprocessing(): Generate the dot output for multiple files (ROSE AST) \n");
+       // generateDOT ( *project );
+               generateDOTforMultipleFile ( *projectNode, "_astPostprocessing" );
+             }
+          printf ("DONE: In astPostprocessing(): Generate the dot output of the SAGE III AST \n");
+#endif
+
+
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("DONE: Calling topLevelResetParentPointer() \n");
+             }
+
+#if 0
+       // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");
@@ -297,6 +330,17 @@ void postProcessingSupport (SgNode* node)
        // Another 2nd step to make sure that parents of even IR nodes not traversed can be set properly.
        // resetParentPointersInMemoryPool();
           resetParentPointersInMemoryPool(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("DONE: Calling resetParentPointersInMemoryPool() \n");
+             }
+
+#if 0
+       // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");

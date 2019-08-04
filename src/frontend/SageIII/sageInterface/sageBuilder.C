@@ -12248,11 +12248,12 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
           ROSE_ASSERT(finalName == nondefdecl->get_name());
         }
 
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): nondefdecl = %p nondefdecl->unparseNameToString() = %s \n",nondefdecl,nondefdecl->unparseNameToString().c_str());
+     printf (" --- nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
 #endif
 
-#if 0
+#if DEBUG_NONDEFINING_CLASS_DECLARATION
   // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
      SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
@@ -12760,21 +12761,27 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
        // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-  // printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+#if 0
+     printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+#endif
+
      if (mysymbol != NULL) // set links if nondefining declaration already exists.
         {
           nondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
 
           ROSE_ASSERT(nondefdecl != NULL);
-          ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+       // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
           nondefdecl->set_definingDeclaration(defdecl);
 
           ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
 
-       // DQ (10/30/2010): There shuld be a properly defined type at this point!
+       // DQ (10/30/2010): There should be a properly defined type at this point!
           ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+       // DQ (7/31/2019): Check that this is true.
+       // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
         }
        else // build a nondefnining declaration if it does not exist
         {
@@ -12804,8 +12811,11 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
           nondefdecl->set_definingDeclaration(defdecl);
           nondefdecl->setForward();
        // Liao, 9/2/2009. scope stack is optional, it can be empty
-      //    nondefdecl->set_parent(topScopeStack());
-          nondefdecl->set_parent(scope);
+       // nondefdecl->set_parent(topScopeStack());
+       // nondefdecl->set_parent(scope);
+
+       // DQ (7/31/2019): Check that this is true.
+       // ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
        // DQ (3/24/2011): This should be NULL before we set it (if the scope is known).
           ROSE_ASSERT(nondefdecl->get_scope() == NULL);
@@ -13384,6 +13394,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                ROSE_ASSERT(nondefdecl->get_file_info() == NULL);
              }
 
+          ROSE_ASSERT(nondefdecl != NULL);
+
        // DQ (6/6/2012): This has to be set before we generate the type.
        // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           ROSE_ASSERT(nondefdecl == nondefdecl->get_firstNondefiningDeclaration());
@@ -13396,13 +13408,24 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // that amounts to a kind of name qualification internally (maybe even exactly name qualification, but I would
        // have to think about that a bit more).
           ROSE_ASSERT(scope != NULL);
+
 #if DEBUG_CLASS_DECLARATION
           printf ("In SageBuilder::buildClassDeclaration_nfi(): Set the scope of the new non-defining declaration to %p = %s \n",scope,scope->class_name().c_str());
 #endif
           nondefdecl->set_scope(scope);
           ROSE_ASSERT(nondefdecl->get_scope() != NULL);
 
-          ROSE_ASSERT(nondefdecl != NULL);
+       // DQ (8/2/2019): The was required becuase the parent pointers were not being set when reading a file from the SageBuilder::buildFil() API.
+       // However the bug was that the astPostprocessing's call to resetParentPointersInMemoryPool() was not properly working to find the global 
+       // scope in anyother case but when it was called usign a SgProject node.  This is not fixed to permit caloling using a SgSourceFile node
+       // and it is now an error to call it using any other kind of IR node.
+       // DQ (8/1/2019): Set the parent for the non defining declaration to be the same as the scope by default.
+       // nondefdecl->set_parent(scope);
+#if 0
+          printf ("In buildClassDeclaration_nfi(): setting the parent of the non defining declaration to be the scope by default) \n");
+#endif
+       // DQ (7/31/2019): Check that the parent is set if this was used a the declaration referenced by a symbol.
+       // ROSE_ASSERT (nondefdecl->get_parent() != NULL);
 
        // DQ (3/22/2012): I think we can assert this.
        // ROSE_ASSERT(nondefdecl->get_type() != NULL);
@@ -13561,6 +13584,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // break the existing interface. Need to discuss this with Liao.
                printf ("Warning: no scope provided to support symbol table entry! \n");
              }
+
+       // DQ (7/31/2019): Check that the parent is set if this was used a the declaration referenced by a symbol.
+       // ROSE_ASSERT (nondefdecl->get_parent() != NULL);
         }
 
   // printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
@@ -15288,7 +15314,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 // infrequently used option.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
-#if 0
+#if 1
      printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
 #endif
 
@@ -15490,6 +15516,27 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
+#if 0
+  // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (SgFile only) \n");
+     generateDOT ( *project );
+  // generateAstGraph(project, 2000);
+#endif
+
+#if 1
+     printf ("Generate the dot output for multiple files (ROSE AST) \n");
+  // generateDOT ( *project );
+     generateDOTforMultipleFile ( *project );
+     printf ("DONE: Generate the dot output of the SAGE III AST \n");
+#endif
+
+#if 1
+  // DQ (7/18/2019): Output a graph of the AST for debugging.
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
+
   // DQ (7/14/2019): I think we need to call the astPostProcessing at this point.
 #if 0
      printf ("In SageBuilder::buildFile(): calling astPostProcessing() \n");
@@ -15530,7 +15577,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      reportModifiedStatements("Leaving SageBuilder::buildFile(): calling reportModifiedStatements()",project);
 #endif
 
-#if 1
+#if 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("Leaving SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
