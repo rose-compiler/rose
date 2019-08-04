@@ -1297,7 +1297,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    SgUntypedTableType* table_type = NULL;
    SgUntypedVariableDeclaration* variable_decl = NULL;
 
-   SgUntypedStructureDeclaration* table_decl = NULL;
    SgUntypedStructureDefinition*  table_desc = NULL;
    SgUntypedExprListExpression*    attr_list = NULL;
    SgUntypedExprListExpression*     dim_info = NULL;
@@ -1351,9 +1350,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
    // This seems all wrong, we need a type with a body here (but could get the type from the declaration
    // With the creation of SgUntypedTableType the dim_info isn't needed for the struct.
+#if 0
       table_decl = new SgUntypedStructureDeclaration(label, table_name, attr_list, dim_info, rank, table_desc);
       ROSE_ASSERT(table_decl);
       setSourcePosition(table_decl, term);
+#endif
 
    // TODO
       ROSE_ASSERT(false);
@@ -1400,10 +1401,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    std::cout << "TABLE DECLARATION     base_type: " << base_type << " : " << base_type->class_name() << endl;
    std::cout << "TABLE DECLARATION     type name: " << base_type->get_type_name() << endl;
    std::cout << "TABLE DECLARATION name and enum: " << table_type->get_type_name() << " : " << table_type->get_type_enum_id() << endl;
-#endif
-#if 0
-   std::cout << "TABLE DECLARATION " << table_decl << " : " << table_decl->class_name() << endl;
-   std::cout << "TABLE DECLARATION table_desc: " << table_desc << " : " << table_desc->class_name() << endl;
 #endif
 
    decl_list->get_decl_list().push_back(variable_decl);
@@ -2495,6 +2492,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
       ROSE_ASSERT(table_desc);
       setSourcePosition(table_desc, t_type_desc);
 
+#if 0
    // These modifiers belong to the declaration
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
       ROSE_ASSERT(attr_list);
@@ -2508,6 +2506,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
       table_decl = new SgUntypedStructureDeclaration(label, table_type_name, attr_list, dim_info, 0/*rank*/, table_desc);
       ROSE_ASSERT(table_decl);
       setSourcePosition(table_decl, term);
+#endif
 
       if (traverse_TableTypeSpecifier(t_type_desc, table_decl)) {
          // MATCHED TableTypeSpecifier
@@ -2610,8 +2609,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, Sg
    else return ATfalse;
 
    cout << ".x. matched opt-dim-list of length " << dim_info->get_expressions().size() << endl;
-   int rank = dim_info->get_expressions().size();
-   if (rank > 0) table_decl->set_rank(rank);
 
 // Source position for was originally unknown, now it can be set
    setSourcePosition(dim_info, t_dim_list);
@@ -2620,7 +2617,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, Sg
    std::cout << "TABLE TYPE SPEC # items are " << item_decl_list->get_decl_list().size() << endl;
    std::cout << "TABLE TYPE SPEC rank is "     << dim_info->get_expressions().size() << endl;
    std::cout << "TABLE TYPE SPEC dim_info: "   << dim_info << endl;
-
 #endif
 
    return ATtrue;
