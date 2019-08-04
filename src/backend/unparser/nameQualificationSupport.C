@@ -291,6 +291,15 @@ NameQualificationTraversal::NameQualificationTraversal(
      explictlySpecifiedCurrentScope     = NULL;
      explictlySpecifiedCurrentStatement = NULL;
 
+#if 0
+  // DQ (8/3/2019): Output a message so that I can verify this is called one per file.
+     printf ("Inside NameQualificationTraversal() constructor \n");
+#endif
+
+  // DQ (8/3/2019): Reset the static data member that holds the aliasSymbolCausalNodeSet.
+     SgSymbolTable::get_aliasSymbolCausalNodeSet().clear();
+     ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
+
      declarationSet = NULL;
    }
 
@@ -8606,10 +8615,28 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(returnType);
                if (declaration != NULL)
                   {
+
+#if 0
+                    printf ("$$$$$$$$$$ Calling nameQualificationDepth for return type: $$$$$$$$$$$ \n");
+                    printf (" --- declaration               = %p = %s \n",declaration,declaration->class_name().c_str());
+                    printf (" --- currentScope              = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                    printf (" --- memberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
+#endif
                     int amountOfNameQualificationRequiredForReturnType = nameQualificationDepth(declaration,currentScope,memberFunctionDeclaration);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgMemberFunctionDeclaration's return type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForReturnType);
                     printf ("Putting the name qualification for the type into the return type of SgMemberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+#endif
+#if 0
+                 // DQ (8/3/2019): Output the aliasSymbolCausalNodeSet.  To support multiple files, or the stame file read twice, 
+                 // we need to clear this set before starting the name qualification process.
+                    SgSymbolTable::display_aliasSymbolCausalNodeSet();
+#endif
+#if 0
+                 // DQ (8/3/2019): Trying to understand why we generate two levels of name qualification before the using directive.
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                     setNameQualificationReturnType(memberFunctionDeclaration,declaration,amountOfNameQualificationRequiredForReturnType);
                   }
@@ -11732,6 +11759,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(n);
 
+#if 0
+       // DQ (8/3/2019): Output the aliasSymbolCausalNodeSet.  To support multiple files, or the stame file read twice, 
+       // we need to clear this set before starting the name qualification process.
+          SgSymbolTable::display_aliasSymbolCausalNodeSet();
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): Added SgAliasSymbols causal node = %p = %s to SgSymbolTable::p_aliasSymbolCausalNodeSet size = %" PRIuPTR " \n",
                n,n->class_name().c_str(),SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
@@ -13165,7 +13202,9 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
              {
                i->second = qualifier;
 
-#if 1
+            // DQ (8/3/2019): Output a message about how we are debugging this.
+               printf ("Commented out reset of name qualification: replacing previousQualifier = %s with new qualifier = %s \n",i->second.c_str(),qualifier.c_str());
+#if 0
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
                ROSE_ASSERT(false);
 #endif
