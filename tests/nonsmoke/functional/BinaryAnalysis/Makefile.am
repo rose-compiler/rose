@@ -1575,6 +1575,25 @@ testSRecords.passed: $(top_srcdir)/scripts/test_exit_status testSRecords
 		CMD="$$(pwd)/testSRecords"			\
 		$< $@
 
+########################################################################################################################
+# Test disassembler
+########################################################################################################################
+
+noinst_PROGRAMS += testDisassembler
+testDisassembler_SOURCES = testDisassembler.C
+testDisassembler_LDADD = $(ROSE_SEPARATE_LIBS)
+testDisassembler_ppc32 = $(srcdir)/testDisassembler-ppc32
+
+TEST_TARGETS += testDisassembler-ppc32.passed
+testDisassembler-ppc32.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler $(testDisassembler_ppc32).txt
+	@$(RTH_RUN)									\
+		TITLE="test disassembler PowerPC-32 [$@]"				\
+		DISABLED="$$(./conditionalDisable)"					\
+		USE_SUBDIR=no								\
+		CMD="$$(pwd)/testDisassembler ppc $(testDisassembler_ppc32).txt"	\
+		ANS="$(testDisassembler_ppc32).ans"					\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

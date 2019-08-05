@@ -562,6 +562,7 @@ SgAsmPowerpcInstruction::description() const {
         case powerpc_orc_record:       return "OR with complement";
         case powerpc_ori:              return "OR immediate";
         case powerpc_oris:             return "OR immediate shifted";
+        case powerpc_popcntb:          return "population count bytes";
         case powerpc_rfi:              return "return from interrupt";
         case powerpc_rfid:             return "return from interrupt";
         case powerpc_rldcl:            return "rotate left doubleword then clear left";
