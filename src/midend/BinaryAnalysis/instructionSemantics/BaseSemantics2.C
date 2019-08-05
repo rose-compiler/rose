@@ -1,4 +1,4 @@
-#include "sage3basic.h" 
+#include "sage3basic.h"
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
@@ -162,7 +162,7 @@ State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     ASSERT_not_null(valOps);
     return memory_->peekMemory(address, dflt, addrOps, valOps);
 }
-    
+
 void
 State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
@@ -178,7 +178,7 @@ State::printRegisters(std::ostream &stream, const std::string &prefix) {
     fmt.set_line_prefix(prefix);
     printRegisters(stream, fmt);
 }
-    
+
 void
 State::printRegisters(std::ostream &stream, Formatter &fmt) const {
     registers_->print(stream, fmt);
@@ -230,9 +230,38 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ++nInsns_;
 };
 
+std::pair<SValuePtr /*low*/, SValuePtr /*high*/>
+RiscOperators::split(const SValuePtr &a, size_t splitPoint) {
+    return std::make_pair(extract(a, 0, splitPoint), extract(a, splitPoint, a->get_width()));
+}
+
+SValuePtr
+RiscOperators::addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    ASSERT_require(a->get_width() == b->get_width());
+    size_t nBits = a->get_width();
+    SValuePtr result = add(a, b);
+
+    // We compute the carry-out bit by repeating the operation with wider addend. The alternative, to perform the addition once
+    // on wider addends and then extracting the carry out and the main sum, results in more complicated expressions.  If we had
+    // a simplifiers (e.g., in the symbolic domain) that recognized and simplified these more complicated expressions we might
+    // be able to get by with performing the addition only once.
+    SValuePtr aWide = signExtend(a, nBits+1);
+    SValuePtr bWide = signExtend(b, nBits+1);
+    carryOut = extract(add(aWide, bWide), nBits, nBits+1);
+
+    return result;
+}
+
 SValuePtr
 RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
     return add(minuend, negate(subtrahend));
+}
+
+SValuePtr
+RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/) {
+    return addCarry(minuend, negate(subtrahend), carryOut);
 }
 
 SValuePtr
@@ -271,15 +300,9 @@ RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr 
 SValuePtr
 RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
     ASSERT_require(a->get_width() == b->get_width());
-    size_t nbits = a->get_width();
-    SValuePtr aIsNeg = extract(a, nbits-1, nbits);
-    SValuePtr bIsNeg = extract(b, nbits-1, nbits);
-    SValuePtr diff = subtract(signExtend(a, nbits+1), signExtend(b, nbits+1));
-    SValuePtr diffIsNeg = extract(diff, nbits, nbits+1); // sign bit
-    SValuePtr negPos = and_(aIsNeg, invert(bIsNeg));     // A is negative and B is non-negative?
-    SValuePtr sameSigns = invert(xor_(aIsNeg, bIsNeg));  // A and B are both negative or both non-negative?
-    SValuePtr result = or_(negPos, and_(sameSigns, diffIsNeg));
-    return result;
+    SValuePtr carryOut;
+    (void) subtractCarry(a, b, carryOut);
+    return carryOut; // a < b implies a - b is negative
 }
 
 SValuePtr
@@ -510,7 +533,7 @@ Dispatcher::iproc_set(int key, InsnProcessor *iproc)
         iproc_table.resize(key+1, NULL);
     iproc_table[key] = iproc;
 }
-    
+
 InsnProcessor *
 Dispatcher::iproc_get(int key)
 {
@@ -722,7 +745,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
 }
-    
+
 } // namespace
 } // namespace
 } // namespace

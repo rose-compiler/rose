@@ -685,7 +685,7 @@ RegisterDictionary::dictionary_powerpc() {
     // WARNING: PowerPC documentation numbers register bits in reverse of their power-of-two position. ROSE numbers bits
     //          according to their power of two, so that the bit corresponding to 2^i is said to be at position i in the
     //          reigster.  In PowerPC documentation, the bit for 2^i is at N - (i+1) where N is the total number of bits in the
-    //          reigster.  All PowerPC bit position numbers need to be converted to the ROSE numbering.
+    //          reigster.  All PowerPC bit position numbers need to be converted to the ROSE numbering when they appear here.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     static RegisterDictionary *regs = NULL;
