@@ -78,16 +78,18 @@ const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label l
   // cs not used yet
   //return _summaryStateMap[lab.getId()];
   pair<int,CallString> p(lab.getId(),cs);
-  if(_summaryCSStateMap.find(p)==_summaryCSStateMap.end()) {
+  auto iter=_summaryCSStateMap.find(p);
+  if(iter==_summaryCSStateMap.end()) {
     return getBottomSummaryState(lab,cs);
   } else {
-    return _summaryCSStateMap[p];
+    return (*iter).second;
   }
 }
 
 void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, CodeThorn::EState const* estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(estate);
   pair<int,CallString> p(lab.getId(),cs);
   _summaryCSStateMap[p]=estate;
 }
@@ -96,6 +98,8 @@ void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::CallS
 const EState* CodeThorn::Analyzer::getBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
+  ROSE_ASSERT(_initialPStateStored);
+  ROSE_ASSERT(_emptycsetstored);
   EState estate(lab,cs,_initialPStateStored,_emptycsetstored,io);
   const EState* bottomElement=processNewOrExisting(estate);
   return bottomElement;
