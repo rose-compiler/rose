@@ -174,12 +174,33 @@ int TypeCommand::run(RoseAst completeAst, TFTransformation & tfTransformation) {
 
   std::vector<SgVariableDeclaration *> vdecls;
   ::Typeforge::typechain.getGlobals(vdecls, location);
+#if DEBUG__TypeCommand__run
+  std::cout << "  # vdecls = " << vdecls.size() << std::endl;
+#endif
   ::Typeforge::typechain.getFields(vdecls, location);
+#if DEBUG__TypeCommand__run
+  std::cout << "  # vdecls = " << vdecls.size() << std::endl;
+#endif
   ::Typeforge::typechain.getLocals(vdecls, location);
+#if DEBUG__TypeCommand__run
+  std::cout << "  # vdecls = " << vdecls.size() << std::endl;
+#endif
   for (auto n : vdecls) {
-    if (isSgTemplateVariableDeclaration(n) || !SgNodeHelper::nodeCanBeChanged(n)) continue;
+#if DEBUG__TypeCommand__run
+    std::cout << "    n = " << n << " (" << n->class_name() << ")" << std::endl;
+#endif
+    bool cannot_be_changed = !SgNodeHelper::nodeCanBeChanged(n);
+#if DEBUG__TypeCommand__run
+    std::cout << "    cannot_be_changed = " << ( cannot_be_changed ? "true" : "false" ) << std::endl;
+#endif
+    if (isSgTemplateVariableDeclaration(n) || cannot_be_changed) continue;
 
-    if (Typeforge::isTypeBasedOn(::Typeforge::typechain.getType(n), otype, base)) {
+    SgType * ctype = ::Typeforge::typechain.getType(n);
+    assert(ctype != nullptr);
+#if DEBUG__TypeCommand__run
+    std::cout << "    ctype = " << ctype << " (" << ctype->class_name() << ")" << std::endl;
+#endif
+    if (Typeforge::isTypeBasedOn(ctype, otype, base)) {
       ::Typeforge::transformer.changeType(n, ntype, base, listing);
     }
   }

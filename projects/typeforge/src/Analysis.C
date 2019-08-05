@@ -16,11 +16,32 @@
 #ifndef DEBUG__ignoreNode
 #  define DEBUG__ignoreNode 0
 #endif
+#ifndef DEBUG__isTypeBasedOn
+#  define DEBUG__isTypeBasedOn 0
+#endif
 #ifndef DEBUG__Analysis
 #  define DEBUG__Analysis 0
 #endif
-#ifndef DEBUG__Analysis__variableSetAnalysis
-#  define DEBUG__Analysis__variableSetAnalysis DEBUG__Analysis
+#ifndef DEBUG__incompatible_types
+#  define DEBUG__incompatible_types 0
+#endif
+#ifndef DEBUG__computeClustering
+#  define DEBUG__computeClustering 0
+#endif
+#ifndef DEBUG__Analysis__initialize
+#  define DEBUG__Analysis__initialize DEBUG__Analysis
+#endif
+#ifndef DEBUG__Analysis__traverse
+#  define DEBUG__Analysis__traverse DEBUG__Analysis
+#endif
+#ifndef DEBUG__Analysis__traverseVariableDeclarations
+#  define DEBUG__Analysis__traverseVariableDeclarations DEBUG__Analysis__traverse
+#endif
+#ifndef DEBUG__Analysis__traverseFunctionDeclarations
+#  define DEBUG__Analysis__traverseFunctionDeclarations DEBUG__Analysis__traverse
+#endif
+#ifndef DEBUG__Analysis__traverseFunctionDefinitions
+#  define DEBUG__Analysis__traverseFunctionDefinitions DEBUG__Analysis__traverse
 #endif
 #ifndef DEBUG__Analysis__linkVariables
 #  define DEBUG__Analysis__linkVariables DEBUG__Analysis
@@ -49,8 +70,8 @@
 #ifndef DEBUG__Analysis__getNode
 #  define DEBUG__Analysis__getNode DEBUG__Analysis
 #endif
-#ifndef DEBUG__isTypeBasedOn
-#  define DEBUG__isTypeBasedOn DEBUG__Analysis
+#ifndef DEBUG__Analysis__buildChildSets
+#  define DEBUG__Analysis__buildChildSets DEBUG__Analysis
 #endif
 
 namespace Typeforge {
@@ -371,6 +392,12 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
 }
 
 void Analysis::initialize(SgProject * p) {
+#if DEBUG__Analysis__initialize
+  std::cout << "ENTER Analysis::initialize" << std::endl;
+  std::cout << "  p = " << p << std::endl;
+  std::cout << "  # nodes = " << node_map.size() << std::endl;
+  std::cout << "  # edges = " << edges.size() << std::endl;
+#endif
   if (p != nullptr) {
     assert(::Typeforge::project == nullptr || ::Typeforge::project == p);
     ::Typeforge::project = p;
@@ -380,6 +407,11 @@ void Analysis::initialize(SgProject * p) {
   for (auto g : SgNodeHelper::listOfSgGlobal(project)) {
     traverse(g);
   }
+#if DEBUG__Analysis__initialize
+  std::cout << "LEAVE Analysis::initialize" << std::endl;
+  std::cout << "  # nodes = " << node_map.size() << std::endl;
+  std::cout << "  # edges = " << edges.size() << std::endl;
+#endif
 }
 
 template <class T> 
@@ -428,7 +460,7 @@ static bool ignoreNode(SgNode * n) {
 }
 
 void Analysis::traverseVariableDeclarations(SgGlobal * g) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseVariableDeclarations
   std::cout << "Analysis::traverseVariableDeclarations" << std::endl;
   std::cout << "  g   = " << g << std::endl;
 #endif
@@ -466,7 +498,7 @@ void Analysis::traverseVariableDeclarations(SgGlobal * g) {
 }
 
 void Analysis::traverseFunctionDeclarations(SgGlobal * g) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDeclarations
   std::cout << "Analysis::traverseFunctionDeclarations" << std::endl;
   std::cout << "  g   = " << g << std::endl;
 #endif
@@ -488,7 +520,7 @@ void Analysis::traverseFunctionDeclarations(SgGlobal * g) {
     fdecls.insert(fd);
   }
   for (auto fdecl : fdecls) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDeclarations
     std::cout << "  fdecl = " << fdecl << " (" << fdecl->class_name() << ")" << std::endl;
 #endif
     addNode(fdecl);
@@ -504,13 +536,13 @@ void Analysis::traverseFunctionDeclarations(SgGlobal * g) {
 }
 
 void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
   std::cout << "Analysis::traverseFunctionDefinitions" << std::endl;
   std::cout << "  g   = " << g << std::endl;
 #endif
 
   list<SgFunctionDefinition*> listOfFunctionDefinitions = SgNodeHelper::listOfFunctionDefinitions(g);
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
   std::cout << "  listOfFunctionDefinitions.size() = " << listOfFunctionDefinitions.size() << std::endl;
 #endif
 
@@ -520,7 +552,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
     if (isSgTemplateFunctionDefinition(funDef))
       continue;
 
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
     std::cout << "    funDef   = " << funDef << " ( " << funDef->class_name() << " )" << std::endl;
 #endif
 
@@ -532,20 +564,20 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
         continue;
       }
 
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
       std::cout << "      n       = " << n << " ( " << n->class_name() << " )" << std::endl;
 #endif
 
       if (SgAssignOp * assignOp = isSgAssignOp(n)) {
         SgExpression * lhs = assignOp->get_lhs_operand();
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
         std::cout << "      lhs     = " << lhs << " ( " << (lhs ? lhs->class_name() : "") << " )" << std::endl;
 #endif
 
         SgDotExp * dotexp = isSgDotExp(lhs);
         SgArrowExp * arrexp = isSgArrowExp(lhs);
         while (dotexp || arrexp) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
           if (dotexp) std::cout << "      dotexp  = " << dotexp << " ( " << (dotexp ? dotexp->class_name() : "") << " )" << std::endl;
           if (arrexp) std::cout << "      arrexp  = " << arrexp << " ( " << (arrexp ? arrexp->class_name() : "") << " )" << std::endl;
 #endif
@@ -557,7 +589,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
         }
 
         if (SgVarRefExp* varRef = isSgVarRefExp(lhs)) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
           std::cout << "      varRef  = " << varRef << " ( " << (varRef ? varRef->class_name() : "") << " )" << std::endl;
 #endif
           SgVariableSymbol* varSym = varRef->get_symbol();
@@ -580,7 +612,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
             linkVariables(iname, assignOp->get_rhs_operand());
           }
         } else if (SgFunctionRefExp * fref = isSgFunctionRefExp(lhs)) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
           std::cout << "      fref    = " << fref << " ( " << (fref ? fref->class_name() : "") << " )" << std::endl;
 #endif
           SgFunctionSymbol * fsym = fref->get_symbol();
@@ -626,7 +658,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
         SgFunctionRefExp * fref = isSgFunctionRefExp(callee);
         SgMemberFunctionRefExp * mfref = isSgMemberFunctionRefExp(callee);
         while (callee != nullptr && fref == nullptr && mfref == nullptr) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
           std::cout << "      callee = " << callee << " ( " << callee->class_name() << " )" << std::endl;
 #endif
           SgBinaryOp * bop = isSgBinaryOp(callee);
@@ -638,7 +670,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
           fref = isSgFunctionRefExp(callee);
           mfref = isSgMemberFunctionRefExp(callee);
         }
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverseFunctionDefinitions
         std::cout << "      fref  = " << fref  << " ( " << ( fref  ? fref->class_name()  : "" ) << " )" << std::endl;
         std::cout << "      mfref = " << mfref << " ( " << ( mfref ? mfref->class_name() : "" ) << " )" << std::endl;
 #endif
@@ -681,6 +713,13 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
       } else if(SgReturnStmt* ret = isSgReturnStmt(n)) {
         SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(funDef->get_declaration()->get_firstNondefiningDeclaration());
         assert(fdecl != nullptr);
+
+        // FIXME These Lulesh functions have overloaded version for float, double, and long double
+        if (fdecl->get_qualified_name() == "::SQRT" || fdecl->get_qualified_name() == "::FABS" || fdecl->get_qualified_name() == "::CBRT") {
+          i.skipChildrenOnForward();
+          continue;
+        }
+
         addNode(fdecl);
         linkVariables(fdecl, ret->get_expression());
       }
@@ -688,15 +727,114 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
   }
 }
 
+// TODO lots of work in this function
+static bool incompatible_types(SgNode * k, SgNode * t) {
+  assert(k != nullptr);
+  assert(t != nullptr);
+
+#if DEBUG__incompatible_types
+  std::cout << "::incompatible_types " << std::endl;
+  std::cout << "  k = " << k << " (" << k->class_name() << ")" << std::endl;
+  std::cout << "  t = " << t << " (" << t->class_name() << ")" << std::endl;
+#endif
+
+  SgType * kt = ::Typeforge::typechain.getType(k);
+  assert(kt != nullptr);
+
+#if DEBUG__incompatible_types
+  std::cout << "  kt = " << kt << " (" << kt->class_name() << ") = " << kt->unparseToString() << std::endl;
+#endif
+
+  SgType * tt = ::Typeforge::typechain.getType(t);
+  assert(tt != nullptr);
+
+#if DEBUG__incompatible_types
+  std::cout << "  tt = " << tt << " (" << tt->class_name() << ") = " << tt->unparseToString() << std::endl;
+#endif
+
+  // case of exact same type
+  if (kt == tt) return false;
+
+  SgType * v_kt = kt->stripType(
+    SgType::STRIP_MODIFIER_TYPE  |
+    SgType::STRIP_REFERENCE_TYPE |
+    SgType::STRIP_RVALUE_REFERENCE_TYPE
+  );
+
+#if DEBUG__incompatible_types
+  std::cout << "  v_kt = " << v_kt << " (" << v_kt->class_name() << ") = " << v_kt->unparseToString() << std::endl;
+#endif
+
+  SgType * b_kt = kt->stripType(
+    SgType::STRIP_ARRAY_TYPE     |
+    SgType::STRIP_POINTER_TYPE   |
+    SgType::STRIP_MODIFIER_TYPE  |
+    SgType::STRIP_REFERENCE_TYPE |
+    SgType::STRIP_RVALUE_REFERENCE_TYPE
+  );
+
+#if DEBUG__incompatible_types
+  std::cout << "  b_kt = " << b_kt << " (" << b_kt->class_name() << ") = " << b_kt->unparseToString() << std::endl;
+#endif
+
+  SgType * v_tt = tt->stripType(
+    SgType::STRIP_MODIFIER_TYPE  |
+    SgType::STRIP_REFERENCE_TYPE |
+    SgType::STRIP_RVALUE_REFERENCE_TYPE
+  );
+
+#if DEBUG__incompatible_types
+  std::cout << "  v_tt = " << v_tt << " (" << v_tt->class_name() << ") = " << v_tt->unparseToString() << std::endl;
+#endif
+
+  SgType * b_tt = tt->stripType(
+    SgType::STRIP_ARRAY_TYPE     |
+    SgType::STRIP_POINTER_TYPE   |
+    SgType::STRIP_MODIFIER_TYPE  |
+    SgType::STRIP_REFERENCE_TYPE |
+    SgType::STRIP_RVALUE_REFERENCE_TYPE
+  );
+
+#if DEBUG__incompatible_types
+  std::cout << "  b_tt = " << b_tt << " (" << b_tt->class_name() << ") = " << b_tt->unparseToString() << std::endl;
+#endif
+
+  bool kt_is_vt  = (kt->stripType(SgType::STRIP_MODIFIER_TYPE) == b_kt);
+  bool kt_no_ptr = (v_kt == b_kt);
+  bool tt_is_vt  = (tt->stripType(SgType::STRIP_MODIFIER_TYPE) == b_tt);
+  bool tt_no_ptr = (v_tt == b_tt);
+
+  // case assign to value type:
+  //    typeof(K) is value type
+  //    typeof(T) is NOT ptr type
+  //    typeof(T) == [const|&|&&]* typeof(K)
+  if (kt_is_vt && tt_no_ptr && b_tt == b_kt) return false;
+
+  // case assign to reference type:
+  //    typeof(T) is value type
+  //    typeof(K) is NOT ptr type
+  //    typeof(K) == [&|&&]* typeof(T)
+  if (tt_is_vt && kt_no_ptr && b_tt == b_kt) return false;
+
+  return true;
+}
+
 void Analysis::traverse(SgGlobal * g) {
-#if DEBUG__Analysis__variableSetAnalysis
+#if DEBUG__Analysis__traverse
   std::cout << "Analysis::traverse" << std::endl;
   std::cout << "  g   = " << g << std::endl;
+  std::cout << "  # nodes = " << node_map.size() << std::endl;
+  std::cout << "  # edges = " << edges.size() << std::endl;
 #endif
 
   traverseVariableDeclarations(g);
   traverseFunctionDeclarations(g);
   traverseFunctionDefinitions(g);
+
+#if DEBUG__Analysis__traverse
+  std::cout << "  # nodes = " << node_map.size() << std::endl;
+  std::cout << "  # edges = " << edges.size() << std::endl;
+#endif
 }
 
 // Searches through the expression for variables of the given type then links them with the key node provided
@@ -718,19 +856,63 @@ void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
   RoseAst ast(expression);
   for (auto i = ast.begin(); i != ast.end(); ++i) {
     if (SgExpression * exp = isSgExpression(*i)) {
+#if DEBUG__Analysis__linkVariables
+      std::cout << "  - exp = " << exp << " (" << exp->class_name() << ")" << std::endl;
+#endif
       if (exp != expression) {
         stack.push_back(exp);
       }
 
+      SgNode * target = nullptr;
+
       if (SgFunctionCallExp * funCall = isSgFunctionCallExp(exp)) {
-        SgFunctionDeclaration* fdecl = funCall->getAssociatedFunctionDeclaration();
+        SgFunctionDeclaration * fdecl = funCall->getAssociatedFunctionDeclaration();
         assert(fdecl != nullptr);
 
         fdecl = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
         assert(fdecl != nullptr);
 
-        SgTemplateInstantiationFunctionDecl * ti_fdecl = isSgTemplateInstantiationFunctionDecl(fdecl);
-        if (ti_fdecl != nullptr) {
+#if DEBUG__Analysis__linkVariables
+        std::cout << "  - fdecl = " << fdecl << " (" << fdecl->class_name() << ")" << std::endl;
+        std::cout << "    ->get_name() = " << fdecl->get_name() << std::endl;
+        std::cout << "    ->get_qualified_name() = " << fdecl->get_qualified_name() << std::endl;
+#endif
+
+        // FIXME These Lulesh functions have overloaded version for float, double, and long double
+        if (fdecl->get_qualified_name() == "::SQRT" || fdecl->get_qualified_name() == "::FABS" || fdecl->get_qualified_name() == "::CBRT") {
+          i.skipChildrenOnForward();
+          continue;
+        }
+
+        if (fdecl->get_name() == "operator[]") {
+          // case: refence: v[i] where typeof(v) is std::vector
+
+          SgDotExp * dotexp = isSgDotExp(funCall->get_function());
+          assert(dotexp != nullptr);
+
+          SgExpression * objexp = dotexp->get_lhs_operand_i();
+          assert(objexp != nullptr);
+
+          if (SgArrowExp * arrexp = isSgArrowExp(objexp)) {
+            // case: implicit "this->"
+            assert(isSgThisExp(arrexp->get_lhs_operand_i()));
+            objexp = arrexp->get_rhs_operand_i();
+          }
+
+          SgVarRefExp * vref = isSgVarRefExp(objexp);
+          assert(vref != nullptr);
+
+          SgVariableSymbol * vsym = vref->get_symbol();
+          assert(vsym != nullptr);
+
+          SgInitializedName * iname = vsym->get_declaration();
+          if (!SgNodeHelper::isFunctionParameterVariableSymbol(vsym)) {
+            target = iname->get_declaration();
+          } else {
+            target = iname;
+          }
+        } else if (SgTemplateInstantiationFunctionDecl * ti_fdecl = isSgTemplateInstantiationFunctionDecl(fdecl)) {
+          // case: call to: template < ... , typename Tx , ... > Tx const & foo(...);
           SgTemplateFunctionDeclaration * t_fdecl = ti_fdecl->get_templateDeclaration();
           assert(t_fdecl != nullptr);
           SgFunctionType * ftype = t_fdecl->get_type();
@@ -742,42 +924,58 @@ void Analysis::linkVariables(SgNode * key, SgExpression * expression) {
             SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
             assert(nrdecl != nullptr);
             if (nrdecl->get_is_template_param()) {
-              fdecl = nullptr;
+              target = funCall;
             }
           }
-        }
-
-        if (fdecl != nullptr) {
-          addNode(fdecl);
-          addEdge(key, fdecl);
         } else {
-          addNode(funCall);
-          addEdge(key, funCall);
+          // TODO overloaded functions
         }
 
-        i.skipChildrenOnForward(); // TODO: expressions used as argument of the function? (they are never seen because of the `skip`)
+        if (target == nullptr) {
+          target = fdecl;
+        }
+
+#if DEBUG__Analysis__linkVariables
+        std::cout << "  - target = " << target << " (" << target->class_name() << ")" << std::endl;
+#endif
+
+        // TODO: expressions used as argument of the function ?
+        //   - std::vector => forced link (use SgType node as immutable node in the graph)
+        //   - templated return type => might depend on other template parameters (implicit or explicit)
+        //        | template <typename R, typename P0, typename P1>
+        //        | R foo(P0 p0, P1 p1);
+        //        | 
+        //        | float v = foo<float>(2., 3.f);                  // ::foo< float, double,  float >(        2.,         3.f )
+        //        | float v = foo<float, float>(2., 3.f);           // ::foo< float,  float,  float >( (float)2.,         3.f )
+        //        | float v = foo<float, double, double>(2., 3.f);  // ::foo< float, double, double >(        2., (double)3.f )
+        //   - normal function call
+
+        i.skipChildrenOnForward();
       } else if (SgVarRefExp* varRef = isSgVarRefExp(exp)) {
         SgVariableSymbol* varSym = varRef->get_symbol();
         if (varSym) {
           SgInitializedName * refInitName = varSym->get_declaration();
-          SgNode * target = refInitName;
+          target = refInitName;
           if (!SgNodeHelper::isFunctionParameterVariableSymbol(varSym)) {
             target = refInitName->get_declaration();
-          }
-          if (target != nullptr) {
-            addNode(target);
-            addEdge(key, target);
           }
         }
       } else if (SgPntrArrRefExp* refExp = isSgPntrArrRefExp(exp)) {
         linkVariables(key, refExp->get_lhs_operand());
-        i.skipChildrenOnForward(); // FIXME what about the RHS? (aka index)
+        i.skipChildrenOnForward(); // TODO what about the RHS? (aka index)
       } else if (SgPointerDerefExp* refExp = isSgPointerDerefExp(exp)) {
         linkVariables(key, refExp->get_operand());
         i.skipChildrenOnForward();
       } else if (SgCommaOpExp* commaExp = isSgCommaOpExp(exp)) {
         linkVariables(key, commaExp->get_rhs_operand());
         i.skipChildrenOnForward();
+      }
+
+      if (target != nullptr) {
+        addNode(target);
+        if (incompatible_types(key, target)) {
+          addEdge(key, target);
+        }
       }
 
       if (exp != expression) {
@@ -959,25 +1157,72 @@ SgNode * Analysis::getScope(SgNode * n) const {
 }
 
 void Analysis::buildChildSets(std::map<SgNode *, std::set<SgNode *> > & childsets, SgType * base) const {
+#if DEBUG__Analysis__buildChildSets
+  std::cout << "Analysis::buildChildSets" << std::endl;
+#endif
+  std::set< std::pair<SgNode *, SgNode *> > edges_of_interrest;
+  for (auto n: node_map) {
+#if DEBUG__Analysis__buildChildSets
+    std::cout << " - n.first = " << n.first << " ( " << n.first->class_name() << " )" << std::endl;
+#endif
+    if (base != nullptr) {
+      if ( !isTypeBasedOn(n.second.type, base, true) ) continue;
+#if DEBUG__Analysis__buildChildSets
+      std::cout << " * selected" << std::endl;
+#endif
+    }
+    edges_of_interrest.insert(std::pair<SgNode *, SgNode *>(n.first,n.first));
+  }
   for (auto e: edges) {
     auto s = e.first;
-
+#if DEBUG__Analysis__buildChildSets
+    std::cout << " - s = " << s << " ( " << s->class_name() << " )" << std::endl;
+#endif
     if (base != nullptr) {
-      auto i = node_map.find(s);
-      if (i != node_map.end()) {
-        if ( !isTypeBasedOn(i->second.type, base, true) ) continue;
+      auto s_n_ = node_map.find(s);
+      if (s_n_ != node_map.end()) {
+        auto n = s_n_->second;
+        if ( !isTypeBasedOn(n.type, base, true) ) continue;
       }
+#if DEBUG__Analysis__buildChildSets
+      std::cout << " * selected" << std::endl;
+#endif
     }
+
+    for (auto t_ : e.second) {
+      auto t = t_.first;
+#if DEBUG__Analysis__buildChildSets
+      std::cout << "   - t = " << t << " ( " << t->class_name() << " )" << std::endl;
+#endif
+      if (base != nullptr) {
+        auto t_n_ = node_map.find(t);
+        if (t_n_ != node_map.end()) {
+          auto n = t_n_->second;
+          if ( !isTypeBasedOn(n.type, base, true) ) continue;
+        }
+#if DEBUG__Analysis__buildChildSets
+        std::cout << "   * selected" << std::endl;
+#endif
+      }
+      edges_of_interrest.insert(std::pair<SgNode *, SgNode *>(s,t));
+    }
+  }
+
+  for (auto e : edges_of_interrest) {
+    auto s = e.first;
+    auto t = e.second;
     childsets[s].insert(s);
-    for (auto i : e.second) {
-      auto t = i.first;
-      childsets[t].insert(s);
-    }
+    childsets[s].insert(t);
+    childsets[t].insert(s);
+    childsets[t].insert(t);
   }
 }
 
 template < typename T, typename S=std::set<T> >
 void computeClustering(std::map<T, S> const & childsets, std::vector<S> & clusters) {
+#if DEBUG__computeClustering
+  std::cout << "computeClustering" << std::endl;
+#endif
   using P = std::pair< S , S >;
   std::vector<P> clustering;
   for (auto p : childsets) {
@@ -1023,7 +1268,7 @@ void Analysis::toDot(std::string const & fileName, SgType * base) const {
       uinfo->set_SkipClassDefinition();
       uinfo->set_SkipFunctionDefinition();
       uinfo->set_SkipBasicBlock();
-      uinfo->set_isTypeFirstPart();
+//    uinfo->set_isTypeFirstPart();
 
   std::map<std::string, std::string> node_color_map = {
     { "SgInitializedName",                         "lightsalmon"    },
