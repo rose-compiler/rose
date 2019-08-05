@@ -1930,11 +1930,14 @@ resetParentPointersInMemoryPool(SgNode* node)
              }
             else
              {
+            // DQ (8/5/2019): It is a bit of a problem that we have to allow this to work when not using a SgProject or SgSourceFile, but this
+            // is required for the inlining tests.  Note that these inlined tests will not have the resetFileInfoParentPointersInMemoryPool() be called.
+
             // DQ (8/2/2019): This function is only meaningful to call with the SgProject node, and will do nothing otherwise.
             // This may be the source of the problem in using the SageBuilder::buildFile() API in testing test2019_501.C).
             // If so then this function should be fixed to allow a SgFile to be used alternatively.
-               printf ("In resetParentPointersInMemoryPool(): This function can't be called using anything but the SgProject \n");
-               ROSE_ASSERT(false);
+            // printf ("In resetParentPointersInMemoryPool(): This function can't be called using anything but the SgProject: node = %p = %s \n",node,node->class_name().c_str());
+            // ROSE_ASSERT(false);
              }
         }
 
@@ -1956,9 +1959,10 @@ resetParentPointersInMemoryPool(SgNode* node)
         }
        else
         {
+       // DQ (8/5/2019): This fails for the binary analysis, where there is no SgGlobal found.
        // DQ (8/2/2019): This function is only meaningful to call with the SgProject node, and will do nothing otherwise.
-          printf ("In resetParentPointersInMemoryPool(): This function is not doing anything when called using: node = %p = %s \n",node,node->class_name().c_str());
-          ROSE_ASSERT(false);
+       // printf ("In resetParentPointersInMemoryPool(): This function is not doing anything when called using: node = %p = %s \n",node,node->class_name().c_str());
+       // ROSE_ASSERT(false);
         }
    }
 
