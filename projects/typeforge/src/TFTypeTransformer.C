@@ -187,6 +187,11 @@ static SgType * rebuildBaseType(SgType* root, SgType* newBaseType) {
     SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
     assert(ti_decl != nullptr);
 
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+    std::cout << "  ti_decl        = " << ti_decl << " ( " << ti_decl->class_name() << " )" << std::endl;
+    std::cout << "    ->get_type() = " << ti_decl->get_type() << " ( " << ti_decl->get_type()->class_name() << "): " << ti_decl->get_type()->unparseToString() << "" << std::endl;
+#endif
+
     SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
     assert(td_decl != nullptr);
 
@@ -195,11 +200,9 @@ static SgType * rebuildBaseType(SgType* root, SgType* newBaseType) {
 //  std:ostringstream oss; oss << "vector< " << newBaseType->unparseToString() << ; SgName new_inst_name(oss.str());
     SgName new_inst_name("vector");
 
-    std::vector<SgTemplateArgument *> tpl_args = ti_decl->get_templateArguments();
-    assert(tpl_args.size() > 0);
-    assert(tpl_args[0] != nullptr);
-    tpl_args[0]->set_type(newBaseType);
-    tpl_args.erase(tpl_args.begin()+1, tpl_args.end());
+    // TODO copy other template arguments
+    std::vector<SgTemplateArgument *> tpl_args;
+    tpl_args.push_back( new SgTemplateArgument(SgTemplateArgument::type_argument, false, newBaseType, nullptr, nullptr) );
 
     SgClassDeclaration * new_xdecl = SageBuilder::buildNondefiningClassDeclaration_nfi(
         new_inst_name, ti_decl->get_class_type(), ti_decl->get_scope(), true, &tpl_args
@@ -207,6 +210,11 @@ static SgType * rebuildBaseType(SgType* root, SgType* newBaseType) {
 
     SgTemplateInstantiationDecl * new_ti_decl = isSgTemplateInstantiationDecl(new_xdecl);
     assert(new_ti_decl != nullptr);
+
+#if DEBUG__TFTypeTransformer__rebuildBaseType
+    std::cout << "  new_ti_decl    = " << new_ti_decl << " ( " << new_ti_decl->class_name() << " )" << std::endl;
+    std::cout << "    ->get_type() = " << new_ti_decl->get_type() << " ( " << new_ti_decl->get_type()->class_name() << "): " << new_ti_decl->get_type()->unparseToString() << "" << std::endl;
+#endif
 
     assert(new_ti_decl->get_type() != nullptr);
 
