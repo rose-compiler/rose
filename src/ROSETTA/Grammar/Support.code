@@ -4582,6 +4582,9 @@ HEADER_SYMBOL_TABLE_START
        // DQ (7/12/2014): Adding support for static data member.
           static SgNodeSet & get_aliasSymbolCausalNodeSet();
 
+       // DQ (8/3/2019): Display function for static data member.
+          static void display_aliasSymbolCausalNodeSet();
+
      protected:
 
 #if 0
@@ -11539,6 +11542,22 @@ SgSymbolTable::get_aliasSymbolCausalNodeSet()
    {
      return p_aliasSymbolCausalNodeSet;
    }
+
+
+// DQ (8/3/2019): Display function for static data member.
+void
+SgSymbolTable::display_aliasSymbolCausalNodeSet()
+   {
+     SgNodeSet::iterator i = p_aliasSymbolCausalNodeSet.begin();
+     while (i != p_aliasSymbolCausalNodeSet.end())
+        {
+          printf ("SgSymbolTable::p_aliasSymbolCausalNodeSet: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+
+          i++;
+        }
+   }
+
+
 
 
 SOURCE_SYMBOL_TABLE_END
