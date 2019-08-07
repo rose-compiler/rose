@@ -494,6 +494,12 @@ void Grammar::setUpBinaryInstructions() {
          *  that causes the branch to be taken. "BO" is the term used in the PowerPC documentation to denote the first argument
          *  of the conditional instruction; it is a 5-bit integer constant. */
         std::string conditionalBranchDescription() const;
+
+        /** Return the register dictionary for a PowerPC architecture.
+         *
+         *  Given an instruction size of 32 or 64 return the register dictionary that describes the PowerPC architecture with
+         *  the specified word size. */
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
         
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
