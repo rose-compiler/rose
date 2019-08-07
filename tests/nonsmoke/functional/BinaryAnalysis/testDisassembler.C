@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 #include <Disassembler.h>
 #include <Partitioner2/Engine.h>
 #include <rose_getline.h>
@@ -14,6 +15,24 @@ using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace I2 = Rose::BinaryAnalysis::InstructionSemantics2;
+
+bool runSemantics = false;
+
+static std::string
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, BinaryAnalysis::Unparser::Settings &upSettings) {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup output = BinaryAnalysis::Unparser::commandLineSwitches(upSettings);
+
+    SwitchGroup tool("Tool-specific switches");
+    tool.name("tool");
+    Rose::CommandLine::insertBooleanSwitch(tool, "semantics", runSemantics, "Run instruction semantics.");
+
+    Parser p = engine.commandLineParser("testing", "Tests disassembler and semantics in various ways.");
+    ParserResult cmdline = p.with(output).with(tool).parse(argc, argv).apply();
+    ASSERT_always_require(cmdline.unreachedArgs().size() == 1);
+    return cmdline.unreachedArgs()[0];
+}
 
 static std::string
 strip(std::string s) {
@@ -54,21 +73,21 @@ parse(const std::string &input, rose_addr_t &va) {
             
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    rose_addr_t va = 0;
 
-    ASSERT_always_require(argc == 3);
-    std::string isaName = argv[1];
-    std::ifstream input(argv[2]);
-    
+    BinaryAnalysis::Unparser::Settings upSettings;
     P2::Engine engine;
-    engine.isaName(isaName);
+    std::string fileName = parseCommandLine(argc, argv, engine, upSettings);
+    std::ifstream input(fileName.c_str());
+    
     P2::mlog[WARN].disable(); // warnings about empty memory map
     P2::Partitioner partitioner = engine.createPartitioner();
     Disassembler *disassembler = engine.obtainDisassembler();
     ASSERT_always_not_null(disassembler);
     BinaryAnalysis::Unparser::BasePtr unparser = partitioner.unparser();
     ASSERT_always_not_null(unparser);
+    unparser->settings(upSettings);
 
+    rose_addr_t va = 0;
     for (size_t lineNum = 1; true; ++lineNum) {
         std::string line = rose_getline(input);
         if (line.empty())
@@ -100,12 +119,14 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        // Process instruction semantics
-        I2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
-        I2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
-        cpu->processInstruction(insn);
-        std::ostringstream ss;
-        ss <<*ops;
-        std::cout <<StringUtility::prefixLines(ss.str(), "       ");
+        if (runSemantics) {
+            // Process instruction semantics
+            I2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
+            I2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+            cpu->processInstruction(insn);
+            std::ostringstream ss;
+            ss <<*ops;
+            std::cout <<StringUtility::prefixLines(ss.str(), "       ");
+        }
     }
 }

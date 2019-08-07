@@ -181,7 +181,8 @@ Disassembler::isaNames() {
     v.push_back("m68040");
     v.push_back("mips-be");
     v.push_back("mips-le");
-    v.push_back("ppc");
+    v.push_back("ppc32");
+    v.push_back("ppc64");
     return v;
 }
 
@@ -197,8 +198,10 @@ Disassembler::lookup(const std::string &name)
         exit(0);
     } else if (name == "arm") {
         retval = new DisassemblerArm();
-    } else if (name == "ppc" || name == "ppc32") {
+    } else if (name == "ppc32") {
         retval = new DisassemblerPowerpc(powerpc_32);
+    } else if (name == "ppc64") {
+        retval = new DisassemblerPowerpc(powerpc_64);
     } else if (name == "mips-be") {
         retval = new DisassemblerMips(ByteOrder::ORDER_MSB);
     } else if (name == "mips-le") {

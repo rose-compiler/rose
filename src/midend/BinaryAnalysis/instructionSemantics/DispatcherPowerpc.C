@@ -57,7 +57,7 @@ public:
     }
 
     // Builds a mask counting bits using the non-ROSE PowerPC numbering.  If a < b then bits a through b (inclusive) are
-    // set. If a > b then bits a through 63 (inclusive) and bits zero through b (inclusive) are set. See PowerPC instruction
+    // set. If a > b then bits a through 31 or 63 (inclusive) and bits zero through b (inclusive) are set. See PowerPC instruction
     // manual section 3.3.12 "Fixed-Point Rotate and Shift Instructions" for details.  The nBits argument is necessary because
     // of PowerPC's stupid backward numbering instead of using power-of-two numbering.
     uint64_t buildMask(size_t mstart, size_t mstop, size_t nBits) {
@@ -78,12 +78,12 @@ struct IP_add: P {
     explicit IP_add(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
-        BaseSemantics::SValuePtr result = ops->add(d->read(args[1], 32), d->read(args[2], 32));
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->add(a, b);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -93,14 +93,14 @@ struct IP_addc: P {
     explicit IP_addc(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -110,15 +110,15 @@ struct IP_addco: P {
     explicit IP_addco(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -128,8 +128,8 @@ struct IP_adde: P {
     explicit IP_adde(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(a, b, c, carries /*out*/);
@@ -137,7 +137,7 @@ struct IP_adde: P {
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -147,8 +147,8 @@ struct IP_addeo: P {
     explicit IP_addeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(a, b, c, carries /*out*/);
@@ -157,7 +157,7 @@ struct IP_addeo: P {
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -165,12 +165,10 @@ struct IP_addeo: P {
 struct IP_addi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr ra = d->read(args[1], 32);
-
-        // The disassembler should have built this as a DWord with a sign extended value
-        BaseSemantics::SValuePtr signExtended_si = ops->signExtend(ops->extract(d->read(args[2], 32), 0, 16), 32);
-
-        d->write(args[0], ops->add(ra, signExtended_si));
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->add(a, b);
+        d->write(args[0], result);
     }
 };
 
@@ -180,14 +178,14 @@ struct IP_addic: P {
     explicit IP_addic(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -195,9 +193,10 @@ struct IP_addic: P {
 struct IP_addis: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr v1 = ops->extract(d->read(args[2], 32), 0, 16);
-        BaseSemantics::SValuePtr v2 = ops->concat(ops->number_(16, 0), v1);
-        d->write(args[0], ops->add(d->read(args[1], 32), v2));
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], 16);
+        BaseSemantics::SValuePtr result = ops->add(a, ops->signExtend(ops->concat(ops->number_(16, 0), b), d->addressWidth()));
+        d->write(args[0], result);
     }
 };
 
@@ -207,16 +206,16 @@ struct IP_addme: P {
     explicit IP_addme(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->invert(ops->number_(32, 0)); // -1
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = ops->invert(ops->number_(d->addressWidth(), 0)); // -1
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(a, b, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -226,17 +225,17 @@ struct IP_addmeo: P {
     explicit IP_addmeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->invert(ops->number_(32, 0)); // -1
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = ops->invert(ops->number_(d->addressWidth(), 0)); // -1
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(a, b, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -246,14 +245,14 @@ struct IP_addo: P {
     explicit IP_addo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -263,14 +262,14 @@ struct IP_addze: P {
     explicit IP_addze(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -280,15 +279,15 @@ struct IP_addzeo: P {
     explicit IP_addzeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -298,12 +297,12 @@ struct IP_and: P {
     explicit IP_and(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->and_(a, b);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -313,23 +312,38 @@ struct IP_andc: P {
     explicit IP_andc(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->and_(a, ops->invert(b));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
+
+// Fixed-point logical AND immediate
+struct IP_andi: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->and_(a, b);
+        d->write(args[0], result);
+        d->updateCr0(result);
+    }
+};
+
 
 // Fixed-point logical AND immediate shifted
 struct IP_andis: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->concat(ops->number_(16, 0), d->read(args[2], 16));
-        BaseSemantics::SValuePtr result = ops->and_(a, b);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], 16);
+        BaseSemantics::SValuePtr bShifted = ops->unsignedExtend(ops->concat(ops->number_(16, 0), b), d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->and_(a, bShifted);
         d->write(args[0], result);
+        d->updateCr0(result);
     }
 };
 
@@ -340,8 +354,8 @@ struct IP_b: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (SaveLink::YES == save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        BaseSemantics::SValuePtr target = d->read(args[0], 32); // operand already is sum of insn addr and LI value
+            ops->writeRegister(d->REG_LR, ops->number_(d->addressWidth(), insn->get_address() + 4));
+        BaseSemantics::SValuePtr target = d->read(args[0], d->addressWidth()); // operand already is sum of insn addr and LI value
         ops->writeRegister(d->REG_IAR, target);
     }
 };
@@ -353,8 +367,8 @@ struct IP_ba: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (SaveLink::YES == save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
-        ops->writeRegister(d->REG_IAR, d->read(args[0], 32));
+            ops->writeRegister(d->REG_LR, ops->number_(d->addressWidth(), insn->get_address() + 4));
+        ops->writeRegister(d->REG_IAR, d->read(args[0], d->addressWidth()));
     }
 };
 
@@ -365,7 +379,7 @@ struct IP_bc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         if (SaveLink::YES == save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
+            ops->writeRegister(d->REG_LR, ops->number_(d->addressWidth(), insn->get_address() + 4));
         SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         ASSERT_not_null(byteValue);
         uint8_t boConstant = byteValue->get_value();
@@ -375,7 +389,7 @@ struct IP_bc: P {
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
         if (!bo_2) {
-            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
+            BaseSemantics::SValuePtr negOne = ops->number_(d->addressWidth(), -1);
             ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
         }
         BaseSemantics::SValuePtr ctr_ok;
@@ -390,7 +404,7 @@ struct IP_bc: P {
         ASSERT_require(bi && bi->get_descriptor().majorNumber() == powerpc_regclass_cr && bi->get_descriptor().nBits() == 1);
         BaseSemantics::SValuePtr cr_bi = bo_0 && bo_2 ? ops->boolean_(true) : ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr target = d->read(args[2], 32);
+        BaseSemantics::SValuePtr target = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
         ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
     }
@@ -403,7 +417,7 @@ struct IP_bcctr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         if (SaveLink::YES == save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
+            ops->writeRegister(d->REG_LR, ops->number_(d->addressWidth(), insn->get_address() + 4));
         SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         ASSERT_not_null(byteValue);
         uint8_t boConstant = byteValue->get_value();
@@ -414,7 +428,7 @@ struct IP_bcctr: P {
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
-        BaseSemantics::SValuePtr mask = ops->number_(32, 0xfffffffc);
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(4, d->addressWidth()-1));
         ops->writeRegister(d->REG_IAR, ops->ite(cond_ok, ops->and_(ops->readRegister(d->REG_CTR), mask), iar));
     }
 };
@@ -426,7 +440,7 @@ struct IP_bclr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         if (SaveLink::YES == save_link)
-            ops->writeRegister(d->REG_LR, ops->number_(32, insn->get_address() + 4));
+            ops->writeRegister(d->REG_LR, ops->number_(d->addressWidth(), insn->get_address() + 4));
         SgAsmIntegerValueExpression *byteValue = isSgAsmIntegerValueExpression(args[0]);
         ASSERT_not_null(byteValue);
         uint8_t boConstant = byteValue->get_value();
@@ -436,7 +450,7 @@ struct IP_bclr: P {
         bool bo_1 = boConstant & 0x8;
         bool bo_0 = boConstant & 0x10;
         if (!bo_2) {
-            BaseSemantics::SValuePtr negOne = ops->number_(32, -1);
+            BaseSemantics::SValuePtr negOne = ops->number_(d->addressWidth(), -1);
             ops->writeRegister(d->REG_CTR, ops->add(ops->readRegister(d->REG_CTR), negOne));
         }
         BaseSemantics::SValuePtr ctr_ok;
@@ -451,7 +465,7 @@ struct IP_bclr: P {
         ASSERT_require(bi && bi->get_descriptor().majorNumber() == powerpc_regclass_cr && bi->get_descriptor().nBits() == 1);
         BaseSemantics::SValuePtr cr_bi = bo_0 && bo_2 ? ops->boolean_(true) : ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr mask = ops->number_(32, 0xfffffffc);
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(4, d->addressWidth()-1));
         BaseSemantics::SValuePtr target = ops->and_(ops->readRegister(d->REG_LR), mask);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
         ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
@@ -462,9 +476,10 @@ struct IP_bclr: P {
 struct IP_cmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        // For 32-bit case we can ignore value of L
-        BaseSemantics::SValuePtr a = d->read(args[2], 32);
-        BaseSemantics::SValuePtr b = d->read(args[3], 32);
+        ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+        size_t nBits = isSgAsmIntegerValueExpression(args[1])->get_absoluteValue() ? d->addressWidth() : 32;
+        BaseSemantics::SValuePtr a = d->read(args[2], nBits);
+        BaseSemantics::SValuePtr b = d->read(args[3], nBits);
         BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
         BaseSemantics::SValuePtr lt = ops->isSignedLessThan(a, b);
         BaseSemantics::SValuePtr cmp = ops->ite(eq,
@@ -481,9 +496,12 @@ struct IP_cmp: P {
 struct IP_cmpi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        // For 32-bit case we can ignore value of L
-        BaseSemantics::SValuePtr a = d->read(args[2], 32);
-        BaseSemantics::SValuePtr b = d->read(args[3], 32);
+        ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+        bool doExtend = 0 == isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
+        BaseSemantics::SValuePtr a = doExtend ?
+                                     ops->signExtend(d->read(args[2], 32), d->addressWidth()) :
+                                     d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[3], d->addressWidth());
         BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
         BaseSemantics::SValuePtr lt = ops->isSignedLessThan(a, b);
         BaseSemantics::SValuePtr cmp = ops->ite(eq,
@@ -500,9 +518,10 @@ struct IP_cmpi: P {
 struct IP_cmpl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        // For 32-bit case we can ignore value of L
-        BaseSemantics::SValuePtr a = d->read(args[2], 32);
-        BaseSemantics::SValuePtr b = d->read(args[3], 32);
+        ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+        size_t nBits = isSgAsmIntegerValueExpression(args[1])->get_absoluteValue() ? d->addressWidth() : 32;
+        BaseSemantics::SValuePtr a = d->read(args[2], nBits);
+        BaseSemantics::SValuePtr b = d->read(args[3], nBits);
         BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
         BaseSemantics::SValuePtr lt = ops->isUnsignedLessThan(a, b);
         BaseSemantics::SValuePtr cmp = ops->ite(eq,
@@ -519,9 +538,12 @@ struct IP_cmpl: P {
 struct IP_cmpli: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        // For 32-bit case we can ignore value of L
-        BaseSemantics::SValuePtr a = d->read(args[2], 32);
-        BaseSemantics::SValuePtr b = d->read(args[3], 32);
+        ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+        bool doExtend = 0 == isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
+        BaseSemantics::SValuePtr a = doExtend ?
+                                     ops->unsignedExtend(d->read(args[2], 32), d->addressWidth()) :
+                                     d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr b = ops->unsignedExtend(d->read(args[3], 32), d->addressWidth());
         BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
         BaseSemantics::SValuePtr lt = ops->isUnsignedLessThan(a, b);
         BaseSemantics::SValuePtr cmp = ops->ite(eq,
@@ -544,10 +566,10 @@ struct IP_cntlzw: P {
         BaseSemantics::SValuePtr thirtyTwo = ops->number_(32, 32);
         BaseSemantics::SValuePtr a = d->read(args[1], 32);
         BaseSemantics::SValuePtr n = ops->subtract(thirtyOne, ops->mostSignificantSetBit(a));
-        BaseSemantics::SValuePtr result = ops->ite(ops->equalToZero(a), thirtyTwo, n);
+        BaseSemantics::SValuePtr result = ops->unsignedExtend(ops->ite(ops->equalToZero(a), thirtyTwo, n), d->addressWidth());
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr) {
-            d->updateCr(result);
+            d->updateCr0(result);
             ops->writeRegister(d->REG_CR0_LT, ops->boolean_(false));
         }
     }
@@ -662,7 +684,7 @@ struct IP_divd: P {
         BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(32), quotient);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -688,7 +710,7 @@ struct IP_divdo: P {
         d->write(args[0], result);
         d->setXerOverflow(isUndefined);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -698,22 +720,25 @@ struct IP_divw: P {
     explicit IP_divw(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr dividend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr divisor = d->read(args[2], 32);
+        BaseSemantics::SValuePtr dividend = ops->signExtend(d->read(args[1], 32), d->addressWidth());
+        BaseSemantics::SValuePtr divisor = ops->signExtend(d->read(args[2], 32), d->addressWidth());
         BaseSemantics::SValuePtr quotient = ops->signedDivide(dividend, divisor);
         
         // Undefined: 0x80...0 / -1
         // Undefined: x / 0
-        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr zero = ops->number_(d->addressWidth(), 0);
         BaseSemantics::SValuePtr negOne = ops->invert(zero);
-        BaseSemantics::SValuePtr minInt = ops->number_(32, 0x80000000);
+        BaseSemantics::SValuePtr minInt = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(d->addressWidth()-1,
+                                                                                                        d->addressWidth()-1));
         BaseSemantics::SValuePtr isUndefined = ops->or_(ops->and_(ops->isEqual(dividend, minInt), ops->isEqual(divisor, negOne)),
                                                         ops->isEqual(divisor, zero));
 
-        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(32), quotient);
+        if (d->addressWidth() == 64)
+            quotient = ops->concat(ops->unsignedExtend(quotient, 32), ops->undefined_(32));
+        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(d->addressWidth()), quotient);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -723,23 +748,26 @@ struct IP_divwo: P {
     explicit IP_divwo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr dividend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr divisor = d->read(args[2], 32);
+        BaseSemantics::SValuePtr dividend = ops->signExtend(d->read(args[1], 32), d->addressWidth());
+        BaseSemantics::SValuePtr divisor = ops->signExtend(d->read(args[2], 32), d->addressWidth());
         BaseSemantics::SValuePtr quotient = ops->signedDivide(dividend, divisor);
         
         // Undefined: 0x80...0 / -1
         // Undefined: x / 0
-        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr zero = ops->number_(d->addressWidth(), 0);
         BaseSemantics::SValuePtr negOne = ops->invert(zero);
-        BaseSemantics::SValuePtr minInt = ops->number_(32, 0x80000000);
+        BaseSemantics::SValuePtr minInt = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(d->addressWidth()-1,
+                                                                                                        d->addressWidth()-1));
         BaseSemantics::SValuePtr isUndefined = ops->or_(ops->and_(ops->isEqual(dividend, minInt), ops->isEqual(divisor, negOne)),
                                                         ops->isEqual(divisor, zero));
 
-        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(32), quotient);
+        if (d->addressWidth() == 64)
+            quotient = ops->concat(ops->unsignedExtend(quotient, 32), ops->undefined_(32));
+        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(d->addressWidth()), quotient);
         d->write(args[0], result);
         d->setXerOverflow(isUndefined);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -749,14 +777,16 @@ struct IP_divwu: P {
     explicit IP_divwu(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr dividend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr divisor = d->read(args[2], 32);
+        BaseSemantics::SValuePtr dividend = ops->unsignedExtend(d->read(args[1], 32), d->addressWidth());
+        BaseSemantics::SValuePtr divisor = ops->unsignedExtend(d->read(args[2], 32), d->addressWidth());
         BaseSemantics::SValuePtr quotient = ops->unsignedDivide(dividend, divisor);
         BaseSemantics::SValuePtr isUndefined = ops->equalToZero(divisor);
-        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(32), quotient);
+        if (d->addressWidth() == 64)
+            quotient = ops->concat(ops->unsignedExtend(quotient, 32), ops->undefined_(32));
+        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(d->addressWidth()), quotient);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -766,15 +796,17 @@ struct IP_divwuo: P {
     explicit IP_divwuo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr dividend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr divisor = d->read(args[2], 32);
+        BaseSemantics::SValuePtr dividend = ops->unsignedExtend(d->read(args[1], 32), d->addressWidth());
+        BaseSemantics::SValuePtr divisor = ops->unsignedExtend(d->read(args[2], 32), d->addressWidth());
         BaseSemantics::SValuePtr quotient = ops->unsignedDivide(dividend, divisor);
         BaseSemantics::SValuePtr isUndefined = ops->equalToZero(divisor);
-        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(32), quotient);
+        if (d->addressWidth() == 64)
+            quotient = ops->concat(ops->unsignedExtend(quotient, 32), ops->undefined_(32));
+        BaseSemantics::SValuePtr result = ops->ite(isUndefined, ops->undefined_(d->addressWidth()), quotient);
         d->write(args[0], result);
         d->setXerOverflow(isUndefined);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -791,12 +823,12 @@ struct IP_eqv: P {
     explicit IP_eqv(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->invert(ops->xor_(a, b));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -806,11 +838,11 @@ struct IP_extsb: P {
     explicit IP_extsb(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr byte = ops->extract(d->read(args[1], 32), 0, 8);
-        BaseSemantics::SValuePtr result = ops->signExtend(byte, 32);
+        BaseSemantics::SValuePtr byte = d->read(args[1], 8);
+        BaseSemantics::SValuePtr result = ops->signExtend(byte, d->addressWidth());
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -820,11 +852,11 @@ struct IP_extsh: P {
     explicit IP_extsh(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr halfword = ops->extract(d->read(args[1], 32), 0, 16);
-        BaseSemantics::SValuePtr result = ops->signExtend(halfword, 32);
+        BaseSemantics::SValuePtr halfword = d->read(args[1], 16);
+        BaseSemantics::SValuePtr result = ops->signExtend(halfword, d->addressWidth());
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -832,7 +864,7 @@ struct IP_extsh: P {
 struct IP_lbz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->unsignedExtend(d->read(args[1], 8), 32));
+        d->write(args[0], ops->unsignedExtend(d->read(args[1], 8), d->addressWidth()));
     }
 };
 
@@ -840,7 +872,7 @@ struct IP_lbz: P {
 struct IP_lbzu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->unsignedExtend(d->readAndUpdate(ops, args[1], 8), 32));
+        d->write(args[0], ops->unsignedExtend(d->readAndUpdate(ops, args[1], 8), d->addressWidth()));
     }
 };
 
@@ -848,7 +880,7 @@ struct IP_lbzu: P {
 struct IP_lha: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->signExtend(d->read(args[1], 16), 32));
+        d->write(args[0], ops->signExtend(d->read(args[1], 16), d->addressWidth()));
     }
 };
 
@@ -856,7 +888,7 @@ struct IP_lha: P {
 struct IP_lhau: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->signExtend(d->readAndUpdate(ops, args[1], 16), 32));
+        d->write(args[0], ops->signExtend(d->readAndUpdate(ops, args[1], 16), d->addressWidth()));
     }
 };
 
@@ -866,7 +898,7 @@ struct IP_lhbrx: P {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr value = d->read(args[1], 16);
         BaseSemantics::SValuePtr swapped = ops->concat(ops->extract(value, 8, 16), ops->extract(value, 0, 8));
-        d->write(args[0], ops->unsignedExtend(swapped, 32));
+        d->write(args[0], ops->unsignedExtend(swapped, d->addressWidth()));
     }
 };
 
@@ -874,7 +906,7 @@ struct IP_lhbrx: P {
 struct IP_lhz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->unsignedExtend(d->read(args[1], 16), 32));
+        d->write(args[0], ops->unsignedExtend(d->read(args[1], 16), d->addressWidth()));
     }
 };
 
@@ -882,7 +914,7 @@ struct IP_lhz: P {
 struct IP_lhzu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], ops->unsignedExtend(d->readAndUpdate(ops, args[1], 16), 32));
+        d->write(args[0], ops->unsignedExtend(d->readAndUpdate(ops, args[1], 16), d->addressWidth()));
     }
 };
 
@@ -890,17 +922,17 @@ struct IP_lhzu: P {
 struct IP_lmw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr base = d->effectiveAddress(args[1], 32);
+        BaseSemantics::SValuePtr base = d->effectiveAddress(args[1], d->addressWidth());
         SgAsmRegisterReferenceExpression *rt = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(rt && rt->get_descriptor().majorNumber() == powerpc_regclass_gpr);
         RegisterDescriptor reg = rt->get_descriptor();
         rose_addr_t offset = 0;
-        for (unsigned minor=reg.minorNumber(); minor<32; minor+=1, offset+=4) {
-            BaseSemantics::SValuePtr addr = ops->add(base, ops->number_(32, offset));
+        for (unsigned minor = reg.minorNumber(); minor < 32; minor += 1, offset += 4) {
+            BaseSemantics::SValuePtr addr = ops->add(base, ops->number_(d->addressWidth(), offset));
             BaseSemantics::SValuePtr dflt = ops->undefined_(32);
             BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), addr, dflt, ops->boolean_(true));
             reg.minorNumber(minor);
-            ops->writeRegister(reg, value);
+            ops->writeRegister(reg, ops->unsignedExtend(value, d->addressWidth()));
         }
     }
 };
@@ -927,8 +959,10 @@ struct IP_lswi: P {
             BaseSemantics::SValuePtr value = ops->readMemory(RegisterDescriptor(), ea, dflt, ops->boolean_(true)); // big endian
             if (nBytes < 4)
                 value = ops->concat(ops->number_(8*(4-nBytes), 0), value);
+            if (d->addressWidth() == 64)
+                value = ops->concat(value, ops->number_(32, 0));
             const size_t regNum = (baseReg.minorNumber() + i) % 32;
-            ops->writeRegister(RegisterDescriptor(baseReg.majorNumber(), regNum, 0, 32), value);
+            ops->writeRegister(RegisterDescriptor(baseReg.majorNumber(), regNum, 0, d->addressWidth()), value);
 
             memOffset += 4;
             nBytesToTransfer -= nBytes;
@@ -955,6 +989,8 @@ struct IP_lswx: P {
             //   3. Else the value is the original byte from the register (i.e., no data transferred).
             BaseSemantics::SValuePtr isRegTouched = ops->isUnsignedLessThan(ops->number_(7, i*4), nBytes);
             BaseSemantics::SValuePtr result;
+            if (d->addressWidth() > 32)
+                result = ops->number_(d->addressWidth() - 32, 0);
             for (size_t j = 0; j < 4; ++j) {
                 // Read a byte from memory
                 size_t memOffset = i*4 + j;
@@ -975,11 +1011,11 @@ struct IP_lswx: P {
                 // (what PowerPC stupidly calls "left to right" and describes as low index to high index).
                 result = result ? ops->concat(byte, result) : byte;
             }
-            ops->writeRegister(RegisterDescriptor(startReg.majorNumber(), regNum, 0, 32), result);
+            ops->writeRegister(RegisterDescriptor(startReg.majorNumber(), regNum, 0, startReg.nBits()), result);
         }
 
         // If no bytes are transferred then the contents of register RT is undefined.
-        BaseSemantics::SValuePtr undef = ops->undefined_(32);
+        BaseSemantics::SValuePtr undef = ops->undefined_(d->addressWidth());
         BaseSemantics::SValuePtr curValue = ops->readRegister(startReg);
         ops->writeRegister(startReg, ops->ite(ops->equalToZero(nBytes), undef, curValue));
     }
@@ -989,7 +1025,7 @@ struct IP_lswx: P {
 struct IP_lwa: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->read(args[1], 32));
+        d->write(args[0], ops->signExtend(d->read(args[1], 32), d->addressWidth()));
     }
 };
 
@@ -997,7 +1033,7 @@ struct IP_lwa: P {
 struct IP_lwax: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->read(args[1], 32));
+        d->write(args[0], ops->signExtend(d->read(args[1], 32), d->addressWidth()));
     }
 };
 
@@ -1005,7 +1041,7 @@ struct IP_lwax: P {
 struct IP_lwaux: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->readAndUpdate(ops, args[1], 32));
+        d->write(args[0], ops->signExtend(d->readAndUpdate(ops, args[1], 32), d->addressWidth()));
     }
 };
 
@@ -1016,7 +1052,15 @@ struct IP_lwbrx: P {
         BaseSemantics::SValuePtr value = d->read(args[1], 32);
         BaseSemantics::SValuePtr swapped = ops->concat(ops->concat(ops->extract(value, 24, 32), ops->extract(value, 16, 24)),
                                                        ops->concat(ops->extract(value, 8, 16), ops->extract(value, 0, 8)));
-        d->write(args[0], swapped);
+        d->write(args[0], ops->unsignedExtend(swapped, d->addressWidth()));
+    }
+};
+
+// Load word and zero
+struct IP_lwz: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        d->write(args[0], ops->unsignedExtend(d->read(args[1], 32), d->addressWidth()));
     }
 };
 
@@ -1024,7 +1068,7 @@ struct IP_lwbrx: P {
 struct IP_lwzu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->readAndUpdate(ops, args[1], 32));
+        d->write(args[0], ops->unsignedExtend(d->readAndUpdate(ops, args[1], 32), d->addressWidth()));
     }
 };
 
@@ -1041,11 +1085,20 @@ struct IP_mcrf: P {
 struct IP_mfcr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        d->write(args[0], ops->readRegister(d->REG_CR));
+        d->write(args[0], ops->unsignedExtend(ops->readRegister(d->REG_CR), d->addressWidth()));
+    }
+};
+
+struct IP_mfspr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr src = d->read(args[1], args[1]->get_type()->get_nBits());// SPR in its native size
+        d->write(args[0], ops->unsignedExtend(src, d->addressWidth()));
     }
 };
 
 // Copies the value from the second argument to the first argument.  This is used for a variety of instructions.
+// FIXME[Robb Matzke 2019-08-08]: replace this with instruction-specific versions.
 struct IP_move: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -1053,11 +1106,12 @@ struct IP_move: P {
     }
 };
 
-// Copies the value from the first argument to the second argument.
+// Move to special purpose register
 struct IP_mtspr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[1], d->read(args[0]));
+        BaseSemantics::SValuePtr src = d->read(args[1], args[0]->get_type()->get_nBits()); // truncate GPR to width of SPR
+        d->write(args[0], src);
     }
 };
 
@@ -1071,9 +1125,11 @@ struct IP_mulhw: P {
         BaseSemantics::SValuePtr b = d->read(args[2], 32);
         BaseSemantics::SValuePtr product = ops->signedMultiply(a, b);
         BaseSemantics::SValuePtr result = ops->extract(product, 32, 64);
+        if (d->addressWidth() == 64)
+            result = ops->concat(result, ops->undefined_(d->addressWidth() - 32));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1087,9 +1143,11 @@ struct IP_mulhwu: P {
         BaseSemantics::SValuePtr b = d->read(args[2], 32);
         BaseSemantics::SValuePtr product = ops->unsignedMultiply(a, b);
         BaseSemantics::SValuePtr result = ops->extract(product, 32, 64);
+        if (d->addressWidth() == 64)
+            result = ops->concat(result, ops->undefined_(d->addressWidth() - 32));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1104,7 +1162,7 @@ struct IP_mulld: P {
         BaseSemantics::SValuePtr result = ops->extract(ops->signedMultiply(a, b), 0, 32);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1121,7 +1179,7 @@ struct IP_mulldo: P {
         d->write(args[0], result);
         d->setXerOverflow(ops->invert(ops->equalToZero(ops->extract(result, 32, 64))));
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1129,9 +1187,9 @@ struct IP_mulldo: P {
 struct IP_mulli: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
-        BaseSemantics::SValuePtr result = ops->extract(ops->signedMultiply(a, b), 0, 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->extract(ops->signedMultiply(a, b), 0, d->addressWidth());
         d->write(args[0], result);
     }
 };
@@ -1144,10 +1202,10 @@ struct IP_mullw: P {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr a = d->read(args[1], 32);
         BaseSemantics::SValuePtr b = d->read(args[2], 32);
-        BaseSemantics::SValuePtr result = ops->extract(ops->signedMultiply(a, b), 0, 32);
+        BaseSemantics::SValuePtr result = ops->extract(ops->signedMultiply(a, b), 0, d->addressWidth());
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1160,11 +1218,11 @@ struct IP_mullwo: P {
         BaseSemantics::SValuePtr a = d->read(args[1], 32);
         BaseSemantics::SValuePtr b = d->read(args[2], 32);
         BaseSemantics::SValuePtr product = ops->signedMultiply(a, b);
-        BaseSemantics::SValuePtr result = ops->extract(product, 0, 32);
+        BaseSemantics::SValuePtr result = ops->extract(product, 0, d->addressWidth());
         d->write(args[0], result);
         d->setXerOverflow(ops->invert(ops->equalToZero(ops->extract(product, 32, 64))));
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1195,12 +1253,12 @@ struct IP_nand: P {
     explicit IP_nand(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->invert(ops->and_(a, b));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1210,10 +1268,10 @@ struct IP_neg: P {
     explicit IP_neg(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr result = ops->negate(d->read(args[1], 32));
+        BaseSemantics::SValuePtr result = ops->negate(d->read(args[1], d->addressWidth()));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1223,14 +1281,14 @@ struct IP_nego: P {
     explicit IP_nego(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], 32));
-        BaseSemantics::SValuePtr b = ops->number_(32, 1);
+        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], d->addressWidth()));
+        BaseSemantics::SValuePtr b = ops->number_(d->addressWidth(), 1);
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1240,12 +1298,12 @@ struct IP_nor: P {
     explicit IP_nor(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->invert(ops->or_(a, b));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1255,12 +1313,12 @@ struct IP_or: P {
     explicit IP_or(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->or_(a, b);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1270,12 +1328,23 @@ struct IP_orc: P {
     explicit IP_orc(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->or_(a, ops->invert(b));
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
+    }
+};
+
+// Fixed-point logocal OR immediate
+struct IP_ori: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->or_(a, b);
+        d->write(args[0], result);
     }
 };
 
@@ -1283,9 +1352,10 @@ struct IP_orc: P {
 struct IP_oris: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->concat(ops->number_(16, 0), d->read(args[2], 16));
-        BaseSemantics::SValuePtr result = ops->or_(a, b);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], 16);
+        BaseSemantics::SValuePtr bShifted = ops->unsignedExtend(ops->concat(ops->number_(16, 0), b), d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->or_(a, bShifted);
         d->write(args[0], result);
     }
 };
@@ -1296,9 +1366,9 @@ struct IP_popcntb: P {
         assert_args(insn, args, 2);
         BaseSemantics::SValuePtr zero = ops->number_(8, 0);
         BaseSemantics::SValuePtr one = ops->number_(8, 1);
-        BaseSemantics::SValuePtr a = d->read(args[0], 32);
+        BaseSemantics::SValuePtr a = d->read(args[0], d->addressWidth());
         BaseSemantics::SValuePtr result;
-        for (size_t byteIdx = 0; byteIdx < 32/8; ++byteIdx) {
+        for (size_t byteIdx = 0; byteIdx < d->addressWidth()/8; ++byteIdx) {
             BaseSemantics::SValuePtr bytePopCnt = ops->number_(8, 0);
             for (size_t i=0; i<8; ++i) {
                 size_t bitIdx = byteIdx * 8 + i;
@@ -1319,15 +1389,18 @@ struct IP_rlwimi: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
         BaseSemantics::SValuePtr amount = d->read(args[2], 5);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t maskBegin = d->read(args[3], 5)->get_number();
-        size_t maskEnd = d->read(args[4], 5)->get_number();
-        BaseSemantics::SValuePtr mask = ops->number_(32, buildMask(maskBegin, maskEnd, 32));
-        BaseSemantics::SValuePtr preserved = ops->and_(d->read(args[0], 32), ops->invert(mask));
+        if (d->addressWidth() == 64)
+            rotated = ops->concat(rotated, rotated);
+        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
+        BaseSemantics::SValuePtr origBits = d->read(args[0], d->addressWidth());
+        BaseSemantics::SValuePtr preserved = ops->and_(origBits, ops->invert(mask));
         BaseSemantics::SValuePtr affected = ops->and_(rotated, mask);
         BaseSemantics::SValuePtr result = ops->or_(preserved, affected);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1340,13 +1413,15 @@ struct IP_rlwinm: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
         BaseSemantics::SValuePtr amount = d->read(args[2], 5);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t maskBegin = d->read(args[3], 5)->get_number();
-        size_t maskEnd = d->read(args[4], 5)->get_number();
-        BaseSemantics::SValuePtr mask = ops->number_(32, buildMask(maskBegin, maskEnd, 32));
+        if (d->addressWidth() == 64)
+            rotated = ops->concat(rotated, rotated);
+        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1359,13 +1434,15 @@ struct IP_rlwnm: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
         BaseSemantics::SValuePtr amount = d->read(args[2], 5);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t maskBegin = d->read(args[3], 5)->get_number();
-        size_t maskEnd = d->read(args[4], 5)->get_number();
-        BaseSemantics::SValuePtr mask = ops->number_(32, buildMask(maskBegin, maskEnd, 32));
+        if (d->addressWidth() == 64)
+            rotated = ops->concat(rotated, rotated);
+        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1386,13 +1463,14 @@ struct IP_slw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
-        BaseSemantics::SValuePtr amount = d->read(args[2], 6);
-        BaseSemantics::SValuePtr shifted = ops->shiftLeft(src, ops->unsignedExtend(amount, 5));
-        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr amount = d->read(args[2], 6); // 5 for shifting, 1 for invalidating the result
+        BaseSemantics::SValuePtr shifted = ops->unsignedExtend(ops->shiftLeft(src, ops->unsignedExtend(amount, 5)),
+                                                               d->addressWidth());
+        BaseSemantics::SValuePtr zero = ops->number_(d->addressWidth(), 0);
         BaseSemantics::SValuePtr result = ops->ite(ops->extract(amount, 5, 6), zero, shifted);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1405,20 +1483,30 @@ struct IP_sraw: P {
 
         // Primary result = source << amount
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
-        BaseSemantics::SValuePtr amount = d->read(args[2], 5);
-        BaseSemantics::SValuePtr result = ops->shiftRightArithmetic(src, amount);
+        BaseSemantics::SValuePtr amount5 = d->read(args[2], 5);
+        BaseSemantics::SValuePtr shifted = ops->signExtend(ops->shiftRightArithmetic(src, amount5), d->addressWidth());
+
+        // Special case when amount >= 32
+        BaseSemantics::SValuePtr isLargeShift = ops->extract(d->read(args[2], 6), 5, 6);
+        BaseSemantics::SValuePtr srcIsNegative = ops->extract(src, 31, 32);
+        BaseSemantics::SValuePtr zero = ops->number_(d->addressWidth(), 0);
+        BaseSemantics::SValuePtr negOne = ops->invert(zero);
+
+        BaseSemantics::SValuePtr result = ops->ite(isLargeShift, ops->ite(srcIsNegative, negOne, zero), shifted);
         d->write(args[0], result);
 
-        // XER CA bit is set if the source is negative and any 1-bits are shifted out; otherwise cleared
-        BaseSemantics::SValuePtr rsIsNegative = ops->extract(src, 31, 32);
-        BaseSemantics::SValuePtr shiftOutMask = ops->invert(ops->shiftLeft(ops->number_(32, -1), amount));
+        // Adjust the XER CA bit. If the shift amount is >= 32, then CA is the same as the src sign bit. Otherwise
+        // CA is true if the src is negative or bits where shifted out of the LSB position.
+        BaseSemantics::SValuePtr shiftOutMask = ops->invert(ops->shiftLeft(ops->number_(32, -1), amount5));
         BaseSemantics::SValuePtr shiftOutBits = ops->and_(src, shiftOutMask);
         BaseSemantics::SValuePtr hasBitsShiftedOut = ops->invert(ops->equalToZero(shiftOutBits));
-        BaseSemantics::SValuePtr ca = ops->or_(rsIsNegative, hasBitsShiftedOut);
+        BaseSemantics::SValuePtr ca = ops->or_(ops->and_(isLargeShift, srcIsNegative),
+                                               ops->and_(ops->invert(isLargeShift),
+                                                         ops->or_(srcIsNegative, hasBitsShiftedOut)));
         ops->writeRegister(d->REG_XER_CA, ca);
 
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1432,10 +1520,10 @@ struct IP_srawi: P {
         // Primary result = source << amount
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
         BaseSemantics::SValuePtr amount = d->read(args[2], 5);
-        BaseSemantics::SValuePtr result = ops->shiftRightArithmetic(src, amount);
+        BaseSemantics::SValuePtr result = ops->signExtend(ops->shiftRightArithmetic(src, amount), d->addressWidth());
         d->write(args[0], result);
 
-        // XER CA bit is set if the source is negative and any 1-bits are shifted out; otherwise cleared
+        // XER CA bit is set if the 32-bit source is negative and any 1-bits are shifted out; otherwise cleared
         BaseSemantics::SValuePtr rsIsNegative = ops->extract(src, 31, 32);
         BaseSemantics::SValuePtr shiftOutMask = ops->invert(ops->shiftLeft(ops->number_(32, -1), amount));
         BaseSemantics::SValuePtr shiftOutBits = ops->and_(src, shiftOutMask);
@@ -1444,7 +1532,7 @@ struct IP_srawi: P {
         ops->writeRegister(d->REG_XER_CA, ca);
 
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1455,13 +1543,14 @@ struct IP_srw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         BaseSemantics::SValuePtr src = d->read(args[1], 32);
-        BaseSemantics::SValuePtr amount = d->read(args[2], 6);
-        BaseSemantics::SValuePtr shifted = ops->shiftRight(src, ops->unsignedExtend(amount, 5));
-        BaseSemantics::SValuePtr zero = ops->number_(32, 0);
+        BaseSemantics::SValuePtr amount = d->read(args[2], 6); // 5 for shifting, 1 for invalidating the result
+        BaseSemantics::SValuePtr shifted = ops->unsignedExtend(ops->shiftRight(src, ops->unsignedExtend(amount, 5)),
+                                                               d->addressWidth());
+        BaseSemantics::SValuePtr zero = ops->number_(d->addressWidth(), 0);
         BaseSemantics::SValuePtr result = ops->ite(ops->extract(amount, 5, 6), zero, shifted);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1469,7 +1558,7 @@ struct IP_srw: P {
 struct IP_stb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[1], ops->extract(d->read(args[0], 32), 0, 8));
+        d->write(args[1], d->read(args[0], 8));
     }
 };
 
@@ -1477,7 +1566,7 @@ struct IP_stb: P {
 struct IP_stbu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->writeAndUpdate(ops, args[1], ops->extract(d->read(args[0], 32), 0, 8));
+        d->writeAndUpdate(ops, args[1], d->read(args[0], 8));
     }
 };
 
@@ -1485,7 +1574,7 @@ struct IP_stbu: P {
 struct IP_stbux: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->writeAndUpdate(ops, args[1], ops->extract(d->read(args[0], 32), 0, 8));
+        d->writeAndUpdate(ops, args[1], d->read(args[0], 8));
     }
 };
 
@@ -1493,7 +1582,7 @@ struct IP_stbux: P {
 struct IP_sth: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[1], ops->extract(d->read(args[0], 32), 0, 16));
+        d->write(args[1], d->read(args[0], 16));
     }
 };
 
@@ -1501,7 +1590,7 @@ struct IP_sth: P {
 struct IP_sthbrx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr value = d->read(args[0], 32);
+        BaseSemantics::SValuePtr value = d->read(args[0], 16);
         BaseSemantics::SValuePtr swapped = ops->concat(ops->extract(value, 8, 16), ops->extract(value, 0, 8));
         d->write(args[1], swapped);
     }
@@ -1511,7 +1600,7 @@ struct IP_sthbrx: P {
 struct IP_sthu: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->writeAndUpdate(ops, args[1], ops->extract(d->read(args[0], 32), 0, 16));
+        d->writeAndUpdate(ops, args[1], d->read(args[0], 16));
     }
 };
 
@@ -1519,7 +1608,7 @@ struct IP_sthu: P {
 struct IP_sthux: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->writeAndUpdate(ops, args[1], ops->extract(d->read(args[0], 32), 0, 16));
+        d->writeAndUpdate(ops, args[1], d->read(args[0], 16));
     }
 };
 
@@ -1527,7 +1616,7 @@ struct IP_sthux: P {
 struct IP_sthx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[1], ops->extract(d->read(args[0], 32), 0, 16));
+        d->write(args[1], d->read(args[0], 16));
     }
 };
 
@@ -1543,7 +1632,7 @@ struct IP_stmw: P {
         for (unsigned minor=reg.minorNumber(); minor<32; minor+=1, offset+=4) {
             BaseSemantics::SValuePtr addr = ops->add(base, ops->number_(32, offset));
             reg.minorNumber(minor);
-            BaseSemantics::SValuePtr value = ops->readRegister(reg);
+            BaseSemantics::SValuePtr value = ops->unsignedExtend(ops->readRegister(reg), 32);
             ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
         }
     }
@@ -1625,7 +1714,7 @@ struct IP_stw: P {
         BaseSemantics::SValuePtr result = d->read(args[0], 32);
         d->write(args[1], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1664,12 +1753,12 @@ struct IP_subf: P {
     explicit IP_subf(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->subtract(minuend, subtrahend);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1679,14 +1768,14 @@ struct IP_subfc: P {
     explicit IP_subfc(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->subtractCarry(minuend, subtrahend, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1696,15 +1785,15 @@ struct IP_subfco: P {
     explicit IP_subfco(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->subtractCarry(minuend, subtrahend, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1714,16 +1803,16 @@ struct IP_subfe: P {
     explicit IP_subfe(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = ops->invert(d->read(args[1], 32)); // not negate
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = ops->invert(d->read(args[1], d->addressWidth())); // not negate
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(minuend, subtrahend, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1733,17 +1822,17 @@ struct IP_subfeo: P {
     explicit IP_subfeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = ops->invert(d->read(args[1], 32)); // not negate
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = ops->invert(d->read(args[1], d->addressWidth())); // not negate
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(minuend, subtrahend, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1751,8 +1840,8 @@ struct IP_subfeo: P {
 struct IP_subfic: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->subtractCarry(minuend, subtrahend, carryOut);
         d->write(args[0], result);
@@ -1766,16 +1855,16 @@ struct IP_subfme: P {
     explicit IP_subfme(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = ops->invert(ops->number_(32, 0)); // -1
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = ops->invert(ops->number_(d->addressWidth(), 0)); // -1
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(minuend, subtrahend, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1785,17 +1874,17 @@ struct IP_subfmeo: P {
     explicit IP_subfmeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = ops->invert(ops->number_(32, 0)); // -1
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = ops->invert(ops->number_(d->addressWidth(), 0)); // -1
         BaseSemantics::SValuePtr c = ops->readRegister(d->REG_XER_CA);
         BaseSemantics::SValuePtr carries;
         BaseSemantics::SValuePtr result = ops->addWithCarries(minuend, subtrahend, c, carries /*out*/);
-        BaseSemantics::SValuePtr carryOut = ops->extract(carries, 31, 32);
+        BaseSemantics::SValuePtr carryOut = ops->extract(carries, d->addressWidth()-1, d->addressWidth());
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1805,14 +1894,14 @@ struct IP_subfo: P {
     explicit IP_subfo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr subtrahend = d->read(args[1], 32);
-        BaseSemantics::SValuePtr minuend = d->read(args[2], 32);
+        BaseSemantics::SValuePtr subtrahend = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr minuend = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->subtractCarry(minuend, subtrahend, carryOut);
         d->write(args[0], result);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1822,14 +1911,14 @@ struct IP_subfze: P {
     explicit IP_subfze(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], 32)); // not negate
-        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), 32);
+        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], d->addressWidth())); // not negate
+        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1839,15 +1928,15 @@ struct IP_subfzeo: P {
     explicit IP_subfzeo(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], 32)); // not negate
-        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), 32);
+        BaseSemantics::SValuePtr a = ops->invert(d->read(args[1], d->addressWidth())); // not negate
+        BaseSemantics::SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_XER_CA), d->addressWidth());
         BaseSemantics::SValuePtr carryOut;
         BaseSemantics::SValuePtr result = ops->addCarry(a, b, carryOut);
         d->write(args[0], result);
         ops->writeRegister(d->REG_XER_CA, carryOut);
         d->updateXerOverflow(result, carryOut);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
     }
 };
 
@@ -1898,7 +1987,7 @@ struct IP_tw: P {
         doTrap = (comparison & 0x10) == 0 ? doTrap :
                  ops->or_(doTrap, ops->isUnsignedGreaterThan(a, b));
 
-        BaseSemantics::SValuePtr target = ops->ite(doTrap, ops->number_(32, 0x700), ops->readRegister(d->REG_IAR));
+        BaseSemantics::SValuePtr target = ops->ite(doTrap, ops->number_(d->addressWidth(), 0x700), ops->readRegister(d->REG_IAR));
         ops->writeRegister(d->REG_IAR, target);
     }
 };
@@ -1909,12 +1998,23 @@ struct IP_xor: P {
     explicit IP_xor(UpdateCr::Flag updateCr): updateCr(updateCr) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = d->read(args[2], 32);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
         BaseSemantics::SValuePtr result = ops->xor_(a, b);
         d->write(args[0], result);
         if (UpdateCr::YES == updateCr)
-            d->updateCr(result);
+            d->updateCr0(result);
+    }
+};
+
+// Fixed-point logical XOR immediate
+struct IP_xori: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->xor_(a, b);
+        d->write(args[0], result);
     }
 };
 
@@ -1922,9 +2022,10 @@ struct IP_xor: P {
 struct IP_xoris: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
-        BaseSemantics::SValuePtr a = d->read(args[1], 32);
-        BaseSemantics::SValuePtr b = ops->concat(ops->number_(16, 0), d->read(args[2], 16));
-        BaseSemantics::SValuePtr result = ops->xor_(a, b);
+        BaseSemantics::SValuePtr a = d->read(args[1], d->addressWidth());
+        BaseSemantics::SValuePtr b = d->read(args[2], 16);
+        BaseSemantics::SValuePtr bShifted = ops->unsignedExtend(ops->concat(ops->number_(16, 0), b), d->addressWidth());
+        BaseSemantics::SValuePtr result = ops->xor_(a, bShifted);
         d->write(args[0], result);
     }
 };
@@ -1963,7 +2064,7 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_addzeo_record,    new Powerpc::IP_addzeo(UpdateCr::YES));
     iproc_set(powerpc_andc,             new Powerpc::IP_andc(UpdateCr::NO));
     iproc_set(powerpc_andc_record,      new Powerpc::IP_andc(UpdateCr::YES));
-    iproc_set(powerpc_andi_record,      new Powerpc::IP_and(UpdateCr::YES));
+    iproc_set(powerpc_andi_record,      new Powerpc::IP_andi);
     iproc_set(powerpc_andis_record,     new Powerpc::IP_andis);
     iproc_set(powerpc_and,              new Powerpc::IP_and(UpdateCr::NO));
     iproc_set(powerpc_and_record,       new Powerpc::IP_and(UpdateCr::YES));
@@ -2034,13 +2135,13 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_lwarx,            new Powerpc::IP_move);
     iproc_set(powerpc_lwaux,            new Powerpc::IP_lwaux);
     iproc_set(powerpc_lwbrx,            new Powerpc::IP_lwbrx);
-    iproc_set(powerpc_lwz,              new Powerpc::IP_move);
+    iproc_set(powerpc_lwz,              new Powerpc::IP_lwz);
     iproc_set(powerpc_lwzu,             new Powerpc::IP_lwzu);
     iproc_set(powerpc_lwzux,            new Powerpc::IP_lwzu);
-    iproc_set(powerpc_lwzx,             new Powerpc::IP_move);
+    iproc_set(powerpc_lwzx,             new Powerpc::IP_lwz);
     iproc_set(powerpc_mcrf,             new Powerpc::IP_mcrf);
     iproc_set(powerpc_mfcr,             new Powerpc::IP_mfcr);
-    iproc_set(powerpc_mfspr,            new Powerpc::IP_move);
+    iproc_set(powerpc_mfspr,            new Powerpc::IP_mfspr);
     iproc_set(powerpc_mtcrf,            new Powerpc::IP_mtcrf);
     iproc_set(powerpc_mtspr,            new Powerpc::IP_mtspr);
     iproc_set(powerpc_mulhw,            new Powerpc::IP_mulhw(UpdateCr::NO));
@@ -2066,7 +2167,7 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_nor_record,       new Powerpc::IP_nor(UpdateCr::YES));
     iproc_set(powerpc_orc,              new Powerpc::IP_orc(UpdateCr::NO));
     iproc_set(powerpc_orc_record,       new Powerpc::IP_orc(UpdateCr::YES));
-    iproc_set(powerpc_ori,              new Powerpc::IP_or(UpdateCr::NO));
+    iproc_set(powerpc_ori,              new Powerpc::IP_ori);
     iproc_set(powerpc_oris,             new Powerpc::IP_oris);
     iproc_set(powerpc_or,               new Powerpc::IP_or(UpdateCr::NO));
     iproc_set(powerpc_or_record,        new Powerpc::IP_or(UpdateCr::YES));
@@ -2129,7 +2230,7 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_tdi,              new Powerpc::IP_td);
     iproc_set(powerpc_tw,               new Powerpc::IP_tw);
     iproc_set(powerpc_twi,              new Powerpc::IP_tw);
-    iproc_set(powerpc_xori,             new Powerpc::IP_xor(UpdateCr::NO));
+    iproc_set(powerpc_xori,             new Powerpc::IP_xori);
     iproc_set(powerpc_xoris,            new Powerpc::IP_xoris);
     iproc_set(powerpc_xor,              new Powerpc::IP_xor(UpdateCr::NO));
     iproc_set(powerpc_xor_record,       new Powerpc::IP_xor(UpdateCr::YES));
@@ -2138,16 +2239,28 @@ DispatcherPowerpc::iproc_init() {
 void
 DispatcherPowerpc::regcache_init() {
     if (regdict) {
-        REG_IAR = findRegister("iar", 32);              // instruction address register (instruction pointer)
-        REG_LR  = findRegister("lr", 32);               // link register
-        REG_XER = findRegister("xer", 32);              // fixed-point exception register
+        switch (addressWidth()) {
+            case 32:
+                REG_IAR = findRegister("iar", 32);      // instruction address register (instruction pointer)
+                REG_LR  = findRegister("lr", 32);       // link register
+                REG_XER = findRegister("xer", 32);      // fixed-point exception register
+                REG_CTR = findRegister("ctr", 32);      // count register
+                break;
+            case 64:
+                REG_IAR = findRegister("iar", 64);      // instruction address register (instruction pointer)
+                REG_LR  = findRegister("lr", 64);       // link register
+                REG_XER = findRegister("xer", 64);      // fixed-point exception register
+                REG_CTR = findRegister("ctr", 64);      // count register
+                break;
+            default:
+                ASSERT_not_reachable("invalid address width");
+        }
         REG_XER_CA = findRegister("xer_ca", 1);         // carry
         REG_XER_SO = findRegister("xer_so", 1);         // summary overflow
         REG_XER_OV = findRegister("xer_ov", 1);         // summary overflow
         REG_CR  = findRegister("cr", 32);               // condition register
         REG_CR0 = findRegister("cr0", 4);               // CR Field 0, result of fixed-point instruction; set by updateCr()
         REG_CR0_LT = findRegister("cr0.lt", 1);         // LT field of CR0 field of CR register
-        REG_CTR = findRegister("ctr", 32);              // count register
     }
 }
 
@@ -2208,14 +2321,17 @@ DispatcherPowerpc::setXerOverflow(const BaseSemantics::SValuePtr &overflow) {
 }
 
 void
-DispatcherPowerpc::updateCr(const BaseSemantics::SValuePtr &result) {
+DispatcherPowerpc::updateCr0(const BaseSemantics::SValuePtr &result) {
+    ASSERT_not_null(result);
+    size_t nBits = result->get_width();
+
     // Three-bit constants
     BaseSemantics::SValuePtr one = operators->number_(3, 1);
     BaseSemantics::SValuePtr two = operators->number_(3, 2);
     BaseSemantics::SValuePtr four = operators->number_(3, 4);
 
     // High three bits of CR0 are set when result is less than zero, greater than zero, or equal to zero
-    BaseSemantics::SValuePtr signBit = operators->extract(result, 31, 32);
+    BaseSemantics::SValuePtr signBit = operators->extract(result, nBits-1, nBits);
     BaseSemantics::SValuePtr highThree = operators->ite(operators->equalToZero(result), one, operators->ite(signBit, four, two));
 
     // Low bit is the summary overflow copied from the XER's SO field

@@ -355,6 +355,7 @@ Settings::Settings() {
     insn.mnemonic.semanticFailureMarker = "[!]";
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
+    insn.operands.showingWidth = false;
     insn.comment.showing = true;
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
@@ -398,6 +399,7 @@ Settings::minimal() {
     s.insn.mnemonic.fieldWidth = 8;
     s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
+    s.insn.operands.showingWidth = false;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
     s.insn.semantics.showing = false;
@@ -532,6 +534,11 @@ commandLineSwitches(Settings &settings) {
               .argument("nchars", positiveIntegerParser(settings.insn.operands.fieldWidth))
               .doc("Minimum size of the instruction operands field in characters. The default is " +
                    boost::lexical_cast<std::string>(settings.insn.operands.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-operand-size", settings.insn.operands.showingWidth,
+                        "Show the width in bits of each term in an operand expression. The width is shown in square brackets "
+                        "after the term, similar to how it's shown for symbolic expressions. Although memory dereferences are "
+                        "also shown in square brackets, they are formatted different.");
 
     insertBooleanSwitch(sg, "insn-comment", settings.insn.comment.showing,
                         "Show comments for instructions that have them. The comments are shown to the right of each "
@@ -1806,6 +1813,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
                     comments.push_back(boost::lexical_cast<std::string>(si));
             }
         }
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<bv.size() <<"]";
         return comments;
     }
 }
@@ -1834,6 +1843,8 @@ Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) cons
         nextUnparser()->emitRegister(out, reg, state);
     } else {
         out <<state.registerNames()(reg);
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<reg.nBits() <<"]";
     }
 }
 

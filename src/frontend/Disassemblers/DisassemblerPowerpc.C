@@ -34,7 +34,14 @@ namespace BinaryAnalysis {
 bool
 DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
+    switch (wordSize_) {
+        case powerpc_32:
+            return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
+        case powerpc_64:
+            return isa == SgAsmExecutableFileFormat::ISA_PowerPC_64bit;
+        default:
+            return false;
+    }
 }
 
 Unparser::BasePtr
@@ -44,17 +51,29 @@ DisassemblerPowerpc::unparser() const {
 
 void
 DisassemblerPowerpc::init() {
-    name("ppc");
-    wordSizeBytes(4);
+    const RegisterDictionary *regdict = NULL;
+    switch (wordSize_) {
+        case powerpc_32:
+            name("ppc32");
+            wordSizeBytes(4);
+            regdict = RegisterDictionary::dictionary_powerpc32();
+            callingConventions(CallingConvention::dictionaryPowerpc32());
+            break;
+        case powerpc_64:
+            name("ppc64");
+            wordSizeBytes(8);
+            regdict = RegisterDictionary::dictionary_powerpc64();
+            callingConventions(CallingConvention::dictionaryPowerpc64());
+            break;
+    }
     byteOrder(ByteOrder::ORDER_MSB);
-    registerDictionary(RegisterDictionary::dictionary_powerpc()); // only a default
-    REG_IP = *registerDictionary()->lookup("iar");
-    REG_SP = *registerDictionary()->lookup("r1");
-    REG_LINK = *registerDictionary()->lookup("lr");
-    callingConventions(CallingConvention::dictionaryPowerpc());
-    InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
-    d->set_register_dictionary(registerDictionary());
+    REG_IP = *regdict->lookup("iar");
+    REG_SP = *regdict->lookup("r1");
+    REG_LINK = *regdict->lookup("lr");
+    InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
+    d->set_register_dictionary(regdict);
     p_proto_dispatcher = d;
+    registerDictionary(regdict);
 }
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
@@ -70,7 +89,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start
     if (tempsz<4)
         throw Exception("short read", start_va);
     uint32_t c = (temp[0]<<24) | (temp[1]<<16) | (temp[2]<<8) | temp[3];
-    
+
     // Disassemble the instruction
     startInstruction(start_va, c);
     SgAsmPowerpcInstruction *insn = disassemble();      // throws an exception on error
@@ -97,7 +116,7 @@ DisassemblerPowerpc::makeUnknownInstruction(const Exception &e) {
 }
 
 template <size_t First, size_t Last>
-uint64_t        
+uint64_t
 DisassemblerPowerpc::fld() const {
     return (insn >> (31 - Last)) & (IntegerOps::GenMask<uint32_t, Last - First + 1>::value);
 }
@@ -180,7 +199,14 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid gpr register number", this);
             name = "r" + StringUtility::numberToString(reg_number);
-            registerType = SageBuilderAsm::buildTypeU32();
+            switch (wordSize_) {
+                case powerpc_32:
+                    registerType = SageBuilderAsm::buildTypeU32();
+                    break;
+                case powerpc_64:
+                    registerType = SageBuilderAsm::buildTypeU64();
+                    break;
+            }
             break;
         case powerpc_regclass_fpr:
             if (reg_number<0 || reg_number>=1024)
@@ -225,20 +251,41 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid spr register number", this);
             name = "spr" + StringUtility::numberToString(reg_number);
-            registerType = SageBuilderAsm::buildTypeU32();
+            switch (wordSize_) {
+                case powerpc_32:
+                    registerType = SageBuilderAsm::buildTypeU32();
+                    break;
+                case powerpc_64:
+                    registerType = SageBuilderAsm::buildTypeU64();
+                    break;
+            }
             break;
         case powerpc_regclass_tbr:
             // Some time base registers have special names, but the dictionary has the generic name as well.
             if (reg_number<0 || reg_number>=1024)
                 throw ExceptionPowerpc("invalid tbr register number", this);
             name = "tbr" + StringUtility::numberToString(reg_number);
-            registerType = SageBuilderAsm::buildTypeU32();
+            switch (wordSize_) {
+                case powerpc_32:
+                    registerType = SageBuilderAsm::buildTypeU32();
+                    break;
+                case powerpc_64:
+                    registerType = SageBuilderAsm::buildTypeU64();
+                    break;
+            }
             break;
         case powerpc_regclass_msr:
             if (0!=reg_number)
                 throw ExceptionPowerpc("invalid msr register number", this);
             name = "msr";
-            registerType = SageBuilderAsm::buildTypeU32();
+            switch (wordSize_) {
+                case powerpc_32:
+                    registerType = SageBuilderAsm::buildTypeU32();
+                    break;
+                case powerpc_64:
+                    registerType = SageBuilderAsm::buildTypeU64();
+                    break;
+            }
             break;
         case powerpc_regclass_sr:
             // FIXME[Robb Matzke 2010-10-09]: not implemented yet
@@ -259,13 +306,17 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
         // Don't add a "default" or else we won't get compiler warnings if a new class is defined.
     }
     ASSERT_forbid(name.empty());
+    ASSERT_not_null(registerType);
 
     // Obtain a register descriptor from the dictionary
     ASSERT_not_null(registerDictionary());
     const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
     if (!rdesc)
         throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(), this);
-    
+    ASSERT_require2(rdesc->nBits() == registerType->get_nBits(),
+                    (boost::format("register width (%|u|) doesn't match type width (%|u|)")
+                     % rdesc->nBits() % registerType->get_nBits()).str());
+
     // Construct the return value
     SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(*rdesc);
     ASSERT_not_null(rre);
@@ -382,7 +433,7 @@ DisassemblerPowerpc::disassemble() {
 
     ASSERT_not_reachable("op code not handled");
 }
-   
+
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_I_formInstruction() {
     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
@@ -391,7 +442,7 @@ DisassemblerPowerpc::decode_I_formInstruction() {
             rose_addr_t targetBranchAddress = LI();
             if (AA() == 0)
                 targetBranchAddress += ip;
-            
+
             SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
 
             if (AA() == 0) {
@@ -420,15 +471,11 @@ DisassemblerPowerpc::decode_B_formInstruction() {
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
      switch(primaryOpcode) {
          case 0x10: {
-             // DQ (10/15/2008): Compute the address of the branch to restart the disassembly.  The address is BD || 0b00
-             // sign-extended.
-             uint32_t targetBranchAddress = BD();
-             if (AA() == 0) {
-                 // In this case the address is the sum of BD || 0b00 sign-extended AND "the address of this instruction".
+             uint64_t targetBranchAddress = BD();
+             if (AA() == 0)
                  targetBranchAddress += ip;
-             }
-
              SgAsmIntegerValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+
              if (LK() == 0) {
                  if (AA() == 0) {
                      return MAKE_INSN3(bc, BO(), BI(), targetAddressExpression);
@@ -660,7 +707,7 @@ SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_X_formInstruction_00() {
     if (insn == 0)
         throw ExceptionPowerpc("zero instruction", this, 0);
-         
+
     // Get the bits 21-30, next 10 bits
     uint16_t xoOpcode = (insn >> 1) & 0x3FF;
     switch(xoOpcode) {
@@ -686,7 +733,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00() {
 
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_XL_formInstruction() {
-    // The primaryOpcode 
+    // The primaryOpcode
     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x13);
 

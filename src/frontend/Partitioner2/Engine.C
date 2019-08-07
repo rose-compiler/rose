@@ -255,8 +255,8 @@ Engine::disassemblerSwitches() {
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
               .doc("Name of instruction set architecture.  If no name is specified then the architecture is obtained from "
-                   "the binary container (ELF, PE). A list of valid architecture names can be obtained by specifying "
-                   "\"list\" as the name."));
+                   "the binary container (ELF, PE). The following ISA names are supported: " +
+                   StringUtility::joinEnglish(Disassembler::isaNames()) + "."));
 
     return sg;
 }

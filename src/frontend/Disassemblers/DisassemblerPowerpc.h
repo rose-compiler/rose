@@ -269,7 +269,13 @@ private:
     }
 
     SgAsmValueExpression* UI() const {
-        return SageBuilderAsm::buildValueU64(fld<16, 31>());
+        switch (wordSize_) {
+            case powerpc_32:
+                return SageBuilderAsm::buildValueU32(fld<16, 31>());
+            case powerpc_64:
+                return SageBuilderAsm::buildValueU64(fld<16, 31>());
+        }
+        ASSERT_not_reachable("invalid word size");
     }
 
     SgAsmMemoryReferenceExpression* memref(SgAsmType* t) const {

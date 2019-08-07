@@ -671,350 +671,318 @@ L516  # mulli r0, r1, -4
 L517  0x1c 0x01 0xff 0xfc
 L517  0x00001000: 1c 01 ff fc               ?? mulli    r0, r1, 0xfffffffc<4294967292,-4>        ; multiply low immediate
 L518  
-L519  # mulld r0, r1, r2
-L520  0x7c 0x01 0x11 0xe8
-L520  0x00001000: 7c 01 11 e8               ?? mulld    r0, r1, r2                               ; multiply low doubleword
+L519  # mullw r0, r1, r2
+L520  0x7c 0x01 0x11 0xd6
+L520  0x00001000: 7c 01 11 d6               ?? mullw    r0, r1, r2                               ; multiply low word
 L521  
-L522  # mulld. r0, r1, r2
-L523  0x7c 0x01 0x11 0xe9
-L523  0x00001000: 7c 01 11 e9               ?? mulld.   r0, r1, r2                               ; multiply low doubleword
+L522  # mullw. r0, r1, r2
+L523  0x7c 0x01 0x11 0xd7
+L523  0x00001000: 7c 01 11 d7               ?? mullw.   r0, r1, r2                               ; multiply low word
 L524  
-L525  # mulldo r0, r1, r2
-L526  0x7c 0x01 0x15 0xe8
-L526  0x00001000: 7c 01 15 e8               ?? mulldo   r0, r1, r2                               ; multiply low doubleword
+L525  # mullwo r0, r1, r2
+L526  0x7c 0x01 0x15 0xd6
+L526  0x00001000: 7c 01 15 d6               ?? mullwo   r0, r1, r2                               ; multiply low word
 L527  
-L528  # mulldo. r0, r1, r2
-L529  0x7c 0x01 0x15 0xe9
-L529  0x00001000: 7c 01 15 e9               ?? mulldo.  r0, r1, r2                               ; multiply low doubleword
+L528  # mullwo. r0, r1, r2
+L529  0x7c 0x01 0x15 0xd7
+L529  0x00001000: 7c 01 15 d7               ?? mullwo.  r0, r1, r2                               ; multiply low word
 L530  
-L531  # mullw r0, r1, r2
-L532  0x7c 0x01 0x11 0xd6
-L532  0x00001000: 7c 01 11 d6               ?? mullw    r0, r1, r2                               ; multiply low word
+L531  # mulhw r0, r1, r2
+L532  0x7c 0x01 0x10 0x96
+L532  0x00001000: 7c 01 10 96               ?? mulhw    r0, r1, r2                               ; multiply high word
 L533  
-L534  # mullw. r0, r1, r2
-L535  0x7c 0x01 0x11 0xd7
-L535  0x00001000: 7c 01 11 d7               ?? mullw.   r0, r1, r2                               ; multiply low word
+L534  # mullhw. r0, r1, r2
+L535  0x7c 0x01 0x10 0x97
+L535  0x00001000: 7c 01 10 97               ?? mulhw.   r0, r1, r2                               ; multiply high word
 L536  
-L537  # mullwo r0, r1, r2
-L538  0x7c 0x01 0x15 0xd6
-L538  0x00001000: 7c 01 15 d6               ?? mullwo   r0, r1, r2                               ; multiply low word
+L537  # mulhwu r0, r1, r2
+L538  0x7c 0x01 0x10 0x16
+L538  0x00001000: 7c 01 10 16               ?? mulhwu   r0, r1, r2                               ; multiply high word unsigned
 L539  
-L540  # mullwo. r0, r1, r2
-L541  0x7c 0x01 0x15 0xd7
-L541  0x00001000: 7c 01 15 d7               ?? mullwo.  r0, r1, r2                               ; multiply low word
+L540  # mulhwu. r0, r1, r2
+L541  0x7c 0x01 0x10 0x17
+L541  0x00001000: 7c 01 10 17               ?? mulhwu.  r0, r1, r2                               ; multiply high word unsigned
 L542  
-L543  # mulhw r0, r1, r2
-L544  0x7c 0x01 0x10 0x96
-L544  0x00001000: 7c 01 10 96               ?? mulhw    r0, r1, r2                               ; multiply high word
+L543  # divw r0, r1, r2
+L544  0x7c 0x01 0x13 0xd6
+L544  0x00001000: 7c 01 13 d6               ?? divw     r0, r1, r2                               ; divide word
 L545  
-L546  # mullhw. r0, r1, r2
-L547  0x7c 0x01 0x10 0x97
-L547  0x00001000: 7c 01 10 97               ?? mulhw.   r0, r1, r2                               ; multiply high word
+L546  # divw. r0, r1, r2
+L547  0x7c 0x01 0x13 0xd7
+L547  0x00001000: 7c 01 13 d7               ?? divw.    r0, r1, r2                               ; divide word
 L548  
-L549  # mulhwu r0, r1, r2
-L550  0x7c 0x01 0x10 0x16
-L550  0x00001000: 7c 01 10 16               ?? mulhwu   r0, r1, r2                               ; multiply high word unsigned
+L549  # divwo r0, r1, r2
+L550  0x7c 0x01 0x17 0xd6
+L550  0x00001000: 7c 01 17 d6               ?? divwo    r0, r1, r2                               ; divide word
 L551  
-L552  # mulhwu. r0, r1, r2
-L553  0x7c 0x01 0x10 0x17
-L553  0x00001000: 7c 01 10 17               ?? mulhwu.  r0, r1, r2                               ; multiply high word unsigned
+L552  # divwo. r0, r1, r2
+L553  0x7c 0x01 0x17 0xd7
+L553  0x00001000: 7c 01 17 d7               ?? divwo.   r0, r1, r2                               ; divide word
 L554  
-L555  # divd r0, r1, r2
-L556  0x7c 0x01 0x13 0xd2
-L556  0x00001000: 7c 01 13 d2               ?? divd     r0, r1, r2                               ; divide doubleword
+L555  # divwu r0, r1, r2
+L556  0x7c 0x01 0x13 0x96
+L556  0x00001000: 7c 01 13 96               ?? divwu    r0, r1, r2                               ; divide word unsigned
 L557  
-L558  # divd. r0, r1, r2
-L559  0x7c 0x01 0x13 0xd3
-L559  0x00001000: 7c 01 13 d3               ?? divd.    r0, r1, r2                               ; divide doubleword
+L558  # divwu. r0, r1, r2
+L559  0x7c 0x01 0x13 0x97
+L559  0x00001000: 7c 01 13 97               ?? divwu.   r0, r1, r2                               ; divide word unsigned
 L560  
-L561  # divdo r0, r1, r2
-L562  0x7c 0x01 0x17 0xd2
-L562  0x00001000: 7c 01 17 d2               ?? divdo    r0, r1, r2                               ; divide doubleword
+L561  # divwuo r0, r1, r2
+L562  0x7c 0x01 0x17 0x96
+L562  0x00001000: 7c 01 17 96               ?? divwuo   r0, r1, r2                               ; divide word unsigned
 L563  
-L564  # divdo. r0, r1, r2
-L565  0x7c 0x01 0x17 0xd3
-L565  0x00001000: 7c 01 17 d3               ?? divdo.   r0, r1, r2                               ; divide doubleword
+L564  # divwuo. r0, r1, r2
+L565  0x7c 0x01 0x17 0x97
+L565  0x00001000: 7c 01 17 97               ?? divwuo.  r0, r1, r2                               ; divide word unsigned
 L566  
-L567  # divw r0, r1, r2
-L568  0x7c 0x01 0x13 0xd6
-L568  0x00001000: 7c 01 13 d6               ?? divw     r0, r1, r2                               ; divide word
-L569  
-L570  # divw. r0, r1, r2
-L571  0x7c 0x01 0x13 0xd7
-L571  0x00001000: 7c 01 13 d7               ?? divw.    r0, r1, r2                               ; divide word
-L572  
-L573  # divwo r0, r1, r2
-L574  0x7c 0x01 0x17 0xd6
-L574  0x00001000: 7c 01 17 d6               ?? divwo    r0, r1, r2                               ; divide word
-L575  
-L576  # divwo. r0, r1, r2
-L577  0x7c 0x01 0x17 0xd7
-L577  0x00001000: 7c 01 17 d7               ?? divwo.   r0, r1, r2                               ; divide word
-L578  
-L579  # divwu r0, r1, r2
-L580  0x7c 0x01 0x13 0x96
-L580  0x00001000: 7c 01 13 96               ?? divwu    r0, r1, r2                               ; divide word unsigned
-L581  
-L582  # divwu. r0, r1, r2
-L583  0x7c 0x01 0x13 0x97
-L583  0x00001000: 7c 01 13 97               ?? divwu.   r0, r1, r2                               ; divide word unsigned
-L584  
-L585  # divwuo r0, r1, r2
-L586  0x7c 0x01 0x17 0x96
-L586  0x00001000: 7c 01 17 96               ?? divwuo   r0, r1, r2                               ; divide word unsigned
-L587  
-L588  # divwuo. r0, r1, r2
-L589  0x7c 0x01 0x17 0x97
-L589  0x00001000: 7c 01 17 97               ?? divwuo.  r0, r1, r2                               ; divide word unsigned
-L590  
-L591  #-------------------------------------------------------------------------------
-L592  # 3.3.9 Fixed-Point Compare Instructions
+L567  #-------------------------------------------------------------------------------
+L568  # 3.3.9 Fixed-Point Compare Instructions
+L569  #-------------------------------------------------------------------------------
+L570  
+L571  # cmpi cr1, 0, r31, -4
+L572  0x2c 0x9f 0xff 0xfc
+L572  0x00001000: 2c 9f ff fc               ?? cmpi     cr1, 0, r31, 0xfffffffc<4294967292,-4>   ; signed compare immediate
+L573  
+L574  # cmp cr1, 0, r31, r1
+L575  0x7c 0x9f 0x08 0x00
+L575  0x00001000: 7c 9f 08 00               ?? cmp      cr1, 0, r31, r1                          ; signed compare
+L576  
+L577  # cmpli cr1, 0, r10, 0xffff
+L578  0x28 0x8a 0xff 0xff
+L578  0x00001000: 28 8a ff ff               ?? cmpli    cr1, 0, r10, 0x0000ffff                  ; unsigned compare immediate
+L579  
+L580  # cmpl cr1, 0, r10, r11
+L581  0x7c 0x8a 0x58 0x40
+L581  0x00001000: 7c 8a 58 40               ?? cmpl     cr1, 0, r10, r11                         ; unsigned compare
+L582  
+L583  #-------------------------------------------------------------------------------
+L584  # 3.3.10 Fixed-Point Trap Instructions
+L585  #-------------------------------------------------------------------------------
+L586  
+L587  # twi 0x15, r1, -1
+L588  0x0e 0xa1 0xff 0xff
+L588  0x00001000: 0e a1 ff ff               ?? twi      0x15<21>, r1, 0xffffffff<4294967295,-1>  ; trap word immediate
+L589  
+L590  # tw 0x15, r1, r2
+L591  0x7e 0xa1 0x10 0x08
+L591  0x00001000: 7e a1 10 08               ?? tw       0x15<21>, r1, r2                         ; trap word
+L592  
 L593  #-------------------------------------------------------------------------------
-L594  
-L595  # cmpi cr1, 0, r31, -4
-L596  0x2c 0x9f 0xff 0xfc
-L596  0x00001000: 2c 9f ff fc               ?? cmpi     cr1, 0, r31, 0xfffffffc<4294967292,-4>   ; signed compare immediate
-L597  
-L598  # cmp cr1, 0, r31, r1
-L599  0x7c 0x9f 0x08 0x00
-L599  0x00001000: 7c 9f 08 00               ?? cmp      cr1, 0, r31, r1                          ; signed compare
-L600  
-L601  # cmpli cr1, 0, r10, 0xffff
-L602  0x28 0x8a 0xff 0xff
-L602  0x00001000: 28 8a ff ff               ?? cmpli    cr1, 0, r10, 0x0000ffff                  ; unsigned compare immediate
-L603  
-L604  # cmpl cr1, 0, r10, r11
-L605  0x7c 0x8a 0x58 0x40
-L605  0x00001000: 7c 8a 58 40               ?? cmpl     cr1, 0, r10, r11                         ; unsigned compare
-L606  
-L607  #-------------------------------------------------------------------------------
-L608  # 3.3.10 Fixed-Point Trap Instructions
-L609  #-------------------------------------------------------------------------------
-L610  
-L611  # twi 0x15, r1, -1
-L612  0x0e 0xa1 0xff 0xff
-L612  0x00001000: 0e a1 ff ff               ?? twi      0x15<21>, r1, 0xffffffff<4294967295,-1>  ; trap word immediate
-L613  
-L614  # tw 0x15, r1, r2
-L615  0x7e 0xa1 0x10 0x08
-L615  0x00001000: 7e a1 10 08               ?? tw       0x15<21>, r1, r2                         ; trap word
-L616  
-L617  #-------------------------------------------------------------------------------
-L618  # 3.3.11 Fixed-Point Logical Instructions
-L619  #-------------------------------------------------------------------------------
+L594  # 3.3.11 Fixed-Point Logical Instructions
+L595  #-------------------------------------------------------------------------------
+L596  
+L597  # andi. r1, r2, 0xffff
+L598  0x70 0x41 0xff 0xff
+L598  0x00001000: 70 41 ff ff               ?? andi.    r1, r2, 0x0000ffff                       ; AND immediate
+L599  
+L600  # andis. r1, r2, 0xffff
+L601  0x74 0x41 0xff 0xff
+L601  0x00001000: 74 41 ff ff               ?? andis.   r1, r2, 0x0000ffff                       ; AND immediate shifted
+L602  
+L603  # ori r1, r2, 0xffff
+L604  0x60 0x41 0xff 0xff
+L604  0x00001000: 60 41 ff ff               ?? ori      r1, r2, 0x0000ffff                       ; OR immediate
+L605  
+L606  # oris r1, r2, 0xffff
+L607  0x64 0x41 0xff 0xff
+L607  0x00001000: 64 41 ff ff               ?? oris     r1, r2, 0x0000ffff                       ; OR immediate shifted
+L608  
+L609  # xori r1, r2, 0xffff
+L610  0x68 0x41 0xff 0xff
+L610  0x00001000: 68 41 ff ff               ?? xori     r1, r2, 0x0000ffff                       ; XOR immediate
+L611  
+L612  # xoris r1, r2, 0xffff
+L613  0x6c 0x41 0xff 0xff
+L613  0x00001000: 6c 41 ff ff               ?? xoris    r1, r2, 0x0000ffff                       ; XOR immediate shift
+L614  
+L615  # and r1, r2, r3
+L616  0x7c 0x41 0x18 0x38
+L616  0x00001000: 7c 41 18 38               ?? and      r1, r2, r3                               ; AND
+L617  
+L618  # and. r1, r2, r3
+L619  0x7c 0x41 0x18 0x39
+L619  0x00001000: 7c 41 18 39               ?? and.     r1, r2, r3                               ; AND
 L620  
-L621  # andi. r1, r2, 0xffff
-L622  0x70 0x41 0xff 0xff
-L622  0x00001000: 70 41 ff ff               ?? andi.    r1, r2, 0x0000ffff                       ; AND immediate
+L621  # or r1, r2, r3
+L622  0x7c 0x41 0x1b 0x78
+L622  0x00001000: 7c 41 1b 78               ?? or       r1, r2, r3                               ; OR
 L623  
-L624  # andis. r1, r2, 0xffff
-L625  0x74 0x41 0xff 0xff
-L625  0x00001000: 74 41 ff ff               ?? andis.   r1, r2, 0x0000ffff                       ; AND immediate shifted
+L624  # or. r1, r2, r3
+L625  0x7c 0x41 0x1b 0x79
+L625  0x00001000: 7c 41 1b 79               ?? or.      r1, r2, r3                               ; OR
 L626  
-L627  # ori r1, r2, 0xffff
-L628  0x60 0x41 0xff 0xff
-L628  0x00001000: 60 41 ff ff               ?? ori      r1, r2, 0x0000ffff                       ; OR immediate
+L627  # xor r1, r2, r3
+L628  0x7c 0x41 0x1a 0x78
+L628  0x00001000: 7c 41 1a 78               ?? xor      r1, r2, r3                               ; XOR
 L629  
-L630  # oris r1, r2, 0xffff
-L631  0x64 0x41 0xff 0xff
-L631  0x00001000: 64 41 ff ff               ?? oris     r1, r2, 0x0000ffff                       ; OR immediate shifted
+L630  # xor. r1, r2, r3
+L631  0x7c 0x41 0x1a 0x79
+L631  0x00001000: 7c 41 1a 79               ?? xor.     r1, r2, r3                               ; XOR
 L632  
-L633  # xori r1, r2, 0xffff
-L634  0x68 0x41 0xff 0xff
-L634  0x00001000: 68 41 ff ff               ?? xori     r1, r2, 0x0000ffff                       ; XOR immediate
+L633  # nand r1, r2, r3
+L634  0x7c 0x41 0x1b 0xb8
+L634  0x00001000: 7c 41 1b b8               ?? nand     r1, r2, r3                               ; NAND
 L635  
-L636  # xoris r1, r2, 0xffff
-L637  0x6c 0x41 0xff 0xff
-L637  0x00001000: 6c 41 ff ff               ?? xoris    r1, r2, 0x0000ffff                       ; XOR immediate shift
+L636  # nand. r1, r2, r3
+L637  0x7c 0x41 0x1b 0xb9
+L637  0x00001000: 7c 41 1b b9               ?? nand.    r1, r2, r3                               ; NAND
 L638  
-L639  # and r1, r2, r3
-L640  0x7c 0x41 0x18 0x38
-L640  0x00001000: 7c 41 18 38               ?? and      r1, r2, r3                               ; AND
+L639  # nor r1, r2, r3
+L640  0x7c 0x41 0x18 0xf8
+L640  0x00001000: 7c 41 18 f8               ?? nor      r1, r2, r3                               ; NOR
 L641  
-L642  # and. r1, r2, r3
-L643  0x7c 0x41 0x18 0x39
-L643  0x00001000: 7c 41 18 39               ?? and.     r1, r2, r3                               ; AND
+L642  # nor. r1, r2, r3
+L643  0x7c 0x41 0x18 0xf9
+L643  0x00001000: 7c 41 18 f9               ?? nor.     r1, r2, r3                               ; NOR
 L644  
-L645  # or r1, r2, r3
-L646  0x7c 0x41 0x1b 0x78
-L646  0x00001000: 7c 41 1b 78               ?? or       r1, r2, r3                               ; OR
+L645  # eqv r1, r2, r3
+L646  0x7c 0x41 0x1a 0x38
+L646  0x00001000: 7c 41 1a 38               ?? eqv      r1, r2, r3                               ; equivalent
 L647  
-L648  # or. r1, r2, r3
-L649  0x7c 0x41 0x1b 0x79
-L649  0x00001000: 7c 41 1b 79               ?? or.      r1, r2, r3                               ; OR
+L648  # eqv. r1, r2, r3
+L649  0x7c 0x41 0x1a 0x39
+L649  0x00001000: 7c 41 1a 39               ?? eqv.     r1, r2, r3                               ; equivalent
 L650  
-L651  # xor r1, r2, r3
-L652  0x7c 0x41 0x1a 0x78
-L652  0x00001000: 7c 41 1a 78               ?? xor      r1, r2, r3                               ; XOR
+L651  # andc r1, r2, r3
+L652  0x7c 0x41 0x18 0x78
+L652  0x00001000: 7c 41 18 78               ?? andc     r1, r2, r3                               ; AND with complement
 L653  
-L654  # xor. r1, r2, r3
-L655  0x7c 0x41 0x1a 0x79
-L655  0x00001000: 7c 41 1a 79               ?? xor.     r1, r2, r3                               ; XOR
+L654  # andc. r1, r2, r3
+L655  0x7c 0x41 0x18 0x79
+L655  0x00001000: 7c 41 18 79               ?? andc.    r1, r2, r3                               ; AND with complement
 L656  
-L657  # nand r1, r2, r3
-L658  0x7c 0x41 0x1b 0xb8
-L658  0x00001000: 7c 41 1b b8               ?? nand     r1, r2, r3                               ; NAND
+L657  # orc r1, r2, r3
+L658  0x7c 0x41 0x1b 0x38
+L658  0x00001000: 7c 41 1b 38               ?? orc      r1, r2, r3                               ; OR with complement
 L659  
-L660  # nand. r1, r2, r3
-L661  0x7c 0x41 0x1b 0xb9
-L661  0x00001000: 7c 41 1b b9               ?? nand.    r1, r2, r3                               ; NAND
+L660  # orc. r1, r2, r3
+L661  0x7c 0x41 0x1b 0x39
+L661  0x00001000: 7c 41 1b 39               ?? orc.     r1, r2, r3                               ; OR with complement
 L662  
-L663  # nor r1, r2, r3
-L664  0x7c 0x41 0x18 0xf8
-L664  0x00001000: 7c 41 18 f8               ?? nor      r1, r2, r3                               ; NOR
+L663  # extsb r1, r2
+L664  0x7c 0x41 0x07 0x74
+L664  0x00001000: 7c 41 07 74               ?? extsb    r1, r2                                   ; extend sign byte
 L665  
-L666  # nor. r1, r2, r3
-L667  0x7c 0x41 0x18 0xf9
-L667  0x00001000: 7c 41 18 f9               ?? nor.     r1, r2, r3                               ; NOR
+L666  # extsb. r1, r2
+L667  0x7c 0x41 0x07 0x75
+L667  0x00001000: 7c 41 07 75               ?? extsb.   r1, r2                                   ; extend sign byte
 L668  
-L669  # eqv r1, r2, r3
-L670  0x7c 0x41 0x1a 0x38
-L670  0x00001000: 7c 41 1a 38               ?? eqv      r1, r2, r3                               ; equivalent
+L669  # extsh r1, r2
+L670  0x7c 0x41 0x0f 0x34
+L670  0x00001000: 7c 41 0f 34               ?? extsh    r1, r2                                   ; extend sign halfword
 L671  
-L672  # eqv. r1, r2, r3
-L673  0x7c 0x41 0x1a 0x39
-L673  0x00001000: 7c 41 1a 39               ?? eqv.     r1, r2, r3                               ; equivalent
+L672  # extsh. r1, r2
+L673  0x7c 0x41 0x0f 0x35
+L673  0x00001000: 7c 41 0f 35               ?? extsh.   r1, r2                                   ; extend sign halfword
 L674  
-L675  # andc r1, r2, r3
-L676  0x7c 0x41 0x18 0x78
-L676  0x00001000: 7c 41 18 78               ?? andc     r1, r2, r3                               ; AND with complement
+L675  # cntlzw r1, r2
+L676  0x7c 0x41 0x00 0x34
+L676  0x00001000: 7c 41 00 34               ?? cntlzw   r1, r2                                   ; count leading zeros word
 L677  
-L678  # andc. r1, r2, r3
-L679  0x7c 0x41 0x18 0x79
-L679  0x00001000: 7c 41 18 79               ?? andc.    r1, r2, r3                               ; AND with complement
+L678  # cntlzw. r1, r2
+L679  0x7c 0x41 0x00 0x35
+L679  0x00001000: 7c 41 00 35               ?? cntlzw.  r1, r2                                   ; count leading zeros word
 L680  
-L681  # orc r1, r2, r3
-L682  0x7c 0x41 0x1b 0x38
-L682  0x00001000: 7c 41 1b 38               ?? orc      r1, r2, r3                               ; OR with complement
+L681  # popcntb r1, r2
+L682  0x7c 0x41 0x00 0xf4
+L682  0x00001000: 7c 41 00 f4               ?? popcntb  r1, r2                                   ; population count bytes
 L683  
-L684  # orc. r1, r2, r3
-L685  0x7c 0x41 0x1b 0x39
-L685  0x00001000: 7c 41 1b 39               ?? orc.     r1, r2, r3                               ; OR with complement
-L686  
-L687  # extsb r1, r2
-L688  0x7c 0x41 0x07 0x74
-L688  0x00001000: 7c 41 07 74               ?? extsb    r1, r2                                   ; extend sign byte
-L689  
-L690  # extsb. r1, r2
-L691  0x7c 0x41 0x07 0x75
-L691  0x00001000: 7c 41 07 75               ?? extsb.   r1, r2                                   ; extend sign byte
-L692  
-L693  # extsh r1, r2
-L694  0x7c 0x41 0x0f 0x34
-L694  0x00001000: 7c 41 0f 34               ?? extsh    r1, r2                                   ; extend sign halfword
-L695  
-L696  # extsh. r1, r2
-L697  0x7c 0x41 0x0f 0x35
-L697  0x00001000: 7c 41 0f 35               ?? extsh.   r1, r2                                   ; extend sign halfword
-L698  
-L699  # cntlzw r1, r2
-L700  0x7c 0x41 0x00 0x34
-L700  0x00001000: 7c 41 00 34               ?? cntlzw   r1, r2                                   ; count leading zeros word
-L701  
-L702  # cntlzw. r1, r2
-L703  0x7c 0x41 0x00 0x35
-L703  0x00001000: 7c 41 00 35               ?? cntlzw.  r1, r2                                   ; count leading zeros word
-L704  
-L705  # popcntb r1, r2
-L706  0x7c 0x41 0x00 0xf4
-L706  0x00001000: 7c 41 00 f4               ?? popcntb  r1, r2                                   ; population count bytes
-L707  
+L684  #-------------------------------------------------------------------------------
+L685  # 3.3.12.1 Fixed-Point Rotate Instructions
+L686  #-------------------------------------------------------------------------------
+L687  
+L688  # rlwinm r1, r2, 3, 4, 5
+L689  0x54 0x41 0x19 0x0a
+L689  0x00001000: 54 41 19 0a               ?? rlwinm   r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
+L690  
+L691  # rlwinm. r1, r2, 3, 4, 5
+L692  0x54 0x41 0x19 0x0b
+L692  0x00001000: 54 41 19 0b               ?? rlwinm.  r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
+L693  
+L694  # rlwnm r1, r2, r3, 4, 5
+L695  0x5c 0x41 0x19 0x0a
+L695  0x00001000: 5c 41 19 0a               ?? rlwnm    r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
+L696  
+L697  # rlwnm. r1, r2, r3, 4, 5
+L698  0x5c 0x41 0x19 0x0b
+L698  0x00001000: 5c 41 19 0b               ?? rlwnm.   r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
+L699  
+L700  # rlwimi r1, r2, 3, 4, 5
+L701  0x50 0x41 0x19 0x0a
+L701  0x00001000: 50 41 19 0a               ?? rlwimi   r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
+L702  
+L703  # rlwimi. r1, r2, 3, 4, 5
+L704  0x50 0x41 0x19 0x0b
+L704  0x00001000: 50 41 19 0b               ?? rlwimi.  r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
+L705  
+L706  #-------------------------------------------------------------------------------
+L707  # 3.3.12.2 Fixed-Point Shift Instructions
 L708  #-------------------------------------------------------------------------------
-L709  # 3.3.12.1 Fixed-Point Rotate Instructions
-L710  #-------------------------------------------------------------------------------
-L711  
-L712  # rlwinm r1, r2, 3, 4, 5
-L713  0x54 0x41 0x19 0x0a
-L713  0x00001000: 54 41 19 0a               ?? rlwinm   r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
-L714  
-L715  # rlwinm. r1, r2, 3, 4, 5
-L716  0x54 0x41 0x19 0x0b
-L716  0x00001000: 54 41 19 0b               ?? rlwinm.  r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
-L717  
-L718  # rlwnm r1, r2, r3, 4, 5
-L719  0x5c 0x41 0x19 0x0a
-L719  0x00001000: 5c 41 19 0a               ?? rlwnm    r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
-L720  
-L721  # rlwnm. r1, r2, r3, 4, 5
-L722  0x5c 0x41 0x19 0x0b
-L722  0x00001000: 5c 41 19 0b               ?? rlwnm.   r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
-L723  
-L724  # rlwimi r1, r2, 3, 4, 5
-L725  0x50 0x41 0x19 0x0a
-L725  0x00001000: 50 41 19 0a               ?? rlwimi   r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
-L726  
-L727  # rlwimi. r1, r2, 3, 4, 5
-L728  0x50 0x41 0x19 0x0b
-L728  0x00001000: 50 41 19 0b               ?? rlwimi.  r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
-L729  
-L730  #-------------------------------------------------------------------------------
-L731  # 3.3.12.2 Fixed-Point Shift Instructions
-L732  #-------------------------------------------------------------------------------
+L709  
+L710  # slw r1, r2, r3
+L711  0x7c 0x41 0x18 0x30
+L711  0x00001000: 7c 41 18 30               ?? slw      r1, r2, r3                               ; shift left word
+L712  
+L713  # slw. r1, r2, r3
+L714  0x7c 0x41 0x18 0x31
+L714  0x00001000: 7c 41 18 31               ?? slw.     r1, r2, r3                               ; shift left word
+L715  
+L716  # srw r1, r2, r3
+L717  0x7c 0x41 0x1c 0x30
+L717  0x00001000: 7c 41 1c 30               ?? srw      r1, r2, r3                               ; shift right word
+L718  
+L719  # srw. r1, r2, r3
+L720  0x7c 0x41 0x1c 0x31
+L720  0x00001000: 7c 41 1c 31               ?? srw.     r1, r2, r3                               ; shift right word
+L721  
+L722  # srawi r1, r2, 3
+L723  0x7c 0x41 0x1e 0x70
+L723  0x00001000: 7c 41 1e 70               ?? srawi    r1, r2, 3                                ; shift right algebraic word immediate
+L724  
+L725  # srawi. r1, r2, 3
+L726  0x7c 0x41 0x1e 0x71
+L726  0x00001000: 7c 41 1e 71               ?? srawi.   r1, r2, 3                                ; shift right algebraic word immediate
+L727  
+L728  # sraw r1, r2, r3
+L729  0x7c 0x41 0x1e 0x30
+L729  0x00001000: 7c 41 1e 30               ?? sraw     r1, r2, r3                               ; shift right algebraic word
+L730  
+L731  # sraw. r1, r2, r3
+L732  0x7c 0x41 0x1e 0x31
+L732  0x00001000: 7c 41 1e 31               ?? sraw.    r1, r2, r3                               ; shift right algebraic word
 L733  
-L734  # slw r1, r2, r3
-L735  0x7c 0x41 0x18 0x30
-L735  0x00001000: 7c 41 18 30               ?? slw      r1, r2, r3                               ; shift left word
-L736  
-L737  # slw. r1, r2, r3
-L738  0x7c 0x41 0x18 0x31
-L738  0x00001000: 7c 41 18 31               ?? slw.     r1, r2, r3                               ; shift left word
-L739  
-L740  # srw r1, r2, r3
-L741  0x7c 0x41 0x1c 0x30
-L741  0x00001000: 7c 41 1c 30               ?? srw      r1, r2, r3                               ; shift right word
-L742  
-L743  # srw. r1, r2, r3
-L744  0x7c 0x41 0x1c 0x31
-L744  0x00001000: 7c 41 1c 31               ?? srw.     r1, r2, r3                               ; shift right word
-L745  
-L746  # srawi r1, r2, 3
-L747  0x7c 0x41 0x1e 0x70
-L747  0x00001000: 7c 41 1e 70               ?? srawi    r1, r2, 3                                ; shift right algebraic word immediate
-L748  
-L749  # srawi. r1, r2, 3
-L750  0x7c 0x41 0x1e 0x71
-L750  0x00001000: 7c 41 1e 71               ?? srawi.   r1, r2, 3                                ; shift right algebraic word immediate
-L751  
-L752  # sraw r1, r2, r3
-L753  0x7c 0x41 0x1e 0x30
-L753  0x00001000: 7c 41 1e 30               ?? sraw     r1, r2, r3                               ; shift right algebraic word
-L754  
-L755  # sraw. r1, r2, r3
-L756  0x7c 0x41 0x1e 0x31
-L756  0x00001000: 7c 41 1e 31               ?? sraw.    r1, r2, r3                               ; shift right algebraic word
-L757  
-L758  #-------------------------------------------------------------------------------
-L759  # 3.3.13 Move To/From System Register Instructions
-L760  #-------------------------------------------------------------------------------
-L761  
-L762  # mtspr xer, r2
-L763  0x7c 0x41 0x03 0xa6
-L763  0x00001000: 7c 41 03 a6               ?? mtspr    xer, r2                                  ; copy to special-purpose register
-L764  
-L765  # mtspr lr, r2
-L766  0x7c 0x48 0x03 0xa6
-L766  0x00001000: 7c 48 03 a6               ?? mtspr    lr, r2                                   ; copy to special-purpose register
-L767  
-L768  # mtspr ctr, r2
-L769  0x7c 0x49 0x03 0xa6
-L769  0x00001000: 7c 49 03 a6               ?? mtspr    ctr, r2                                  ; copy to special-purpose register
-L770  
-L771  # mfspr r2, xer
-L772  0x7c 0x41 0x02 0xa6
-L772  0x00001000: 7c 41 02 a6               ?? mfspr    r2, xer                                  ; copy from special-purpose register
-L773  
-L774  # mfspr r2, lr
-L775  0x7c 0x48 0x02 0xa6
-L775  0x00001000: 7c 48 02 a6               ?? mfspr    r2, lr                                   ; copy from special-purpose register
-L776  
-L777  # mfspr r2, ctr
-L778  0x7c 0x49 0x02 0xa6
-L778  0x00001000: 7c 49 02 a6               ?? mfspr    r2, ctr                                  ; copy from special-purpose register
-L779  
-L780  # mtcrf 0xb4, r1
-L781  0x7c 0x2b 0x41 0x20
-L781  0x00001000: 7c 2b 41 20               ?? mtcrf    0xb4<180,-76>, r1                        ; copy to condition register fields
-L782  
-L783  # mfcr r1
-L784  0x7c 0x20 0x00 0x26
-L784  0x00001000: 7c 20 00 26               ?? mfcr     r1                                       ; copy from condition register
+L734  #-------------------------------------------------------------------------------
+L735  # 3.3.13 Move To/From System Register Instructions
+L736  #-------------------------------------------------------------------------------
+L737  
+L738  # mtspr xer, r2
+L739  0x7c 0x41 0x03 0xa6
+L739  0x00001000: 7c 41 03 a6               ?? mtspr    xer, r2                                  ; copy to special-purpose register
+L740  
+L741  # mtspr lr, r2
+L742  0x7c 0x48 0x03 0xa6
+L742  0x00001000: 7c 48 03 a6               ?? mtspr    lr, r2                                   ; copy to special-purpose register
+L743  
+L744  # mtspr ctr, r2
+L745  0x7c 0x49 0x03 0xa6
+L745  0x00001000: 7c 49 03 a6               ?? mtspr    ctr, r2                                  ; copy to special-purpose register
+L746  
+L747  # mfspr r2, xer
+L748  0x7c 0x41 0x02 0xa6
+L748  0x00001000: 7c 41 02 a6               ?? mfspr    r2, xer                                  ; copy from special-purpose register
+L749  
+L750  # mfspr r2, lr
+L751  0x7c 0x48 0x02 0xa6
+L751  0x00001000: 7c 48 02 a6               ?? mfspr    r2, lr                                   ; copy from special-purpose register
+L752  
+L753  # mfspr r2, ctr
+L754  0x7c 0x49 0x02 0xa6
+L754  0x00001000: 7c 49 02 a6               ?? mfspr    r2, ctr                                  ; copy from special-purpose register
+L755  
+L756  # mtcrf 0xb4, r1
+L757  0x7c 0x2b 0x41 0x20
+L757  0x00001000: 7c 2b 41 20               ?? mtcrf    0xb4<180,-76>, r1                        ; copy to condition register fields
+L758  
+L759  # mfcr r1
+L760  0x7c 0x20 0x00 0x26
+L760  0x00001000: 7c 20 00 26               ?? mfcr     r1                                       ; copy from condition register

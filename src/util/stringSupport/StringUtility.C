@@ -258,7 +258,7 @@ joinEnglish(const std::vector<std::string> &phrases, const std::string &separato
 
     std::string s;
     for (size_t i=0; i<phrases.size()-1; ++i)
-        s = phrases[i] + separator + " ";
+        s += phrases[i] + separator + " ";
     return s + finalIntro + " " + phrases.back();
 }
 

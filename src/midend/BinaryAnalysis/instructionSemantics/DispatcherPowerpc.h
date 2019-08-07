@@ -55,12 +55,16 @@ private:
 #endif
 
 protected:
-    // prototypical constructor
-    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc()) {}
+    // Prototypical constructor
+    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc32()) {}
 
+    // Prototypical constructor
+    DispatcherPowerpc(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}
+    
     DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::dictionary_powerpc()) {
-        ASSERT_require(32==addrWidth);
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {
+        ASSERT_require(32==addrWidth || 64==addrWidth);
         regcache_init();
         iproc_init();
         memory_init();
@@ -81,7 +85,12 @@ public:
     static DispatcherPowerpcPtr instance() {
         return DispatcherPowerpcPtr(new DispatcherPowerpc);
     }
-    
+
+    /** Constructor. */
+    static DispatcherPowerpcPtr instance(size_t addrWidth, const RegisterDictionary *regs = NULL) {
+        return DispatcherPowerpcPtr(new DispatcherPowerpc(addrWidth, regs));
+    }
+            
     /** Constructor. */
     static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
                                          const RegisterDictionary *regs=NULL) {
@@ -119,7 +128,7 @@ public:
 
     /** Update OV and SO bits of the XER register.
      *
-     *  If called, it should be called before @ref updateCr since updateCr will copy some of the XER into the CR result.  The
+     *  If called, it should be called before @ref updateCr0 since updateCr0 will copy some of the XER into the CR result.  The
      *  arguments are the @p result of some addition-like operation and a @p carry out bit from that operation. An overflow is
      *  deemed to have occurred if the result's sign bit is not equal to the carry bit. */
     void updateXerOverflow(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &carry);
@@ -130,7 +139,7 @@ public:
     void setXerOverflow(const BaseSemantics::SValuePtr &hadOverflow);
 
     /** Write status flags for result. */
-    virtual void updateCr(const BaseSemantics::SValuePtr &result);
+    virtual void updateCr0(const BaseSemantics::SValuePtr &result);
 
     /** Reads from a memory address and updates a register with the effective address that was read. The address expression
      *  must be a binary add operation whose first argument is a register, and it is this register that gets updated. */
