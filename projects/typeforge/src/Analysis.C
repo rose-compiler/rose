@@ -23,7 +23,7 @@
 #  define DEBUG__Analysis 0
 #endif
 #ifndef DEBUG__incompatible_types
-#  define DEBUG__incompatible_types 1
+#  define DEBUG__incompatible_types 0
 #endif
 #ifndef DEBUG__computeClustering
 #  define DEBUG__computeClustering 0
@@ -688,6 +688,7 @@ void Analysis::traverseFunctionDefinitions(SgGlobal * g) {
         assert(fdecl != nullptr);
 
         if (fdecl->get_qualified_name() == "::SQRT" || fdecl->get_qualified_name() == "::FABS" || fdecl->get_qualified_name() == "::CBRT") {
+          i.skipChildrenOnForward();
           continue;
         }
 
@@ -752,8 +753,8 @@ static bool incompatible_types(SgNode * k, SgNode * t) {
   std::cout << "  tt = " << tt << " (" << tt->class_name() << ") = " << tt->unparseToString() << std::endl;
 #endif
 
-  // case of exact same type
-  if (kt == tt) return false;
+  // case of exact same type but not reference/pointer
+  if (kt == tt && !isSgReferenceType(kt) && !isSgPointerType(kt)) return false;
 
   auto strip_to_value_or_pointer =
           SgType::STRIP_MODIFIER_TYPE          |
