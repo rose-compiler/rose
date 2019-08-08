@@ -7,6 +7,9 @@
 
 namespace Typeforge {
 
+SgType * stripType(SgType * type, bool strip_std_vector = true);
+bool isTypeBasedOn(SgType * type, SgType * base, bool strip_type = false);
+
 class ToolConfig;
 
 class Analysis {
@@ -38,12 +41,14 @@ class Analysis {
     std::map< SgNode *, std::map< SgNode *, std::vector<stack_t> > > edges;
     void addEdge(SgNode * s, SgNode * t);
 
-    // Compute link
+    // Discover nodes of interrest
 
     void traverse(SgGlobal * g);
     void traverseVariableDeclarations(SgGlobal * g);
     void traverseFunctionDeclarations(SgGlobal * g);
     void traverseFunctionDefinitions(SgGlobal * g);
+
+    // Find links between nodes
 
     void linkVariables(SgNode * key, SgExpression * exp);
 
@@ -73,6 +78,12 @@ class Analysis {
     void getFunctions  ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
     void getMethods    ( std::vector<SgFunctionDeclaration *> & decls, std::string const & location) const;
     void getParameters ( std::vector<SgInitializedName     *> & decls, std::string const & location) const;
+    void getCallExp    ( std::vector<SgFunctionCallExp     *> & exprs, std::string const & location) const;
+
+    // Create Clusters
+
+    void buildChildSets(std::map<SgNode *, std::set<SgNode *> > & childsets, SgType * base) const;
+    void buildClusters(std::vector<std::set<SgNode *> > & clusters, SgType * base) const;
 
     // Generate the graph of the model
 

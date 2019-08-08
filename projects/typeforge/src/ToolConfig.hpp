@@ -76,7 +76,7 @@ class ToolConfig {
 public:
     static ToolConfig * getGlobal();
     static void writeGlobal();
-    static void appendAnalysis();
+    static void appendAnalysis(SgType * type = nullptr);
 
     static std::string filename;
 

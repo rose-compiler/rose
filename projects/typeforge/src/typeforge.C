@@ -47,16 +47,17 @@ int main (int argc, char* argv[]) {
   Rose::global_options.set_backend_warnings(false);
 
   auto rose_args = ::Typeforge::parse_args(argc, argv);
- 
-  // Build ROSE IR and use it to initialize Typeforge
-
   rose_args.insert(rose_args.begin(), "rose");
   if (!args.count("compile")) {
     rose_args.push_back("-rose:skipfinalCompileStep");
   }
+ 
+  // Build ROSE IR and use it to initialize Typeforge
+
   ::Typeforge::typechain.initialize(frontend(rose_args));
   if (args.isUserProvided("set-analysis")) {
-    ::Typeforge::typechain.toDot("set_analysis.dot", SageBuilder::buildDoubleType());
+    ::Typeforge::typechain.toDot("set_analysis.dot", nullptr);
+    ::Typeforge::typechain.toDot("set_analysis_double.dot", SageBuilder::buildDoubleType());
   }
 
   // [ALTERNATIVE] "--cast-stats": display statistics about casts operations in the program TODO This should be a simple query to the model.
@@ -129,7 +130,7 @@ int main (int argc, char* argv[]) {
     //   FIXME race-condition: parallel make (see above)
 
     if (args.isUserProvided("typeforge-out")) {
-      ::Typeforge::ToolConfig::appendAnalysis();
+      ::Typeforge::ToolConfig::appendAnalysis(SageBuilder::buildDoubleType());
       ::Typeforge::ToolConfig::writeGlobal();
     }
 

@@ -22,6 +22,12 @@
 #ifndef DEBUG__ToolConfig__addLabel
 #  define DEBUG__ToolConfig__addLabel  DEBUG__ToolConfig
 #endif
+#ifndef DEBUG__ToolConfig__appendAnalysis
+#  define DEBUG__ToolConfig__appendAnalysis DEBUG__ToolConfig
+#endif
+#ifndef WARNING__ToolConfig
+#  define WARNING__ToolConfig 0
+#endif
 
 namespace SgNodeHelper {
   //Returns the name of the file the specified node is part of
@@ -310,16 +316,30 @@ void ToolConfig::writeGlobal() {
   }
 }
 
-void ToolConfig::appendAnalysis() {
+void ToolConfig::appendAnalysis(SgType * type) {
+#if DEBUG__ToolConfig__appendAnalysis
+  std::cout << "ToolConfig::appendAnalysis()" << std::endl;
+  std::cout << "  type = " << type << std::endl;
+#endif
+
   if (ToolConfig::global_config != nullptr) {
-    for (auto e: ::Typeforge::typechain.edges) {
-      auto key = e.first;
-      std::ostringstream oss; oss << "set-analysis:" << key;
+    std::vector<std::set<SgNode *> > clusters;
+    ::Typeforge::typechain.buildClusters(clusters, type);
+    for (size_t s = 0; s < clusters.size(); ++s) {
+      std::ostringstream oss; oss << "typechain:cluster=" << s;
       std::string label = oss.str();
-      ToolConfig::global_config->addLabel(key, label);
+      for (auto n : clusters[s]) {
+        ToolConfig::global_config->addLabel(n, label);
+      }
+    }
+
+    for (auto e: ::Typeforge::typechain.edges) {
+      auto h = ::Typeforge::typechain.getHandle(e.first);
+      std::ostringstream oss; oss << "typechain:address=" << h;
+      std::string label = oss.str();
+      ToolConfig::global_config->addLabel(e.first, label);
       for (auto target_stack: e.second) {
         auto target = target_stack.first;
-//      auto stack = target_stack.second;
         ToolConfig::global_config->addLabel(target, label);
       }
     }
@@ -392,7 +412,9 @@ void ToolConfig::addAction(SgNode * node, SgType * toType, std::string action_ta
 #endif
 
     if (actions.find(handle) != actions.end()) {
+#if WARNING__ToolConfig
       std::cerr << "[typeforge] WARNING: Cannot add another action for an existing handle! (" << handle << ")" << std::endl;
+#endif
       return;
     }
 
