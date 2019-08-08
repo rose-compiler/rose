@@ -23,7 +23,7 @@
 #  define DEBUG__Analysis 0
 #endif
 #ifndef DEBUG__incompatible_types
-#  define DEBUG__incompatible_types 0
+#  define DEBUG__incompatible_types 1
 #endif
 #ifndef DEBUG__computeClustering
 #  define DEBUG__computeClustering 0
@@ -44,7 +44,7 @@
 #  define DEBUG__Analysis__traverseFunctionDefinitions DEBUG__Analysis__traverse
 #endif
 #ifndef DEBUG__Analysis__linkVariables
-#  define DEBUG__Analysis__linkVariables DEBUG__Analysis
+#  define DEBUG__Analysis__linkVariables 1
 #endif
 #ifndef DEBUG__Analysis__addEdge
 #  define DEBUG__Analysis__addEdge DEBUG__Analysis
@@ -755,47 +755,25 @@ static bool incompatible_types(SgNode * k, SgNode * t) {
   // case of exact same type
   if (kt == tt) return false;
 
-  SgType * v_kt = kt->stripType(
-    SgType::STRIP_MODIFIER_TYPE  |
-    SgType::STRIP_REFERENCE_TYPE |
-    SgType::STRIP_RVALUE_REFERENCE_TYPE
-  );
+  auto strip_to_value_or_pointer =
+          SgType::STRIP_MODIFIER_TYPE          |
+          SgType::STRIP_REFERENCE_TYPE         |
+          SgType::STRIP_RVALUE_REFERENCE_TYPE;
+
+  auto strip_to_base =
+          strip_to_value_or_pointer   |
+          SgType::STRIP_ARRAY_TYPE    |
+          SgType::STRIP_POINTER_TYPE;
+
+  SgType * v_kt = kt->stripType(strip_to_value_or_pointer);
+  SgType * b_kt = kt->stripType(strip_to_base);
+  SgType * v_tt = tt->stripType(strip_to_value_or_pointer);
+  SgType * b_tt = tt->stripType(strip_to_base);
 
 #if DEBUG__incompatible_types
   std::cout << "  v_kt = " << v_kt << " (" << v_kt->class_name() << ") = " << v_kt->unparseToString() << std::endl;
-#endif
-
-  SgType * b_kt = kt->stripType(
-    SgType::STRIP_ARRAY_TYPE     |
-    SgType::STRIP_POINTER_TYPE   |
-    SgType::STRIP_MODIFIER_TYPE  |
-    SgType::STRIP_REFERENCE_TYPE |
-    SgType::STRIP_RVALUE_REFERENCE_TYPE
-  );
-
-#if DEBUG__incompatible_types
   std::cout << "  b_kt = " << b_kt << " (" << b_kt->class_name() << ") = " << b_kt->unparseToString() << std::endl;
-#endif
-
-  SgType * v_tt = tt->stripType(
-    SgType::STRIP_MODIFIER_TYPE  |
-    SgType::STRIP_REFERENCE_TYPE |
-    SgType::STRIP_RVALUE_REFERENCE_TYPE
-  );
-
-#if DEBUG__incompatible_types
   std::cout << "  v_tt = " << v_tt << " (" << v_tt->class_name() << ") = " << v_tt->unparseToString() << std::endl;
-#endif
-
-  SgType * b_tt = tt->stripType(
-    SgType::STRIP_ARRAY_TYPE     |
-    SgType::STRIP_POINTER_TYPE   |
-    SgType::STRIP_MODIFIER_TYPE  |
-    SgType::STRIP_REFERENCE_TYPE |
-    SgType::STRIP_RVALUE_REFERENCE_TYPE
-  );
-
-#if DEBUG__incompatible_types
   std::cout << "  b_tt = " << b_tt << " (" << b_tt->class_name() << ") = " << b_tt->unparseToString() << std::endl;
 #endif
 
@@ -803,6 +781,13 @@ static bool incompatible_types(SgNode * k, SgNode * t) {
   bool kt_no_ptr = (v_kt == b_kt);
   bool tt_is_vt  = (tt->stripType(SgType::STRIP_MODIFIER_TYPE) == b_tt);
   bool tt_no_ptr = (v_tt == b_tt);
+
+#if DEBUG__incompatible_types
+  std::cout << "  kt_is_vt  = " << kt_is_vt  << std::endl;
+  std::cout << "  kt_no_ptr = " << kt_no_ptr << std::endl;
+  std::cout << "  tt_is_vt  = " << tt_is_vt  << std::endl;
+  std::cout << "  tt_no_ptr = " << tt_no_ptr << std::endl;
+#endif
 
   // case assign to value type:
   //    typeof(K) is value type
@@ -814,7 +799,7 @@ static bool incompatible_types(SgNode * k, SgNode * t) {
   //    typeof(T) is value type
   //    typeof(K) is NOT ptr type
   //    typeof(K) == [&|&&]* typeof(T)
-  if (tt_is_vt && kt_no_ptr && b_tt == b_kt) return false;
+//if (tt_is_vt && kt_no_ptr && b_tt == b_kt) return false;
 
   return true;
 }
