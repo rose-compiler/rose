@@ -28,5 +28,8 @@ typeforge_SOURCES = \
   SpecFrontEnd.C \
   ToolConfig.cpp \
   CommandList.C \
-  Analysis.C
+  Analysis.C \
+  OperandNetwork.C \
+  OperandData.C \
+  TypeChain.C
 

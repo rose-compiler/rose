@@ -44,7 +44,7 @@
 #  define DEBUG__Analysis__traverseFunctionDefinitions DEBUG__Analysis__traverse
 #endif
 #ifndef DEBUG__Analysis__linkVariables
-#  define DEBUG__Analysis__linkVariables 1
+#  define DEBUG__Analysis__linkVariables DEBUG__Analysis
 #endif
 #ifndef DEBUG__Analysis__addEdge
 #  define DEBUG__Analysis__addEdge DEBUG__Analysis
