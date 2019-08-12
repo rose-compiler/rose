@@ -206,6 +206,8 @@ public:
      *  Thread safety: This method is thread safe. */
     const std::vector<uint8_t>& content() const;
 
+    // FIXME[Robb Matzke 2019-08-12]: content is read-only, created by constructor. Therefore this member shouldn't be defined,
+    // or at least should be private.
     void content(std::vector<uint8_t> binary_data);
 };
 
@@ -213,7 +215,8 @@ public:
 // Test cases
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef std::pair<std::string, std::string> EnvValue;
+/** Environment variable and its value. */
+typedef std::pair<std::string /*name*/, std::string /*value*/> EnvValue;
 
 /** Information about how to run a specimen.
  *

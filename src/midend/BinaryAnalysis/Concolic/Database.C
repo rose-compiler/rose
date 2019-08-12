@@ -765,7 +765,8 @@ namespace BinaryAnalysis {
                      const Concolic::ObjectId<IdTag>& id
                    )
     {
-      if (!id) throw std::logic_error("ID not set");
+      if (!id)
+          throw Exception("ID not set");
 
       return sqlPrepare(tx, objQueryString(id), id.get());
     }
@@ -1549,10 +1550,10 @@ Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj, Update::Flag upd
 }
 
 
-void failNonExistingDB(bool fileexists, const std::string& file)
+void failNonExistingDB(bool fileexists, const std::string& url)
 {
   if (!fileexists)
-    throw std::runtime_error("Database file for url: " + file + "does not exist (cannot open).");
+      throw Exception("database file for URL \"" + StringUtility::cEscape(url) + "\" does not exist (cannot open)");
 }
 
 void overwriteExistingDB(bool fileexists, const std::string& file)
@@ -1579,8 +1580,8 @@ Database::instance(const std::string &url)
 {
   SqlConnectionPtr dbconn = connectToDB(url, failNonExistingDB);
 
-    if (!isDbInitialized(dbconn))
-    throw std::runtime_error("Database " + url + " is not a concolic DB.");
+  if (!isDbInitialized(dbconn))
+      throw Exception("database \"" + StringUtility::cEscape(url) + "\" is not a concolic database");
 
   Ptr              db(new Database);
 
@@ -1727,7 +1728,7 @@ void GuardedDB::debug(GuardedStmt& sql)
 void checkSql(GuardedDB& db, int sql3code, int expected = SQLITE_OK)
 {
   if (sql3code != expected)
-    throw std::runtime_error(sqlite3_errmsg(db));
+    throw Exception(sqlite3_errmsg(db));
 }
 
 template <class Iterator>
@@ -1814,7 +1815,7 @@ Database::extractRbaFile(const boost::filesystem::path& path, Database::Specimen
   std::ofstream outfile(path.string().c_str(), std::ofstream::binary);
 
   if (!outfile.good())
-    throw std::runtime_error("unable to open file: " + path.string());
+      throw Exception("unable to open file \"" + StringUtility::cEscape(path.string()) + "\"");
 
   retrieveRBAFile(db, id, FileSink<char>(outfile));
 #else
