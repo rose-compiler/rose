@@ -3,7 +3,9 @@
 #include <BinaryConcolic.h>
 
 #include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -51,22 +53,23 @@ namespace BinaryAnalysis {
 
   namespace
   {
-    std::pair<std::string, bool>
-    dbProperties(const std::string& url)
-    {
-      static const std::string locator  = "sqlite3://";
-      static const std::string debugopt = "?debug";
+    // Split a database URL into a file name and debug Boolean. This assumes that the URL contains a file name, and that the
+    // debug flag is the first option in the URL.
+  std::pair<boost::filesystem::path, bool /*isDebugging*/>
+    dbProperties(const std::string& url) {
+        SqlDatabase::Connection::ParsedUrl parsed = SqlDatabase::Connection::parseUrl(url);
+        if (SqlDatabase::SQLITE3 != parsed.driver)
+            return std::make_pair(boost::filesystem::path(), false); // we're only handling SQLite3 for now
 
-      if (!boost::starts_with(url, locator)) return std::make_pair(url, false);
+        bool withDebug = false;
+        BOOST_FOREACH (const SqlDatabase::Connection::Parameter &param, parsed.params) {
+            if ("debug" == param.first) {
+                withDebug = true;
+                break;
+            }
+        }
 
-      ROSE_ASSERT(SqlDatabase::Connection::guess_driver(url) == SqlDatabase::SQLITE3);
-
-      size_t limit = url.find_first_of('?', locator.size());
-      bool   with_debug = (  (limit != std::string::npos)
-                          && debugopt == url.substr(limit, limit + debugopt.size())
-                          );
-
-      return std::make_pair(url.substr(locator.size(), limit), with_debug);
+        return std::make_pair(boost::filesystem::path(parsed.dbName), withDebug);
     }
 
     static const size_t
@@ -1550,29 +1553,22 @@ Database::id_ns(SqlTransactionPtr tx, const Specimen::Ptr& obj, Update::Flag upd
 }
 
 
-void failNonExistingDB(bool fileexists, const std::string& url)
-{
-  if (!fileexists)
+void failNonExistingDB(bool fileExists, const std::string& url, const boost::filesystem::path &file) {
+  if (!fileExists)
       throw Exception("database file for URL \"" + StringUtility::cEscape(url) + "\" does not exist (cannot open)");
 }
 
-void overwriteExistingDB(bool fileexists, const std::string& file)
-{
-  if (fileexists)
+void overwriteExistingDB(bool fileExists, const std::string &url, const boost::filesystem::path &file) {
+  if (fileExists)
     boost::filesystem::remove(file);
 }
 
 template <class ExistingDBPolicy>
 SqlConnectionPtr
-connectToDB(const std::string& url, ExistingDBPolicy policy)
-{
-  std::pair<std::string, bool> dbinfo = dbProperties(url);
-
-  policy(boost::filesystem::exists(dbinfo.first), dbinfo.first);
-
-    SqlDatabase::Driver dbdriver = SqlDatabase::Connection::guess_driver(url);
-
-  return SqlDatabase::Connection::create(url, dbdriver);
+connectToDB(const std::string& url, ExistingDBPolicy policy) {
+    std::pair<boost::filesystem::path, bool> dbinfo = dbProperties(url);
+    policy(boost::filesystem::exists(dbinfo.first), url, dbinfo.first);
+    return SqlDatabase::Connection::create(url);
 }
 
 Database::Ptr
@@ -1650,9 +1646,9 @@ struct GuardedDB
     GuardedDB(const std::string& url)
     : db_(NULL), dbg_(false)
     {
-      std::pair<std::string, bool> properties = dbProperties(url);
+      std::pair<boost::filesystem::path, bool> properties = dbProperties(url);
 
-      sqlite3_open(properties.first.c_str(), &db_);
+      sqlite3_open(properties.first.native().c_str(), &db_);
       dbg_ = properties.second;
     }
 
