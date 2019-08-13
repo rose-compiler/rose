@@ -49,10 +49,13 @@
 #define AD_INST            "ad_intermediate_instrumentation"
 
 #ifndef DEBUG__SpecFrontEnd
-#  define DEBUG__SpecFrontEnd__parse 0
+#  define DEBUG__SpecFrontEnd 0
 #endif
 #ifndef DEBUG__SpecFrontEnd__parse
 #  define DEBUG__SpecFrontEnd__parse DEBUG__SpecFrontEnd
+#endif
+#ifndef DEBUG__SpecFrontEnd__readJSONFile
+#  define DEBUG__SpecFrontEnd__readJSONFile DEBUG__SpecFrontEnd
 #endif
 
 namespace Typeforge {
@@ -101,11 +104,28 @@ bool SpecFrontEnd::readJSONFile(string const & fileName, CommandList & commandLi
     }
   }
 
-  ToolConfig* config = new ToolConfig(fileName);
-  map<std::string, ToolAction>& actions = config->getActions();
-  for(auto act: actions){
-    string handle = act.second.getHandle();
-    string action = act.second.getActionType();
+#if DEBUG__SpecFrontEnd__readJSONFile
+  std::cout << "SpecFrontEnd::readJSONFile" << std::endl;
+  std::cout << "  fileName = " << fileName << std::endl;
+#endif
+
+  ToolConfig * config = new ToolConfig(fileName);
+  auto const & actions = config->getActions();
+
+#if DEBUG__SpecFrontEnd__readJSONFile
+  std::cout << "  actions.size() = " << actions.size() << std::endl;
+#endif
+
+  for (auto const & act: actions) {
+
+    std::string const & handle = act.second.getHandle();
+    std::string const & action = act.second.getActionType();
+
+#if DEBUG__SpecFrontEnd__readJSONFile
+    std::cout << "  handle = " << handle << std::endl;
+    std::cout << "  action = " << action << std::endl;
+#endif
+
     bool deprecatedBase    = ((action == "replace_varbasetype") || (action == "change_varbasetype") || (action == "replace_basetype") || (action == "change_basetype") || (action == "list_basereplacements"));
     bool base = (
       action == CHANGE_VAR_BASE ||
