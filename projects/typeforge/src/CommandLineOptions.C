@@ -48,6 +48,7 @@ std::vector<std::string> parse_args(int argc, char* argv[]) {
   hidden_desc.add_options()
     ("source-file", po::value<vector<string> >(),"Name of source files.")
     ("set-analysis", "Perform set analysis to determine which variables must be changed together.")
+    ("opnet", "Extract the Operand Network.")
     ("spec-file", po::value<vector<string> >(),"Name of Typeforge specification file.")
     ;
 

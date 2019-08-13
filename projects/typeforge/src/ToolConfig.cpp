@@ -10,6 +10,13 @@
 
 #define MAXPATHLEN 255
 
+#ifndef DEBUG__ToolAction
+#  define DEBUG__ToolAction 0
+#endif
+#ifndef DEBUG__ToolAction__from_json
+#  define  DEBUG__ToolAction__from_json DEBUG__ToolAction
+#endif
+
 #ifndef DEBUG__ToolConfig
 #  define DEBUG__ToolConfig 0
 #endif
@@ -24,6 +31,9 @@
 #endif
 #ifndef DEBUG__ToolConfig__appendAnalysis
 #  define DEBUG__ToolConfig__appendAnalysis DEBUG__ToolConfig
+#endif
+#ifndef DEBUG__ToolConfig__from_json
+#  define DEBUG__ToolConfig__from_json DEBUG__ToolConfig
 #endif
 #ifndef WARNING__ToolConfig
 #  define WARNING__ToolConfig 0
@@ -48,6 +58,9 @@ namespace Typeforge {
 //////////////
 //ToolAction//
 //////////////
+
+size_t ToolAction::annon_count = 0;
+
 ToolAction::ToolAction(std::string actionType) :
   action(actionType),
   name(""),
@@ -75,7 +88,7 @@ ToolAction::ToolAction() :
 {}
 
 //actionType
-std::string ToolAction::getActionType() {
+std::string const & ToolAction::getActionType() const {
     return action;
 }
 
@@ -84,7 +97,7 @@ void ToolAction::setActionType(std::string type) {
 }
 
 //name
-std::string ToolAction::getName() {
+std::string const & ToolAction::getName() const {
     return name;
 }
 
@@ -93,7 +106,7 @@ void ToolAction::setName(std::string name) {
 }
 
 //handle
-std::string ToolAction::getHandle() {
+std::string const & ToolAction::getHandle() const {
     return handle;
 }
 
@@ -102,7 +115,7 @@ void ToolAction::setHandle(std::string handle) {
 }
 
 //scope
-std::string ToolAction::getScope() {
+std::string const & ToolAction::getScope() const {
     return scope;
 }
 
@@ -111,7 +124,7 @@ void ToolAction::setScope(std::string scope) {
 }
 
 //sourceInfo
-std::string ToolAction::getSourceInfo() {
+std::string const & ToolAction::getSourceInfo() const {
     return sourceInfo;
 }
 
@@ -120,7 +133,7 @@ void ToolAction::setSourceInfo(std::string source) {
 }
 
 //fromType
-std::string ToolAction::getFromType() {
+std::string const & ToolAction::getFromType() const {
     return fromType;
 }
 
@@ -129,7 +142,7 @@ void ToolAction::setFromType(std::string type) {
 }
 
 //toType
-std::string ToolAction::getToType() {
+std::string const & ToolAction::getToType() const {
     return toType;
 }
 
@@ -148,7 +161,7 @@ std::vector<std::string> & ToolAction::getLabels() {
 }
 
 //error
-double ToolAction::getError() {
+double ToolAction::getError() const {
     return error;
 }
 
@@ -157,7 +170,7 @@ void ToolAction::setError(double error) {
 }
 
 //assignments
-long ToolAction::getAssignments() {
+long ToolAction::getAssignments() const {
     return assignments;
 }
 
@@ -216,6 +229,9 @@ void to_json(json& j, const ToolAction& a) {
 }
 
 void from_json(const json& j, ToolAction& a) {
+#if DEBUG__ToolAction__from_json
+    std::cout << "::from_json(const json &, ToolAction &)" << std::endl;
+#endif
     try {
         a.setActionType(j.at("action"));
     } catch(...) {
@@ -239,6 +255,11 @@ void from_json(const json& j, ToolAction& a) {
         a.setHandle(handle);
     } catch(...) {
         a.setHandle("");
+    }
+    if (a.getHandle().size() == 0) {
+      std::ostringstream oss;
+      oss << "annonymous[" << ToolAction::annon_count++ << "]";
+      a.setHandle(oss.str());
     }
 
     try {
@@ -517,7 +538,10 @@ void to_json(json &j, const ToolConfig &a) {
 }
 
 void from_json(const json& j, ToolConfig& a) {
-    std::vector<std::string>& files = a.getSourceFiles();
+#if DEBUG__ToolConfig__from_json
+    std::cout << "::from_json(const json &, ToolConfig &)" << std::endl;
+#endif
+    std::vector<std::string> & files = a.getSourceFiles();
     try {
         files = j.at("source_files").get<std::vector<std::string>>();
     } catch (...) {
