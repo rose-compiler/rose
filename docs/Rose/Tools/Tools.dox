@@ -54,6 +54,9 @@
  *     optionally running post-partitioning analyses such as may-return, stack-delta, calling-convention, etc. The results are
  *     saved in a binary analysis state file (*.rba) that can be read by other tools.
  *
+ * <tr><td>bat-arraybounds              <td>Megachiropteran
+ *     <td>Statically analyzes binaries to find out-of-bound reads and writes for arrays.
+ *
  * <tr><td>bat-cc                       <td>Megachiropteran
  *     <td>This tool runs the ROSE calling-convention analysis and either reports the results or inserts them into the binary
  *     analysis state file.
@@ -66,10 +69,31 @@
  *     <td>Prints information about the function call graph. It can show human-readable information about individual functions
  *     (the function's callers and callees), or it can produce GraphViz output of the entire call graph.
  *
+ * <tr><td>bat-container                <td>Megachiropteran
+ *     <td>Prints information about ELF and PE containers.
+ *
  * <tr><td>bat-dis                      <td>Megachiropteran
  *     <td>Disassembly lister. This tool reads a binary analysis state file and produces assembly listings. It has numerous
  *     switches to control the format of the output. Note that ROSE listings are intended for human consumption and it
  *     generally doesn't work to feed them into an assembler to produce a new binary.
+ *
+ * <tr><td>bat-dis-simple               <td>Megachiropteran
+ *     <td>Similar to bat-dis but all command-line switches default to values that produce a simplified assembly listing.
+ *
+ * <tr><td>bat-entropy                  <td>Megachiropteran
+ *     <td>Measures symbol entropy in a sliding window through virtual memory. This is different from most other entropy tools
+ *     because it scans virtual memory rather than just the executable file itself.
+ *
+ * <tr><td>bat-insert-call              <td>Megachiropteran
+ *     <td>Patches a binary by inserting new code and calls to the new code.
+ *
+ * <tr><td>bat-io                       <td>Megachiropteran
+ *     <td>Static analysis to analyze I/O characteristics of an executable.
+ *
+ * <tr><td>bat-linear                   <td>Megachiropteran
+ *     <td>Linear (ordered by memory address) assembly listing. This is a trivial disassembler that disassembles each address
+ *     before moving on to the instruction at the following address. No attempt is made to organize instructions into basic
+ *     blocks or functions.
  *
  * <tr><td>bat-lsb                      <td>Megachiropteran
  *     <td>Reads a binary analysis state file and lists information about each basic block, such as the number of instructions
@@ -78,12 +102,27 @@
  *     unconditional branches as long as no interior instruction is a successor of some other basic block.  The output is
  *     intended to be in a format that's easily used by other tools.
  *
+ * <tr><td>bat-lsd                      <td>Megachiropteran
+ *     <td>Reads a binary analysis state file and lists information about each static data block.
+ *
  * <tr><td>bat-lsf                      <td>Megachiropteran
  *     <td>Reads a binary analysis state file and lists information about each function.  The output is intended to be in a
  *     format that's easily used by other tools.
  *
  * <tr><td>bat-mem                      <td>Megachiropteran
- *     <td>Reads a binary analysis state file and shows information about the simulated virtual memory.
+ *     <td>Reads a binary analysis state file and shows information about the simulated virtual memory. The memory can be
+ *     output in a variety of formats such as raw memory dumps with a text index file, Motorola S-Records, Intel HEX files,
+ *     hexdump-style output, etc.
+ *
+ * <tr><td>bat-nullptr                  <td>Megachiropteran
+ *     <td>Static analysis to find possible null pointer dereferences and the inputs that would cause such an execution path
+ *     to be taken.
+ *
+ * <tr><td>bat-prop                     <td>Megachiropteran
+ *     <td>Prints various properties about a specimen in an output format intended to be used by shell scripts.
+ *
+ * <tr><td>bat-reachable                <td>Megachiropteran
+ *     <td>Computes reachability information through the global control flow graph.
  *
  * <tr><td>bat-stack-deltas             <td>Megachiropteran
  *     <td>Reads a binary analysis state file, runs the stack delta analysis for functions where it hasn't already been run
@@ -92,11 +131,15 @@
  *     stack pointer at the start of the function. This is useful for unwinding call frames when there's no frame pointer
  *     register.
  *
+ * <tr><td>bat-window                   <td>Megachiropteran
+ *     <td>Measures code likelihood in a sliding window through virtual memory. This can be used to find what parts of virtual
+ *     memory are likely to contain code versus data.
+ *
  * <tr><td>BinaryCloneDetection         <td>ROSE
  *     <td>This is a suite of tools to incrementally build a database and query it for results in order to find similar
  *     functions across executables based on their symbolic behavior.
  *
- * <tr><td>binaryToSource               <td>ROSE
+ * <tr><td>rose-binary-to-source        <td>ROSE
  *     <td>Generates a low-level C source code for any architecture for which ROSE has instruction semantics.
  *
  * <tr><td>bROwSE-server                <td>ROSE
@@ -107,11 +150,11 @@
  *     traditional linear assembly listings, cross references for constants, decoded strings, hexdumps of virtual memory,
  *     symbolic data-flow results, lists of magic numbers, etc.
  *
- * <tr><td>checkExecutionAddresses      <td>ROSE
+ * <tr><td>rose-check-execution-addresses <td>ROSE
  *     <td>Compares a dynamically-generated execution trace of a Linux program with the statically-generated global control
  *     flow graph and reports differences.
  *
- * <tr><td>debugSemantics               <td>ROSE
+ * <tr><td>rose-debug-semantics         <td>ROSE
  *     <td>Instruction semantics trace tool. This tool runs instruction semantics in various domains and reports all operations
  *     and states per basic block. It's main purpose is to have an easy and extensible way for users to check whether semantics
  *     are operating as they expect, and to be able to report bugs that the ROSE developers can reproduce.
@@ -120,55 +163,59 @@
  *     <td>Demonstrates a few ways that constants can be found in binaries, such as by traversal of the AST or by examining
  *     machine states after a data-flow analysis.
  *
- * <tr><td>dumpMemory                   <td>ROSE
+ * <tr><td>rose-dump-memory             <td>ROSE
  *     <td>A tool to print information about virtual memory and to extract data in a few different formats. As with most binary
  *     analysis tools, this one can examine data in files, or simulated virtual memory initialized from ELF and PE files, raw
  *     memory dumps, or stopped or running Linux processes.
  *
- * <tr><td>dwarfLines                   <td>ROSE
+ * <tr><td>rose-dwarf-lines             <td>ROSE
  *     <td>This tool reads DWARF debugging information from an executable compiled with "-g" and emits two mappings: one that
  *     shows which source code files and lines correspond to each instruction, and vice versa.
  *
- * <tr><td>findDeadCode                 <td>ROSE
+ * <tr><td>rose-find-dead-code          <td>ROSE
  *     <td>This is a simple demonstration of how the global control flow graph can be used to propagate reachability
  *     information.  It uses a custom implementation to propagate reachability, which is a good example of how to traverse
  *     CFGs, but it's been superseded by a better analysis built into the ROSE library.
  *
- * <tr><td>findPath                     <td>ROSE
+ * <tr><td>rose-find-path               <td>ROSE
  *     <td>Given end-points of an execution path and addresses and/or branches to be avoided, this tool determines whether any
  *     execution path exists and the input conditions necessary to drive that path.  Most of this tool is superseded by a path
  *     feasibility analysis that's part of the ROSE library.
  *
- * <tr><td>findSimilarFunctions         <td>ROSE
+ * <tr><td>rose-find-similar-functions  <td>ROSE
  *     <td>Given two closely related executables, this tool finds the best mapping of functions from one executable to the
  *     other. This is for the common case when function's don't have names. It correlates functions by computing a difference
  *     metric (several are implemented) to create a bipartite graph, then solving the minimum weight perfect matching problem
  *     with the Kuhn-Munkres algorithm. This tool is superseded by a matching analysis that's part of the ROSE library.
  *
- * <tr><td>generatePaths                <td>ROSE
+ * <tr><td>rose-generate-paths          <td>ROSE
  *     <td>This tool generates source code of arbitrary size with various kinds of control flow paths in order to test
  *     algorithms that operate on control flow graphs.
  *
- * <tr><td>linearDisassemble            <td>ROSE
+ * <tr><td>rose-linear-disassemble      <td>ROSE
  *     <td>This is a simple linear sweep disassembler: it starts at some specified address(es) and decodes instructions one
  *     after another with no regard for control flow.
  *
- * <tr><td>magicScanner                 <td>ROSE
+ * <tr><td>rose-magic-scanner           <td>ROSE
  *     <td>Scans binaries for magic numbers and reports them like the Unix "file" command. The differences between this tool and
  *     "file" is that this tool scans every address instead of just the beginning of the file, and it scans the simulated
  *     virtual memory rather than the file (i.e., addresses are virtual memory addresses rather than file offsets).  Like most
  *     ROSE-based binary analysis tools, the virtual memory can be constructed from raw files, ELF or PE containers, Motorola
  *     S-Records, or running or stopped Linux processes.
  *
- * <tr><td>maxBijection                 <td>ROSE
+ * <tr><td>rose-max-bijection           <td>ROSE
  *     <td>This is a low-level tool that computes a minimum-cost 1:1 mapping between two sets of integers. It's used as part of
  *     a work flow to find where code should be mapped in memory if it is not position independent and no starting address is
  *     known.
  *
- * <tr><td>nativeExecutionTrace         <td>ROSE
+ * <tr><td>rose-missing-semantics       <td>ROSE
+ *     <td>Shell script that runs some ROSE tools in order to obtain statistics about which instructions are missing semantics.
+ *     This is mainly used as a development tool to guide how resources are used to implement instruction semantics.
+ *
+ * <tr><td>rose-native-execution-trace  <td>ROSE
  *     <td>Generates a simple execution trace by single-stepping a Linux executable within the ROSE debugger.
  *
- * <tr><td>recursiveDisassemble         <td>ROSE
+ * <tr><td>rose-recursive-disassemble   <td>ROSE
  *     <td>The full-fledged ROSE disassembler with lots of command-line switches to control specimen loading into simulated
  *     virtual memory, the disassembly and partitioning process, analyses run by the partitioner, output of virtual memory
  *     information, statistics about the CFG and instruction cache, a detailed list of all CFG information, output of various
@@ -177,10 +224,43 @@
  *     other tools, lists of string literals in various encodings, all details about PE or ELF containers, and assembly
  *     listings.
  *
- * <tr><td>rxml                         <td>ROSE
+ * <tr><td>rose-rxml                    <td>ROSE
  *     <td>This tool generates an XML representation of various ROSE data structures, such as the entire @ref
  *     Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" binary analysis state, or the binary components of an
  *     AST.  Various free tools are able to convert XML to JSON.
+ *
+ * <tr><td>rose-simulate                <td>ROSE
+ *     <td>Parses and loads a specimen and then executes its instructions in a concrete semantic domain.
+ *
+ * <tr><td>rose-string-decoder          <td>ROSE
+ *     <td>Finds strings of various formats using the string analysis in the ROSE library. This analysis is able to search for
+ *     ASCII, Unicode, etc. with variable width character encoding, termination or run-length encoding, etc. It can search for
+ *     multiple encodings simultaneously and reports the string literal and encoding information. Another way it differs from
+ *     the Unix "strings" command is that it searches the simulated virtual address space rather than a file. Like most ROSE
+ *     binary analysis tools, the virtual memory can be constructed in a variety of ways.
+ *
+ * <tr><td>rose-symbolic-simplifier     <td>ROSE
+ *     <td>This implements a read-eval-print loop (REPL) for symbolic expressions, where the "eval" step sends the expression
+ *     through ROSE's built-in simplification layer. This layer is not a full simplifier like what might be found in SMT
+ *     solvers, but rather tuned for those situations that commonly occur when emulating instructions symbolically.  It's
+ *     purpose is to give the user a way to interactively discover how the simplifier works, and to report bugs that the ROSE
+ *     team can reproduce.
+ *
+ * <tr><td>rose-trace                   <td>ROSE
+ *     <td>Compares a dynamically-generated execution trace of a Linux program with the statically-generated global control
+ *     flow graph and reports differences.
+ *
+ * <tr><td>rose-x86-call-targets        <td>ROSE
+ *     <td>A low-level function that disassembles all bytes and reports the target addresses for all x86 CALL instructions it
+ *     finds. This is part of a work flow to find the best address at which to map non-PIC code.
+ *
+ * <tr><td>rose-xml2json                     <td>ROSE
+ *     <td>Translates the XML produced by @c boost::serialization to JSON and is able to handle XML inputs that are many
+ *     gigabytes. This tool is very fast and uses a small amount of memory compared to the input size.
+ *
+ * <tr><td>x86-function-vas             <td>ROSE
+ *     <td>A low-level tool that reports addresses of functions. This is part of a work flow to find the best address at which
+ *     to map non-PIC code.
  *
  * <tr><td>simulator2                   <td>ROSE
  *     <td>This is a suite of tools to "execute" a program by using concrete instruction semantics and a Linux system call
@@ -191,36 +271,6 @@
  *     access; it partially supports multi-threaded applications; user can adjust instruction, memory, and syscall behavior
  *     through callbacks; it's able to selectively disable certain system calls; it can trace file and socket I/O; it has an
  *     interactive debugger for examining the specimen being simulated.
- *
- * <tr><td>stringDecoder                <td>ROSE
- *     <td>Finds strings of various formats using the string analysis in the ROSE library. This analysis is able to search for
- *     ASCII, Unicode, etc. with variable width character encoding, termination or run-length encoding, etc. It can search for
- *     multiple encodings simultaneously and reports the string literal and encoding information. Another way it differs from
- *     the Unix "strings" command is that it searches the simulated virtual address space rather than a file. Like most ROSE
- *     binary analysis tools, the virtual memory can be constructed in a variety of ways.
- *
- * <tr><td>symbolicSimplifier           <td>ROSE
- *     <td>This implements a read-eval-print loop (REPL) for symbolic expressions, where the "eval" step sends the expression
- *     through ROSE's built-in simplification layer. This layer is not a full simplifier like what might be found in SMT
- *     solvers, but rather tuned for those situations that commonly occur when emulating instructions symbolically.  It's
- *     purpose is to give the user a way to interactively discover how the simplifier works, and to report bugs that the ROSE
- *     team can reproduce.
- *
- * <tr><td>trace                        <td>ROSE
- *     <td>Compares a dynamically-generated execution trace of a Linux program with the statically-generated global control
- *     flow graph and reports differences.
- *
- * <tr><td>x86-call-targets             <td>ROSE
- *     <td>A low-level function that disassembles all bytes and reports the target addresses for all x86 CALL instructions it
- *     finds. This is part of a work flow to find the best address at which to map non-PIC code.
- *
- * <tr><td>x86-function-vas             <td>ROSE
- *     <td>A low-level tool that reports addresses of functions. This is part of a work flow to find the best address at which
- *     to map non-PIC code.
- *
- * <tr><td>xml2json                     <td>ROSE
- *     <td>Translates the XML produced by @c boost::serialization to JSON and is able to handle XML inputs that are many
- *     gigabytes.
  *
  * </table>
  *
