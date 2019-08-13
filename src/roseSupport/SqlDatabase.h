@@ -193,6 +193,19 @@ class Connection: public boost::enable_shared_from_this<Connection> {
     friend class Transaction;
     friend class StatementImpl;
 public:
+    typedef std::pair<std::string /*name*/, std::string /*value*/> Parameter;
+
+    /** Broken-out info about a URL. */
+    struct ParsedUrl {
+        Driver driver;                                  // database low-level driver
+        std::string dbName;                             // main part of URL -- database name or maybe a file name
+        std::vector<Parameter> params;                  // stuff after the last "?"
+        std::string error;                              // error message if there was a problem parsing
+
+        ParsedUrl()
+            : driver(NO_DRIVER) {}
+    };
+    
     /** Create a new database connection.  All connection objects are bound to a database throughout their lifetime, although
      * depending on the driver, the actual low-level connection may open and close. The @p open_spec string describes how to
      * connect to the database and its format varies depending on the underlying database driver.  If no @p driver is specified
@@ -236,6 +249,9 @@ public:
 
     /** Converts a uniform resource locator to a driver specific string. */
     static std::string connectionSpecification(const std::string &uri, Driver driver = NO_DRIVER);
+
+    /** Parse a URL to return its parts. */
+    static ParsedUrl parseUrl(std::string url);
 
 protected:
     // Protected because you should be using create() to get a smart pointer.  Database driver-level connections are typically
