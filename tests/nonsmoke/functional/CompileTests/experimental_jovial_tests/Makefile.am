@@ -7,6 +7,7 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
+ tiny.jov                               \
  1_2_3_main-program-module_a.jov        \
  1_2_3_main-program-module_b.jov        \
  1_2_3_program-body_b.jov               \
@@ -32,7 +33,8 @@ JOVIAL_TESTCODES = \
  5_2_1_relational_expressions_a.jov     \
  9_0_directives.jov                     \
  rose-issue-1507.jov                    \
- rose-issue-1516.jov
+ rose-issue-1516.jov                    \
+ rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
  1_2_1_compool_a.cpl                    \
@@ -83,7 +85,6 @@ JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2148.jov                    \
  rose-issue-2149.jov                    \
  rose-issue-2150.jov                    \
- tiny.jov                               \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
  1_2_2_procedure-module_a.jov           \
