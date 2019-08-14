@@ -358,6 +358,14 @@ SWIGEXPORT void SWIGSTDCALL CSharp_varDecl(int jarg1) {
 }
 
 
+SWIGEXPORT void SWIGSTDCALL CSharp_paramDecl(int jarg1) {
+  int arg1 ;
+  
+  arg1 = (int)jarg1; 
+  csharp_translator::paramDecl(arg1);
+}
+
+
 SWIGEXPORT void SWIGSTDCALL CSharp_classDecl(int jarg1) {
   int arg1 ;
   
@@ -382,11 +390,35 @@ SWIGEXPORT void SWIGSTDCALL CSharp_stageMethodDecl(int jarg1) {
 }
 
 
-SWIGEXPORT void SWIGSTDCALL CSharp_initVarDecl(int jarg1) {
+SWIGEXPORT void SWIGSTDCALL CSharp_refVarParamDecl(int jarg1) {
   int arg1 ;
   
   arg1 = (int)jarg1; 
-  csharp_translator::initVarDecl(arg1);
+  csharp_translator::refVarParamDecl(arg1);
+}
+
+
+SWIGEXPORT void SWIGSTDCALL CSharp_refFunDecl(int jarg1) {
+  int arg1 ;
+  
+  arg1 = (int)jarg1; 
+  csharp_translator::refFunDecl(arg1);
+}
+
+
+SWIGEXPORT void SWIGSTDCALL CSharp_initVarParamDecl(int jarg1) {
+  int arg1 ;
+  
+  arg1 = (int)jarg1; 
+  csharp_translator::initVarParamDecl(arg1);
+}
+
+
+SWIGEXPORT void SWIGSTDCALL CSharp_returnStmt(int jarg1) {
+  int arg1 ;
+  
+  arg1 = (int)jarg1; 
+  csharp_translator::returnStmt(arg1);
 }
 
 
@@ -400,6 +432,14 @@ SWIGEXPORT void SWIGSTDCALL CSharp_literal(char * jarg1) {
   
   arg1 = (char *)jarg1; 
   csharp_translator::literal((char const *)arg1);
+}
+
+
+SWIGEXPORT void SWIGSTDCALL CSharp_binary(char * jarg1) {
+  char *arg1 = (char *) 0 ;
+  
+  arg1 = (char *)jarg1; 
+  csharp_translator::binary((char const *)arg1);
 }
 
 

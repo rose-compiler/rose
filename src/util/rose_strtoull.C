@@ -9,9 +9,8 @@
 #endif
 
 uint64_t
-rose_strtoull(const char *nptr, char **endptr, int base)
-{
-    if (0==base && NULL!=nptr) {
+rose_strtoull(const char *nptr, char **endptr, int base) {
+    if (0 == base && NULL != nptr) {
         // Look for Perl regular expression "^\s*[-+]0b[01]{1,64}" and if found return the (possibly negated) binary value.
         bool negative = false;
         const char *s = nptr;
@@ -32,8 +31,13 @@ rose_strtoull(const char *nptr, char **endptr, int base)
         }
     }
 
+    // ::strtoull is undefined when nptr is null, so do something a little better.
+    if (NULL == nptr) {
+        errno = EINVAL;
+        if (NULL != endptr)
+            *endptr = NULL;
+        return 0;
+    }
+
     return strtoull(nptr, endptr, base);
 }
-
-            
-

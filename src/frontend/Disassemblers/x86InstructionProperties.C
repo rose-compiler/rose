@@ -1,5 +1,8 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
+namespace Rose {
+namespace BinaryAnalysis {
+
 bool x86InstructionIsConditionalFlagControlTransfer(SgAsmX86Instruction* inst) {
   switch (inst->get_kind()) {
     case x86_ja:
@@ -484,10 +487,10 @@ bool x86InstructionIsPrivileged(SgAsmX86Instruction *insn)
                 return false;
             SgAsmRegisterReferenceExpression *rre0 = isSgAsmRegisterReferenceExpression(operands[0]);
             SgAsmRegisterReferenceExpression *rre1 = isSgAsmRegisterReferenceExpression(operands[1]);
-            if ((rre0!=NULL && (rre0->get_descriptor().get_major()==x86_regclass_cr ||
-                                rre0->get_descriptor().get_major()==x86_regclass_dr)) ||
-                (rre1!=NULL && (rre1->get_descriptor().get_major()==x86_regclass_cr ||
-                                rre1->get_descriptor().get_major()==x86_regclass_dr)))
+            if ((rre0!=NULL && (rre0->get_descriptor().majorNumber()==x86_regclass_cr ||
+                                rre0->get_descriptor().majorNumber()==x86_regclass_dr)) ||
+                (rre1!=NULL && (rre1->get_descriptor().majorNumber()==x86_regclass_cr ||
+                                rre1->get_descriptor().majorNumber()==x86_regclass_dr)))
                 return true;
             return false;
         }
@@ -769,3 +772,6 @@ const char* flagToString(X86Flag n) {
   ROSE_ASSERT ((int)n >= 0 && (int)n < 32);
   return names[(int)n];
 }
+
+} // namespace
+} // namespace

@@ -249,7 +249,6 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
-SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
 SgAutoType
@@ -348,6 +347,7 @@ SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
+SgEmptyDeclaration
 SgEmptyDirectiveStatement
 SgEndfileStatement
 SgEndifDirectiveStatement
@@ -441,6 +441,9 @@ SgIsNotOp
 SgIorAssignOp
 SgJovialCompoolStatement
 SgJovialForThenStatement
+SgJovialDefineDeclaration
+SgJovialDirectiveStatement
+SgJovialTableStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp
@@ -775,6 +778,7 @@ SgUntypedOtherStatement
 SgUntypedUseStatement
 SgUntypedDeclarationStatement
 SgUntypedDirectiveDeclaration
+SgUntypedEnumDeclaration
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration
@@ -816,6 +820,7 @@ SgUntypedToken
 SgUntypedTokenPair
 SgUntypedType
 SgUntypedArrayType
+SgUntypedTableType
 SgUntypedAttribute
 SgUntypedFile
 SgUntypedScope
@@ -826,6 +831,7 @@ SgUntypedModuleDeclaration
 SgUntypedSubmoduleDeclaration
 SgUntypedBlockDataDeclaration
 SgUntypedStructureDeclaration
+SgUntypedStructureDefinition
 SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration
 SgUntypedExceptionHandlerDeclaration
@@ -896,6 +902,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgJovialTableType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt

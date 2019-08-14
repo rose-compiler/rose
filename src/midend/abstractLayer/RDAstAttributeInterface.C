@@ -2,6 +2,6 @@
 #include "sage3basic.h"
 #include "RDAstAttributeInterface.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 RDAstAttributeInterface::~RDAstAttributeInterface() {}
