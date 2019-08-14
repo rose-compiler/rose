@@ -1089,14 +1089,17 @@ queryIdByName( SqlDatabase::ConnectionPtr& dbconn,
   return id;
 }
 
-
-TestSuiteId
-Database::testSuite(const std::string& name)
-{
-  return queryIdByName<TestSuiteId>(dbconn_, QY_TESTSUITE_BY_NAME, name);
+TestSuite::Ptr
+Database::findTestSuite(const std::string &nameOrId) {
+    TestSuiteId id = queryIdByName<TestSuiteId>(dbconn_, QY_TESTSUITE_BY_NAME, nameOrId);
+    if (!id) {
+        try {
+            id = TestSuiteId(nameOrId);
+        } catch (...) {
+        }
+    }
+    return id ? object(id) : TestSuite::Ptr();
 }
-
-
 
 // specimens
 

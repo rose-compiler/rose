@@ -779,7 +779,6 @@ public:
     Specimen::Ptr object(SpecimenId, Update::Flag update = Update::YES);
     /** @} */
 
-
     /** Reconstitute an object from a database ID as part of a subquery.
      *
      *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
@@ -809,11 +808,33 @@ public:
     TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&, Update::Flag update = Update::YES);
 
-    /** Returns an ID number for a specimen with a given key @ref name
-     * @{ */
+    /** Finds a test suite by name or ID.
+     *
+     *  Returns the (unique) @ref TestSuite object has the specified name. If no such test suite exists and the specified name
+     *  can be parsed as an obect ID (see constroctors for @ref ObjectId) returns the test suite with the specified ID. If no
+     *  matches are found by either mechanism then a null pointer is returned. This method is intended to be used mainly to
+     *  convert command-line arguments to test suites. */
+    TestSuite::Ptr findTestSuite(const std::string &nameOrId);
+
+    /** Finds all specimens having the specified name.
+     *
+     *  If the database is restricted to a test suite (see @ref testSuite) then the returned specimens are only those that
+     *  are part of the current test suite and have the specified name. Specimen names need not be unique or non-empty. */
+    std::vector<SpecimenId> findSpecimensByName(const std::string &name) {
+        // FIXME[Robb Matzke 2019-08-14]: ROSE-2176. This is not the correct definition for this function. Please
+        // replace it with a correct one and remove the "specimen" method.
+        if (SpecimenId id = specimen(name)) {
+            return std::vector<SpecimenId>(1, id);
+        } else {
+            return std::vector<SpecimenId>();
+        }
+    }
+
+#if 1 // FIXME[Robb Matzke 2019-08-14]: ROSE-2176 "Concolic Database::specimen is ill-defined"
+private:
     SpecimenId  specimen(const std::string& name);
-    TestSuiteId testSuite(const std::string& name);
-    /** @} */
+public:
+#endif
 
     //------------------------------------------------------------------------------------------------------------------------
     // Cached info about disassembly. This is large data. Each specimen has zero or one associated RBA data blob.

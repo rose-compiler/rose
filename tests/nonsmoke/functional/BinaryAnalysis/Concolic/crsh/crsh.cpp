@@ -285,7 +285,7 @@ void Crsh::createdb(const char* dburl, const char* testsuite)
 Crsh::TestSuite::Ptr
 Crsh::testSuite(const std::string& s, bool createMissingEntry)
 {
-  return byName(db, s, db->testSuite(s), createMissingEntry);
+    return db->findTestSuite(s);
 }
 
 Crsh::EnvValue*
@@ -408,6 +408,11 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
 
     TestCaseId                  id        = db->id(test);
     TestSuite::Ptr              suite_obj = testSuite(suitename);
+    if (!suite_obj) {
+        // I'm not sure if this is correct, but if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
+        suite_obj = TestSuite::instance(suitename);
+    }
+    ASSERT_not_null(suite_obj);
     TestSuiteId                 suite_id  = db->id(suite_obj);
 
     ROSE_ASSERT(id);
@@ -441,7 +446,20 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
 Crsh::Specimen::Ptr
 Crsh::specimen(const std::string& specimen_name)
 {
-  return byName(db, specimen_name, db->specimen(specimen_name));
+    // The original implementation of this function used Database::specimen(const std::string&), which returned either an empty
+    // SpecimenId or a single (first?) matching SpecimenId.  Database::specimen was replaced by Database::findSpecimensByName
+    // (ROSE-2176) which returns a vector of matching specimens within the database's current test suite (or all matching
+    // specimens if no current test suite). Since Crsh is used only for testing and none of the test cases currently handle
+    // multiple specimens having the same name, I'm just asserting that only zero or one specimen is found. I'm also not sure
+    // that calling "byName" with an empty specimen ID is the right thing to do when no matching specimen is found, but that
+    // was the original behavior. [Robb Matzke 2019-08-14]
+    std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
+    if (found.empty()) {
+        return byName(db, specimen_name, SpecimenId());
+    } else {
+        ASSERT_always_require(found.size() == 1);
+        return byName(db, specimen_name, found[0]);
+    }
 }
 
 
