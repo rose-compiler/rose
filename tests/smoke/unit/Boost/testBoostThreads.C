@@ -30,6 +30,7 @@ main() {
         workers[i] = boost::thread(worker);
     for (size_t i = 0; i < NWORKERS; ++i)
         workers[i].join();
+    delete[] workers;
     std::cout <<globalAccumulator <<"\n";
 
     // Done this way for 32-bit compilers

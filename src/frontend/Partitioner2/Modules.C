@@ -66,7 +66,7 @@ demangleFunctionNames(const Partitioner &p) {
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
-        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
         BOOST_FOREACH (rose_addr_t successorVa, args.partitioner.basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
@@ -429,6 +429,57 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
     size_t callNumber = trigger_.nCalls() - 1;
     bool isBblock = bblock != NULL;
     debug <<"Debugger triggered: #" <<callNumber <<" for " <<(isBblock?"bblock=":"placeholder=") <<addrToString(va) <<"\n";
+}
+
+bool
+MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    // Disassemble the next few undiscovered instructions
+    static const size_t maxInsns = 2;                   // max length of a thunk
+    std::vector<SgAsmInstruction*> insns;
+    rose_addr_t va = anchor;
+    for (size_t i=0; i<maxInsns; ++i) {
+        if (partitioner.instructionExists(va))
+            break;                                      // look only for undiscovered instructions
+        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
+        if (!insn)
+            break;
+        insns.push_back(insn);
+        va += insn->get_size();
+    }
+    if (insns.empty())
+        return false;
+
+    functions_.clear();
+    ThunkDetection found = predicates_->isThunk(partitioner, insns);
+    if (!found)
+        return false;
+
+    // This is a thunk
+    Function::Ptr thunk = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
+    if (!found.name.empty())
+        thunk->reasonComment("matched " + found.name);
+    functions_.push_back(thunk);
+
+    // Do we know the successors?  They would be the function(s) to which the thunk branches.
+    BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
+    for (size_t i=0; i<found.nInsns; ++i)
+        bb->append(partitioner, insns[i]);
+    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
+        if (successor.expr()->is_number()) {
+            rose_addr_t targetVa = successor.expr()->get_number();
+            if (Function::Ptr thunkTarget = partitioner.functionExists(targetVa)) {
+                thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
+                if (thunkTarget->reasonComment().empty())
+                    thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+            } else {
+                thunkTarget = Function::instance(targetVa, SgAsmFunction::FUNC_THUNK_TARGET);
+                thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+                insertUnique(functions_, thunkTarget, sortFunctionsByAddress);
+            }
+        }
+    }
+
+    return true;
 }
 
 AddressIntervalSet

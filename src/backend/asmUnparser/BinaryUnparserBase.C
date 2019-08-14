@@ -352,8 +352,10 @@ Settings::Settings() {
     insn.stackDelta.showing = true;
     insn.stackDelta.fieldWidth = 2;
     insn.mnemonic.fieldWidth = 8;
+    insn.mnemonic.semanticFailureMarker = "[!]";
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
+    insn.operands.showingWidth = false;
     insn.comment.showing = true;
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
@@ -395,7 +397,9 @@ Settings::minimal() {
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 8;
+    s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
+    s.insn.operands.showingWidth = false;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
     s.insn.semantics.showing = false;
@@ -531,6 +535,11 @@ commandLineSwitches(Settings &settings) {
               .doc("Minimum size of the instruction operands field in characters. The default is " +
                    boost::lexical_cast<std::string>(settings.insn.operands.fieldWidth) + "."));
 
+    insertBooleanSwitch(sg, "insn-operand-size", settings.insn.operands.showingWidth,
+                        "Show the width in bits of each term in an operand expression. The width is shown in square brackets "
+                        "after the term, similar to how it's shown for symbolic expressions. Although memory dereferences are "
+                        "also shown in square brackets, they are formatted different.");
+
     insertBooleanSwitch(sg, "insn-comment", settings.insn.comment.showing,
                         "Show comments for instructions that have them. The comments are shown to the right of each "
                         "instruction.");
@@ -547,6 +556,11 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
                         "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
                         "net effect.");
+
+    sg.insert(Switch("insn-semantic-failure")
+              .argument("string", anyParser(settings.insn.mnemonic.semanticFailureMarker))
+              .doc("String to append to instruction mnemonic when the instruction is the cause of a semantic failure. The default "
+                   "is \"" + StringUtility::cEscape(settings.insn.mnemonic.semanticFailureMarker) + "\"."));
 
     //----- Arrows -----
     sg.insert(Switch("arrow-style")
@@ -870,6 +884,7 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_ENTRY_POINT,  "program entry point");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_IMPORT,       "import");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK,        "thunk");
+        addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK_TARGET, "thunk target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_EXPORT,       "export");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_TARGET,  "function call target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_INSN,    "possible function call target");
@@ -1381,6 +1396,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockPrologue(out, db, state);
     } else {
+        if (!db->comment().empty())
+            state.frontUnparser().emitCommentBlock(out, db->comment(), state, "\t;; ");
+
         state.frontUnparser().emitLinePrefix(out, state);
         out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
         if (P2::Function::Ptr function = state.currentFunction()) {
@@ -1393,6 +1411,9 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
                 }
             }
         }
+
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; block type is " <<db->type()->toString() <<"\n";
     }
 }
 
@@ -1521,7 +1542,6 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
         }
         fieldWidths.push_back(settings().insn.mnemonic.fieldWidth);
 
-
         // Operands
         if (insn) {
             std::ostringstream ss;
@@ -1625,6 +1645,8 @@ Base::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State &
         nextUnparser()->emitInstructionMnemonic(out, insn, state);
     } else {
         out <<insn->get_mnemonic();
+        if (insn->semanticFailure() > 0)
+            out <<settings().insn.mnemonic.semanticFailureMarker;
     }
 }
 
@@ -1768,7 +1790,7 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().get_nbits() &&
+        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
         } else if (bv.isEqualToZero()) {
@@ -1791,6 +1813,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
                     comments.push_back(boost::lexical_cast<std::string>(si));
             }
         }
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<bv.size() <<"]";
         return comments;
     }
 }
@@ -1819,6 +1843,8 @@ Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) cons
         nextUnparser()->emitRegister(out, reg, state);
     } else {
         out <<state.registerNames()(reg);
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<reg.nBits() <<"]";
     }
 }
 

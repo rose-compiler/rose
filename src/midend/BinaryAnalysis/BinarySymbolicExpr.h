@@ -18,6 +18,7 @@
 #include <boost/unordered_map.hpp>
 #include <cassert>
 #include <inttypes.h>
+#include <RoseException.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Set.h>
@@ -43,9 +44,9 @@ namespace SymbolicExpr {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Exceptions for symbolic expressions. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    explicit Exception(const std::string &mesg): Rose::Exception(mesg) {}
 };
 
 /** Operators for interior nodes of the expression tree.
@@ -794,6 +795,14 @@ public:
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
     InteriorPtr commutative();
+
+    /** Simplifies idempotent operators.
+     *
+     *  An idempotent operator I is one such that X I X = X. For operators that have more than two operands, only those
+     *  repeated neighboring operands are reduced to a single operand. Therefore, if the operator is commutative, then do the
+     *  commutative simplification before the idempotent simplification. Returns either a new, simplified expression or the
+     *  original unmodified expression. */
+    InteriorPtr idempotent(const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Simplifies involutary operators.  An involutary operator is one that is its own inverse.  This method should only be
      *  called if this node is an interior node whose operator has the involutary property (such as invert or negate). Returns

@@ -10,7 +10,7 @@ run $(librose_compile) --depend=license.h Combinatorics.C CommandLine.C Diagnost
 
 run $(public_header) Combinatorics.h CommandLine.h Diagnostics.h IncludeDirective.h SqlDatabase.h callbacks.h initialize.h \
     optionDeclaration.h rangemap.h roseTranslators.h sourceLocationInheritedAttribute.h stringify.h transformationSupport.h \
-    utility_functions.h
+    utility_functions.h RoseException.h
 
 # Strange name for a header file (#include'd by rose.h)
 run $(public_header) utility_functionsImpl.C

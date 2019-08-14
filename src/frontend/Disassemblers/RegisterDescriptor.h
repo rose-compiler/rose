@@ -3,8 +3,8 @@
 
 #include <boost/serialization/access.hpp>
 
-// FIXME[Robb Matzke 2017-08-04]: Not in Rose::BinaryAnalysis yet (for backward compatibility), but should be.
-
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Describes (part of) a physical CPU register.
  *
@@ -199,7 +199,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Old interface  (not deprecated yet, just implemented in terms of the new interface)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     unsigned get_major() const {
         return majorNumber();
     }
@@ -232,5 +232,8 @@ public:
         return *this;
     }
 };
+
+} // namespace
+} // namespace
 
 #endif

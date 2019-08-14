@@ -311,6 +311,9 @@ public:
      * @{ */
     virtual const Settings& settings() const = 0;
     virtual Settings& settings() = 0;
+    void settings(const Settings &s) {
+        settings() = s;
+    }
     /** @} */
 
     /** Property: Next parser in chain.

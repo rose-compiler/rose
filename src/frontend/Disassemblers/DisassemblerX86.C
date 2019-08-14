@@ -9,7 +9,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include "DisassemblerX86.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -230,7 +230,8 @@ DisassemblerX86::effectiveAddressSize() const
             case x86_insnsize_32: return x86_insnsize_16;
             case x86_insnsize_64: return x86_insnsize_32;
             default: {
-                ASSERT_not_reachable("not a valid effective address size: " + stringifyX86InstructionSize(insnSize));
+                ASSERT_not_reachable("not a valid effective address size: " +
+                                     stringifyBinaryAnalysisX86InstructionSize(insnSize));
                 /* avoid MSCV warning by adding return stmt even though it cannot be reached */
                 return insnSize;
             }
@@ -259,7 +260,8 @@ DisassemblerX86::effectiveOperandSize() const
                 return x86_insnsize_16;
             }
             default: {
-                ASSERT_not_reachable("not a valid effective operand size: " + stringifyX86InstructionSize(insnSize));
+                ASSERT_not_reachable("not a valid effective operand size: " +
+                                     stringifyBinaryAnalysisX86InstructionSize(insnSize));
                 /* avoid MSCV warning by adding return stmt */
                 return insnSize;
             }
@@ -299,7 +301,8 @@ DisassemblerX86::mmPrefix() const
             }
         }
         default: {
-            ASSERT_not_reachable("not a valid repeat prefix: " + stringifyX86RepeatPrefix(repeatPrefix));
+            ASSERT_not_reachable("not a valid repeat prefix: " +
+                                 stringifyBinaryAnalysisX86RepeatPrefix(repeatPrefix));
             /* avoid MSCV warning by adding return stmt */
             return mmNone;
         }
@@ -324,7 +327,8 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
         case x86_insnsize_32: return rmDWord;
         case x86_insnsize_64: return rmQWord;
         default: {
-            ASSERT_not_reachable("not a valid instruction size: " + stringifyX86InstructionSize(s));
+            ASSERT_not_reachable("not a valid instruction size: " +
+                                 stringifyBinaryAnalysisX86InstructionSize(s));
             /* avoid MSCV warning by adding return stmt */
             return rmWord;
         }
@@ -370,7 +374,8 @@ DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_si
             retval = SageBuilderAsm::buildValueX86QWord((uint64_t)val);
             break;
         default:
-            ASSERT_not_reachable("not a valid effective address size " + stringifyX86InstructionSize(effectiveAddressSize()));
+            ASSERT_not_reachable("not a valid effective address size " +
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize()));
     }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
@@ -420,7 +425,7 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
 SgAsmRegisterReferenceExpression *
 DisassemblerX86::makeIP()
 {
-    ASSERT_require(REG_IP.is_valid());
+    ASSERT_forbid(REG_IP.isEmpty());
     SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
     r->set_type(sizeToType(insnSize));
     return r;
@@ -871,7 +876,8 @@ DisassemblerX86::getImmForAddr()
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
         default: {
-            ASSERT_not_reachable("invalid effective address size: " + stringifyX86InstructionSize(effectiveAddressSize()));
+            ASSERT_not_reachable("invalid effective address size: " +
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize()));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -886,7 +892,8 @@ DisassemblerX86::getImmIv()
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
         default: {
-            ASSERT_not_reachable("invalid effective operand size: " + stringifyX86InstructionSize(effectiveOperandSize()));
+            ASSERT_not_reachable("invalid effective operand size: " +
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -949,7 +956,8 @@ DisassemblerX86::getImmIzAsIv()
             return getImmDWord();
         }
         default: {
-            ASSERT_not_reachable("invalid effective operand size: " + stringifyX86InstructionSize(effectiveOperandSize()));
+            ASSERT_not_reachable("invalid effective operand size: " +
+                                 stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             /* avoid MSCV warning by adding return stmt */
             return NULL;
         }
@@ -974,7 +982,8 @@ DisassemblerX86::getImmJb()
             retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
         default:
-            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
+            ASSERT_not_reachable("invalid instruction size: " +
+                                 stringifyBinaryAnalysisX86InstructionSize(insnSize));
             return NULL;                                // not reachable, but avoids MSCV warning
     }
     retval->set_bit_offset(bit_offset);
@@ -1678,7 +1687,7 @@ DisassemblerX86::disassemble()
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x6E: {
@@ -1720,7 +1729,7 @@ DisassemblerX86::disassemble()
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x70: {
@@ -1961,7 +1970,7 @@ DisassemblerX86::disassemble()
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x99: {
@@ -1977,7 +1986,7 @@ DisassemblerX86::disassemble()
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9A: {
@@ -2005,7 +2014,7 @@ DisassemblerX86::disassemble()
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9D: {
@@ -2022,7 +2031,7 @@ DisassemblerX86::disassemble()
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0x9E: {
@@ -2107,7 +2116,7 @@ DisassemblerX86::disassemble()
                             throw ExceptionX86("bad repeat prefix for movsq", this);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xA6: {
@@ -2170,7 +2179,7 @@ DisassemblerX86::disassemble()
                             throw ExceptionX86("bad repeat prefix for cmpsq", this);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xA8: {
@@ -2231,7 +2240,7 @@ DisassemblerX86::disassemble()
                     }
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xAC: {
@@ -2282,7 +2291,7 @@ DisassemblerX86::disassemble()
                             throw ExceptionX86("bad repeat prefix for lodsq", this);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xAE: {
@@ -2345,7 +2354,7 @@ DisassemblerX86::disassemble()
                             throw ExceptionX86("bad repeat prefix for scasq", this);
                     }
                 default: ASSERT_not_reachable("invalid effective operand size: " +
-                                              stringifyX86InstructionSize(effectiveOperandSize()));
+                                              stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xB0: {
@@ -2620,7 +2629,7 @@ DisassemblerX86::disassemble()
                     goto done;
                 default:
                     ASSERT_not_reachable("invalid effective operand size: " +
-                                         stringifyX86InstructionSize(effectiveOperandSize()));
+                                         stringifyBinaryAnalysisX86InstructionSize(effectiveOperandSize()));
             }
         }
         case 0xE4: {

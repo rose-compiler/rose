@@ -16,6 +16,8 @@
 #include "j2c.h"
 #include "CommandOptions.h"
 
+#define DEBUG_JOVIAL_TRANSLATION 0
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -26,41 +28,38 @@ vector<SgStatement*> statementList;
 vector<SgNode*> removeList;
 stack<SgStatement*> insertList;
 
-// Memory pool traversal for variable declarations
-//
-#ifdef USE_PLACEHOLDER_TRAVERSAL
-class VariableDeclTraversal : public ROSE_VisitorPattern
-{
-  public:
-    void visit(SgVariableDeclaration* varDecl);
-};
-
-void VariableDeclTraversal::visit(SgVariableDeclaration* decl)
-{
-    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl);
-    ROSE_ASSERT(variableDeclaration);
-    SgInitializedNamePtrList initializedNameList = variableDeclaration->get_variables();
-    for (SgInitializedNamePtrList::iterator i=initializedNameList.begin(); i!=initializedNameList.end();++i)
-       {
-          SgInitializedName* initializedName = isSgInitializedName(*i);
-       }
-
-    variableDeclList.push_back(decl);
-}
-#endif
-
 // Simple traversal for general language translation
 //
 class Jovial2cTraversal : public AstSimpleProcessing
 {
   public:
     virtual void visit(SgNode* n);
+
+  private:
+   SgSourceFile* src_file{nullptr};
+
+  private:
+   PreprocessingInfo* preprocess_directive{nullptr};
 };
 
 void Jovial2cTraversal::visit(SgNode* n)
 {
-  Sg_File_Info* fileInfo = n->get_file_info();
-  fileInfo->set_isPartOfTransformation(true);
+#if DEBUG_JOVIAL_TRANSLATION
+   std::cout << "... visit node: classname is " << n->class_name() << std::endl;
+#endif
+
+  // Apparently source files don't want to be part of the transformation
+   if (isSgSourceFile(n) == NULL)
+      {
+         Sg_File_Info* fileInfo = n->get_file_info();
+         fileInfo->set_isPartOfTransformation(true);
+      }
+   else
+      {
+         src_file = isSgSourceFile(n);
+         ROSE_ASSERT(src_file);
+         ROSE_ASSERT(src_file->get_startOfConstruct()->get_file_id() >= 0);
+      }
 
   /***
     1. The following switch statement searches for Jovial-specific
@@ -81,6 +80,20 @@ void Jovial2cTraversal::visit(SgNode* n)
       {
          SgGlobal* global = isSgGlobal(n);
          ROSE_ASSERT(global);
+
+      // will contain modified/transformed nodes
+         global->set_isModified(true);
+         global->set_containsTransformation(true);
+
+         break;
+      }
+    case V_SgJovialDefineDeclaration:
+      {
+         SgJovialDefineDeclaration* defineDeclaration = isSgJovialDefineDeclaration(n);
+         ROSE_ASSERT(defineDeclaration);
+         preprocess_directive = translateJovialDefineDeclaration(defineDeclaration);
+      // Deep delete the original SgJovialDefineDeclaration
+         removeList.push_back(defineDeclaration);
          break;
       }
     case V_SgProgramHeaderStatement:
@@ -90,6 +103,31 @@ void Jovial2cTraversal::visit(SgNode* n)
          translateProgramHeaderStatement(programHeaderStatement);
       // Deep delete the original Jovial SgProgramHeaderStatement
          removeList.push_back(programHeaderStatement);
+         break;
+      }
+    case V_SgJovialTableStatement:
+      {
+         SgJovialTableStatement* tableStatement = isSgJovialTableStatement(n);
+         ROSE_ASSERT(tableStatement);
+         translateJovialTableStatement(tableStatement);
+      // Deep delete the original Jovial SgProgramHeaderStatement
+      // removeList.push_back(compoolStatement);
+         break;
+      }
+    case V_SgJovialCompoolStatement:
+      {
+         SgJovialCompoolStatement* compoolStatement = isSgJovialCompoolStatement(n);
+         ROSE_ASSERT(compoolStatement);
+         translateJovialCompoolStatement(compoolStatement);
+      // Deep delete the original Jovial SgProgramHeaderStatement
+      // removeList.push_back(compoolStatement);
+         break;
+      }
+    case V_SgInitializedName:
+      {
+         SgInitializedName* name = isSgInitializedName(n);
+         ROSE_ASSERT(name);
+         translateInitializedName(name);
          break;
       }
     case V_SgExprStatement:
@@ -108,11 +146,25 @@ void Jovial2cTraversal::visit(SgNode* n)
          SgStopOrPauseStatement* stopOrPauseStmt = isSgStopOrPauseStatement(n);
          ROSE_ASSERT(stopOrPauseStmt);
          translateStopOrPauseStatement(stopOrPauseStmt);
+         break;
       }
 
     default:
        break;
   }
+
+  // Attach any dangling preprocessor directives
+  // TODO - this should be a list
+  if (preprocess_directive && (n->variantT() == V_SgVariableDeclaration))
+     {
+        SgLocatedNode* located_node = isSgLocatedNode(n);
+        if (located_node)
+           {
+              located_node->addToAttachedPreprocessingInfo(preprocess_directive);
+              preprocess_directive = nullptr;
+           }
+     }
+
 }
 
 int main( int argc, char * argv[] )
@@ -130,9 +182,17 @@ int main( int argc, char * argv[] )
   // Check the AST for consistency
      AstTests::runAllTests(project);
 
-     std::cout << std::endl;
-     std::cout << "STARTING translation to C ..." << std::endl;
-     std::cout << std::endl;
+     ROSE_ASSERT(project->numberOfFiles() == 1);
+     SgFilePtrList file_list = project->get_files();
+     ROSE_ASSERT(file_list.size() == 1);
+     SgFile* file = file_list[0];
+
+     SgSourceFile* src_file = isSgSourceFile(file);
+     ROSE_ASSERT(src_file);
+
+  // std::cout << std::endl;
+  // std::cout << "STARTING translation to C ..." << std::endl;
+  // std::cout << std::endl;
 
   // Simple traversal, bottom-up, to translate the rest
      Jovial2cTraversal j2c;
@@ -141,7 +201,9 @@ int main( int argc, char * argv[] )
   // Remove all unused statements from the AST
      for (vector<SgStatement*>::iterator i=statementList.begin(); i!=statementList.end(); ++i)
        {
-          std::cout << "... removing statement \n";
+#if DEBUG_JOVIAL_TRANSLATION
+          std::cout << "... removing statement " << *i << " : finfo is " << (*i)->get_file_info() << endl;;
+#endif
           removeStatement(*i);
           (*i)->set_parent(NULL);
        }
@@ -149,13 +211,20 @@ int main( int argc, char * argv[] )
   // Deep delete of the removed nodes 
      for (vector<SgNode*>::iterator i=removeList.begin(); i!=removeList.end(); ++i)
        {
-          std::cout << "... deleting node of type: " << (*i)->class_name() << std::endl;
+#if DEBUG_JOVIAL_TRANSLATION
+          std::cout << "... deleting statement " << *i << " : finfo is " << (*i)->get_file_info() << endl;;
+#endif
           deepDelete(*i);
        }
 
+  // std::cout << "... # of files is " << project->numberOfFiles() << std::endl;
+
      project->set_C_only(true);
      project->set_Fortran_only(false);
-      
+
+  // Not in API
+  // project->set_Jovial_only(false);
+
 /*
   1. There should be no Jovial-specific AST nodes in the whole
      AST graph after the translation. 
@@ -183,7 +252,7 @@ int main( int argc, char * argv[] )
      timer.set_project(project);
 
   // Finished with translation
-     std::cout << std::endl;
+  // std::cout << "finished translation \n" << std::endl;
 
      return backend(project);
 }

@@ -1,6 +1,0 @@
-varBitVector_OBJ = ${ANALYSIS_ROOT}/src/varBitVector/obj/varBitVector.o
-varBitVector_H = ${ANALYSIS_ROOT}/src/varBitVector/varBitVector.h
-
-.PHONY: varBitVector
-varBitVector:
-	cd ${ANALYSIS_ROOT}/src/varBitVector; ${MAKE} all; cd ${ANALYSIS_ROOT}/src/${Component}

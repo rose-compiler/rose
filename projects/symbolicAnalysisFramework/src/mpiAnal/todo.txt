@@ -1,3 +1,0 @@
-boundVar_0|pCFG_2->0x1*1 <= nprocsVar|pCFG_2->0x1*1 + -1
-nprocsVar|pCFG_1->0x1*1 <= i|pCFG_1->0x1*1 + 0
-i|pCFG_1->0x1*1 <= boundVar_0|pCFG_2->0x1*1 + 0

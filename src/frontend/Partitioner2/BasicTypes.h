@@ -461,6 +461,8 @@ class BasicBlock;
 typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
 class DataBlock;
 typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
+class ThunkPredicates;
+typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 
 } // namespace
 } // namespace

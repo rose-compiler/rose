@@ -13,7 +13,7 @@
 #include "Labeler.h"
 
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class FunctionId;
 

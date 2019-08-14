@@ -13,37 +13,31 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
-SPRAY::LVPropertyStateFactory::LVPropertyStateFactory() {
+CodeThorn::LVPropertyStateFactory::LVPropertyStateFactory() {
 }
 
-SPRAY::PropertyState* SPRAY::LVPropertyStateFactory::create() {
+CodeThorn::PropertyState* CodeThorn::LVPropertyStateFactory::create() {
   LVLattice* element=new LVLattice();
   return element;
 }
 
-SPRAY::LVPropertyStateFactory::~LVPropertyStateFactory() {
+CodeThorn::LVPropertyStateFactory::~LVPropertyStateFactory() {
 }
 
-SPRAY::LVAnalysis::LVAnalysis() {
+CodeThorn::LVAnalysis::LVAnalysis() {
   _transferFunctions=new LVTransferFunctions();
-  _initialElementFactory=new LVPropertyStateFactory();
+  _transferFunctions->setInitialElementFactory(new LVPropertyStateFactory());
 }
 
-SPRAY::LVAnalysis::~LVAnalysis() {
+CodeThorn::LVAnalysis::~LVAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
-}
-void SPRAY::LVAnalysis::initializeExtremalValue(Lattice* element) {
-  LVLattice* lvElement=dynamic_cast<LVLattice*>(element);
-  ROSE_ASSERT(lvElement);
-  lvElement->setEmptySet();
-  cout<<"INFO: initialized extremal value."<<endl;
+  delete _transferFunctions->getInitialElementFactory();
 }
 
-DFAstAttribute* SPRAY::LVAnalysis::createDFAstAttribute(Lattice* elem) {
+DFAstAttribute* CodeThorn::LVAnalysis::createDFAstAttribute(Lattice* elem) {
   LVLattice* lvElem=dynamic_cast<LVLattice*>(elem);
   ROSE_ASSERT(lvElem);
-  return new SPRAY::LVAstAttribute(lvElem);
+  return new CodeThorn::LVAstAttribute(lvElem);
 }

@@ -570,7 +570,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2014_157.C \
    rose-1540-0.C \
    rose-1541-0.C \
+   rose-1701-0.C \
+   rose-1766.C \
    rose-1789-001.C \
+   rose-1814.C \
+   rose-1834.C \
+   rose-1839.C \
+   rose-1846.C \
+   rose-1860.C \
+   rose-1998.C \
+   rose-2000-01.C \
+   rose-2000-02.C \
+   rose-2007-01.C \
+   rose-2007-02.C \
+   rose-2008.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -594,9 +607,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2019_21.C \
    test2019_22.C \
    test2019_23.C \
-   test2019_24.C \
-   rose-1701-0.C \
-   rose-1766.C
+   test2019_24.C
 
 FAILING_TEST_SUITE_TESTS = \
    test2018_22.C \
@@ -1126,18 +1137,8 @@ else
 endif
 endif
 
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USE_EDG_VERSION_4_8
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-       test2012_68.C
-else
-  TESTCODE_CURRENTLY_FAILING += \
-       test2012_68.C
-endif
-else
-  TESTCODE_CURRENTLY_FAILING += \
-     test2012_68.C
-endif
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_68.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -1146,10 +1147,16 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
      test2017_44.C \
      test2017_46.C \
      test2017_47.C \
-     test2017_69.C \
      test2016_96.C \
      test2015_135.C \
      test2015_136.C
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += test2017_69.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2017_69.C
+endif
+
 else
   TESTCODE_CURRENTLY_FAILING += \
      test2017_31.C \
@@ -1275,7 +1282,11 @@ if USING_INTEL_COMPILER
      test2014_211.C \
      test2006_08.C \
      test2006_37.C
+  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     rose-1962.C
 else
+  TESTCODE_CURRENTLY_FAILING += \
+     rose-1962.C
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2014_159.C \
      test2014_211.C \
@@ -1551,6 +1562,17 @@ testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
+# DQ (4/26/2019): Test the use of the -ansi option in ROSE.
+test_ansi_and_nonansi_modes:
+# DQ (4/26/2019): It appears that -edg:strict option does not work.
+#	$(TEST_TRANSLATOR) -rose:verbose 0 -edg:strict $(srcdir)/test_ansi.C
+#	$(TEST_TRANSLATOR) -rose:verbose 0 $(srcdir)/test_nonansi.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -ansi -c $(srcdir)/test_ansi.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/test_nonansi.C
+
+multipleDeclarationsBug: $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C $(srcdir)/markus_1.h
+	$(TEST_TRANSLATOR) -rose:verbose 0 -c $(srcdir)/markus_1a.C $(srcdir)/markus_1b.C
+
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
 test_MPI_LAM:
@@ -1562,6 +1584,16 @@ test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 # DQ (7/24/2018): Test for output spew from multiple files on the same command line.
 test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
 	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C 
+
+test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdir)/test2019_30.h 
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C 
+
+# DQ (7/9/2019): This test demonstrates a failing case for older versions of EDG (pre 5.0) 
+# when using at least GNU 5.1.  Not clear if we should worry about this since we are moving
+# to have EDG 5.0 be the default shortly.  This issue reproduces a problem that is only see
+# in one of the CFG tests.  It is not a problem with EDG 5.0, as I understand it.
+test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
 
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o

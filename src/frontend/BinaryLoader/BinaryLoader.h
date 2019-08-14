@@ -1,6 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_BinaryLoader_H
 #define ROSE_BinaryAnalysis_BinaryLoader_H
 
+#include <RoseException.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
@@ -76,10 +77,10 @@ public:
     };
 
     /** Base class for exceptions thrown by loaders. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construcor that takes a message. */
-        explicit Exception(const std::string &reason): std::runtime_error(reason) {}
+        explicit Exception(const std::string &reason): Rose::Exception(reason) {}
 
         /** Emit the error message to an output stream. */
         void print(std::ostream&) const;

@@ -4,21 +4,21 @@
 #include "TFTypeTransformer.h"
 #include "CommandList.h"
 
+namespace Typeforge {
+
 class SpecFrontEnd {
  public:
   // run frontend for typeforge specification file
   // returns true if reading the spec file failed
   // also reports errors
-  bool parse(std::string specFileName);
-  bool readJSONFile(std::string fileName);
-  bool readTFFile(std::string fileName);
-  int run(SgProject* root, TFTypeTransformer& tt, TFTransformation& tfTransformation);
-  int getNumTypeReplace();
-  TFTypeTransformer::VarTypeVarNameTupleList getTransformationList();
+  static void parse(std::vector<std::string> const & filenames, CommandList & commandList);
+  static bool parse(std::string const & specFileName, CommandList & commandList);
+
  private:
-  int numTypeReplace=0;
-  //TFTypeTransformer::VarTypeVarNameTupleList _list;
-  CommandList commandList;
+  static bool readJSONFile(std::string const & fileName, CommandList & commandList);
+  static bool readTFFile(std::string const & fileName, CommandList & commandList);
 };
+
+}
 
 #endif

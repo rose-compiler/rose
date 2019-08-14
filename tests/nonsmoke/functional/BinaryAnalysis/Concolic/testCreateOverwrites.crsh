@@ -1,0 +1,34 @@
+create sqlite3://./testCreateOverwrites.db
+
+ls-family :: l01
+  @success
+{
+  ls -la /
+}
+
+ls-family :: l02
+  @success
+{
+  ls -1 /
+}
+
+close
+
+create sqlite3://./testCreateOverwrites.db
+
+tail-family :: t03
+  @ success
+{
+  tail /etc/passwd
+}
+
+ls-family :: run 1 @failure
+tail-family :: run 1 @success
+
+close
+
+! rm ./testCreateOverwrites.db
+
+! echo ok.
+
+

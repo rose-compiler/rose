@@ -2100,6 +2100,8 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_package = NULL;
      this->p_import_list = NULL;
      this->p_class_list = NULL;
+     this->p_associated_include_file = NULL;
+     this->p_headerFileReport = NULL;
 
      set_globalScope(NULL);
 
@@ -2537,7 +2539,7 @@ SgProject::parse()
 #endif
 
   // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after
-  // AST Postprocessing and before any transformations are done. The token steam mapping only
+  // AST Postprocessing and before any transformations are done. The token stream mapping only
   // really makes since at this position in the time-line since otherwise removed statements would
   // be included as whitespace between remaining statements.
 
@@ -2555,6 +2557,14 @@ SgProject::parse()
                          ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+                         if (file->get_translateCommentsAndDirectivesIntoAST() == true)
+                            {
+                              printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
+                              ROSE_ASSERT(false);
+
+                           // DQ (3/29/2019): This still needs to be debugged.
+                              SageInterface::translateToUseCppDeclarations(sourceFile);
+                            }
 #if 0
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
@@ -5964,13 +5974,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                                   frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
                                                // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                                                // Any non-zero value indicates an error.
                                                   frontend_failed = (frontendErrorLevel != 0);
-#else
-                                               // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                                                  frontend_failed = (frontendErrorLevel > 3);
-#endif
                                                 }
                                            }
                                       }
@@ -7629,23 +7634,23 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
                break;
              }
 
-          case PreprocessingInfo::CpreprocessorIncludeDeclaration:          { cppDirective = new SgIncludeDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIncludeDeclaration:          { cppDirective = new SgIncludeDirectiveStatement();     break; }
           case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:      { cppDirective = new SgIncludeNextDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorDefineDeclaration:           { cppDirective = new SgDefineDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorUndefDeclaration:            { cppDirective = new SgUndefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfdefDeclaration:            { cppDirective = new SgIfdefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfndefDeclaration:           { cppDirective = new SgIfndefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfDeclaration:               { cppDirective = new SgIfDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorDeadIfDeclaration:           { cppDirective = new SgDeadIfDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorElseDeclaration:             { cppDirective = new SgElseDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorElifDeclaration:             { cppDirective = new SgElseifDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorEndifDeclaration:            { cppDirective = new SgEndifDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorLineDeclaration:             { cppDirective = new SgLineDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorErrorDeclaration:            { cppDirective = new SgErrorDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorWarningDeclaration:          { cppDirective = new SgWarningDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorEmptyDeclaration:            { cppDirective = new SgEmptyDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIdentDeclaration:            { cppDirective = new SgIdentDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker: { cppDirective = new SgLinemarkerDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorDefineDeclaration:           { cppDirective = new SgDefineDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorUndefDeclaration:            { cppDirective = new SgUndefDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIfdefDeclaration:            { cppDirective = new SgIfdefDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration:           { cppDirective = new SgIfndefDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorIfDeclaration:               { cppDirective = new SgIfDirectiveStatement();          break; }
+          case PreprocessingInfo::CpreprocessorDeadIfDeclaration:           { cppDirective = new SgDeadIfDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorElseDeclaration:             { cppDirective = new SgElseDirectiveStatement();        break; }
+          case PreprocessingInfo::CpreprocessorElifDeclaration:             { cppDirective = new SgElseifDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:            { cppDirective = new SgEndifDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorLineDeclaration:             { cppDirective = new SgLineDirectiveStatement();        break; }
+          case PreprocessingInfo::CpreprocessorErrorDeclaration:            { cppDirective = new SgErrorDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorWarningDeclaration:          { cppDirective = new SgWarningDirectiveStatement();     break; }
+          case PreprocessingInfo::CpreprocessorEmptyDeclaration:            { cppDirective = new SgEmptyDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIdentDeclaration:            { cppDirective = new SgIdentDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker: { cppDirective = new SgLinemarkerDirectiveStatement();  break; }
 
           default:
              {
@@ -7656,14 +7661,18 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
 
      ROSE_ASSERT(cppDirective != NULL);
 
+     printf ("In SgC_PreprocessorDirectiveStatement::createDirective(): currentPreprocessingInfo->getString() = %s \n",currentPreprocessingInfo->getString().c_str());
+
      cppDirective->set_directiveString(currentPreprocessingInfo->getString());
+
+     printf ("In SgC_PreprocessorDirectiveStatement::createDirective(): cppDirective->get_directiveString() = %s \n",cppDirective->get_directiveString().c_str());
 
   // Set the defining declaration to be a self reference...
      cppDirective->set_definingDeclaration(cppDirective);
 
   // Build source position information...
      cppDirective->set_startOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
-     cppDirective->set_endOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
+     cppDirective->set_endOfConstruct  (new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
 
      return cppDirective;
    }

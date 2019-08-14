@@ -2,10 +2,10 @@
 #include "TransformationOperators.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // creates a copy of a function definition, but also the corresponding declaration, and creates a new name.
-SgFunctionDefinition* SPRAY::TransformationOperators::createAdaptedFunctionDefinitionCopy(SgFunctionDefinition* originalFunDef, string prefix, string suffix) {
+SgFunctionDefinition* CodeThorn::TransformationOperators::createAdaptedFunctionDefinitionCopy(SgFunctionDefinition* originalFunDef, string prefix, string suffix) {
     SgFunctionDeclaration* originalFunDecl=originalFunDef->get_declaration();
     SgFunctionDeclaration* clonedFunDecl=isSgFunctionDeclaration(SageInterface::deepCopyNode(originalFunDecl));
     clonedFunDecl->set_name(SgName(prefix+clonedFunDecl->get_name().getString()+suffix));
@@ -15,7 +15,7 @@ SgFunctionDefinition* SPRAY::TransformationOperators::createAdaptedFunctionDefin
     return clonedFunDef;
 }
 
-list<SgExpression*> SPRAY::TransformationOperators::varRefExpOfVar(SgNode* root, VariableId varId, VariableIdMapping* variableIdMapping ) {
+list<SgExpression*> CodeThorn::TransformationOperators::varRefExpOfVar(SgNode* root, VariableId varId, VariableIdMapping* variableIdMapping ) {
   list<SgExpression*> varRefList;
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -29,7 +29,7 @@ list<SgExpression*> SPRAY::TransformationOperators::varRefExpOfVar(SgNode* root,
 }
 
 // requires available expressions analysis
-void SPRAY::TransformationOperators::substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
+void CodeThorn::TransformationOperators::substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
   RoseAst ast(root);
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {

@@ -3325,20 +3325,6 @@ SgFile::usage ( int status )
 "                             assertions that use the Sawyer mechanism are affected.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
-"     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
-"                             Supported for C/C++, and currently only generates token \n"
-"                             stream for fortran (call parser with --tokens option)\n"
-"                             call parser with --tokens option (fortran only)\n"
-"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
-"                             unparses code using original token stream and forces the output \n"
-"                             of two files representing the unparsing of each statement using \n"
-"                             the token stream mapping to the AST.  The token_leading_* file \n"
-"                             uses the mapping and the leading whitespace mapping between \n"
-"                             statements, where as the token_trailing_* file uses the mapping \n"
-"                             and the trailing whitespace mapping between statements.  Both \n"
-"                             files should be identical, and the same as the input file. \n"
-"     -rose:unparse_template_ast\n"
-"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3459,6 +3445,19 @@ SgFile::usage ( int status )
 "     -rose:appendPID\n"
 "                             append PID into the temporary output name. \n"
 "                             This can avoid issues in parallel compilation (default: false). \n"
+"     -rose:unparse_tokens\n"
+"                             Unparses code using original token stream where possible.\n"
+"                             Only C/C++ are supported now. Fortran support is under development \n"
+"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
+"                             unparses code using original token stream and forces the output \n"
+"                             of two files representing the unparsing of each statement using \n"
+"                             the token stream mapping to the AST.  The token_leading_* file \n"
+"                             uses the mapping and the leading whitespace mapping between \n"
+"                             statements, where as the token_trailing_* file uses the mapping \n"
+"                             and the trailing whitespace mapping between statements.  Both \n"
+"                             files should be identical, and the same as the input file. \n"
+"     -rose:unparse_template_ast\n"
+"                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
 "     -rose:unparseTemplateDeclarationsFromAST\n"
 "                             (experimental) option to permit unparsing template declarations \n"
 "                             from the AST (default: false). \n"
@@ -4921,6 +4920,23 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // set_collectAllCommentsAndDirectives(false);
         }
 
+  // DQ (3/24/2019): Adding support to translate comments and CPP directives into explicit IR nodes in the AST.
+  // This can simplify how transformations are done when intended to be a part of the token-baed unparsing.
+  //
+  // This translateCommentsAndDirectivesIntoAST option: When using the token based unparsing, and soemtime even 
+  // if not, a greater degree of precisison in the unparsing is possible if new directives can be positioned into 
+  // the AST with more precission relative to other directives that are already present.  This option adds the 
+  // comments and CPP directives as explicit IR nodes in each scope where they can be added as such.
+  // This also has the advantage of making them more trivially availalbe in the analysis as well.
+  // This is however, not the default in ROSE, and it an experimental option that may be adopted more
+  // formally later if it can be demonstraed to be robust.
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(translateCommentsAndDirectivesIntoAST)",true) == true )
+        {
+          printf ("option -rose:translateCommentsAndDirectivesIntoAST found \n");
+          set_translateCommentsAndDirectivesIntoAST(true);
+        }
+
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of
   // the binary executable file format and not the instructions).  This is also useful for testing.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only)",true) == true )
@@ -5854,11 +5870,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Communicate to the generated program that we are using ROSE (in case there are specific options that the user wants to to invoke.
      roseSpecificDefs.push_back("-DUSE_ROSE");
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) is in use.
-     roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-#endif
-
      ROSE_ASSERT(configDefs.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
@@ -5940,19 +5951,21 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("In SgFile::build_EDG_CommandLine(): emulate_backend_compiler_version_number = %d \n",emulate_backend_compiler_version_number);
         }
 
+  // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
+     if (get_strict_language_handling() == false)
+        {
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #endif
 
 #ifdef BACKEND_CXX_IS_GNU_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #else
    #ifdef USE_CMAKE
-  // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
-     commandLine.push_back("--gnu_version");
+       // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
+          commandLine.push_back("--gnu_version");
    #endif
 #endif
-
 
 #ifdef BACKEND_CXX_IS_CLANG_COMPILER
 #if 0
@@ -5985,8 +5998,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
   // commandLine.push_back("--c++11");
 #endif
-     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+          commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+        }
+
+// #endif for ROSE_USE_MICROSOFT_EXTENSIONS
 #endif
+// #endif for _MSC_VER
 #endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
@@ -6536,9 +6553,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
-  // #ifndef ROSE_USE_NEW_EDG_INTERFACE
      inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
-  // #endif
 
      if (get_C_only() == true)
         {
@@ -6548,6 +6563,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_strict_language_handling() == true)
         {
+       // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
           inputCommandLine.push_back("--strict");
         }
 
@@ -7016,15 +7032,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to
@@ -7037,15 +7044,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // Generate --upc_threads n
@@ -7768,15 +7766,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
-#endif
-
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-     if (get_C_only() || get_Cxx_only())
-        {
-       // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
-       // is in use to be properly passed on the compilation of the generated code.
-          compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-        }
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C

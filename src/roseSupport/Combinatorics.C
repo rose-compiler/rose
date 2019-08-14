@@ -35,6 +35,59 @@ Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
 
+boost::shared_ptr<Hasher> Hasher::createHasher(const std::string& inType) 
+{
+    std::string type;
+    std::transform(inType.begin(), inType.end(), back_inserter(type), ::toupper);
+    
+    if(type == "SHA256") {
+        HasherSha256Builtin* hasher = new HasherSha256Builtin;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "FNV") {
+        HasherFnv* hasher = new HasherFnv;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+#ifdef ROSE_HAVE_LIBGCRYPT
+    if(type == "MD5" || type == "GCRYPT_MD5") {
+        HasherMd5* hasher = new HasherMd5;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "SHA1" || type == "GCRYPT_SHA1") {
+        HasherSha1* hasher = new HasherSha1;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "GCRYPT_SHA256") {
+        HasherSha256* hasher = new HasherSha256;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "SHA384" || type == "GCRYPT_SHA384") {
+        HasherSha384* hasher = new HasherSha384;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "SHA512" || type == "GCRYPT_SHA512") {
+        HasherSha512* hasher = new HasherSha512;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+    if(type == "CRC_32"  || type == "GCRYPT_CRC32") {
+        HasherCrc32* hasher = new HasherCrc32;
+        boost::shared_ptr<Hasher> hashPtr(hasher);
+        return hashPtr;
+    }
+
+
+#endif
+    return boost::shared_ptr<Hasher>();
+    
+}
+
 ROSE_DLL_API std::string digest_to_string(const uint8_t *data, size_t size) {
     std::vector<uint8_t> digest(data+0, data+size);
     return Hasher::toString(digest);
@@ -51,6 +104,8 @@ digest_to_string(const std::string &data) {
     std::vector<uint8_t> digest(s, s + data.size());
     return Hasher::toString(digest);
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHA1 hashing

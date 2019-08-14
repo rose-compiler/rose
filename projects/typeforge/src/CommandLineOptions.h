@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <cstdio>
 #include <cstring>
 
@@ -13,6 +14,10 @@
 #else
 #include <boost/program_options.hpp>
 #endif
+
+namespace Typeforge {
+
+std::vector<std::string> parse_args(int argc, char* argv[]);
 
 class CommandLineOptions 
 #ifdef USE_SAWYER_COMMANDLINE
@@ -56,5 +61,8 @@ void CommandLineOptions::setOption(string option, T value) {
   const_cast<boost::program_options::variable_value&>(operator[](option)) = 
     boost::program_options::variable_value(boost::any(value), false);
 }
+
+}
+
 #endif
 

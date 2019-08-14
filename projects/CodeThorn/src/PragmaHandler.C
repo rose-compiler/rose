@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace boost;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::Analyzer* analyzer) {
   size_t num=extractAndParsePragmas(sageProject, analyzer);

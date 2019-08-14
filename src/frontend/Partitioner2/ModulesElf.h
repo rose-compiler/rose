@@ -33,6 +33,11 @@ std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretat
 size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
 
+/** Get a list of all ELF sections by name.
+ *
+ *  Returns an empty list if the interpretation is null or it doesn't have any sections that match the specified name. */
+std::vector<SgAsmElfSection*> findSectionsByName(SgAsmInterpretation*, const std::string&);
+
 /** True if the function is an import.
  *
  *  True if the specified function is an import, whether it's actually been linked in or not. This is a weaker version of @ref

@@ -3,9 +3,9 @@
 #include "RoseAst.h"
 
 using namespace std;
-using namespace SPRAY;
 using namespace CodeThorn;
-Threadification::Threadification(SPRAY::VariableIdMapping* vim):
+using namespace CodeThorn;
+Threadification::Threadification(CodeThorn::VariableIdMapping* vim):
   _variableIdMapping(vim) {
 }
 
@@ -54,7 +54,7 @@ void Threadification::transformVariableDeclaration(SgVariableDeclaration* varDec
   SgNodeHelper::replaceAstWithString(varDecl,newVarDecl);
 }
 
-void Threadification::transformVariableDeclarations(SgNode* root, SPRAY::VariableIdSet varIdSet) {
+void Threadification::transformVariableDeclarations(SgNode* root, CodeThorn::VariableIdSet varIdSet) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
@@ -71,7 +71,7 @@ void Threadification::transformVariableAccess(SgVarRefExp* varRefExp) {
   SgNodeHelper::replaceAstWithString(varRefExp,newVarRefExp);
 }
 
-void Threadification::transformVariableAccess(SgPntrArrRefExp* arrRefExp, SPRAY::VariableIdSet varIdSet) {
+void Threadification::transformVariableAccess(SgPntrArrRefExp* arrRefExp, CodeThorn::VariableIdSet varIdSet) {
   SgNode* lhs=SgNodeHelper::getLhs(arrRefExp);
   SgNode* rhs=SgNodeHelper::getRhs(arrRefExp);
   transformVariableAccesses(rhs,varIdSet);
@@ -79,7 +79,7 @@ void Threadification::transformVariableAccess(SgPntrArrRefExp* arrRefExp, SPRAY:
   SgNodeHelper::replaceAstWithString(arrRefExp,newArrayRefExp);
 }
 
-void Threadification::transformVariableAccesses(SgNode* root, SPRAY::VariableIdSet varIdSet) {
+void Threadification::transformVariableAccesses(SgNode* root, CodeThorn::VariableIdSet varIdSet) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVarRefExp* varRefExp=isSgVarRefExp(*i)) {

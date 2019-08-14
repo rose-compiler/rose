@@ -21,7 +21,7 @@ static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, con
 
     if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(reg)) {
         /* Add mask letters to program status registers */
-        if (rdesc.get_major()==arm_regclass_psr && dre->get_psr_mask()!=0) {
+        if (rdesc.majorNumber()==arm_regclass_psr && dre->get_psr_mask()!=0) {
             name += "_";
             if (dre->get_psr_mask() & 1) name += "c";
             if (dre->get_psr_mask() & 2) name += "x";
@@ -35,7 +35,7 @@ static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, con
 
 static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unparse as used for mnemonics
 #ifndef _MSC_VER
-    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+    std::string retval = stringifyBinaryAnalysisArmInstructionCondition(cond, "arm_cond_");
 #else
     ROSE_ASSERT(false);
     std::string retval ="";

@@ -3,8 +3,9 @@
 
 #include "BinarySmtSolver.h"
 #include "Diagnostics.h"
-#include "Registers.h"
 #include "FormatRestorer.h"
+#include "Registers.h"
+#include "RoseException.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -411,10 +412,10 @@ typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for exceptions thrown by instruction semantics. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
     SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
+    Exception(const std::string &mesg, SgAsmInstruction *insn): Rose::Exception(mesg), insn(insn) {}
     void print(std::ostream&) const;
 };
 
@@ -1688,10 +1689,19 @@ public:
      *  number zero. The begin_bit and end_bit values must be valid for the width of @p a. */
     virtual SValuePtr extract(const SValuePtr &a, size_t begin_bit, size_t end_bit) = 0;
 
-    /** Concatenates the bits of two values.  The bits of @p a and @p b are concatenated so that the result has @p
-     *  b in the high-order bits and @p a in the low order bits. The width of the return value is the sum of the widths of @p
-     *  a and @p b. */
-    virtual SValuePtr concat(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Concatenates the bits of two values.  The bits of @p lowBits and @p highBits are concatenated so that the result has @p
+     *  lowBits in the low-order bits and @p highBits in the high order bits. The width of the return value is the sum of the
+     *  widths of @p lowBits and @p highBits.
+     *
+     *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpr concatenation function. */
+    virtual SValuePtr concat(const SValuePtr &lowBits, const SValuePtr &highBits) = 0;
+
+    /** Split a value into two narrower values. Returns the two parts as a pair consisting of the low-order bits of @p a and
+     *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusvie) and
+     *  has width @p splitPoint. The returned high-order bits are bits @p splitPoint (inclusive) to the width of @p a
+     *  (exclusive) and has width which is the width of @p a minus @p splitPoint. This is not a pure virtual function because
+     *  it can be implemented in terms of @ref extract. */
+    virtual std::pair<SValuePtr /*low*/, SValuePtr /*high*/> split(const SValuePtr &a, size_t splitPoint);
 
     /** Returns position of least significant set bit; zero when no bits are set. The return value will have the same width as
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
@@ -1795,9 +1805,25 @@ public:
      * as @p a and @p b. */
     virtual SValuePtr add(const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
-     * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
+    /** Adds two integers of equal size and carry. The width of @p a and @p b must be the same, and the resulting sum will
+     *  also have the same width. Returns the sum by value and a carry-out bit by reference. This method is not pure abstract
+     *  and is generally not overridden in subclasses because it can be implemented in terms of other operations. */
+    virtual SValuePtr addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/);
+
+    /** Subtract one value from another.
+     *
+     *  Subtracts the @p subtrahend from the @p minuend and returns the result. The two arguments must be the same width and
+     *  the return value will also be that same width.  This method is not pure virtual and is not usually overridden by
+     *  subclasses because it can be implemented in terms of other operations. */
     virtual SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
+
+    /** Subtract one value from another and carry.
+     *
+     *  Subtracts the @p subtrahend from the @p minuend and returns the result. The two arguments must be the same width and
+     *  the return value will also be that same width. A carry-out bit is returned via reference. Overflow is indicated when
+     *  the carry-out bit is different than the sign bit of the result. This method is not pure virtual and is not usually
+     *  overridden by subclasses because it can be implemented in terms of other operations. */
+    virtual SValuePtr subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
@@ -1821,8 +1847,8 @@ public:
     /** Two's complement. The return value will have the same width as the operand. */
     virtual SValuePtr negate(const SValuePtr &a) = 0;
 
-    /** Divides two signed values. The width of the result will be the same as the width of operand @p a. */
-    virtual SValuePtr signedDivide(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Divides two signed values. The width of the result will be the same as the width of the @p dividend. */
+    virtual SValuePtr signedDivide(const SValuePtr &dividend, const SValuePtr &divisor) = 0;
 
     /** Calculates modulo with signed values. The width of the result will be the same as the width of operand @p b. */
     virtual SValuePtr signedModulo(const SValuePtr &a, const SValuePtr &b) = 0;
@@ -1830,8 +1856,8 @@ public:
     /** Multiplies two signed values. The width of the result will be the sum of the widths of @p a and @p b. */
     virtual SValuePtr signedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Divides two unsigned values. The width of the result is the same as the width of operand @p a. */
-    virtual SValuePtr unsignedDivide(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Divides two unsigned values. The width of the result is the same as the width of the @p dividend. */
+    virtual SValuePtr unsignedDivide(const SValuePtr &dividend, const SValuePtr &divisor) = 0;
 
     /** Calculates modulo with unsigned values. The width of the result is the same as the width of operand @p b. */
     virtual SValuePtr unsignedModulo(const SValuePtr &a, const SValuePtr &b) = 0;
@@ -1961,7 +1987,7 @@ public:
      *
      *  @{ */
     virtual SValuePtr readRegister(RegisterDescriptor reg) {   // old subclasses can still override this if they want,
-        return readRegister(reg, undefined_(reg.get_nbits())); // but new subclasses should not override this method.
+        return readRegister(reg, undefined_(reg.nBits())); // but new subclasses should not override this method.
     }
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt); // new subclasses override this
     /** @} */
@@ -1989,7 +2015,7 @@ public:
      * @{ */
     virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
     SValuePtr peekRegister(RegisterDescriptor reg) {
-        return peekRegister(reg, undefined_(reg.get_nbits()));
+        return peekRegister(reg, undefined_(reg.nBits()));
     }
     /** @} */
 
@@ -2239,6 +2265,9 @@ public:
 
     /** Returns the stack pointer register. */
     virtual RegisterDescriptor stackPointerRegister() const = 0;
+
+    /** Returns the function call return address register. */
+    virtual RegisterDescriptor callReturnRegister() const = 0;
 
     /** Property: Reset instruction pointer register for each instruction.
      *

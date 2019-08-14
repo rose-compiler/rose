@@ -5,7 +5,7 @@
 #include "VariableIdUtils.h"
 #include "CFAnalysis.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 class VariableIdSetAttribute;

@@ -1,7 +1,0 @@
-This is the configure command line to setup ROSE with Yices:
-
-64 bit configureation:
-/home/dquinlan/ROSE/NEW_ROSE/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-yices=/home/dquinlan/ROSE/YICES/yices-1.0.10 --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6_YICES_install CFLAGS=-fPIC CXXFLAGS=-fPIC
-
-
-

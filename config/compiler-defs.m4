@@ -179,12 +179,6 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
             # Trying out various way of getting GCC version number: after version 7 "-dumpversion" was replaced by "-dumpfullversion"
             #     CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND --dumpversion | grep "^gcc" | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
             CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpfullversion -dumpversion 2> /dev/null)
-#            if [ $? != 0 ]; then
-#              CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpversion 2> /dev/null)
-#              if [ $? != 0 ]; then
-#                AC_MSG_ERROR([Could detect the compiler version for $CXX_COMPILER_COMMAND])
-#              fi
-#            fi
             CXX_VERSION_MAJOR=$(echo $CXX_VERSION_TRIPLET |cut -d. -f1)
             CXX_VERSION_MINOR=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f2)
             CXX_VERSION_PATCH=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f3)
@@ -415,7 +409,19 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION3)
 
     # Frontend C++ compiler vendor and version major.minor
-    FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    echo FRONTEND_CXX_COMPILER_VENDOR=$FRONTEND_CXX_COMPILER_VENDOR
+    echo FRONTEND_CXX_VERSION_MAJOR=$FRONTEND_CXX_VERSION_MAJOR
+    echo FRONTEND_CXX_VERSION_MINOR=$FRONTEND_CXX_VERSION_MINOR
+    if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "clang" && test $FRONTEND_CXX_VERSION_MAJOR -ge 4; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "intel"; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    else
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    fi
+    echo FRONTEND_CXX_VENDOR_AND_VERSION2=$FRONTEND_CXX_VENDOR_AND_VERSION2
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION2)
 
     # Backend C++ compiler vendor and version triplet
