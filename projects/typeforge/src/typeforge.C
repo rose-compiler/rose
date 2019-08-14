@@ -53,27 +53,35 @@ int main (int argc, char* argv[]) {
   if (!args.count("compile")) {
     rose_args.push_back("-rose:skipfinalCompileStep");
   }
- 
-  // Build ROSE IR and use it to initialize Typeforge
 
-  ::Typeforge::typechain.initialize(frontend(rose_args));
-  if (args.isUserProvided("set-analysis")) {
-    ::Typeforge::typechain.toDot("set_analysis.dot", nullptr);
-    ::Typeforge::typechain.toDot("set_analysis_double.dot", SageBuilder::buildDoubleType());
-  }
+  // [ALTERNATIVE] "--opnet"
 
   if (args.isUserProvided("opnet")) {
     ::Typeforge::opnet.initialize();
     ::Typeforge::opnet.toDot("operand-network.dot");
   }
 
-  // [ALTERNATIVE] "--cast-stats": display statistics about casts operations in the program TODO This should be a simple query to the model.
+  // [ALTERNATIVE] "--cast-stats":
+  //     display statistics about casts operations in the program
+  //     TODO This should be a simple query to the model.
 
   if(args.isUserProvided("cast-stats")) {
     CastStats castStats;
-    castStats.computeStats(::Typeforge::project);
+    castStats.computeStats(frontend(rose_args));
     cout << castStats.toString();
     return 0;
+  }
+
+  if (args.isUserProvided("typeforge-out")) {
+    ::Typeforge::ToolConfig::filename = args["typeforge-out"].as<string>();
+  }
+
+  // Build ROSE IR and use it to initialize Typeforge
+
+  ::Typeforge::typechain.initialize(frontend(rose_args));
+  if (args.isUserProvided("set-analysis")) {
+    ::Typeforge::typechain.toDot("set_analysis.dot", nullptr);
+    ::Typeforge::typechain.toDot("set_analysis_double.dot", SageBuilder::buildDoubleType());
   }
 
   // Transformation Objects => TODO should be only one
@@ -118,10 +126,6 @@ int main (int argc, char* argv[]) {
 
     // Read in the JSON file used to store "defered" actions ("list_*" queries)
     //   FIXME race-condition: parallel make with "CC=typeforge --typeforge-out xxx.json"
-
-    if (args.isUserProvided("typeforge-out")) {
-      ToolConfig::filename = args["typeforge-out"].as<string>();
-    }
 
     // Analyze Phase
 

@@ -368,6 +368,9 @@ void ToolConfig::appendAnalysis(SgType * type) {
 }
 
 ToolConfig::ToolConfig() {
+#if DEBUG__ToolConfig
+  std::cout << "ToolConfig::ToolConfig()" << std::endl;
+#endif
     this->version = newVersion;
     this->sourceFiles = {};
     this->executable = "";
@@ -376,6 +379,10 @@ ToolConfig::ToolConfig() {
 }
 
 ToolConfig::ToolConfig(std::string fname) {
+#if DEBUG__ToolConfig
+  std::cout << "ToolConfig::ToolConfig()" << std::endl;
+  std::cout << "  fname = " << fname << std::endl;
+#endif
     std::ifstream in(fname);
     json config;
     in >> config;

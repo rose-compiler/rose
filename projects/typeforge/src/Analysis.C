@@ -230,12 +230,20 @@ Analysis::node_tuple_t::node_tuple_t(SgNode * n) :
   assert(lnode != nullptr);
 
   {
+    SgLocatedNode * loc_node = lnode;
+    if (SgDeclarationStatement * declstmt = isSgDeclarationStatement(loc_node)) {
+      declstmt = declstmt->get_definingDeclaration();
+      if (declstmt != nullptr) {
+        loc_node = declstmt;
+      }
+    }
+
     std::ostringstream oss;
-    oss << lnode->get_endOfConstruct()->get_filenameString()
-        << ":" << lnode->get_startOfConstruct()->get_raw_line()
-        << ":" << lnode->get_startOfConstruct()->get_raw_col()
-        << ":" << lnode->get_endOfConstruct()->get_raw_line()
-        << ":" << lnode->get_endOfConstruct()->get_raw_col();
+    oss << loc_node->get_endOfConstruct()->get_filenameString()
+        << ":" << loc_node->get_startOfConstruct()->get_raw_line()
+        << ":" << loc_node->get_startOfConstruct()->get_raw_col()
+        << ":" << loc_node->get_endOfConstruct()->get_raw_line()
+        << ":" << loc_node->get_endOfConstruct()->get_raw_col();
     position = oss.str();
   }
 

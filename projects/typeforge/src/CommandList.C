@@ -257,7 +257,14 @@ int HandleCommand::run(RoseAst completeAst, TFTransformation& tfTransformation) 
 #endif
 
   SgNode * n = ::Typeforge::typechain.getNode(handle);
-  assert(n != nullptr); // TODO possible when working with multiple files: (1) list change, (2) external tool select, (3) apply transform ; can also happen for user provided handles so we might need some warnings!
+  if (n == nullptr) {
+    // TODO possible when working with multiple files:
+    //   (1) list change,
+    //   (2) external tool select,
+    //   (3) apply transform
+    // Can also happen for user provided handles so we might need some warnings!
+    return 0;
+  }
 
 #if DEBUG__HandleCommand__run
   std::cout << "  n      = " << n << " ( " << n->class_name() << ")" << std::endl;
