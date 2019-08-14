@@ -37,6 +37,8 @@
 #include <list>
 #include "TFTransformation.h"
 
+#include "OperandNetwork.h"
+
 using namespace std;
 using namespace Typeforge;
 
@@ -58,6 +60,11 @@ int main (int argc, char* argv[]) {
   if (args.isUserProvided("set-analysis")) {
     ::Typeforge::typechain.toDot("set_analysis.dot", nullptr);
     ::Typeforge::typechain.toDot("set_analysis_double.dot", SageBuilder::buildDoubleType());
+  }
+
+  if (args.isUserProvided("opnet")) {
+    ::Typeforge::opnet.initialize();
+    ::Typeforge::opnet.toDot("operand-network.dot");
   }
 
   // [ALTERNATIVE] "--cast-stats": display statistics about casts operations in the program TODO This should be a simple query to the model.

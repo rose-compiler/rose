@@ -23,6 +23,9 @@ using namespace std;
 #ifndef DEBUG__TFTypeTransformer_changeVariableType
 #  define DEBUG__TFTypeTransformer_changeVariableType DEBUG__TFTypeTransformer
 #endif
+#ifndef DEBUG__TFTypeTransformer__addTransformation
+#  define DEBUG__TFTypeTransformer__addTransformation DEBUG__TFTypeTransformer
+#endif
 
 namespace Typeforge {
 
@@ -303,6 +306,23 @@ void TFTypeTransformer::addToActionList(SgNode* node, SgType* toType, bool base)
 }
 
 void TFTypeTransformer::addTransformation(SgNode * node, SgType * type, bool base) {
+#if DEBUG__TFTypeTransformer__addTransformation
+  std::cout << "TFTypeTransformer::addTransformation" << std::endl;
+  std::cout << "  node = " << node << " ( " << node->class_name() << " )" << std::endl;
+  std::cout << "  type = " << type << " ( " << ( type ? type->class_name() : "" ) << " ) : " << ( type ? type->unparseToString() : "" ) << std::endl;
+#endif
+  if (transformations.find(node) != transformations.end()) { // FIXME node traversed twice
+    SgType * ptype = transformations[node];
+    assert(ptype != nullptr);
+
+#if DEBUG__TFTypeTransformer__addTransformation
+    std::cout << "  transformations[node] = " << ptype << " ( " << ( ptype ? ptype->class_name() : "" ) << " ) : " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
+#endif
+
+    if (type->unparseToString() == ptype->unparseToString()) { // FIXME should have type pointers equally!!! (opaque types created multiple time)
+      return;
+    }
+  }
   assert(transformations.find(node) == transformations.end());
 
 #if 0

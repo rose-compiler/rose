@@ -19,44 +19,43 @@ namespace Typeforge {
 
 using json = nlohmann::json;
 
-class ToolAction
-{
-public:
+class ToolAction {
+  public:
     ToolAction();
 
     ToolAction(std::string actionType);
 
-    std::string getActionType();
+    std::string const & getActionType() const;
     void setActionType(std::string type);
 
+    std::string const & getName() const;
     void setName(std::string name);
-    std::string getName();
 
+    std::string const & getHandle() const;
     void setHandle(std::string handle);
-    std::string getHandle();
 
+    std::string const & getScope() const;
     void setScope(std::string scope);
-    std::string getScope();
 
+    std::string const & getSourceInfo() const;
     void setSourceInfo(std::string source);
-    std::string getSourceInfo();
 
-    std::string getFromType();
+    std::string const & getFromType() const;
     void setFromType(std::string type);
 
-    std::string getToType();
+    std::string const & getToType() const;
     void setToType(std::string type);
 
     std::vector<std::string> & getLabels();
     std::vector<std::string> const & getLabels() const;
 
-    double getError();
+    double getError() const;
     void setError(double error);
 
-    long getAssignments();
+    long getAssignments() const;
     void setAssignments(long asignments);
 
-private:
+  private:
     std::string action;
     std::string name;
     std::string handle;
@@ -67,6 +66,9 @@ private:
     std::vector<std::string> labels;
     double error;
     long assignments;
+
+  public:
+    static size_t annon_count;
 };
 
 void to_json(json &j, const ToolAction &a);
