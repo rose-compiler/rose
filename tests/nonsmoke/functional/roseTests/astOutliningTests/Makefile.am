@@ -76,7 +76,8 @@ C_TESTCODES_REQUIRED_TO_PASS =			\
 	 moreTest0.c				\
 	 moreTest1.c				\
 	 moreTest8.c				\
-	 zeroParameter.c
+	 zeroParameter.c                        \
+         variables_in_header.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	array2.cpp				\
