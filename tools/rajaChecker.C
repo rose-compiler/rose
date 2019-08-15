@@ -1022,6 +1022,7 @@ SgStatement* getNextNonNullStatement(SgStatement* s)
   //now r is NULL, or not a NULL statement
   return r; 
 }
+
 // With a known loop variable lvar, check if a basic block contains the 4-statement pattern
 bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt)
 {
