@@ -155,6 +155,7 @@ libcodethorn_la_SOURCES=\
   CPAstAttribute.h CPAstAttribute.C \
   CTIOLabeler.h                    \
   CTIOLabeler.C                    \
+  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   DataRaceDetection.h \
   DataRaceDetection.C \
   EqualityMaintainer.h             \
@@ -273,7 +274,9 @@ libcodethorn_la_SOURCES=\
   Analyzer.C                       \
   Analyzer.h                       \
   IOAnalyzer.C                     \
-  IOAnalyzer.h
+  IOAnalyzer.h                     \
+  UDAstAttribute.h                 \
+  UDAstAttribute.C                 
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
@@ -319,10 +322,7 @@ endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   CPAstAttribute.h CPAstAttribute.C \
-  UDAstAttribute.h                 \
-  UDAstAttribute.C                 \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   ProgramStats.h                 \

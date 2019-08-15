@@ -35,9 +35,6 @@ public:
 
   SgFunctionDeclaration* getFunctionDeclaration(FunctionId funcFunctionId) const;
 
-
-
-
   void generateDot(std::string filename,SgNode* astRoot);
 
   FunctionIdSet getFunctionIdsOfFunctionDeclarations(std::set<SgFunctionDeclaration*> varDecls);

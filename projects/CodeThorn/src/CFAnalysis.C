@@ -19,6 +19,7 @@ using namespace std;
 using namespace Sawyer::Message;
 
 CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;
+//CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;
 
 Sawyer::Message::Facility CFAnalysis::logger;
 void CFAnalysis::initDiagnostics() {
@@ -144,6 +145,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   int externalFunCalls=0;
   int externalFunCallsWithoutDecl=0;
   int functionsFound=0;
+ 
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
@@ -152,6 +154,19 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
       throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
+#if 0
+    //SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+    //SgFunctionSymbol* funSym=funCall->getAssociatedFunctionSymbol();
+    //SgType* funCallType=funCall->get_type(); // return type
+    SgExpression* funExp=funDecl->get_function();
+    ROSE_ASSERT(funExp);
+    SgType* funExpType=funExp->get_type();
+    ROSE_ASSERT(funExpType);
+    SgFunctionType* funType=isSgFunctionType(funExpType);
+    if(funType) {
+      SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    }
+#endif
     SgFunctionDefinition* funDef=nullptr;
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
@@ -1357,9 +1372,40 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp
 }
 
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
+  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
   SgFunctionDefinition* funDef=nullptr;
   // TODO (use function id mapping)
-  logger[ERROR]<<"CFAnalysis::determineFunctionDefinition3 not implemented."<<endl;
-  exit(1);
+  ROSE_ASSERT(getFunctionIdMapping());
+  SgExpression* node=funCall->get_function();
+  if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
+    FunctionId funId=_functionIdMapping->getFunctionIdFromFunctionRef(funRef);
+    // TODO: get function definition from funId
+    cout<<"DEBUG: FunctionId "<<funId.toString()<<" for funCall: "<<funCall->unparseToString()<<": definition: "<<endl;
+    if(funId.isValid()) {
+      SgSymbol* sym=_functionIdMapping->getSymbolFromFunctionId(funId);
+      SgFunctionSymbol* funSym=isSgFunctionSymbol(sym);
+      cout<<"funSym:"<<funSym<<" ";
+      if(funSym) {
+        SgDeclarationStatement* declStmt=funSym->get_declaration();
+        cout<<"declStmt:"<<declStmt<<" ";
+        if(declStmt) {
+          auto declStmt2=declStmt->get_definingDeclaration();
+          cout<<"declStmt2:"<<declStmt2<<" ";
+          if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(declStmt2)) {
+            funDef=funDecl->get_definition();
+          }
+        }
+      }
+    }
+    cout<<funDef<<endl;
+  }
   return funDef;
+}
+
+void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
+  _functionIdMapping=fim;
+}
+
+FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
+  return _functionIdMapping;
 }

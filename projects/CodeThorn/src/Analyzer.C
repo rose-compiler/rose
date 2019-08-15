@@ -294,6 +294,12 @@ CodeThorn::Analyzer::Analyzer():
  }
 
 CodeThorn::Analyzer::~Analyzer() {
+  if(cfanalyzer) {
+    if(FunctionIdMapping* fim=cfanalyzer->getFunctionIdMapping()) {
+      delete fim;
+    }
+    delete cfanalyzer;
+  }
 }
 
 size_t CodeThorn::Analyzer::getNumberOfErrorLabels() {
@@ -1413,8 +1419,15 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<< "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
+
+  FunctionIdMapping* funIdMapping=new FunctionIdMapping();
+  ROSE_ASSERT(isSgProject(root));
+  funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
+  cfanalyzer->setFunctionIdMapping(funIdMapping);
+
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+
 
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[TRACE])<< "INIT: Building CFGs."<<endl;

@@ -8,6 +8,8 @@
 using namespace std;
 using namespace CodeThorn;
 
+//TODO: SgFunctionSymbol->get_declaration() ..->get_definingDeclaration(=>DeclarationStmt => (FunctionDeclaration*)) -> get_definition() ==> SgFunctionDefinition
+
 FunctionIdMapping::FunctionIdMapping() {
 
 }
