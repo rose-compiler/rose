@@ -569,7 +569,7 @@ traverseWithinFile(SgNode* node, InheritedAttributeType inheritedValue)
 template <class SynthesizedAttributeType>
 DummyAttribute
 AstBottomUpProcessing<SynthesizedAttributeType>::
-evaluateInheritedAttribute(SgNode* astNode, DummyAttribute inheritedValue)
+evaluateInheritedAttribute(SgNode*, DummyAttribute /*inheritedValue*/)
 {
     /* called but not used */
     DummyAttribute a = defaultDummyAttribute;
@@ -593,7 +593,7 @@ defaultSynthesizedAttribute()
 // MS: 30/07/04
 template <class SynthesizedAttributeType>
 SynthesizedAttributeType AstBottomUpProcessing<SynthesizedAttributeType>::
-defaultSynthesizedAttribute(DummyAttribute inheritedValue)
+defaultSynthesizedAttribute(DummyAttribute /*inheritedValue*/)
 {
     return defaultSynthesizedAttribute();
 }
@@ -602,7 +602,7 @@ defaultSynthesizedAttribute(DummyAttribute inheritedValue)
 template <class SynthesizedAttributeType>
 SynthesizedAttributeType AstBottomUpProcessing<SynthesizedAttributeType>::
 evaluateSynthesizedAttribute(SgNode* astNode,
-        DummyAttribute inheritedValue,
+        DummyAttribute /*inheritedValue*/,
         SynthesizedAttributesList l)
 {
     return evaluateSynthesizedAttribute(astNode, l);
@@ -655,7 +655,7 @@ traverseInputFiles(SgProject* projectNode)
 // MS: 07/29/04
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 SynthesizedAttributeType SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-defaultSynthesizedAttribute(InheritedAttributeType inh)
+defaultSynthesizedAttribute(InheritedAttributeType /*inh*/)
 {
     // we provide 'inh' but do not use it in the constructor of 's' to allow primitive types
     SynthesizedAttributeType s = SynthesizedAttributeType(); 
@@ -693,10 +693,18 @@ traverseWithinFile(SgNode* node,
      // comparisons are much cheaper this way
      fileToVisit = filenode;
 
+#if 0
+  // DQ (8/17/2018): Added debugging support for new combined unparse tokens with unparse headers feature.
+     std::string filename = fileToVisit != NULL ? fileToVisit->getFileName() : "";
+     printf ("In SgTreeTraversal<>::traverseWithinFile(): fileToVisit = %p filename = %s \n",fileToVisit,filename.c_str());
+#endif
+
      ROSE_ASSERT(SgTreeTraversal_inFileToTraverse(node, traversalConstraint, fileToVisit) == true);
      
      SynthesizedAttributeType synth = traverse(node, inheritedValue, treeTraversalOrder);
+
      traversalConstraint = false;
+
      return synth;
 }
 
@@ -782,6 +790,11 @@ performTraversal(SgNode* node,
                numberOfSuccessors = node->get_numberOfTraversalSuccessors();
              }
 
+#if 0
+       // DQ (8/17/2018): Add support for debugging.
+          printf ("In SgTreeTraversal<>::performTraversal(): node = %p = %s numberOfSuccessors = %zu \n",node,node->class_name().c_str(),numberOfSuccessors);
+#endif
+
           for (size_t idx = 0; idx < numberOfSuccessors; idx++)
              {
                SgNode *child = NULL;
@@ -803,17 +816,21 @@ performTraversal(SgNode* node,
                     ROSE_ASSERT(child == NULL || child != NULL);
                   }
 
+#if 0
+            // DQ (8/17/2018): Add support for debugging.
+               printf ("In SgTreeTraversal<>::performTraversal(): child = %p \n",child);
+#endif
+
                if (child != NULL)
                   {
-                
-                    
+#if 0
+                 // DQ (8/17/2018): Add support for debugging.
+                    printf ("In SgTreeTraversal<>::performTraversal(): child = %p = %s \n",child,child->class_name().c_str());
+#endif
+                    performTraversal(child, inheritedValue, treeTraversalOrder);
                    
-                        performTraversal(child, inheritedValue, treeTraversalOrder);
-                        
-                
-                   
-                //ENDEDIT
-                   }
+                 // ENDEDIT
+                  }
                  else
                   {
                  // null pointer (not traversed): we put the default value(s) of SynthesizedAttribute onto the stack
@@ -821,7 +838,7 @@ performTraversal(SgNode* node,
                          synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
                   }
              }
- 
+
        // In case of a postorder traversal call the function to be applied to each node of the AST
        // GB (7/6/2007): Because AstPrePostProcessing was introduced, a
        // treeTraversalOrder can now be pre *and* post at the same time! The

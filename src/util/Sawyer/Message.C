@@ -1112,7 +1112,7 @@ StreamBuf::bake() {
         destination_->bakeDestinations(message_->properties(), *baked_/*out*/);
         anyUnbuffered_ = false;
         for (BakedDestinations::const_iterator bi=baked_->begin(); bi!=baked_->end() && !anyUnbuffered_; ++bi)
-            anyUnbuffered_ = !bi->second.isBuffered;
+            anyUnbuffered_ = !bi->second.isBuffered ? true : false;
         isBaked_ = true;
     }
 }
@@ -1441,6 +1441,24 @@ Facility::operator=(const Facility &other) {
     return *this;
 }
 
+SAWYER_EXPORT Facility&
+Facility::initialize(const std::string &name) {
+    assert(isConstructed());
+    constructed_ = CONSTRUCTED_MAGIC;
+    name_ = name;
+    initStreams(FdSink::instance(2));
+    return *this;
+}
+
+SAWYER_EXPORT Facility&
+Facility::initialize(const std::string &name, const DestinationPtr &destination) {
+    assert(isConstructed());
+    constructed_ = CONSTRUCTED_MAGIC;
+    name_ = name;
+    initStreams(destination);
+    return *this;
+}
+
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::initStreams(const DestinationPtr &destination) {
@@ -1469,7 +1487,12 @@ Facility::renameStreams(const std::string &name) {
 // thread-safe
 SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
-    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
+    if (!isConstructed()) {
+        // If you're looking at this line in a debugger it's probably because you declarated a Message::Facility global
+        // variable and tried to use it before the C++ runtime has had a chance to initialize it.  You can initialize
+        // Facility objects from "main" (for instance) by calling Facility::initialize.
+        throw std::runtime_error("message facility has not been constructed yet");
+    }
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
@@ -1517,6 +1540,23 @@ Facility::name() const {
     assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return name_;
+}
+
+// thread-safe
+SAWYER_EXPORT std::string
+Facility::comment() const {
+    assert(isConstructed());
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return comment_;
+}
+
+// thread-safe
+SAWYER_EXPORT Facility&
+Facility::comment(const std::string &s) {
+    assert(isConstructed());
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    comment_ = s;
+    return *this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2089,6 +2129,12 @@ Facilities::print(std::ostream &log) const {
     if (facilities_.isEmpty()) {
         log <<"no message facilities registered\n";
     } else {
+        // Get length of longest facility name (assume single-line, no tabs as documented in API)
+        size_t maxNameLength = 0;
+        BOOST_FOREACH (const std::string &name, facilities_.keys())
+            maxNameLength = std::max(maxNameLength, name.size());
+
+        // Produce the output
         BOOST_FOREACH (const FacilityMap::Node &fnode, facilities_.nodes()) {
             Facility *facility = fnode.value();
 
@@ -2102,7 +2148,14 @@ Facilities::print(std::ostream &log) const {
                     log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
                 }
             }
-            log <<" " <<fnode.key() <<"\n";
+            log <<" " <<fnode.key();
+
+            std::string comment = facility->comment();
+            if (!comment.empty()) {
+                ASSERT_require(fnode.key().size() <= maxNameLength);
+                log <<std::string(maxNameLength - fnode.key().size(), ' ') <<" -- " <<comment;
+            }
+            log <<"\n";
         }
     }
 }
@@ -2147,7 +2200,8 @@ class Initializer {
 public:
     void operator()() {
         merr = FdSink::instance(2);
-        mlog = Facility("", merr);
+        mlog.initialize("", merr);
+        mlog.comment("Sawyer C++ support library");
         mlog[DEBUG].disable();
         mlog[TRACE].disable();
         mlog[WHERE].disable();

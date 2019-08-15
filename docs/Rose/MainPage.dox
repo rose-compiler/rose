@@ -98,8 +98,8 @@
  *
  *   <tr>
  *     <td>To write a source-to-source translator</td>
- *     <td>You'll need to call @ref ::frontend (@ref ROSE_FrontEndGroup) to obtain a @ref SgProject node of an AST, then
- *         transform the AST as you see fit (@ref rose_midend), then call @ref ::backend (@ref ROSE_BackEndGroup) to generate
+ *     <td>You'll need to call @ref ::frontend (@ref rose_frontend) to obtain a @ref SgProject node of an AST, then
+ *         transform the AST as you see fit (@ref rose_midend), then call @ref ::backend (@ref rose_backend) to generate
  *         new code. All node classes start with the letters "Sg" (short for "Sage"), and the base class @ref SgNode.</td>
  *   </tr>
  *

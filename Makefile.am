@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
-
+EXTRA_DIST =
 
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
@@ -16,7 +16,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
 # ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
-SUBDIRS = libltdl config src
+SUBDIRS = LicenseInformation libltdl config src python
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
@@ -32,6 +32,18 @@ if !ROSE_USE_INSURE
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
+
+# The MatrixTestingProject is not compiled as part of ROSE but serves as a simple example of an external project.
+# Matrix testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
+# and build trees. Therefore, this project's source code should be installed as part of the ROSE installation. These
+# rules are at this high level of the source code because this project must be installed even if the "projects'
+# subdirectory doesn't participate in the $(SUBDIRS).
+testprojdir = ${datarootdir}/test-project
+testproj_DATA =						\
+	projects/MatrixTestingProject/Makefile		\
+	projects/MatrixTestingProject/README		\
+	projects/MatrixTestingProject/test-rose.C
+EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
 # Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
@@ -71,8 +83,21 @@ all: remove_sage3basic_h_pch
 
 core:
 	$(MAKE) -C $(top_builddir)/src
+
+tools:
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) -C $(top_builddir)/projects/autoTuning
+	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
+	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -80,15 +105,46 @@ endif
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
+	cp rosePublicConfig.h $(pkgincludedir)
+
+install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) install -C $(top_builddir)/projects/autoTuning
+	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
-	$(MAKE) install -C $(top_builddir)/projects/xgenTranslator
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) install -C $(top_builddir)/projects/typeforge
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
-	cp rosePublicConfig.h $(pkgincludedir)
+
+check-core: core
+	$(MAKE) check -C $(top_builddir)/src
+
+check-tools: tools
+	$(MAKE) check -C $(top_builddir)/tools
+	$(MAKE) check -C $(top_builddir)/exampleTranslators
+	$(MAKE) check -C $(top_builddir)/projects/compass
+	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
+	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
+	$(MAKE) check -C $(top_builddir)/projects/autoTuning
+	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
+	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
+	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
+	$(MAKE) check -C $(top_builddir)/projects/ArithmeticMeasureTool
+if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
+	$(MAKE) check -C $(top_builddir)/projects/typeforge
+endif
+if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
+	$(MAKE) check -C $(top_builddir)/tutorial
+endif
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
@@ -98,9 +154,11 @@ install-compass: install-core
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
 # ROSE project developers that have a need to install the library and other specific tools (via other install targets) but
 # don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
-install-rose-library: install-data-local
+install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
+	$(MAKE) -C $(top_builddir)/LicenseInformation install
 	cp rosePublicConfig.h $(pkgincludedir)
+	$(MAKE) -C $(top_builddir)/python install
 
 # Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
 # some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
@@ -118,35 +176,35 @@ install-rose-library: install-data-local
 rose-installer-rmc2: install-rose-library
 	rm -rf $@.tmp
 	mkdir  $@.tmp
-	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
-		--create="$@"								\
-		--cc="$(C_VENDOR) $(C_VERSION)"						\
-		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
-		--contact="http://rosecompiler.org"					\
-		--os="$(RMC_OS_NAME)"							\
-		--prjnam=ROSE								\
-		--prjver=$(PACKAGE_VERSION)						\
-		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
-		$(prefix)/*								\
-		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
-		    $(BOOST_ROOT)							\
-		    $(CMAKE_ROOT)							\
-		    $(DLIB_ROOT)							\
-		    $(GNU_COMPILERS_ROOT)						\
-		    $(LIBBZ2_ROOT)							\
-		    $(LIBGCRYPT_ROOT)							\
-		    $(LIBGPG_ERROR_ROOT)						\
-		    $(LIBGRAPHICSMAGICK_ROOT)						\
-		    $(LIBJPEG_ROOT)							\
-		    $(LIBLCMS_ROOT)							\
-		    $(LIBLZMA_ROOT)							\
-		    $(LIBPNG_ROOT)							\
-		    $(LIBTIFF_ROOT)							\
-		    $(PYTHON_ROOT)							\
-		    $(SPOT_ROOT)							\
-		    $(WT_ROOT)								\
-		    $(YAMLCPP_ROOT)							\
-		    $(ZLIB_ROOT)							\
+	$(top_srcdir)/scripts/mkinstaller --version
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
+		--create="$@"												\
+		--CC="$(CC)"												\
+		--CXX="$(CXX)"												\
+		--contact="http://rosecompiler.org"									\
+		--prjnam=ROSE												\
+		--prjver=$(PACKAGE_VERSION)										\
+		--postinstall-bin=$(top_srcdir)/projects/MatrixTesting/lib/matrix/container-scripts/post-install-script	\
+		$(prefix)/*												\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,								\
+		    $(BOOST_ROOT)											\
+		    $(CMAKE_ROOT)											\
+		    $(DLIB_ROOT)											\
+		    $(GNU_COMPILERS_ROOT)										\
+		    $(LIBBZ2_ROOT)											\
+		    $(LIBGCRYPT_ROOT)											\
+		    $(LIBGPG_ERROR_ROOT)										\
+		    $(LIBGRAPHICSMAGICK_ROOT)										\
+		    $(LIBJPEG_ROOT)											\
+		    $(LIBLCMS_ROOT)											\
+		    $(LIBLZMA_ROOT)											\
+		    $(LIBPNG_ROOT)											\
+		    $(LIBTIFF_ROOT)											\
+		    $(PYTHON_ROOT)											\
+		    $(SPOT_ROOT)											\
+		    $(WT_ROOT)												\
+		    $(YAMLCPP_ROOT)											\
+		    $(ZLIB_ROOT)											\
 		))
 	rm -rf $@.tmp
 
@@ -199,7 +257,7 @@ check-policies: enforce_policies
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
-EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
+EXTRA_DIST += cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
              LicenseInformation ROSE_ResearchPapers build ChangeLog2
 
 # The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
@@ -257,7 +315,6 @@ install-exec-local:
 install-data-local: uninstall-local
 	-mkdir -p $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
-#	if !ROSE_USE_NEW_EDG_INTERFACE
 	mkdir -p "$(DESTDIR)$(includedir)/edg"
 	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
 #	endif
@@ -386,8 +443,6 @@ FORCE_DOCS_TO_BE_MADE:
 
 # DQ (7/25/2008): Running "make docs" introduces dependences that are inappropriate
 # for a distribution.
-# Liao (9/26/2013) We no longer support haskellport as part of the migration to EDG 4.x based ROSE
-#	   $(MAKE) -Cprojects/haskellport docs && 
 docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
@@ -696,7 +751,7 @@ lcov:
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
 -d src/frontend/Partitioner2/.libs \
--d src/midend/binaryAnalyses/.libs \
+-d src/midend/BinaryAnalysis/.libs \
 -d src/midend/programAnalysis/.libs \
 -d src/midend/programAnalysis/staticSingleAssignment/.libs \
 -d src/midend/programAnalysis/ssaUnfilteredCfg/.libs \

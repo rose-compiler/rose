@@ -15,7 +15,7 @@ std::string
 SgAsmFunction::reason_key(const std::string &prefix)
 {
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
-            prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
+            prefix + "X = exception frame       T = thunk, t = target    I = imported/dyn-linked\n" +
             prefix + "O = exported              S = function symbol      P = instruction pattern\n" +
             prefix + "G = CFG graph analysis    U = user-def detection   N = NOP/zero padding\n" +
             prefix + "D = discontiguous blocks  V = intra-function block L = leftover blocks\n" +
@@ -74,6 +74,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
     add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
+    add_to_reason_string(result, (r & FUNC_THUNK_TARGET),  do_pad, "t", "thunk target");
 
     /* The miscellaneous marker is special. It's a single letter like the others, but is followed by a fixed width
      * integer indicating the (user-defined) algorithm that added the function. */
@@ -205,55 +206,6 @@ SgAsmFunction::get_entry_block() const {
     return NULL;
 }
 
-int 
-SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
-//  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
-  std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
-  int instructions = succs.size();
-  bool foundRet=false;
-  bool nodeOtherThanNopAfterRetExists=false;    
-/*
-  if (j!=succs.begin())
-    j--;
-  else
-    return 0;
-*/
-  for (;j!=succs.rend(); j++) {
-     SgAsmX86Instruction* n = isSgAsmX86Instruction(*j);
-     if (n && (n->get_kind() == x86_ret || n->get_kind() == x86_hlt)) {
-          foundRet=true;
-          break;
-    } else {
-       if (n && n->get_kind() != x86_nop) {
-          nodeOtherThanNopAfterRetExists= true;
-       }
-       instructions--;
-    }
-  }
-  if (!foundRet)
-     instructions = succs.size();
-  // if we find a return and there are NOPs following it somewhere,
-  // we cut off the CFG at the NOP but we keep valid instructions
-  // after the RET
-  if (foundRet)
-    if (nodeOtherThanNopAfterRetExists)
-      return succs.size();
-   
-  return instructions;
-}
-
-void
-SgAsmFunction::remove_children(  )
-   {
-     p_statementList.clear();
-   }
-
-void
-SgAsmFunction::append_dest( SgAsmStatement* statement )
-   {
-     p_dest.push_back(statement);
-   }
-
 void
 SgAsmFunction::append_statement( SgAsmStatement* statement )
    {
@@ -272,17 +224,4 @@ SgAsmFunction::remove_statement( SgAsmStatement* statement )
      }  
         if (l!=p_statementList.end())
             p_statementList.erase(l);
-   }
-
-// DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
-int
-SgAsmFunction::get_stackNutralityMetric() const
-   {
-  // This function computes the positon of the stack at the end of the function relative to the 
-  // start of the function and contributes to a scoring of functions as valid functions.
-
-     printf ("Error: This SgAsmFunction::get_stackNutralityMetric() function is not yet implemented. \n");
-     ROSE_ASSERT(false);
-
-     return 0;
    }

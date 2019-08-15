@@ -1,6 +1,6 @@
  /*!
      \defgroup FortranCodeGenerator Backend Fortran Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates Fortran Source code from the AST.
 

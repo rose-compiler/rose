@@ -1,27 +1,8 @@
 /* Functions that produce output reminiscent of the Unix "hexdump" command. */
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include <boost/format.hpp>
 #include <stdarg.h>
-
-/* Helper function that safely sprintfs to a buffer, allocation the buffer as needed. Note that the buffer is never freed (so
- * we don't have to allocate/free each time in, but that the conversion to std::string copies it. */
-static std::string
-str_printf(const char *fmt, ...)
-{
-    va_list ap;
-    static size_t bufsz = 128;
-    static char *buf = new char[bufsz];
-    va_start(ap, fmt);
-
-    size_t need;
-    while ((need=vsnprintf(buf, bufsz, fmt, ap))>bufsz) {
-        delete[] buf;
-        bufsz = need+1;
-        buf = new char[bufsz];
-    }
-    va_end(ap);
-    return buf;
-}
 
 /*************************************************************************************************************************
  *                                                      C++ Stream Output
@@ -31,24 +12,22 @@ void
 SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const unsigned char *data,
                                    size_t n, const HexdumpFormat &fmt)
 {
-    /* Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h> */
-    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08" PRIx64 ": ";
-    const char *numeric_fmt = fmt.numeric_fmt ? fmt.numeric_fmt : "%02x";
-    const char *numeric_sep = fmt.numeric_sep ? fmt.numeric_sep : " ";
-    const char *prefix = fmt.prefix ? fmt.prefix : "";
+    // Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h>
+    std::string addr_fmt = fmt.addr_fmt.empty() ? std::string("0x%|08x|: ") : fmt.addr_fmt;
+    std::string numeric_fmt = fmt.numeric_fmt.empty() ? std::string("%|02x|") : fmt.numeric_fmt;
+    std::string numeric_sep = fmt.numeric_sep.empty() ? std::string(" ") : fmt.numeric_sep;
+    std::string prefix = fmt.prefix;
 
-    char s[1024];
-    sprintf(s, numeric_fmt, 0u);
-    int numeric_width = strlen(s);
+    size_t numeric_width = (boost::format(numeric_fmt) % (rose_addr_t)0).str().size();
 
     if (fmt.multiline)
         f <<prefix;
 
     for (size_t i=0; i<n; i+=fmt.width) {
-        /* Prefix and/or address */
+        // Prefix and/or address
         if (i>0)
             f <<"\n" <<prefix;
-        f <<str_printf(addr_fmt, base_addr+i);
+        f <<boost::format(addr_fmt) % (base_addr+i);
 
         /* Numeric byte values */
         if (fmt.show_numeric) {
@@ -60,16 +39,20 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                         f <<" ";
                     std::map<unsigned char, std::string>::const_iterator special = fmt.numeric_fmt_special.find(data[i+j]);
                     if (special == fmt.numeric_fmt_special.end()) {
-                        f <<str_printf(numeric_fmt, data[i+j]);
+                        f <<boost::format(numeric_fmt) % (unsigned)data[i+j];
                     } else {
-                        f <<str_printf(special->second.c_str(), special->first);
+                        try {
+                            f <<boost::format(special->second) % (unsigned)(special->first);
+                        } catch (...) {
+                            f <<special->second;
+                        }
                     }
                 } else if (fmt.pad_numeric) {
                     if (j>0)
                         f <<numeric_sep;
                     if (j>0 && 0 == j % fmt.colsize)
                         f <<" ";
-                    f <<str_printf("%*s", numeric_width, "");
+                    f <<std::string(numeric_width, ' ');
                 }
             }
         }

@@ -1,7 +1,7 @@
 # Build the ROSE-based tools
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIR = globalVariablesInLambdas
+SUBDIR = globalVariablesInLambdas classMemberVariablesInLambdas checkFortranInterfaces
 
 EXTRA_DIST = 
 
@@ -24,16 +24,14 @@ rajaChecker_SOURCES                       = rajaChecker.C
 
 #----------testing part 
 #  rose_inputrajaChecker.C 
-
+# To test an individual input, type 'make insideIfStmt.cpp.output'
 Checker_Test_Files =
-# C++ 11 features need GCC 4.9  and EDG 4.12 and later
-# Liao 4/10/2017
-if USING_GNU_COMPILER
-if ROSE_USE_EDG_VERSION_4_12
-if ROSE_USING_GCC_VERSION_LATER_4_9
 Checker_Test_Files += \
+   nodalAccPatternForAllWrapper.cpp \
    nodalAccPattern1.cpp \
    nodalAccPattern2.cpp \
+   nodalAccPattern-localIndex.cpp \
+   nodalAccPattern-min-max.cpp \
    constDouble.cpp \
    indirectArrayAccess.cpp \
    indirectLambdaCall.cpp \
@@ -45,10 +43,10 @@ Checker_Test_Files += \
    nodalAccPattern3.cpp \
    nodalAccPattern4.cpp \
    definedTwice.cpp \
-   insideForLoop.cpp
-endif
-endif
-endif
+   insideForLoop.cpp \
+   integerPattern.cpp \
+   insideIfStmt.cpp \
+   nodalAccPattern5-multipleAssign.cpp
 
 # special options for raja checker 
 rose_inputrajaChecker.C: $(top_srcdir)/tools/tests/inputrajaChecker.C rajaChecker
@@ -71,7 +69,15 @@ $(Checker_Output_Diff_Files): %.diff:%.output
 #short cut to test rajaChecker
 rajaChecker_diff: $(Checker_Output_Diff_Files)
 
+# C++ 11 features need GCC 4.9  and EDG 4.12 and later
+# Liao 4/10/2017
+if USING_GNU_COMPILER
+if ROSE_USE_EDG_VERSION_4_12
+if ROSE_USING_GCC_VERSION_LATER_4_9
 check: $(Checker_Output_Diff_Files)
+endif
+endif
+endif
 
 clean-local:
 	rm -rf rose_*.C rose_*.cpp rose*.cxx *.diff *.output *.txt *.o *.log

@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_SYSTEM
 #
-# LAST MODIFICATION
-#
-#   2008-02-20
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Thomas Porschberg <thomas@randspringer.de>
@@ -108,7 +104,7 @@ AC_DEFUN([AX_BOOST_SYSTEM],
 
             fi
 			if test "x$link_system" = "xno"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
                 AC_DEFINE([USE_ROSE_BOOST_WAVE_SUPPORT],1,[Controls use of BOOST WAVE support in ROSE.])
 			fi
 		fi

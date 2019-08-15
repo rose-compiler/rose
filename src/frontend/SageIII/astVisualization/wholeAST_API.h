@@ -29,4 +29,10 @@ ROSE_DLL_API void generateGraphOfAST( SgProject* project, std::string filename )
 // Include debugging visualization support used for AST Copy and AST Outlining (when done to a separate file).
 #include "copyGraph.h"
 
+// DQ (11/10/2018): Adding support for specialized include graph.
+#include "includeGraph.h"
+
+ROSE_DLL_API void generateGraphOfIncludeFiles( SgProject* project, std::string filename );
+ROSE_DLL_API void generateGraphOfIncludeFiles( SgSourceFile* sourceFile, std::string filename );
+
 #endif // WHOLE_AST_API_H

@@ -1,6 +1,6 @@
  /*!
      \defgroup LanguageIndependentCodeGenerator Backend Language Independent Code Generator
-     \ingroup ROSE_BackEndGroup
+     \ingroup rose_backend
 
      \brief Generates calls to the appropriate language to build source code from the AST.
 

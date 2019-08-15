@@ -5,11 +5,44 @@ exports
   sorts
 
     Letter Digit Mark Icon     %% 8.1        %% Icon added for IntegerLiteralConstant
+    CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
     BeadSize Bead              %% 8.3.2
 
+    SignedTypeDesc             %% 2.1.1.1
+    UnsignedTypeDesc           %% 2.1.1.1
+    BitTypeDesc                %% 2.1.1.5
+    PointerTypeDesc            %% 2.1.1.7
+    DefString                  %% 2.4
+
   lexical syntax
+
+
+%%%%%%%%%%
+%% 2.1.1 ITEM DECLARATIONS AND TYPE DESCRIPTIONS
+%%%%%%%%%%
+
+%% 2.1.1.1
+%%
+  'S'                       -> SignedTypeDesc
+  'U'                       -> UnsignedTypeDesc
+
+%% 2.1.1.5
+%%
+  'B'                       -> BitTypeDesc
+
+%% 2.1.1.7
+%%
+  'P'                       -> PointerTypeDesc
+
+
+%%%%%%%%%%
+%% 2.4 DEFINE DECLARATIONS
+%%%%%%%%%%
+
+  [\?] (Mark | Digit | Letter)*  [\?]  -> DefString
+
 
 %%%%%%%%%%
 %% 8.0 BASIC ELEMENTS
@@ -17,22 +50,65 @@ exports
 
 %% 8.1 CHARACTERS
 %%
-    [A-Za-z]                -> Letter
-    [0-9]                   -> Digit
+  [A-Za-z]                    -> Letter
+  [0-9]                       -> Digit
+
+%% Character Constant
+%%
+  [\'] (~[\'] | "''")*  [\']  -> CharString
 
 %% Integer Constant
 %%
-    [0-9]+                  -> Icon
+  [0-9]+                    -> Icon
 
-    [\+\-\*\/\>\<]          -> Mark
-    [\=\@\.\:\,\;]          -> Mark
-    [\(\)\'\"\%\!]          -> Mark
-    [\$\ ]                  -> Mark
+  [\+\-\*\/\>\<]            -> Mark
+  [\=\@\.\:\,\;]            -> Mark
+  [\(\)\'\"\%\!]            -> Mark
+  [\$\ ]                    -> Mark
 
 %% 8.2.1 NAMES
 %%
-    [A-Za-z\$]
-    [A-Za-z0-9\$\']+        -> Name
+  [A-Za-z\$]
+  [A-Za-z0-9\$\']+          -> Name
+  'TRUE'                    -> Name     {reject}
+  'FALSE'                   -> Name     {reject}
+  'NULL'                    -> Name     {reject}
+  ReservedWord              -> Name     {reject}
+
+  'BITSINBYTE'              -> Name     {reject}
+  'BITSINWORD'              -> Name     {reject}
+  'LOCSINWORD'              -> Name     {reject}
+  'BYTEPOS'                 -> Name     {reject}
+  'BYTESINWORD'             -> Name     {reject}
+  'BITSINPOINTER'           -> Name     {reject}
+  'INTPRECISION'            -> Name     {reject}
+  'FLOATPRECISION'          -> Name     {reject}
+  'FIXEDPRECISION'          -> Name     {reject}
+  'FLOATRADIX'              -> Name     {reject}
+  'IMPLFLOATPRECISION'      -> Name     {reject}
+  'IMPLFIXEDPRECISION'      -> Name     {reject}
+  'IMPLINTSIZE'             -> Name     {reject}
+  'MAXFLOATPRECISION'       -> Name     {reject}
+  'MAXFIXEDPRECISION'       -> Name     {reject}
+  'MAXINTSIZE'              -> Name     {reject}
+  'MAXBYTES'                -> Name     {reject}
+  'MAXBITS'                 -> Name     {reject}
+  'MAXINT'                  -> Name     {reject}
+  'MININT'                  -> Name     {reject}
+  'MAXTABLESIZE'            -> Name     {reject}
+  'MAXSTOP'                 -> Name     {reject}
+  'MINSTOP'                 -> Name     {reject}
+  'MAXSIGNDIGITS'           -> Name     {reject}
+  'MINSIZE'                 -> Name     {reject}
+  'MINFRACTION'             -> Name     {reject}
+  'MINSCALE'                -> Name     {reject}
+  'MINRELPRECISION'         -> Name     {reject}
+  'MAXFLOAT'                -> Name     {reject}
+  'MINFLOAT'                -> Name     {reject}
+  'FLOATRELPRECISION'       -> Name     {reject}
+  'FLOATUNDERFLOW'          -> Name     {reject}
+  'MAXFIXED'                -> Name     {reject}
+  'MINFIXED'                -> Name     {reject}
 
 %% 8.2.2 RESERVED WORDS
 %%
@@ -55,20 +131,125 @@ exports
   'CASE'                    -> ReservedWord
   'COMPOOL'                 -> ReservedWord
   'CONDITION*'              -> ReservedWord
+  'CONSTANT'                -> ReservedWord
 
+  'DEF'                     -> ReservedWord
+  'DEFAULT'                 -> ReservedWord
+  'DEFINE'                  -> ReservedWord
+
+  'ELSE'                    -> ReservedWord
+  'ENCAPSULATION*'          -> ReservedWord
+  'END'                     -> ReservedWord
+  'EQV'                     -> ReservedWord
+  'EXIT'                    -> ReservedWord
+  'EXPORTS*'                -> ReservedWord
+
+  'FALLTHRU'                -> ReservedWord
+  'FALSE'                   -> ReservedWord
+  'FIRST'                   -> ReservedWord
+  'FOR'                     -> ReservedWord
+  'FREE*'                   -> ReservedWord
+
+  'GOTO'                    -> ReservedWord
+
+  'HANDLER*'                -> ReservedWord
+
+  'IF'                      -> ReservedWord
+  'IN*'                     -> ReservedWord
+  'INLINE'                  -> ReservedWord
+  'INSTANCE'                -> ReservedWord
+  'INTERRUPT*'              -> ReservedWord
+  'ITEM'                    -> ReservedWord
+
+  'LABEL'                   -> ReservedWord
+  'LAST'                    -> ReservedWord
+  'LBOUND'                  -> ReservedWord
+  'LIKE'                    -> ReservedWord
+  'LOC'                     -> ReservedWord
+
+  'MOD'                     -> ReservedWord
+
+  'NENT'                    -> ReservedWord
+  'NEW*'                    -> ReservedWord
+  'NEXT'                    -> ReservedWord
+  'NOT'                     -> ReservedWord
+  'NULL'                    -> ReservedWord
+  'NWDSEN'                  -> ReservedWord
+
+  'OR'                      -> ReservedWord
+  'OVERLAY'                 -> ReservedWord
+
+  'PARALLEL'                -> ReservedWord
+  'POS'                     -> ReservedWord
+  'PROC'                    -> ReservedWord
+  'PROGRAM'                 -> ReservedWord
+  'PROTECTED*'              -> ReservedWord
+
+  'READONLY*'               -> ReservedWord
+  'REC'                     -> ReservedWord
+  'REF'                     -> ReservedWord
+  'REGISTER*'               -> ReservedWord
+  'RENT'                    -> ReservedWord
+  'REP'                     -> ReservedWord
+  'RETURN'                  -> ReservedWord
+
+  'SGN'                     -> ReservedWord
+  'SHIFTL'                  -> ReservedWord
+  'SHIFTR'                  -> ReservedWord
+  'SIGNAL*'                 -> ReservedWord
+  'START'                   -> ReservedWord
+  'STATIC'                  -> ReservedWord
+  'STATUS'                  -> ReservedWord
+  'STOP'                    -> ReservedWord
+
+  'TABLE'                   -> ReservedWord
+  'TERM'                    -> ReservedWord
+  'THEN'                    -> ReservedWord
+  'TO*'                     -> ReservedWord
+  'TRUE'                    -> ReservedWord
+  'TYPE'                    -> ReservedWord
+
+  'UNBOUND'                 -> ReservedWord
+  'UPDATE*'                 -> ReservedWord
+
+  'WHILE'                   -> ReservedWord
+  'WITH*'                   -> ReservedWord
+  'WORDSIZE'                -> ReservedWord
+  'WRITEONLY*'              -> ReservedWord
+
+  'XOR'                     -> ReservedWord
+  'ZONE*'                   -> ReservedWord
 
 %% 8.3.2 BIT LITERALS
 %%
-    [1-5]                   -> BeadSize
-    [A-V]                   -> Bead
+  [1-5]                     -> BeadSize
+  [A-V]                     -> Bead
+
+%% 8.4 COMMENTS
+%%
+  [\%] ~[\%]+ [\%]          -> LAYOUT
+  [\"] ~[\"]+ [\"]          -> LAYOUT
 
 %% 8.5 BLANKS
 %%
-    [\ \t\n\r]              -> LAYOUT
+  [\ \t\n\r]                -> LAYOUT
 
-%%  lexical restrictions
-%%    Id  -/- [A-Za-z0-9]
-%%    Int -/- [0-9]
+
+  lexical restrictions
+
+%% Name lexical restriction needed so 'ivar' is not split into 'iv' 'a' 'r'
+%% -/- to be read as "cannot be followed by"
+    Name -/- [A-Za-z0-9]
+%% TODO think about Icon lexical restriction
+%%  Icon -/- [0-9]
+%% Trying to stop IntegerItemDescription from interferring with StatusItemDescription
+
+    SignedTypeDesc   -/- [A-Za-z0-9]
+    UnsignedTypeDesc -/- [A-Za-z0-9]
+    BitTypeDesc      -/- [A-Za-z0-9]
+
+    PointerTypeDesc  -/- [A-Za-z0-9]
 
   context-free restrictions
-    LAYOUT? -/- [\ \t\n\r]
+
+    LAYOUT? -/- [\ \t\n\r\%\"]

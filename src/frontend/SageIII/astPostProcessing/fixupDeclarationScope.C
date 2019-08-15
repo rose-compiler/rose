@@ -41,6 +41,10 @@ void fixupAstDeclarationScope( SgNode* node )
      while (i != mapOfSets.end())
         {
           SgDeclarationStatement* firstNondefiningDeclaration = i->first;
+          if (isSgNonrealDecl(firstNondefiningDeclaration)) {
+            i++;
+            continue;
+          }
 
        // DQ (3/2/2015): Added assertion.
           ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -115,6 +119,7 @@ void FixupAstDeclarationScope::initDiagnostics()
         {
           initialized = true;
           Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstDeclarationScope");
+          mlog.comment("normalizing AST declarations");
         }
    }
 

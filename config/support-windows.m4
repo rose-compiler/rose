@@ -11,14 +11,14 @@ if test ! "$with_wine" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_wine $with_wine"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_wine = "$with_wine"])
 
 if test "$with_wine" = no; then
    # If wine is not specified, then don't use it.
-   echo "Skipping use of Wine for Windows Binary Analysis!"
+   AC_MSG_NOTICE([skipping use of Wine for Windows Binary Analysis])
 else
    wine_path=$with_wine
-   echo "Setup Wine support in ROSE! path = $wine_path"
+   AC_MSG_NOTICE([setup Wine support in ROSE. path = "$wine_path"])
    AC_DEFINE([USE_ROSE_WINDOWS_ANALYSIS_SUPPORT],1,[Wine provides access to Windows header files for analysis of windows applications under Linux.])
 fi
 

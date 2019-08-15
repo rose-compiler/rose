@@ -1,0 +1,16 @@
+# non-recursive Makefile
+
+mpaArithmeticIntensity_includes=
+
+mpaArithmeticIntensity_la_sources = \
+	$(mpaArithmeticIntensityPath)/ai_measurement.cpp
+
+mpaArithmeticIntensity_includeHeaders=\
+	$(mpaArithmeticIntensityPath)/ai_measurement.h
+
+mpaArithmeticIntensity_extraDist= \
+      $(mpaArithmeticIntensityPath)/CMakeLists.txt				  
+
+mpaArithmeticIntensity_distCleanLocal=
+
+mpaArithmeticIntensity_cleanLocal=

@@ -384,7 +384,8 @@ Grammar::generateStorageClassesFiles()
 
   // Building the file StorageClasses.h
      ofstream AstSpecificDataHeaderFile ( std::string(target_directory+"/astFileIO/AstSpecificDataManagingClass.h").c_str()) ;
-     std::cout << "Building StorageClasses header" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses header" << std::flush;
      StringUtility::FileWithLineNumbers readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassHeader.macro");
      std::string dataMembers = buildStaticDataMemberListClassEntries(*rootNode);
      std::string accessFunctions = buildAccessFunctionsOfClassEntries(*rootNode);
@@ -399,11 +400,13 @@ Grammar::generateStorageClassesFiles()
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_ACCESSFUNCITONS", accessFunctions.c_str() );
      AstSpecificDataHeaderFile << StringUtility::toString(readFromFile);
      AstSpecificDataHeaderFile.close();
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
 
   // Building the file StorageClasses.h
      StringUtility::FileWithLineNumbers StorageClassHeaderFile ;
-     std::cout << "Building StorageClasses header" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses header" << std::flush;
      readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassStorageClassHeader.macro");
      dataMembers = buildStaticDataMemberListClassEntries(*rootNode);
      accessFunctions = buildAccessFunctionsOfClassEntries(*rootNode);
@@ -415,11 +418,13 @@ Grammar::generateStorageClassesFiles()
      StorageClassHeaderFile += readFromFile;
      buildStorageClassHeaderFiles(*rootNode,StorageClassHeaderFile);
      Grammar::writeFile(StorageClassHeaderFile, target_directory, "StorageClasses", ".h");
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
 
   // Building the file StorageClasses.C
      StringUtility::FileWithLineNumbers StorageClassSourceFile;
-     std::cout << "Building StorageClasses source" << std::flush;
+     if (verbose)
+         std::cout << "Building StorageClasses source" << std::flush;
      readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassSource.macro");
      std::ostringstream myStream2; //creates an ostringstream object
      myStream2 << maxVariant + 1 << std::flush;
@@ -585,7 +590,8 @@ Grammar::generateStorageClassesFiles()
      StorageClassSourceFile << "\n\n";
      StorageClassSourceFile << "#endif // STORAGE_CLASSES_H\n";
      Grammar::writeFile(StorageClassSourceFile, target_directory, "StorageClasses", ".C");
-     std::cout << "... done " << std::endl;
+     if (verbose)
+         std::cout << "... done " << std::endl;
      return;
    }
 
@@ -834,12 +840,15 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
+                 ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgTemplateClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
+                 ( varTypeString == "SgForAllStatement::forall_statement_kind_enum" ) ||
+                 ( varTypeString == "SgImageControlStatement::image_control_statement_enum" ) ||
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
@@ -863,23 +872,23 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeModifier::gnu_extension_machine_mode_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::gnu_extension_visability_attribute_enum" ) ||
                  ( varTypeString == "SgVariableDeclaration::gnu_extension_declaration_attributes_enum" ) ||
-                 ( varTypeString == "X86InstructionKind" ) ||
-                 ( varTypeString == "X86RegisterClass" ) ||
-                 ( varTypeString == "X86SegmentRegister" ) ||
-                 ( varTypeString == "X86BranchPrediction" ) ||
-                 ( varTypeString == "X86RepeatPrefix" ) ||
-                 ( varTypeString == "X86PositionInRegister" ) ||
-                 ( varTypeString == "X86InstructionSize" ) ||
-                 ( varTypeString == "ArmInstructionKind" ) ||
-                 ( varTypeString == "ArmInstructionCondition" ) ||
-                 ( varTypeString == "PowerpcInstructionKind" ) ||
-                 ( varTypeString == "PowerpcRegisterClass" ) ||
-                 ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) ||
-                 ( varTypeString == "PowerpcSpecialPurposeRegister" ) ||
-                 ( varTypeString == "PowerpcTimeBaseRegister" ) ||
-                 ( varTypeString == "MipsInstructionKind") ||
-                 ( varTypeString == "M68kInstructionKind") ||
-                 ( varTypeString == "ByteOrder::Endianness" ) ||
+                 ( varTypeString == "X86InstructionKind" ) || "Rose::BinaryAnalysis::X86InstructionKind" == varTypeString ||
+                 ( varTypeString == "X86RegisterClass" ) || "Rose::BinaryAnalysis::X86RegisterClass" == varTypeString ||
+                 ( varTypeString == "X86SegmentRegister" ) || "Rose::BinaryAnalysis::X86SegmentRegister" == varTypeString ||
+                 ( varTypeString == "X86BranchPrediction" ) || "Rose::BinaryAnalysis::X86BranchPrediction" == varTypeString ||
+                 ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
+                 ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
+                 ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
+                 ( varTypeString == "ArmInstructionKind" ) || "Rose::BinaryAnalysis::ArmInstructionKind" == varTypeString ||
+                 ( varTypeString == "ArmInstructionCondition" ) || "Rose::BinaryAnalysis::ArmInstructionCondition" == varTypeString ||
+                 ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
+                 ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
+                 ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||
+                 ( varTypeString == "PowerpcSpecialPurposeRegister" ) || "Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister" == varTypeString ||
+                 ( varTypeString == "PowerpcTimeBaseRegister" ) || "Rose::BinaryAnalysis::PowerpcTimeBaseRegister" == varTypeString ||
+                 ( varTypeString == "MipsInstructionKind") || "Rose::BinaryAnalysis::MipsInstructionKind" == varTypeString ||
+                 ( varTypeString == "M68kInstructionKind") || "Rose::BinaryAnalysis::M68kInstructionKind" == varTypeString ||
+                 ( varTypeString == "ByteOrder::Endianness" ) || "Rose::BinaryAnalysis::ByteOrder::Endianness" == varTypeString ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
                  ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||
@@ -950,7 +959,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
-                 ( varTypeString == "RegisterDescriptor") ||
+                 ( varTypeString == "RegisterDescriptor") || ( varTypeString == "Rose::BinaryAnalysis::RegisterDescriptor" ) ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.

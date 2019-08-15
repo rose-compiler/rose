@@ -1,0 +1,21 @@
+include_rules
+
+: ompparser.yy |> bison -d -o %o %f && mv ompparser.hh ompparser.h |> ompparser.cc | ompparser.h
+: omplexer.ll  |> flex --stdout %f > %o |> omplexer.cc
+: preproc-c.ll |> flex --stdout %f > %o |> preproc-c.cc
+
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.C atermSupport.h
+# and nodeBuildFunctionsForAterms.C have been removed.
+
+run $(librose_compile) --depend=ompparser.h Utf8.C rose_attributes_list.C attachPreprocessingInfo.C \
+    attachPreprocessingInfoTraversal.C attributeListMap.C manglingSupport.C fixupCopy_scopes.C fixupCopy_symbols.C \
+    fixupCopy_references.C rtiHelpers.C OmpAttribute.C ompFortranParser.C ompAstConstruction.cpp dwarfSupport.C \
+    rose_graph_support.C preproc-c.cc ompparser.cc omplexer.cc
+
+run $(public_header) sage3.h sage3basic.h rose_attributes_list.h attachPreprocessingInfo.h \
+    attachPreprocessingInfoTraversal.h attach_all_info.h manglingSupport.h C++_include_files.h fixupCopy.h \
+    general_token_defs.h rtiHelpers.h OmpAttribute.h omp.h dwarfSupport.h omp_lib_kinds.h omp_lib.h \
+    rosedefs.h fileoffsetbits.h rosedll.h
+
+# What's up with the name *.hhh?!?
+run $(public_header) sage3basic.hhh

@@ -311,7 +311,7 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
      file_info = new Sg_File_Info(tokCont[0].get_position().get_file().c_str(),lineNo,colNo);
      ROSE_ASSERT(file_info != NULL);
 
-  // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
+  // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful).
      file_info->setCommentOrDirective();
 
   // lineNumber   = lineNo;//macroDef->macrodef.lineNumber;
@@ -423,7 +423,7 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
 // : macroDef(mdef), relativePosition(relPos)
    {
   // DQ (2/28/2010): Removed preinitialization list and moved data member initialization to here.
-     macroDef        = mdef;
+     macroDef         = mdef;
      relativePosition = relPos;
 
      tokenStream = new token_container();
@@ -934,6 +934,28 @@ PreprocessingInfo::getColumnNumber() const
      return file_info->get_col();
   // return columnNumber;
    }
+
+
+// DQ (2/27/2019): Adding support for CPP directives and comments to have 
+// filename information (already present, but we need to access it).
+std::string
+PreprocessingInfo::getFilename() const
+   {
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(file_info != NULL);
+     return file_info->get_filenameString();
+   }
+
+// DQ (2/27/2019): Adding support for CPP directives and comments to have 
+// filename information (already present, but we need to access it).
+int
+PreprocessingInfo::getFileId() const
+   {
+     ROSE_ASSERT(this != NULL);
+     ROSE_ASSERT(file_info != NULL);
+     return file_info->get_file_id();
+   }
+
 
 string
 PreprocessingInfo::getString() const
@@ -1507,6 +1529,8 @@ ROSEAttributesList::setFileName(const string & fName)
   // strcpy(fileName,fName);
      fileName = fName;
 
+  // TV (11/19/2018): ROSE-1470: with File I/O, SgFile (and contained ROSEAttributesList) are loaded before Sg_File_Info causing issues....
+#if 0
   // DQ (10/4/2013): This code was not previously exercised and is not an error,
   // commented out the assert to allow the test below to be done. This is 
   // causing tests/nonsmoke/functional/testAstFileIO.C to fail on this input test code.  It might be
@@ -1516,7 +1540,6 @@ ROSEAttributesList::setFileName(const string & fName)
      printf ("In ROSEAttributesList::setFileName(): Verify that the filenames are correct for all comments in this list! \n");
   // ROSE_ASSERT(false);
 
-#if 1
   // Error checking!
      vector<PreprocessingInfo*>::iterator i = attributeList.begin();
      while( i != attributeList.end() )
@@ -1528,8 +1551,6 @@ ROSEAttributesList::setFileName(const string & fName)
        // ROSE_ASSERT( (*i)->get_file_info()->get_filenameString() == getFileName());
           i++;
         }
-#else
-     printf ("ROSEAttributesList::setFileName(fName = %s): Error checking disabled \n",fName.c_str());
 #endif
    }
 
@@ -1599,7 +1620,7 @@ ROSEAttributesList::operator[]( int i)
 void
 ROSEAttributesList::display ( const string & label )
    {
-     printf ("ROSEAttributesList::display (label = %s) \n",label.c_str());
+     printf ("ROSEAttributesList::display (label = %s): size = %zu \n",label.c_str(),attributeList.size());
      ROSE_ASSERT(this != NULL);
 
   // fprintf(outFile,"\n%s: \n", getFileName() );
@@ -2942,8 +2963,11 @@ ROSEAttributesListContainer::display ( const string & label )
           string filename = i->first;
           ROSEAttributesList* attributeList = i->second;
 
-          printf ("filename = %s \n",filename.c_str());
+          printf ("   --- filename = %s \n",filename.c_str());
           ROSE_ASSERT(attributeList != NULL);
+
+       // DQ (9/25/2018): Added output the the list for each file (debugging header file unparsing).
+          attributeList->display("In ROSEAttributesListContainer::display(): xxx");
 
           i++;
         }

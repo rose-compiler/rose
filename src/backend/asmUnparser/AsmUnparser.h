@@ -345,12 +345,12 @@ public:
          *         added to one of the function callback lists.</li>
          *  </ol>
          *  @{ */
-        virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); return false; }
-        virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); return false; }
-        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); return false; }
-        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); return false; }
-        virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); return false; }
-        virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const InsnArgs&)           { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const BasicBlockArgs&)     { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const StaticDataArgs&)     { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const DataBlockArgs&)      { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const FunctionArgs&)       { abort(); return false; }
+        virtual bool operator()(bool /*enabled*/, const InterpretationArgs&) { abort(); return false; }
         /** @} */
     };
 
@@ -551,7 +551,7 @@ public:
         StaticDataRawBytes() {
             show_address = true;
             show_offset = false;
-            fmt.prefix = NULL;          /* Adjusted by the callback each time called. */
+            fmt.prefix = "";            /* Adjusted by the callback each time called. */
             fmt.multiline = false;      /* Do not emit prefix before first line and linefeed after last line. */
             fmt.width = 8;              /* Max data bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */

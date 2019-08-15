@@ -2,6 +2,8 @@
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 asmUnparser_la_sources=					\
+	$(asmUnparserPath)/BinaryEdgeArrows.C		\
+	$(asmUnparserPath)/BinarySerialIo.C		\
 	$(asmUnparserPath)/BinaryUnparserArm.C		\
 	$(asmUnparserPath)/BinaryUnparserBase.C		\
 	$(asmUnparserPath)/BinaryUnparserM68k.C		\
@@ -22,6 +24,8 @@ endif
 
 
 asmUnparser_distIncludeHeaders=				\
+	$(asmUnparserPath)/BinaryEdgeArrows.h		\
+	$(asmUnparserPath)/BinarySerialIo.h		\
 	$(asmUnparserPath)/BinaryUnparser.h		\
 	$(asmUnparserPath)/BinaryUnparserArm.h		\
 	$(asmUnparserPath)/BinaryUnparserBase.h		\

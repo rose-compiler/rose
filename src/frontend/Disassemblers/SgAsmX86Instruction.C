@@ -6,6 +6,7 @@
 #include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "PartialSymbolicSemantics2.h"
+#include "CommandLine.h"
 #include "DispatcherX86.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
@@ -114,11 +115,12 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
-        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+        ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
-        SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
+        SValuePtr orig_esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -127,7 +129,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
-        SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
+        SValuePtr eip = SValue::promote(ops->peekRegister(dispatcher->REG_anyIP));
         if (eip->is_number()) {
             rose_addr_t target_va = eip->get_number();
             SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(target_va, NULL));
@@ -136,8 +138,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If nothing was pushed onto the stack, then this isn't a function call.
-        const size_t spWidth = dispatcher->REG_anySP.get_nbits();
-        SValuePtr esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
+        const size_t spWidth = dispatcher->REG_anySP.nBits();
+        SValuePtr esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         SValuePtr stack_delta = SValue::promote(ops->add(esp, ops->negate(orig_esp)));
         SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, spWidth-1, spWidth));
         if (stack_delta_sign->is_number() && 0==stack_delta_sign->get_number())
@@ -145,8 +147,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth), esp->boolean_(true)));
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
+        SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
@@ -173,7 +175,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
         ASSERT_not_null(x86insn);
 #if 1 // [Robb P. Matzke 2015-03-03]: FIXME[Robb P. Matzke 2015-03-03]: not ready yet; x86-64 semantics still under construction
@@ -183,7 +185,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -192,13 +194,12 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // Look at the top of the stack
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(SP),
-                                                        ops->protoval()->undefined_(ipWidth),
-                                                        ops->protoval()->boolean_(true)));
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
+        SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, ops->peekRegister(SP),
+                                                        ops->protoval()->undefined_(ipWidth)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
-                SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
+                SValuePtr eip = SValue::promote(ops->peekRegister(dispatcher->REG_anyIP));
                 if (eip->is_number())
                     *target = eip->get_number();
             }
@@ -290,12 +291,20 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
             break;
         }
 
-        case x86_ret:
-        case x86_iret:
+        case x86_int:                                   // assumes interrupts return
         case x86_int1:
         case x86_int3:
         case x86_into:
+        case x86_syscall: {
+            retval.insert(get_address() + get_size());  // probable return point
+            *complete = false;
+            break;
+        }
+            
+        case x86_ret:
+        case x86_iret:
         case x86_rsm:
+        case x86_sysret:
         case x86_ud2:
         case x86_retf: {
             /* Unconditional branch to run-time specified address */
@@ -407,14 +416,14 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
         const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         ops->set_memory_map(initial_memory);
-        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.get_nbits(), regdict);
+        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.nBits(), regdict);
 
         try {
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {
                 cpu->processInstruction(insn);
-                SAWYER_MESG(debug) <<"  state after " <<unparseInstructionWithAddress(insn) <<"\n" <<*ops;
+                SAWYER_MESG(debug) <<"  state after " <<insn->toString() <<"\n" <<*ops;
             }
-            BaseSemantics::SValuePtr ip = ops->readRegister(IP);
+            BaseSemantics::SValuePtr ip = ops->peekRegister(IP);
             if (ip->is_number()) {
                 successors.clear();
                 successors.insert(ip->get_number());

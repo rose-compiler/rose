@@ -7,6 +7,7 @@
 #include <StmtInfoCollect.h>
 #include <StmtDepAnal.h>
 #include <LoopInfoInterface.h>
+#include <LoopTransformInterface.h>
 
 #include <iostream>
 #include <CommandOptions.h>
@@ -374,16 +375,16 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
 
                 if ( !d.IsTop())
                 {
-                        if (ref.commLevel > 0) {
-                                DepInfo d1 = Reverse(d);
-                                SetDepDirection( d1, ref.commLevel, inDeps);
-                        }
-                        if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
-                                int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
-                                if ( ! d.IsTop() &&
-                                        !(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )
-                                        outDeps( d );
-                        }
+                   if (ref.commLevel > 0) {
+                      DepInfo d1 = Reverse(d);
+                      SetDepDirection( d1, ref.commLevel, inDeps);
+                   }
+                   if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+                      int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
+                      if ( ! d.IsTop() &&
+                         !(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )
+                         outDeps( d );
+                   }
                 }
         }
 }
@@ -416,9 +417,11 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   MakeUniqueVarGetBound boundop(varmap, anal);
 
   AstInterface::AstNodeList sub1, sub2;
+#ifndef NDEBUG
   bool succ1 =  LoopTransformInterface::IsArrayAccess(ref.r1.ref, 0, &sub1);
   bool succ2 = LoopTransformInterface::IsArrayAccess(ref.r2.ref, 0, &sub2);
   assert(succ1 && succ2);
+#endif
 
   AstInterface::AstNodeList::const_iterator iter1 = sub1.begin();
   AstInterface::AstNodeList::const_iterator iter2 = sub2.begin();
@@ -439,7 +442,12 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
     s1 = *iter1; s2 = *iter2;
     SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(fa, s1);
     SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(fa, s2);
-
+      /* here try to handle a special case */ 
+    if (val1 == val2 && 
+        fa.IsArrayAccess(s1, &s2) && LoopTransformInterface::IsUniqueArray(s2)) {
+          std::cerr << "Skipping unique array dependence!\n";
+          return false;
+    }
     std::vector<SymbolicVal> cur;
     SymbolicVal left1 = DecomposeAffineExpression(val1, info1.ivars, cur,dim1); 
     SymbolicVal left2 = DecomposeAffineExpression(-val2, info2.ivars,cur,dim2); 
@@ -447,21 +455,26 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
          precise = false;
          continue;
     }
-    for (i = 0; i < dim1; ++i) {
+    assert (cur.size() == dim);
+    for (i = 0; i < dim1;  ++i) {
        cur[i] = varop(ref.commLoop, ref.r1.ref, cur[i], varpostfix1.str()); 
     }
-    left1 = varop(ref.commLoop, ref.r1.ref, left1, varpostfix1.str());
     for (; i < dim; ++i) {
        cur[i] = varop(ref.commLoop, ref.r2.ref, cur[i], varpostfix2.str()); 
     }
+    if (DebugDep()) {
+       std::cerr << "analyzing array subscripts: " << val1.toString() << " .vs. " << val2.toString() << "\n";
+       std::cerr << "remaining value assumed to be loop invarient: " << left1.toString() << " + " << left2.toString() << "\n";
+    }
+    left1 = varop(ref.commLoop, ref.r1.ref, left1, varpostfix1.str());
     left2 = varop(ref.commLoop, ref.r2.ref, left2, varpostfix2.str());
     SymbolicVal leftVal = -left2 - left1;
     cur.push_back(leftVal);  
+    assert(dim+1 == cur.size());
     if (DebugDep()) {
-       assert(dim+1 == cur.size());
        std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
        for (size_t i = 0; i < dim; ++i) 
-         std::cerr << cur[i].toString() << bounds[i].toString() << " " ;
+         std::cerr << cur[i].toString() << bounds[i].toString() << "\n" ;
        std::cerr << cur[dim].toString() << std::endl;
     }
 
@@ -573,9 +586,20 @@ ComputeCtrlDep( const AstNodePtr& s1,  const AstNodePtr& s2,
 {
   StmtRefDep ref = GetStmtRefDep(s1, s1, s2, s2);
   if (ref.commLevel > 0 || s1 != s2) {
-     DepInfo d = ComputePrivateDep( *this, ref, t, 1);
-     assert(!d.IsTop());
-     outDeps(d);
+     if (AstInterface::IsIf(s1)) {
+        DepInfo d = ComputePrivateDep( *this, ref, t, 1);
+        assert(!d.IsTop());
+        outDeps(d);
+        StmtRefDep ref2 = GetStmtRefDep(s2, s2, s1, s1);
+        d = ComputePrivateDep( *this, ref2, t, 1);
+        assert(!d.IsTop());
+        inDeps(d);
+     }
+     else {
+        DepInfo d = ComputePrivateDep( *this, ref, t, 1);
+        assert(!d.IsTop());
+        outDeps(d);
+     }
   }
 }
 

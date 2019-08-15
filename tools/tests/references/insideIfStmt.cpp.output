@@ -1,0 +1,4 @@
+Found a nodal accumulation loop at line:17 1st acc. stmt at line:25
+Not a nodal accumulation loop at line:60
+Found a nodal accumulation lambda function at line:82 1st acc. stmt at line:90
+Found a nodal accumulation lambda function at line:122 1st acc. stmt at line:130

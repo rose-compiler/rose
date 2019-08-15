@@ -57,13 +57,16 @@ class UnparseLanguageIndependentConstructs
              };
 
        // Single statement specification of token subsequence.
-          void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+       // void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+          void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info);
 
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
        // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
        // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+       // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
+       //                                       token_sequence_position_enum_type e_token_subsequence_start, bool unparseOnlyWhitespace = false );
           void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
-                                                token_sequence_position_enum_type e_token_subsequence_start, bool unparseOnlyWhitespace = false );
+                                                token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info, bool unparseOnlyWhitespace = false );
 
        // DQ (12/30/2014): Adding debugging information.
           std::string token_sequence_position_name( token_sequence_position_enum_type e );
@@ -205,6 +208,11 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseCharVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUCharVal                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
+
+       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+          virtual void unparseChar16Val               (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseChar32Val               (SgExpression* expr, SgUnparse_Info& info);  
+
        // Unparsing strings is language dependent.
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info) = 0;  
           virtual void unparseUShortVal               (SgExpression* expr, SgUnparse_Info& info);  

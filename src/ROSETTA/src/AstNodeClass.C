@@ -1865,7 +1865,9 @@ string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeNa
   // By "simple list" we mean NOT a pointer to a list (just a list, e.g. STL list)
      bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
      bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
+#ifndef NDEBUG
      bool typeIsSgNode                     = typeName.find('*') != string::npos;
+#endif
             
 #if 0
      printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
@@ -2089,7 +2091,9 @@ std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, 
   // By "simple list" we mean NOT a pointer to a list (just a list, e.g. STL list)
      bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
      bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
+#ifndef NDEBUG
      bool typeIsSgNode                     = typeName.find('*') != string::npos;
+#endif
             
 #if 0
      printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");

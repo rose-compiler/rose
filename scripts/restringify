@@ -1,0 +1,43 @@
+#!/bin/bash
+# Regenerate the ROSE source files that contain functions that turn enum constants into names.
+#
+# Usage: restringify $ROSE_SRCDIR $ROSE_BLDDIR
+
+set -e
+
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+top_srcdir="$(readlink -f "$1")"
+top_blddir="$(readlink -f "$2")"
+
+stringifier="$top_blddir/src/util/Sawyer/stringify-enums"
+
+if [ ! -d "$top_srcdir" -o ! -d "$top_blddir" ]; then
+    echo "$arg0: specify the top of the ROSE source tree and build tree as arguments to this script" >&2
+    exit 1
+fi
+if [ ! -x "$stringifier" ]; then
+    echo "$arg0: you need to build $stringifier first" >&2
+    exit 1
+fi
+
+# When running the libraries from inside the ROSE build tree, the rpath to find libsawyer
+# is set to a directory relative to src/util/Sawyer. That's probably not our CWD, so temporarily
+# override using LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="$top_blddir/src/util/Sawyer:$LD_LIBRARY_PATH"
+
+# Generate the declarations as well as diagnostics
+"$stringifier" --declarations --compatible --no-deprecate --root="$top_srcdir" \
+	       $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
+	       $(find "$top_blddir/src" -name '*.h') \
+	       > "$top_srcdir/src/roseSupport/stringify.h"
+
+# Generate the implementations, but we can discard the diagnostics since they're identical to above
+"$stringifier" --implementations --compatible --no-deprecate --root="$top_srcdir" \
+	       $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
+	       $(find "$top_blddir/src" -name '*.h') \
+	       > "$top_srcdir/src/roseSupport/stringify.C" \
+	       2> /dev/null
+
+exit 0

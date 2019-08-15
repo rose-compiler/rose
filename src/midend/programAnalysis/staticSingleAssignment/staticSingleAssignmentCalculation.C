@@ -140,13 +140,24 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         if (memFunction == NULL)
             return false;
 
-        SgClassDefinition* funcClassScope = memFunction->get_class_scope();
-        ROSE_ASSERT(funcClassScope != NULL);
+        SgScopeStatement* funcScope = memFunction->get_class_scope();
+        ROSE_ASSERT(funcScope != NULL);
 
         //If they are members of the same class, we're done
-        if (funcClassScope == varClassScope)
+        if (funcScope == varClassScope)
         {
             return true;
+        }
+
+        SgDeclarationStatement * decl = NULL;
+        SgClassDefinition* funcClassScope = isSgClassDefinition(funcScope);
+        SgDeclarationScope* funcNonrealScope = isSgDeclarationScope(funcScope);
+        if (funcClassScope != NULL) {
+          decl = funcClassScope->get_declaration();
+        } else if (funcNonrealScope != NULL) {
+          decl = isSgDeclarationStatement(funcClassScope->get_parent());
+        } else {
+          ROSE_ASSERT(false);
         }
 
         //The two are not from the same class. Let's see if there is a friend class declaration
@@ -161,7 +172,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
             {
                 //The variable's class has friend class. Check if the member function in question is in that friend
                 if (nestedDeclaration->get_firstNondefiningDeclaration() ==
-                        funcClassScope->get_declaration()->get_firstNondefiningDeclaration())
+                        decl->get_firstNondefiningDeclaration())
                 {
                     return true;
                 }
@@ -171,7 +182,9 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         //The variable is not in the same class and there is no friend class declaration, but we need to check the inheritance tree
         //We do a search of the inheritance tree; this will terminate because it's a DAG
         set<SgBaseClass*> worklist;
-        worklist.insert(funcClassScope->get_inheritances().begin(), funcClassScope->get_inheritances().end());
+        if (funcClassScope != NULL) {
+          worklist.insert(funcClassScope->get_inheritances().begin(), funcClassScope->get_inheritances().end());
+        }
 
         while (!worklist.empty())
         {
@@ -624,6 +637,7 @@ void StaticSingleAssignment::buildUseTable(const vector<FilteredCfgNode>& cfgNod
                 printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
                 printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
                         node->get_file_info()->get_filename());
+                continue; // FIXME ROSE-1392
                 ROSE_ASSERT(false);
             }
         }
@@ -1031,3 +1045,97 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 
     return results;
 }
+
+
+  // DQ (1/7/2018): Move this from the header file to the source code file (staticSingleAssignmentCalculation.C).
+    /**
+     * @param dominatorTree map from each node in the dom tree to its childrenn
+     * @param iDominatorMap map from each node to its immediate dominator. */
+template<class CfgNodeT, class CfgEdgeT>
+multimap< CfgNodeT, pair<CfgNodeT, CfgEdgeT> >
+ssa_private::calculateControlDependence(SgFunctionDefinition* function, const map<CfgNodeT, CfgNodeT>& iPostDominatorMap)
+    {
+        //Map from each node to the nodes it's control dependent on (and corresponding edges)
+        multimap< CfgNodeT, pair<CfgNodeT, CfgEdgeT> > controlDepdendences;
+
+        //Let's iterate the control flow graph and stop every time we hit an edge with a condition
+        set<CfgNodeT> visited;
+        set<CfgNodeT> worklist;
+
+        CfgNodeT sourceNode = function->cfgForBeginning();
+        worklist.insert(sourceNode);
+
+        while (!worklist.empty())
+        {
+            //Get the node to work on
+            sourceNode = *worklist.begin();
+            worklist.erase(worklist.begin());
+            visited.insert(sourceNode);
+
+            //For every edge, add it to the worklist 
+
+            BOOST_FOREACH(const CfgEdgeT& edge, sourceNode.outEdges())
+            {
+                CfgNodeT targetNode = edge.target();
+
+                //Insert the child in the worklist if the it hasn't been visited yet
+                if (visited.count(targetNode) == 0)
+                {
+                    worklist.insert(targetNode);
+                }
+
+                //Check if we need to process this edge in control dependence calculation
+                if (edge.condition() == VirtualCFG::eckUnconditional)
+                    continue;
+
+                //We traverse from nextNode up in the postdominator tree until we reach the parent of currNode.
+                CfgNodeT parent;
+                typename map<CfgNodeT, CfgNodeT>::const_iterator parentIter = iPostDominatorMap.find(sourceNode);
+
+             // DQ (1/7/2018): Note clear how to fix this. The correct handling of compound statements appears to be a problem for this code.
+             // This failes for test2001_14.C in the ss testing.
+                if (parentIter == iPostDominatorMap.end())
+                   {
+                  // printf ("sourceNode = %p \n",sourceNode);
+                     printf ("Error: function = %p = %s \n",function,function->class_name().c_str());
+                     function->get_file_info()->display("Called from ssa_private::calculateControlDependence: debug");
+                  // ROSE_ASSERT(false);
+                  // return controlDepdendences;
+                   }
+#if 0
+                printf ("Testing: parentIter != iPostDominatorMap.end() \n");
+#endif
+                ROSE_ASSERT(parentIter != iPostDominatorMap.end());
+
+                parent = parentIter->second;
+
+                //This is the node that we'll be marking as control dependent
+                CfgNodeT currNode = targetNode;
+
+                while (true)
+                {
+                    //If we reach the parent of the source, stop
+                    if (currNode == parent)
+                    {
+                        break;
+                    }
+
+                    //Add a control dependence from the source to the new node
+                    controlDepdendences.insert(make_pair(currNode, make_pair(sourceNode, edge)));
+
+                    if (StaticSingleAssignment::getDebugExtra())
+                    {
+                        printf("%s is control-dependent on %s - %s \n", currNode.toStringForDebugging().c_str(),
+                                sourceNode.toStringForDebugging().c_str(), edge.condition() == VirtualCFG::eckTrue ? "true" : "false");
+                    }
+
+                    //Move to the parent of the current node
+                    parentIter = iPostDominatorMap.find(currNode);
+                    ROSE_ASSERT(parentIter != iPostDominatorMap.end());
+                    currNode = parentIter->second;
+                }
+            }
+        }
+
+        return controlDepdendences;
+    }

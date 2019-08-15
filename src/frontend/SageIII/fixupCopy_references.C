@@ -722,8 +722,26 @@ SgBaseClass::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      SgBaseClass* baseClass_copy = isSgBaseClass(copy);
      ROSE_ASSERT(baseClass_copy != NULL);
 
-     ROSE_ASSERT(this->get_base_class() != NULL);
-     this->get_base_class()->fixupCopy_references(baseClass_copy->get_base_class(),help);
+     const SgNonrealBaseClass* nrBaseClass = isSgNonrealBaseClass(this);
+     SgNonrealBaseClass* nrBaseClass_copy = isSgNonrealBaseClass(copy);
+
+     if (this->get_base_class() != NULL) {
+       ROSE_ASSERT(baseClass_copy->get_base_class());
+
+       ROSE_ASSERT(nrBaseClass == NULL);
+       ROSE_ASSERT(nrBaseClass_copy == NULL);
+
+       this->get_base_class()->fixupCopy_references(baseClass_copy->get_base_class(),help);
+     } else if (nrBaseClass != NULL) {
+       ROSE_ASSERT(nrBaseClass->get_base_class_nonreal() != NULL);
+
+       ROSE_ASSERT(nrBaseClass_copy != NULL);
+       ROSE_ASSERT(nrBaseClass_copy->get_base_class_nonreal() != NULL);
+
+       nrBaseClass->get_base_class_nonreal()->fixupCopy_references(nrBaseClass_copy->get_base_class_nonreal(),help);
+     } else {
+       ROSE_ASSERT(false);
+     }
    }
 
 
@@ -969,6 +987,40 @@ SgForStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
      ROSE_ASSERT(this->get_increment() != NULL);
      this->get_increment()->fixupCopy_references(forStatement_copy->get_increment(),help);
+
+     ROSE_ASSERT(this->get_loop_body() != NULL);
+     this->get_loop_body()->fixupCopy_references(forStatement_copy->get_loop_body(),help);
+   }
+
+void
+SgRangeBasedForStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgRangeBasedForStatement::fixupCopy_references() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgScopeStatement::fixupCopy_references(copy,help);
+
+     SgRangeBasedForStatement* forStatement_copy = isSgRangeBasedForStatement(copy);
+     ROSE_ASSERT(forStatement_copy != NULL);
+
+     ROSE_ASSERT(this->get_iterator_declaration() != NULL);
+     this->get_iterator_declaration()->fixupCopy_references(forStatement_copy->get_iterator_declaration(),help);
+
+     ROSE_ASSERT(this->get_range_declaration() != NULL);
+     this->get_range_declaration()->fixupCopy_references(forStatement_copy->get_range_declaration(),help);
+
+     ROSE_ASSERT(this->get_begin_declaration() != NULL);
+     this->get_begin_declaration()->fixupCopy_references(forStatement_copy->get_begin_declaration(),help);
+
+     ROSE_ASSERT(this->get_end_declaration() != NULL);
+     this->get_end_declaration()->fixupCopy_references(forStatement_copy->get_end_declaration(),help);
+
+     ROSE_ASSERT(this->get_not_equal_expression() != NULL);
+     this->get_not_equal_expression()->fixupCopy_references(forStatement_copy->get_not_equal_expression(),help);
+
+     ROSE_ASSERT(this->get_increment_expression() != NULL);
+     this->get_increment_expression()->fixupCopy_references(forStatement_copy->get_increment_expression(),help);
 
      ROSE_ASSERT(this->get_loop_body() != NULL);
      this->get_loop_body()->fixupCopy_references(forStatement_copy->get_loop_body(),help);

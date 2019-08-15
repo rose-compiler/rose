@@ -61,6 +61,7 @@ DepInfo DepInfoGenerator::GetIDDepInfo(int nr, bool p)
 
 DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, bool p, int commLevel)
 {
+  assert(commLevel <= nr && commLevel <= nc);
   return new DepInfoImpl(nr, nc, p, commLevel);
 }
 
@@ -99,13 +100,13 @@ std::string DepInfo :: toString() const
   int num1, num2;
   CarryLevels(num1,num2);
   std::stringstream out;
-  out <<this<< " Distance Matrix size:"<< rows() << "*" << cols()<<" ";
+  out << " Distance Matrix size:"<< rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
-  out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
+  out << "CarryLevel = ("<<num1 << "," << num2 << ") \n";
   if (is_precise()) 
       out << " Is precise ";
   else
-      out<<  " Not precise";
+      out<<  " Not precise ";
   out << AstInterface::AstToString(SrcRef())<<AstInterface::getAstLocation(SrcRef())<<"->" << AstInterface::AstToString(SnkRef())<<AstInterface::getAstLocation(SnkRef())<<"\n"; 
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
@@ -142,8 +143,9 @@ bool DepInfo:: operator *= ( const DepInfo &info2)
   }
   DepInfo info1(*this);
   int commLevel1 = info1.CommonLevel();
-  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS,
-                                       commLevel1);
+  int commLevel2 = info2.CommonLevel();
+  if (commLevel1 > commLevel2) commLevel1 = commLevel2;
+  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS, commLevel1);
   for (int i = 0; i < info1.rows(); i++) {
     for (int j = 0; j < info2.cols(); j++) {
       for (int k = 0; k < info1.cols(); k++) {
@@ -325,8 +327,10 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
 
 void DepInfo:: DistLoop( int level)
 {
-  //assert( level < CommonLevel());
-  CommonLevel() = level;
+/* QY: 3/4/2018: changing common level here is problematic for some tests
+  if ( level < CommonLevel());
+      CommonLevel() = level;
+*/
   assert( CommonLevel() <= rows() && CommonLevel() <= cols());
 }
 
@@ -443,12 +447,16 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
             notcarry = carry = false;
     default: break;
     }
-    if (carry && minLevel < 0)
-       minLevel = maxLevel = i;
-    if ( ! notcarry ) {
+    if (carry) {
+      if (minLevel < 0)
+         minLevel = maxLevel = i;
+       else maxLevel = i;
+    }
+    if ( !notcarry )  {
         maxLevel = i;
         break;
     }
+    else maxLevel = i;
   }
   if (minLevel < 0) {
      if (GetDepType() == DEPTYPE_BACKSCALAR)

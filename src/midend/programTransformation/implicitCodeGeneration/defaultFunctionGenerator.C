@@ -1223,23 +1223,26 @@ static bool isCopyConstructor(SgMemberFunctionDeclaration *memberFunctionDeclara
 
       // Make certain the formal is an object of the
       // method's class.
-      SgClassDeclaration *classDeclaration =
-        getClassDeclaration(classType);
+      SgClassDeclaration *classDeclaration = getClassDeclaration(classType);
 
       if ( classDeclaration == NULL ) 
         return false;
 
-      // Get the class declaration associated with this method.
-      SgClassDefinition *methodClassDefinition =
-        memberFunctionDeclaration->get_class_scope();
-      ROSE_ASSERT(methodClassDefinition != NULL);
+      SgDeclarationStatement * methodDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+      ROSE_ASSERT(methodDeclaration != NULL);
+      
+      SgClassDeclaration * xdecl = isSgClassDeclaration(methodDeclaration);
+      SgNonrealDecl * nrdecl = isSgNonrealDecl(methodDeclaration);
 
-      SgClassDeclaration *methodClassDeclaration =
-        methodClassDefinition->get_declaration();
-
-      if ( classDeclaration->get_type()->get_name() != 
-           methodClassDeclaration->get_type()->get_name() )
-        return false;
+      if (xdecl != NULL) {
+        if ( classDeclaration->get_type()->get_name() != xdecl->get_type()->get_name() )
+          return false;
+      } else if (nrdecl != NULL) {
+        if ( classDeclaration->get_type()->get_name() != nrdecl->get_type()->get_name() )
+          return false;
+      } else {
+        ROSE_ASSERT(false);
+      }
 
       if ((*p)->get_initializer() != 0) // default parameter
         return false;
@@ -1280,46 +1283,29 @@ static bool isDestructor(SgMemberFunctionDeclaration *memberFunctionDeclaration)
  *         to the rules for type equivalency in the context of the
  *         copy assignment operator, as defined by s12.8.9 of the C++ Standard.
  */
-static bool isCopyAssignmentTypeEquivalent(SgClassType *classType, SgType *typeToMatch)
+static bool isCopyAssignmentTypeEquivalent(SgType *type, SgType *typeToMatch)
    {
-     while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
-        {
-          typeToMatch = typedefType->get_base_type();
-        }
+#if TODO____USE_SINGLE_TYPE_STRIP_FOR_COPY_ASSIGNEMENT_EQUIVALENCE
+     typeToMatch = typeToMatch->stripType(SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+#else
+     // Get through the typedefs
+     typeToMatch = typeToMatch->stripType(SgType::STRIP_TYPEDEF_TYPE);
 
-     if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
-        {
-          return classType->get_declaration() == classTypeToMatch->get_declaration();
-        }
-     else if (SgReferenceType *refType = isSgReferenceType(typeToMatch))
-        {
-          typeToMatch = refType->get_base_type();
-          
-          while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
-             {
-               typeToMatch = typedefType->get_base_type();
-             }
+     // SgType are unique so pointer comparison works 
+     if (type == typeToMatch) return true;
 
-          if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
-             {
-               return classType->get_declaration() == classTypeToMatch->get_declaration();
-             }
-          else if (SgModifierType *modType = isSgModifierType(typeToMatch))
-             {
-               typeToMatch = modType->get_base_type();
+     // Not sure if we could use strip type: are we removing only ine level of reference?
+     if (SgReferenceType *refType = isSgReferenceType(typeToMatch)) {
+       typeToMatch = refType->get_base_type();
+     }
 
-               while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
-                  {
-                    typeToMatch = typedefType->get_base_type();
-                  }
+     // remove modifier
+     typeToMatch = typeToMatch->stripType(SgType::STRIP_MODIFIER_TYPE);
 
-               if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
-                  {
-                    return classType->get_declaration() == classTypeToMatch->get_declaration();
-                  }
-             }
-        }
-     return false;
+     // remove more typedef
+     typeToMatch = typeToMatch->stripType(SgType::STRIP_TYPEDEF_TYPE);
+#endif
+     return type == typeToMatch;
    }
 
 /** \brief Returns true if the method is operator=.
@@ -1356,10 +1342,20 @@ static bool isOperatorEquals(SgMemberFunctionDeclaration *memberFunctionDeclarat
        return false;
      }
 
-  SgClassDefinition *desiredClass = memberFunctionDeclaration->get_class_scope();
-  SgClassType *desiredClassType = SgClassType::createType(desiredClass->get_declaration());
+  SgDeclarationStatement * decl = memberFunctionDeclaration->get_associatedClassDeclaration();
+  ROSE_ASSERT(decl != NULL);
+  SgClassDeclaration * xdecl = isSgClassDeclaration(decl);
+  SgNonrealDecl * nrdecl = isSgNonrealDecl(decl);
+  if (xdecl != NULL) {
+     SgClassType * desiredClassType = SgClassType::createType(xdecl);
+    return isCopyAssignmentTypeEquivalent(desiredClassType, memberFnType->get_arguments().front());
+  } else if (nrdecl != NULL) {
+    return isCopyAssignmentTypeEquivalent(nrdecl->get_type(), memberFnType->get_arguments().front());
+  } else {
+    ROSE_ASSERT(false);
+  }
 
-  return isCopyAssignmentTypeEquivalent(desiredClassType, memberFnType->get_arguments().front());
+  return false;
 }
 
 /** \brief  Converts a SgMemberFunctionDeclaration to a 
@@ -2037,18 +2033,16 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
              ( enumFunctionType != e_assignment_operator ) )
           return;
 
-        SgClassDefinition* parentClassDef1=func->get_class_scope();
-        SgClassDeclaration * classDec1 = parentClassDef1->get_declaration();
+        SgDeclarationStatement* parentDecl1 = func->get_associatedClassDeclaration();
+        ROSE_ASSERT(parentDecl1 != NULL);
+        SgClassDeclaration* classDeclaration = isSgClassDeclaration(parentDecl1);
+        ROSE_ASSERT(classDeclaration != NULL);
+        SgClassDefinition* classDefn = isSgClassDefinition(classDeclaration->get_definition());
+        ROSE_ASSERT(classDeclaration != NULL);
 
         SgShallowCopy shallowCopy;
         SgTreeCopy treeCopy;
-#if 0
-        SgClassDeclaration *classDeclaration = 
-          isSgClassDeclaration(classDec1->copy(treeCopy));
-#else
-        SgClassDeclaration *classDeclaration = 
-          isSgClassDeclaration(classDec1);
-#endif
+
         SgBasicBlock * bBlock1= func->get_definition()->get_body();
         SgInitializedNamePtrList& argList= func->get_parameterList()->get_args();
         SgInitializedName* parameter1=*(argList.begin()); //only 1 parameter for copy constructor       
@@ -2086,7 +2080,7 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 
 
         // handling member variables in copy constructor and operator=
-        SgDeclarationStatementPtrList & declareList=parentClassDef1->get_members();
+        SgDeclarationStatementPtrList & declareList=classDefn->get_members();
         typedef Rose_STL_Container<SgDeclarationStatement*>::iterator declareListIterator;
         for (declareListIterator listElement=declareList.begin();listElement!=declareList.end();++listElement)
           {
@@ -2113,7 +2107,7 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
                    SgInitializedName* initName1= buildInitializedName(varName,varType,assignInit1);
                    initName1->set_file_info(COMPILERGENERATED_FILE_INFO);
                    // Must set scope to global here!!
-                   initName1->set_scope(isSgGlobal(parentClassDef1->get_declaration()->get_scope()));
+                   initName1->set_scope(isSgGlobal(classDefn->get_declaration()->get_scope()));
                    func->get_CtorInitializerList()->append_ctor_initializer(initName1);
                  } //end if    
 
@@ -2302,20 +2296,14 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
           SgTemplateInstantiationDecl *classDecl = isSgTemplateInstantiationDecl(parentClassDef1->get_declaration());
           ROSE_ASSERT(classDecl);
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
        // DQ (12/22/2011): This is required by the new design to support SgTemplateClassDeclaration derived from SgClassDeclaration.
        // A better solution might be to fix this to use the SageBuilder API directly. Make this a runtime error.
 
        // DQ (8/28/2012): Make this an error at runtime.
-          printf ("ERROR: Not using the new API for TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS \n");
+          printf ("ERROR: Not using the new API for template declaration\n");
           ROSE_ASSERT(false);
 
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;
-#else
-      // Older code
-      //! TODO use SageBuilder
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
-#endif
+          SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;// new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
           tempFunc->set_definingDeclaration(tempFunc);
           tempFunc->set_templateName(func_name);
           func = tempFunc;

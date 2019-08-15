@@ -1,0 +1,288 @@
+#!/bin/bash
+# This is a test script for running a test from a Tupfile
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+# Defaults
+timeout=15m
+output_file=
+answer_file=
+disabled_mesg=
+disabled_cond=0
+filter=cat
+map_srcroot=
+map_bldroot=
+
+########################################################################################################################
+usage() {
+    #     --------------------------------------------------------------------------------
+    echo "usage: $arg0 [SWITCHES] COMMAND..."
+    echo "  Runs COMMAND... as a test, and does various other things with it."
+    echo
+    echo "  Switches"
+    echo "    --answer=FILE"
+    echo "        Specifies an existing file to which the COMMAND... standard output is"
+    echo "        compared. If there are differences, they are shown (with \"diff -u\")"
+    echo "        and the command is deemed to have failed."
+    echo
+    echo "    --disabled=REASON | --enabled"
+    echo "        Marks this test as being disabled. As far as the build system is"
+    echo "        concerned, the test passes. However, it prints the disablement message"
+    echo "        to the tty in red text."
+    echo
+    echo "    --disabled-if CONDITION REASON"
+    echo "        Marks this test as being disable if the condition (a perl expression)"
+    echo "        evaluates to true. The \"--disabled=REASON\" switch is the same as "
+    echo "        saying \"--disabled-if 1 REASON\""
+    echo
+    echo "    -f FILTER | --filter=FILTER"
+    echo "        Run the specified filter command on standard output. If an answer is"
+    echo "        given (--answer) then also run the filter on the answer file before"
+    echo "        comparing with the output. The filter should read standard input and"
+    echo "        write to standard output. The default is \"$filter\"."
+    echo
+    echo "    --map=SRCROOT,BLDROOT"
+    echo "        Indicates that tup is mapping the source tree root onto the build tree."
+    echo "        Using this switch will result in more accurate file names for tools that"
+    echo "        run outside the tup build environment. The SRCROOT should be the absolute"
+    echo "        name of the top of the source tree, and BLDROOT is the value of the tup"
+    echo "        \$(TUP_CWD) directory, i.e., a relative name upward from the current working"
+    echo "        directory to the root of the build tree."
+    echo
+    echo "    -o OUTPUT | --output=OUTPUT"
+    echo "        The result of running COMMAND... is stored in the specified file. If"
+    echo "        the command failed, then the output is also echoed.  The standard output"
+    echo "        appears first, followed by the line \"======== CUT ========\" followed"
+    echo "        by the standard error. This switch is required."
+    echo
+    echo "    --timeout=DURATION"
+    echo "        If the COMMAND... does not exit within the specified DURATION then it"
+    echo "        is forcibly terminated and considered to have failed.  The DURATION is"
+    echo "        a positive integer followed by the suffix \"s\", \"m\", or \"h\" for"
+    echo "        seconds, minutes, or hours. Lack of a suffix is the same as \"s\". The"
+    echo "        default is ${timeout}."
+    echo
+    echo "  Exit status"
+    echo "    0:   command succeeded within allowed time, or was disabled"
+    echo "    124: command timed out"
+    echo "    125: standard output differed from precomputed answer"
+    echo "    127: command exit status was 124 or greater"
+}
+
+########################################################################################################################
+# Print error and exit
+die() {
+    echo "$arg0:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+# Create a temporary file
+tempfile() {
+    local real_tempfile="$(which tempfile 2>/dev/null)"
+    if [ -n "$real_tempfile" ]; then
+	"$real_tempfile"
+    else
+	local tmpdir="${TMPDIR:-$TEMPDIR}"
+	mkdir -p "${tmpdir:-/tmp}"
+	echo "${tmpdir:-/tmp}/spock-$RANDOM$RANDOM$RANDOM"
+    fi
+}
+
+########################################################################################################################
+# Parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	--answer)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    answer_file="$2"
+	    shift 2
+	    ;;
+	--answer=*)
+	    answer_file="${1#--answer=}"
+	    shift
+	    ;;
+	--disabled)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    disabled_mesg="$2"
+	    disabled_cond=1
+	    shift 2
+	    ;;
+	--disabled=*)
+	    disabled_mesg="${1#--disabled=}"
+	    disabled_cond=1
+	    shift
+	    ;;
+	--disabled-if)
+	    [ "$#" -gt 2 ] || die "\"$1\" switch expects two arguments"
+	    disabled_cond="$2"
+	    disabled_mesg="$3"
+	    shift 3
+	    ;;
+	--enabled)
+	    disabled_mesg=
+	    disabled_cond=0
+	    shift
+	    ;;
+	-f|--filter)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    filter="$2"
+	    shift 2
+	    ;;
+	-f*)
+	    filter="${1#-f}"
+	    shift
+	    ;;
+	--filter=*)
+	    filter="${1#--filter=}"
+	    shift
+	    ;;
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+	--map)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    map_srcdir=$(echo "$2" |cut -d, -f1)
+	    map_blddir=$(echo "$2" |cut -d, -f2 -s)
+	    shift 2
+	    ;;
+	--map=*)
+	    map_srcdir=$(echo "${1#--map=}" |cut -d, -f1)
+	    map_blddir=$(echo "${1#--map=}" |cut -d, -f2 -s)
+	    shift
+	    ;;
+	-o|--output)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    output_file="$2"
+	    shift 2
+	    ;;
+	-o*)
+	    output_file="${1#-o}"
+	    shift
+	    ;;
+	--output=*)
+	    output_file="${1#--output=}"
+	    shift
+	    ;;
+	--timeout)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    timeout="$2"
+	    shift 2
+	    ;;
+	--timeout=*)
+	    timeout="${1#--timeout=}"
+	    shift
+	    ;;
+	-*)
+	    die "unknown switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+[ -n "$output_file" ] || die "no output name specified (see --output)"
+
+# If --map was specified, figure out the relative name of the CWD w.r.t. the root
+# of the build tree.
+if [ -n "$map_srcdir" ]; then
+    map_srcdir=$(cd "$map_srcdir" && pwd)
+    map_blddir=$(cd "$map_blddir" && pwd)
+    map_cwdrel=$(pwd)
+    map_cwdrel="${map_cwdrel#$map_blddir/}"
+fi
+
+# Check for being disabled.
+if perl -I"$dir0" -Mversions -e "exit !($disabled_cond)"; then
+    [ -n "$disabled_mesg" ] || disabled_mesg="unspecified reason"
+    echo -ne '\033[31;1m\t'
+    echo -n "This test is disabled ($disabled_mesg)"
+    echo -e '\033[0m'
+    echo "This test is disabled ($disabled_mesg)" >"$output_file"
+    exit 0
+fi
+
+# Run the command, capturing it's output. This uses the "timeout" command from coreutils.
+temp_stdout=$(tempfile)
+temp_stderr=$(tempfile)
+temp_cmd=$(tempfile)
+echo "$@" >"$temp_cmd"
+
+start_time=$(date '+%s')
+set +e
+(
+    echo "+" "$@" >&2
+    timeout --foreground --kill-after=1m "$timeout" bash $temp_cmd |$filter
+    exit ${PIPESTATUS[0]}
+) >"$temp_stdout" 2>"$temp_stderr"
+exit_status=$?
+end_time=$(date '+%s')
+rm -f "$temp_cmd"
+set -e
+(
+    cat "$temp_stdout"
+    echo "======== CUT ========"
+    cat "$temp_stderr"
+    echo "ELAPSED_TIME" $[ end_time - start_time ]
+) > "$output_file"
+
+# If an answer file was supplied, compare the command standard output with the answer.
+error=
+if [ "$exit_status" -eq 124 ]; then
+    error="command timed out after $timeout"
+elif [ "$exit_status" -ne 0 ]; then
+    error="command failed with exit status $exit_status"
+    [ "$exit_status" -ge 124 ] && exit_status=127
+elif [ -n "$answer_file" ]; then
+    temp_answer=$(tempfile)
+    $filter <"$answer_file" >"$temp_answer"
+    echo "+ diff -u $answer_file COMMAND_STDOUT" >>"$output_file"
+    echo "+ filtering with $filter" >>"$output_file"
+    if ! diff -u "$temp_answer" "$temp_stdout" >> "$output_file"; then
+	error="Result differs from precomputed answer"
+	exit_status=125
+    fi
+fi
+
+# Add some extra usage info to the end of the file if there was an error
+if [ -n "$error" ]; then
+    if [ -n "$map_srcdir" ]; then
+	validate_answer="$map_srcdir/scripts/tup/validate-answer"
+    else
+	validate_answer="$dir0/validate-answer"
+    fi
+    answer_abs="${map_srcdir}/${map_cwdrel}/${answer_file}"
+
+    # Something we can easily grep (e.g., "grep TEST_FAILED *.result")
+    echo "TEST_FAILED $output_file" >>"$output_file"
+    if [ -n "$map_srcdir" ]; then
+	echo "REVALIDATE $validate_answer --filter=\"$filter\" --answer=$answer_abs $output_file" >>"$output_file"
+    fi
+
+    # If a comparison test failed, how can an expert review the differences and possibly accept them?
+    if [ -n "$answer_file" ]; then
+	(
+	    echo
+	    echo "To review and possibly accept the new output as an answer, run:"
+	    if [ -n "$map_srcdir" ]; then
+		echo "  $validate_answer --filter=\"$filter\" --answer=$answer_abs $output_file"
+	    else
+		echo "  $validate_answer --filter=\"$filter\" --answer=$answer_file $output_file"
+	    fi
+	) >>"$output_file"
+    fi
+fi    
+
+# Show output?
+if [ -n "$error" ]; then
+    echo "$arg0: $output_file: $error" >&2
+    cat "$output_file"
+fi
+
+exit "$exit_status"

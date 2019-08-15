@@ -5,13 +5,26 @@
 #include "BinaryNoOperation.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
+#include "AsmUnparser_compat.h"
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
 
-/** Indicates concrete stack delta is not known or not calculated. */
+// Indicates concrete stack delta is not known or not calculated.
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
+
+size_t
+SgAsmInstruction::nOperands() const {
+    if (!get_operandList())
+        return 0;
+    return get_operandList()->get_operands().size();
+}
+
+SgAsmExpression*
+SgAsmInstruction::operand(size_t i) const {
+    return i < nOperands() ? get_operandList()->get_operands()[i] : NULL;
+}
 
 void
 SgAsmInstruction::appendSources(SgAsmInstruction *inst) {
@@ -186,4 +199,56 @@ SgAsmInstruction::isUnknown() const
 {
     abort(); // too bad ROSETTA doesn't allow virtual base classes
     return false;
+}
+
+std::string
+SgAsmInstruction::toString() const {
+    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
+    std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
+    if (SgAsmOperandList *opList = insn->get_operandList()) {
+        const SgAsmExpressionPtrList &operands = opList->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            retval += i == 0 ? " " : ", ";
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+        }
+    }
+    return retval;
+}
+
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    struct T1: AstSimpleProcessing {
+        std::set<rose_addr_t> values;
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(node))
+                values.insert(ive->get_absoluteValue());
+        }
+    } t1;
+#if 0 // [Robb Matzke 2019-02-06]: ROSE API deficiency: cannot traverse a const AST
+    t1.traverse(this, preorder);
+#else
+    t1.traverse(const_cast<SgAsmInstruction*>(this), preorder);
+#endif
+    return t1.values;
+}
+
+
+static SAWYER_THREAD_TRAITS::Mutex semanticFailureMutex;
+
+size_t
+SgAsmInstruction::semanticFailure() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    return semanticFailure_.n;
+}
+
+void
+SgAsmInstruction::semanticFailure(size_t n) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    semanticFailure_.n = n;
+}
+
+void
+SgAsmInstruction::incrementSemanticFailure() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    ++semanticFailure_.n;
 }

@@ -25,6 +25,7 @@
 #     AM_CONDITIONAL(ROSE_WITH_ATERM)
 #     AM_CONDITIONAL(ROSE_WITH_ATERM_BIN)
 #     AM_CONDITIONAL(ROSE_WITH_ATERM_LIB)
+#     AM_CONDITIONAL(ROSE_BUILD_ATERM_SUPPORT)
 #
 #     CPP #defines:
 #     AC_DEFINE_UNQUOTED(ATERM_INSTALL_PATH)
@@ -40,10 +41,6 @@
 #       AC_MSG_ERROR([No ATERM/lib])
 #   fi
 #
-# LAST MODIFICATION
-#
-#   2013-03-14
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -56,7 +53,7 @@ AC_DEFUN([ROSE_SUPPORT_ATERM],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_ATERM_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([ATERM Library])
+  ROSE_CONFIGURE_SECTION([Checking ATERM library])
 
   #============================================================================
   # --with-aterm=/path/to/aterm-trunk/aterm.dist/
@@ -104,9 +101,9 @@ AC_DEFUN([ROSE_SUPPORT_ATERM],
   fi
 
 # DQ (3/23/2013): debugging...
-echo "ATERM_INSTALL_PATH = "$ATERM_INSTALL_PATH
-echo "ATERM_BIN_PATH     = "$ATERM_BIN_PATH
-echo "ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH
+AC_MSG_NOTICE([ATERM_INSTALL_PATH = "$ATERM_INSTALL_PATH"])
+AC_MSG_NOTICE([ATERM_BIN_PATH     = "$ATERM_BIN_PATH"])
+AC_MSG_NOTICE([ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH"])
 
   #============================================================================
   # Validate installation (if provided)
@@ -140,6 +137,7 @@ echo "ATERM_LIBRARY_PATH = "$ATERM_LIBRARY_PATH
   AM_CONDITIONAL(ROSE_WITH_ATERM, [test "x$ATERM_BIN_PATH" != "x" && test "x$ATERM_LIBRARY_PATH" != "x"])
   AM_CONDITIONAL(ROSE_WITH_ATERM_BIN, [test "x$ATERM_BIN_PATH" != "x"])
   AM_CONDITIONAL(ROSE_WITH_ATERM_LIB, [test "x$ATERM_LIBRARY_PATH" != "x"])
+  AM_CONDITIONAL(ROSE_BUILD_ATERM_SUPPORT, [test "x$ATERM_LIBRARY_PATH" != "x"])
 
   AC_SUBST(ATERM_INSTALL_PATH)
   AC_SUBST(ATERM_BIN_PATH)
@@ -176,4 +174,3 @@ fi
 
 # End macro ROSE_SUPPORT_ATERM.
 ])
-

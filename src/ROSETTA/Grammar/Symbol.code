@@ -267,7 +267,8 @@ SgSymbol::get_mangled_name() const
                assert(symbol != NULL);
                mangledName = symbol->get_name();
 
-               printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
+            // DQ (4/12/2019): I think this should be commented out since it generates output spew.
+            // printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
 
                break;
              }
@@ -342,7 +343,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTypedefSymbol:
              {
                const SgTypedefSymbol* symbol = isSgTypedefSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                SgTypedefDeclaration* typedefDeclaration = symbol->get_declaration();
 
             // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
@@ -355,7 +356,7 @@ SgSymbol::get_mangled_name() const
           case V_SgVariableSymbol:
              {
                const SgVariableSymbol* symbol = isSgVariableSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                SgInitializedName* initializedName = symbol->get_declaration();
 
             // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
@@ -368,7 +369,7 @@ SgSymbol::get_mangled_name() const
           case V_SgAliasSymbol:
              {
                const SgAliasSymbol* symbol = isSgAliasSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -377,7 +378,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateFunctionSymbol:
              {
                const SgTemplateFunctionSymbol* symbol = isSgTemplateFunctionSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -385,7 +386,7 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateClassSymbol:
              {
                const SgTemplateClassSymbol* symbol = isSgTemplateClassSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
@@ -394,11 +395,59 @@ SgSymbol::get_mangled_name() const
           case V_SgTemplateMemberFunctionSymbol:
              {
                const SgTemplateMemberFunctionSymbol* symbol = isSgTemplateMemberFunctionSymbol(symbolFromTable);
-               assert(symbol != NULL);
+               ROSE_ASSERT(symbol != NULL);
                mangledName = symbol->get_name();
                break;
              }
 
+          case V_SgNonrealSymbol:
+             {
+               const SgNonrealSymbol* symbol = isSgNonrealSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               mangledName = symbol->get_name();
+               break;
+             }
+
+#if 1
+       // DQ (2/28/2018): Added support for C++11 specific symbol.
+          case V_SgTemplateTypedefSymbol:
+             {
+               const SgTemplateTypedefSymbol* symbol = isSgTemplateTypedefSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               ROSE_ASSERT(symbol->get_declaration() != NULL);
+
+#if 0
+            // DQ (3/19/2016): Klocworks reports this as an issue (fix by adding assertion).
+               ROSE_ASSERT(typedefDeclaration != NULL);
+
+               mangledName = typedefDeclaration->get_mangled_name();
+#else
+            // DQ (2/28/2018): We need to handle the association of the symbol with either a 
+            // SgTemplateTypedefDeclaration or a SgTemplateInstantiationTypedefDeclaration IR node.
+
+               SgTemplateTypedefDeclaration* typedefDeclaration = isSgTemplateTypedefDeclaration(symbol->get_declaration());
+               if (typedefDeclaration != NULL)
+                  {
+                    mangledName = typedefDeclaration->get_mangled_name();
+                  }
+                 else
+                  {
+                    printf ("In SgSymbol::get_mangled_name(): symbol->get_declaration() = %p = %s \n",symbol->get_declaration(),symbol->get_declaration()->class_name().c_str());
+
+                    SgTemplateInstantiationTypedefDeclaration* typedefInstantiationDeclaration = isSgTemplateInstantiationTypedefDeclaration(symbol->get_declaration());
+                    if (typedefInstantiationDeclaration != NULL)
+                       {
+                         mangledName = typedefInstantiationDeclaration->get_mangled_name();
+                       }
+                      else
+                       {
+                         printf ("ERROR: In SgSymbol::get_mangled_name(): symbol->get_declaration() = %p = %s \n",symbol->get_declaration(),symbol->get_declaration()->class_name().c_str());
+                       }
+                  }
+#endif
+               break;
+             }
+#endif
           default:
              {
                mangledName = "unknown mangled name";
@@ -939,6 +988,11 @@ SgAliasSymbol::get_name() const
           name = get_alias()->get_name();
         }
 
+#if 0
+  // DQ (1/21/2019): Adding debugging information.
+     printf ("In SgAliasSymbol::get_name(): name = %s \n",name.str());
+#endif
+
      return name;
    }
 
@@ -966,6 +1020,10 @@ SgAliasSymbol::get_base() const
      SgAliasSymbol* aliasSymbol = isSgAliasSymbol(get_alias());
      while (aliasSymbol != NULL)
         {
+#if 0
+       // DQ (1/21/2019): Adding debugging information.
+          printf ("SgAliasSymbol::get_base(): We want to avoid chains of SgAliasSymbol symbols \n");
+#endif
        // This may be any symbol (even a SgAliasSymbol)
           nonAliasedSymbol = aliasSymbol->get_alias();
 
@@ -1014,6 +1072,7 @@ SgAliasSymbol::get_declaration() const
              }
 
           case V_SgFunctionSymbol:
+          case V_SgMemberFunctionSymbol:
              {
                SgFunctionSymbol* symbol = isSgFunctionSymbol(get_alias());
                ROSE_ASSERT(symbol != NULL);
@@ -1022,6 +1081,7 @@ SgAliasSymbol::get_declaration() const
                break;
              }
 
+           case V_SgTemplateClassSymbol:
            case V_SgClassSymbol:
              {
                SgClassSymbol* symbol = isSgClassSymbol(get_alias());
@@ -1101,6 +1161,11 @@ SgAliasSymbol::get_declaration() const
              }
         }
 
+#if 0
+  // DQ (1/21/2019): Adding debugging information.
+     printf ("In SgAliasSymbol::get_declaration(): returnValue = %p = %s \n",returnValue,(returnValue != NULL) ? returnValue->class_name().c_str() : "null");
+#endif
+
      return returnValue;
    }
 
@@ -1115,6 +1180,7 @@ SgAliasSymbol::SgAliasSymbol( const SgAliasSymbol & X )
      p_causal_nodes = X.p_causal_nodes;
 
 #if 0
+  // DQ (1/21/2019): Adding debugging information.
      printf ("In SgAliasSymbol copy constructor: p_causal_nodes.size() = %zu X.p_causal_nodes = %zu \n",p_causal_nodes.size(),X.p_causal_nodes.size());
 #endif
    }
@@ -1128,6 +1194,7 @@ SgAliasSymbol::post_construction_initialization()
      if (aliasSymbol != NULL)
         {
 #if 0
+       // DQ (1/21/2019): Adding debugging information.
           printf ("WARNING: SgAliasSymbol build from another SgAliasSymbol is not allowed! (automating fix) \n");
 #endif
           p_alias = aliasSymbol->get_alias();
@@ -1141,8 +1208,8 @@ SgAliasSymbol::post_construction_initialization()
         }
    }
 
-
 SOURCE_ALIAS_SYMBOL_END
+
 
 SOURCE_RENAME_SYMBOL_START
 SgName

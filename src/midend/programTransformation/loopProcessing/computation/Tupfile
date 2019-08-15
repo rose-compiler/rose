@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) LoopTree.C LoopTreeDummyNode.C LoopTreeShadow.C LoopTreeLocality.C LoopTreeDepComp.C \
+    DepCompTransform.C LoopTreeTransform.C
+
+run $(public_header) LoopTreeDummyNode.h LoopTreeShadow.h LoopTreeLocality.h LoopTreeBuild.h LoopTree.h \
+    LoopTreeObserver.h LoopTreeTransform.h LoopTreeDepComp.h LoopTreeHoldNode.h DepCompTransform.h

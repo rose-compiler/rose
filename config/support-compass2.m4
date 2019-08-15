@@ -14,10 +14,6 @@
 #
 #     AM_CONDITIONAL(ROSE_BUILD_COMPASS2, [test "x$HAVE_XERCES" = "xyes"])
 #
-# LAST MODIFICATION
-#
-#   2011-09-14
-#
 # COPYLEFT
 #
 #   Copyright (c) 2011 Justin Too <too1@llnl.gov>
@@ -57,7 +53,7 @@ AC_DEFUN([ROSE_SUPPORT_COMPASS2],
     AC_DEFUN([AX_PTHREAD], [])
     AX_LIB_XERCES([3.1.1])
     if test "x$HAVE_XERCES" = "xno"; then
-      AC_MSG_FAILURE([Compass requires the Xerces C++ XML library.])
+      AC_MSG_FAILURE([compass requires the Xerces C++ XML library])
     fi
   fi
 

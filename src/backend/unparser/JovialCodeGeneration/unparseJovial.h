@@ -23,10 +23,31 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseStringVal              (SgExpression* expr, SgUnparse_Info& info);  
 
+          virtual void unparseDefineDeclStmt         (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDirectiveStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseCompoolStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt            (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt           (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseBasicBlockStmt         (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLabelStmt              (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForStatement           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseJovialForThenStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseWhileStmt              (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseGotoStmt               (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIfStmt                 (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSwitchStmt             (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseCaseStmt               (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDefaultStmt            (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseBreakStmt              (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseStopOrPauseStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseTableDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseVarDeclStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseVarDecl                (SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info);
@@ -34,7 +55,11 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseExprStmt               (SgStatement* stmt, SgUnparse_Info& info);
 
        // Types
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseType        (SgType* type,  SgUnparse_Info& info);
+          virtual void unparseTypeSize    (SgType* expr,  SgUnparse_Info& info);
+          virtual void unparseArrayType   (SgType* type,  SgUnparse_Info& info);
+          virtual void unparseTableType   (SgType* type,  SgUnparse_Info& info);
+
 #if 0
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
@@ -48,12 +73,28 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 #endif
 
        // Expressions
+          virtual void unparseUnaryOperator  (SgExpression* expr, const char* op, SgUnparse_Info& info);
+          virtual void unparseBinaryOperator (SgExpression* expr, const char* op, SgUnparse_Info& info);
+
+          virtual void unparseSubscriptExpr     (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseArrayOp           (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseAsteriskShapeExpr (SgExpression* expr, SgUnparse_Info& info);
+
        // virtual void unparseExpression     (SgExpression* expr, SgUnparse_Info& info);
        // virtual void unparseUnaryExpr      (SgExpression* expr, SgUnparse_Info& info);
        // virtual void unparseBinaryExpr     (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseAssignOp       (SgExpression* expr, SgUnparse_Info& info);   
+          virtual void unparseFuncRef        (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarRef         (SgExpression* expr, SgUnparse_Info& info);
+
+          virtual void unparseFuncCall       (SgExpression* expr, SgUnparse_Info& info);
+
+       // Initializers
+          virtual void unparseAssnInit       (SgExpression* expr, SgUnparse_Info& info);
+
+       // Table dimension list
+          void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
 #if 0
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
@@ -72,7 +113,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseVarRef                  (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseClassRef                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseFuncRef                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseMFuncRef                (SgExpression* expr, SgUnparse_Info& info);
 
        // DQ (11/10/2005): Added general support for SgValue (so that we could unparse 
@@ -92,7 +132,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseLongDoubleVal           (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseComplexVal              (SgExpression* expr, SgUnparse_Info& info);
 
-          virtual void unparseFuncCall                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
@@ -145,7 +184,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseX10PackageStmt  (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDefnStmt    (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseEnumDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhileStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDoWhileStmt      (SgStatement* stmt, SgUnparse_Info& info);
@@ -156,9 +194,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseDefaultStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
 
@@ -189,7 +225,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
 
       //! Support for unparsing types
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
@@ -220,6 +255,3 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
    };
 
 #endif
-
-
-

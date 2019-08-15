@@ -52,6 +52,9 @@ class Unparse_Type
        // DQ (11/20/2011): Adding support for template declarations in the AST.
           virtual void unparseTemplateType(SgType* type, SgUnparse_Info& info);
 
+          virtual void unparseNonrealType(SgType* type, SgUnparse_Info& info, bool is_first_in_nonreal_chain = true);
+          virtual void unparseAutoType(SgType* type, SgUnparse_Info& info);
+
        // DQ (7/31/2014): Adding support for nullptr constant expression and its associated type.
           virtual void unparseNullptrType(SgType* type, SgUnparse_Info& info);
 
@@ -74,7 +77,12 @@ class Unparse_Type
           template <class T>
           void outputType(T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info);
 
-          void foobar( SgUnparse_Info & info );
+       // DQ (4/15/2018): Adding support for output of template instantiations from template typedefs with template arguments with name qualification.
+          void unparseTemplateTypedefName(SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration, SgUnparse_Info& info);
+
+       // DQ (4/15/2018): This was part of a test (it can be removed now).
+       // void foobar( SgUnparse_Info & info );
+
    };
 
 #endif

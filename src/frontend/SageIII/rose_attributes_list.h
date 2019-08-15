@@ -59,6 +59,13 @@
    #endif
 #endif
 
+#if __sun
+  // PP 05/16/19
+  // Continue skipping WAVE until it is needed
+  // (after boost 1.65 is working on Solaris, WAVE should also work)
+  #define ROSE_SKIP_COMPILATION_OF_WAVE
+#endif
+
 // DQ (2/27/2016): Test compilation of ROSE without boost::wave support.
 // #define ROSE_SKIP_COMPILATION_OF_WAVE
 
@@ -117,7 +124,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 #endif
 
 //! For preprocessing information including source comments, #include , #if, #define, etc
-class  PreprocessingInfo
+class PreprocessingInfo
    {
      public:
       //  DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).
@@ -278,7 +285,7 @@ class  PreprocessingInfo
        // contains more information since it is a tokenized stream.
           token_container* tokenStream;
 
-     public:         
+     public:
           typedef struct r_include_directive
              {
             // The parameter 'directive' contains the (expanded) file name found after 
@@ -402,6 +409,10 @@ class  PreprocessingInfo
           DirectiveType getTypeOfDirective() const;
           RelativePositionType getRelativePosition(void) const;
           void setRelativePosition(RelativePositionType relPos);
+
+       // DQ (2/27/2019): Adding support for CPP directives and comments to have filename information (already present, but we need to access it).
+          std::string getFilename() const;
+          int getFileId() const;
 
        // Number of lines occupied by this comment (count the number of line feeds)
           int getNumberOfLines() const;

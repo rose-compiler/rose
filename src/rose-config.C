@@ -33,6 +33,7 @@ static const char *description =
   "subdirectories (among others) where the ROSE library and its headers are installed.}";
 
 #include <rose.h>                                       // POLICY_OK -- this is not a ROSE library source file
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <rose_getline.h>
 
@@ -66,16 +67,38 @@ requiredKeys() {
   static std::vector<std::string> required;
   if (required.empty()) {
     // These should all be documented in the --help output
-    required.push_back("cc");
-    required.push_back("cxx");
-    required.push_back("cppflags");
-    required.push_back("cflags");
-    required.push_back("cxxflags");
-    required.push_back("ldflags");
-    required.push_back("libdirs");
-    required.push_back("prefix");
+    required.push_back("ROSE_CC");
+    required.push_back("ROSE_CXX");
+    required.push_back("ROSE_CPPFLAGS");
+    required.push_back("ROSE_CFLAGS");
+    required.push_back("ROSE_CXXFLAGS");
+    required.push_back("ROSE_LDFLAGS");
+    required.push_back("ROSE_LIBDIRS");
+    required.push_back("ROSE_PREFIX");
   }
   return required;
+}
+
+/** 
+ * toOldKeyFormat
+ *
+ * /brief Converts a Key to the old format
+ *
+ * JL (03/24/2018) I changed the default keys to be ROSE_CC,
+ * ROSE_PREFIX, etc.  They used to be cc, prefix, etc.  This was so
+ * the rose-config.cfg would not conflict with similar keys when
+ * included in a Makefile.
+ * To keep the rose-config binary compatible with old code, we now
+ * support both on the command line.  This function converts the 
+ * new format to the old format.   
+ *
+ **/
+std::string toOldKeyFormat(std::string& key) 
+{
+    std::string oldFormat;
+    std::transform(key.begin()+5, key.end(), std::back_inserter(oldFormat), ::tolower);
+    return oldFormat;
+    
 }
 
 // Parse switches and return the single positional KEY argument.
@@ -83,10 +106,10 @@ static std::string
 parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
   using namespace Sawyer::CommandLine;
 
-  Parser parser = CommandlineProcessing::createEmptyParser(purpose, description);
-  parser.errorStream(mlog[FATAL]);
-  parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{variable}");
-  parser.with(CommandlineProcessing::genericSwitches());
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
+    parser.errorStream(mlog[FATAL]);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{variable}");
+    parser.with(Rose::CommandLine::genericSwitches());
 
   SwitchGroup tool("Tool-specific switches");
   tool.insert(Switch("config")
@@ -186,6 +209,14 @@ readConfigFile(const boost::filesystem::path &configName) {
       mlog[FATAL] <<configName <<":" <<lineNumber <<": duplicate key \"" <<StringUtility::cEscape(key) <<"\"\n";
       exit(1);
     }
+    
+    //Add the old format key to the database as well
+    if (!retval.insert(std::make_pair(toOldKeyFormat(key), value)).second) {
+      mlog[FATAL] <<configName <<":" <<lineNumber <<": duplicate key \"" <<StringUtility::cEscape(key) <<"\"\n";
+      exit(1);
+    }
+
+
   }
 
   bool hadError = false;

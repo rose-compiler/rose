@@ -1,0 +1,489 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+
+usage() {
+    echo "NAME"
+    echo
+    echo "  $arg0 - install from installation staging directories"
+    echo
+    echo "SYNOPSIS"
+    echo
+    echo "  $arg0 [SWITCHES] PREFIX [SYMLINKS...]"
+    echo
+    echo "DESCRIPTION"
+    echo
+    echo "  This script copies parts of the build tree to the installation prefix"
+    echo "  directory. This script should be invoked with the current working directory"
+    echo "  set to the top of the build tree. It  recursively copies files found under the"
+    echo "  install-staging directory to the same subdirectories (created if necessary)"
+    echo "  under the install prefix. Any files named \"MANIFEST\" are not copied, but"
+    echo "  instead contain a white-space separated list of files to copy from the build"
+    echo "  directory to the installation prefix."
+    echo 
+    echo "  This script depends on the presense of either \"patchelf\" or \"chrpath\" in"
+    echo "  order to rewrite rpath information in dynamically linked executables."
+    echo
+    echo "SWITCHES"
+    echo
+    echo "  --add PATH | -a PATH"
+    echo "      Paths to add to all rpaths."
+    echo
+    echo "  --build-type TYPE"
+    echo "      Name of build type, usually 'release' or 'debug' but it can be whatever"
+    echo "      you want.  If not specified, then the word 'release' or 'debug' is used"
+    echo "      depending on how ROSE was compiled (which is determined somewhat"
+    echo "      heuristically."
+    echo
+    echo "  --changer patchelf|chrpath|rpath"
+    echo "      The tool to use to change the RPATH in an ELF file.  If this switch"
+    echo "      isn't specified, then the tools are tried in the order listed here."
+    echo
+    echo "  --debug | --verbose | -v"
+    echo "      Print information about what's being done."
+    echo
+    echo "  --force | -f"
+    echo "      Force re-installation even for files that appear to already be installed."
+    echo
+    echo "  --libtool LIBTOOL"
+    echo "      When installing libraries and executables, do so using the specified"
+    echo "      libtool script."
+    echo
+    echo "  --next"
+    echo "      The PREFIX is only the root of the installation hierarchy instead of"
+    echo "      the actual installation point.  When this switch is used, the installation"
+    echo "      directory name is computed by combining the given PREFIX, the current"
+    echo "      date, the release mode (usually 'release' or 'debug'), and a three-digit"
+    echo "      serial number. Also, if a SYMLINK isn't specified, it is constructed in the"
+    echo "      given PREFIX directory and named \"latest\".  If PREFIX itself is not"
+    echo "      specified, it defaults to \"\$HOME/rose-installed\"."
+    echo
+    echo "  --remove PATH | -d PATH"
+    echo "      Paths to remove from rpaths. These are usually directories in the build"
+    echo "      tree."
+    echo
+    echo "  --exclude PATTERN"
+    echo "      Do not adjust the rpaths for files matching the specified pattern. The "
+    echo "      pattern is a shell glob."
+}
+
+die() {
+    echo "$arg0: $*" >&2
+    exit 1
+}
+
+# Read a variable from tup_config
+get_tup_config() {
+    local tup_config="$1"; shift
+    local retval=
+    for varname in "$@"; do
+	local s=$(sed -n "/^${varname}=/ s/^${varname}=//p" "$tup_config")
+	if [ -n "$s" ]; then
+	    if [ -n "$retval" ]; then
+		retval="$retval $s"
+	    else
+		retval="$s"
+	    fi
+	fi
+    done
+    echo "$retval"
+}
+
+# Return true (0) if the tup.config file appears to be configuring a debug build.
+is_debug_build() {
+    local tup_config="$1"
+    local switches=$(get_tup_config "$tup_config" \
+				    CONFIG_CPPFLAGS \
+				    CONFIG_C_CXX_DEBUG CONFIG_C_DEBUG CONFIG_CXX_DEBUG \
+				    CONFIG_C_CXX_OPTIM CONFIG_C_OPTIM CONFIG_CXX_OPTIM \
+				    CONFIG_C_CXX_WARN CONFIG_C_WARN CONFIG_CXX_WARN \
+				    CONFIG_C_CXX_MISC CONFIG_C_MISC CONFIG_CXX_MISC \
+				    CONFIG_SUPPORT_CPPFLAGS CONFIG_SUPPORT_CFLAGS CONFIG_SUPPORT_CXXFLAGS \
+				    CONFIG_LIBROSE_CPPFLAGS CONFIG_LIBROSE_CFLAGS CONFIG_LIBROSE_CXXFLAGS \
+				    CONFIG_TOOL_CPPFLAGS CONFIG_TOOL_CFLAGS CONFIG_TOOL_CXXFLAGS)
+    local is_debug=yes has_g=
+    for switch in $(echo "$switches" |sed 's/[ \t]\+/\n/g'); do
+	case "$switch" in
+	    -g)          has_g=yes ;;
+	    -Os|-O0|-O1) is_debug=yes ;;
+	    -O*)         is_debug= ;;
+	esac
+    done
+
+    [ -n "$is_debug" -a -n "$has_g" ] && return 0  # this is a debug build
+    return 1 # not a debug build
+}
+
+# Get the next three-digit serial number by looking at all the files in the specified directory and scanning the
+# last integer in their names (e.g., "12 in "matzke1.attempt12"), if any, and returning one greater than the maximum.
+# If there are no files with integers in their names, return "001".
+next_serial_number() {
+    local dir="$1"
+    if [ -d "$dir" ]; then
+	(cd $dir && ls |perl -ne '/^.*?(\d+)[^0-9]*$/ and $x = $1 > $x ? $1 : $x; END { printf "%03d\n", $x+1 }')
+    else
+	echo "001"
+    fi
+}
+
+####################################################################################################################################
+
+remove_paths=()
+add_paths=()
+build_type=
+verbose=
+libtool=
+force=
+auto_next=
+rpath_changer=
+exclude=()
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	--add|-a)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    add_paths=("${add_paths[@]}" "$2")
+	    shift 2
+	    ;;
+	--build-type)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    build_type="$2"
+	    shift 2
+	    ;;
+	--build-type=*)
+	    build_type="${1#--build-type=}"
+	    shift
+	    ;;
+	--changer=*)
+	    rpath_changer="${1#--changer=}"
+	    shift
+	    ;;
+	--changer)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    rpath_changer="$2"
+	    shift 2
+	    ;;
+	--debug|--verbose|-v)
+	    verbose=yes
+	    shift
+	    ;;
+	--exclude=*)
+	    exclude=("${exclude[@]}" "${1#--exclude=}")
+	    shift
+	    ;;
+	--exclude)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    exclude=("${exclude[@]}" "$2")
+	    shift 2
+	    ;;
+	--force|-f)
+	    force=yes
+	    shift
+	    ;;
+	--help|-h)
+	    usage
+	    exit 0
+	    ;;
+	--libtool)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    libtool="$2"
+	    shift 2
+	    ;;
+	--libtool=*)
+	    libtool="${1#--libtool=}"
+	    shift
+	    ;;
+	--next)
+	    auto_next=yes
+	    shift
+	    ;;
+	--remove|-d)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    remove_paths=("${remove_paths[@]}" "$2")
+	    shift 2
+	    ;;
+	--remove=*)
+	    remove_paths=("${remove_paths[@]}" "${1#--remove=}")
+	    shift
+	    ;;
+	-d*)
+	    remove_paths=("${remove_paths[@]}" "${1#-d}")
+	    shift
+	    ;;
+	-*)
+	    die "unknown command-line switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+
+# Main installation directory
+if [ "$#" -ge 1 ]; then
+    prefix=$(readlink -f "$1")
+    shift
+elif [ -n "$auto_next" ]; then
+    prefix="$HOME/rose-installed"
+else
+    die "invalid usage: no installation directory specified"
+fi
+
+# Additional symbolic link to main installation directory?
+symlinks=()
+if [ "$#" -ge 1 ]; then
+    symlinks=("$@")
+    shift
+elif [ -n "$auto_next" ]; then
+    if [ "$build_type" = "" ]; then
+	build_type=release
+	[ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
+	is_debug_build tup.config && build_type=debug
+    fi
+    symlinks=("$prefix/latest" "$prefix/latest-$build_type")
+fi
+
+[ "$#" -eq 0 ] || die "invalid usage: wrong number of positional arguments (try --help)"
+
+# If this is an auto-next build, then $prefix is only the root of the hiearchy and we need to
+# fill in the details.
+if [ -n "$auto_next" ]; then
+    prefix="$prefix/$(date '+%Y-%m-%d')"
+
+    if [ "$build_type" = "" ]; then
+	build_type=release
+	[ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
+	is_debug_build tup.config && build_type=debug
+    fi
+    prefix="${prefix}/${build_type}-$(next_serial_number "$prefix")"
+fi
+
+[ -d install-staging ] || die "no ./install-staging directory; was this a tup build?"
+mkdir -p "$prefix"
+
+new_paths=("$prefix/lib")
+
+# The program we can use to change the rpath that's embedded in a
+# dynamically linked ELF executable. The patchelf tool is a bit slower
+# than chrpath but can handle more cases, so we prefer it.  We don't
+# report any errors here yet, but rather wait to see if we're actually
+# installing any dynamically linked executables.
+if [ "$rpath_changer" = "" ]; then
+    if patchelf --version >/dev/null 2>&1; then
+	rpath_changer=patchelf
+    elif chrpath --version >/dev/null 2>&1; then
+	rpath_changer=chrpath
+    elif rpath --version >/dev/null 2>&1; then
+	rpath_changer=rpath
+    fi
+elif [ "$rpath_changer" != patchelf -a "$rpath_changer" != chrpath -a "$rpath_changer" != rpath ]; then
+    die "invalid rpath changer: $rpath_changer"
+fi
+
+# Returns the current rpath for the given shared ELF executable.
+# The return value is a colon-separated list of directory names.
+current_rpath() {
+    local file="$1"
+    case "$rpath_changer" in
+	patchelf)
+	    patchelf --print-rpath "$file"
+	    ;;
+	chrpath)
+	    chrpath --list "$file" |cut -d= -f2-
+	    ;;
+	rpath)
+	    rpath "$file"
+	    ;;
+	skip)
+	    : no path
+	    ;;
+	*)
+	    (
+		#     --------------------------------------------------------------------------------
+		echo "$arg0: error: patchelf or chrpath required but not found."
+		echo "   The patchelf or chrpath program is needed in order to rewrite the rpath info"
+		echo "   in executables that use dynamic linking. The rpath mechanism allows the"
+		echo "   executable to find shared librar for this project when that library is"
+		echo "   not installed in a standard, system-wide location.  These ELF tools are often"
+		echo "   available in your system package manager (e.g., Debian/Ubuntu/Mint users can"
+		echo "   run \"sudo apt-get install patchelf\").  If you would rather skip the rpath"
+		echo "   rewriting step and use some other method (such as LD_LIBRARY_PATH) then"
+		echo "   export \"rpath_changer=skip\" when doing this install. Note that the method"
+		echo "   of using LD_LIBRARY_PATH is not recommended for project's programs that"
+		echo "   run non-project sub-programs because it can adversely affect the behavior of"
+		echo "   the sub-program."
+		echo
+		echo "$arg0: instalation aborted."
+	    ) >&2
+	    exit 1
+	    ;;
+    esac
+}
+
+# Replace the rpath in the specified file with the new specified rpath.
+replace_rpath() {
+    local file="$1" rpath="$2"
+    case "$rpath_changer" in
+	patchelf)
+	    patchelf --set-rpath "$rpath" "$file"
+	    ;;
+	chrpath)
+	    # Excessivly noisy command
+	    chrpath --replace "$rpath" "$file" >/dev/null
+	    ;;
+	rpath)
+	    rpath "$rpath" "$file"
+	    ;;
+	skip)
+	    : nothing
+	    ;;
+	*)
+	    die "patchelf or chrpath required but not found"
+	    ;;
+    esac
+}
+
+# Return true if the specified source file should be excluded from rpath substitution
+exclude_rpath() {
+    local file="$1"; shift
+    local pattern=
+    for pattern in "$@"; do
+	if [ "${file%$pattern}" != "$file" ]; then
+	    return 0 # pattern matches end of file name
+	fi
+    done
+    return 1
+}
+
+if [ -n "$verbose" ]; then
+    for dir in "${new_paths[@]}"; do
+	echo "new_path = $dir"
+    done
+fi
+
+# Was an installation prefix specified when this project was built?  If so (and we know what it is) we can change it
+# in certain files we install.
+if [ -r tup.config ]; then
+    old_prefix="$(grep CONFIG_INSTALLATION_PREFIX tup.config |cut -d= -f2)"
+fi
+
+build_dir=$(pwd)
+for manifest in $(find install-staging -name MANIFEST); do
+
+    # Directory containing the MANIFEST file
+    manifest_dir="${manifest%/MANIFEST}"
+
+    # Which subdir of install-staging is the $manifest_dir?
+    subdir="${manifest_dir#install-staging/}"
+
+    # Destination directory is where we're going to place the file, so make sure it exists.
+    destdir="$prefix/$subdir"
+    mkdir -p "$destdir"
+
+    # Process all the file names in the MANIFEST.
+    for file in $(cat "$manifest"); do
+
+	# srcfile is the path of the file to be copied.
+	srcfile="$manifest_dir/$file"
+
+	# filetgt is the base name of the destination file. We need to remove
+	# any ".preinstall" extensions that might be present.
+	filetgt="${srcfile##*/}"
+	filetgt="${filetgt%.preinstall*}"
+
+	# dstfile is the path of the destination file
+	dstfile="$destdir/$filetgt";
+
+	# copy the file, but only if the destination doesn't exist or is older than the source, or "--force" was specified
+	if [ -n "$force" -o ! -e "$dstfile" -o "$srcfile" -nt "$dstfile" ]; then
+	    echo "INSTALL $dstfile"
+
+	    case "$(basename $dstfile)" in
+		rose-installed-*.cfg)
+		    # If the prefix to which we're installing isn't the same as the prefix when ROSE was built, then
+		    # we need to change it to the correct one.
+		    if [ -n "$old_prefix" ]; then
+			sed "s%${old_prefix}%${prefix}%g" <"$srcfile" >"$dstfile"
+			chmod --reference="$srcfile" "$dstfile"
+		    else
+			cp --dereference -p "$srcfile" "$dstfile"
+		    fi
+		    ;;
+
+		*.h|*.hpp|*.H)
+		    # Copy file as-is
+		    cp --dereference -p "$srcfile" "$dstfile"
+		    ;;
+
+		*)
+		    # If the file is a dynamically linked ELF executable we may need to change
+		    # the rpath location for librose.so. We don't want to change the copy that's in our build
+		    # tree, so we copy it first.
+		    if exclude_rpath "$srcfile" "${exclude[@]}"; then
+			cp --dereference -p "$srcfile" "$dstfile"
+		    elif [ -n "$libtool" ]; then
+			$libtool --mode=install --quiet install "$srcfile" "$dstfile"
+		    else
+			cp --dereference -p "$srcfile" "$dstfile"
+			if file "$dstfile" |grep ': ELF' >/dev/null 2>&1; then
+			    old_rpath_string=$(current_rpath "$dstfile")
+			    old_rpath=($(echo "$old_rpath_string" |tr : ' '))
+
+			    new_rpath=("${add_paths[@]}")
+			    inserted=
+			    for old_dir in "${old_rpath[@]}"; do
+				new_dir="$old_dir"
+				if $(echo "$old_dir" | egrep '^(X{96}|Y{96}|Z{96})$' >/dev/null); then
+				    # Remove padding paths
+				    new_dir=
+				elif [ "${#remove_paths[*]}" -eq 0 ]; then
+				    # If the user didn't specify any paths to remove, remove those that have the build directory
+				    # as a prefix or which don't start with a slash.
+				    if [ "${old_dir#$build_dir}" != "$old_dir" ]; then
+					new_dir=
+				    elif [ "${old_dir#/}" = "$old_dir" ]; then
+					new_dir=
+				    fi
+				else
+				    # Remove the paths that the user wants to have removed
+				    for user in "${remove_paths[@]}"; do
+					if [ "$old_dir" = "$user" ]; then
+					    new_dir=
+					    break
+					fi
+				    done
+				fi
+
+				if [ "$new_dir" != "" ]; then
+				    if [ "$new_dir" = "$old_dir" ]; then
+					[ -n "$verbose" ] && echo "  $old_dir -> NO_CHANGE" >&2
+				    else
+					[ -n "$verbose" ] && echo "  $old_dir -> $new_dir" >&2
+				    fi
+				    new_rpath=("${new_rpath[@]}" "$new_dir")
+				elif [ "$inserted" = "" ]; then
+				    [ -n "$verbose" ] && echo "  $old_dir -> INSTALLATION_PREFIX" >&2
+				    new_rpath=("${new_rpath[@]}" "${new_paths[@]}")
+				    inserted=yes
+				else
+				    [ -n "$verbose" ] && echo "  $old_dir -> DELETED" >&2
+				fi
+			    done
+
+			    new_rpath_string="$(echo "${new_rpath[@]}" |tr ' ' :)"
+			    replace_rpath "$dstfile" "$new_rpath_string"
+			fi
+		    fi
+		    ;;
+	    esac
+	fi
+    done
+done
+
+for symlink in "${symlinks[@]}"; do
+    rm -f "$symlink"
+    ln -s "$prefix" "$symlink"
+done
