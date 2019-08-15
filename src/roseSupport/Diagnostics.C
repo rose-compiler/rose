@@ -6,24 +6,31 @@
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
+#include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
+#include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
 #include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
+#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
+#include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
+    namespace Concolic { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
+    namespace Unparser { void initDiagnostics(); }
+    void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
 #endif
@@ -94,13 +101,14 @@ void initialize() {
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
         initAndRegister(&mlog, "Rose");
+        mlog.comment("top-level ROSE diagnostics");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
 
         // Turn down the progress bar rates
-        Sawyer::ProgressBarSettings::initialDelay(12.0);
-        Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
+        Sawyer::ProgressBarSettings::initialDelay(1.0);
+        Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2);
 
         // Register logging facilities from other software layers.  Calling these initializers should make all the streams
         // point to the Rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
@@ -110,6 +118,8 @@ void initialize() {
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
+        BinaryAnalysis::CodeInserter::initDiagnostics();
+        BinaryAnalysis::Concolic::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
@@ -118,11 +128,16 @@ void initialize() {
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
+        BinaryAnalysis::Reachability::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
+        BinaryAnalysis::SerialIo_initDiagnostics();
         BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
+        BinaryAnalysis::SymbolicExprParser::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
+        BinaryAnalysis::BinaryToSource::initDiagnostics();
+        BinaryAnalysis::Unparser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();

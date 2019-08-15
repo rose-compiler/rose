@@ -3,6 +3,8 @@
 #define ROSE_BinaryAnalysis_Unparser_H
 
 #include <Sawyer/CommandLine.h>
+#include <BaseSemantics2.h>
+#include <BinaryEdgeArrows.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,7 +44,11 @@ struct Settings {
             bool showingPredecessors;                   /**< Show basic block predecessors? */
             bool showingSuccessors;                     /**< Show basic block successors? */
             bool showingSharing;                        /**< Show functions when block is shared? */
+            bool showingArrows;                         /**< Draw arrows from one block to another. */
         } cfg;                                          /**< Settings for control flow graphs. */
+        struct {
+            bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
+        } reach;                                        /**< Reachability analysis results. */
     } bblock;                                           /**< Settings for basic blocks. */
 
     struct {
@@ -64,11 +70,13 @@ struct Settings {
 
         struct {
             size_t fieldWidth;                          /**< Min characters to use for the instruction mnemonic. */
+            std::string semanticFailureMarker;          /**< Mark instruction if it had semantic failures. */
         } mnemonic;                                     /**< Settings for instruction mnemonics. */
 
         struct {
             std::string separator;                      /**< How to separate one operand from another. */
             size_t fieldWidth;                          /**< Min characters to use for the operand list. */
+            bool showingWidth;                          /**< Show width of all expression terms in square brackets. */
         } operands;                                     /**< Settings for the operand list. */
 
         struct {
@@ -78,7 +86,17 @@ struct Settings {
             std::string post;                           /**< String to terminate a comment. */
             size_t fieldWidth;                          /**< Min characters to use for the comment field. */
         } comment;                                      /**< Settings for instruction comments. */
+
+        struct {
+            bool showing;                               /**< Show instruction semantics? */
+            InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
+            bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
+        } semantics;
     } insn;                                             /**< Settings for instructions. */
+    
+    struct {
+        EdgeArrows::ArrowStylePreset style;             /**< One of the arrow style presets. */
+    } arrow;                                            /**< How to render arrows along the left margin. */
 
     Settings();
     static Settings full();

@@ -7,7 +7,7 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 /*! 
   * \author Markus Schordan

@@ -86,6 +86,7 @@ int main (int argc, char* argv[])
     }
   else
     retval = PolyOptOptimizeProject (project, polyoptions);
+
   if (retval == EXIT_SUCCESS)
     // 6- If the optimization process succeeded, invoke the Rose unparser.
     return backend (project);

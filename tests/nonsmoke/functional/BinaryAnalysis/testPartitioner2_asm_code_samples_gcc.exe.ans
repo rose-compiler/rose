@@ -15,7 +15,7 @@
 
 0x00401012: Basic block reasons: 
 0x00401012: cc                      |.       |<sp-16>   int3   
-0x00401012: Successor blocks: unknown
+0x00401012: Successor blocks: 0x00401013, unknown
 
 0x00401013: Basic block reasons: 
 0x00401013: d9 7d fe                |.}.     |<sp-16>   fnstcw word ss:[ebp + 0xfe<-2>]

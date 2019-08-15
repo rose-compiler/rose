@@ -4,6 +4,9 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 
+namespace Rose {
+namespace BinaryAnalysis {
+
 std::ostream&
 operator<<(std::ostream &o, const Assembler::Exception &e)
 {
@@ -63,3 +66,5 @@ Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_
     return retval;
 }
 
+} // namespace
+} // namespace

@@ -1,7 +1,7 @@
 #include "NumberIntervalLattice.h"
 #include <iostream>
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 Number::Number():_num(0){}
 Number::Number(int num):_num(num) {}
@@ -51,43 +51,43 @@ std::string Number::toString() const {
     return ss.str();
 }
 
-Number SPRAY::operator+(const Number& n1, const Number& n2) {
+Number CodeThorn::operator+(const Number& n1, const Number& n2) {
   Number n=n1;
     n+=n2;
     return n;
 }
-Number SPRAY::operator-(const Number& n1, const Number& n2) {
+Number CodeThorn::operator-(const Number& n1, const Number& n2) {
   Number n=n1;
   n-=n2;
   return n;
 }
-Number SPRAY::operator*(const Number& n1, const Number& n2) {
+Number CodeThorn::operator*(const Number& n1, const Number& n2) {
   Number n=n1;
   n*=n2;
   return n;
 }
-Number SPRAY::operator/(const Number& n1, const Number& n2) {
+Number CodeThorn::operator/(const Number& n1, const Number& n2) {
   Number n=n1;
   n/=n2;
   return n;
 }
-Number SPRAY::operator%(const Number& n1, const Number& n2) {
+Number CodeThorn::operator%(const Number& n1, const Number& n2) {
   Number n=n1;
   n%=n2;
   return n;
 }
-Number SPRAY::operator<<(const Number& n1, const Number& n2) {
+Number CodeThorn::operator<<(const Number& n1, const Number& n2) {
     Number n=n1;
     n<<=n2;
     return n;
 }
-Number SPRAY::operator>>(const Number& n1, const Number& n2) {
+Number CodeThorn::operator>>(const Number& n1, const Number& n2) {
   Number n=n1;
   n>>=n2;
   return n;
 }
 
-std::ostream& SPRAY::operator<<(std::ostream& out, Number& number) {
+std::ostream& CodeThorn::operator<<(std::ostream& out, Number& number) {
   out<<number.toString();
   return out;
 }

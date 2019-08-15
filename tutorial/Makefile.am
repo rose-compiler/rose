@@ -29,6 +29,7 @@ bin_PROGRAMS = \
    defuseAnalysis \
    livenessAnalysis \
    interproceduralCFG \
+   loopProcessor \
    virtualCFG
 
 if ROSE_HAVE_YICES
@@ -116,7 +117,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    lineReplacement \
    loopNestingInfoProcessing \
    loopOptimization \
-   loopProcessor \
    loopRecognition \
    nestedQueryExample \
    nestedTraversal \

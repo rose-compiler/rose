@@ -87,7 +87,7 @@ namespace boost {
 namespace serialization {
 
 template<class Archive>
-inline void save(Archive &archive, const SgNode &node, const unsigned version) {
+inline void save(Archive &archive, const SgNode &node, const unsigned /*version*/) {
     SgNode *parent = node.get_parent();
     bool isModified = node.get_isModified();
     bool containsTransformation = node.get_containsTransformation();
@@ -97,7 +97,7 @@ inline void save(Archive &archive, const SgNode &node, const unsigned version) {
 }
 
 template<class Archive>
-inline void load(Archive &archive, SgNode &node, const unsigned version) {
+inline void load(Archive &archive, SgNode &node, const unsigned /*version*/) {
     SgNode *parent = NULL;
     bool isModified=false, containsTransformation=false;
     archive >>BOOST_SERIALIZATION_NVP(parent);

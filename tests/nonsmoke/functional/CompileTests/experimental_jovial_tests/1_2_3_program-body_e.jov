@@ -5,6 +5,6 @@ BEGIN
   ivar = 13 ;
   PROC sub1 ;
     ;
-  label:
+  label1:
 END
 TERM

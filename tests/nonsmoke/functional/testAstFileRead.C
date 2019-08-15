@@ -527,9 +527,12 @@ mergeStaticASTFileInformation(vector<AstFileSpecificInfo*> & AstFileInfoArray)
      SgFunctionTypeTable* globalFunctionTypeTable = mergeFunctionTypeSymbolTables (functionTableArray);
      ROSE_ASSERT(globalFunctionTypeTable != NULL);
 
-     map<int,std::string> mergedFileidtoname_map;
-     map<std::string,int> mergedNametofileid_map;
+     map<int,std::string> & mergedFileidtoname_map = Sg_File_Info::get_fileidtoname_map();
+     map<std::string,int> & mergedNametofileid_map = Sg_File_Info::get_nametofileid_map();
      map<int,int> mergedFileidtoid_map;
+
+     mergedFileidtoname_map.clear();
+     mergedNametofileid_map.clear();
 
   // Now merge the file name maps (static information in Sg_File_Info).
   // int maxFilenameIndex = 0;
@@ -593,11 +596,6 @@ mergeStaticASTFileInformation(vector<AstFileSpecificInfo*> & AstFileInfoArray)
                   }
              }
        }
-
-  // Now reset the static maps to use the new mapping.
-     Sg_File_Info::get_nametofileid_map() = mergedNametofileid_map;
-     Sg_File_Info::get_fileidtoname_map() = mergedFileidtoname_map;
-
 
   // DQ (6/21/2010): Fixup the support for builtin types stored as static data in the SgType derived classes.
   // FixupbuiltinTypes(AST_FILE_IO::getAst(i),AST_FILE_IO::getAst(i));

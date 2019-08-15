@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+bin_SCRIPTS =
+pkgdata_DATA =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -36,17 +38,22 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+# Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
+if ROSE_BUILD_ATERM_SUPPORT
+   libroseExperimentalGeneralLanguagelibraries = \
+        frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
+        frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/CUDA_Fortran.tbl
+   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl
+else
+   libroseExperimentalGeneralLanguagelibraries =
+endif
+
+# Rasmussen (01/29/2018): Removed building of ATerm traversal in 3rdPartyLibraries. Replaced with C++ traversals of ATerms.
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-
-# DQ (1/26/2017): This is built in the new way that Craig and I are working together on the new OFP.
-# Rasmussen (2/7/2017): The ATerm traversal library is needed by the frontend/Experimental_OpenFortranParser_ROSE_Connection.
-# Adding this library is ok because it is built with the normal 64-bit mode of the compiler (no -m32 CFLAGS) and then linked with the 64-bit ATerm library.
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
-
-#  libroseExperimentalOpenFortranParserlibraries =
-#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
@@ -126,12 +133,12 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
 	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la		\
-	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la
+	$(top_builddir)/src/midend/BinaryAnalysis/libbinaryMidend.la
 else
    libroseBinaryLibraries =							\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
 	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
-	$(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la		\
+	$(top_builddir)/src/midend/BinaryAnalysis/libbinaryMidend.la		\
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
 	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la
 endif
@@ -187,6 +194,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
@@ -248,44 +256,6 @@ pkginclude_HEADERS = \
      frontend/SageIII/sage3basic.hhh \
      midend/astDiagnostics/AstConsistencyTests.h \
      backend/asmUnparser/AsmUnparser_compat.h
-
-########################################################################################################################
-# Test that a simple ROSE program can run, and as a side effect, print some version numbers.
-# DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
-noinst_PROGRAMS = testSharedRoseLib
-testSharedRoseLib_SOURCES = testRoseLib.C
-testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
-testSharedRoseLib_LDADD  = $(ROSE_LIBS)
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-if USING_CLANG_COMPILER
-# testSharedRoseLib_LDADD += -lstdc++
-# testSharedRoseLib_LDADD += -lstdc++ -fno-rtti
-testSharedRoseLib_LDADD += -lstdc++ 
-testSharedRoseLib_LDFLAGS = -fno-rtti
-endif
-if OS_MACOSX
-testSharedRoseLib_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
-else
-testSharedRoseLib_LDFLAGS = $(ROSE_RPATHS)
-endif
-
-# Matzke (8/11/2016) I think "--version" is always supported now regardless of which frontends are compiled
-check-trivial-program: testSharedRoseLib$(EXEEXT) check-boost-linkage
-	@echo "  TEST     whether a trivial ROSE program runs [$@]"
-	${AM_V_at}if ! ./testSharedRoseLib$(EXEEXT) --version; then					\
-	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2;	\
-	  echo "error: LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the" >&2;	\
-	  echo "error: correct libraries (JVM, Boost, librose.so, etc.)" >&2;				\
-	  exit 1;											\
-	fi
-
-check-boost-linkage: testSharedRoseLib$(EXEEXT)
-	@echo "  TEST     boost shared linkage [$@]"
-	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/testSharedRoseLib >&2
-
-check-local: check-trivial-program check-boost-linkage
-
-.PHONY: check-trivial-program check-boost-linkage
 
 ########################################################################################################################
 
@@ -459,26 +429,156 @@ rose_config_installed_ldflags =			\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
 	-lm
-
+if ROSE_USE_EDG_QUAD_FLOAT
+  rose_config_installed_ldflags += -lquadmath
+endif
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg
 
+# Rasmussen (3/23/2018): Added ROSE_RPATHS and ROSE_LINK_RPATHS to enable
+# linking on Mac OSX from a ROSE installations.
 rose-config.cfg:
 	$(AM_V_GEN) (								\
 		echo "# Things that the 'rose-config' tool can report";		\
-		echo "cc       = $(CC)";					\
-		echo "cxx      = $(CXX)";					\
-		echo "cppflags = $(rose_config_installed_cppflags)";		\
-		echo "cflags   = $(CFLAGS)";					\
-		echo "cxxflags = $(CXXFLAGS)";					\
-		echo "ldflags  = $(rose_config_installed_ldflags)";		\
-		echo "libdirs  = $(filter-out -R, $(ROSE_RPATHS))";		\
-		echo "prefix   = $(prefix)";					\
+		echo "ROSE_CC       = $(CC)";					\
+		echo "ROSE_CXX      = $(CXX)";					\
+		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";	\
+		echo "ROSE_CFLAGS   = $(CFLAGS)";				\
+		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";				\
+		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";	\
+		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";	\
+		echo "ROSE_PREFIX   = $(prefix)";				\
+		echo "# Additional items useful to include in Makefiles";	\
+		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
+		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
 	) >$@
 
 MOSTLYCLEANFILES += rose-config.cfg
 
+bin_PROGRAMS += rose-compiler
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+  bin_PROGRAMS += rose-cc rose-c++
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+  bin_PROGRAMS += rose-fortran
+endif
+# The -std= option in ROSE only support c, c++, fortran
+#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+#if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+#if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+#if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+#if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+
+ROSEBIN_LDADD        = $(ROSE_LIBS)
+ROSEBIN_LDFLAGS      = $(ROSE_RPATHS)
+ROSEBIN_DEPENDENCIES = $(REQUIRED_LIBS)
+if USING_CLANG_COMPILER
+  ROSEBIN_LDADD   += -lstdc++ 
+  ROSEBIN_LDFLAGS += -fno-rtti
+endif
+if OS_MACOSX
+  ROSEBIN_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
+endif
+
+rose_compiler_SOURCES      = rose-compiler.C
+rose_compiler_LDFLAGS      = $(ROSEBIN_LDFLAGS)
+rose_compiler_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_compiler_CPPFLAGS     =
+rose_compiler_LDADD        = $(ROSEBIN_LDADD)
+
+rose_cc_SOURCES      = rose-compiler.C
+rose_cc_LDFLAGS      = $(ROSEBIN_LDFLAGS)
+rose_cc_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_cc_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"c\""
+rose_cc_LDADD        = $(ROSEBIN_LDADD)
+
+rose_c___SOURCES      = rose-compiler.C
+rose_c___LDFLAGS      = $(ROSEBIN_LDFLAGS)
+rose_c___DEPENDENCIES = $(REQUIRED_LIBS)
+rose_c___CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"c++\""
+rose_c___LDADD        = $(ROSEBIN_LDADD)
+
+rose_fortran_SOURCES      = rose-compiler.C
+rose_fortran_LDFLAGS      = $(ROSEBIN_LDFLAGS)
+rose_fortran_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_fortran_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"fortran\""
+rose_fortran_LDADD        = $(ROSEBIN_LDADD)
+
 ########################################################################################################################
+# Test that a simple ROSE program can run, and as a side effect, print some version numbers.
+
+check-boost:
+	@echo "  TEST     boost shared linkage [rose-compiler]"
+	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/rose-compiler >&2
+
+check-dynload:
+	@echo "  TEST     whether a trivial ROSE program runs [rose-compiler]"
+	${AM_V_at}if ! ./rose-compiler --version; then                                           \
+	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2; \
+	  echo "error: LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the" >&2; \
+	  echo "error: correct libraries (JVM, Boost, librose.so, etc.)" >&2;                    \
+	  exit 1;                                                                                \
+	fi
+
+check-config:
+	@echo "  TEST     ROSE configuration tool [rose-config]"
+	./rose-config --version
+
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+check-hello-c:
+	@echo "  TEST     ROSE C compiler [rose-cc]"
+	${AM_V_at}echo "#include <stdio.h>"                     >  hello-world.c
+	${AM_V_at}echo "int main() {"                           >> hello-world.c
+	${AM_V_at}echo "   printf(\"Hello World from C!\\n\");" >> hello-world.c
+	${AM_V_at}echo "   return 0;"                           >> hello-world.c
+	${AM_V_at}echo "}"                                      >> hello-world.c
+	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./hello-world-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-hello-cxx:
+	@echo "  TEST     ROSE C++ compiler [rose-c++]"
+	${AM_V_at}echo "#include <iostream>"                                      >  hello-world.cpp
+	${AM_V_at}echo "int main() {"                                             >> hello-world.cpp
+	${AM_V_at}echo "    std::cout << \"Hello World from C++!\" << std::endl;" >> hello-world.cpp
+	${AM_V_at}echo "    return 0;"                                            >> hello-world.cpp
+	${AM_V_at}echo "}"                                                        >> hello-world.cpp
+	${AM_V_at}./rose-c++ hello-world.cpp -o hello-world-cpp
+	${AM_V_at}./hello-world-cpp
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-hello-fortran:
+	@echo "  TEST     ROSE Fortran compiler [rose-fortran]"
+	${AM_V_at}echo "program hello"                            >  hello-world.f90
+	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
+	${AM_V_at}echo "end program hello"                        >> hello-world.f90
+	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
+	${AM_V_at}./hello-world-f90
+endif
+
+check-local: $(bin_PROGRAMS)
+	${AM_V_at}$(MAKE) check-boost
+	${AM_V_at}$(MAKE) check-dynload
+	${AM_V_at}$(MAKE) check-config
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-cxx
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-fortran
+endif
+
+########################################################################################################################
+
+# Rasmussen (3/23/2018): Added installing libtool to the bin directory to support
+# linking an application using ROSE from a ROSE installations.
+bin_SCRIPTS += ../libtool
 
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
@@ -514,7 +614,4 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-
-
-
 

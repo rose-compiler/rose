@@ -3,6 +3,8 @@ if (enable-binary-analysis)
         AsmUnparser.C
         AsmUnparser_compat.C
         AsmFunctionIndex.C
+	BinaryEdgeArrows.C
+	BinarySerialIo.C
         BinaryUnparserArm.C
         BinaryUnparserBase.C
         BinaryUnparserM68k.C
@@ -25,6 +27,8 @@ install(FILES
     AsmUnparser.h
     AsmUnparser_compat.h
     AsmFunctionIndex.h
+    BinaryEdgeArrows.h
+    BinarySerialIo.h
     BinaryUnparser.h
     BinaryUnparserArm.h
     BinaryUnparserBase.h

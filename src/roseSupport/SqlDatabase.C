@@ -7,6 +7,7 @@
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #ifndef _MSC_VER
@@ -20,8 +21,7 @@
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
-#include <pqxx/connection>
-#include <pqxx/transaction>
+#include <pqxx/pqxx>
 #include <pqxx/tablewriter>
 #endif
 
@@ -130,48 +130,29 @@ sqlite3_url_documentation() {
 //    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
 static std::string
-sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
-{
-    std::string dbname;
-    size_t at1 = 0;
-    if (0!=src.substr(at1, 10).compare("sqlite3://"))
+sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/) {
+    Connection::ParsedUrl parsed = Connection::parseUrl(src);
+    if (parsed.driver != SqlDatabase::SQLITE3)
         throw Exception("malformed SQLite3 connection URL: missing \"sqlite3://\"");
-    at1 = 10;
+    if (!parsed.error.empty())
+        throw Exception(parsed.error);
 
-    // Database name is everything up to the next '?' or end of string
-    size_t at2 = src.find_first_of('?', at1);
-    if (at2==std::string::npos) {
-        dbname = src.substr(at1);
-        at1 = src.size();
-    } else {
-        dbname = src.substr(at1, at2-at1);
-        at1 = at2;
-    }
+    std::string fileName = parsed.dbName;
 
-    // Parameters
-    if (at1<src.size() && '?'==src[at1]) {
-        ++at1;
-        while (at1<src.size()) {
-            at2 = src.find_first_of('&');
-            std::string param;
-            if (at2==std::string::npos) {
-                param = src.substr(at1);
-                at1 = src.size();
-            } else {
-                param = src.substr(at1, at2-at1);
-                at1 = at2 + 1;
-            }
-            if (0==param.compare("debug")) {
-                if (has_debug!=NULL)
-                    *has_debug = true;
-            } else {
-                throw Exception("invalid SQLite3 parameter: "+param);
-            }
+    BOOST_FOREACH (const Connection::Parameter &param, parsed.params) {
+        if ("debug" == param.first) {
+            if (has_debug)
+                *has_debug = true;
+        } else {
+            throw Exception("invalid SQLite3 parameter \"" + StringUtility::cEscape(param.first) + "\"");
         }
     }
-    return dbname;
+
+    return fileName;
 }
 
+ // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -184,88 +165,59 @@ postgres_url_documentation() {
             "parameter that is understood at this time is \"debug\", which takes no value and causes each SQL statement "
             "to be emitted to standard error as it's executed.}");
 }
+#endif
 
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
 //    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
 // The has_debug argument is set if a "debug" parameter is found.
 static std::string
-postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
-{
-    std::string user, password, netloc, port, dbname;
+postgres_parse_url(const std::string &url, bool *has_debug/*in,out*/) {
+    Connection::ParsedUrl parsed = Connection::parseUrl(url);
 
-    size_t at1 = 0;
-    if (0!=src.substr(at1, 13).compare("postgresql://"))
+    if (parsed.driver != SqlDatabase::POSTGRESQL)
         throw Exception("malformed PostgreSQL connection URL: missing \"postgresql://\"");
-    at1 = 13;
+    if (!parsed.error.empty())
+        throw Exception(parsed.error);
+    std::string src = parsed.dbName;
 
     // The username and password, everything up to the next '@' character if there is one.
-    size_t atsign = src.find_first_of('@', at1);
-    if (atsign!=std::string::npos) {
-        size_t colon = src.find_first_of(':', at1);
-        if (colon!=std::string::npos && colon<atsign) {
-            user = src.substr(at1, colon-at1);
-            password = src.substr(colon+1, atsign-colon-1);
-        } else {
-            user = src.substr(at1, atsign-at1);
-        }
-        at1 = atsign + 1;
-    }
-
-    // The optional netloc, everything up to the next '/', '?', ':', or end of string
-    size_t at2 = src.find_first_of("/?:", at1);
-    if (at2==std::string::npos) {
-        netloc = src.substr(at1);
-        at1 = src.size();
-    } else {
-        netloc = src.substr(at1, at2-at1);
-        at1 = at2;
-    }
-
-    // Optional port number is present if next character is a ':' and extends to next '/', '?', or end of string
-    if (at1<src.size() && ':'==src[at1]) {
-        at2 = src.find_first_of("/?", at1);
-        if (at2==std::string::npos) {
-            port = src.substr(at1+1);
-            at1 = src.size();
-        } else {
-            port = src.substr(at1+1, at2-(at1+1));
-            at1 = at2 + 1;
+    std::string user, password;
+    {
+        size_t atsign = src.find('@');
+        if (atsign != std::string::npos) {
+            std::vector<std::string> parts = StringUtility::split(":", src.substr(0, atsign), 2);
+            user = parts[0];
+            if (parts.size() == 2)
+                password = parts[1];
+            src = src.substr(atsign+1);
         }
     }
 
-    // Optional database name is present if next character is a '/' and extends up to the next '?' or end of string
-    if (at1<src.size() && '/'==src[at1]) {
-        at2 = src.find_first_of('?', at1);
-        if (at2==std::string::npos) {
-            dbname = src.substr(at1+1);
-            at1 = src.size();
-        } else {
-            dbname = src.substr(at1+1, at2-(at1+1));
-            at1 = at2;
+    // Host name and port, everything up to the next '/' character if there is one
+    std::string netloc, port;
+    {
+        size_t slash = src.find('/');
+        if (slash != std::string::npos) {
+            std::vector<std::string> parts = StringUtility::split(":", src.substr(0, slash), 2);
+            netloc = parts[0];
+            if (parts.size() == 2)
+                port = parts[1];
+            src = src.substr(slash+1);
         }
     }
 
+    // Optional database name is everything left over.
+    std::string dbname = src;
+    
     // Parameters
     std::vector<std::string> url_params;
-    if (at1<src.size() && '?'==src[at1]) {
-        ++at1;
-        while (at1<src.size()) {
-            at2 = src.find_first_of('&');
-            std::string param;
-            if (at2==std::string::npos) {
-                param = src.substr(at1);
-                at1 = src.size();
-            } else {
-                param = src.substr(at1, at2-at1);
-                at1 = at2 + 1;
-            }
-            if (0==param.compare("debug")) {
-                if (has_debug!=NULL)
-                    *has_debug = true;
-            } else {
-                url_params.push_back(param);
-            }
+    BOOST_FOREACH (const Connection::Parameter &param, parsed.params) {
+        if ("debug" == param.first) {
+            if (has_debug != NULL)
+                *has_debug = true;
+        } else {
+            url_params.push_back(param.first + "=" + param.second);
         }
     }
 
@@ -308,7 +260,10 @@ ConnectionImpl::conn_for_transaction()
         retval = driver_connections.size();
         driver_connections.resize(retval+10);
     }
+
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     DriverConnection &dconn = driver_connections[retval];
+#endif
 
     // Fill in the necessary info for the driver connection and establish the connection
     switch (driver) {
@@ -341,6 +296,7 @@ ConnectionImpl::conn_for_transaction()
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: PostgreSQL open spec: %s\n", specs.c_str());
                 dconn.postgres_connection = new pqxx::connection(specs);
+                dconn.postgres_connection->set_client_encoding("UTF8");
             }
             break;
         }
@@ -376,7 +332,7 @@ ConnectionImpl::dec_driver_connection(size_t idx)
         case POSTGRESQL: {
             // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
             // create more transactions on that connection.
-            
+
             // Also, libpqxx3 has a bug in the pqxx::transaction<> destructor: if the transaction commit() method is called,
             // then the d'tor executes a conditional jump or move that depends on unitialized values (according to valgrind).
             // This occurs in:
@@ -422,6 +378,50 @@ Connection::finish()
     delete impl;
 }
 
+// class method
+Connection::ParsedUrl
+Connection::parseUrl(std::string url) {
+    ParsedUrl retval;
+
+    // Optional driver (stuff before first "://")
+    size_t next = url.find("://");
+    if (next != std::string::npos) {
+        std::string driverName = url.substr(0, next);
+        if ("sqlite3" == driverName) {
+            retval.driver = SQLITE3;
+        } else if ("postgresql" == driverName) {
+            retval.driver = POSTGRESQL;
+        } else {
+            retval.error = "invalid driver name \"" + StringUtility::cEscape(driverName) + "\"";
+            return retval;
+        }
+        url = url.substr(next + 3);                     // everything after "://"
+    } else {
+        retval.driver = guess_driver(url);
+    }
+
+    // Datatabase is everything up to the last "?", but see below.
+    next = url.rfind("?");
+    if (next == std::string::npos) {
+        retval.dbName = url;
+        return retval;                                  // no parameters
+    } else {
+        retval.dbName = url.substr(0, next);
+        url = url.substr(next+1);                       // everything after the "?"
+    }
+
+    // Parameters, each "name[=value]" and separated from one another by "&"
+    std::vector<std::string> params = StringUtility::split("&", url);
+    BOOST_FOREACH (const std::string &s, params) {
+        std::vector<std::string> nameValue = StringUtility::split("=", s, 2);
+        if (nameValue.size() == 1)
+            nameValue.push_back("");
+        retval.params.push_back(std::make_pair(nameValue[0], nameValue[1]));
+    }
+
+    return retval;
+}
+
 Driver
 Connection::guess_driver(const std::string &open_spec)
 {
@@ -440,7 +440,7 @@ Connection::guess_driver(const std::string &open_spec)
     bool is_filename = true;
     for (size_t i=0; is_filename && i<open_spec.size(); ++i)
         is_filename = isgraph(open_spec[i]);
-    if (is_filename && open_spec.size()>=4 && 0==open_spec.substr(open_spec.size()-3).compare(".db"))
+    if (is_filename && open_spec.size()>=4 && boost::ends_with(open_spec, ".db"))
         return SQLITE3;
 
     return NO_DRIVER;
@@ -544,8 +544,10 @@ TransactionImpl::init()
     postgres_tranx = NULL;
 #endif
     assert(drv_conn_idx < conn->impl->driver_connections.size());
+#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
     ConnectionImpl::DriverConnection &dconn = conn->impl->driver_connections[drv_conn_idx];
     assert(dconn.nrefs>0);
+#endif
 
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
@@ -605,6 +607,7 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
 #endif
 #ifdef ROSE_HAVE_LIBPQXX
         case POSTGRESQL: {
+#if 1 // [Robb Matzke 2019-04-19]: marked as deprecated, but alternative doesn't work yet
             pqxx::tablewriter twriter(*postgres_tranx, tablename);
             char buf[4096];
             while (file.getline(buf, sizeof buf).good()) {
@@ -613,6 +616,16 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
                 twriter.insert(tuple);
             }
             twriter.complete();
+#else // this should for libpqxx-6.4.3 and probably some earlier versions also, but doesn't
+            pqxx::stream_to stream(*postgres_tranx, tablename);
+            char buf[4096];
+            while (file.getline(buf, sizeof buf).good()) {
+                std::vector<std::string> elmts;
+                StringUtility::splitStringIntoStrings(buf, ',', elmts);
+                stream <<elmts; // compile-time errors in libpqxx header files
+            }
+            stream.complete();
+#endif
             break;
         }
 #endif
@@ -653,7 +666,7 @@ TransactionImpl::rollback()
         ss <<"transaction: "; print(ss);
         fprintf(debug, "SqlDatabase: rolling back transaction\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
     }
-    
+
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
@@ -861,6 +874,8 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t>&);
+    StatementPtr bind_null(const StatementPtr &stmt, size_t idx);
     std::vector<size_t> findSubstitutionQuestionMarks(const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
@@ -987,6 +1002,24 @@ StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val
     return stmt;
 }
 
+StatementPtr
+StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::vector<uint8_t> &val)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = hexSequence(val, tranx->driver());
+    return stmt;
+}
+
+StatementPtr
+StatementImpl::bind_null(const StatementPtr &stmt, size_t idx)
+{
+    bind_check(stmt, idx);
+    placeholders[idx].second = "NULL";
+    return stmt;
+}
+
+
+
 // Expand some SQL by replacing substitution '?' with the value of the corresponding bound argument.
 std::string
 StatementImpl::expand()
@@ -1045,7 +1078,7 @@ StatementImpl::begin(const StatementPtr &stmt)
                     sqlite3_cmd = NULL;
                 }
             } catch (const std::runtime_error &e) {
-                throw Exception(e, tranx->impl->conn, tranx, stmt);
+                throw Exception(e.what(), tranx->impl->conn, tranx, stmt);
             }
             break;
         }
@@ -1057,7 +1090,7 @@ StatementImpl::begin(const StatementPtr &stmt)
                 postgres_result = tranx->impl->postgres_tranx->exec(sql_expanded);
                 postgres_iter = postgres_result.begin();
             } catch (const std::runtime_error &e) { // postgres exception
-                throw Exception(e, tranx->impl->conn, tranx, stmt);
+                throw Exception(e.what(), tranx->impl->conn, tranx, stmt);
             }
             break;
         }
@@ -1158,6 +1191,16 @@ Statement::execute_string()
     return i.get<std::string>(0);
 }
 
+std::vector<uint8_t> 
+Statement::execute_blob()
+{
+    iterator i = begin();
+    if (i==end())
+        throw Exception("statement did not return any rows\n" + StringUtility::prefixLines(impl->sql, "  sql: ") + "\n",
+                        impl->tranx->impl->conn, impl->tranx, shared_from_this());
+    return i.get_blob(0);
+}
+
 void
 Statement::set_debug(FILE *debug)
 {
@@ -1185,6 +1228,8 @@ StatementPtr Statement::bind(size_t idx, uint32_t val) { return impl->bind(share
 StatementPtr Statement::bind(size_t idx, uint64_t val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, double val) { return impl->bind(shared_from_this(), idx, val); }
 StatementPtr Statement::bind(size_t idx, const std::string &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, const std::vector<uint8_t> &val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind_null(size_t idx) { return impl->bind_null(shared_from_this(), idx); }
 
 /*******************************************************************************************************************************
  *                                      Statement iterators
@@ -1451,6 +1496,37 @@ Statement::iterator::get_str(size_t idx)
     return retval;
 }
 
+std::vector<uint8_t>
+Statement::iterator::get_blob(size_t idx)
+{
+    std::vector<uint8_t> retval;
+    check();
+    switch (stmt->driver()) {
+#ifdef ROSE_HAVE_SQLITE3
+        case SQLITE3: {
+            std::string data = stmt->impl->sqlite3_cursor->getblob(idx);
+            
+            retval.reserve(data.size());
+            std::copy(data.begin(), data.end(), std::back_inserter(retval));
+            break;
+        }
+#endif
+
+#ifdef ROSE_HAVE_LIBPQXX
+        case POSTGRESQL: {
+            assert(!"BLOBS (or BYTEA) not yet supported in Postgres interface");
+            abort();
+        }
+#endif
+
+        default:
+            assert(!"database driver not supported");
+            abort();
+    }
+    return retval;
+}
+
+
 template<> NoColumn Statement::iterator::get<NoColumn>(size_t idx) { return NoColumn(); }
 template<> int32_t Statement::iterator::get<int32_t>(size_t idx) { return get_i32(idx); }
 template<> int64_t Statement::iterator::get<int64_t>(size_t idx) { return get_i64(idx); }
@@ -1514,7 +1590,58 @@ escape(const std::string &s, Driver driver, bool quote)
         retval = std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
     return retval;
 }
+
+struct hex_appender : std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+    explicit
+    hex_appender(std::string& res)
+    : sink(&res)
+    {}
     
+    static
+    char hexDigit(uint8_t digit)
+    {
+      ROSE_ASSERT(digit < 16);
+      
+      if (digit < 10) return '0' + digit;
+      
+      return 'A' + (digit - 10);
+    }
+
+    hex_appender& operator=(const uint8_t& value)
+    {
+      char hexval[] = { hexDigit(value/16), hexDigit(value%16), 0 };
+      
+      //~ std::cout << ": " << hexval << "." << std::endl;
+      sink->append(hexval);
+      return *this;
+    }
+
+    hex_appender& operator*()     { return *this; }
+    hex_appender& operator++()    { return *this; }
+    hex_appender& operator++(int) { return *this; }
+
+  private:
+    std::string* sink;
+};
+
+
+std::string
+hexSequence(const std::vector<uint8_t> &v, Driver driver)
+{
+    static const std::string HEXPRE  = "X'";
+    static const std::string HEXPOST = "'";
+
+    size_t      len = HEXPRE.size() + 2*v.size() + HEXPOST.size();
+    std::string retval;
+
+    retval.reserve(len);
+    retval.append(HEXPRE);
+    std::copy(v.begin(), v.end(), hex_appender(retval));
+    retval.append(HEXPOST);
+    return retval;
+}
+
 bool
 is_valid_table_name(const std::string &name)
 {

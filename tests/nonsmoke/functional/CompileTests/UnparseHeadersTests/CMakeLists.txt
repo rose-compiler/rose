@@ -7,7 +7,7 @@ target_link_libraries(TestUnparseHeaders ROSE_DLL EDG ${link_with_libraries} )
 set(TESTCODES
   test1/Simple1.C test2/Simple2.C test3/Simple3.C test4/Simple4.C
   test5/Simple5.C test9/Simple9.C test10/Simple10.C test11/Simple11.C
-  test12/Simple12.C test13/Simple13.C
+  test12/Simple12.C test13/Simple13.C test14/Simple14.C
 )
 
 set(TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER test0/Simple0.C)

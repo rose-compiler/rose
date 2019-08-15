@@ -1,4 +1,9 @@
+#include "sage3basic.h"
 #include "ConversionFunctionsGenerator.h"
+#include "SgNodeHelper.h"
+#include "CppStdUtilities.h"
+
+using namespace std;
 
 string ConversionFunctionsGenerator::generateCodeForGlobalVarAdressMaps(set<string> vars) {
   string code;
@@ -21,6 +26,28 @@ string ConversionFunctionsGenerator::generateCodeForGlobalVarAdressMaps(set<stri
   } 
   code+="}\n";
   return code;
+}
+
+
+void ConversionFunctionsGenerator::generateFile(SgProject* root, string conversionFunctionsFileName) {
+  set<string> varNameSet;
+  std::list<SgVariableDeclaration*> globalVarDeclList=SgNodeHelper::listOfGlobalVars(root);
+  for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
+    SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
+    for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
+      SgInitializedName* initName=*j;
+      if ( true || isSgArrayType(initName->get_type()) ) {  // optional filter (array variables only)
+        SgName varName=initName->get_name();
+        string varNameString=varName; // implicit conversion
+        varNameSet.insert(varNameString);
+      }
+    }
+  }
+  string code=generateCodeForGlobalVarAdressMaps(varNameSet);
+  ofstream myfile;
+  myfile.open(conversionFunctionsFileName.c_str());
+  myfile<<code;
+  myfile.close();
 }
 
 #if 0

@@ -1,6 +1,9 @@
-# MS: makefile for local development with installed version of ROSE.
-# ROSE_INCLUDE_DIR must be set as environment variable (.e.g install/rose/includes)
-# ROSE_LIB_DIR must be set as environment variable (.e.g install/rose/lib)
+# MS: makefile for building hybrid analyzers
+
+# required environment variables:
+# ROSE_LIB_DIR (.e.g install/rose/lib)
+# ROSE_SRC_DIR
+# ROSE_BUILD_TREE
 
 TOOLNAME3 = codethorn
 
@@ -20,11 +23,11 @@ CXXFLAGS              = -Wno-deprecated -std=c++11
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
+#OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
 
 REGRESSION_DATA_DIR=regressiondata
 
-OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
+#OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
 
 # Default make rule to use
 all: RERS_BINARY
@@ -37,22 +40,19 @@ all: RERS_BINARY
 
 ###############################################################################################
 
-%.o: %.C %.h
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+TODO: build_tree and Z3 directory provided by script
 
+#%.o: %.C %.h
+#	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+
+# build_tree necessary for rose_config.h
 %.o: %.C
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
+	$(CXX) -I$(ROSE_BUILD_TREE) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
 
-$(TOOLNAME3): $(OBJECT_FILES) RERS_empty_specialization.o $(TOOLNAME3).o 
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) RERS_empty_specialization.o $(OBJECT_FILES) $(TOOLNAME3).o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(TOOLNAME3)
-
-# Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
-#$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-#	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
-
-# Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
+# Create a specialized hybrid analyzer for the given RERS problem.
+# Called by "generate_rers_hybrid_analyzer" script.
 $(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(Z3_LIBS) $(BOOST_CPPFLAGS) -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(Z3_LIBS) $(BOOST_CPPFLAGS) -lspray -lcodethorn -lz3 -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) -L $(Z3_LIBRARY_INSTALL_PATH)
 
 ###############################################################################################
 
@@ -101,18 +101,6 @@ validate:
 docs:
 	doxygen Doxyfile
 
-vizps: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
-	dot -Tps transitiongraph1.dot -oviz/transitiongraph1.ps
-	dot -Tps transitiongraph2.dot -oviz/transitiongraph2.ps
-	dot -Tps cfg.dot -oviz/cfg.ps
-	dot -Gordering=out -Tps ast.dot -oviz/ast.ps
-
-vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
-	dot -Tjpg transitiongraph1.dot -oviz/transitiongraph1.jpg
-	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
-	dot -Tjpg cfg.dot -oviz/cfg.jpg
-	dot -Gordering=out -Tjpg ast.dot -oviz/ast.jpg
-
 clean:
 	rm -f testCode.o
 	rm -f rose_testCode.o
@@ -136,46 +124,6 @@ distclean: clean
 	rm -f *~
 	rm -rf ../docs/doxygen
 	rm -f $(TOOLNAME3)ref
-
-bsps: codethorn
-
-	./codethorn tests/basictest10f.C --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
-	cp tests/basictest10f.C bsps
-	cp viz/cfg.ps bsps/basictest10f_cfg.ps
-	cp viz/transitiongraph1.ps bsps/basictest10f_transitiongraph1.ps
-	cp viz/transitiongraph2.ps bsps/basictest10f_transitiongraph2.ps
-	cp viz/ast.jpg bsps/basictest10f_ast.jpg
-	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
-	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
-	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
-	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
-
-	./codethorn tests/basictest15.C && make -f Makefile_local vizps && make -f Makefile_local vizjpg
-	cp tests/basictest15.C bsps
-	cp viz/cfg.ps bsps/basictest15_cfg.ps
-	cp viz/transitiongraph1.ps bsps/basictest15_transitiongraph1.ps
-	cp viz/transitiongraph2.ps bsps/basictest15_transitiongraph2.ps
-	cp viz/ast.jpg bsps/basictest15_ast.jpg
-	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
-	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
-	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
-	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
-
-	./codethorn tests/rers_mini8.c --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
-	cp tests/rers_mini8.c bsps
-	cp viz/cfg.ps bsps/rers_mini8_cfg.ps
-	cp viz/transitiongraph1.ps bsps/rers_mini8_transitiongraph1.ps
-	cp viz/transitiongraph2.ps bsps/rers_mini8_transitiongraph2.ps
-	cp viz/ast.jpg bsps/rers_mini8_ast.jpg
-	cp viz/cfg.jpg bsps/rers_mini8_cfg.jpg
-	cp viz/transitiongraph1.jpg bsps/rers_mini8_transitiongraph1.jpg
-	cp viz/transitiongraph2.jpg bsps/rers_mini8_transitiongraph2.jpg
-	ps2pdf bsps/rers_mini8_transitiongraph2.ps bsps/rers_mini8_transitiongraph2.pdf
-
-	./codethorn tests/rers/Problem1.c --viz=yes
-	cp tests/rers/Problem1.c bsps
-	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
-	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
 
 dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*

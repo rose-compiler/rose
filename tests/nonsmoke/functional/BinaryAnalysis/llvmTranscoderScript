@@ -1,0 +1,13 @@
+#!/bin/bash
+set -ex
+
+specimen="$1"
+llvm_version="$(llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*version ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')"
+output=llvmTranscoder-$(basename $specimen).ll
+
+./llvmTranscoder --llvm=${llvm_version} ${specimen} > ${output}
+wc -l ${output}
+
+if llvm-as --version && opt --version; then
+    llvm-as -o - ${output} | opt -analyze -lint
+fi

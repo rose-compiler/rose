@@ -68,6 +68,11 @@ namespace AtermSupport
   // use of Aterms later).
      std::string uniqueId(const rose_rva_t & n);
 
+  // This supports generation of strings from registers (so that the SgAsm support will compile).
+  // I don't think it is clear how to implement this function (but we can worry about the binary analysis 
+  // use of Aterms later).
+     std::string uniqueId(Rose::BinaryAnalysis::RegisterDescriptor);
+
      ATerm convertFileInfoToAterm(Sg_File_Info* fi);
      Sg_File_Info* getAtermFileInfo(ATerm term, std::string annotationName);
 

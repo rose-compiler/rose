@@ -5,6 +5,7 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 
 #include <Sawyer/SharedPointer.h>
@@ -148,6 +149,7 @@ public:
 //                                      Generic modules
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Miscellaneous supporting functions for disassembly. */
 namespace Modules {
 
 /** Convert system function names to ROSE canonical form.
@@ -332,6 +334,38 @@ public:
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
     void debug(rose_addr_t, const BasicBlock::Ptr&);
+};
+
+/** Match thunk.
+ *
+ *  Matches any thunk matched by the specified predicates.  This callback is invoked at addresses that are not part of the
+ *  partitioner's CFG and will only match instructions not in the CFG. */
+class MatchThunk: public FunctionPrologueMatcher {
+private:
+    ThunkPredicates::Ptr predicates_;
+protected:
+    std::vector<Function::Ptr> functions_;
+
+protected:
+    // use 'instance' instead
+    MatchThunk(const ThunkPredicates::Ptr &predicates)
+        : predicates_(predicates) {}
+    
+public:
+    /** Allocating constructor. */
+    static Ptr instance(const ThunkPredicates::Ptr &predicates) {
+        return Ptr(new MatchThunk(predicates));
+    }
+
+    /** Property: Predicates used for matching thunks.
+     *
+     * @{ */
+    ThunkPredicates::Ptr predicates() const { return predicates_; }
+    void predicates(const ThunkPredicates::Ptr &p) { predicates_ = p; }
+    /** @} */
+
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
+    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Remove execute permissions for zeros.

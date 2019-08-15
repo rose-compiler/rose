@@ -427,9 +427,11 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
                 } else if (SgFunctionParameterList *params = isSgFunctionParameterList(rootName[0]->get_parent())) {
                     // x can also have global scope when it appears as a formal parameter in an extern function declaration,
                     // as in:  void f() { void g(int x); ... }
+#ifndef NDEBUG
                     SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(params->get_parent());
                     assert(fdecl!=NULL);
                     assert(fdecl!=function);
+#endif
                     continue;
                 }
             }
@@ -437,7 +439,7 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
 
         //Are there any other types of external vars?
         ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
-                || isSgGlobal(varScope));
+                || isSgDeclarationScope(varScope) || isSgGlobal(varScope));
 
         //The variable is not in local scope; we need to insert a def for it at the function definition
         for (size_t i = 0; i < usedVar.size(); i++)

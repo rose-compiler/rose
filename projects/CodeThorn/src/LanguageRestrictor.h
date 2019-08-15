@@ -11,7 +11,7 @@
 #include <string>
 #include "RoseAst.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 /*!
   \brief Allows to check an AST for a restricted subset of C/C++.
   \details This class can be used to check the AST of an input program to contain only nodes of a certain subset of C/C++.

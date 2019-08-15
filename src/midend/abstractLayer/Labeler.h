@@ -6,15 +6,16 @@
  * Author   : Markus Schordan                                *
  *************************************************************/
 
+#include <limits>
 #include <set>
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
 
 #define NO_STATE -3
 #define NO_ESTATE -4
-#define NO_LABEL_ID -1
+#define NO_LABEL_ID std::numeric_limits<size_t>::max()
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -39,7 +40,7 @@ class Label {
   // postfix inc operator
   Label operator++(int);
   size_t getId() const;
-
+  std::string toString() const;
   friend std::ostream& operator<<(std::ostream& os, const Label& label);
 
  protected:
@@ -98,6 +99,9 @@ class LabelProperty {
    bool isTerminationRelevant();
    bool isLTLRelevant();
 
+   bool isExternalFunctionCallLabel();
+   void setExternalFunctionCallLabel();
+
  private:
    bool _isValid;
    SgNode* _node;
@@ -109,7 +113,8 @@ class LabelProperty {
    int _ioValue;
    bool _isTerminationRelevant;
    bool _isLTLRelevant;
- };
+   bool _isExternalFunctionCallLabel;
+};
 
 /*! 
   * \author Markus Schordan
@@ -134,19 +139,21 @@ typedef std::set<LabelSet> LabelSetSet;
 class Labeler {
  public:
   Labeler();
-  static Label NO_LABEL;
+  static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
   Labeler(SgNode* start);
   static std::string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
   virtual void createLabels(SgNode* node);
 
-  /* Labels are numbered 0..n-1 where n is the number of labeled nodes (not all nodes are labeled).
+  /** Labels are numbered 0..n-1 where n is the number of labels
+      associated with AST nodes (not all nodes are labeled, and some
+      nodes are associated with more than one label).
      A return value of NO_LABEL means that this node has no label.
   */
   Label getLabel(SgNode* node);
   LabelSet getLabelSet(std::set<SgNode*>& nodeSet);
 
-  /* Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
+  /** Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
      this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label);
@@ -169,6 +176,13 @@ class Labeler {
   bool isSwitchExprLabel(Label lab);
   bool isFirstLabelOfMultiLabeledNode(Label lab);
   bool isSecondLabelOfMultiLabeledNode(Label lab);
+
+#if 1
+  // by default false for all labels. This must be set by the CF analysis.
+  bool isExternalFunctionCallLabel(Label lab);
+  void setExternalFunctionCallLabel(Label lab);
+#endif
+
   class iterator {
   public:
     iterator();
@@ -212,6 +226,9 @@ class IOLabeler : public Labeler {
   VariableIdMapping* _variableIdMapping;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif

@@ -1,7 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_JAVA],
 [
 # Begin macro ROSE_SUPPORT_JAVA.
-ROSE_CONFIGURE_SECTION([Java])
+ROSE_CONFIGURE_SECTION([Checking Java])
 
 AC_MSG_CHECKING([for Java (javac first, then java, then jvm)])
 
@@ -42,7 +42,7 @@ elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
       else
        # This is likely the Eclipse Java (ecj).
        # DQ (11/3/2009): If this is IBM Java then it should also work with ROSE and this macro.
-         AC_MSG_ERROR([This is not SUN or IBM Java found by default (likely found ecj - Eclipse Java) -- specify correct java using --with-java=<path>])
+         AC_MSG_ERROR([this is not SUN or IBM Java found by default (likely found ecj - Eclipse Java) -- specify correct java using --with-java=PATH])
       fi
     # AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVA}`/../..")
       AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/..")
@@ -79,13 +79,13 @@ elif test -d "${javasetting}"; then
   # echo "After setting value using javasetting: JAVA_PATH = ${JAVA_PATH}"
     JAVAC="${javasetting}/bin/javac"
   else
-    AC_MSG_ERROR([Argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
+    AC_MSG_ERROR([argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
   fi
 elif test -x "${javasetting}"; then
   AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${javasetting}`/..")
   JAVAC="${javasetting}"
 else
-  AC_MSG_ERROR([Argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
+  AC_MSG_ERROR([argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
 fi
 
 # echo "USE_JAVA = $USE_JAVA"
@@ -99,7 +99,7 @@ fi
 # echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
 if test "x$USE_JAVA" = x1; then
 
-  echo "Now verifying aspects of the found java software (java, javac, javah, jar)..."
+  AC_MSG_NOTICE([Now verifying aspects of the found java software (java, javac, javah, jar)])
 
   JAVA_BIN="${JAVA_PATH}/bin"
   JAVA="${JAVA_BIN}/java"
@@ -108,10 +108,16 @@ if test "x$USE_JAVA" = x1; then
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
 
-echo "JAVA=${JAVA}"
+  AC_MSG_NOTICE([JAVA = "$JAVA"])
 
     # Determine java version, e.g. java version "1.7.0_51"
     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "java version" | sed 's/java version//' | sed 's/"//g'`
+
+# try to detect openjdk if previous command fails , Liao 3/11/2019
+   if test "x$JAVA_VERSION" = x; then
+     JAVA_VERSION=`${JAVA} -version 2>&1 | grep "openjdk version" | sed 's/openjdk version//' | sed 's/"//g'`
+   fi
+
     JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]1}'`
     JAVA_VERSION_MINOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]2}'`
     JAVA_VERSION_PATCH=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]1}'`
@@ -137,7 +143,11 @@ echo "JAVA=${JAVA}"
        test -z "${JAVA_VERSION_PATCH}" ||
        test -z "${JAVA_VERSION_RELEASE}"
     then
-       ROSE_MSG_ERROR([An error occurred while trying to determine your java -version])
+      echo "JAVA_VERSION_MAJOR = $JAVA_VERSION_MAJOR"
+      echo "JAVA_VERSION_MINOR = $JAVA_VERSION_MINOR"
+      echo "JAVA_VERSION_PATCH = $JAVA_VERSION_PATCH"
+      echo "JAVA_VERSION_RELEASE = $JAVA_VERSION_RELEASE"
+      ROSE_MSG_ERROR([An error occurred while trying to determine your java version: one or more extracted major, minor, patch and release version numbers displayed above are empty. Please look into rose/config/support-java.m4 to make sure the extraction commands inside the m4 file work as expected.])
     else
       if test ${JAVA_VERSION_MAJOR} -lt 1 ||
         (test ${JAVA_VERSION_MAJOR} -eq 1 &&
@@ -161,7 +171,7 @@ echo "JAVA=${JAVA}"
     if test "x$JAVA_JVM_FULL_PATH" = x; then
       JAVA_JVM_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>&1 | grep '^JavaJVMDir  = ' | cut -c 15-`" # IBM J9 JVM
       if test "x$JAVA_JVM_PATH" = x; then
-        AC_MSG_ERROR([Unable to find path to JVM library])
+        AC_MSG_ERROR([unable to find path to JVM library])
       fi
     fi
     JAVA_JVM_LINK="-L${JAVA_JVM_PATH} -ljvm"
@@ -221,9 +231,9 @@ fi
 # AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
 AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath ${JAVA_HOME}/jre/lib/server $LDFLAGS"],[])
 
-echo "In support-java: build_os = $build_os"
-echo "In support-java: LDFLAGS = $LDFLAGS"
-echo "In support-java: OS_MACOSX = $OS_MACOSX"
+AC_MSG_NOTICE([in support-java: build_os is "$build_os"])
+AC_MSG_NOTICE([in support-java: LDFLAGS = "$LDFLAGS"])
+AC_MSG_NOTICE([in support-java: OS_MACOSX = "$OS_MACOSX"])
 
 # echo "In support-java: Exiting as a test!"
 # exit 1
@@ -234,7 +244,7 @@ echo "In support-java: OS_MACOSX = $OS_MACOSX"
 # is the case then we want to use the 
 AC_CHECK_HEADERS([jni.h], [have_jni=yes], [have_jni=no])
 if test "x$have_jni" = "xyes"; then
-  AC_MSG_WARN([ROSE has determined that there is a default version of jni.h (likely in the compiler's include directory) this may be the wrong version of jni.h (however, this is not known to be a problem).])
+  AC_MSG_WARN([ROSE has determined that there is a default version of jni.h (likely in the compiler's include directory); this may be the wrong version of jni.h (however, this is not known to be a problem)])
 else
   AC_MSG_RESULT([ROSE can't find the jni.h in a default directory (this is good since it will be included correctly).])
 fi
@@ -280,7 +290,7 @@ AC_DEFINE_UNQUOTED(
 
 
 dnl Summary of Java information
-AC_MSG_NOTICE([Summary of Java information:])
+AC_MSG_NOTICE([summary of Java information:])
 AC_MSG_NOTICE([    The --with-java switch specified:       $javasetting])
 AC_MSG_NOTICE([    Installation path (JAVA_PATH):          $JAVA_PATH])
 AC_MSG_NOTICE([    C++ header switches (JAVA_JVM_INCLUDE): $JAVA_JVM_INCLUDE])

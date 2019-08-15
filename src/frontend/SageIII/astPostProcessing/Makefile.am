@@ -45,7 +45,8 @@ libastPostProcessing_la_SOURCES      = \
      fixupDeclarationScope.C \
      fixupFileInfoFlags.C \
      fixupTemplateArguments.C \
-     addPrototypesForTemplateInstantiations.C
+     addPrototypesForTemplateInstantiations.C \
+     markSharedDeclarationsForOutputInCodeGeneration.C
 
 if !ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 libastPostProcessing_la_SOURCES += dummy.C
@@ -94,7 +95,8 @@ pkginclude_HEADERS = \
      fixupDeclarationScope.h \
      fixupFileInfoFlags.h \
      fixupTemplateArguments.h \
-     addPrototypesForTemplateInstantiations.h
+     addPrototypesForTemplateInstantiations.h \
+     markSharedDeclarationsForOutputInCodeGeneration.h
 
 EXTRA_DIST = CMakeLists.txt
 

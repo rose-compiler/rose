@@ -26,6 +26,13 @@ nodeHierarchyTest_LDADD= \
   $(ROSE_LIBS)
 
 unit-tests:
-	./nodeHierarchyTest
+# DQ (7/2/2018): Remove this test because it used GTest which sometimes fails when 
+# running in parallel with Jenkins (rarely, but a point of stability for Jenkins).
+# We are unclear why these tests were added (by a student working for us) and they
+# are not setup to run in a conventional manner within ROSE (thus the stability issue).
+#	./nodeHierarchyTest
+	@echo "*******************************************"
+	@echo "Removed nodeHierarchyTest test using gTest."
+	@echo "*******************************************"
 
 check-local: unit-tests

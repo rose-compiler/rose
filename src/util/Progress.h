@@ -25,9 +25,9 @@ namespace Rose {
  *  task completes (either because the task was finished or it had an error), one of the workers calls @ref finished to let all
  *  the listeners know there will be nothing new to report.
  *
- *  Sometimes a task has multiple phases and its hard to predict the total amount of work across all phases before earlier
+ *  Sometimes a task has multiple phases and it's hard to predict the total amount of work across all phases before earlier
  *  phases have completed. Therefore, progress reports have two parts: not only do they have a completion amount, they
- *  also have a phase name.  When a @ref Progress object is first created, it's phase name is empty and the completion
+ *  also have a phase name.  When a @ref Progress object is first created, its phase name is empty and the completion
  *  amount is zero.  There is no intrinsic @ref Progress requirement that phases occur in any particular order, or that the
  *  completion amount is monotonically increasing, or that the completion amount is in the interval [0..1] although listeners
  *  might be expecting certain things.
@@ -84,7 +84,7 @@ namespace Rose {
  *  The following guidelines should be used when writing a long-running task, such as a ROSE analysis or transformation, that
  *  supports progress reporting. These guidelines assume that the task is encapsulated in a class (as most analyses and
  *  transformations should be) so that an application is able to have more than one instance of the task. A task that's
- *  implemented as a single function should take an argument of type <code>const Rose::Progress::Ptr&<code> (which may be a
+ *  implemented as a single function should take an argument of type <code>const Rose::Progress::Ptr&</code> (which may be a
  *  null progress object), and a task that's implemented in a namespace should try to provide an API similar to a class (the
  *  main difference will be that there's only once "instance" of the analysis).
  *
@@ -168,22 +168,29 @@ public:
 
     /** A single progress report.
      *
-     *  Progress is reported and monitored as a stream of progress reports, and this object represents one such report. */
+     *  Progress is reported and monitored as a stream of progress reports, and this object represents one such report.
+     *
+     *  A progress report has a name, an amount completed, and a maximum value. The name is optional. The amount
+     *  completed is normally a non-negative number and can be NAN if the completion amount is unknown.  The maximum is
+     *  the expected upper range of the completion (defaulting to 1.0) and is used to calculate percents. If the maximum
+     *  is NAN, then the percent completed cannot be computed and perhaps a busy indicator or spinner would be used instead
+     *  of a progress bar to represent the state. */
     struct Report {
-        std::string name;                               /**< What is being reported. Defaults to "progress". */
-        double completion;                              /**< Estimated degree of completion. Usually in [0..1] or NAN. */
+        std::string name;                               /**< What is being reported. Defaults to empty string. */
+        double completion;                              /**< Estimated degree of completion. In [0..maximum] or NAN. */
+        double maximum;                                 /**< Maximum value for completion. Defaults to 1.0. NAN => spinner. */
 
         /** Initial progress report. */
         Report()
-            : completion(0.0) {}
+            : completion(0.0), maximum(1.0) {}
 
         /** Report completion with default name. */
-        explicit Report(double completion)
-            : completion(completion) {}
+        explicit Report(double completion, double maximum = 1.0)
+            : completion(completion), maximum(maximum) {}
 
-        /** Full report with name and completion. */
-        Report(const std::string &name, double completion)
-            : name(name), completion(completion) {}
+        /** Report with name and completion. */
+        Report(const std::string &name, double completion, double maximum = 1.0)
+            : name(name), completion(completion), maximum(maximum) {}
     };
 
 private:
@@ -228,7 +235,7 @@ public:
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    void update(double completion);
+    void update(double completion, double maximum = 1.0);
     void update(const Report&);
     /** @} */
 
@@ -247,7 +254,7 @@ public:
      *
      * @{ */
     Report push();
-    Report push(double completion);
+    Report push(double completion, double maximum = 1.0);
     Report push(const Report&);
     /** @} */
 
@@ -266,7 +273,7 @@ public:
      *
      * @{ */
     void pop();
-    void pop(double completion);
+    void pop(double completion, double maximum = 1.0);
     void pop(const Report&);
     /** @} */
 
@@ -291,7 +298,7 @@ public:
      *
      * @{ */
     void finished();
-    void finished(double completion);
+    void finished(double completion, double maximum = 1.0);
     void finished(const Report&);
     /** @} */
 

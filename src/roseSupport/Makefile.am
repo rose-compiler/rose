@@ -13,14 +13,19 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # Ubuntu 14.04 it takes >12 hours.
 .PHONY: rebuild-stringify
 rebuild-stringify:
-	rm -f $(srcdir)/stringify.C
-	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl		\
-	    --generic --header --output=$(srcdir)/stringify.C	\
-	    $(top_srcdir)/src ../frontend/SageIII
+	$(top_srcdir)/scripts/restringify $(top_srcdir) $(top_blddir)
 
 noinst_LTLIBRARIES = libroseSupport.la
 
+license.h: $(top_srcdir)/LicenseInformation/ROSE_BSD_License.txt
+	perl $(top_srcdir)/scripts/to-c-string.pl < $< > $@
+
+# All files mentiond in BUILT_SOURCES will be built before the normal compilation rules run.
+BUILT_SOURCES = license.h
+
 libroseSupport_la_SOURCES =			\
+	Combinatorics.C				\
+	CommandLine.C				\
 	Diagnostics.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
@@ -35,8 +40,11 @@ libroseSupport_la_SOURCES =			\
 	utility_functions.C
 
 pkginclude_HEADERS =				\
+	Combinatorics.h				\
+	CommandLine.h				\
 	Diagnostics.h				\
 	IncludeDirective.h			\
+	RoseException.h				\
 	SqlDatabase.h				\
 	callbacks.h				\
 	initialize.h				\

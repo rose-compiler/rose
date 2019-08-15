@@ -21,6 +21,7 @@ SageBuilder::buildUntypedFile(SgUntypedGlobalScope* scope)
    {
      SgUntypedFile* returnNode = new SgUntypedFile();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      returnNode->set_scope(scope);
 
@@ -29,10 +30,7 @@ SageBuilder::buildUntypedFile(SgUntypedGlobalScope* scope)
           scope->set_parent(returnNode);
         }
 
-     setSourcePosition(returnNode);
-
      return returnNode;
-
    }
 
 void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list)
@@ -59,10 +57,25 @@ void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationStatementList* d
         {
           function_list->set_parent(scopeNode);
         }
+   }
 
-  // Not clear what to do with the source position information.
-  // Since a SgUntypedNode is a SgLocatedNode we internally have a place to store source position information.
-     setSourcePosition(scopeNode);
+SgUntypedScope*
+SageBuilder::buildUntypedScope()
+   {
+      SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
+      SgUntypedStatementList*            stmt_list = new SgUntypedStatementList();
+      SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
+      ROSE_ASSERT(decl_list && stmt_list && func_list);
+
+      setSourcePosition(decl_list);
+      setSourcePosition(stmt_list);
+      setSourcePosition(func_list);
+
+      SgUntypedScope* returnNode = buildUntypedScope(decl_list, stmt_list, func_list);
+      ROSE_ASSERT(returnNode != NULL);
+      setSourcePosition(returnNode);
+
+      return returnNode;
    }
 
 SgUntypedScope*
@@ -70,6 +83,7 @@ SageBuilder::buildUntypedScope(SgUntypedDeclarationStatementList* declaration_li
    {
      SgUntypedScope* returnNode = new SgUntypedScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -82,6 +96,7 @@ SageBuilder::buildUntypedGlobalScope(SgUntypedDeclarationStatementList* declarat
    {
      SgUntypedGlobalScope* returnNode = new SgUntypedGlobalScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -94,6 +109,7 @@ SageBuilder::buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declar
    {
      SgUntypedFunctionScope* returnNode = new SgUntypedFunctionScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
@@ -105,12 +121,30 @@ SageBuilder::buildUntypedModuleScope(SgUntypedDeclarationStatementList* declarat
    {
      SgUntypedModuleScope* returnNode = new SgUntypedModuleScope();
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,declaration_list,statement_list,function_list);
 
      return returnNode;
    }
 
+SgUntypedBlockStatement*
+SageBuilder::buildUntypedBlockStatement(std::string label_string, SgUntypedScope* scope)
+   {
+      SgUntypedBlockStatement* returnNode;
+
+      if (scope == NULL) {
+         scope = buildUntypedScope();
+      }
+
+      returnNode = new SgUntypedBlockStatement(label_string, scope);
+      ROSE_ASSERT(returnNode != NULL);
+      setSourcePosition(returnNode);
+
+      scope->set_parent(returnNode);
+
+      return returnNode;
+   }
 
 void setupMembers(SgUntypedFunctionDeclaration* functionNode, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement)
    {
@@ -142,10 +176,6 @@ void setupMembers(SgUntypedFunctionDeclaration* functionNode, SgUntypedInitializ
         {
           end_statement->set_parent(functionNode);
         }
-     
-  // Not clear what to do with the source position information.
-  // Since a SgUntypedNode is a SgLocatedNode we internally have a place to store source position information.
-     setSourcePosition(functionNode);
    }
 
 SgUntypedFunctionDeclaration*
@@ -153,6 +183,7 @@ SageBuilder::buildUntypedFunctionDeclaration(std::string name, SgUntypedInitiali
    {
      SgUntypedFunctionDeclaration* returnNode = new SgUntypedFunctionDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
@@ -164,6 +195,7 @@ SageBuilder::buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedIni
    {
      SgUntypedProgramHeaderDeclaration* returnNode = new SgUntypedProgramHeaderDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
@@ -175,9 +207,34 @@ SageBuilder::buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitia
    {
      SgUntypedSubroutineDeclaration* returnNode = new SgUntypedSubroutineDeclaration(name);
      ROSE_ASSERT(returnNode != NULL);
+     setSourcePosition(returnNode);
 
      setupMembers(returnNode,parameters,type,scope,end_statement);
 
      return returnNode;
    }
 
+SgUntypedIfStatement*
+SageBuilder::buildUntypedIfStatement(std::string label, SgUntypedExpression* conditional,
+                                     SgUntypedStatement* true_body, SgUntypedStatement* false_body)
+   {
+      ROSE_ASSERT(conditional);
+      ROSE_ASSERT(true_body);
+   // false_body may (allowed to) be NULL
+
+   // This works for the general case, specify after building if needed
+      int statement_enum = 0;
+
+      SgUntypedIfStatement* if_stmt = new SgUntypedIfStatement(label,statement_enum,conditional,true_body,false_body);
+      ROSE_ASSERT(if_stmt);
+      setSourcePosition(if_stmt);
+
+      conditional->set_parent(if_stmt);
+      true_body->set_parent(if_stmt);
+      if (false_body != NULL)
+         {
+            false_body->set_parent(if_stmt);
+         }
+
+      return if_stmt;
+   }

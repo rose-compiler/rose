@@ -6,7 +6,7 @@ using namespace std;
 #include "RDTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 #if 0
 bool hasDereferenceOperation(SgExpression* exp) {
@@ -28,53 +28,71 @@ bool hasDereferenceOperation(SgExpression* exp) {
 RDTransferFunctions::RDTransferFunctions() {
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
+
+SgNode* determineDef(SgNode* node, bool lhs) {
+  VariantT nodeType=node->variantT();
+  if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
+    return determineDef(SgNodeHelper::getLhs(node),true);
+  }
+  switch(nodeType) {
+  case V_SgVarRefExp: {
+    if(lhs) {
+      return node;
+    } else {
+      return 0;
+    }
+  }
+  case V_SgArrowExp:
+  case V_SgPointerDerefExp:
+    cout<<"WARNING RD Analysis: unsupported pointer op "<<node->unparseToString()<<endl;
+    return 0;
+  default:
+    if(isSgBinaryOp(node)) {
+      SgNode* lhsNode=determineDef(SgNodeHelper::getLhs(node),lhs);
+      if(lhsNode) {
+        return lhsNode;
+      } else {
+        return determineDef(SgNodeHelper::getRhs(node),lhs);
+      }
+    }
+    if(isSgUnaryOp(node)) {
+      return determineDef(SgNodeHelper::getUnaryOpChild(node),lhs);
+    }
+  }
+  return 0;
+}
+
+SgNode* determineDef(SgNode* node) {
+  return determineDef(node,false);
+}
+
 void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   // throws bad_cast exception when downcasting to the wrong type
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // update analysis information
-  // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
   // 2) add (lab,lhs.varid)
-
-  // (for programs with pointers we require a set here)
-  ROSE_ASSERT(_pointerAnalysisInterface);
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
-
-  if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
-    // If an unknown array element is referenced, we consider
-    // all its elements modified in the same statement.
-    // Here *var* is an array element if its symbol is equal to at
-    // least one of those corresponding to VariableIds with next or previous ids.
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      VariableId var = *i;
-      VariableId prev_var_id;
-      VariableId next_var_id;
-      prev_var_id.setIdCode(var.getIdCode() - 1);
-      next_var_id.setIdCode(var.getIdCode() + 1);
-      SgSymbol *var_smb = getVariableIdMapping()->getSymbol(var);
-      SgSymbol *prev_var_smb = getVariableIdMapping()->getSymbol(prev_var_id);
-      SgSymbol *next_var_smb = getVariableIdMapping()->getSymbol(next_var_id);
-      if((var_smb == prev_var_smb) || (var_smb == next_var_smb))
-        element.removeAllPairsWithVariableId(var);
+  if(SgNode* lhsNode=determineDef(node)) {
+    if(SgVarRefExp* lhsVar=isSgVarRefExp(lhsNode)) {
+      VariableId var=getVariableIdMapping()->variableId(lhsVar);
+      element.removeAllPairsWithVariableId(var);
+      element.insertPair(lab,var);
     }
-    // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      element.insertPair(lab,*i);
-    }
-  } else if(defVarIds.size()==1) {
-    // one unique memory location (variable). We can remove all pairs with this variable
-    VariableId var=*defVarIds.begin();
-    element.removeAllPairsWithVariableId(var);
-    element.insertPair(lab,var);
+  } else {
+    // no assignments (e.g. condition), nothing to do.
   }
+
+  // (for programs with pointers)
+  ROSE_ASSERT(_pointerAnalysisInterface);
+  //VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -83,45 +101,11 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
-  // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
-  if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
-    // If an array is defined, we add all its elements to def set.
-    // Remove pairs corresponding to array elements as in transferExpression()
-    // but now assert that only elements of one array were modified.
-    unsigned elements = 0;
-    SgSymbol *array_smb = getVariableIdMapping()->getSymbol(*(defVarIds.begin()));
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      VariableId var = *i;
-      VariableId prev_var_id;
-      VariableId next_var_id;
-      prev_var_id.setIdCode(var.getIdCode() - 1);
-      next_var_id.setIdCode(var.getIdCode() + 1);
-      SgSymbol *var_smb = getVariableIdMapping()->getSymbol(var);
-      SgSymbol *prev_var_smb = getVariableIdMapping()->getSymbol(prev_var_id);
-      SgSymbol *next_var_smb = getVariableIdMapping()->getSymbol(next_var_id);
-      if((var_smb == prev_var_smb) || (var_smb == next_var_smb)) {
-        element.removeAllPairsWithVariableId(var);
-        elements++;
-      }
-      if(var_smb != array_smb)
-        assert(0); // more than one array is modified
-    }
-    // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      element.insertPair(lab,*i);
-    }
-    if(elements != defVarIds.size())
-      assert(0);
-  } else if(defVarIds.size()==1) {
-    // one unique memory location (variable). We can remove all pairs with this variable
-    VariableId var=*defVarIds.begin();
-    element.removeAllPairsWithVariableId(var);
-    element.insertPair(lab,var);
-  }
+  VariableId var=getVariableIdMapping()->variableId(node);
+  element.insertPair(lab,var);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -138,15 +122,13 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
     paramNr++;
   }
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
-void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
+
+void RDTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
-  if(lhsVar) {
-    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
-    element.insertPair(lab,varId);
+  if(lhsVarId.isValid()) {
+    element.insertPair(lab,lhsVarId);
+  } else {
+    // void function call, nothing to do.
   }
   // determine variable-id of dedicated variable for holding the return value
   VariableId resVarId=getResultVariableId();
@@ -154,7 +136,7 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
   element.removeAllPairsWithVariableId(resVarId);
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013, 2015.
  */
@@ -181,7 +163,7 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   }
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -200,4 +182,10 @@ void RDTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, 
   transferExpression(lab,node,element);
   VariableId resVarId=getResultVariableId();
   element.insertPair(lab,resVarId);
+}
+
+void RDTransferFunctions::initializeExtremalValue(Lattice& element) {
+  RDLattice* rdElement=dynamic_cast<RDLattice*>(&element);
+  rdElement->setEmptySet();
+  cout<<"INFO: initialized extremal value."<<endl;
 }

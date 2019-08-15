@@ -166,7 +166,7 @@ Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeIterato
         return false;
     if (edge->value().type() == E_CALL_RETURN) {
         boost::logic::tribool tb = mayReturnDoesCalleeReturn(edge->source(), vertexInfo);
-        return tb || boost::logic::indeterminate(tb);
+        return tb || boost::logic::indeterminate(tb) ? true : false;
     }
     return true;
 }
@@ -459,10 +459,11 @@ Partitioner::functionOptionalMayReturn(const Function::Ptr &function) const {
 void
 Partitioner::allFunctionMayReturn() const {
     using namespace Sawyer::Container::Algorithm;
-    FunctionCallGraph cg = functionCallGraph();
+    FunctionCallGraph cg = functionCallGraph(AllowParallelEdges::NO);
     size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "may-return analysis");
+    progress.suffix(" functions");
     for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
         if (!visited[cgVertexId]) {
             typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;

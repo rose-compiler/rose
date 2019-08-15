@@ -18,10 +18,10 @@
 #include "TypeSizeMapping.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
-SgTypeSizeMapping* AbstractValue::_typeSizeMapping=new SgTypeSizeMapping();
+SgTypeSizeMapping* AbstractValue::_typeSizeMapping=nullptr;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -49,9 +49,11 @@ AbstractValue::AbstractValue(bool val) {
 }
 
 void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+#if 0
   if(AbstractValue::_typeSizeMapping!=nullptr) {
     delete _typeSizeMapping;
   }
+#endif
   AbstractValue::_typeSizeMapping=typeSizeMapping;
 }
 
@@ -59,7 +61,7 @@ SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
   return  _typeSizeMapping;
 }
 
-AbstractValue::TypeSize AbstractValue::calculateTypeSize(SPRAY::BuiltInType btype) {
+AbstractValue::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_typeSizeMapping);
   return AbstractValue::_typeSizeMapping->getTypeSize(btype);
 }
@@ -76,19 +78,19 @@ void AbstractValue::setValue(long double fval) {
   floatValue=fval;
 }
 
-AbstractValue AbstractValue::createIntegerValue(SPRAY::BuiltInType btype, long long int ival) {
+AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
   AbstractValue aval;
   aval.initInteger(btype,ival);
   return aval;
 }
 
-void AbstractValue::initInteger(SPRAY::BuiltInType btype, long long int ival) {
+void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long long int ival) {
   valueType=AbstractValue::INTEGER;
   setTypeSize(calculateTypeSize(btype));
   setValue(ival);
 }
 
-void AbstractValue::initFloat(SPRAY::BuiltInType btype, long double fval) {
+void AbstractValue::initFloat(CodeThorn::BuiltInType btype, long double fval) {
   valueType=AbstractValue::FLOAT;
   setTypeSize(calculateTypeSize(btype));
   setValue(fval);
@@ -140,16 +142,22 @@ AbstractValue::AbstractValue(long double x) {
   initFloat(BITYPE_LONG_DOUBLE,x);
 }
 
+AbstractValue AbstractValue::createNullPtr() {
+  AbstractValue aval(0);
+  // create an integer 0, not marked as pointer value.
+  return aval;
+}
+
 AbstractValue 
-AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
+AbstractValue::createAddressOfVariable(CodeThorn::VariableId varId) {
   return AbstractValue::createAddressOfArray(varId);
 }
 AbstractValue 
-AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
+AbstractValue::createAddressOfArray(CodeThorn::VariableId arrayVarId) {
   return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
 }
 AbstractValue 
-AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, 
+AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, 
                                              AbstractValue index) {
   AbstractValue val;
   if(index.isTop()) {
@@ -159,6 +167,7 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
   } else if(index.isConstInt()) {
     val.valueType=PTR;
     val.variableId=arrayVariableId;
+    ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
     return val;
   } else {
@@ -180,18 +189,28 @@ std::string AbstractValue::valueTypeToString() const {
   }
 }
 
+// currently maps to isTop(); in preparation for explicit handling of
+// undefined values.
+bool AbstractValue::isUndefined() const {return isTop();}
+
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
-bool AbstractValue::isPtr() const {return valueType==AbstractValue::PTR;}
+bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 
 long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
-    else if(isPtr()) return getVariableId().getIdCode()+getIntValue();
+  else if(isPtr()) {
+    VariableId varId=getVariableId();
+    ROSE_ASSERT(varId.isValid());
+    return varId.getIdCode()+getIntValue();
+  }
   else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
 }
 
@@ -463,7 +482,7 @@ AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) cons
   return getIntValue()>>other.getIntValue();
 }
 
-string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
@@ -486,7 +505,7 @@ string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   }
 }
 
-string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
@@ -499,9 +518,9 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
     if(vim->getNumberOfElements(variableId)==1) {
-      ss<<variableId.toString(vim); // variables are arrays of size 1
+      ss<<variableId.toUniqueString(vim); // variables are arrays of size 1
     } else {
-      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+      ss<<variableId.toUniqueString(vim)<<"["<<getIntValue()<<"]";
     }
     return ss.str();
   }
@@ -510,7 +529,7 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
   }
 }
 
-string AbstractValue::arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case PTR: {
     stringstream ss;
@@ -522,7 +541,7 @@ string AbstractValue::arrayVariableNameToString(SPRAY::VariableIdMapping* vim) c
   }
 }
 
-string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
@@ -535,17 +554,17 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
-        <<variableId.toString(vim)
+        <<variableId.toUniqueString(vim)
         <<","
         <<getIntValue()
         <<")";
       return ss.str();
-    } else {
-      return variableId.toString(vim);
-    }
+      //    } else {
+      //      return variableId.toString(vim);
+      //    }
   }
   default:
     throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
@@ -576,13 +595,13 @@ string AbstractValue::toString() const {
 
 void AbstractValue::fromStream(istream& is) {
   int tmpintValue=0;
-  if(SPRAY::Parse::checkWord("top",is)) {
+  if(CodeThorn::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
-  } else if(SPRAY::Parse::checkWord("bot",is)) {
+  } else if(CodeThorn::Parse::checkWord("bot",is)) {
     valueType=BOT;
     intValue=0;
-  } else if(SPRAY::Parse::integer(is,tmpintValue)) {
+  } else if(CodeThorn::Parse::integer(is,tmpintValue)) {
     valueType=INTEGER;
     intValue=tmpintValue;
   } else {
@@ -605,6 +624,14 @@ AbstractValue::TypeSize AbstractValue::getValueSize() const {
 
 void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {
   this->typeSize=typeSize;
+}
+
+AbstractValue AbstractValue::getIndexValue() const { 
+  if(isTop()||isBot()) {
+    return *this;
+  } else {
+    return AbstractValue(getIndexIntValue());
+  }
 }
 
 int AbstractValue::getIndexIntValue() const { 
@@ -637,7 +664,7 @@ std::string AbstractValue::getFloatValueString() const {
    }
 }
 
-SPRAY::VariableId AbstractValue::getVariableId() const { 
+CodeThorn::VariableId AbstractValue::getVariableId() const { 
   if(valueType!=PTR && valueType!=REF) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
@@ -751,6 +778,68 @@ AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   return a.getIntValue()%b.getIntValue();
 }
 
+// static function, two arguments
+bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
+  if(val1.isBot()||val2.isTop()) {
+    // bot <= x, x <= top
+    return true;
+  } else if(val1.valueType==val2.valueType) {
+    switch(val1.valueType) {
+    case BOT: return true;
+    case INTEGER: return (val1.intValue==val2.intValue);
+    case FLOAT: return (val1.floatValue==val2.floatValue);
+    case PTR: return (val1.getVariableId()==val2.getVariableId());
+    case REF: return (val1.getVariableId()==val2.getVariableId());
+    case TOP: return true;
+    }
+  }
+  return false;
+}
+
+// static function, two arguments
+AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
+  if(val1.isTop()||val2.isTop()) {
+    return createTop();
+  } else if(val1.isBot()) {
+    return val2;
+  } else if(val2.isBot()) {
+    return val1;
+  } else if(val1.valueType==val2.valueType) {
+    switch(val1.valueType) {
+    case BOT: return val2;
+    case TOP: return val1;
+    case INTEGER: {
+      if(val1.intValue==val2.intValue) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case FLOAT: {
+      if(val1.floatValue==val2.floatValue) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case PTR: 
+    case REF: {
+      if(val1.getVariableId()==val2.getVariableId()) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    }
+  }
+  return createTop();
+}
+
+AbstractValue AbstractValue::createTop() {
+  CodeThorn::Top top;
+  return AbstractValue(top);
+}
+
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorAdd(a,b);
 }
@@ -773,3 +862,4 @@ AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& 
   }
   return s1;
 }
+

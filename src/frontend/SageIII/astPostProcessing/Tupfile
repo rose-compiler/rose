@@ -1,0 +1,34 @@
+include_rules
+
+SOURCES = addPrototypesForTemplateInstantiations.C astPostProcessing.C buildStatementNumbering.C \
+    checkIsCompilerGeneratedFlag.C checkIsFrontendSpecificFlag.C checkIsModifiedFlag.C checkPhysicalSourcePosition.C \
+    detectTransformations.C fixupConstantFoldedValues.C fixupConstructorPreinitializationLists.C \
+    fixupCxxSymbolTablesToSupportAliasingSymbols.C fixupDeclarationScope.C fixupDeclarations.C \
+    fixupDefiningAndNondefiningDeclarations.C fixupFileInfoFlags.C fixupFunctionDefaultArguments.C fixupNames.C \
+    fixupNullPointers.C fixupSelfReferentialMacros.C fixupSymbolTables.C fixupTemplateArguments.C \
+    fixupTemplateInstantiations.C fixupTypeReferences.C fixupTypes.C fixupUseAndUsingDeclarations.C \
+    initializeExplicitScopeData.C insertFortranContainsStatement.C markBackendCompilerSpecificFunctions.C \
+    markCompilerGenerated.C markForOutputInCodeGeneration.C markLhsValues.C markOverloadedTemplateInstantiations.C \
+    markSharedDeclarationsForOutputInCodeGeneration.C markTemplateInstantiationsForOutput.C \
+    markTemplateSpecializationsForOutput.C markTransformationsForOutput.C \
+    normalizeTypedefSequenceLists.C processTemplateHandlingOptions.C propagateHiddenListData.C resetParentPointers.C \
+    resetTemplateNames.C resolveFortranReferences.C
+
+ifeq (@(ENABLE_CXX_ANALYSIS),no)
+SOURCES += dummy.C
+endif
+
+run $(librose_compile) $(SOURCES)
+
+run $(public_header) addPrototypesForTemplateInstantiations.h astPostProcessing.h checkIsCompilerGeneratedFlag.h \
+    checkIsFrontendSpecificFlag.h checkIsModifiedFlag.h checkPhysicalSourcePosition.h detectTransformations.h \
+    fixupConstantFoldedValues.h fixupConstructorPreinitializationLists.h fixupCxxSymbolTablesToSupportAliasingSymbols.h \
+    fixupDeclarationScope.h fixupDeclarations.h fixupDefiningAndNondefiningDeclarations.h fixupFileInfoFlags.h \
+    fixupFunctionDefaultArguments.h fixupNames.h fixupNullPointers.h fixupSelfReferentialMacros.h fixupSymbolTables.h \
+    fixupTemplateArguments.h fixupTemplateInstantiations.h fixupTypeReferences.h fixupTypes.h fixupUseAndUsingDeclarations.h \
+    initializeExplicitScopeData.h insertFortranContainsStatement.h markBackendCompilerSpecificFunctions.h \
+    markCompilerGenerated.h markForOutputInCodeGeneration.h markLhsValues.h markOverloadedTemplateInstantiations.h \
+    markSharedDeclarationsForOutputInCodeGeneration.h markTemplateInstantiationsForOutput.h \
+    markTemplateSpecializationsForOutput.h markTransformationsForOutput.h \
+    normalizeTypedefSequenceLists.h processTemplateHandlingOptions.h propagateHiddenListData.h resetParentPointers.h \
+    resetTemplateNames.h resolveFortranReferences.h \

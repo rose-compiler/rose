@@ -57,7 +57,7 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
 
             // DQ (1/20/204): Moved to supporting the more general expression (required), plus the expression from which it may have been generated.
             // SgUnsignedLongVal* bitfield = variableDefinition_original->get_bitfield();
-               SgValueExp* bitfield = variableDefinition_original->get_bitfield();
+               SgExpression* bitfield = variableDefinition_original->get_bitfield();
 
                SgVariableDefinition* variableDefinition_copy = new SgVariableDefinition(copyInitializedName,bitfield);
                ROSE_ASSERT(variableDefinition_copy != NULL);
@@ -660,8 +660,13 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                                  {
                                    printf ("Warning: (inner scope) this->get_definingDeclaration()->get_parent() == NULL (OK for some SgTemplateFunctionDeclaration and SgTemplateMemberFunctionDeclaration) \n");
                                  }
+                                else if (isSgTemplateClassDeclaration(this->get_definingDeclaration()) != NULL)
+                                 {
+                                   printf ("WARNING: %p (%s) has no parent! \n", this->get_definingDeclaration(), this->get_definingDeclaration()->class_name().c_str());
+                                 }
                                 else
                                  {
+                                   printf ("ERROR: %p (%s) has no parent! \n", this->get_definingDeclaration(), this->get_definingDeclaration()->class_name().c_str());
                                    ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
                                  }
                             }
@@ -1512,8 +1517,26 @@ SgBaseClass::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      SgBaseClass* baseClass_copy = isSgBaseClass(copy);
      ROSE_ASSERT(baseClass_copy != NULL);
 
-     ROSE_ASSERT(this->get_base_class() != NULL);
-     this->get_base_class()->fixupCopy_scopes(baseClass_copy->get_base_class(),help);
+     const SgNonrealBaseClass* nrBaseClass = isSgNonrealBaseClass(this);
+     SgNonrealBaseClass* nrBaseClass_copy = isSgNonrealBaseClass(copy);
+
+     if (this->get_base_class() != NULL) {
+       ROSE_ASSERT(baseClass_copy->get_base_class());
+
+       ROSE_ASSERT(nrBaseClass == NULL);
+       ROSE_ASSERT(nrBaseClass_copy == NULL);
+
+       this->get_base_class()->fixupCopy_scopes(baseClass_copy->get_base_class(),help);
+     } else if (nrBaseClass != NULL) {
+       ROSE_ASSERT(nrBaseClass->get_base_class_nonreal() != NULL);
+
+       ROSE_ASSERT(nrBaseClass_copy != NULL);
+       ROSE_ASSERT(nrBaseClass_copy->get_base_class_nonreal() != NULL);
+
+       nrBaseClass->get_base_class_nonreal()->fixupCopy_scopes(nrBaseClass_copy->get_base_class_nonreal(),help);
+     } else {
+       ROSE_ASSERT(false);
+     }
    }
 
 
@@ -1933,6 +1956,53 @@ SgForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      ROSE_ASSERT(this->get_increment() != NULL);
      this->get_increment()->fixupCopy_scopes(forStatement_copy->get_increment(),help);
+
+     ROSE_ASSERT(this->get_loop_body() != NULL);
+     this->get_loop_body()->fixupCopy_scopes(forStatement_copy->get_loop_body(),help);
+
+#if 0
+  // SgScopeStatement::fixupCopy_scopes(copy,help);
+     printf ("Calling SgScopeStatement::fixupCopy_scopes() (2nd time) \n");
+     SgScopeStatement::fixupCopy_scopes(copy,help);
+     printf ("DONE: SgScopeStatement::fixupCopy_scopes() (2nd time) \n");
+#endif
+   }
+
+void
+SgRangeBasedForStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgRangeBasedForStatement::fixupCopy_scopes() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgRangeBasedForStatement* forStatement_copy = isSgRangeBasedForStatement(copy);
+     ROSE_ASSERT(forStatement_copy != NULL);
+
+  // This could generate a vaiable declaration, so wait to build the sysmbol table.
+     ROSE_ASSERT(this->get_iterator_declaration() != NULL);
+     this->get_iterator_declaration()->fixupCopy_scopes(forStatement_copy->get_iterator_declaration(),help);
+
+     ROSE_ASSERT(this->get_range_declaration() != NULL);
+     this->get_range_declaration()->fixupCopy_scopes(forStatement_copy->get_range_declaration(),help);
+
+  // DQ (11/1/2007): Force the symbol table to be setup so that references can be made to it later.
+  // If we built it too early then the scope (on The SgInitializedName objects) have not be setup, 
+  // and if we build it too late then we don't have the symbols in place to reset the references.
+  // printf ("Calling SgScopeStatement::fixupCopy_scopes() \n");
+     SgScopeStatement::fixupCopy_scopes(copy,help);
+  // printf ("DONE: SgScopeStatement::fixupCopy_scopes() \n");
+
+     ROSE_ASSERT(this->get_begin_declaration() != NULL);
+     this->get_begin_declaration()->fixupCopy_scopes(forStatement_copy->get_begin_declaration(),help);
+
+     ROSE_ASSERT(this->get_end_declaration() != NULL);
+     this->get_end_declaration()->fixupCopy_scopes(forStatement_copy->get_end_declaration(),help);
+
+     ROSE_ASSERT(this->get_not_equal_expression() != NULL);
+     this->get_not_equal_expression()->fixupCopy_scopes(forStatement_copy->get_not_equal_expression(),help);
+
+     ROSE_ASSERT(this->get_increment_expression() != NULL);
+     this->get_increment_expression()->fixupCopy_scopes(forStatement_copy->get_increment_expression(),help);
 
      ROSE_ASSERT(this->get_loop_body() != NULL);
      this->get_loop_body()->fixupCopy_scopes(forStatement_copy->get_loop_body(),help);

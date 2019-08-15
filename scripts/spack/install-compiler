@@ -1,0 +1,27 @@
+#!/bin/bash
+# Install a compiler and register it with Spack as a compiler.
+
+set -e
+arg0="${0##*/}"
+
+die() {
+    echo "$arg0" "$@" >&2
+    exit 1
+}
+
+usage_error() {
+    echo "usage: $arg0 COMPILER_SPEC" >&2
+    exit 1
+}
+
+[ "$#" -gt 0 ] || usage_error
+spack install "$@"
+
+(
+    module purge
+    spack load "$@"
+    spack compiler add
+)
+
+echo
+spack compiler list

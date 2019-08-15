@@ -30,20 +30,21 @@ test2014_29.c \
 test2014_30.c \
 last.c
 
+TESTCODE_CURRENTLY_FAILING =
+
 if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_01.c \
    test2014_02.c \
    test2014_04.c \
    test2014_05.c 
+else
+TESTCODE_CURRENTLY_FAILING += \
+   test2014_01.c \
+   test2014_02.c \
+   test2014_04.c \
+   test2014_05.c 
 endif
-
-TESTCODE_CURRENTLY_FAILING = \
-test2012_03.c \
-test2012_04.c \
-test2012_05.c \
-test2012_06.c \
-test2012_07.c 
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
@@ -52,90 +53,62 @@ test2012_07.c
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) 
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) 
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
+#########
+# Targets lists
 
-# Use options to turn on C11 and process using just the frontend for now.
-# C11_OPTIONS = -rose:C11 -rose:skip_translation_from_edg_ast_to_rose_ast
-C11_OPTIONS = -rose:C11 
+PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
+TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 
-# DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
-ROSE_FLAGS = $(C11_OPTIONS) --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
-# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
-
-TESTCODE_INCLUDES =
-
-PASSING_TEST_Objects = ${TESTCODES:.c=.o}
-TEST_Objects = ${ALL_TESTCODES:.c=.o}
-
-# DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
-TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
-TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
-
-# VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
-# A number of tests require the path to the A++ include directory 
-# and a number of other tests require a path to the source directory.
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): ../../testTranslator
-if !ROSE_USE_INSURE
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-else
-#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
-#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	echo "Removing the just built copy of lt-testTranslator to save space..."
-#	rm -f testTranslator_$(@:.o=)
-	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
-endif
-
-# DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
-$(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
-	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.c) && touch $@
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-
-# DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
-# $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
-#	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.c) && touch $@
+#########
+# Translator to be used: calling "make TEST_TRANSLATOR=../../testBackend" uses the backend compiler only
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-../../testTranslatorFoldedConstants:
-	cd ../..; $(MAKE) testTranslatorFoldedConstants
+../../testBackend:
+	cd ../..; $(MAKE) testBackend
 
-../../testTranslatorUnfoldedConstants:
-	cd ../..; $(MAKE) testTranslatorUnfoldedConstants
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
+TEST_TRANSLATOR=../../testTranslator
 
-CURRENT_DIRECTORY = `pwd`
-QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
+#########
+# ROSE_FLAGS
 
-# $(QMTEST_Objects): ../../testTranslator
-#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+LANG_FLAGS = -std=c11
 
-# Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+ROSE_FLAGS =
+if !ROSE_USE_CLANG_FRONTEND
+   ROSE_FLAGS += --edg:no_warnings --edg:restrict
+endif
+ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
+
+#########
+# RTH test targets
+
+$(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)" \
+		TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(@:.o=.C)
+endif
+
+#
+############
 
 # Make sure that all the test codes end up in the distribution
 EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
-
-print_testcodes:
-	echo $(TESTCODES)
 
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
@@ -150,7 +123,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 	@echo "C11 tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
@@ -178,7 +151,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 	@echo "C11 tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
@@ -187,13 +160,13 @@ if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
 # DQ (2/28/2017): Skip these tests until we can return to this problem later.
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"
@@ -205,11 +178,11 @@ endif # ROSE_USE_EDG_VERSION_4_9
 # # if ROSE_USE_EDG_VERSION_4_9
 # if ROSE_USING_GCC_VERSION_LATER_4_8
 #	@echo "C11 tests using GNU version 4.8 backend compiler."
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
 # else
 # if ROSE_USING_GCC_VERSION_LATER_4_9
 # 	@echo "C11 tests using GNU version 4.9 backend compiler."
-#	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Source_passed)
 # endif
 # endif
 # else
@@ -221,7 +194,8 @@ endif # ROSE_USE_EDG_VERSION_4_9
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
-	rm -f *.foldedConstants-o
-	rm -f *.unfoldedConstants-o
-	rm -rf QMTest
 	rm -f *.int.c
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
+

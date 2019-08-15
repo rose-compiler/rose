@@ -12,14 +12,13 @@ public:
                                                                current_function_decls(NULL)
     {}
 
+    void processDimensionExpressions();
     void processRemainingFunctions();
 
-    bool isValignType(SgType *);
-    bool isUnsignedType(SgType *);
-    bool isFloatType(SgType *);
-    bool isIntegerType(SgType *);
-    bool isBooleanType(SgType *);
-
+    void setupAdHocVisitor(LLVMAstAttributes *attributes) {
+        setAttributes(attributes);
+    }
+      
 protected:
 
     FunctionAstAttribute *current_function_decls;
@@ -62,6 +61,13 @@ protected:
     void genBasicBinaryOperationAndAssign(SgBinaryOp *, std::string, std::string const &, bool op_signedness = false);
     void genDivideBinaryOperation(SgBinaryOp *, std::string, std::string const &);
     void genDivideBinaryOperationAndAssign(SgBinaryOp *, std::string, std::string const &);
+
+    SgFunctionType *getFunctionType(SgType *);
+
+    /**
+     * TODO: Obsolete !
+    void generateArraySizeCode(const std::string &, SgType *, SgArrayType *);
+    */
 
     virtual bool preVisitEnter(SgNode *);
     virtual void preVisit(SgNode *);

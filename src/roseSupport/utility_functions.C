@@ -51,8 +51,9 @@ int ROSE_DEBUG = 0;
 
 // CW: here we should definitly find a better way
 // to specify the cache parameters
-const int roseTargetCacheSize     = 8192;
-const int roseTargetCacheLineSize = 32;
+// Removed unused variables (next two declarations) [Rasmussen 2019.01.29]
+// const int roseTargetCacheSize     = 8192;
+// const int roseTargetCacheLineSize = 32;
 // cacheInfo roseTargetCacheInfo(roseTargetCacheSize,roseTargetCacheLineSize);
 
 // What is this and who put it here?
@@ -145,25 +146,38 @@ void Rose::Options::set_backend_warnings(bool flag)
 #define DEBUG_COPY_EDIT false
 
 
+// DQ (9/27/2018): We need to build multiple maps, one for each file (to support token based unparsing for multiple files,
+// such as what is required when using the unparsing header files feature).
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
+// std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
+// std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
+std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
-std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
+// std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
+std::map<int,std::map<SgStatement*,FrontierNode*>*> Rose::frontierNodesMapOfMaps;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
+// std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
+std::map<int,std::map<SgNode*,PreviousAndNextNodeData*>*> Rose::previousAndNextNodeMapOfMaps;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
-std::set<int> Rose::redundantTokenEndingsSet;
+// std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
+// std::set<int> Rose::redundantTokenEndingsSet;
+std::map<int,std::multimap<int,SgStatement*>*> Rose::redundantlyMappedTokensToStatementMapOfMultimaps;
+std::map<int,std::set<int>*> Rose::redundantTokenEndingsMapOfSets;
 
 // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
+// std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
+std::map<int,std::map<SgScopeStatement*,SgStatement*>*> Rose::representativeWhitespaceStatementMapOfMaps;
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
+// std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
+std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfMaps;
+
+// DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
+std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
@@ -180,6 +194,7 @@ void Rose::initDiagnostics()
           initialized = true;
        // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
           ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", Rose::Diagnostics::destination);
+          ir_node_mlog.comment("operating on ROSE internal representation nodes");
           Rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
        // printf ("In Rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
         }
@@ -496,11 +511,15 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // DQ (4/16/2015): This is replaced with a better implementation.
   // Make sure the isModified boolean is clear for all newly-parsed nodes.
   // checkIsModifiedFlag(project);
+
+  // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
+  // printf ("ERROR: In frontend(const std::vector<std::string>& argv): commented out unsetNodesMarkedAsModified() \n");
 
    
-  // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
-     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
+  // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
+  // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
+     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
   // Connect to Ast Plugin Mechanism
@@ -773,7 +792,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
   // Note that the command generated may have to be fixup later to include more subtle details 
   // required to link libraries, etc.  At present this function only handles the support required
   // to build an object file.
-     string commandLineToGenerateObjectFile;
+     SgStringList commandLineToGenerateObjectFile;
 
      enum language_enum
         {
@@ -802,15 +821,15 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
      switch (language)
         {
-          case e_c       : commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;       break;
-          case e_cxx     : commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;     break;
-          case e_fortran : commandLineToGenerateObjectFile = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH; break;
+        case e_c       : commandLineToGenerateObjectFile.push_back(BACKEND_C_COMPILER_NAME_WITH_PATH);       break;
+        case e_cxx     : commandLineToGenerateObjectFile.push_back(BACKEND_CXX_COMPILER_NAME_WITH_PATH);     break;
+        case e_fortran : commandLineToGenerateObjectFile.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH); break;
 
           default:
              {
-            // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
-            // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
-            // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
+                 // Note that the default is C++, and that if there are no SgFile objects then there is no place to hold the default
+                 // since the SgProject does not have any such state to hold this information.  A better idea might be to give the
+                 // SgProject state so that it can hold if it is used with -rose:C or -rose:Cxx or -rose:Fortran on the command line.
 
                printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
@@ -823,7 +842,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
        // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
        // This will help us detect where strings handed in using -D options may have lost some outer quotes.
        // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
-          commandLineToGenerateObjectFile += " -DUSE_ROSE ";
+            commandLineToGenerateObjectFile.push_back("-DUSE_ROSE");
         }
 
      int finalCombinedExitStatus = 0;
@@ -841,35 +860,42 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
           if (it != originalCommandLineArgumentList.end())
                it++;
 
-       // Make a list of the remaining command line arguments
+       // JL (03/15/2018) Changed system to systemFromVector so that
+       // command line arguments will be handled correctly ROSE-813
           for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
-             {
-               commandLineToGenerateObjectFile += " " + *i;
-             }
-       // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+          {
+              commandLineToGenerateObjectFile.push_back(*i);
+          }
 
           if ( SgProject::get_verbose() >= 1 )
-             {
-               printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              printf("Compile Line: ");                 
+              for (SgStringList::iterator i = it; i != commandLineToGenerateObjectFile.end(); i++)
+              {
+                  printf("%s ", (*i).c_str());
+              }
+              printf("\n");                 
+          }
+          
 
        // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
        // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
        // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
-             {
-               finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
-             }
+          {
+              finalCombinedExitStatus = systemFromVector (commandLineToGenerateObjectFile);
+          }
         }
        else
         {
        // Note that in general it is not possible to tell whether to use gcc, g++, or gfortran to do the linking.
        // When we just have a list of object files then we can't assume anything (and project->get_C_only() will be false).
-
        // Note that commandLineToGenerateObjectFile is just the name of the backend compiler to use!
-       // finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
-          finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile);
+       // JL (03/15/2018) Put in ROSE_ASSERT to verify command line is just the linker
+       //Thats all link is supposed to take
+            ROSE_ASSERT(commandLineToGenerateObjectFile.size() == 1);
+            finalCombinedExitStatus = project->link(commandLineToGenerateObjectFile[0]);
         }
 
      return finalCombinedExitStatus;
@@ -956,7 +982,7 @@ generatePDF ( const SgProject & project )
    }
 
 void
-generateDOT ( const SgProject & project, std::string filenamePostfix )
+generateDOT ( const SgProject & project, std::string filenamePostfix, bool excludeTemplateInstantiations )
    {
   // DQ (7/4/2008): Added default parameter to support the filenamePostfix 
   // mechanism in AstDOTGeneration
@@ -967,8 +993,12 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
+  // DQ (12/14/2018): The number of nodes is computed globally, but the graph is genereated only for the input file.
+  // So this can suppress the generation of the graph when there are a large number of IR nodes from header files.
+  // Multiplied the previous value by 10 to support building the smaller graph of the input file.
   // DQ (2/18/2013): Generating a DOT file of over a million IR nodes is too much.
-     int maxSize = 1000000;
+  // int maxSize = 1000000;
+     int maxSize = 10000000;
 
      int numberOfASTnodes = numberOfNodes();
 
@@ -988,7 +1018,8 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
        // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
        // is not being processed (which appears to be a bug). This is because in the implementation
        // of the generateInputFiles the function traverseInputFiles is called.
-          astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+       // astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+          astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix,excludeTemplateInstantiations);
 #endif
         }
        else
@@ -1032,7 +1063,10 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
   // This used to be the default, but it would output too much data (from include files).
   // It is particularly useful when handling multiple files on the command line and 
   // traversing the files included from each file.
-     astdotgen.generate(&nonconstProject);
+  // astdotgen.generate(&nonconstProject);
+  // DOTGeneration::traversalType tt = TOPDOWNBOTTOMUP;
+     AstDOTGeneration::traversalType tt = AstDOTGeneration::TOPDOWNBOTTOMUP;
+     astdotgen.generate(&nonconstProject,tt,filenamePostfix);
 #else
   // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
   // is not being processed (which appears to be a bug). This is because in the implementation
@@ -1085,7 +1119,7 @@ void generateAstGraph ( const SgProject* project, int maxSize, std::string filen
         }
        else
         {
-          if ( SgProject::get_verbose() >= 0 )
+          if ( SgProject::get_verbose() >= 1 )
                printf ("In generateAstGraph(): WHOLE AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }

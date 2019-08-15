@@ -139,7 +139,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    const size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
                    <<StringUtility::plural(wordSize, "bytes") <<"\n";
@@ -165,6 +165,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
         // First, pack it as little-endian
         uint8_t packed[8];
+        memset(packed, 0, 8);
         for (size_t i=0; i<wordSize; ++i)
             packed[i] = (node.key() >> (8*i)) & 0xff;
 
@@ -182,7 +183,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         }
         
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize!=partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
+        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }
@@ -226,9 +227,9 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             }
             return;
         }
-        if (insn->get_kind()!=x86_jmp || insn->get_operandList()->get_operands().size()!=1)
+        if (insn->get_kind()!=x86_jmp || insn->nOperands() != 1)
             continue;                                   // ...that is a JMP...
-        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
         SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
         if (!addr)
             continue;                                   // ...with addressing mode [C] where C is a constant...
@@ -278,7 +279,7 @@ PeDescrambler::nameKeyAddresses(Partitioner &partitioner) {
 bool
 PeDescrambler::operator()(bool chain, const Args &args) {
     if (!checkedPreconditions_) {
-        if (args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() != 32)
+        if (args.partitioner.instructionProvider().instructionPointerRegister().nBits() != 32)
             throw std::runtime_error("PeDescrambler module only works on 32-bit specimens");
         checkedPreconditions_ = true;
     }

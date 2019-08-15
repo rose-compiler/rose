@@ -33,7 +33,7 @@ symbolicFormat(const std::string &prefix) {
 RiscOperatorsPtr
 RiscOperators::instance(const Partitioner2::Partitioner *partitioner,
                         const RegisterDictionary *regdict,
-                        SmtSolver *solver) {
+                        const SmtSolver::Ptr &solver) {
     BaseSemantics::SValuePtr protoval = SValue::instance();
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     BaseSemantics::MemoryStatePtr memory;

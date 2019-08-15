@@ -602,6 +602,19 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
      printf("%s is either a %s token \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier");
 #endif
 
+#if 0
+     printf("%s is a %s token str.length() = %zu \n",str.c_str(),(is_keyword != -1) ? "keyword" : "identifier",str.length());
+     if (str.length() == 1)
+        {
+          printf ("str[0] = %d \n",str[0]);
+        }
+     if (str.length() == 2)
+        {
+          printf ("str[0] = %d \n",str[0]);
+          printf ("str[1] = %d \n",str[1]);
+        }
+#endif
+
   // found a keyword?
      if(is_keyword != -1)
         {
@@ -663,10 +676,48 @@ void add_token (std::string str, int preproc_line_num, int & preproc_column_num,
 
   // When using the std::string we need to subtract 1 for the null terminal.
   // preproc_column_num += strlen(yytext);
-     preproc_column_num += str.length();
+  // preproc_column_num += str.length();
+
+  // DQ (12/26/2018): This is reset when we see a windows CR LF pair.
+     if (str.length() == 2)
+        {
+          if (str[0] == '\r' && str[1] == '\n')
+             {
+#if 0
+               printf ("Found a CR LF Windows line ending pair, reset the column number \n");
+#endif
+               preproc_column_num = 1;
+             }
+            else
+             {
+               preproc_column_num += str.length();
+             }
+        }
+       else
+        {
+          preproc_column_num += str.length();
+        }
 
   // push the element onto the token stream
      ROSE_token_stream_pointer->push_back(p_se);
+
+#if 0
+  // DQ (11/29/2018): Investigating form-feeds and windows line endings (and how the token-based unparsing is removing them).
+     if (p_tok_elem->token_id == C_CXX_WHITESPACE)
+        {
+          printf ("p_se->beginning_fpi.line_num   = (%d,%d) \n",p_se->beginning_fpi.line_num,p_se->beginning_fpi.column_num);
+          if (p_tok_elem->token_lexeme.length() == 1)
+             {
+               printf ("Found token of length one \n");
+               char character = p_tok_elem->token_lexeme[0];
+               printf ("character = %d \n",(int)character);
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
    }
 
 
@@ -688,6 +739,18 @@ void add_preprocessingInfo_to_token_stream (PreprocessingInfo* preprocessingInfo
 
 #if DEBUG_LEX_PASS
      printf("This is a PreprocessingInfo object processed as a token: preprocessingInfo = %p \n",preprocessingInfo);
+#endif
+
+#if DEBUG_LEX_PASS
+     for (size_t i = 0; i < p_tok_elem->token_lexeme.length(); i++)
+        {
+          printf("   --- p_tok_elem->token_lexeme[i] = %c = (ascii value) %d \n",p_tok_elem->token_lexeme[i],p_tok_elem->token_lexeme[i]);
+       // if (p_tok_elem->token_lexeme[i+1] == '\r')
+          if (p_tok_elem->token_lexeme[i+1] != '\0')
+             {
+               printf("   --- --- p_tok_elem->token_lexeme[i+1] = %c = (ascii value) %d \n",p_tok_elem->token_lexeme[i+1],p_tok_elem->token_lexeme[i+1]);
+             }
+        }
 #endif
 
      stream_element *p_se = new stream_element;
@@ -863,6 +926,29 @@ int preproc_start_column_num = preproc_column_num;
                         /*Do we need this  ???*/
 BEGIN NORMAL;
 %}
+
+<NORMAL>\f { 
+#if DEBUG_LEX_PASS
+     printf("%s is a form-feed token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
+  // DQ (11/29/2018): Adding form feed support to ROSE.
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+   }
+
+<NORMAL>\r\n { 
+#if DEBUG_LEX_PASS
+     printf("%s is a windows line ending token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
+  // DQ (11/29/2018): Adding windows line ending support to ROSE.
+     add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
+
+  // DQ (12/26/2018): Adding windows line ending support to ROSE (increment the line count).
+     preproc_line_num  += 1;
+
+  // DQ (12/26/2018): This is reset in the add_token() function.
+  // preproc_column_num = 1;
+   }
+
 <NORMAL>{mlinkagespecification} { 
 #if DEBUG_LEX_PASS
      printf("%s is a mlinkagespecification token \n",yytext);
@@ -1418,6 +1504,9 @@ BEGIN NORMAL;
 
         /*Actions while in a MACRO.*/
 <MACRO>\\\r\n   {   // Escaped DOS line termination
+#if DEBUG_LEX_PASS
+                    printf("%s is an escaped  windows line ending token in a CPP directive (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
+#endif
                     macroString += yytext;
                     ++preproc_line_num;
                     preproc_column_num = 1;
@@ -1430,7 +1519,11 @@ BEGIN NORMAL;
                 }
 
 <MACRO>\n       {   // End of macro
-                    macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+
+                 // DQ (12/30/2018): This is where windows line endings are normalized, and we need to supress this.
+                 // macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = macroString + yytext;
+
                     preproc_line_num++; 
                     preproc_column_num=1; 
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
@@ -1443,7 +1536,11 @@ BEGIN NORMAL;
                 }
 
 <MACRO><<EOF>>  {   // End of macro
-                    macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+
+                 // DQ (12/30/2018): This is where windows line endings are normalized, and we need to supress this.
+                 // macroString = Rose::StringUtility::fixLineTermination(macroString + yytext);
+                    macroString = macroString + yytext;
+
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
                                                 preproc_start_line_num, preproc_start_column_num,
                                                 preproc_line_num-preproc_start_line_num);
@@ -1535,6 +1632,8 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
+  // printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives() \n");
+
   // printf ("Inside of lex file: getPreprocessorDirectives() \n");
   // ROSE_ASSERT(false);
 
@@ -1609,7 +1708,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);
 
-#if DEBUG_LEX_PASS
+#if DEBUG_LEX_PASS || 0
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
 #endif

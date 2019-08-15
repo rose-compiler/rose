@@ -13,6 +13,7 @@ Grammar::setUpExpressions ()
   // C++ grammar.  Modified grammars will add and subtract elements from this default C++ grammar.
 
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
+     NEW_TERMINAL_MACRO (NonrealRefExp,          "NonrealRefExp",          "NONREAL_REF" );
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
   // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
@@ -169,6 +170,11 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CharVal,                "CharVal",                "CHAR_VAL" );
      NEW_TERMINAL_MACRO (UnsignedCharVal,        "UnsignedCharVal",        "UNSIGNED_CHAR_VAL" );
      NEW_TERMINAL_MACRO (WcharVal,               "WcharVal",               "WCHAR_VAL" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     NEW_TERMINAL_MACRO (Char16Val,              "Char16Val",              "CHAR16_VAL" );
+     NEW_TERMINAL_MACRO (Char32Val,              "Char32Val",              "CHAR32_VAL" );
+
      NEW_TERMINAL_MACRO (UnsignedShortVal,       "UnsignedShortVal",       "UNSIGNED_SHORT_VAL" );
      NEW_TERMINAL_MACRO (IntVal,                 "IntVal",                 "INT_VAL" );
      NEW_TERMINAL_MACRO (EnumVal,                "EnumVal",                "ENUM_VAL" );
@@ -180,9 +186,14 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (FloatVal,               "FloatVal",               "FLOAT_VAL" );
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
+     NEW_TERMINAL_MACRO (Float80Val,             "Float80Val",             "FLOAT_80_VAL" );
+     NEW_TERMINAL_MACRO (Float128Val,            "Float128Val",            "FLOAT_128_VAL" );
 
   // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
      NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
+
+  // DQ (2/14/2019): Added support for C++14 void values.
+     NEW_TERMINAL_MACRO (VoidVal,          "VoidVal",          "VOID_VAL" );
 
   // DQ (8/8/2014): Added support for C++11 decltype which references a function parameter.
      NEW_TERMINAL_MACRO (FunctionParameterRefExp, "FunctionParameterRefExp", "FUNCTION_PARAMETER_REF_EXP" );
@@ -392,10 +403,10 @@ Grammar::setUpExpressions ()
           BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal | NullptrValExp /* | LabelAddressVal */,
+          DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
+          TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      | 
+          Float128Val          | VoidVal       /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
-
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
           ListExp  | TupleExp | MatrixExp,
@@ -433,7 +444,7 @@ Grammar::setUpExpressions ()
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp, "Expression", "ExpressionTag", false);
        // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
@@ -618,6 +629,9 @@ Grammar::setUpExpressions ()
      VarRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
+     NonrealRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                      "../Grammar/Expression.code" );
+
      CompoundLiteralExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
@@ -703,8 +717,9 @@ Grammar::setUpExpressions ()
      AddressOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
-     BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
-                                  "../Grammar/Expression.code" );
+  // DQ (1/20/2019): This should be a prefix operator and so it can't use the default  
+  // automatically generated version of the post_construction_initialization function.
+  // BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      RealPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -801,6 +816,10 @@ Grammar::setUpExpressions ()
      FloatVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      DoubleVal.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     Float80Val.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     Float128Val.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     VoidVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
   // DQ (11/28/2011): Adding template declaration support to the AST.
      TemplateParameterVal.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1248,6 +1267,18 @@ Grammar::setUpExpressions ()
      VarRefExp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     NonrealRefExp.setFunctionPrototype ( "HEADER_NONREAL_REF_EXPRESSION", "../Grammar/Expression.code" );
+
+     NonrealRefExp.setDataPrototype ( "SgNonrealSymbol*", "symbol", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     NonrealRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealRefExp.setDataPrototype ("bool","type_elaboration_required","= false",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NonrealRefExp.setDataPrototype ("bool","global_qualification_required","= false",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      LabelRefExp.setFunctionPrototype ( "HEADER_LABEL_REF_EXPRESSION", "../Grammar/Expression.code" );
      LabelRefExp.setDataPrototype ( "SgLabelSymbol*", "symbol", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1468,6 +1499,8 @@ Grammar::setUpExpressions ()
   // NullptrValExp.setDataPrototype ( "SgNullptrType*", "value", "= 0",
   //                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     VoidVal.setFunctionPrototype ( "HEADER_VOID_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
      FunctionParameterRefExp.setDataPrototype ("int", "parameter_number", "= -1",
@@ -1587,7 +1620,21 @@ Grammar::setUpExpressions ()
      WcharVal.setDataPrototype ( "unsigned long", "valueUL", "= 0",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      WcharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
-                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionPrototype ( "HEADER_CHAR16_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char16Val.setDataPrototype ( "unsigned short", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char16Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char32Val.setFunctionPrototype ( "HEADER_CHAR32_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Char32Val.setDataPrototype ( "unsigned int", "valueUL", "= 0",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Char32Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UnsignedShortVal.setFunctionPrototype ( "HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      UnsignedShortVal.setDataPrototype ( "unsigned short", "value", "= 0",
@@ -1685,6 +1732,20 @@ Grammar::setUpExpressions ()
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
      LongDoubleVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Float80Val.setFunctionPrototype ( "HEADER_FLOAT_80_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Float80Val.setDataPrototype ( "long double", "value", "= 0.0",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
+     Float80Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Float128Val.setFunctionPrototype ( "HEADER_FLOAT_128_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     Float128Val.setDataPrototype ( "long double", "value", "= 0.0",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
+     Float128Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
@@ -1868,6 +1929,25 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","sizeOfContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/12/2019): Adding support for objectless nonstatic data member references (C++11 feature).
+     SizeOfOp.setDataPrototype("bool","is_objectless_nonstatic_data_member_reference","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_379.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the sizeof operator.
+     SizeOfOp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
   // DQ (6/20/2013): Added alignOf operator.
      AlignOfOp.setFunctionPrototype ( "HEADER_ALIGNOF_OPERATOR", "../Grammar/Expression.code" );
      AlignOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
@@ -1992,6 +2072,22 @@ Grammar::setUpExpressions ()
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_380.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the typeid operator.
+     TypeIdOp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
   // DQ (2/5/2004): Adding vararg support for SAGE AST
      VarArgStartOp.setFunctionPrototype ( "HEADER_VARARG_START_OPERATOR", "../Grammar/Expression.code" );
@@ -2129,6 +2225,22 @@ Grammar::setUpExpressions ()
      CastExp.setDataPrototype("bool","castContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 1
+  // DQ (4/15/2019): Let's demonstrate this is possible in the language before we add support for it (see Cxx11_test/test2019_381.C).
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the cast operator.
+     CastExp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
 
      PntrArrRefExp.setFunctionPrototype ( "HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2181,6 +2293,22 @@ Grammar::setUpExpressions ()
      NewExp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype ( "int", "name_qualification_for_pointer_to_member_class_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype("bool","type_elaboration_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/15/2019): This is needed to support pointers to member type specified to the new operator.
+     NewExp.setDataPrototype("bool","global_qualification_for_pointer_to_member_class_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+
      DeleteExp.setFunctionPrototype ( "HEADER_DELETE_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      DeleteExp.setDataPrototype     ( "SgExpression*", "variable", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2195,6 +2323,8 @@ Grammar::setUpExpressions ()
 
      ThisExp.setFunctionPrototype ( "HEADER_THIS_EXPRESSION", "../Grammar/Expression.code" );
      ThisExp.setDataPrototype     ( "SgClassSymbol*", "class_symbol", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ThisExp.setDataPrototype     ( "SgNonrealSymbol*", "nonreal_symbol", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/14/2006): This is a CC++ specific data member, but it is part of the 
@@ -2292,33 +2422,75 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+  // DQ (3/22/2018): Revert back to the previous implementation and pursue changing the name qualification support code.
+  // The new version below with the names NOT using the "_for_type" version was a problem for the unparser support
+  // (which reuses the same code for SgInitializedName, SgTemplateArgument, and SgAggregateInitializer).  So it might
+  // be better to just fixup the name qualification support and reuse the unparsing support then to reuse the name 
+  // qualification support and implement new unparsing support.  It appears that we can not quite do both, unless 
+  // I figure that out next.
+
+  // DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support 
+  // using the same support as for the SgConstructor initializer.  The name qualification that is supported for
+  // an aggregate initializer is just that for the C++11 specific type specifier that is sometime required 
+  // (for an example of this see Cxx11_tests/test2018_47.C).  Since it is the type name that is qualified
+  // it does make sens to use the original names (e.g. name_qualification_length_for_type), but it would be
+  // inconsistant with the constructor initializer support, and eliminate the opportunity to reuse that
+  // supporting name qualification code.
+#define USE_NAME_QUALIFICATION_THROUGH_TYPE 1
+
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+  // DQ (3/22/2018): This should be the type_elaboration_required data member (and to be consistant with the ConstructorInitializer.
+  // In general, the use of this name qualification is only for type names that are sometime required for C++11 support (see Cxx11_tests/test2018_47.C).
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
   // AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if USE_NAME_QUALIFICATION_THROUGH_TYPE
      AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     AggregateInitializer.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
      AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -2387,22 +2559,25 @@ Grammar::setUpExpressions ()
   // ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
   // ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/15/2019): Adding support for initializers in for loop tests (conditionals), see Cxx_tests/test2019_02.C).
+     ConstructorInitializer.setDataPrototype     ( "bool", "is_used_in_conditional", "= false",
+                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AssignInitializer.setFunctionPrototype ( "HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      AssignInitializer.setDataPrototype     ( "SgExpression*", "operand_i"      , "= NULL",
@@ -2739,6 +2914,7 @@ Grammar::setUpExpressions ()
      ExprListExp.setFunctionSource ( "SOURCE_EXPRESSION_LIST_EXPRESSION","../Grammar/Expression.code" );
 
      VarRefExp.setFunctionSource ( "SOURCE_VARIABLE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+     NonrealRefExp.setFunctionSource ( "SOURCE_NONREAL_REF_EXPRESSION","../Grammar/Expression.code" );
      CompoundLiteralExp.setFunctionSource ( "SOURCE_COMPOUND_LITERAL_EXPRESSION","../Grammar/Expression.code" );
 
      LabelRefExp.setFunctionSource ( "SOURCE_LABEL_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
@@ -2758,6 +2934,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource ( "SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      WcharVal.setFunctionSource ( "SOURCE_WCHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource ( "SOURCE_CHAR16_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource ( "SOURCE_CHAR32_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource ( "SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      IntVal.setFunctionSource ( "SOURCE_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
      EnumVal.setFunctionSource ( "SOURCE_ENUM_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2769,6 +2950,10 @@ Grammar::setUpExpressions ()
      FloatVal.setFunctionSource ( "SOURCE_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      DoubleVal.setFunctionSource ( "SOURCE_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource ( "SOURCE_LONG_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     Float80Val.setFunctionSource ( "SOURCE_FLOAT_80_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+     VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2989,6 +3174,7 @@ Grammar::setUpExpressions ()
      ExprListExp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
      VarRefExp.setFunctionSource              ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+     NonrealRefExp.setFunctionSource          ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
   // DQ (9/4/2013): This follows the design of CompoundLiteralExp to be similar to a variable reference.
      CompoundLiteralExp.setFunctionSource     ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
@@ -3018,6 +3204,11 @@ Grammar::setUpExpressions ()
      CharVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      WcharVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     Char32Val.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      UnsignedShortVal.setFunctionSource       ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      IntVal.setFunctionSource                 ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      EnumVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3029,7 +3220,11 @@ Grammar::setUpExpressions ()
      FloatVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      DoubleVal.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     Float80Val.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     Float128Val.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
+
+     VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
   // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
   // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
@@ -3052,7 +3247,13 @@ Grammar::setUpExpressions ()
      CharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeChar" );
 
      UnsignedCharVal.editSubstitute        ( "GENERIC_TYPE", "SgTypeUnsignedChar" );
+
      WcharVal.editSubstitute               ( "GENERIC_TYPE", "SgTypeWchar" );
+
+  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
+     Char16Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar16" );
+     Char32Val.editSubstitute              ( "GENERIC_TYPE", "SgTypeChar32" );
+
      UnsignedShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeUnsignedShort" );
      IntVal.editSubstitute                 ( "GENERIC_TYPE", "SgTypeInt" );
 
@@ -3069,7 +3270,11 @@ Grammar::setUpExpressions ()
      FloatVal.editSubstitute               ( "GENERIC_TYPE", "SgTypeFloat" );
      DoubleVal.editSubstitute              ( "GENERIC_TYPE", "SgTypeDouble" );
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
+     Float80Val.editSubstitute             ( "GENERIC_TYPE", "SgTypeFloat80" );
+     Float128Val.editSubstitute            ( "GENERIC_TYPE", "SgTypeFloat128" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
+
+     VoidVal.editSubstitute                ( "GENERIC_TYPE", "SgTypeVoid" );
 
   // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
   // DQ (11/21/2017): Unclear what the type of a label address value expression should be (though in the test2017_73.C it is "void*").

@@ -18,7 +18,9 @@ ngx_get_options()
 #if 1
           switch (*p++) 
              {
-               case 12:
+          // DQ (12/21/2017): Modified to make legal code for GNU, now that we don't normalize by adding "{}" to the unparsed code.
+          // case 12:
+             case 12: {}
             // default:
              }
 #endif

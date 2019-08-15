@@ -3543,6 +3543,9 @@
 0x0804a302: 8b 7f 24                |..$     |<sp-16>   mov    edi, dword ds:[edi + 0x24]
 0x0804a305: b8 c0 00 00 00          |.....   |<sp-16>   mov    eax, 0x000000c0
 0x0804a30a: cd 80                   |..      |<sp-16>   int    0x80<-128>
+0x0804a30a: Successor blocks: 0x0804a30c, unknown
+
+0x0804a30c: Basic block reasons: 
 0x0804a30c: 83 f8 84                |...     |          cmp    eax, 0x84<-124>
 0x0804a30f: 76 0e                   |v.      |          jbe    0x0804a31f<<BBlock>>
 0x0804a30f: Successor blocks: 0x0804a311, 0x0804a31f
@@ -3552,13 +3555,15 @@
 0x0804a311: Successor blocks: 0x0804a313
 
 0x0804a313: Basic block reasons: 
-0x0804a313: 89 c3                   |..      |          mov    ebx, eax
-0x0804a315: e8 96 fe ff ff          |.....   |          call   0x0804a1b0<<Func>>
+0x0804a313: 89 c3                   |..      |<sp-16>   mov    ebx, eax
+0x0804a315: e8 96 fe ff ff          |.....   |<sp-16>   call   0x0804a1b0<<Func>>
+0x0804a315: Outgoing stack delta: -20
 0x0804a315: Successor blocks: 0x0804a1b0<<Func>>, 0x0804a31a
 
 0x0804a31a: Basic block reasons: 
-0x0804a31a: 89 18                   |..      |          mov    dword ds:[eax], ebx
-0x0804a31c: 83 c8 ff                |...     |          or     eax, 0xff<-1>
+0x0804a31a: 89 18                   |..      |<sp-16>   mov    dword ds:[eax], ebx
+0x0804a31c: 83 c8 ff                |...     |<sp-16>   or     eax, 0xff<-1>
+0x0804a31c: Outgoing stack delta: -16
 0x0804a31c: Successor blocks: 0x0804a31f
 
 0x0804a31f: Basic block reasons: 

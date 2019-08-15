@@ -9,5 +9,5 @@ libSSA_la_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQu
 		reachingDef.C staticSingleAssignmentInterprocedural.C
 pkginclude_HEADERS = staticSingleAssignment.h uniqueNameTraversal.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
 		reachingDef.h controlDependence.h dataflowCfgFilter.h boostGraphCFG.h
-		
+
 EXTRA_DIST = KNOWN_BUGS.txt

@@ -1,0 +1,25 @@
+-----------------------------------------------
+OpenMP region SgOmpParallelStatement @ 54
+"i"@58:5	shared
+"i"@0:0	shared
+"i"@60:23	shared
+"i"@0:0	shared
+"i"@62:23	shared
+"i"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpSingleStatement @ 55
+"i"@58:5	shared
+"i"@0:0	shared
+"i"@60:23	shared
+"i"@0:0	shared
+"i"@62:23	shared
+"i"@0:0	shared
+-----------------------------------------------
+OpenMP region SgOmpTaskStatement @ 57
+"i"@58:5	shared
+-----------------------------------------------
+OpenMP region SgOmpTaskStatement @ 59
+"i"@60:23	shared
+-----------------------------------------------
+OpenMP region SgOmpTaskStatement @ 61
+"i"@62:23	shared

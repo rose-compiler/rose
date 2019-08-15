@@ -7,9 +7,14 @@
 // C++11 added a similar feature. The statement for allows for easy iteration over a list of elements:
 
 int my_array[5] = {1, 2, 3, 4, 5};
-for (int &x : my_array) {
-    x *= 2;
-}
+
+void foobar()
+   {
+     for (int &x : my_array)
+        {
+          x *= 2;
+        }
+   }
 
 // This form of for, called the \u201crange-based for\u201d, will iterate over each element in the list. It 
 // will work for C-style arrays, initializer lists, and any type that has begin() and end() functions defined 

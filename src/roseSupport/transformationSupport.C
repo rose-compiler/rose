@@ -848,197 +848,6 @@ TransformationSupport::getTypeName ( SgType* type )
      return typeName;
    }
 
-#if 0
-string
-TransformationSupport::getTypeName ( SgType* type )
-   {
-     string typeName;
-
-  // printf ("In TransformationSupport::getTypeName(): type->sage_class_name() = %s \n",type->sage_class_name());
-
-     switch (type->variantT())
-        {
-          case V_SgComplex:
-               typeName = "complex";
-               break;
-          case V_SgTypeBool:
-               typeName = "bool";
-               break;
-#if 0
-          case V_SgEnumType:
-            // DQ (3/2/2005): This needs to be fixed, but Tom is going to send me the fix since I'm working on Kull presently.
-               printf ("getTypeName() of an enum should return the name of the enum, not the string \"enum\" \n");
-               typeName = "enum";
-               break;
-#endif
-          case V_SgTypeChar:
-               typeName = "char";
-               break;
-          case V_SgTypeVoid:
-               typeName = "void";
-               break;
-          case V_SgTypeInt:
-               typeName = "int";
-               break;
-          case V_SgTypeDouble:
-               typeName = "double";
-               break;
-          case V_SgTypeFloat:
-               typeName = "float";
-               break;
-          case V_SgTypeLong:
-               typeName = "long";
-               break;
-          case V_SgTypeLongDouble:
-               typeName = "long double";
-               break;
-          case V_SgTypeEllipse:
-               typeName = "ellipse";
-               break;
-          case V_SgTypeGlobalVoid:
-               typeName = "void";
-               break;
-          case V_SgTypeLongLong:
-               typeName = "long long";
-               break;
-          case V_SgTypeShort:
-               typeName = "short";
-               break;
-          case V_SgTypeSignedChar:
-               typeName = "signed char";
-               break;
-          case V_SgTypeSignedInt:
-               typeName = "signed int";
-               break;
-          case V_SgTypeSignedLong:
-               typeName = "signed long";
-               break;
-          case V_SgTypeSignedShort:
-               typeName = "signed short";
-               break;
-          case V_SgTypeString:
-               typeName = "string";
-               break;
-          case V_SgTypeUnknown:
-               typeName = "unknown";
-               break;
-          case V_SgTypeUnsignedChar:
-               typeName = "unsigned char";
-               break;
-          case V_SgTypeUnsignedInt:
-               typeName = "unsigned int";
-               break;
-          case V_SgTypeUnsignedLong:
-               typeName = "unsigned long";
-               break;
-          case V_SgTypeUnsignedShort:
-               typeName = "unsigned short";
-               break;
-          case V_SgTypeUnsignedLongLong:
-               typeName = "unsigned long long";
-               break;
-          case V_SgReferenceType: 
-             {
-               ROSE_ASSERT ( isSgReferenceType(type)->get_base_type() != NULL );
-               typeName = getTypeName(isSgReferenceType(type)->get_base_type());
-               break;
-             }
-          case V_SgPointerType:
-             {
-               ROSE_ASSERT ( isSgPointerType(type)->get_base_type() != NULL );
-               typeName = getTypeName(isSgPointerType(type)->get_base_type());
-               break;
-             }
-          case V_SgModifierType:
-             {
-               ROSE_ASSERT ( isSgModifierType(type)->get_base_type() != NULL );
-               typeName = getTypeName(isSgModifierType(type)->get_base_type());
-               break;
-             }
-       // DQ (3/2/2005): Merged cases of SgEnumType and SgNamedType (Tom Epperly's fix)
-          case V_SgEnumType:
-          case V_SgNamedType:
-             {
-               SgNamedType* sageNamedType = isSgNamedType(type);
-               ROSE_ASSERT( sageNamedType != NULL );
-               typeName = sageNamedType->get_name().str();
-               break;
-             }
-          case V_SgClassType:
-             {
-               SgClassType* sageClassType = isSgClassType(type);
-               ROSE_ASSERT( sageClassType != NULL );
-               if( sageClassType->get_name().str() == NULL)
-               typeName = "";
-               else
-               typeName = sageClassType->get_name().str();
-               break;
-             }
-          case V_SgTypedefType:
-             {
-               SgTypedefType* sageTypedefType = isSgTypedefType(type);
-               ROSE_ASSERT( sageTypedefType != NULL );
-               typeName = sageTypedefType->get_name().str();
-               break;
-             }
-          case V_SgPointerMemberType:
-             {
-               SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
-               ROSE_ASSERT (pointerMemberType != NULL);
-               SgClassDefinition* classDefinition = pointerMemberType->get_class_of();
-               ROSE_ASSERT (classDefinition != NULL);
-               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
-               ROSE_ASSERT (classDeclaration != NULL);
-               typeName = classDeclaration->get_name().str();
-               break;
-             }
-          case V_SgArrayType: 
-             {
-               ROSE_ASSERT ( isSgArrayType(type)->get_base_type() != NULL );
-               typeName = getTypeName(isSgArrayType(type)->get_base_type());
-               break;
-             }
-          case V_SgFunctionType:
-             {
-               SgFunctionType* functionType = isSgFunctionType(type);
-               ROSE_ASSERT(functionType != NULL);
-               typeName = functionType->get_mangled_type().str();
-               break;
-             }
-          case V_SgMemberFunctionType:
-             {
-               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
-               ROSE_ASSERT (memberFunctionType != NULL);
-               SgClassDefinition* classDefinition = memberFunctionType->get_struct_name();
-               ROSE_ASSERT (classDefinition != NULL);
-               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
-               ROSE_ASSERT (classDeclaration != NULL);
-               typeName = classDeclaration->get_name().str();
-               break;
-             }
-          case V_SgTypeWchar:
-               typeName = "wchar";
-               break;
-          case V_SgTypeDefault:
-               typeName = "default";
-               break;
-          default:
-             {
-               printf ("default reached in switch within TransformationSupport::getTypeName type->sage_class_name() = %s variant = %d \n",
-               type->sage_class_name(),type->variant());
-               ROSE_ABORT();
-               break;
-             }
-        }
-
-  // Fix for purify problem report
-  // typeName = Rose::stringDuplicate(typeName);
-
-     ROSE_ASSERT(typeName.c_str() != NULL);
-  // return typeName;
-     return Rose::stringDuplicate(typeName.c_str());
-   }
-#endif
 
 string
 TransformationSupport::getFunctionTypeName ( SgFunctionCallExp* functionCallExpression )
@@ -2690,7 +2499,9 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
 
+#if 0
      printf ("In TransformationSupport::getTemplateDeclaration(): astNode = %p = %s \n",astNode,astNode != NULL ? astNode->class_name().c_str() : "NULL");
+#endif
 
   // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
   // while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
@@ -2699,8 +2510,8 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
              (isSgTemplateVariableDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
           parentNode = parentNode->get_parent();
-#if 1
-          printf ("parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
+#if 0
+          printf ("In TransformationSupport::getTemplateDeclaration(): parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
 #endif
         }
 

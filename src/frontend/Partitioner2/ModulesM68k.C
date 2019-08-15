@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/Utility.h>
+#include <SageBuilderAsm.h>
 #include <boost/foreach.hpp>
 #include <set>
 
@@ -24,6 +25,7 @@ MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
             (rre=isSgAsmDirectRegisterExpression(args[0])) && rre->get_descriptor()==REG_A6 &&
             (offset=isSgAsmIntegerValueExpression(args[1])) && offset->get_signedValue()<=0) {
             function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
+            function_->reasonComment("matched LINK A6, <non_positive_integer>");
             return true;
         }
     }
@@ -192,7 +194,10 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         args.bblock->insertSuccessor(va, 32);
 
     // Create a data block for the offset table and attach it to the basic block
-    DataBlock::Ptr offsetTable = DataBlock::instance(startOfOffsetTable, 2*tableIdx);
+    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU16();
+    SgAsmType *tableType = SageBuilderAsm::buildTypeVector(tableIdx, tableEntryType);
+    DataBlock::Ptr offsetTable = DataBlock::instance(startOfOffsetTable, tableType);
+    offsetTable->comment("m68k 'switch' statement's 'case' address table");
     args.bblock->insertDataBlock(offsetTable);
 
     return chain;
@@ -267,6 +272,8 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
             }
                         
             Function::Ptr function = Function::instance(functionVa, name, reasons);
+            function->reasonComment("vector " + StringUtility::addrToString(vectorVa) +
+                                    " entry " + StringUtility::numberToString(i));
             if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {
                 // Multiple vector entries point to the same function, so give it a rather generic name
                 found.get()->name("interrupt_vector_function");

@@ -7,7 +7,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "Flow.h"
 
 // CodeThorn includes
@@ -20,7 +20,7 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
   typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
@@ -44,6 +44,6 @@ namespace SPRAY {
 			      boost::unordered_set<size_t>& mostRecentTargetNodes);
   };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

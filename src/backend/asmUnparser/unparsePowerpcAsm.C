@@ -17,7 +17,7 @@ using namespace Rose::BinaryAnalysis;
 static std::string unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_powerpc();
+        registers = RegisterDictionary::dictionary_powerpc32();
     std::string name = registers->lookup(rdesc);
     if (name.empty())
         name = AsmUnparser::invalid_register(insn, rdesc, registers);
@@ -108,12 +108,12 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::L
                              kind == powerpc_bl ||
                              kind == powerpc_ba ||
                              kind == powerpc_bla) &&
-                            expr==insn->get_operandList()->get_operands()[0]) ||
+                            expr==insn->operand(0)) ||
                            ((kind == powerpc_bc ||
                              kind == powerpc_bcl ||
                              kind == powerpc_bca ||
                              kind == powerpc_bcla) &&
-                            insn->get_operandList()->get_operands().size()>=3 &&
-                            expr==insn->get_operandList()->get_operands()[2]));
+                            insn->nOperands() >= 3 &&
+                            expr==insn->operand(2)));
     return unparsePowerpcExpression(expr, labels, registers, isBranchTarget);
 }

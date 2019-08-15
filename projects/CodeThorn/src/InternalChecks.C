@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include "SgTypeSizeMapping.h"
 
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
@@ -46,6 +47,8 @@ void check(string checkIdentifier, bool checkResult, bool check);
 extern bool checkresult;
 
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
+  SgTypeSizeMapping* typeSizeMapping=new SgTypeSizeMapping();
+  AbstractValue::setTypeSizeMapping(typeSizeMapping);
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -68,6 +71,8 @@ bool CodeThorn::internalChecks(int argc, char *argv[]) {
   cout << color("white")<<"-------------------------"<<endl;
   cout << color("default-bg-color");
   cout << color("normal");
+  AbstractValue::setTypeSizeMapping(nullptr);
+  delete typeSizeMapping;
   return checkresult;
 }
 
@@ -439,7 +444,9 @@ void checkTypes() {
     check("=> eStateSet.size() == 3",eStateSet.size() == 3);
     checkLargeSets();
 #endif
+
  }
+
 #if 0
   // MS: TODO: rewrite the following test to new check format
   {
@@ -476,11 +483,11 @@ void checkTypes() {
 
     stringstream ss2;
     ss2<<"test1";
-    check("Parse: Testing test2 on test1.",!SPRAY::Parse::checkWord("test2",ss2));
+    check("Parse: Testing test2 on test1.",!CodeThorn::Parse::checkWord("test2",ss2));
     //cout << "Remaing stream: "<<ss2.str()<<endl;
     stringstream ss3;
     ss3<<"test1";
-    check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
+    check("Parse: Testing test1 on test1.",CodeThorn::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
     {
@@ -488,7 +495,7 @@ void checkTypes() {
       string s="aaabbb";
       ss<<s;
       string parseString="aaa";
-      SPRAY::Parse::parseString(parseString,ss); // throws exception if it fails
+      CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
@@ -511,6 +518,15 @@ void checkTypes() {
     }
 #endif
   } // end of stream operator checks
+
+  {  
+    cout << "------------------------------------------"<<endl;
+    cout << "RUNNING CHECKS FOR CALL STRINGS:"<<endl;
+    CallString s1;
+    CallString s2;
+    check("callstrings: "+s1.toString()+" == "+s2.toString()+" (true)",s1==s2);
+  }
+
 }
 
 void checkLanguageRestrictor(int argc, char *argv[]) {

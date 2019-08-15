@@ -40,7 +40,7 @@ private:
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned version) {
+        void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_NVP(majr_);
             s & BOOST_SERIALIZATION_NVP(minr_);
         }
@@ -50,7 +50,7 @@ private:
         MajorMinor(): majr_(0), minr_(0) {}
 
         MajorMinor(RegisterDescriptor reg) /*implicit*/
-            : majr_(reg.get_major()), minr_(reg.get_minor()) {}
+            : majr_(reg.majorNumber()), minr_(reg.minorNumber()) {}
 
         bool operator<(const MajorMinor &other) const {
             return majr_ < other.majr_ || (majr_ == other.majr_ && minr_ < other.minr_);
@@ -79,7 +79,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(map_);
     }
 #endif
@@ -197,8 +197,8 @@ public:
 
 private:
     static BitRange bitRange(RegisterDescriptor reg) {
-        ASSERT_require(reg.is_valid());
-        return BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+        ASSERT_forbid(reg.isEmpty());
+        return BitRange::baseSize(reg.offset(), reg.nBits());
     }
 
 };

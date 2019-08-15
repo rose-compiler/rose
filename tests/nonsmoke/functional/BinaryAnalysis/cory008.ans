@@ -34,14 +34,15 @@
 0x08048390: basic block
       yes: 0x000000000804834c<134513484>__libc_start_main@plt
       yes: 0x00000000080483b1<134513585><BBlock>
+      yes: 0x0000000008048440<134513728>main
 0x08048395: and    esp, 0xf0<-16>
   *****no: 0x00000000000000f0
 0x0804839b: push   0x08048528<<Func>>
       yes: 0x0000000008048528<134513960><Func>
 0x080483a0: push   0x080484d4<<Func>>
       yes: 0x00000000080484d4<134513876><Func>
-0x080483a7: push   0x08048440<<Func>>
-      yes: 0x0000000008048440<134513728><Func>
+0x080483a7: push   0x08048440<main>
+      yes: 0x0000000008048440<134513728>main
 0x080483ac: call   0x0804834c<__libc_start_main@plt>
       yes: 0x000000000804834c<134513484>__libc_start_main@plt
 0x080483b4: basic block
@@ -317,5 +318,5 @@
   *****no: 0x000000000000113f<4415>
 0x080485a1: call   0x080483d8<<Func>>
       yes: 0x00000000080483d8<134513624><Func>
-Number of SgAsmIntegerValueExpression nodes: 174
-Number of such nodes having a base object:   120
+Number of SgAsmIntegerValueExpression nodes: 175
+Number of such nodes having a base object:   121

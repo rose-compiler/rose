@@ -19,3 +19,4 @@ int main(void)
 
   return 0;
 }
+// This code has data races since j is shared

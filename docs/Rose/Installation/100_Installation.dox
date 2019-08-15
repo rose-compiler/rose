@@ -1,8 +1,15 @@
 // -*- c++ -*-
 
-/** @page installation Installing ROSE
+/** @page installation_page Installing ROSE
+ *  How to install ROSE from source code.
+ *
+ *  See @ref installation. */
+
+/** @defgroup installation Installing ROSE
  *  How to install ROSE from source code.
  *  
+ *  @section installation_vm Virtual Machine Images
+ *
  *  If you don't want to install ROSE from scratch, you can try to use the virtual machine image with ROSE installed. 
  *  See more at https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Virtual_Machine_Image 
  * 
@@ -12,56 +19,32 @@
  *
  *  @section installation_obtaining Downloading ROSE
  *
- *  ROSE is free (libre) software distributed under a @ref license "modified BSD license". The ROSE team at Lawrence Livermore
+ *  ROSE is distributed under a @ref license "modified BSD license". The ROSE team at Lawrence Livermore
  *  National Laboratory makes two kinds of public source releases both as Git repositories.
  *
- *  @li <strong>Development Branch</strong>: The development "Level-1" releases occur on the "master" branch of https://github.com/rose-compiler/rose-develop. These
- *      releases undergo a limited amount of testing and are intended for those users that require the latest bleeding edge
- *      versions and aren't afraid to get their hands dirty in source code. The "limited" testing includes running more than
- *      50,000 tests on numerous operating systems and backend compilers for approximately three hours.
+ *  @li <strong>Development Branch (recommended)</strong>: The development "Level-1" releases occur on the "master" branch of
+ *      https://github.com/rose-compiler/rose-develop. These releases undergo a limited amount of testing and are intended for
+ *      those users that require the latest bleeding edge versions and aren't afraid to get their hands dirty in source
+ *      code. The "limited" testing includes running more than 50,000 tests on numerous operating systems and backend compilers
+ *      for approximately three hours.
  *
- *  @li <strong>Release Candidate</strong>: Once every few weeks the development release goes through a more extensive testing process and a "Level-2" release is
- *      pushed to the "master" branch of https://github.com/rose-compiler/rose if all tests pass.  In general, bug fixes are
- *      not backported from the Level-1 release to Level-2.
- *
- *  @li <strong>Release</strong>: An official release of ROSE begins with a Release Candidate. Once all testing has passed, release packages and documentation are 
- *      prepared to accompany this release version and are then published to the official ROSE website.
+ *  @li <strong>Release Candidate</strong>: Once every few weeks the development release goes through a more extensive testing
+ *      process and a "Level-2" release is pushed to the "master" branch of https://github.com/rose-compiler/rose if all tests
+ *      pass.  In general, bug fixes are not backported from the Level-1 release to Level-2.
  *
  *  ROSE can be downloaded with standard Git commands. <em>Do not use Github's "Download ZIP" button since this strips necessary
  *  version information from the ZIP archive.</em>
- *
- *  @section installation_dev_repo Development Repository
  *
  *  @code
  *  git clone https://github.com/rose-compiler/rose-develop rose
  *  cd rose/
  *  @endcode
  *
- *  @section installation_release_repo Release Repository
- *
- *  @code
- *  git clone https://github.com/rose-compiler/rose
- *  cd rose/
- *  @endcode
- *
- *  @section installation_versioning Versioning Scheme
- *
- *  ROSE uses a [continuous delivery](https://en.wikipedia.org/wiki/Continuous_delivery) paradigm. To obtain the identification
- *  for a particular version of ROSE, run "git rev-parse HEAD" in the ROSE source directory (the reported SHA1 hash can be
- *  abbreviated to 7 or so characters for convenience).  ROSE also has a loosely-coupled dotted quad version number which can
- *  be found in the ROSE_VERSION file, but the Git SHA1 hash is more precise.
- *
- *  The repositories listed above are the official release points; other repositories might be available but are unofficial.
- *  Some members of the ROSE team also distribute custom builds in virtual machines, which can be a good way to get up and
- *  playing quickly. Query one of the ROSE mailing lists to find this information, which changes from time to time.
- *
- *
- *
  *  @section installation_hardware Hardware requirements
  *
  *  ROSE is tested and supported on [Redhat Enterprise
  *  Linux](http://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) RHEL6 and RHEL7 running on Intel x86-64
- *  hardware. Some developers are able to use other operating systems and platforms, including Debian and Ubuntu.
+ *  hardware. It also runs on other operating systems and platforms, including Debian and Ubuntu.
  *
  *  The ROSE library consists of approximately two million lines of C++ and requires substantial resources to compile. The
  *  machine should have at least eight gigabytes of free RAM available, and the build system can make use of multiple CPU
@@ -81,7 +64,6 @@
  *      <td><b>Software component</b></td>
  *      <td><b>Necessity</b></td>
  *      <td><b>Supported Versions</b></td>
- *      <td><b>Regularly tested</b></td>
  *      <td><b>Purpose</b></td>
  *    </tr>
  *
@@ -89,7 +71,7 @@
  *      <td><a href="http://git-scm.com">Git</a></td>
  *      <td>Required</td>
  *      <td>Any recent version</td>
- *      <td>1.7.2.5</td>
+ *      <td>Portability: 1.9.1, 2.1.4, 2.7.4, 2.11.0; Integration: </td>
  *      <td>Used for cloning the ROSE release repository to your local machine. See @ref installing_git. </td>
  *    </tr>
  *
@@ -97,7 +79,7 @@
  *      <td><a href="https://www.gnu.org/software/wget">wget</a></td>
  *      <td>Required</td>
  *      <td>Any recent version</td>
- *      <td>1.12</td>
+ *      <td>Portability: 1.15, 1.16, 1.17, 1.18; Integration: 1.12, 1.16</td>
  *      <td>Used to download the EDG binary tarball, a C/C++ parser. This is currently (Sep 2015) required even when ROSE is
  *      configured without the C/C++ frontend languages. See @ref installing_wget.</td>
  *    </tr>
@@ -105,8 +87,10 @@
  *    <tr>
  *      <td><a href="https://gcc.gnu.org">GNU Compiler Collection</a></td>
  *      <td>Required</td>
- *      <td>GCC-4.2.4 through 4.8.4</td>
- *      <td>GCC-4.4.5</td>
+ *      <td>GCC-4.2.4 or later</td>
+ *      <td>Portability: GCC-4.8.4 (C++03, C++11), GCC-4.8.5 (C++03, C++11), GCC-4.9.2 (C++03, C++11), GCC-4.9.3 (C++03, C++11),
+ *          GCC-5.4.0 (C++03, C++11), GCC-6.3.0 (C++03, C++11), LLVM-3.5.0 (C++03, C++11), LLVM-3.8.0 (C++03);
+ *          Integration: GCC-4.8.4 (C++03, C++11), Intel 14.0.3, 15.0.4, 16.0.3, 17.0.4</td>
  *      <td>To compile ROSE. The gcc, g++, and gfortran compilers are required. Furthermore, all libraries on which ROSE
  *      depends should be compiled with the same compiler for best results. See @ref installing_gcc. </td>
  *    </tr>
@@ -114,10 +98,11 @@
  *    <tr>
  *      <td>GNU autotools</td>
  *      <td>Required (or cmake)</td>
- *      <td>automake-1.11.1 or later; autoconf-2.59 or later; libtool-1.5.6 or later</td>
- *      <td><a href="https://www.gnu.org/software/automake">automake-1.11.1</a>,
- *          <a href="http://www.gnu.org/software/autoconf/autoconf.html">autoconf-2.67</a>,
- *          <a href="https://www.gnu.org/software/libtool]">libtool-2.2.6b</a></td>
+ *      <td><a href="https://www.gnu.org/software/automake">automake</a>-1.11.1 or later;
+ *          <a href="http://www.gnu.org/software/autoconf/autoconf.html">autoconf</a>-2.59 or later;
+ *          <a href="https://www.gnu.org/software/libtool]">libtool</a>-1.5.6 or later</td>
+ *      <td>Portability: automake-1.14.1, automake-1.15, autoconf-2.69, libtool-2.4.2, libtool-2.4.6;
+ *          Integration: automake-1.11.1, autoconf-2.67, libtool-2.2.6b</td>
  *      <td>Automake, autoconf, and libtool are used to configure ROSE and generate makefiles. You can install either this
  *      dependency or the cmake dependency. See @ref installing_autotools.</td>
  *    </tr>
@@ -126,7 +111,7 @@
  *      <td><a href="http://www.cmake.org">CMake</a></td>
  *      <td>Required (or autotools)</td>
  *      <td>2.8.12 or later</td>
- *      <td>2.8.12</td>
+ *      <td>Portability: untested; Integration: 2.8.12</td>
  *      <td>Configures ROSE and generates makefiles. You can install either this dependency or the GNU autotools. See @ref
  *      installing_cmake.</td>
  *    </tr>
@@ -134,8 +119,9 @@
  *    <tr>
  *      <td><a href="http://flex.sourceforge.net">Flex</a> and <a href="https://www.gnu.org/software/bison">bison</a></td>
  *      <td>Required</td>
- *      <td>Any recent version</td>
- *      <td>flex-2.5.35, bison-2.4.1</td>
+ *      <td>bison-2.4.1 or later</td>
+ *      <td>Portability: flex-2.5.35, flex-2.5.39, flex-2.6.0, flex-2.6.1, bison-3.0.2, bison-3.0.4;
+ *          Integration: flex-2.5.35, 2.5.39, 2.6.0, 2.6.1, bison-4.2.1, 3.0.2, 3.0.4</td>
  *      <td>Generates code for lexical analyzers and parsers. See @ref installing_flexbison.</td>
  *    </tr>
  *
@@ -143,7 +129,7 @@
  *      <td>Java Virtual Machine</td>
  *      <td>Required</td>
  *      <td>Sun/Oracle version 7</td>
- *      <td>1.7.0_51</td>
+ *      <td>Portability: Oracle JDK 8.161; Integration: 1.7.0_51</td>
  *      <td>Runtime for Java and Fortran frontends in ROSE. See @ref installing_jre.</td>
  *    </tr>
  *
@@ -151,7 +137,7 @@
  *      <td>Java Development Kit</td>
  *      <td>Required (cmake)</td>
  *      <td>Any version 7</td>
- *      <td>OpenJDK 7</td>
+ *      <td>Portatility: Oracle JDK 8.161; Integration: OpenJDK 7</td>
  *      <td>A JDK is required when configuring ROSE with cmake, even if the Java and Fortran frontends are disabled.
  *          See @ref installing_jdk. Avoid Sun/Oracle version 1.7.0_25.</td>
  *    </tr>
@@ -159,8 +145,8 @@
  *    <tr>
  *      <td><a href="http://www.boost.org">Boost</a></td>
  *      <td>Required</td>
- *      <td>1.51 through 1.61, except 1.54</td>
- *      <td>1.51 through 1.61, except 1.54</td>
+ *      <td>1.57 through 1.69</td>
+ *      <td>Portability: 1.57.0, 1.58.0, 1.59.0, 1.60.0, 1.61.0, 1.62.0, 1.63.0, 1.64.0, 1.65.1, 1.66.0; Integration: ?</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
  *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
@@ -175,7 +161,6 @@
  *      <td><b>Software component</b></td>
  *      <td><b>Necessity</b></td>
  *      <td><b>Supported Versions</b></td>
- *      <td><b>Regularly tested</b></td>
  *      <td><b>Purpose</b></td>
  *    </tr>
  *
@@ -183,7 +168,7 @@
  *      <td><a href="https://www.python.org">Python</a></td>
  *      <td>Required</td>
  *      <td>3</td>
- *      <td>3.1.3</td>
+ *      <td>Portability: 3.6.0; Integration: 3.1.3</td>
  *      <td>Needed for the ROSE Python frontend. See @ref installing_python.</td>
  *    </tr>
  *
@@ -191,7 +176,7 @@
  *      <td><a href="http://www.stack.nl/~dimitri/doxygen">Doxygen</a></td>
  *      <td>Optional</td>
  *      <td>1.8.1 through 1.8.10</td>
- *      <td>1.8.1</td>
+ *      <td>Portability: untested; Integration: 1.8.1</td>
  *      <td>Generates local copies of the online documentation. See @ref installing_doxygen.</td>
  *    </tr>
  *
@@ -199,7 +184,7 @@
  *      <td><a href="http://graphviz.org">GraphViz</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>For visualizing graphs such as control flow graphs. See @ref installing_graphviz.</td>
  *    </tr>
  *
@@ -207,7 +192,7 @@
  *      <td><a href="http://zvtm.sourceforge.net/zgrviewer.html">ZGRViewer</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>A free Java program for interactive visualization of graphs, supporting features like zooming and panning. See @ref
  *      installing_zgrviewer.</td>
  *    </tr>
@@ -216,7 +201,7 @@
  *      <td><a href="http://www.latex-project.org">LaTeX</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>pdfTeX 3.1415926</td>
+ *      <td>Portability: untested; Integration: pdfTeX 3.1415926</td>
  *      <td>For generating PDF documentation from TeX/LaTeX sources.</td>
  *    </tr>
  *
@@ -224,7 +209,7 @@
  *      <td><a href="https://github.com/kjellmf/dot2tex">dot2tex</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: ?</td>
  *      <td>Generates TeX versions of graphs for inclusion into documentation.</td>
  *    </tr>
  *
@@ -232,15 +217,15 @@
  *      <td><a href="https://www.qt.io">Qt</a></td>
  *      <td>Optional</td>
  *      <td>4</td>
- *      <td>4</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>For building ROSE's tools that have a graphical user interface. See @ref installing_qt.</td>
  *    </tr>
  *
  *    <tr>
  *      <td><a href="http://www.graphicsmagick.org">GraphicsMagick</a></td>
  *      <td>Optional</td>
- *      <td>?</td>
- *      <td>?</td>
+ *      <td>Any recent version</td>
+ *      <td>Portability: untested; Integration: 1.3.25</td>
  *      <td>See @ref installing_graphicsmagick.</td>
  *    </tr>
  *
@@ -248,7 +233,7 @@
  *      <td>Relational database system</td>
  *      <td>Optional</td>
  *      <td><a href="https://sqlite.org">SQLite3</a> and/or <a href="http://www.postgresql.org">PostgreSQL</a></td>
- *      <td>SQLite-3.7.3; libpqxx-3.0; postgresql-8.4</td>
+ *      <td>Portability: untested; Integration: SQLite-3.7.3; libpqxx-3.0; postgresql-8.4</td>
  *      <td>For tools that store results in a database. See @ref installing_database.</td>
  *    </tr>
  *
@@ -256,7 +241,7 @@
  *      <td><a href="http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html">GNU readline</a></td>
  *      <td>Optional</td>
  *      <td>?</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>For command-line editing in interactive tools. See @ref installing_readline.</td>
  *    </tr>
  *
@@ -264,7 +249,7 @@
  *      <td><a href="https://packages.debian.org/unstable/libdevel/libmagic-dev">libmagic</a></td>
  *      <td>Optional</td>
  *      <td>3</td>
- *      <td>3</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>For identifying magic numbers in binary analysis. See @ref installing_libmagic.</td>
  *    </tr>
  *
@@ -272,7 +257,7 @@
  *      <td><a href="https://github.com/jbeder/yaml-cpp">yaml-cpp</a></td>
  *      <td>Optional</td>
  *      <td>0.5.1 through 0.5.3</td>
- *      <td>0.5.1 through 0.5.3</td>
+ *      <td>Portability: 0.5.1, 0.5.2, 0.5.3; Integration: untested</td>
  *      <td>For reading YAML or JSON configuration files and storing results. Yaml-cpp must be compiled against the same
  *      version of boost used by ROSE. See @ref installing_yamlcpp.</td>
  *    </td>
@@ -281,7 +266,7 @@
  *      <td><a href="http://dlib.net">Dlib</a></td>
  *      <td>Optional</td>
  *      <td>18.11 - 18.18</td>
- *      <td>18.11 - 18.18</td>
+ *      <td>Portability: 18.16, 18.17, 18.18; Integration: ?</td>
  *      <td>For certain binary analysis algorithms. See @ref installing_dlib.</td>
  *    </tr>
  *
@@ -289,7 +274,7 @@
  *      <td><a href="http://www.webtoolkit.eu/wt">Wt</a></td>
  *      <td>Optional</td>
  *      <td>3.3.3 through 3.3.7</td>
- *      <td>3.3.3 through 3.3.7</td>
+ *      <td>Portability: 3.3.4, 3.3.5; Integration: untested</td>
  *      <td>For binary analysis tools that present results through a web server. Wt must be compiled against the same version
  *      of Boost used by ROSE. See @ref installing_wt.</td>
  *    </tr>
@@ -298,7 +283,7 @@
  *      <td><a href="http://yices.csl.sri.com">Yices</a></td>
  *      <td>Optional</td>
  *      <td>1.0.34</td>
- *      <td>1.0.34</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>An SMT solver used by certain binary analysis algorithms.</td>
  *    </tr>
  *
@@ -306,7 +291,7 @@
  *      <td>Cryptography libs</td>
  *      <td>Optional</td>
  *      <td>libssl, libxml-2, libgcrypt-11</td>
- *      <td>libxml-2; libgcrypt-11</td>
+ *      <td>Portability: untested; Integration: libxml-2; libgcrypt-11</td>
  *      <td>For various analysis algorithms that use cryptographic functions. See @ref installing_crypto.</td>
  *    </tr>
  *
@@ -314,7 +299,7 @@
  *      <td><a href="http://xmlsoft.org">libxml2</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>For parsing XML files in certain tools such as roseHPCT and BinaryContextLookup. See @ref installing_libxml2.</td>
  *    </tr>
  *
@@ -322,7 +307,7 @@
  *      <td>MPI</td>
  *      <td>Optional</td>
  *      <td>?</td>
- *      <td>?</td>
+ *      <td>Portability: untested; Integration: ?</td>
  *      <td>For features in ROSE that allow for distributed parallel AST traversals.</td>
  *    </tr>
  *
@@ -330,7 +315,7 @@
  *      <td>Haskell compiler</td>
  *      <td>Optional</td>
  *      <td><a href="http://www.haskell.org/ghc">ghc</a>-6.10.x</td>
- *      <td>ghc-?</td>
+ *      <td>Portability: untested; Integration: ghc-?</td>
  *      <td>For ROSE API Haskell bindings so that tools can be written in Haskell. ROSE does not parse or support
  *      source-to-source analysis and transformation of the Haskell language. See @ref installing_haskell.</td>
  *    </tr>
@@ -340,11 +325,16 @@
  *          <a href="https://sourceware.org/elfutils">libelf</a></td>
  *      <td>Optional</td>
  *      <td>dwarf-20160613 - 20170416; libelf-0.133 - 0.169</td>
- *      <td>dwarf-20160613 - 20170416; libelf-0.133 - 0.169</td>
+ *      <td>Portability: untested; Integration: untested</td>
  *      <td>Used by binary analysis to parse DWARF debugging information.  ROSE has its own internal, portable ELF parser, but
  *          libdwarf depends on the libelf parser. See @ref installing_dwarf.</td>
  *    </tr>
  *  </table>
+ *
+ *  In the tables above, the "Regularly tested" column lists the versions that are used during integration testing and
+ *  portability testing. Integration testing is part of the ROSE software release process, but portability testing occurs on a
+ *  separate schedule and covers only selected ROSE releases. Additional software versions are tested by ROSE authors and users
+ *  in an ad hoc manner and not recorded in these tables.
  *
  *  @todo Add shell scripts to install the ROSE software dependencies on RHEL and Debian. Most of the instructions are already
  *  available in the docs/readmes directory, but it would be nice if we could include them in the interactive documentation.
@@ -360,7 +350,7 @@
  *  In the instructions that follow, "$ROSE_SRC" is the top-level directory holding the ROSE source code, and "$ROSE_BLD" is a
  *  build directory that these instructions have you create to hold files generated during the build.
  *
- *  @subsection installation_autotools Configuring with GNU autotools
+ *  @subsection installation_autotools Configuring and building with GNU autotools
  *
  *  If you desire to configure ROSE with GNU autotools instead of CMake, follow these steps:
  *
@@ -380,16 +370,41 @@
  *      location of the Boost headers and libraries (or you can omit this to use system-installed versions).  If you specify
  *      non-system locations for Boost or other libraries you may need to also set the LD_LIBRARY_PATH environment variable.
  *
+ *  The following command lines are usually used to install rose on RedHat 7 systems:
+ * 
  *  @code
- *  ROSE_SRC=/absolute/path/to/the/rose/source/tree
- *  BOOST_ROOT=/path/to/my/boost/installation/directory
+ *  JAVA_PATH=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/java/jdk/1.8.0_131
+ *  BOOST_ROOT=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/boost/1_60_0/gcc/4.9.3
  *  export LD_LIBRARY_PATH="$BOOST_ROOT/lib:$LD_LIBRARY_PATH"
- *  cd $ROSE_BLD
- *  $ROSE_SRC/configure --prefix=$HOME/my-rose-installation --enable-languages=c,c++ --with-boost=$BOOST_ROOT
+ *  git clone https://github.com/rose-compiler/rose-develop
+ *  cd rose-develop
+ *  ./build
+ *  cd ..
+ *  mkdir buildrose 
+ *  cd buildrose
+ *  ../rose-develop/configure --prefix=$HOME/my-rose-installation --enable-languages=c,c++ --with-boost=$BOOST_ROOT --with-java=$JAVA_PATH
+ *  make rose-core -j32
+ *  make install-core -j32
+ *  @endcode
+ *
+ *  The following command lines show how to install rose-develop on Ubuntu 18.04 systems: 
+ * 
+ *  @code
+ *  sudo apt-get update
+ *  sudo apt-get install git wget build-essential libtool flex bison python3-dev unzip perl-doc doxygen texlive libboost-all-dev gdb gcc g++ gfortran autoconf automake libxml2-dev libdwarf-dev graphviz openjdk-8-jdk-headless openjdk-8-jre-headless
+ *  git clone https://github.com/rose-compiler/rose-develop
+ *  cd rose-develop/
+ *  ./build
+ *  cd ..
+ *  mkdir buildrose
+ *  cd buildrose/
+ *  ../rose-develop/configure --prefix=/home/demo/opt/rose-inst --enable-edg_version=4.12 --with-boost-libdir=/usr/lib/x86_64-linux-gnu --with-boost=/usr
+ *  make rose-core -j4
+ *  make install-core -j4
  *  @endcode
  *      
  *
- *  @subsection installation_cmake Configuring with CMake
+ *  @subsection installation_cmake Configuring and building with CMake
  *
  *  If you desire to configure ROSE with CMake instead of GNU autotools, Follow these steps:
  *
@@ -409,31 +424,16 @@
  *  BOOST_ROOT=/path/to/my/boost/installation/directory
  *  export LD_LIBRARY_PATH="$BOOST_ROOT/lib:$LD_LIBRARY_PATH"
  *  cmake $ROSE_SRC -DCMAKE_INSTALL_PREFIX=$HOME/my-rose-installation -DBOOST_ROOT=$BOOST_ROOT
+ *  make -j4
  *  @endcode
  *
+ *  @section installation_build Other notes
  *
- *
- *  @section installation_build Building the library
- *
- *  To build and install the ROSE library, run "cd $ROSE_BLD" and then "make install-rose-library" (equivalently, "make -C
- *  $ROSE_BLD install-rose-library"). If you run "make" without specifying the "install-rose-library" target then additional
- *  tests, projects, and tutorials are also built. Projects are typically not tested to the same degree as the core
- *  library. You may specify an amount of parallelism with make's "-j N" switch.  Ensure that your machine meets the minimum
- *  hardware requirements before starting. A parallel build will require more than the minimum.
  *
  *  If you encounter errors about downloading EDG binary tarballs, see @ref installing_edg.
  *
  *  If you modify a ROSE header file then run "make -C $ROSE_BLD clean" before rebuilding if you're using GNU automake (not
  *  necessary for CMake).
- *
- *  If you're installing a different version of ROSE (or you've made modifications and are re-running "make install"), it is
- *  prudent to first remove the original installation directory to prevent the new installation from containing a mix of old
- *  and new versions.
- *
- *  The "check" targets in the makefiles run a variety of tests, most of which are also run by the automated continuous
- *  integration and release testing.
- *
- *
  *
  *  @section installation_using Using the library
  *
@@ -449,5 +449,6 @@
  *  This page is generated from $ROSE/docs/Rose/Installation/100_Installation.dox */
 
 /** @defgroup software_dependencies Software dependencies
+ *  @ingroup installation
  *
  *  Software on which ROSE depends. */

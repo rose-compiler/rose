@@ -6,6 +6,8 @@ static const char *description =
 
 #include <rose.h>
 
+#include <AsmUnparser_compat.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <LinearCongruentialGenerator.h>
@@ -25,16 +27,17 @@ struct Settings {
     size_t nBytes;                                      // number of bytes to disassemble
     int lcgSeed;                                        // seed value for the pseudo-random number generator
     std::string isa;                                    // instruction set architecture name
+    bool showingInsns;
 
     Settings()
-        : nBytes(1024), lcgSeed(0), isa("i386") {}
+        : nBytes(1024), lcgSeed(0), isa("i386"), showingInsns(false) {}
 };
 
 void
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    Parser p = CommandlineProcessing::createEmptyParser(purpose, description);
-    p.with(CommandlineProcessing::genericSwitches());
+    Parser p = Rose::CommandLine::createEmptyParser(purpose, description);
+    p.with(Rose::CommandLine::genericSwitches());
 
     SwitchGroup tool("Tool-specific switches");
 
@@ -51,6 +54,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .argument("name", anyParser(settings.isa))
                 .doc("Instruction set architecture name. This determines which disassembler is used. Specify \"list\" "
                      "to get a list of possible names."));
+
+    CommandLine::insertBooleanSwitch(tool, "show-insn", settings.showingInsns,
+                                     "Show disassembled instruction before running semantics.");
 
     if (!p.with(tool).parse(argc, argv).apply().unreachedArgs().empty()) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
@@ -130,6 +136,9 @@ main(int argc, char *argv[]) {
         } catch (const Disassembler::Exception&) {
             ++nDisExceptions;
         }
+
+        if (insn && settings.showingInsns)
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
 
         // Run semantics. We use a fresh input state each time, otherwise the state would eventually get too large.
         if (cpu && insn && !insn->isUnknown()) {

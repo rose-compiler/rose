@@ -1,0 +1,386 @@
+#!/bin/bash
+
+# This script is intended to take the place of ROSE's "configure" script. It takes all the same
+# command-line arguments, but produces a build tree configured for tup instead of make.
+#
+# This script does not require RMC to be used to configure ROSE, although that's how it's usually
+# tested. If you don't use RMC, some features might be missing due to not being supported by
+# ROSE's configure script.  E.g., ROSE's configure has no way to specify the location of the
+# libgpg-error package which is needed by libgcrypt, therefore if you don't use RMC then the
+# tup files will be configured to find "-lgpg-error" without any particular search directory.
+
+set -e
+
+arg0="${0##*/}"
+dir0="${0%/*}"
+dry_run=
+config_timestamp=.config-timestamp
+: VERBOSE # if non-empty, be verbose. Also set by the --verbose switch.
+
+: ${TUP_SCRIPTS_URL=https://github.com/matzke1/tup-scripts}
+
+# Print arguments and exit failure
+die() {
+    echo "$arg0:" "$@" >&2
+    exit 1
+}
+
+# Given a name and a bunch of arguments of the form "name1=value1", "name2=value2", etc. return the value
+# for the specified name, or nothing. The names don't have to be just letters.
+value_of() {
+    local name="$1"; shift
+    local arg
+    for arg in "$@"; do
+	local val="${arg#$name=}"
+	if [ "$val" != "$arg" ]; then
+	    echo "$val"
+	    return 0
+	fi
+    done
+}
+
+# Given a word and a list of words, return 0 if the word is present in the list and 1 otherwise.
+is_present() {
+    local name="$1"; shift
+    local ar
+    for arg in "$@"; do
+	[ "$name" = "$arg" ] && return 0
+    done
+    return 1
+}
+
+# Given ROSE configure script command-line arguments, return the value of the specified switch.
+#   If the command-line contains "SWITCH=VALUE" then return VALUE
+#   else if the switch matches "--with-NAME" and the command-line contains "--without-NAME" then return "no"
+#   else if the switch matches "--enable-NAME" and the command-line contains "--disable-NAME" then return "no"
+#   else return nothing
+config_switch() {
+    local switch="$1"; shift
+    local val="$(value_of "$switch" "$@")"
+    if [ "$val" != "" ]; then
+	echo "$val"
+	return 0
+    fi
+
+    case "$switch" in
+	--with-*)
+	    local name="${switch#--with-}"
+	    if is_present "--without-$name" "$@"; then
+		echo "no"
+		return 0
+	    fi
+	    ;;
+	--enable-*)
+	    local name="${switch#--enable-}"
+	    if is_present "--disable-$name" "$@"; then
+		echo "no"
+		return 0
+	    fi
+	    ;;
+    esac
+    return 0
+}
+
+# Given the NAME of a variable, return the value as set in a makefile. The makefile must have a line
+# of the form "NAME = VALUE" where VALUE does not contain the string "$(" or "${"
+makefile_value() {
+    local variable="$1" makefile="$2"
+    sed -n "/^${variable}[ \t]*=/ { s/^${variable}[ \t]*=[ \t]*//p; q }" <"$makefile"
+}
+
+# Given a C preprocessor include search path argument of the form "-Ifoo/include" return "foo".
+prefix_from_include() {
+    echo "$1" |\
+	sed -n 's/^[ \t]*-I[ \t]*\(.*\)\/include/\1/p'
+}
+
+# Given VALUE, YES, and NO
+#   if VALUE is empty, "no", "none", or "ambivalent" return NO
+#   otherwise return YES
+value_ite() {
+    local value="$1" yes="$2" no="$3"
+    case "$value" in
+	no|none|""|ambivalent)
+	    echo "$no"
+	    ;;
+	*)
+	    echo "$yes"
+	    ;;
+    esac
+}
+
+# Given a VALUE and DEFAULT, return one or the other
+value_or_else() {
+    local value="$1" dflt="$2"
+    value_ite "$value" "$value" "$dflt"
+}
+
+# Given a VALUE return "no" or VALUE.  A second argument of "no" forces the return of "no"
+value_or_no() {
+    if [ "$2" = "no" ]; then
+	echo no
+    else
+	value_or_else "$1" no
+    fi
+}
+
+# Given ROSE configure arguments, echo the list of tup variables for enabling and disabling ROSE
+# language features in the tup.config file.
+language_vars() {
+    # Get list of enabled languages
+    local languages=()
+    for lang in $(value_of --enable-languages "$@" |tr , ' '); do
+	case "$lang" in
+	    none)
+		: ignored
+		;;
+	    all)
+		languages=($(sed -n '/^[ \t]*ALL_SUPPORTED_LANGUAGES/ { s/.*"\(.*\)"/\1/; s/[, \t]\+/ /g; p; q}' \
+				 < "$RG_SRC/config/support-languages.m4"))
+		;;
+	    c|c++)
+		languages=("${languages[@]}" "cxx")
+		;;
+	    binaries)
+		languages=("${languages[@]}" "binary")
+		;;
+	    *)
+		languages=("${languages[@]}" "$lang")
+		;;
+	esac
+    done
+
+    for lang in "${languages[@]}"; do
+	echo -n "ENABLE_${lang}_ANALYSIS" |tr a-z A-Z
+	echo "=yes"
+    done
+}
+
+# Information about the hosting compiler
+host_compiler_vars() {
+    if [ -n "$CXX_VENDOR" ]; then
+	echo "CXX_VENDOR=\"$CXX_VENDOR\""
+	echo "CXX_VERSION=\"$CXX_VERSION\""
+	echo "CXX_LANGUAGE=\"$CXX_LANGUAGE\""
+    fi
+
+    if [ -n "$C_VENDOR" ]; then
+	echo "C_VENDOR=\"$C_VENDOR\""
+	echo "C_VERSION=\"$C_VERSION\""
+	echo "C_LANGUAGE=\"$C_LANGUAGE\""
+    fi
+}
+
+# Information about the target (backend) compiler
+target_compiler_vars() {
+    local vendor="$(makefile_value BACKEND_COMPILER_VERSION_NAME Makefile)"
+    local major="$(makefile_value BACKEND_COMPILER_VERSION_MAJOR_NUMBER Makefile)"
+    local minor="$(makefile_value BACKEND_COMPILER_VERSION_MINOR_NUMBER Makefile)"
+    local patch="$(makefile_value BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER Makefile)"
+    echo "CXX_TARGET_VENDOR=\"$vendor\""
+    echo "CXX_TARGET_VERSION=\"${major}.${minor}.${patch}\""
+}
+
+# Given the name of a "lib", "include", or "bin" directory, return the part before.
+# The given path can have one additional component after the "lib", "include", or "bin"
+prefix() {
+    local path="$1"
+
+    if [ "${path%/bin}" != "$path" ]; then
+	echo "${path%/bin}"
+    elif [ "${path%/bin/*}" != "$path" ]; then
+	echo "${path%/bin/*}"
+    elif [ "${path%/include}" != "$path" ]; then
+	echo "${path%/include}"
+    elif [ "${path%/include/*}" != "$path" ]; then
+	echo "${path%/include/*}"
+    elif [ "${path%/lib}" != "$path" ]; then
+	echo "${path%/lib}"
+    elif [ "${path%/lib/*}" != "$path" ]; then
+	echo "${path%/lib/*}"
+    fi
+}
+
+# Given the name of an executable, such as "binwalk", return the installation directory. If the executable is not
+# found, then return nothing.
+exe_prefix() {
+    local exename="$1"
+    prefix "$(type -p "$exename")"
+}
+
+# Grab the EDG major and minor version number from the top-level Makefile
+edg_version() {
+    edg_major="$(makefile_value ROSE_EDG_MAJOR_VERSION_NUMBER Makefile)"
+    edg_minor="$(makefile_value ROSE_EDG_MINOR_VERSION_NUMBER Makefile)"
+    [ -n "$edg_major" -a -n "$edg_minor" ] && echo "${edg_major}.${edg_minor}"
+}
+
+# Execute the arguments as a command, or just show them
+dry_run() {
+    local comment_out=""
+    if [ -n "$dry_run" ]; then
+	echo "+" "$@"
+    else
+	if [ -n "$VERBOSE" ]; then
+	    echo "+" "$@"
+	fi
+	"$@"
+    fi
+}
+
+########################################################################################################################
+########################################################################################################################
+
+if is_present --dry-run "$@" || is_present -n "$@"; then
+    dry_run=yes
+fi
+if is_present --verbose "$@"; then
+    VERBOSE=yes
+fi
+
+RG_SRC="$(cd .. && pwd)"
+[ -r "$RG_SRC/ROSE_VERSION" ] || die "parent directory ($RG_SRC) is not the top of the ROSE source tree"
+[ -x "$RG_SRC/configure" ] || die "$RG_SRC/configure is not found or is not executable"
+[ -r "$RG_SRC/Tuprules.tup" ] || die "ROSE does not support Tup builds (did you apply the patch?)"
+if [ ! -d "$RG_SRC/scripts/tup" ]; then
+    echo "$arg0: Robb's Tup scripts are not installed. Doing that now..." >&2
+    dry_run git clone "$TUP_SCRIPTS_URL" "$RG_SRC/scripts/tup"
+fi
+
+# Run ROSE's configure script
+dry_run touch "$config_timestamp"
+dry_run sleep 1 # in case of low-resolution file mtimes
+dry_run $RG_SRC/configure "$@"
+
+# Generate the tup.config file in the CWD by merging the source tup.config with information that was
+# passed to the configure script and the results of the configure script. If the information isn't
+# available as a configure argument or a configure result, then try to get it from RMC/Spock. If RMC/Spock
+# isn't being used then assume "no" in most cases.
+dry_run $RG_SRC/scripts/tup/merge-configs \
+    CC="$(value_or_else "$CC" "$(value_or_else "$C_COMPILER" cc)")" \
+    CXX="$(value_or_else "$CXX" "$(value_or_else "$CXX_COMPILER" c++)")" \
+    C_DEBUG="$(value_or_else "$(value_of --with-C_DEBUG "$@")" -g)" \
+    CXX_DEBUG="$(value_or_else "$(value_of --with-CXX_DEBUG "$@")" -g)" \
+    C_OPTIM="$(value_or_else "$(value_of --with-C_OPTIMIZE "$@")" -O2)" \
+    CXX_OPTIM="$(value_or_else "$(value_of --with-CXX_OPTIMIZE "$@")" -O2)" \
+    C_WARN="$(value_of --with-C_WARNINGS "$@")" \
+    CXX_WARN="$(value_of --with-CXX_WARNINGS "$@")" \
+    C_CXX_MISC="-pthread" \
+    C_MISC="$CFLAGS" \
+    CXX_MISC="$CXXFLAGS" \
+    EDG_VERSION="$(value_or_no "$(edg_version)")" \
+    INSTALLATION_PREFIX="$(value_of --prefix "$@")" \
+    $(language_vars "$@") \
+    WITH_BINWALK="$(value_or_else "$BINWALK_ROOT" "$(value_or_no "$(exe_prefix binwalk)")")" \
+    WITH_BOOST="$(value_or_no "$(config_switch --with-boost "$@")")" \
+    WITH_BZIP2="$(value_or_else "$LIBBZ2_ROOT" "$(value_or_no "$BZIP2_ROOT")")"  \
+    WITH_CAPSTONE="$(value_or_no "$(config_switch --with-capstone "$@")")" \
+    WITH_DLIB="$(value_or_no "$(prefix "$(config_switch --with-dlib "$@")")")" \
+    WITH_DOXYGEN="$(value_or_no "$(makefile_value DOXYGEN Makefile)")" \
+    WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
+    WITH_ELF="$(value_or_no "$(config_switch --with-elf "$@")")" \
+    WITH_GCRYPT="$(value_or_no "$(config_switch --with-gcrypt "$@")")" \
+    WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system)")" \
+    WITH_GRAPHICSMAGICK="$(value_or_no "$LIBGRAPHICSMAGICK_ROOT")" \
+    WITH_JPEG="$(value_or_no "$LIBJPEG_ROOT")" \
+    WITH_LCMS="$(value_or_no "$LIBLCMS_ROOT")" \
+    WITH_LZMA="$(value_or_no "$LIBLZMA_ROOT")" \
+    WITH_MAGIC="$(value_or_no "$(config_switch --with-magic "$@")")" \
+    WITH_PNG="$(value_or_no "$LIBPNG_ROOT")" \
+    WITH_PQXX="$(value_or_no "$(config_switch --with-pqxx "$@")")" \
+    WITH_PYTHON="$(value_ite "$(makefile_value PYTHON Makefile)" "$(makefile_value PYTHON_ROOT Makefile)" no)" \
+    PYTHON_VERSION="$(makefile_value PYTHON_VERSION_MM Makefile)" \
+    WITH_QT="$(value_or_no "$(exe_prefix "$(makefile_value MOC Makefile)")" "$(config_switch --with-qt "$@")")" \
+    WITH_READLINE="$(value_or_no "$(makefile_value LIBREADLINE_INSTALL_PATH Makefile)")" \
+    WITH_SQLITE="$(value_or_no "$(prefix_from_include "$(makefile_value SQLITE3_CFLAGS Makefile)")")" \
+    WITH_TIFF="$(value_or_no "$LIBTIFF_ROOT")" \
+    WITH_WT="$(value_or_no "$(makefile_value WT_PREFIX Makefile)")" \
+    WITH_YAMLCPP="$(value_or_no "$(makefile_value ROSE_YAML_PREFIX Makefile)")" \
+    WITH_YICES="$(value_or_no "$(makefile_value ROSE_YICES_PREFIX Makefile)")" \
+    WITH_Z3="$(value_or_no "$(makefile_value ROSE_Z3_PREFIX Makefile)")" \
+    WITH_ZLIB="$(value_or_no "$ZLIB_ROOT")" \
+    AUTOTOOLS_STASH="$(pwd)/.stash" \
+    $(host_compiler_vars) \
+    $(target_compiler_vars) \
+    ROSE_SOURCE="$RG_SRC" \
+    ROSE_VERSION="$(makefile_value PACKAGE_VERSION Makefile)" \
+    TUP_ACKNOWLEDGMENT="$(value_or_no "$TUP_ACKNOWLEDGMENT")" \
+    < "${RG_SRC}/tup.config" > ./tup.config
+
+# The ROSE_CONFIGURE_DATE is usually the time at which "configure" was run. However, that causes the
+# contents of the src/util/rose_paths.C file to change every time configure runs, which means that
+# rose_paths.C needs to be recompiled, which means that CxxGrammarMetaProgram needs to be recompiled,
+# which means all the huge ROSETTA generated source files might need to be recompiled. Also, since
+# the src/util/librose_partial.a archive gets updated, librose.so and librose.a need to be rebuilt,
+# which means all the ROSE tests need to be recompiled and relinked, which means all the test results
+# are out-of-date and need to be re-run. Whew!!!! Therefore, we'll replace the configuration date
+# with something that's close but changes less frequently: namely, the last commit date.
+commit_date="$(git log -1 --pretty=format:"%cd")"
+sed -i "s/^const std::string ROSE_CONFIGURE_DATE .*/const std::string ROSE_CONFIGURE_DATE = \"$commit_date\";/" src/util/rose_paths.C
+
+# Initialize or update the tup database
+if [ ! -r tup.debug ]; then
+    # The initial tup build in this variant directory needs to start with an empty directory
+    # except for the tup.config file and dot files. Therefore, temporarily stash away everything, run
+    # some trivial tup command, and then unstash.  We leave a copy in the stash so that Tupfiles
+    # can have rules to reach into the stash to update the working copy.
+    dry_run rm -rf .stash
+    dry_run mkdir .stash
+    # Generated makefiles aren't needed by tup and just pollute, so trash them
+    dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
+    dry_run mv libtool .libtool # referenced by tup files
+    dry_run mv * .stash
+    dry_run mv .stash/tup.config .
+    dry_run tup tup.debug
+    dry_run rsync -a .stash/ .
+else
+    # Generated makefiles aren't needed by tup and just pollute, so trash them
+    if [ -n "$VERBOSE" ]; then
+	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
+    else
+	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty rm
+    fi
+	
+    # Any files that were just created or modified by ROSE's configure script should be copied
+    # into the stash so that Tupfile rules that copy them back out into the build tree will
+    # get the latest version rather than overwriting the working copy with an old version. However,
+    # if the only change is the file's mtime, reset the mtime to be the same as in the stash.
+    if [ -n "$dry_run" ]; then
+	echo "+ : update_stash" >&2
+    else
+	for file in $(find . -type f -newer $config_timestamp); do
+	    dir="${file%/*}"
+	    [ -n "$dir" ] || dir="."
+	    save=
+	    if [ ! -e ".stash/$file" ]; then
+		save=yes # not existing in the stash
+	    elif ! cmp --quiet "$file" ".stash/$file"; then
+		save=yes # files differ
+	    fi
+	    if [ -n "$save" ]; then
+		# Save the new file
+		dry_run mkdir -p ".stash/$dir"
+		dry_run cp -p "$file" ".stash/$file"
+	    else
+		# Restore the old (identical) file including its mtime
+		dry_run mkdir -p "$dir"
+		dry_run cp -p ".stash/$file" "$file"
+	    fi
+	done
+    fi
+    dry_run tup tup.debug
+fi
+
+# Speed up the first build by parsing Tup files now
+dry_run tup parse
+
+# Generate a stub makefile at the top level for users that can't remember how to spell "tup"
+(
+    echo "# This makefile is just a stub because you've chosen to build ROSE using tup."
+    echo
+    echo ".PHONY: all check install"
+    echo
+    echo "all:; tup"
+    echo "check:; tup"
+    echo "install:; tup && ../scripts/tup/install-staged --next"
+) >Makefile

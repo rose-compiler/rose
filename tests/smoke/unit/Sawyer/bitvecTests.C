@@ -71,6 +71,11 @@ static void string_tests() {
     BitVector v3 = BitVector::parse("10");
     check(v3.size()==7);
     check(v3.toInteger() == 10);
+
+    BitVector v4 = BitVector::parse("340193404210632335760508365704335069440");
+    show(v4);
+    std::string v4hex = v4.toHex();
+    check(v4hex == "0ffeeddccbbaa99887766554433221100");
 }
 
 static void copy_ctor_tests() {

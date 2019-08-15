@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
@@ -180,9 +181,9 @@ CfgEmitter::init() {
 
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
-        SmtSolver *solver = NULL;
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
-        size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().nBits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
@@ -836,7 +837,7 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
     : functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
-    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+    callGraph(partitioner.functionCallGraph(AllowParallelEdges::NO));
 }
 
 CgEmitter::CgEmitter(const Partitioner& /*for consistency and future expansion*/, const FunctionCallGraph &cg)
@@ -933,7 +934,7 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
 
 CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher)
     : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
-    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+    callGraph(partitioner.functionCallGraph(AllowParallelEdges::NO));
 }
 
 CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher)

@@ -1,1 +1,2 @@
 X < int > ::foobar -> X < int > ::foobar
+foo -> X < int > ::foobar

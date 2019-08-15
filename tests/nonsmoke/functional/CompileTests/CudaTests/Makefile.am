@@ -11,32 +11,27 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS  = $(ROSE_RPATHS)
 LDADD = $(ROSE_LIBS)
 
-CUDA_NO_BUILT_IN_CODES = \
+CUDA_NO_BUILTIN_CODES = \
 test_2011_01.cu \
 test_2011_02.cu
 
-CUDA_CODES = \
-test_2011_11.cu \
-test_2011_12.cu 
+CUDA_NO_BUILTIN_CODES_Objects = ${CUDA_NO_BUILTIN_CODES:.cu=.o}
 
-# DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
-if !ROSE_USING_GCC_VERSION_LATER_5_1
-CUDA_CODES += \
-test_2011_13.cu
-endif
-
-CUDA_CODES_FAILING = 
-
-TESTCODES= \
-  $(CUDA_NO_BUILT_IN_CODES) \
-  $(CUDA_CODES)
-
-TESTCODES_Objects = ${TESTCODES:.cu=.o}
-
-$(TESTCODES_Objects): ../../testTranslator
+$(CUDA_NO_BUILTIN_CODES_Objects): ../../testTranslator
 	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
 
-if ROSE_USE_EDG_VERSION_4_9
+CUDA_CODES = \
+test_2011_11.cu \
+test_2011_12.cu \
+test_2011_13.cu \
+header_test.cu \
+mm_single.cu
+
+CUDA_CODES_Objects = ${CUDA_CODES:.cu=.o}
+
+$(CUDA_CODES_Objects): ../../testTranslator
+	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
+
 # DQ (1/25/2016): These are conditional upon EDG 4.9 which is the only version with the C++11 support.
 if !ROSE_USING_GCC_VERSION_LATER_4_9
 # DQ (2/6/2017): We can't use C++11 mode on GNU 4.9 and greater with EDG 4.9 (requires EDG 4.12).
@@ -46,9 +41,19 @@ testDeviceTransformation_01: deviceTranformation
 testDeviceTransformation_02: deviceTranformation
 	./deviceTranformation -std=c++11 -rose:skipfinalCompileStep -c $(srcdir)/test2016_03.cu
 endif
-endif
 
 check-local:
+if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+	@$(MAKE) $(CUDA_NO_BUILTIN_CODES_Objects)
+	@$(MAKE) $(CUDA_CODES_Objects)
+	@echo "*******************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
+	@echo "*******************************************************************************************************************"
+else
+	@echo "Rose is configured without C for CUDA support"
+endif
+
+old-check-local:
 if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
 	@echo "Tests for CUDA support"
 # DQ (2/19/2017): NEW VERSION OF LOGIC
@@ -65,7 +70,8 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
 	@echo "source position tests using GNU version 4.8 and earlier backend compiler."
-	@$(MAKE) $(TESTCODES_Objects)
+	@$(MAKE) $(CUDA_NO_BUILTIN_CODES_Objects)
+	@$(MAKE) $(CUDA_CODES_Objects)
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else  # NOT USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == false"
@@ -89,7 +95,8 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 if USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == true"
 	@echo "source position tests using GNU version 4.8 backend compiler."
-	@$(MAKE) $(TESTCODES_Objects)
+	@$(MAKE) $(CUDA_NO_BUILTIN_CODES_Objects)
+	@$(MAKE) $(CUDA_CODES_Objects)
 else  # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
@@ -101,7 +108,8 @@ else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 	@echo "USING_INTEL_COMPILER == true"
-	@$(MAKE) $(TESTCODES_Objects)
+	@$(MAKE) $(CUDA_NO_BUILTIN_CODES_Objects)
+	@$(MAKE) $(CUDA_CODES_Objects)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 	@echo "USING_INTEL_COMPILER == false"

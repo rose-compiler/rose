@@ -7,78 +7,36 @@
 //-----------------------------------------------------------------------------------
 
 #include "sageBuilder.h"
-#include "JovialBuilderInterface.h"
+#include "UntypedConverter.h"
 
-#ifdef FORTRAN_JUNK
-#include "FASTNodes.hpp"
-#include "FortranBuilderInterface.h"
-#endif
-
-namespace Jovial {
 namespace Untyped {
 
-class UntypedConverter
+class UntypedJovialConverter : public UntypedConverter
   {
     public:
 
-      UntypedConverter(JovialBuilderInterface* builder) : pBuilder(builder)
-        {
-        }
+      virtual bool convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt, SgScopeStatement* label_scope=NULL);
 
-      void  setSourcePositionFrom      ( SgLocatedNode* toNode, SgLocatedNode* fromNode );
-      void  setSourcePositionIncluding ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode );
-
-      void  setSourcePositionUnknown   ( SgLocatedNode* locatedNode );
-
-      SgScopeStatement* initialize_global_scope ( SgSourceFile* file );
-
-      void buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function,
-                                  SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope);
-
-      void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                        SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope=NULL);
-
-      SgInitializedName* convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
-
-      void convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl);
-
-      void setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedTokenList* mod_list);
-
-
-      SgType*   convertSgUntypedType        (SgUntypedType* ut_type,                SgScopeStatement* scope);
-      SgGlobal* convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
-
-      SgModuleStatement*          convertSgUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
-      SgProgramHeaderStatement*   convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
-      SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
-      SgProcedureHeaderStatement* convertSgUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
-      void                        convertSgUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
+      virtual bool convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+                                SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope=NULL);
 
    // Declaration statements
    //
-      SgDeclarationStatement* convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
-      SgImplicitStatement*    convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
-      SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
+
+    virtual SgDeclarationStatement* convertUntypedJovialCompoolStatement(SgUntypedNameListDeclaration*  ut_decl, SgScopeStatement* scope);
+    virtual SgDeclarationStatement* convertUntypedStructureDeclaration  (SgUntypedStructureDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //
-      SgExprStatement* convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope);
-      SgStatement*     convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope);
-      SgStatement*     convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
+
+    virtual SgStatement* convertUntypedCaseStatement (SgUntypedCaseStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+    virtual SgStatement* convertUntypedForStatement  (SgUntypedForStatement*  ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
 
    // Expressions
    //
-      SgExpression* convertSgUntypedExpression      (SgUntypedExpression* ut_expr, SgExpressionPtrList& children, SgScopeStatement* scope);
 
-      SgValueExp*   convertSgUntypedValueExpression (SgUntypedValueExpression* ut_expr);
-      SgUnaryOp*    convertSgUntypedUnaryOperator   (SgUntypedUnaryOperator* untyped_operator, SgExpression* expr);
-      SgBinaryOp*   convertSgUntypedBinaryOperator  (SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs);
-
-    private:
-      JovialBuilderInterface* pBuilder;  // pointer to controlling builder class; DO NOT delete/free
   };
 
-} // namespace Jovial
 } // namespace Untyped
 
 // endif for UNTYPED_JOVIAL_CONVERTER_H

@@ -4,7 +4,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C99 testcodes targeting aspects of C99 that might not be a subset of C or C++ #
 ###########################################################################################
 
-# if ROSE_USE_EDG_VERSION_4_4
 TESTCODES_REQUIRED_TO_PASS = \
      test2005_186.c \
      test2006_127.c \
@@ -25,25 +24,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      complex_01.c \
      complex_03.c \
      bool.c \
-     constants.c 
-
-# DQ (7/31/2013): I think this is a C89 test code.
-# DQ (10/6/2012): This is a failing test for the new edg 4.x work.
-# test2012_106.c
-
-# TESTCODES_REQUIRED_TO_PASS = \
-#     test2005_186.c \
-#     test2006_127.c \
-#     test2006_143.c \
-#     test2008_01.c \
-#     complex_01.c \
-#     complex_03.c \
-#     bool.c \
-#     constants.c 
+     constants.c
 
 TESTCODE_CURRENTLY_FAILING = \
      complex_02.c \
-     complex_04.c 
+     complex_04.c \
+     test2012_106.c
 
 # DQ (7/3/2013): This demonstrates the GNU gcc does not default to C99, at least for gcc 
 # version 4.4.5. ROSE was modified in March 2013 to default to C99, but this might have 
@@ -60,42 +46,65 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-# DQ (7/2/2013): Change to allow default behavior to be used (so that default C99 behavior can be tested).
-# ROSE_FLAGS = -rose:C99 --edg:no_warnings -w --edg:restrict 
-# ROSE_FLAGS = -rose:verbose 0 -rose:C99 --edg:no_warnings -w --edg:restrict 
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -w --edg:restrict
+#########
+# Targets lists
 
-PASSING_TEST_Objects = ${TESTCODES:.c=.o}
-TEST_Objects = ${ALL_TESTCODES:.c=.o}
+PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
+TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 
-# DQ (10/27/2012): Removed the dependency on the object files to avoid recompiling all files.
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-$(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+#########
+# Translator to be used: calling "make TEST_TRANSLATOR=../../testBackend" uses the backend compiler only
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
+../../testBackend:
+	cd ../..; $(MAKE) testBackend
 
-# Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.c)
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
-# Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+TEST_TRANSLATOR=../../testTranslator
+
+#########
+# ROSE_FLAGS
+
+LANG_FLAGS = -std=c99
+
+ROSE_FLAGS =
+if !ROSE_USE_CLANG_FRONTEND
+   ROSE_FLAGS += --edg:no_warnings --edg:restrict
+endif
+ROSE_FLAGS += -w -rose:verbose 0
+
+#########
+# RTH test targets
+
+$(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)" \
+		TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)
+endif
+
+#
+############
 
 EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
 	@echo "Tests for C99 examples."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C99_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
 	rm -f *.o rose_*.[cC]
-	rm -rf QMTest
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

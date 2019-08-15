@@ -92,6 +92,32 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
 }
 
 /*! 
+ * \author Markus Schordan
+ * \date 2019 (linear algorithm for IO reduction)
+ */         
+void TransitionGraph::reduceEStates3(function<bool(const EState*)> predicate) {
+  const size_t reportingInterval=10000;
+  EStatePtrSet states=estateSet();
+  size_t todo=states.size();
+  size_t numReduced=0;
+  cout << "STATUS: remaining states to check for reduction: "<<todo<<endl;
+  if (todo==0) {
+    return;
+  }
+  for(auto i:states) { 
+    if(!(predicate(i) || i == getStartEState())) {
+      reduceEState2(i);
+      numReduced++;
+    }
+    todo--;
+    if(todo%reportingInterval==0) {
+      cout << "STATUS: remaining states to check for reduction: "<<todo<<endl;
+    }
+  }
+  cout<<"STATUS: reduced "<<numReduced<<" states."<<endl;
+}
+
+/*! 
   * \author Markus Schordan
   * \date 2012.
  */
@@ -308,19 +334,6 @@ string TransitionGraph::toString() const {
   }
   assert(cnt==size());
   return s;
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> estateSet;
-  for(TransitionGraph::iterator j=begin();j!=end();++j) {
-    if((*j)->source->label()==lab)
-      estateSet.insert((*j)->source);
-  }
-  return estateSet;
 }
 
 /*! 

@@ -120,28 +120,53 @@ TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -std=c89
-if !ROSE_USE_CLANG_FRONTEND
-   ROSE_FLAGS += --edg:no_warnings --edg:restrict
-endif
-ROSE_FLAGS += -w
+#########
+# Targets lists
 
 PASSING_TEST_Source_passed = ${TESTCODES:.c=.c.passed}
 TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 
-testTranslator = ../../testTranslator
-
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-#$(TEST_Objects): ../../testTranslator
-#	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
-
-# DQ (9/23/2013): Added better control to run tests more cleanly (command-line and any output put into *.passed file, or generates similar *.failed file is testing is unsuccessful).
-$(TEST_Source_passed): %.passed: ../../testTranslator $(top_srcdir)/scripts/test_exit_status
-	@$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.c.passed=.c)" $(top_srcdir)/scripts/test_exit_status $@
+#########
+# Translator to be used: calling "make TEST_TRANSLATOR=../../testBackend" uses the backend compiler only
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+
+../../testBackend:
+	cd ../..; $(MAKE) testBackend
+
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
+
+TEST_TRANSLATOR=../../testTranslator
+
+#########
+# ROSE_FLAGS
+
+LANG_FLAGS = -std=c89
+
+ROSE_FLAGS =
+if !ROSE_USE_CLANG_FRONTEND
+   ROSE_FLAGS += --edg:no_warnings --edg:restrict
+endif
+ROSE_FLAGS += -w -rose:verbose 0
+
+#########
+# RTH test targets
+
+$(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+if !ROSE_USE_INSURE
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)" \
+		TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
+		$(top_srcdir)/scripts/test_exit_status $@
+else
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)
+endif
+
+#
+############
+
 # builtin-types.def, Liao, 1/15/2014, no reference to this file at all. remove it from the list
 EXTRA_DIST = $(ALL_TESTCODES) c-common.def \
              predict.def test2010_15.h test2013_05.h test2013_06.h
@@ -165,4 +190,7 @@ clean-local:
 	rm -rf test_directory
 	rm -rf test2013_76_unparse_headers conftest_configure_test else_case_disambiguation_test.c
 	rm -f *.err *.passed *.failed
+
+status:
+	@$(MAKE) $(TEST_Source_passed)
 

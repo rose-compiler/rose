@@ -167,7 +167,12 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
+  rose_inputcreateAbstractHandles.C \
   buildJavaPackage.passed
+
+# DQ (7/7/2019): This is failing for at least GNU 5.1, and I can't debug it 
+# (need to discuss with Robb, everything else appears to pass).
+#  abiStuffTest.passed 
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
 # DQ (2/8/2017): This test will sometimes fail on GNU 5.1 and later compilers.
@@ -600,4 +605,4 @@ clean-local:
 	rm -f $(generatedCodeExamples) *.dot 
 	rm -f $(addsuffix .passed, $(generatedCodeExamples)) 
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
-	rm -rf rose_*.C
+	rm -rf rose_*.C inputcreateAbstractHandles.C.pdf

@@ -34,6 +34,8 @@ noinst_PROGRAMS = \
    testTraversalOfTemplateInstantiations \
 	testTranslator2013_01 \
 	testTranslator2013_02 \
+	testTranslator2018_01 \
+	testTranslator2018_02 \
 	testPlugins
 #
 # a better alternative to identityTranslator
@@ -69,6 +71,8 @@ testTraversalOfTemplateInstantiations_SOURCES = testTraversalOfTemplateInstantia
 
 testTranslator2013_01_SOURCES = testTranslator2013_01.C
 testTranslator2013_02_SOURCES = testTranslator2013_02.C
+testTranslator2018_01_SOURCES = testTranslator2018_01.C
+testTranslator2018_02_SOURCES = testTranslator2018_02.C
 
 # LDADD = $(ROSE_SEPARATE_LIBS)
 
@@ -152,6 +156,12 @@ input_testTranslator2013_01.o: testTranslator2013_01
 
 input_testTranslator2013_02.o: testTranslator2013_02
 	./testTranslator2013_02 -rose:verbose 0 $(srcdir)/input_testTranslator2013_02.C && touch $@
+
+input_testTranslator2018_01.o: testTranslator2018_01
+	./testTranslator2018_01 -DSKIP_ROSE_BUILTIN_DECLARATIONS -rose:verbose 0 -c $(srcdir)/input_testTranslator2018_01.C && touch $@
+
+input_testTranslator2018_02.o: testTranslator2018_02
+	./testTranslator2018_02 -rose:verbose 0 -c $(srcdir)/input_testTranslator2018_02.C && touch $@
 
 
 EXTRA_DIST = \

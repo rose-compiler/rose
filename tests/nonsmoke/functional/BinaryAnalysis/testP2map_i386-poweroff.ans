@@ -386,10 +386,10 @@
 0x08048c2c: 68 1c 98 04 08          |h....   |<sp-16>   push   0x0804981c<<Func>>
 0x08048c31: 51                      |Q       |<sp-20>   push   ecx
 0x08048c32: 56                      |V       |<sp-24>   push   esi
-0x08048c33: 68 6c 8e 04 08          |hl...   |<sp-28>   push   0x08048e6c<<Func>>
+0x08048c33: 68 6c 8e 04 08          |hl...   |<sp-28>   push   0x08048e6c<main>
 0x08048c38: e8 5f fe ff ff          |._...   |<sp-32>   call   0x08048a9c<__libc_start_main@plt>
 0x08048c38: Outgoing stack delta: -36
-0x08048c38: Successor blocks: 0x08048a9c<__libc_start_main@plt>, 0x08048c3d
+0x08048c38: Successor blocks: 0x08048a9c<__libc_start_main@plt>, 0x08048c3d, 0x08048e6c<main>
 
 0x08048c3d: Basic block reasons: 
 0x08048c3d: f4                      |.       |<sp-32>   hlt    
@@ -510,7 +510,7 @@
 0x08048cc1: Outgoing stack delta: +4
 0x08048cc1: Successor blocks: unknown
 
-0x08048cc4: ================================== Function (function call, pattern, graph) unknown name
+0x08048cc4: ================================== Function (function call, graph) unknown name
 0x08048cc4: Function does not return to caller.
 
 0x08048cc4: Basic block reasons: entry point
@@ -576,7 +576,7 @@
 0x08048d58: Outgoing stack delta: -32
 0x08048d58: Successor blocks: 0x08048b5c<exit@plt>
 
-0x08048d60: ================================== Function (function call, pattern, graph) unknown name
+0x08048d60: ================================== Function (function call, graph) unknown name
 0x08048d60: Function stack delta: +4
 
 0x08048d60: Basic block reasons: entry point
@@ -680,7 +680,7 @@
 0x08048de8: Outgoing stack delta: +4
 0x08048de8: Successor blocks: unknown
 
-0x08048dec: ================================== Function (function call, pattern, graph) unknown name
+0x08048dec: ================================== Function (function call, graph) unknown name
 0x08048dec: Function does not return to caller.
 
 0x08048dec: Basic block reasons: entry point
@@ -746,9 +746,9 @@
 0x08048e66: Outgoing stack delta: -64
 0x08048e66: Successor blocks: 0x08048b5c<exit@plt>
 
-0x08048e6c: ================================== Function (pattern, graph, discontiguous) unknown name
+0x08048e6c: ================================== Function (function call, graph, discontiguous) <main>
 
-0x08048e6c: Basic block reasons: entry point, CFG head
+0x08048e6c: Basic block reasons: entry point
 0x08048e6c: 55                      |U       |<sp+0 >   push   ebp
 0x08048e6d: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
 0x08048e6f: 57                      |W       |<sp-4 >   push   edi

@@ -6,7 +6,7 @@
 #include "NumberIntervalLattice.h"
 #include "PointerAnalysisInterface.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 class CppExprEvaluator {
  public:
   CppExprEvaluator(NumberIntervalLattice* d, VariableIdMapping* vim);
@@ -17,8 +17,10 @@ class CppExprEvaluator {
   void setVariableIdMapping(VariableIdMapping* variableIdMapping);
   bool isValid();
   void setShowWarnings(bool warnings);
-  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface);
+  void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface);
   void setSoundness(bool s);
+  void setSkipSelectedFunctionCalls(bool flag);
+  bool getSkipSelectedFunctionCalls();
  private:
   // takes the expression of SgSizeOfOp(Exp) and determines its size
   int computeSize(SgSizeOfOp* node);
@@ -28,8 +30,9 @@ class CppExprEvaluator {
   VariableIdMapping* variableIdMapping;
   PropertyState* propertyState;
   bool _showWarnings;
-  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
   bool _sound;
+  bool _skipSelectedFunctionCalls=false;
 };
 }
 #endif

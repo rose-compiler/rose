@@ -1,0 +1,10 @@
+START
+PROGRAM testreturn ;
+BEGIN
+ RETURN ;
+ label1: label2:
+ label3:
+ Return ;
+ labelaa: labelbb: labelcc: return ;
+END
+TERM

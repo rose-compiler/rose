@@ -1,0 +1,13 @@
+include_rules
+
+run $(tool_compile_linkexe) --install identityTranslator.C
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    run $(tool_compile_linkexe) binaryAnalysis_symbolTable.C
+    run $(tool_compile_linkexe) binaryAttribute.C
+    run $(tool_compile_linkexe) binaryCallGraph.C
+    run $(tool_compile_linkexe) binaryDominance.C
+    run $(tool_compile_linkexe) binaryFunctionCfg.C
+    run $(tool_compile_linkexe) binaryHelloWorld.C
+    run $(tool_compile_linkexe) binaryStrings.C
+endif

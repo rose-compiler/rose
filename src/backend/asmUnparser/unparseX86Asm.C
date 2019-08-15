@@ -22,7 +22,8 @@ std::string unparseX86Mnemonic(SgAsmX86Instruction *insn) {
         case x86_branch_prediction_taken: result += ",pt"; break;
         case x86_branch_prediction_not_taken: result += ",pn"; break;
         default:
-            ASSERT_not_reachable("bad x86 branch prediction: " + stringifyX86BranchPrediction(insn->get_branchPrediction()));
+            ASSERT_not_reachable("bad x86 branch prediction: " +
+                                 stringifyBinaryAnalysisX86BranchPrediction(insn->get_branchPrediction()));
     }
     return result;
 }

@@ -121,27 +121,29 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if(func_ref != NULL)
-    func_name = func_ref->get_symbol()->get_name().str();
-  else
-    func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if(func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if( func_name == "operator<=" ||
-      func_name == "operator>=" ||
-      func_name == "operator<" ||
-      func_name == "operator>" ||
-      func_name == "operator!="  )
-    return true;
+     if( func_name == "operator<=" ||
+         func_name == "operator>=" ||
+         func_name == "operator<" ||
+         func_name == "operator>" ||
+         func_name == "operator!="  )
+        {
+          return true;
+        }
 
-  return false;
+     return false;
+   }
 
-}
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryArithmeticOperator
@@ -151,30 +153,32 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if(func_ref != NULL)
-    func_name = func_ref->get_symbol()->get_name().str();
-  else
-    func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if(func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if( func_name == "operator+"  ||
-      func_name == "operator-"  ||
-      func_name == "operator*" ||
-      func_name == "operator/" ||
-      func_name == "operator+=" ||
-      func_name == "operator-=" ||
-      func_name == "operator*="||
-      func_name == "operator/="  )
-    return true;
+     if( func_name == "operator+"  ||
+         func_name == "operator-"  ||
+         func_name == "operator*" ||
+         func_name == "operator/" ||
+         func_name == "operator+=" ||
+         func_name == "operator-=" ||
+         func_name == "operator*="||
+         func_name == "operator/="  )
+        {
+          return true;
+        }
 
-  return false;
+     return false;
+   }
 
-}
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryParenOperator
@@ -184,21 +188,23 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if (func_ref != NULL)
-       func_name = func_ref->get_symbol()->get_name().str();
-    else
-       func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if (func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator()")
-    return true;
-  return false;
-}
+     if (func_name == "operator()")
+          return true;
+
+     return false;
+   }
+
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryBracketOperator
@@ -208,22 +214,22 @@ bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
    {
-  SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-  SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref        = isSgFunctionRefExp(expr);
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  if (!func_ref && !mfunc_ref) return false;
+     if (!func_ref && !mfunc_ref) return false;
 
-  string func_name;
-  if (func_ref != NULL)
-       func_name = func_ref->get_symbol()->get_name().str();
-    else
-       func_name = mfunc_ref->get_symbol()->get_name().str();
+     string func_name;
+     if (func_ref != NULL)
+          func_name = func_ref->get_symbol()->get_name().str();
+       else
+          func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator[]")
-    return true;
-  return false;
+     if (func_name == "operator[]")
+          return true;
 
-}
+     return false;
+   }
 
 
 //-----------------------------------------------------------------------------------
@@ -233,9 +239,11 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
    {
+     ROSE_ASSERT(expr != NULL);
+
      bool isBinaryOperatorResult = false;
 
-     SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+     SgFunctionRefExp* func_ref        = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
      if (!func_ref && !mfunc_ref)
@@ -290,7 +298,8 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
          func_name == "operator[]")
         {
        // DQ (5/6/2007): Make sure this could not be a unary operator (using new fix for unary operators).
-          if (isUnaryOperatorPlus(expr) || isUnaryOperatorMinus(expr))
+       // if (isUnaryOperatorPlus(expr) || isUnaryOperatorMinus(expr))
+          if (isUnaryOperator(expr) == true)
                isBinaryOperatorResult = false;
             else
                isBinaryOperatorResult = true;
@@ -311,7 +320,8 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -333,6 +343,30 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
              }
         }
 
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         if (func_name.getString() == "operator++")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 0) 
+                                   return true;
+                            }
+                       }
+                  }
+             }
+        }
+
      return false;
    }
 
@@ -346,7 +380,8 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -368,8 +403,84 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
              }
         }
 
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         if (func_name.getString() == "operator--")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 0) 
+                                   return true;
+                            }
+                       }
+                  }
+             }
+        }
+
      return false;
    }
+
+
+bool
+Unparse_MOD_SAGE::isUnaryLiteralOperator(SgExpression* expr)
+   {
+     ROSE_ASSERT(expr != NULL);
+
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     if (mfunc_ref != NULL)
+        {
+          SgMemberFunctionSymbol* mfunc_sym = mfunc_ref->get_symbol();
+          if (mfunc_sym != NULL)
+             {
+               SgMemberFunctionDeclaration* mfunc_decl = mfunc_sym->get_declaration();
+               if (mfunc_decl != NULL)
+                  {
+                    SgName func_name = mfunc_decl->get_name();
+                    std::string s = func_name.getString();
+                    if (s.find("operator \"\" ",0) != std::string::npos)
+                       {
+                         return true;
+                       }
+                  }
+             }
+        }
+
+    // DQ (2/12/2019): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                         std::string s = func_name.getString();
+                         if (s.find("operator \"\" ",0) != std::string::npos)
+                            {
+                              return true;
+                            }
+                       }
+                  }
+             }
+        }
+
+     return false;
+   }
+
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryOperator
@@ -384,7 +495,7 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
      if (isSgFunctionRefExp(expr) != NULL && isSgMemberFunctionRefExp(expr) == NULL)
         {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 0
        // printf ("Case not implemented in Unparse_MOD_SAGE::isUnaryOperator(): expr = %p = %s = %s \n",expr,expr->class_name().c_str(),SageInterface::get_name(expr).c_str());
           printf ("Case not implemented in Unparse_MOD_SAGE::isUnaryOperator(): expr = %p = %s = %s \n",expr,expr->class_name().c_str(),isSgFunctionRefExp(expr)->get_symbol()->get_name().str());
 #endif
@@ -399,15 +510,31 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
      if (func_ref == NULL && mfunc_ref == NULL)
         {
        // DQ (8/27/2007): This really is called for many non-functions reference expressions.
-       // printf ("Warning, Unparse_MOD_SAGE::isUnaryOperator() test on non-function \n");
+#if 0
+          printf ("Warning, Unparse_MOD_SAGE::isUnaryOperator() test on non-function \n");
+#endif
           return false;
         }
 
      string func_name;
      if (func_ref != NULL)
+        {
+#if 0
+          printf ("In isUnaryOperator(): this is a non-member function \n");
+#endif
           func_name = func_ref->get_symbol()->get_name().str();
+        }
        else
+        {
+#if 0
+          printf ("In isUnaryOperator(): this is a member function \n");
+#endif
           func_name = mfunc_ref->get_symbol()->get_name().str();
+        }
+
+#if 0
+     printf ("In isUnaryOperator(): func_name = %s \n",func_name.c_str());
+#endif
 
   // DQ (2/14/2005): Need special test for operator*(), and other unary operators,
   // similar to operator+() and operator-().
@@ -416,9 +543,36 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
   // Maybe also for the binary operator&() (what about operator~()?)
   // Added support for isUnaryDereferenceOperator(), isUnaryAddressOperator(),
   // isUnaryOrOperator(), isUnaryComplementOperator().
+#if 1
+  // DQ (2/1/2018): The argument to these functions in the predicate should be "exp" not "mfunc_ref"
+     if ( isUnaryOperatorPlus(expr) ||
+          isUnaryOperatorMinus(expr) ||
+       // DQ (2/1/2018): This operator now has a function to support the evaluation of it being unary.
+       // func_name == "operator!" ||
+          isUnaryNotOperator(expr) ||
+       // func_name == "operator*" ||
+          isUnaryDereferenceOperator(expr) ||
+       // DQ (11/24/2004): Added support for address operator "operator&"
+       // func_name == "operator&" ||
+          isUnaryAddressOperator(expr) ||
+          func_name == "operator--" ||
+          func_name == "operator++" ||
+       // DQ (2/12/2019): Adding support for C++11 literal operators.
+          isUnaryLiteralOperator(expr) ||
+       // DQ (2/1/2018): I don't think this operator can exist.
+       // isUnaryOrOperator(mfunc_ref) ||
+       // func_name == "operator~")
+          isUnaryComplementOperator(expr) )
+#else
+  // Original code.
+
+#error "DEAD CODE!"
+
      if ( isUnaryOperatorPlus(mfunc_ref) ||
           isUnaryOperatorMinus(mfunc_ref) ||
-          func_name == "operator!" ||
+       // DQ (2/1/2018): This operator now has a function to support the evaluation of it being unary.
+       // func_name == "operator!" ||
+          isUnaryNotOperator(mfunc_ref) ||
        // func_name == "operator*" ||
           isUnaryDereferenceOperator(mfunc_ref) ||
        // DQ (11/24/2004): Added support for address operator "operator&"
@@ -426,10 +580,21 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
           isUnaryAddressOperator(mfunc_ref) ||
           func_name == "operator--" ||
           func_name == "operator++" ||
-          isUnaryOrOperator(mfunc_ref) ||
+       // DQ (2/1/2018): I don't think this operator can exist.
+       // isUnaryOrOperator(mfunc_ref) ||
        // func_name == "operator~")
           isUnaryComplementOperator(mfunc_ref) )
+#endif
+        {
+#if 0
+          printf ("In isUnaryOperator(): returning true \n");
+#endif
           return true;
+        }
+
+#if 0
+     printf ("In isUnaryOperator(): returning false \n");
+#endif
 
      return false;
    }
@@ -443,7 +608,8 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
 bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
    {
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
-     ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+  // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
+     ROSE_ASSERT(expr != NULL);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -460,11 +626,72 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
                            // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
-                            return true;
+                            {
+#if 0
+                              printf ("In isUnaryPostfixOperator(): returning true \n");
+#endif
+                              return true;
+                            }
+                           else
+                            {
+                           // DQ (2/12/2019): Check if this is a literal operator.
+                              if (mfunc_decl->get_specialFunctionModifier().isUldOperator() == true)
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): literal operator: returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
                        }
                   }
              }
         }
+
+    // DQ (2/1/2018): Added to catch case of non-member function unary operator
+       else
+        {
+          SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
+          if (func_ref != NULL)
+             {
+               SgFunctionSymbol* func_sym = func_ref->get_symbol();
+               if (func_sym != NULL)
+                  {
+                    SgFunctionDeclaration* func_decl = func_sym->get_declaration();
+                    if (func_decl != NULL)
+                       {
+                         SgName func_name = func_decl->get_name();
+                      // if (func_name.getString() == "operator--")
+                         if (func_name.getString() == "operator++" || func_name.getString() == "operator--")
+                            {
+                              SgInitializedNamePtrList argList = func_decl->get_args();
+                              if (argList.size() == 2) 
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
+                           else
+                            {
+                           // DQ (2/12/2019): Check if this is a literal operator.
+                              if (func_decl->get_specialFunctionModifier().isUldOperator() == true)
+                                 {
+#if 0
+                                   printf ("In isUnaryPostfixOperator(): literal operator: returning true \n");
+#endif
+                                   return true;
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+#if 0
+     printf ("In isUnaryPostfixOperator(): returning false \n");
+#endif
 
      return false;
    }
@@ -568,23 +795,18 @@ GetOperatorVariant(SgExpression* expr)
 #else
             // DQ (11/27/2012): Added more general support for templates to include new IR nodes.
                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(mfunc);
-               if (mfunc_ref != NULL)
-                  {
-                    name = mfunc_ref->get_symbol()->get_name();
-                  }
-                 else
-                  {
-                    SgTemplateMemberFunctionRefExp* template_mfunc_ref = isSgTemplateMemberFunctionRefExp(mfunc);
-
-                 // DQ (9/28/2012): Added debug support.
-                    if (template_mfunc_ref == NULL)
-                       {
-                         printf ("ERROR: mfunc = %p = %s mfunc->get_startOfConstruct() = %p mfunc->get_operatorPosition() = %p \n",mfunc,mfunc->class_name().c_str(),mfunc->get_startOfConstruct(),mfunc->get_operatorPosition());
-                         mfunc->get_startOfConstruct()->display("Error in GetOperatorVariant() in modified_sage.C (unparser): debug");
-                       }
-                    ROSE_ASSERT(template_mfunc_ref != NULL);
-                    name = template_mfunc_ref->get_symbol()->get_name();
-                  }
+               SgTemplateMemberFunctionRefExp* tplmfunc_ref = isSgTemplateMemberFunctionRefExp(mfunc);
+               SgNonrealRefExp * nrref = isSgNonrealRefExp(mfunc);
+               if (mfunc_ref != NULL) {
+                 name = mfunc_ref->get_symbol()->get_name();
+               } else if (tplmfunc_ref != NULL) {
+                 name = tplmfunc_ref->get_symbol()->get_name();
+               } else if (nrref != NULL) {
+                 name = nrref->get_symbol()->get_name();
+               } else {
+                 printf("ERROR: unexpected reference expression for a member-function: %p (%s)\n", mfunc, mfunc ? mfunc->class_name().c_str() : "");
+                 ROSE_ASSERT(false);
+               }
 #endif
                break;
              }
@@ -1155,10 +1377,23 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
 
 #if 0
      printf ("In Unparse_MOD_SAGE::printSpecifier1: decl_stmt = %p = %s info.CheckAccess() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),info.CheckAccess() ? "true" : "false");
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (6/15/2019): This is horrible API for this function.
+          SgInitializedName & initalizedName = SageInterface::getFirstVariable(*variableDeclaration);
+       // ROSE_ASSERT(initalizedName != NULL);
+          printf (" --- initalizedName name = %s \n",initalizedName.get_name().str());
+        }
+
      printf ("info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
      printf ("info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
      printf ("info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
   // printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
 #endif
 
      if (info.CheckAccess())
@@ -1281,7 +1516,10 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
-#if 0
+
+#define DEBUG_TEMPLATE_SPECIALIZATION 0
+
+#if DEBUG_TEMPLATE_SPECIALIZATION
      printf ("In outputTemplateSpecializationSpecifier(): experimentalMode = %s \n",experimentalMode ? "true" : "false");
      curprint( "\n/* In outputTemplateSpecializationSpecifier(): TOP of function */ ");
 #endif
@@ -1303,19 +1541,20 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           curprint( "template<> ");
         }
 #else
+
      if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
        // DQ (1/3/2016): Adding support for template variable declarations.
           (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
           curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a template instantiation */ ");
 #endif
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
             // Template instantiation directives use "template" instead of "template<>"
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): This is a SgTemplateInstantiationDirectiveStatement */ ");
 #endif
                curprint( "template ");
@@ -1324,7 +1563,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
              {
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations: " +  decl_stmt->class_name() + " */ ");
 #endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
@@ -1335,7 +1574,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                  // DQ (4/6/2014): This happens when a member function template in embedded in a class
                  // template and thus there is not an associated template for the member function separate
                  // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                     printf ("This is a declaration defined in a templated class (suppress the output of template specialization syntax) \n");
 
                  // DQ (8/8/2012): This is a valid branch, commented out assert(false).
@@ -1355,7 +1594,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                          if (templateClassInstatiationDefn != NULL)
                             {
                            // Supress output of "template<>" syntax for template member function instantiations.
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
                               printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
                               printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
@@ -1369,25 +1608,32 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
                               SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
                               ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
-                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
-                              ROSE_ASSERT(nondefiningTemplateClassInstatiationDefn != NULL);
-                              SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
-                              ROSE_ASSERT(templateClassInstantiation != NULL);
-                              bool isOutput = false;
-#if 0
-                              printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
-                              printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                              printf("  nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() = %p (%s)\n", nondefiningTemplateInstantiationMemberFunctionDecl->get_parent(), nondefiningTemplateInstantiationMemberFunctionDecl->get_parent() ? nondefiningTemplateInstantiationMemberFunctionDecl->get_parent()->class_name().c_str() : "");
 #endif
-                              isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
+                              bool isOutput = false;
+
+                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
+                              if (nondefiningTemplateClassInstatiationDefn != NULL) {
+                                SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
+                                ROSE_ASSERT(templateClassInstantiation != NULL);
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
+                                printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+#endif
+                             // isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
+                             // TV (3/14/18): This need to be true whether or not it is compiler generated (template<> not used when defining a member of a class specialization)
+                                isOutput = templateClassInstantiation->get_file_info()->isOutputInCodeGeneration();
+                              }
                               if (isOutput == true)
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Member function's class instantation WAS output, so we need to supress the output of template<> syntax */ ");
 #endif
                                  }
                                 else
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Member function's class instantation was NOT output, so we need to output of template<> syntax */ ");
 #endif
                                    curprint("template<> ");
@@ -1412,15 +1658,15 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             }
                            else
                             {
-#if 0
-                              curprint("/* Member function instantiations in non-template clases still output template<> syntax */ ");
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                              curprint("/* Member function instantiations in non-template classes still output template<> syntax */ ");
 #endif
                               curprint("template<> ");
                             }
                        }
                       else
                        {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                          curprint("/* This still might require the output of the template<> syntax */ ");
 #endif
                       // DQ (11/27/2015): If this is a friend function then supress the "template<>" syntax (see test2015_123.C).
@@ -1431,14 +1677,14 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             {
                               if (nondefiningTemplateInstantiationFunctionDecl->get_declarationModifier().isFriend() == true)
                                  {
-#if 0
-                                   printf ("Supress the output fo the template<> syntax \n");
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   printf ("Supress the output of the template<> syntax \n");
                                    curprint("/* Non-Member friend function instantiations cause us to supress the output of template<> syntax */ ");
 #endif
                                  }
                                 else
                                  {
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
                                    curprint("/* Non-Member (non-friend) function instantiations still output template<> syntax */ ");
 #endif
                                    curprint("template<> ");
@@ -1446,18 +1692,28 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                             }
                            else
                             {
-#if 0
-                              curprint("/* Non function instantiations still output template<> syntax */ ");
+                           // DQ (4/11/2019): Check if this is a friend declaration.
+                              if (decl_stmt->get_declarationModifier().isFriend() == true)
+                                 {
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   printf ("Supress the output of the template<> syntax for friend non-function specializations \n");
+                                   curprint("/* Non-Member friend non-function instantiations cause us to supress the output of template<> syntax */ ");
 #endif
-                              curprint("template<> ");
+                                 }
+                                else
+                                 {
+#if DEBUG_TEMPLATE_SPECIALIZATION
+                                   curprint("/* Non function instantiations still output template<> syntax */ ");
+#endif
+                                   curprint("template<> ");
+                                 }
                             }
-
                        }
                   }
              }
         }
 
-#if 0
+#if DEBUG_TEMPLATE_SPECIALIZATION
      curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
 #endif
 #endif
@@ -1588,7 +1844,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                        }
                   }
 #endif
-               curprint("virtual ");
+
+            // DQ (4/11/2019): Only output the "virtual" keyword for functions defined in a class definition.
+            // curprint("virtual ");
+               SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+               if (classDefinition != NULL)
+                  {
+                    curprint("virtual ");
+                  }
              }
 
        // if (unp->opt.get_inline_opt())
@@ -1632,13 +1895,32 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                   }
              }
 
+#if 0
+          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+          printf ("functionDeclaration->get_functionModifier().isExplicit() = %s \n",functionDeclaration->get_functionModifier().isExplicit() ? "true" : "false");
+          printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization ? "true" : "false");
+#endif
+
+       // DQ (4/13/2019): We want to output the explicit keyword even when info.SkipFunctionDefinition() == true.
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
        // if ((!info.SkipFunctionDefinition()) && functionDeclaration->get_functionModifier().isExplicit())
-          if ( (info.SkipFunctionDefinition() == false) &&
-               (functionDeclaration->get_functionModifier().isExplicit() == true) &&
+       // if ( (info.SkipFunctionDefinition() == false) &&
+       //      (functionDeclaration->get_functionModifier().isExplicit() == true) &&
+       //      (isDeclarationOfTemplateSpecialization == false) )
+          if ( (functionDeclaration->get_functionModifier().isExplicit() == true) &&
                (isDeclarationOfTemplateSpecialization == false) )
              {
-               curprint( "explicit ");
+#if 0
+               printf ("@@@@@@@@ Detected use of keyword and explicit keyword is being output \n");
+#endif
+            // DQ (4/13/2019): We can't output the "explicit" keyword for a function outside of it's class.
+            // curprint( "explicit ");
+            // check that this is a declaration appearing in a class.
+               SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+               if (classDefinition != NULL)
+                  {
+                    curprint( "explicit ");
+                  }
              }
 
        // TV (04/26/2010): CUDA function modifiers
@@ -1744,10 +2026,12 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
           ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().isDefault() == false);
 
+       // DQ (4/11/2019): Don't allow friend and extern together (see Cxx11_tests/test2019_338.C).
        // DQ (1/3/2016): We may have to suppress this for SgTemplateVariableDeclaration IR nodes.
        // curprint("extern ");
        // curprint("/* extern from storageModifier */ extern ");
-          if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+       // if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+          if ( (decl_stmt->get_declarationModifier().isFriend() == false) && (isSgTemplateVariableDeclaration(decl_stmt) == NULL) )
              {
                curprint("extern ");
              }

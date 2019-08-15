@@ -72,6 +72,7 @@ outlineSelection_LDADD = $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS =			\
 	 array1.c				\
 	 arrayParameter.c			\
+	 jacobi.c                               \
 	 moreTest0.c				\
 	 moreTest1.c				\
 	 moreTest8.c				\
@@ -248,6 +249,10 @@ $(tofile_test_targets): tofile_%.passed: % outline
 		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:new_file -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
+# shortcut to test new_file
+
+test_newfile: $(tofile_test_targets)
+
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file using dlopen
 
@@ -256,9 +261,7 @@ TEST_TARGETS += $(dlopen_test_targets)
 
 dlopen_test_flags =				\
 	-rose:outline:use_dlopen		\
-	-rose:outline:temp_variable		\
 	-I$(abs_top_srcdir)/projects/autoTuning	\
-	-rose:outline:exclude_headers		\
 	-rose:outline:output_path .
 
 $(dlopen_test_targets): dlopen_%.passed: % outline
@@ -267,6 +270,26 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+# Liao, 2019/1/31
+# test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
+dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTCODES_REQUIRED_TO_PASS)))
+dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTCODES_REQUIRED_TO_PASS)))
+TEST_TARGETS += $(dlopen2_test_targets)
+dlopen2_test_flags =				\
+	-rose:outline:use_dlopen		\
+	-rose:outline:copy_orig_file		\
+	-I$(abs_top_srcdir)/projects/autoTuning	\
+	-rose:outline:output_path .
+
+$(dlopen2_test_targets): dlopen2_%.passed: % outline
+	@$(RTH_RUN) \
+		TITLE="outine dlopen2 $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen2_test_flags) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+# shortcut to test the dlopen feature
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches

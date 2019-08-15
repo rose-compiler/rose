@@ -18,14 +18,14 @@
 #include "TrivialInlining.h"
 #include "Threadification.h"
 #include "RewriteSystem.h"
-#include "Lowering.h"
+#include "Normalization.h"
 
 #include <vector>
 #include <set>
 #include <list>
 #include <string>
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "CodeThornException.h"
 
 #include "limits.h"
@@ -50,12 +50,6 @@ const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 bool global_option_multiconstanalysis=false;
 
-#if 0
-bool isVariableOfInterest(VariableId varId) {
-  return variablesOfInterest.find(varId)!=variablesOfInterest.end();
-}
-#endif
-
 size_t numberOfFunctions(SgNode* node) {
   RoseAst ast(node);
   size_t num=0;
@@ -66,42 +60,6 @@ size_t numberOfFunctions(SgNode* node) {
   return num;
 }
 
-void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
-  cout<<"Result:"<<endl;
-  VariableConstInfo vci(&variableIdMapping, &map);
-  for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
-    VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueVariableName(varId);
-    string variableName=variableIdMapping.variableName(varId);
-    set<AbstractValue> valueSet=(*i).second;
-    stringstream setstr;
-    setstr<<"{";
-    for(set<AbstractValue>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
-      if(i!=valueSet.begin())
-        setstr<<",";
-      setstr<<(*i).toString();
-    }
-    setstr<<"}";
-    cout<<variableName<<"="<<setstr.str()<<";";
-#if 1
-    cout<<"Range:"<<VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
-    cout<<" width: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
-    cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
-    cout<<endl;
-#endif
-    cout<<" isAny:"<<vci.isAny(varId)
-        <<" isUniqueConst:"<<vci.isUniqueConst(varId)
-        <<" isMultiConst:"<<vci.isMultiConst(varId);
-    if(vci.isUniqueConst(varId)||vci.isMultiConst(varId)) {
-      cout<<" width:"<<vci.width(varId);
-    } else {
-      cout<<" width:unknown";
-    }
-    cout<<" Test34:"<<vci.isInConstSet(varId,34);
-    cout<<endl;
-  }
-  cout<<"---------------------"<<endl;
-}
 
 
 void printCodeStatistics(SgNode* root) {
@@ -136,13 +94,6 @@ int main(int argc, char* argv[]) {
       logger[ERROR] << "wrong command line options."<<endl;
       exit(1);
     }
-#if 0
-    if(argc==3) {
-      csvAssertFileName=argv[2];
-      argc=2; // don't confuse ROSE command line
-      cout<< "INIT: CSV-output file: "<<csvAssertFileName<<endl;
-    }
-#endif
 
   // Command line option handling.
 #ifdef USE_SAWYER_COMMANDLINE
@@ -161,17 +112,21 @@ int main(int argc, char* argv[]) {
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
-    ("normalize", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (eliminate compound assignment operators).")
-    ("normalize2", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (normalize for-statements).")
-    ("inline", po::value< bool >()->default_value(true)->implicit_value(true), "perform inlining.")
-    ("eliminate-empty-if", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate if-statements with empty branches in main function.")
-    ("eliminate-dead-code", po::value< bool >()->default_value(true)->implicit_value(true), "eliminate dead code (variables and expressions).")
-    ("csv-const-result",po::value< string >(), "generate csv-file <arg> with const-analysis data.")
-    ("generate-transformed-code",po::value< bool >()->default_value(true)->implicit_value(true), "generate transformed code with prefix \"rose_\".")
+    ("normalize-compound-stmts", po::value< bool >()->default_value(false)->implicit_value(true), "normalize code (eliminate compound assignment operators).")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true), "apply normalization to all expressions.")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true), "apply normalization to all expressions.")
+    ("lowering", po::value< bool >()->default_value(false)->implicit_value(true), "apply lowering to code (eliminates for,while,do-while,continue,break; inlines functions).")
+    ("inline", po::value< bool >()->default_value(false)->implicit_value(true), "inlines functions.")
+    ("inline-non-param-functions", po::value< bool >()->default_value(false)->implicit_value(true), "inlines only functions that have no return value and no parameters.")
+    ("eliminate-empty-if", po::value< bool >()->default_value(false)->implicit_value(true), "eliminate if-statements that have only empty branches.")
+    ("eliminate-fi-dead-code", po::value< bool >()->default_value(false)->implicit_value(true), "eliminate flow-insensitive dead variables and dead expressions.")
+    ("unparse",po::value< bool >()->default_value(false)->implicit_value(true), "unparse transformed code with prefix \"rose_\".")
     ("verbose", po::value< bool >()->default_value(false)->implicit_value(true), "print detailed output during analysis and transformation.")
-    ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
+    ("csv-const-result",po::value< string >(), "generate csv-file <arg> with const-analysis data.")
+    ("fi-const-analysis", po::value< bool >()->default_value(false)->implicit_value(true), "perform flow-insensitive const analysis.")
     ("enable-multi-const-analysis", po::value< bool >()->default_value(false)->implicit_value(true), "enable multi-const analysis.")
+    ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("transform-thread-variable", "transform code to use additional thread variable.")
     ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|debug)).")
     ;
@@ -222,13 +177,6 @@ int main(int argc, char* argv[]) {
   }
 
   global_option_multiconstanalysis=args.getBool("enable-multi-const-analysis");
-#if 0
-  if(global_option_multiconstanalysis) {
-    cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
-  } else {
-    cout<<"INFO: Using flow-insensitive unique-const-analysis."<<endl;
-  }
-#endif
 
   logger[TRACE] << "INIT: Parsing and creating AST started."<<endl;
   SgProject* root = frontend(argc,argv);
@@ -236,23 +184,34 @@ int main(int argc, char* argv[]) {
   // inline all functions
   logger[TRACE] << "INIT: Parsing and creating AST finished."<<endl;
 
-  if(args.count("stats")) {
-    printCodeStatistics(root);
-    exit(0);
+  if(args.getBool("normalize-fcalls")) {
+    logger[TRACE] <<"STATUS: Normalization level 1 started."<<endl;
+    CodeThorn::Normalization lowering;
+    lowering.normalizeAst(root,1);
+    logger[TRACE] <<"STATUS: Normalization level 1 finished."<<endl;
   }
 
-  if(args.getBool("normalize2")) {
+  if(args.getBool("normalize-all")) {
+    logger[TRACE] <<"STATUS: Normalization level 2 started."<<endl;
+    CodeThorn::Normalization lowering;
+    lowering.normalizeAst(root,2);
+    logger[TRACE] <<"STATUS: Normalization level 2 finished."<<endl;
+  } 
+
+  if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
-    SPRAY::Lowering lowering;
-    lowering.lowerAst(root);
+    CodeThorn::Normalization lowering;
+    lowering.normalizeAst(root,3);
     logger[TRACE] <<"STATUS: Lowering finished."<<endl;
-    root->unparse(0,0);
-    exit(0);
   }
 
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-
+  SgTypeSizeMapping _typeSizeMapping;
+  AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  
+  logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
+  
   if(args.count("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);
@@ -263,8 +222,8 @@ int main(int argc, char* argv[]) {
   }
 
   SgFunctionDefinition* mainFunctionRoot=0;
-  if(args.getBool("inline")) {
-    logger[TRACE] <<"STATUS: eliminating non-called trivial functions."<<endl;
+  if(args.getBool("inline-non-param-functions")) {
+    logger[TRACE] <<"STATUS: eliminating non-called non-param functions."<<endl;
     // inline functions
     TrivialInlining tin;
     tin.setDetailedOutput(detailedOutput);
@@ -274,7 +233,7 @@ int main(int argc, char* argv[]) {
     int numEliminatedFunctions=dce.eliminateNonCalledTrivialFunctions(root);
     logger[TRACE] <<"STATUS: eliminated "<<numEliminatedFunctions<<" functions."<<endl;
   } else {
-    logger[INFO] <<"Inlining: turned off."<<endl;
+    logger[INFO] <<"inlining of non-param functions: turned off."<<endl;
   }
 
   if(args.getBool("eliminate-empty-if")) {
@@ -290,27 +249,52 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
 
-  if(args.getBool("normalize")) {
-    logger[TRACE] <<"STATUS: Lowering started."<<endl;
+  if(args.getBool("normalize-compound-stmts")) {
+    logger[TRACE] <<"STATUS: normalization of compound statements started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
+    logger[TRACE] <<"STATUS: normalization of compound statements finished."<<endl;
   }
 
-  logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
-  VarConstSetMap varConstSetMap;
-  VariableIdSet variablesOfInterest;
-  FIConstAnalysis fiConstAnalysis(&variableIdMapping);
-  fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
-  fiConstAnalysis.setDetailedOutput(detailedOutput);
-  fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
-  variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
-  logger[INFO] <<"variables of interest: "<<variablesOfInterest.size()<<endl;
-  if(detailedOutput)
-    printResult(variableIdMapping,varConstSetMap);
+  if(args.getBool("eliminate-fi-dead-code")) {
+    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+    DeadCodeElimination dce;
+    cout<<"STATUS: Performing dead code elimination."<<endl;
+    dce.setDetailedOutput(detailedOutput);
+    fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
+    VariableIdSet variablesOfInterest;
+    variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
+    VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
+    dce.setVariablesOfInterest(variablesOfInterest);
+    dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
+    cout<<"DCE: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
+    cout<<"DCE: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
+    cout<<"DCE: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
+    cout<<"DCE: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
+    cout<<"DCE: Dead code elimination finished."<<endl;
+  } else {
+    //cout<<"STATUS: Dead code elimination: turned off."<<endl;
+  }
+
+  if(args.getBool("fi-const-analysis")) {
+    logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
+    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+    VarConstSetMap varConstSetMap;
+    VariableIdSet variablesOfInterest;
+    fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
+    fiConstAnalysis.setDetailedOutput(detailedOutput);
+    fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
+    if(detailedOutput)
+      FIConstAnalysis::printResult(variableIdMapping,varConstSetMap);
+    variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
+    cout <<"constant variables: "<<variablesOfInterest.size()<<endl;
+  }
 
   if(csvConstResultFileName) {
+    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+    fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
+    fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
     VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
     VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
     VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
@@ -323,47 +307,17 @@ int main(int argc, char* argv[]) {
   }
 
   if(args.count("generate-conversion-functions")) {
-    string conversionFunctionsFileName="conversionFunctions.C";
     ConversionFunctionsGenerator gen;
-    set<string> varNameSet;
-    std::list<SgVariableDeclaration*> globalVarDeclList=SgNodeHelper::listOfGlobalVars(root);
-    for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
-      SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
-      for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
-	      SgInitializedName* initName=*j;
-        if ( true || isSgArrayType(initName->get_type()) ) {  // optional filter (array variables only)
-	        SgName varName=initName->get_name();
-	        string varNameString=varName; // implicit conversion
-	        varNameSet.insert(varNameString);
-        }
-      }
-    }
-    string code=gen.generateCodeForGlobalVarAdressMaps(varNameSet);
-    ofstream myfile;
-    myfile.open(conversionFunctionsFileName.c_str());
-    myfile<<code;
-    myfile.close();
+    gen.generateFile(root,"conversionFunctions.C");
+    return 0;
   }
 
-  VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
-  DeadCodeElimination dce;
-  if(args.getBool("eliminate-dead-code")) {
-    logger[TRACE]<<"STATUS: performing dead code elimination."<<endl;
-    dce.setDetailedOutput(detailedOutput);
-    dce.setVariablesOfInterest(variablesOfInterest);
-    dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
-    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
-    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimAssignments()<<" variable assignments."<<endl;
-    logger[TRACE]<<"STATUS: Replaced "<<dce.numElimVarUses()<<" uses of variables with constant."<<endl;
-    logger[TRACE]<<"STATUS: Eliminated "<<dce.numElimVars()<<" dead variables."<<endl;
-    logger[TRACE]<<"STATUS: Dead code elimination phase 1: finished."<<endl;
-    logger[TRACE]<<"STATUS: Performing condition const analysis."<<endl;
-  } else {
-    logger[TRACE]<<"STATUS: Dead code elimination: turned off."<<endl;
-  }
   if(csvAssertFileName) {
-    logger[TRACE]<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
+    cout<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
     Labeler labeler(root);
+    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
+    fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
+    fiConstAnalysis.runAnalysis(root, mainFunctionRoot); // is this required for conditionConstAnalysis?
     fiConstAnalysis.performConditionConstAnalysis(&labeler);
     logger[INFO]<<"Number of true-conditions     : "<<fiConstAnalysis.getTrueConditions().size()<<endl;
     logger[INFO]<<"Number of false-conditions    : "<<fiConstAnalysis.getFalseConditions().size()<<endl;
@@ -374,14 +328,15 @@ int main(int argc, char* argv[]) {
     logger[TRACE]<<"STATUS: generating file "<<csvAssertFileName<<endl;
     reachabilityResults.writeFile(csvAssertFileName,true);
   }
-#if 0
-  rdAnalyzer->determineExtremalLabels(startFunRoot);
-  rdAnalyzer->run();
-#endif
   logger[INFO]<< "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
-  if(args.getBool("generate-transformed-code")) {
-    logger[TRACE]<< "STATUS: generating transformed source code."<<endl;
+
+  if(args.getBool("unparse")) {
+    logger[TRACE]<< "STATUS: unparsing - generating transformed source code."<<endl;
     root->unparse(0,0);
+  }
+
+  if(args.count("stats")) {
+    printCodeStatistics(root);
   }
 
   logger[TRACE]<< "STATUS: finished."<<endl;
@@ -389,10 +344,6 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
-    mfacilities.shutdown();
-    return 1;
-  } catch(SPRAY::Exception& e) {
-    cerr << "Spray::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {

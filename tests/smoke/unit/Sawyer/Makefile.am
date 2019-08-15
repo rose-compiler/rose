@@ -19,6 +19,7 @@ sawyer_checkers =				\
 	optionalUnitTests			\
 	listUnitTests				\
 	mapUnitTests				\
+	hashMapUnitTests			\
 	setUnitTests				\
         distinctListUnitTests			\
 	intervalUnitTests			\
@@ -45,6 +46,7 @@ noinst_PROGRAMS +=				\
         optionalUnitTests			\
         listUnitTests				\
         mapUnitTests				\
+	hashMapUnitTests			\
         setUnitTests				\
         distinctListUnitTests			\
         intervalUnitTests			\
@@ -70,6 +72,7 @@ attributeUnitTests_SOURCES       = attributeUnitTests.C
 optionalUnitTests_SOURCES        = optionalUnitTests.C
 listUnitTests_SOURCES            = listUnitTests.C
 mapUnitTests_SOURCES             = mapUnitTests.C
+hashMapUnitTests_SOURCES	 = hashMapUnitTests.C
 setUnitTests_SOURCES             = setUnitTests.C
 distinctListUnitTests_SOURCES    = distinctListUnitTests.C
 intervalUnitTests_SOURCES        = intervalUnitTests.C

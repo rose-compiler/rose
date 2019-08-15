@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "fixupDefiningAndNondefiningDeclarations.h"
@@ -65,12 +64,14 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
 
 
-#if 0 //FMZ (6/8/2008): caused core dump when read in a .rmod file
+#if 0
+       // FMZ (6/8/2008): caused core dump when read in a .rmod file
           if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)  
              {
                printf ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
                printf ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
              }
+       // DQ (4/18/18): This can't be used for Fortran code.
           ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
 #endif
 
@@ -130,7 +131,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
                   {
                  // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
-#if 1
+#if 0
                     printf ("Warning: Fixup defining declarations: We have identified an inconsistantcy where the defining declaration has not be uniformally setup \n");
 #endif
                     declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
@@ -224,7 +225,20 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),definingScope);
                          printf ("Removing symbol = %p from scope = %p \n",symbolToMove,nondefiningScope);
 #endif
-                         nondefiningScope->remove_symbol(symbolToMove);
+                      // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be 
+                      // related to a bug fix to support symbols in namespaces and record them in both the namespace 
+                      // definition where they are placed plus the global copy of the namespace definition.
+                      // nondefiningScope->remove_symbol(symbolToMove);
+                         if (nondefiningScope->symbol_exists(symbolToMove) == true)
+                            {
+                              nondefiningScope->remove_symbol(symbolToMove);
+                            }
+                           else
+                            {
+#if 0
+                              printf ("AST Fixup: this symbol does not exist \n");
+#endif
+                            }
 
                       // DQ (2/25/2007): There could be multiple non-defining declarations such that the symbol might 
                       // already exist in the definingScope's symbol table.  (Confirmed to be true).
@@ -410,6 +424,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               printf ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
                                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                                    firstNondefiningDeclarationScope,firstNondefiningDeclarationScope->class_name().c_str());
+                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(firstNondefiningDeclaration);
+                              if (classDeclaration != NULL)
+                                 {
+                                   printf (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
+                                 }
 #if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("declaration: firstNondefiningDeclaration: debug");
                               firstNondefiningDeclarationScope->get_startOfConstruct()->display("scope: firstNondefiningDeclarationScope: debug");
@@ -683,11 +702,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (templateMemberFunction != NULL)
                   {
                  // Look for the SgTempleteDeclaration (some of them can been hidden and are not traversed)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = templateMemberFunction->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* templateDeclaration = templateMemberFunction->get_templateDeclaration();
-#endif
 
                  // DQ (5/3/2012): We don't always have a template declaration, so I would like to weaken this test in ROSE.  We might be able to fix it later.
                  // ROSE_ASSERT(templateDeclaration != NULL);

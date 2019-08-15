@@ -49,11 +49,17 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
             ],
             [want_boost="maybe"])
 
-    if test "x$want_boost" = "xyes" -o "$want_boost" = "maybe"; then
+    # Boost 1.61 through 1.63 serialization with Intel compilers is broken.
+    if test "$FRONTEND_CXX_COMPILER_VENDOR" = "intel" -a \
+            "$rose_boost_version" -ge 106100 -a "$rose_boost_version" -le 106300 -a \
+            "$support_binaries_frontend" = "yes"; then
+        AC_MSG_NOTICE([this combination of boost serialization, intel compiler, and binary analysis is not supported])
+
+    elif test "x$want_boost" = "xyes" -o "$want_boost" = "maybe"; then
         AC_REQUIRE([AC_PROG_CC])
         CPPFLAGS_SAVED="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-        AC_MSG_WARN(BOOST_CPPFLAGS $BOOST_CPPFLAGS)
+        AC_MSG_NOTICE([BOOST_CPPFLAGS = "$BOOST_CPPFLAGS"])
         export CPPFLAGS
 
         LDFLAGS_SAVED="$LDFLAGS"
@@ -119,7 +125,7 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
             fi
             if test "x$link_serialization" != "xyes"; then
                 if test "$want_boost" = "yes"; then
-                    AC_MSG_ERROR(Could not link against $ax_lib!)
+                    AC_MSG_ERROR([could not link against "$ax_lib"])
                 else
                     AC_MSG_NOTICE([library for boost::serialization was not found])
                 fi

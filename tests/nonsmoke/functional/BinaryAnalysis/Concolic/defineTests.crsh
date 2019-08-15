@@ -1,0 +1,17 @@
+create sqlite3://./defineTests.db
+
+ls-family :: t01
+  @ success
+{
+  ls -la
+}
+
+ls-family :: t02
+  @ success
+{
+  export DESC = ThisIsASimpleTest
+
+  ls -l --author
+}
+
+! echo ok.

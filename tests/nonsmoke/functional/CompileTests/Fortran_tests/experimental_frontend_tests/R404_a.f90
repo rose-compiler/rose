@@ -1,0 +1,7 @@
+INTEGER :: a
+INTEGER(KIND=4) :: b
+REAL :: c
+REAL(KIND=4) :: d
+LOGICAL :: m
+LOGICAL(KIND=1) :: n
+END PROGRAM

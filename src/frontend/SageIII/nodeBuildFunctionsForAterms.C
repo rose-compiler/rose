@@ -1222,6 +1222,34 @@ SgTypeChar* SgTypeChar::build_node_from_nonlist_children (  )
    }
 
 
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgTypeChar16* SgTypeChar16::build_node_from_nonlist_children (  )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTypeChar16::build_node_from_nonlist_children (): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTypeChar16* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgTypeChar32* SgTypeChar32::build_node_from_nonlist_children (  )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTypeChar32::build_node_from_nonlist_children (): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTypeChar32* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 /* #line 1224 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
@@ -1522,6 +1550,20 @@ SgTypeDouble* SgTypeDouble::build_node_from_nonlist_children (  )
      returnNode = SageBuilder::buildDoubleType();
      ROSE_ASSERT(returnNode != NULL);
 
+     return returnNode;
+   }
+
+SgTypeFloat80* SgTypeFloat80::build_node_from_nonlist_children (  )
+   {
+     SgTypeFloat80* returnNode = SageBuilder::buildFloat80Type();
+     ROSE_ASSERT(returnNode != NULL);
+     return returnNode;
+   }
+
+SgTypeFloat128* SgTypeFloat128::build_node_from_nonlist_children (  )
+   {
+     SgTypeFloat128* returnNode = SageBuilder::buildFloat128Type();
+     ROSE_ASSERT(returnNode != NULL);
      return returnNode;
    }
 
@@ -1917,7 +1959,7 @@ SgFunctionType* SgFunctionType::build_node_from_nonlist_children ( SgType* retur
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -1935,7 +1977,7 @@ SgMemberFunctionType* SgMemberFunctionType::build_node_from_nonlist_children ( S
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -1953,7 +1995,7 @@ SgPartialFunctionType* SgPartialFunctionType::build_node_from_nonlist_children (
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgPartialFunctionModifierType* SgPartialFunctionModifierType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier )
+SgPartialFunctionModifierType* SgPartialFunctionModifierType::build_node_from_nonlist_children ( SgType* return_type, bool has_ellipses, SgType* class_type, unsigned int mfunc_specifier, unsigned int ref_qualifier )
    {
 #if 0
   // debugging information!
@@ -2007,7 +2049,7 @@ SgTypeEllipse* SgTypeEllipse::build_node_from_nonlist_children (  )
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgTemplateType* SgTemplateType::build_node_from_nonlist_children ( SgName name, int template_parameter_position )
+SgTemplateType* SgTemplateType::build_node_from_nonlist_children ( SgName name )
    {
 #if 0
   // debugging information!
@@ -2413,7 +2455,7 @@ SgOmpClause* SgOmpClause::build_node_from_nonlist_children ( Sg_File_Info* start
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpOrderedClause* SgOmpOrderedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExpression* expression )
    {
 #if 0
   // debugging information!
@@ -2944,19 +2986,29 @@ SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_chil
    }
 
 
-/* #line 2880 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string name, SgUntypedExpression* array_subscripts, SgUntypedExpression* coarray_subscripts)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string name, SgUntypedExpression* array_subscripts, SgUntypedExpression* coarray_subscripts): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedArrayReferenceExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedSubscriptExpression* SgUntypedSubscriptExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgUntypedExpression* lower_bound, SgUntypedExpression* upper_bound, SgUntypedExpression* stride )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedSubscriptExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgUntypedExpression* lower_bound, SgUntypedExpression* upper_bound, SgUntypedExpression* stride): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedSubscriptExpression* returnNode = NULL;
 
      return returnNode;
    }
@@ -2975,6 +3027,32 @@ SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_chil
 #endif
 
      SgUntypedOtherExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedNamedExpression* SgUntypedNamedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string expression_name, SgUntypedExpression* expression)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNamedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string expression_name, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNamedExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedNullExpression* SgUntypedNullExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNullExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullExpression* returnNode = NULL;
 
      return returnNode;
    }
@@ -3034,11 +3112,6 @@ SgUntypedStatement* SgUntypedStatement::build_node_from_nonlist_children ( Sg_Fi
    }
 
 
-/* #line 2970 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
@@ -3052,11 +3125,42 @@ SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_no
    }
 
 
-/* #line 2988 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
+SgUntypedDirectiveDeclaration* SgUntypedDirectiveDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedDirectiveDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
+     SgUntypedDirectiveDeclaration* returnNode = NULL;
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+     return returnNode;
+   }
+
+SgUntypedEnumDeclaration* SgUntypedEnumDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string enum_name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedEnumDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string enum_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedEnumDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedLabelStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedLabelStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
@@ -3065,6 +3169,18 @@ SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonl
 #endif
 
      SgUntypedNameListDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgUntypedInitializedNameListDeclaration* SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedInitializedNameListDeclaration* returnNode = NULL;
 
      return returnNode;
    }
@@ -3242,11 +3358,11 @@ SgUntypedDelayRelativeStatement* SgUntypedDelayRelativeStatement::build_node_fro
    }
 
 
-SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* initialization, SgUntypedExpression* bound, SgUntypedExpression* increment, SgUntypedStatement* body, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedForStatement* returnNode = NULL;
@@ -3255,11 +3371,25 @@ SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(S
    }
 
 
-SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedForAllStatement* SgUntypedForAllStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedForAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedType* type, SgUntypedExprListExpression* iterates, SgUntypedExprListExpression* local, SgUntypedExpression* mask, std::string do_construct_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedForAllStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Rasmussen (4/18/2018): Added target_expression so that the goto statement has a place to go to.
+SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string target_label)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string target_label): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedGotoStatement* returnNode = NULL;
@@ -3294,11 +3424,11 @@ SgUntypedAcceptStatement* SgUntypedAcceptStatement::build_node_from_nonlist_chil
    }
 
 
-SgUntypedIfStatement* SgUntypedIfStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedIfStatement* SgUntypedIfStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedIfStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedIfStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* conditional, SgUntypedStatement* true_body, SgUntypedStatement* false_body): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedIfStatement* returnNode = NULL;
@@ -3333,11 +3463,11 @@ SgUntypedRequeueStatement* SgUntypedRequeueStatement::build_node_from_nonlist_ch
    }
 
 
-SgUntypedCaseStatement* SgUntypedCaseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedCaseStatement* SgUntypedCaseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* expression, SgUntypedStatement* body, std::string case_name)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedCaseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedCaseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* expression, SgUntypedStatement* body, std::string case_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedCaseStatement* returnNode = NULL;
@@ -3372,14 +3502,40 @@ SgUntypedNullStatement* SgUntypedNullStatement::build_node_from_nonlist_children
    }
 
 
-SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedNullDeclaration* SgUntypedNullDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedNullDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* expression)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedReturnStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedStopStatement* SgUntypedStopStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* expression)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedStopStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedStopStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -3502,11 +3658,11 @@ SgUntypedAsynchronousSelectStatement* SgUntypedAsynchronousSelectStatement::buil
    }
 
 
-SgUntypedWhileStatement* SgUntypedWhileStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+SgUntypedWhileStatement* SgUntypedWhileStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, SgUntypedExpression* condition, SgUntypedStatement* body)
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedWhileStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedWhileStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* condition, SgUntypedStatement* body): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedWhileStatement* returnNode = NULL;
@@ -3637,29 +3793,7 @@ SgUntypedAssignmentStatement* SgUntypedAssignmentStatement::build_node_from_nonl
    }
 
 
-/* #line 3114 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedFunctionCallStatement* SgUntypedFunctionCallStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
-   {
-#if 0
-  // debugging information!
-     printf ("In SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
-#endif
-
-     SgUntypedFunctionCallStatement* returnNode = NULL;
-
-     return returnNode;
-   }
-
-
-/* #line 3132 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+// Static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedBlockStatement* SgUntypedBlockStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
@@ -3668,6 +3802,34 @@ SgUntypedBlockStatement* SgUntypedBlockStatement::build_node_from_nonlist_childr
 #endif
 
      SgUntypedBlockStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedFunctionCallStatement* SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info*, int, SgUntypedExpression*, SgUntypedExprListExpression*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedFunctionCallStatement::build_node_from_nonlist_children (Sg_File_Info*, int, SgUntypedExpression*, SgUntypedExprListExpression*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedFunctionCallStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedImageControlStatement* SgUntypedImageControlStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* variable, SgUntypedExpression* expression, SgUntypedExprListExpression* status_list)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedImageControlStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* variable, SgUntypedExpression* expression, SgUntypedExprListExpression* status_list): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedImageControlStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -3690,7 +3852,6 @@ SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_childr
      return returnNode;
    }
 
-//TODO: Rasmussen - figure out how to get this file generated
 SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* statement_expression )
    {
 #if 0
@@ -4046,6 +4207,19 @@ SgUntypedTokenPairList* SgUntypedTokenPairList::build_node_from_nonlist_children
      return returnNode;
    }
 
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedExprListExpression* SgUntypedExprListExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExprListExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExprListExpression* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 /* #line 3420 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -4187,6 +4361,19 @@ SgForStatement* SgForStatement::build_node_from_nonlist_children ( Sg_File_Info*
 #endif
 
      SgForStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (3/28/2018): Added support for new IR nodes specific to range-based for loop in C++11.
+SgRangeBasedForStatement* SgRangeBasedForStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgVariableDeclaration* iterator_declaration, SgVariableDeclaration* range_declaration, SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, SgExpression* not_equal_expression, SgExpression* increment_expression, SgStatement* loop_body )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgRangeBasedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgVariableDeclaration* iterator_declaration, SgVariableDeclaration* range_declaration, SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, SgExpression* not_equal_expression, SgExpression* increment_expression, SgStatement* loop_body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgRangeBasedForStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -4426,11 +4613,7 @@ SgFortranDo* SgFortranDo::build_node_from_nonlist_children ( Sg_File_Info* start
    }
 
 
-/* #line 3762 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+// Static function for building IR nodes for Aterm support (like a constructor).
 SgFortranNonblockedDo* SgFortranNonblockedDo::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* body, SgStatement* end_statement )
    {
 #if 0
@@ -4444,11 +4627,7 @@ SgFortranNonblockedDo* SgFortranNonblockedDo::build_node_from_nonlist_children (
    }
 
 
-/* #line 3780 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
-
-/* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
-
-// Generated static function for building IR nodes for Aterm support (like a constructor).
+// Static function for building IR nodes for Aterm support (like a constructor).
 SgForAllStatement* SgForAllStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExprListExp* forall_header, SgBasicBlock* body )
    {
 #if 0
@@ -4461,6 +4640,69 @@ SgForAllStatement* SgForAllStatement::build_node_from_nonlist_children ( Sg_File
      return returnNode;
    }
 
+
+// Jovial statements
+//
+
+SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* then_expression, SgExpression* where_expression, SgBasicBlock* loop_body)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialForThenStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* initialization, SgExpression* then_expression, SgExpression* where_expression, SgBasicBlock* loop_body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialForThenStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialDefineDeclaration* SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDefineDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialDirectiveStatement* SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDirectiveStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialCompoolStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialTableStatement* SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialTableStatement* returnNode = NULL;
+
+     return returnNode;
+   }
 
 /* #line 3798 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -4640,7 +4882,7 @@ SgTemplateVariableDeclaration* SgTemplateVariableDeclaration::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgVariableDefinition* SgVariableDefinition::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgInitializedName* vardefn, SgValueExp* bitfield )
+SgVariableDefinition* SgVariableDefinition::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgInitializedName* vardefn, SgExpression* bitfield )
    {
 #if 0
   // debugging information!
@@ -6146,6 +6388,85 @@ SgStopOrPauseStatement* SgStopOrPauseStatement::build_node_from_nonlist_children
 #endif
 
      SgStopOrPauseStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncAllStatement* SgSyncAllStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncAllStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncAllStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncImagesStatement* SgSyncImagesStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* image_set )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncImagesStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* image_set): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncImagesStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncMemoryStatement* SgSyncMemoryStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncMemoryStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncMemoryStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgSyncTeamStatement* SgSyncTeamStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* team_value )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgSyncTeamStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* team_value): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgSyncTeamStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgLockStatement* SgLockStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* lock_variable )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLockStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* lock_variable): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLockStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Static function for building IR nodes for Aterm support (like a constructor).
+SgUnlockStatement* SgUnlockStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* lock_variable )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUnlockStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgExpression* lock_variable): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUnlockStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -8651,6 +8972,32 @@ SgCharVal* SgCharVal::build_node_from_nonlist_children ( Sg_File_Info* startOfCo
      return returnNode;
    }
 
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgChar16Val* SgChar16Val::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, unsigned short value, std::string valueString )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgChar16Val::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, unsigned short value, std::string valueString): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgChar16Val* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (3/23/2018): Added to support new char16 and char32 types.
+SgChar32Val* SgChar32Val::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, unsigned int value, std::string valueString )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgChar32Val::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, unsigned int value, std::string valueString): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgChar32Val* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 /* #line 7848 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -9215,7 +9562,7 @@ SgDeleteExp* SgDeleteExp::build_node_from_nonlist_children ( Sg_File_Info* start
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgThisExp* SgThisExp::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgClassSymbol* class_symbol, int pobj_this )
+SgThisExp* SgThisExp::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgClassSymbol* class_symbol, SgNonrealSymbol* nonreal_symbol, int pobj_this )
    {
 #if 0
   // debugging information!
@@ -10792,14 +11139,18 @@ SgAsmInstruction* SgAsmInstruction::build_node_from_nonlist_children ( rose_addr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmx86Instruction* SgAsmx86Instruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize )
+SgAsmX86Instruction* SgAsmX86Instruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                           Rose::BinaryAnalysis::X86InstructionKind kind,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize baseSize,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize operandSize,
+                                                                           Rose::BinaryAnalysis::X86InstructionSize addressSize)
    {
 #if 0
   // debugging information!
-     printf ("In SgAsmx86Instruction::build_node_from_nonlist_children (rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgAsmX86Instruction::build_node_from_nonlist_children (rose_addr_t address, std::string mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-     SgAsmx86Instruction* returnNode = NULL;
+     SgAsmX86Instruction* returnNode = NULL;
 
      return returnNode;
    }
@@ -10810,7 +11161,10 @@ SgAsmx86Instruction* SgAsmx86Instruction::build_node_from_nonlist_children ( ros
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, ArmInstructionKind kind, ArmInstructionCondition condition, int positionOfConditionInMnemonic )
+SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                           Rose::BinaryAnalysis::ArmInstructionKind kind,
+                                                                           Rose::BinaryAnalysis::ArmInstructionCondition condition,
+                                                                           int positionOfConditionInMnemonic)
    {
 #if 0
   // debugging information!
@@ -10828,7 +11182,8 @@ SgAsmArmInstruction* SgAsmArmInstruction::build_node_from_nonlist_children ( ros
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, PowerpcInstructionKind kind )
+SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                                   Rose::BinaryAnalysis::PowerpcInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -10846,7 +11201,8 @@ SgAsmPowerpcInstruction* SgAsmPowerpcInstruction::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, MipsInstructionKind kind )
+SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                             Rose::BinaryAnalysis::MipsInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -10864,7 +11220,8 @@ SgAsmMipsInstruction* SgAsmMipsInstruction::build_node_from_nonlist_children ( r
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmM68kInstruction* SgAsmM68kInstruction::build_node_from_nonlist_children ( rose_addr_t address, std::string mnemonic, M68kInstructionKind kind )
+SgAsmM68kInstruction* SgAsmM68kInstruction::build_node_from_nonlist_children(rose_addr_t address, std::string mnemonic,
+                                                                             Rose::BinaryAnalysis::M68kInstructionKind kind)
    {
 #if 0
   // debugging information!
@@ -11350,7 +11707,7 @@ SgAsmMemoryReferenceExpression* SgAsmMemoryReferenceExpression::build_node_from_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11368,7 +11725,7 @@ SgAsmRegisterReferenceExpression* SgAsmRegisterReferenceExpression::build_node_f
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor )
+SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor )
    {
 #if 0
   // debugging information!
@@ -11386,7 +11743,7 @@ SgAsmDirectRegisterExpression* SgAsmDirectRegisterExpression::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( RegisterDescriptor descriptor, RegisterDescriptor stride, RegisterDescriptor offset, size_t index, size_t modulus )
+SgAsmIndirectRegisterExpression* SgAsmIndirectRegisterExpression::build_node_from_nonlist_children ( Rose::BinaryAnalysis::RegisterDescriptor descriptor, Rose::BinaryAnalysis::RegisterDescriptor stride, Rose::BinaryAnalysis::RegisterDescriptor offset, size_t index, size_t modulus )
    {
 #if 0
   // debugging information!
@@ -15084,3 +15441,75 @@ SgWhenStmt* SgWhenStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpres
      SgWhenStmt* returnNode = NULL;
      return returnNode;
    }
+
+// DQ (12/2/2018: Added support for new IR node.
+SgIncludeFile* SgIncludeFile::build_node_from_nonlist_children ( SgName name )
+   {
+     SgIncludeFile* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgNonrealRefExp* SgNonrealRefExp::build_node_from_nonlist_children(Sg_File_Info*, SgNonrealSymbol*)
+   {
+     SgNonrealRefExp* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealBaseClass* SgNonrealBaseClass::build_node_from_nonlist_children(SgClassDeclaration*, bool, SgNonrealDecl*)
+   {
+     SgNonrealBaseClass* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealType* SgNonrealType::build_node_from_nonlist_children(SgDeclarationStatement*)
+   {
+     SgNonrealType* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealSymbol* SgNonrealSymbol::build_node_from_nonlist_children(SgNonrealDecl*)
+   {
+     SgNonrealSymbol* returnNode = NULL;
+     return returnNode;
+   }
+
+SgNonrealDecl* SgNonrealDecl::build_node_from_nonlist_children(Sg_File_Info*, SgName)
+   {
+     SgNonrealDecl* returnNode = NULL;
+     return returnNode;
+   }
+
+SgAutoType* SgAutoType::build_node_from_nonlist_children()
+   {
+     SgAutoType* returnNode = NULL;
+     return returnNode;
+   }
+
+SgFloat80Val* SgFloat80Val::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, long double value, std::string valueString)
+   {
+     SgFloat80Val* returnNode = NULL;
+     return returnNode;
+   }
+
+SgFloat128Val* SgFloat128Val::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, long double value, std::string valueString)
+   {
+     SgFloat128Val* returnNode = NULL;
+     return returnNode;
+   }
+
+
+SgVoidVal* SgVoidVal::build_node_from_nonlist_children (Sg_File_Info*)
+   {
+     SgVoidVal* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgEmptyDeclaration* SgEmptyDeclaration::build_node_from_nonlist_children (Sg_File_Info*)
+   {
+     SgEmptyDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+

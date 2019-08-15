@@ -9,6 +9,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
 endif
 
+# Rasmussen (01/21/2018): Adding general support for experimental languages
+if ROSE_BUILD_ATERM_SUPPORT
+   SUBDIRS += Experimental_General_Language_Support
+endif
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
 endif
@@ -80,11 +85,13 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/InstructionProvider.h	\
 	Partitioner2/Modules.h			\
 	Partitioner2/ModulesElf.h		\
+	Partitioner2/ModulesLinux.h		\
 	Partitioner2/ModulesM68k.h		\
 	Partitioner2/ModulesPe.h		\
+	Partitioner2/ModulesPowerpc.h		\
 	Partitioner2/ModulesX86.h		\
-	Partitioner2/OwnedDataBlock.h		\
 	Partitioner2/Partitioner.h		\
 	Partitioner2/Reference.h		\
 	Partitioner2/Semantics.h		\
+	Partitioner2/Thunk.h			\
 	Partitioner2/Utility.h

@@ -79,7 +79,9 @@ namespace Rose {
  *  phase.  This is the point at which the mlog is given a name and connected to a destination(s).  The name is usually the
  *  fully qualified name of the component for which the @c mlog object serves as the logging facility, and may contain typical
  *  C++ symbol names, dots, and "::".  This name is used to enable/disable the facility from the command-line, and will show up
- *  as part of the output for any message emitted using this facility.
+ *  as part of the output for any message emitted using this facility.  It is recommended that you also provide a comment in
+ *  order to help people that are not ROSE developers to use ROSE-based tools. The comment should start with a gerund (verb
+ *  ending with "ing"), be uncapitalized, and unpunctuated.
  *
  *  The second, optional half of this step is to register the facility with the ROSE library so it can be controlled from the
  *  command-line. Although unregistered facilities are still useful, components of the ROSE library should almost always
@@ -92,6 +94,7 @@ namespace Rose {
  *      if (!initialized) {
  *          initialized = true;
  *          Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::BinaryLoader");
+ *          mlog.comment("mapping files into virtual memory");
  *      }
  *  }
  * @endcode
@@ -307,7 +310,7 @@ ROSE_DLL_API bool isInitialized();
  *  streams. Then register the facility with ROSE's global list of facilities so it can be controlled from the command-line.
  *  Registering a facility does not copy it--it only saves a reference to it. Therefore, either facilties should be statically
  *  declared or they should be de-registered before they go out of scope. */
-void initAndRegister(Facility *mlog, const std::string &name);
+ROSE_DLL_API void initAndRegister(Facility *mlog, const std::string &name);
 
 // [Robb P Matzke 2017-02-16]: deprecated: The version that takes a pointer first argument is a better design because it gives
 // the user a better clue that we're saving a reference rather than a copy. Note: ROSE_DEPRECATED not defined here.

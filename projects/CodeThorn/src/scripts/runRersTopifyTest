@@ -14,7 +14,7 @@ echo "*=========================================================================
 
 #create a temp directory
 CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
-TEMP_DIR="make_check_log_"${CURRENT_TIME}
+TEMP_DIR="make_check_log_topify_mode_"${CURRENT_TIME}
 mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 

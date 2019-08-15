@@ -9,7 +9,7 @@ namespace Unparser {
 // class method
 std::string
 Arm::unparseArmCondition(ArmInstructionCondition cond) {
-    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+    std::string retval = stringifyBinaryAnalysisArmInstructionCondition(cond, "arm_cond_");
     ASSERT_require(!retval.empty() && retval[0]!='(');
     return retval;
 }
@@ -145,7 +145,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::str
         case V_SgAsmDirectRegisterExpression: {
             SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(expr);
             state.frontUnparser().emitRegister(out, rre->get_descriptor(), state);
-            if (rre->get_descriptor().get_major() == arm_regclass_psr && rre->get_psr_mask() !=0) {
+            if (rre->get_descriptor().majorNumber() == arm_regclass_psr && rre->get_psr_mask() !=0) {
                 out <<"_";
                 if (rre->get_psr_mask() & 1)
                     out <<"c";
@@ -205,8 +205,8 @@ Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) con
     ASSERT_not_null(insn);
 
     if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
-        ASSERT_require(insn->get_operandList()->get_operands().size()==1);
-        ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
+        ASSERT_require(insn->nOperands() == 1);
+        ASSERT_require(insn->operand(0) == expr);
         SgAsmIntegerValueExpression *tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
         state.frontUnparser().emitAddress(out, tgt->get_bitVector(), state);

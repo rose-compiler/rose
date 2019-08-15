@@ -77,6 +77,20 @@ insertUnique(Container &container, const Value &item, Comparator cmp) {
     return false;
 }
 
+// Insert an intem into a sorted continer, replacing any existing item that compares equal to it.
+template<class Container, class Value, class Comparator>
+void
+replaceOrInsert(Container &container, const Value &item, Comparator cmp) {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
+    typename Container::iterator lb = lowerBound(container, item, cmp);
+    if (lb == container.end() || !equalUnique(*lb, item, cmp)) {
+        container.insert(lb, item);
+    } else {
+        *lb = item;
+    }
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true));
+}
+
 // Erase an item from a sorted container if it doesn't exist yet in the container.  Returns true iff erased.
 template<class Container, class Value, class Comparator>
 bool
@@ -166,6 +180,20 @@ public:
     }
 
     static std::string docString();
+
+    /** Parse an interval from a C string.
+     *
+     *  Tries to parse an interval from the @p input string, and if successful adjusts @p rest to point to the
+     *  first character beyond what was parsed. If a syntax error occurs, then an @c std::runtime_error is thrown. */
+    static AddressInterval parse(const char *input, const char **rest);
+
+    /** Parse an interval from a C++ string.
+     *
+     *  Tries to parse an interval from the @p input string. The string may contain leading and trailing white space,
+     *  but any extra characters will cause a syntax error. Syntax errors are reported by throwing @c std::runtime_error.
+     *  Since the underlying parsing is done on C strings, this function is ill-defined when the @p input contains NUL
+     *  bytes. */
+    static AddressInterval parse(const std::string &input);
 
 private:
     virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,

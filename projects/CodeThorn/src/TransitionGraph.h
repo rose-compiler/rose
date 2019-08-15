@@ -56,7 +56,6 @@ namespace CodeThorn {
     TransitionGraph();
     void setModeLTLDriven(bool mode) { _modeLTLDriven=mode; }
     bool getModeLTLDriven() { return _modeLTLDriven; }
-    EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
     EStatePtrSet estateSetOfLabel(Label lab);
     EStatePtrSet estateSet();
     long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
@@ -79,6 +78,7 @@ namespace CodeThorn {
     //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
     void reduceEStates2(set<const EState*> toReduce);
     void reduceEState2(const EState* estate); // used for semantic folding
+    void reduceEStates3(function<bool(const EState*)> predicate); // used for semantic folding
     TransitionPtrSet inEdges(const EState* estate);
     TransitionPtrSet outEdges(const EState* estate);
     EStatePtrSet pred(const EState* estate);

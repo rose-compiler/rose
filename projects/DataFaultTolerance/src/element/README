@@ -1,6 +1,0 @@
-This folder contains code which worked upon per array element instead of a chunk of elements.
-SECDED (Single Error Correction Double Error Detection) is used for calculating the parity bits.
-The code worked by hashing the address of array element alongwith the parity bits and storing
-in a hash table. Later based on the accesses, the parity bits are verified.
-
-Currently, this code is kept for future reference. ( Kamal 08/09/2011 )

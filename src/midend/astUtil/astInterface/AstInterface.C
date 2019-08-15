@@ -263,7 +263,8 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
     SgDeclarationStatement *decl = classtype->get_declaration();
-    if (decl->variantT() == V_SgClassDeclaration) 
+    // FIXME[Robb Matzke 2019-07-10]: The following line is buggy. The condition is always true.
+    if (decl->variantT() == V_SgClassDeclaration || V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
@@ -485,7 +486,12 @@ SgVariableSymbol* LookupQualifiedVar (const std::string& name, SgScopeStatement*
       }
       if (!matched_decl) 
       {
-        cerr<<"Warning: cannot find qualified name for "<< currentname << " within scope " << cur_scope->class_name() << " @ " << cur_scope->get_file_info()->get_line() <<endl;
+        if (cur_scope != NULL) {
+          cerr<<"Warning: cannot find qualified name for "<< currentname << " within scope " << cur_scope->class_name() << " @ " << cur_scope->get_file_info()->get_line() <<endl;
+        }
+        else {
+          cerr<<"Warning: cannot find qualified name "<< currentname <<endl;
+        }
         return NULL; // cannot find the declaration
       }
 
@@ -512,7 +518,7 @@ SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
 
   SgClassDefinition *cdef = isSgClassDefinition(loc);
   if (cdef != 0) {
-     SgVariableSymbol* r = cdef->lookup_variable_symbol(start);
+     SgVariableSymbol* r = dynamic_cast<SgVariableSymbol*>(cdef->lookup_symbol(start));
      if (DebugSymbol()) {
            if (r == 0) 
               std:: cerr << "failed to find variable " << start;
@@ -542,7 +548,7 @@ SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
   else {
      SgVariableSymbol* f = 0;
      do {
-        f = loc->lookup_variable_symbol(start);
+        f = dynamic_cast<SgVariableSymbol*>(loc->lookup_symbol(start));
         if (DebugSymbol()) {
            if (f == 0) 
               std:: cerr << "failed to find variable ";
@@ -564,7 +570,7 @@ LookupVar( const std::string& name, SgScopeStatement* loc)
 {
   if (loc == 0) loc = scope;
   assert(loc!=0);
-  return ::LookupVar(name, loc);
+  return isSgVariableSymbol(::LookupVar(name, loc));
 }
 
 
@@ -956,10 +962,15 @@ std::string AstInterface::unparseToString( const AstNodePtr& n)
   return ::unparseToString(s);
 }
 
-std::string AstInterface::AstToString( const AstNodePtr& n)
+std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
 { 
   SgNode* s = (SgNode*)n.get_ptr();
-  return string(s->sage_class_name()) + ":" + ::unparseToString(s);
+  if (s == 0) return "";
+  std::string res;
+  if (withClassName)
+    res =  string(s->sage_class_name()) + ":";
+  res = res + ::unparseToString(s);
+  return res;
 }
 
 // Return "@line_number:column_number" for an AST node  
@@ -1726,6 +1737,23 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
       decl = var;
     }
     break;
+  case V_SgArrowExp:
+   {
+     const SgArrowExp *exp1 = isSgArrowExp(exp);
+     SgNode* lhs = exp1->get_lhs_operand();
+     if (isSgThisExp(lhs)!=0) { return IsVarRef(exp1->get_rhs_operand(),vartype,varname,_scope, isglobal); } 
+     SgVarRefExp* var1 = isSgVarRefExp(lhs);
+     SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
+     if (var1 == 0 || var2 == 0)
+        return false;
+     SgVariableSymbol *sb1 = var1->get_symbol();
+     SgVariableSymbol *sb2 = var2->get_symbol();
+     if (vartype != 0) *vartype = sb2->get_type();
+     if (varname != 0)
+        *varname = string(sb1->get_name().str()) + "->" + StripQualifier(string(sb2->get_name().str()));
+     decl = sb1->get_declaration();
+     break;
+   }
   case V_SgDotExp:
    {
      const SgDotExp *exp1 = isSgDotExp(exp);
@@ -1777,6 +1805,15 @@ SgNode* SkipCasting(SgNode*  exp)
     return exp;
 }
 
+std::string AstInterface::GetScopeName( const AstNodePtr& _scope)
+{
+  SgNode* s = AstNodePtrImpl(_scope).get_ptr();
+  SgScopeStatement* scope = isSgScopeStatement(s);
+  assert(scope != 0); 
+  return StripGlobalQualifier(scope->get_qualified_name().str());
+}
+
+
 string AstInterface::GetVarName( const AstNodePtr& _exp)
 {
   AstNodePtrImpl exp(_exp);
@@ -1810,8 +1847,10 @@ NewVar( const AstNodeType& _type, const string& name, bool makeunique,
   SgExpression* e = 0;
   if (_init != AST_NULL) e = ToExpression( *impl, (SgNode*)_init.get_ptr());
   SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, delayInsert, e, scope);
+#ifndef NDEBUG
   SgInitializedName* def = sb->get_declaration();
   assert(def != 0 && !HasNullParent(def));
+#endif
 
   if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   SgName n =  sb->get_name();
@@ -2028,8 +2067,7 @@ bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
-  if (IsVarRef(_s) || IsArrayAccess(_s))
-    return true;
+  if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
   switch (s->variantT()) {
   case V_SgPntrArrRefExp:
   case V_SgPointerDerefExp:
@@ -2067,6 +2105,11 @@ bool AstInterface::
 IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstList* index)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  if (s->variantT() == V_SgDotExp) {
+        SgDotExp* dot = isSgDotExp(s);
+        if (!IsVarRef(AstNodePtrImpl(dot->get_rhs_operand()))) return false;
+        s = dot->get_lhs_operand();
+  }
   if (s->variantT() == V_SgPntrArrRefExp) {
       if (index != 0 || array != 0) {
         SgNode* n = s;
@@ -2104,27 +2147,6 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstList* index)
   }
   return false;
 }
-
-/*
-bool AstInterface::
-IsArrayType( const AstNodeType& s, AstNodeType* base)
-{
-  if (s->variantT() ==  V_SgArrayType) {
-      if (base != 0) {
-        SgType* n = s;
-        while (true) {
-          SgArrayType *arr = isSgArrayType(n);
-          if (arr == 0)
-            break;
-          n = arr->get_base_type();
-        }
-        *base = n;
-      }
-      return true;
-  }
-  return false;
-}
-*/
 
 bool AstInterface::
 IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
@@ -2448,9 +2470,30 @@ AstInterface::IsPointerType(const AstNodeType& __type)
   return type.get_ptr()->variantT() == V_SgPointerType;
 }
 
+/*
+bool AstInterface::
+IsArrayType( const AstNodeType& s, AstNodeType* base)
+{
+  if (s->variantT() ==  V_SgArrayType) {
+      if (base != 0) {
+        SgType* n = s;
+        while (true) {
+          SgArrayType *arr = isSgArrayType(n);
+          if (arr == 0)
+            break;
+          n = arr->get_base_type();
+        }
+        *base = n;
+      }
+      return true;
+  }
+  return false;
+}
+*/
+
 bool
 AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
-                          AstNodeType* __base_type)
+                          AstNodeType* __base_type, std::string* annotation)
 {
   AstNodeTypeImpl type(__type);
   SgArrayType* t = isSgArrayType(type.get_ptr());
@@ -2461,6 +2504,15 @@ AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
     (*__base_type) = AstNodeTypeImpl(t->get_base_type());
   if (__dim)
     (*__dim) = t->get_rank();
+  if (annotation != 0) {
+/*
+    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
+    if (p != NULL) {
+      *annotation = p->getString();
+std::cerr << "ANNOTATION:" << *annotation << "\n";
+    } 
+*/
+  }
   return true;
 }
 
@@ -2861,6 +2913,13 @@ AstInterface::AstNodeList AstInterface::GetBlockStmtList( const AstNodePtr& _n)
   case V_SgSwitchStatement:
        result.push_back(isSgSwitchStatement(n.get_ptr())->get_body());
        return result;
+  case V_SgGlobal: {
+       SgDeclarationStatementPtrList& l1 = isSgGlobal(n.get_ptr())->get_declarations();
+       for (SgDeclarationStatementPtrList::iterator p = l1.begin(); p != l1.end(); ++p) {
+          result.push_back(*p);
+       }
+       return result;
+      }
   default:  
       assert(false);
   }
@@ -3159,6 +3218,10 @@ CreateBinaryOP( OperatorEnum op, const AstNodePtr& _a0, const AstNodePtr& _a1)
       n =  new SgAndOp(GetFileInfo(), e0,e1); break;
   case BOP_OR:
       n =  new SgOrOp(GetFileInfo(), e0,e1); break;
+  case BOP_BIT_RSHIFT:
+      n = new SgRshiftOp(GetFileInfo(), e0,e1); break;
+  case BOP_BIT_LSHIFT:
+      n = new SgLshiftOp(GetFileInfo(), e0,e1); break;
   default:
       cerr << "Error: non-recognized binary operator: \n";
       assert(false);
@@ -3800,7 +3863,7 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
          SgVarRefExp *var = isSgVarRefExp(ast);
          SgScopeStatement *scope = GetScope(ast);
          string name = var->get_symbol()->get_name().str();
-         SgVariableSymbol *r =  LookupVar(name, scope);
+         SgVariableSymbol *r =  isSgVariableSymbol(LookupVar(name, scope));
          if (r == 0) {
              cerr << "failed to find symbol for variable: " << name << " in scope " << scope << endl;
              //assert(false);

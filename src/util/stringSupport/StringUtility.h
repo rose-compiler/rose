@@ -3,12 +3,16 @@
 
 #include "commandline_processing.h"
 
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <limits.h>
 #include <map>
 #include <sstream>
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <Sawyer/IntervalSet.h>
 
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
@@ -42,6 +46,10 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
  *  resulting string. */
 ROSE_UTIL_API std::string cEscape(const std::string&);
 
+/**  Escapes characters that are special to the Bourne shell.
+ *
+ *   Assumes that the context is outside of any quoting and possibly adds quotes. */
+ROSE_UTIL_API std::string bourneEscape(const std::string&);
 
 // [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
 //   1. Its name is spelled wrong: "Charater"
@@ -54,8 +62,7 @@ ROSE_UTIL_API std::string cEscape(const std::string&);
  *
  *  Scans the input string character by character and replaces line-feed characters with a backslash followed by the letter "l"
  *  and replaces double quotes by a backslash followed by a double qoute. */
-ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&)
-    SAWYER_DEPRECATED("tell us if you use this");       // ROSE_DEPRECATED is not defined here; lack of sage3basic.h
+ROSE_UTIL_API std::string escapeNewLineCharaters(const std::string&);
 
 // DQ (12/8/2016): This is ued in the generation of dot files.
 ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::string&);
@@ -117,6 +124,28 @@ ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], si
 ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
 /** @} */
 
+/** Join strings as if they were English prose.
+ *
+ *  This is useful when generating documentation strings.
+ *
+ *  If the input is empty, the output is the empty string.
+ *  I.e., <code>() => ""</code>
+ *
+ *  If the input is one phrase, the output is that phrase.
+ *  E.g., <code>("foo") => "foo"</code>
+ *
+ *  If the input is two phrases, the output will be those two phrases separated by "and" (the @p finalIntro).
+ *  E.g., <code>("foo", "bar") => "foo and bar"</code>
+ *
+ *  If the input is three or more phrases, they will be separated from one another by commas (the @p separator) and the last
+ *  item will also be introduced with "and" (the @p finalIntro).
+ *  E.g., <code>("foo", "bar", "baz") => "foo, bar, and baz"</code>
+ *
+ *  No transformations are performed on the input phrases. Space characters are inserted after each @p separator and @p
+ *  finalIntro. A space is also inserted before the @p finalIntro when the input is two phrases. */
+ROSE_UTIL_API std::string joinEnglish(const std::vector<std::string> &phrases,
+                                      const std::string &separator = ",",
+                                      const std::string &finalIntro = "and");
 
 
 
@@ -226,6 +255,19 @@ template<typename T> std::string unsignedToHex(T value) { return unsignedToHex2(
  *  represents at least @p nbits bits (four bits per hexadecimal digits). If @p nbits is zero then the function uses 32 bits
  *  for values that fit in 32 bits, otherwise 64 bits. */
 ROSE_UTIL_API std::string addrToString(uint64_t value, size_t nbits = 0);
+
+/** Convert an interval of virtual addresses to a string.
+ *
+ *  Converts an interval to a string by converting each address to a string, separating them with a comma, and enclosing the
+ *  whole string in square brackets. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::Interval<uint64_t> &interval, size_t nbits = 0);
+
+/** Convert an interval set of virtual addresses to a string.
+ *
+ *  Converts the interval-set to a string by converting each interval to a string, separating the intervals with commas, and
+ *  enclosing the whole string in curly braces. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<uint64_t> > &iset,
+                                       size_t nbits = 0);
 
 
 
@@ -343,16 +385,6 @@ ROSE_UTIL_API std::string untab(const std::string &str, size_t tabstops=8, size_
  *  if it was non-empty and unique. This happened when it was not followed by a line-feed. */
 ROSE_UTIL_API std::string removeRedundantSubstrings(const std::string&);
 
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removeRedundentSubstrings(std::string);
-
-/** Remove redundant lines containing special substrings of form string#. */
-ROSE_UTIL_API std::string removePseudoRedundantSubstrings(const std::string&);
-
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removePseudoRedundentSubstrings(std::string);
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -460,12 +492,19 @@ std::string plural(T n, const std::string &plural_word, const std::string &singu
     if (1==n) {
         if (!singular_word.empty()) {
             retval += singular_word;
-        } else if (plural_word.size()>3 && 0==plural_word.substr(plural_word.size()-3).compare("ies")) {
+        } else if (boost::ends_with(plural_word, "vertices")) {
+            retval += boost::replace_tail_copy(plural_word, 8, "vertex");
+        } else if (boost::ends_with(plural_word, "indices")) {
+            retval += boost::replace_tail_copy(plural_word, 7, "index");
+        } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
-            retval += plural_word.substr(0, plural_word.size()-3) + "y";
-        } else if (plural_word.size()>1 && plural_word[plural_word.size()-1]=='s') {
-            // just drop the final 's'
-            retval += plural_word.substr(0, plural_word.size()-1);
+            retval += boost::replace_tail_copy(plural_word, 3, "y");
+        } else if (boost::ends_with(plural_word, "indexes")) {
+            // Sometimes we need to drop an "es" rather than just the "s"
+            retval += boost::erase_tail_copy(plural_word, 2);
+        } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
+            // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
+            retval += boost::erase_tail_copy(plural_word, 1);
         } else {
             // I give up.  Use the plural and risk being grammatically incorrect.
             retval += plural_word;

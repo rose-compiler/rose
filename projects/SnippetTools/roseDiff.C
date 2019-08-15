@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <CommandLine.h>
 #include <FileSystem.h>
 
 #include <Sawyer/CommandLine.h>
@@ -26,7 +27,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
         .doc("description",
              "Scans the two specified directories and creates a recursive, unified diff of the ROSE-generated files "
              "in those directories.")
-        .with(CommandlineProcessing::genericSwitches());
+        .with(Rose::CommandLine::genericSwitches());
 
     return parser.parse(argc, argv).apply();
 }

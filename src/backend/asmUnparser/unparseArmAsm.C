@@ -21,7 +21,7 @@ static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, con
 
     if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(reg)) {
         /* Add mask letters to program status registers */
-        if (rdesc.get_major()==arm_regclass_psr && dre->get_psr_mask()!=0) {
+        if (rdesc.majorNumber()==arm_regclass_psr && dre->get_psr_mask()!=0) {
             name += "_";
             if (dre->get_psr_mask() & 1) name += "c";
             if (dre->get_psr_mask() & 2) name += "x";
@@ -35,7 +35,7 @@ static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, con
 
 static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unparse as used for mnemonics
 #ifndef _MSC_VER
-    std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
+    std::string retval = stringifyBinaryAnalysisArmInstructionCondition(cond, "arm_cond_");
 #else
     ROSE_ASSERT(false);
     std::string retval ="";
@@ -252,8 +252,8 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
     ASSERT_not_null(insn);
 
     if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
-        ASSERT_require(insn->get_operandList()->get_operands().size()==1);
-        ASSERT_require(insn->get_operandList()->get_operands()[0]==expr);
+        ASSERT_require(insn->nOperands() == 1);
+        ASSERT_require(insn->operand(0) == expr);
         SgAsmIntegerValueExpression* tgt = isSgAsmIntegerValueExpression(expr);
         ASSERT_not_null(tgt);
         return StringUtility::addrToString(tgt->get_value(), tgt->get_significantBits());

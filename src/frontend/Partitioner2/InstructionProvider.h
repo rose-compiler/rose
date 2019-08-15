@@ -7,7 +7,7 @@
 
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
-#include <Sawyer/Map.h>
+#include <Sawyer/HashMap.h>
 #include <Sawyer/SharedPointer.h>
 
 namespace Rose {
@@ -31,7 +31,7 @@ public:
     typedef Sawyer::SharedPointer<InstructionProvider> Ptr;
 
     /** Mapping from address to instruction. */
-    typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InsnMap;
+    typedef Sawyer::Container::HashMap<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:
     Disassembler *disassembler_;
@@ -44,7 +44,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void save(S &s, const unsigned version) const {
+    void save(S &s, const unsigned /*version*/) const {
         roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
         bool hasDisassembler = disassembler_ != NULL;
         s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
@@ -58,7 +58,7 @@ private:
     }
 
     template<class S>
-    void load(S &s, const unsigned version) {
+    void load(S &s, const unsigned /*version*/) {
         roseAstSerializationRegistration(s);
         bool hasDisassembler = false;
         s >>BOOST_SERIALIZATION_NVP(hasDisassembler);
@@ -78,11 +78,16 @@ private:
 
 protected:
     InstructionProvider()
-        : disassembler_(NULL), useDisassembler_(false) {}
+        : disassembler_(NULL), useDisassembler_(false) {
+        // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
+        insnMap_.rehash(1000000);
+    }
 
     InstructionProvider(Disassembler *disassembler, const MemoryMap::Ptr &map)
         : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
         ASSERT_not_null(disassembler);
+        // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
+        insnMap_.rehash(1000000);
     }
 
 public:
@@ -158,6 +163,17 @@ public:
     /** Register used as a user-mode stack pointer. */
     RegisterDescriptor stackPointerRegister() const { return disassembler_->stackPointerRegister(); }
 
+    /** Register used for function call frames.
+     *
+     *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
+    RegisterDescriptor stackFrameRegister() const { return disassembler_->stackFrameRegister(); }
+
+    /** Register holding a function call's return address.
+     *
+     *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. Some
+     *  architectures call this a "link" register (e.g., PowerPC). */
+    RegisterDescriptor callReturnRegister() const { return disassembler_->callReturnRegister(); }
+
     /** Register used as a segment to access stack memory.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
@@ -172,6 +188,9 @@ public:
      *  in which case a null pointer is returned.  The returned dispatcher is not connected to any semantic domain, so it can
      *  only be used to call its virtual constructor to create a valid dispatcher. */
     InstructionSemantics2::BaseSemantics::DispatcherPtr dispatcher() const { return disassembler_->dispatcher(); }
+
+    /** Print some partitioner performance statistics. */
+    void showStatistics() const;
 };
 
 } // namespace

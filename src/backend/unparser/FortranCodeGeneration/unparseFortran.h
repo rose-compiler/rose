@@ -258,6 +258,16 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseEndfileStatement         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWaitStatement            (SgStatement* stmt, SgUnparse_Info& info);
 
+          virtual void unparseSyncAllStatement         (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSyncImagesStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSyncMemoryStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSyncTeamStatement        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLockStatement            (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUnlockStatement          (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparse_Image_Ctrl_Stmt_Support (SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info& info);
+
+
           virtual void unparseAssociateStatement       (SgStatement* stmt, SgUnparse_Info& info);
 
        // Unparse base class data members
@@ -346,7 +356,8 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseFormatStatement  (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFormatItemList   (SgFormatItemList* formatItemList, SgUnparse_Info& info);
 
-          virtual void unparseForAllStatement  (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForAllStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDoConcurrentStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseContainsStatement(SgStatement* stmt, SgUnparse_Info& info);
 

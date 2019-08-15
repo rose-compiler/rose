@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {
@@ -110,6 +110,8 @@ class FIConstAnalysis {
   // removes all variables that are NOT in this provided set
   void filterVariables(VariableIdSet& variableIdSet);
 
+  static void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map);
+
  private:
   // Expression evaluation functions
   EvalValueType eval(SgExpression* node);
@@ -124,7 +126,7 @@ class FIConstAnalysis {
   bool isConstVal(SgExpression* node);
   bool isRelationalOperator(SgExpression* node);
 
-private:
+ private:
   VariableIdMapping* global_variableIdMapping;
   VarConstSetMap _varConstSetMap;
   VariableConstInfo* global_variableConstInfo;

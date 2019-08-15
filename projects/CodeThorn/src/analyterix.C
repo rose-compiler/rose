@@ -60,8 +60,10 @@
 // temporary
 #include "IntervalTransferFunctions.h"
 
-#include "SprayException.h"
 #include "CodeThornException.h"
+#include "CodeThornException.h"
+#include "DeadCodeAnalysis.h"
+#include "Normalization.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -79,6 +81,7 @@ const char* csvConstResultFileName=0;
 const char* csvAddressTakenResultFileName=0;
 const char* csvDeadCodeUnreachableFileName = 0;
 const char* csvDeadCodeDeadStoreFileName = 0;
+string option_start_function="main";
 bool option_rd_analysis=false;
 bool option_ud_analysis=false;
 bool option_lv_analysis=false;
@@ -89,8 +92,17 @@ bool option_trace=false;
 bool option_optimize_icfg=false;
 bool option_csv_stable=false;
 bool option_no_topological_sort=false;
-
+bool option_annotate_source_code=false;
+bool option_ignore_unknown_functions=false;
+bool option_inlining=false;
+bool option_normalize=false;
+bool option_show_source_code=false;
+bool option_show_path=true;
 //boost::program_options::variables_map args;
+
+void myInitDiagnostics() {
+  Normalization::initDiagnostics();
+}
 
 void writeFile(std::string filename, std::string data) {
   std::ofstream myfile;
@@ -101,7 +113,7 @@ void writeFile(std::string filename, std::string data) {
 
 void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   cout << "INFO: computing program statistics."<<endl;
-  SPRAY::ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
+  CodeThorn::ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
                        rdAnalyzer->getLabeler(), 
                        rdAnalyzer->getFlow(),
                        "ud-analysis");
@@ -113,10 +125,10 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   rdAnalyzer->getFlow()->resetDotOptions();
 }
 
-void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAnalysis) {
+void checkStaticArrayBounds(SgProject* root, CodeThorn::IntervalAnalysis* intervalAnalysis) {
   cout<<"STATUS: checking static array bounds."<<endl;
   int issuesFound=0;
-  SPRAY::Labeler* labeler=intervalAnalysis->getLabeler();
+  CodeThorn::Labeler* labeler=intervalAnalysis->getLabeler();
   for(Labeler::iterator j=labeler->begin();j!=labeler->end();++j) {
     SgNode* node=labeler->getNode(*j);
     std::string lineCol=SgNodeHelper::sourceLineColumnToString(node);
@@ -253,7 +265,7 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
           if(funcDecl->get_name() == tempSgName) {
             // There is a function whose name contains tempName. The mangled scope
             //  will probably be wrong:
-            throw SPRAY::Exception("Found function whose name contains the reserved text \"" + tempName + "\". "
+            throw CodeThorn::Exception("Found function whose name contains the reserved text \"" + tempName + "\". "
                                    "Mangling of scope is not possible.");
           }
           else if(funcDecl->get_name() == mainSgName) {
@@ -302,11 +314,7 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
 }
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
-
-  SPRAY::DFAnalysisBase::normalizeProgram(root);
-
   if(option_fi_constanalysis) {
-    VarConstSetMap varConstSetMap;
     FIConstAnalysis fiConstAnalysis(variableIdMapping);
     fiConstAnalysis.runAnalysis(root);
     fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
@@ -314,10 +322,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
       fiConstAnalysis.writeCvsConstResult(*variableIdMapping, option_prefix+csvConstResultFileName);
     }
-    cout << "INFO: annotating analysis results as comments."<<endl;
-    AstAnnotator ara(labeler);
-    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
-    ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+    if(option_annotate_source_code) {
+      cout << "INFO: annotating analysis results as comments."<<endl;
+      AstAnnotator ara(labeler);
+      ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
+      ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+    }
   }
 
   if(option_at_analysis) {
@@ -338,7 +348,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     }
 
     cout << "STATUS: computing address taken sets."<<endl;
-    SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
+    CodeThorn::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
     fipa.run();
 
@@ -466,19 +476,19 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
 #if 0
     VariableIdSet vidset=fipa.getModByPointer();
-    cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
+    cout<<"mod-set: "<<CodeThorn::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
 #endif
   }
   
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
-    SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
+    CodeThorn::IntervalAnalysis* intervalAnalyzer=new CodeThorn::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->setNoTopologicalSort(option_no_topological_sort);
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);
@@ -487,68 +497,45 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+
     intervalAnalyzer->setSolverTrace(option_trace);
-    std::string funtofind="main";
+    std::string funtofind=option_start_function;
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-    intervalAnalyzer->determineExtremalLabels(startFunRoot);
+    intervalAnalyzer->determineExtremalLabels(startFunRoot,false);
     intervalAnalyzer->run();
 
-#if 0
-    intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
-    intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
-    AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
-    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
-    ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
-#else
-    AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
-    ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
-#endif
+    if(option_annotate_source_code) {
+      AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
+    }
+
     if(option_check_static_array_bounds) {
       checkStaticArrayBounds(root,intervalAnalyzer);
     }
-    // schroder3 (2016-08-08): Generate csv-file that contains unreachable statements:
+    // schroder3 (2016-08-08): Generate csv-file containing unreachable statements
     if(csvDeadCodeUnreachableFileName) {
-      // Generate file name and open file:
-      std::string deadCodeCsvFileName = option_prefix;
-      deadCodeCsvFileName += csvDeadCodeUnreachableFileName;
-      ofstream deadCodeCsvFile;
-      deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
-      // Iteratate over all CFG nodes/ labels:
-      for(Flow::const_node_iterator i = intervalAnalyzer->getFlow()->nodes_begin(); i != intervalAnalyzer->getFlow()->nodes_end(); ++i) {
-        const Label& label = *i;
-        // Do not output a function call twice (only the function call label and not the function call return label):
-        if(!intervalAnalyzer->getLabeler()->isFunctionCallReturnLabel(label)) {
-          /*const*/ IntervalPropertyState& intervalsLattice = *static_cast<IntervalPropertyState*>(intervalAnalyzer->getPreInfo(label.getId()));
-          if(intervalsLattice.isBot()) {
-            // Unreachable statement found:
-            const SgNode* correspondingNode = intervalAnalyzer->getLabeler()->getNode(label);
-            ROSE_ASSERT(correspondingNode);
-            // Do not output scope statements ({ }, ...)
-            if(!isSgScopeStatement(correspondingNode)) {
-              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                              << endl;
-            }
-          }
-        }
-      }
-      deadCodeCsvFile.close();
+      // Generate file name
+      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeUnreachableFileName;
+      DeadCodeAnalysis deadCodeAnalysis;
+      deadCodeAnalysis.setOptionSourceCode(option_show_source_code);
+      deadCodeAnalysis.setOptionFilePath(option_show_path);
+      deadCodeAnalysis.writeUnreachableCodeResultFile(intervalAnalyzer,deadCodeCsvFileName);
     }
-
     delete fipa;
   }
 
   if(option_lv_analysis) {
     cout << "STATUS: creating LV analysis."<<endl;
-    SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
+    CodeThorn::LVAnalysis* lvAnalysis=new CodeThorn::LVAnalysis();
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
     lvAnalysis->setNoTopologicalSort(option_no_topological_sort);
     lvAnalysis->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     lvAnalysis->setPointerAnalysis(fipa);
@@ -556,11 +543,14 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     lvAnalysis->initializeTransferFunctions();
     cout << "STATUS: initializing LV global variables."<<endl;
     lvAnalysis->initializeGlobalVariables(root);
-    std::string funtofind="main";
+    lvAnalysis->setSolverTrace(option_trace);
+    std::string funtofind=option_start_function;
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     cout << "generating icfg_backward.dot."<<endl;
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
+
+    lvAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
 
     lvAnalysis->determineExtremalLabels(startFunRoot);
     lvAnalysis->run();
@@ -572,84 +562,24 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
     ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
 #else
-    AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
-    ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
+    if(option_annotate_source_code) {
+      AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
+    }
 #endif
 
     // schroder3 (2016-08-15): Generate csv-file that contains dead assignments/ initializations:
     if(csvDeadCodeDeadStoreFileName) {
-      // Generate file name and open file:
-      std::string deadCodeCsvFileName = option_prefix;
-      deadCodeCsvFileName += csvDeadCodeDeadStoreFileName;
-      ofstream deadCodeCsvFile;
-      deadCodeCsvFile.open(deadCodeCsvFileName.c_str());
-      if(option_trace) {
-        cout << "TRACE: checking for dead stores." << endl;
-      }
-      // Iteratate over all CFG nodes/ labels:
-      for(Flow::const_node_iterator labIter = lvAnalysis->getFlow()->nodes_begin(); labIter != lvAnalysis->getFlow()->nodes_end(); ++labIter) {
-        const Label& label = *labIter;
-        // Do not output a function call twice (only the function call return label and not the function call label):
-        if(!lvAnalysis->getLabeler()->isFunctionCallLabel(label)) {
-          /*const*/ SgNode* correspondingNode = lvAnalysis->getLabeler()->getNode(label);
-          ROSE_ASSERT(correspondingNode);
-          if(/*const*/ SgExprStatement* exprStmt = isSgExprStatement(correspondingNode)) {
-            correspondingNode = exprStmt->get_expression();
-          }
-          /*const*/ SgNode* association = 0;
-          // Check if the corresponding node is an assignment or an initialization:
-          if(isSgAssignOp(correspondingNode)) {
-            association = correspondingNode;
-          }
-          else if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(correspondingNode)) {
-            SgInitializedName* initName = SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-            ROSE_ASSERT(initName);
-            // Check whether there is an initialization that can be eliminated (reference initialization can not be eliminated).
-            if(!SgNodeHelper::isReferenceType(initName->get_type()) && initName->get_initializer()) {
-              association = correspondingNode;
-            }
-          }
-
-          if(association) {
-            if(option_trace) {
-              cout << endl << "association: " << association->unparseToString() << endl;
-            }
-            VariableIdSet assignedVars = AnalysisAbstractionLayer::defVariables(association, *lvAnalysis->getVariableIdMapping(), fipa);
-            /*const*/ LVLattice& liveVarsLattice = *static_cast<LVLattice*>(lvAnalysis->getPreInfo(label.getId()));
-            if(option_trace) {
-              cout << "live: " << liveVarsLattice.toString(lvAnalysis->getVariableIdMapping()) << endl;
-              cout << "assigned: " << endl;
-            }
-            bool minOneIsLive = false;
-            for(VariableIdSet::const_iterator assignedVarIter = assignedVars.begin(); assignedVarIter != assignedVars.end(); ++assignedVarIter) {
-              if(option_trace) {
-                cout << (*assignedVarIter).toString(*lvAnalysis->getVariableIdMapping()) << endl;
-              }
-              if(liveVarsLattice.exists(*assignedVarIter)) {
-                minOneIsLive = true;
-                break;
-              }
-            }
-            if(!minOneIsLive) {
-              if(option_trace) {
-                cout << "association is dead." << endl;
-              }
-              // assignment to only dead variables found:
-              deadCodeCsvFile << correspondingNode->get_file_info()->get_line()
-                              << "," << SPRAY::replace_string(correspondingNode->unparseToString(), ",", "/*comma*/")
-                              << endl;
-            }
-          }
-        }
-      }
-      deadCodeCsvFile.close();
+      std::string deadCodeCsvFileName = option_prefix+csvDeadCodeDeadStoreFileName;
+      DeadCodeAnalysis deadCodeAnalysis;
+      deadCodeAnalysis.writeDeadAssignmentResultFile(lvAnalysis,deadCodeCsvFileName);
     }
     delete lvAnalysis;
   }
 
   if(option_rd_analysis) {
       cout << "STATUS: creating RD analyzer."<<endl;
-      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
+      CodeThorn::RDAnalysis* rdAnalysis=new CodeThorn::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->setNoTopologicalSort(option_no_topological_sort);
       rdAnalysis->initialize(root);
@@ -657,13 +587,15 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       rdAnalysis->initializeTransferFunctions();
       cout << "STATUS: initializing RD global variables."<<endl;
       rdAnalysis->initializeGlobalVariables(root);
+      rdAnalysis->setSolverTrace(option_trace);
       
       cout << "generating icfg_forward.dot."<<endl;
       write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
     
-      std::string funtofind="main";
+      std::string funtofind=option_start_function;
       RoseAst completeast(root);
       SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      rdAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
       rdAnalysis->determineExtremalLabels(startFunRoot);
       rdAnalysis->run();
     
@@ -678,8 +610,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
       ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
 #else
-      AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
-      ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+      if(option_annotate_source_code) {
+        AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
+        ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+      }
 #endif
 
 #if 0
@@ -692,9 +626,9 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
-        int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
-        cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
+        //CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        //int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
+        //cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         
 #if 0
         cout << "INFO: computing program statistics."<<endl;
@@ -751,6 +685,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 }
 
 int main(int argc, char* argv[]) {
+  // required for Sawyer logger streams
+  ROSE_INITIALIZE;
+  myInitDiagnostics();
+
   try {
     if(argc==1) {
       cout << "Error: wrong command line options."<<endl;
@@ -781,6 +719,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("annotate", "Annotate source code with analysis results.")
       ("csv-at-analysis",po::value< string >(), "generate csv-file [arg] with address-taken analysis data.")
       ("no-topological-sort", "do not initialize the worklist with topological sorted CFG.")
       ("icfg-dot", "generates the ICFG as dot file.")
@@ -789,13 +728,22 @@ int main(int argc, char* argv[]) {
       ("interval-analysis", "perform interval analysis.")
       ("csv-deadcode-unreachable", po::value< string >(), "perform interval analysis and generate csv-file [arg] with unreachable code.")
       ("csv-deadcode-deadstore", po::value< string >(), "perform liveness analysis and generate csv-file [arg] with stores to dead variables.")
+      ("report-source-code", "report source code in generated csv files.")
+      ("report-only-file-name", "report only file name in generated csv files (default: full path).")
       ("trace", "show operations as performed by selected solver.")
       ("check-static-array-bounds", "check static array bounds (uses interval analysis).")
       ("print-varid-mapping", "prints variableIdMapping")
       ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
+      ("print-inter-flow", "prints inter-procedural information call/entry/exit/callreturn.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
-      ("csv-stable", "do not output csv data that is not stable/portable across environments.")
+      ("start-function",po::value< string >(), "set name of function where analysis is supposed to start (default is 'main').")
+      ("ignore-unknown-functions","ignore unknown functions (assume those functions are side effect free)")
+      ("csv-stable", "only output csv data that is stable/portable across environments.")
+      ("normalize-fcalls", "normalize only expressions with function calls [default].")
+      ("normalize-all", "normalize program (transform all expressions).")
+      ("inline", "inline functions (can increase precision of analysis).")
+      ("unparse", "generate source code from internal representation.")
       ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -831,6 +779,9 @@ int main(int argc, char* argv[]) {
     if(args.count("stats")) {
       option_stats=true;
     }
+    if(args.count("start-function")) {
+      option_start_function = args["start-function"].as<string>();
+    }
     if(args.count("rd-analysis")) {
       option_rd_analysis=true;
     }
@@ -839,6 +790,9 @@ int main(int argc, char* argv[]) {
     }
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
+    }
+    if(args.count("annotate")) {
+      option_annotate_source_code=true;
     }
     if(args.count("csv-deadcode-unreachable")) {
       option_interval_analysis = true;
@@ -879,6 +833,15 @@ int main(int argc, char* argv[]) {
     if (args.count("no-topological-sort")) {
       option_no_topological_sort=true;
     }
+    if (args.count("ignore-unknown-functions")) {
+      option_ignore_unknown_functions=true;
+    }
+    if (args.count("report-source-code")) {
+      option_show_source_code=true;
+    }
+    if (args.count("report-only-file-name")) {
+      option_show_path=false;
+    }
 
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
@@ -904,11 +867,24 @@ int main(int argc, char* argv[]) {
     //  AstTests::runAllTests(root);
 
    if(option_stats) {
-      SPRAY::ProgramStatistics::printBasicCodeInfo(root);
+      CodeThorn::ProgramStatistics::printBasicCodeInfo(root);
     }
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  if(args.count("inline")) {
+    programAbstractionLayer->setInliningOption(true);
+  }
+  if(args.count("normalize-fcalls")) {
+    programAbstractionLayer->setNormalizationLevel(1);
+  }
+  if(args.count("normalize-all")) {
+    programAbstractionLayer->setNormalizationLevel(2);
+  }
+  if(programAbstractionLayer->getInliningOption() && programAbstractionLayer->getNormalizationLevel()==0) {
+    cerr<<"Error: inlining option selected without option 'normalize'."<<endl;
+    exit(1);
+  }
   programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {
     programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
@@ -929,6 +905,17 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  if(args.count("print-inter-flow")) {
+    CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
+    Flow flow=cfAnalysis->flow(root);
+    if(option_optimize_icfg) {
+      cfAnalysis->optimizeFlow(flow);
+    }
+    InterFlow interFlow=cfAnalysis->interFlow(flow);
+    cout<<interFlow.toString()<<endl;
+    return 0;
+  }
+
   if(args.count("icfg-dot")) {
     CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
     Flow flow=cfAnalysis->flow(root);
@@ -936,7 +923,9 @@ int main(int argc, char* argv[]) {
       cfAnalysis->optimizeFlow(flow);
     }
     InterFlow interFlow=cfAnalysis->interFlow(flow);
+    // merges interFlow into Flow
     cfAnalysis->intraInterFlow(flow,interFlow);
+    cout << "generating icfg.dot."<<endl;
     string dotString=flow.toDot(programAbstractionLayer->getLabeler());
     writeFile("icfg.dot",dotString);
 
@@ -949,8 +938,10 @@ int main(int argc, char* argv[]) {
   }
   runAnalyses(root, programAbstractionLayer->getLabeler(), programAbstractionLayer->getVariableIdMapping());
 
-  cout << "INFO: generating annotated source code."<<endl;
-  root->unparse(0,0);
+  if(args.count("unparse")) {
+    cout << "INFO: generating source code from internal representation."<<endl;
+    root->unparse(0,0);
+  }
 
   if(option_rose_rd_analysis) {
     Experimental::RoseRDAnalysis::generateRoseRDDotFiles(programAbstractionLayer->getLabeler(),root);
@@ -961,9 +952,6 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
-    return 1;
-  } catch(SPRAY::Exception& e) {
-    cerr << "Spray::Exception raised: " << e.what() << endl;
     return 1;
   } catch(std::exception& e) {
     cerr << "std::exception raised: " << e.what() << endl;

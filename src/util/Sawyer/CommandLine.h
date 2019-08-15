@@ -392,7 +392,7 @@ protected:
 public:
     typedef SharedPointer<ValueSaver> Ptr;
     virtual ~ValueSaver() {}
-    virtual void save(const boost::any&, const std::string &switchKey) const = 0;
+    virtual void save(const boost::any&, const std::string &switchKey) = 0;
 };
 
 // used internally
@@ -404,7 +404,7 @@ protected:
 public:
     typedef SharedPointer<TypedSaver> Ptr;
     static Ptr instance(T &storage) { return Ptr(new TypedSaver(storage)); }
-    virtual void save(const boost::any &value, const std::string &/*switchKey*/) const /*override*/ {
+    virtual void save(const boost::any &value, const std::string &/*switchKey*/) /*override*/ {
         storage_ = boost::any_cast<T>(value);
     }
 };
@@ -420,7 +420,7 @@ public:
         TypedSaver(CONTAINER_TEMPLATE<T> &storage): storage_(storage) {}                                                       \
     public:                                                                                                                    \
         static Ptr instance(CONTAINER_TEMPLATE<T> &storage) { return Ptr(new TypedSaver(storage)); }                           \
-        virtual void save(const boost::any &value, const std::string &/*switchKey*/) const /*override*/ {                      \
+        virtual void save(const boost::any &value, const std::string &/*switchKey*/) /*override*/ {                            \
             T typed = boost::any_cast<T>(value);                                                                               \
             storage_.INSERT_METHOD(typed);                                                                                     \
         }                                                                                                                      \
@@ -438,7 +438,7 @@ public:
         TypedSaver(CONTAINER_TEMPLATE<std::string, T> &storage): storage_(storage) {}                                          \
     public:                                                                                                                    \
         static Ptr instance(CONTAINER_TEMPLATE<std::string, T> &storage) { return Ptr(new TypedSaver(storage)); }              \
-        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+        virtual void save(const boost::any &value, const std::string &switchKey) /*override*/ {                                \
             T typed = boost::any_cast<T>(value);                                                                               \
             storage_.INSERT_METHOD(switchKey, typed);                                                                          \
         }                                                                                                                      \
@@ -456,7 +456,7 @@ public:
         TypedSaver(CONTAINER_TEMPLATE<std::string, T> &storage): storage_(storage) {}                                          \
     public:                                                                                                                    \
         static Ptr instance(CONTAINER_TEMPLATE<std::string, T> &storage) { return Ptr(new TypedSaver(storage)); }              \
-        virtual void save(const boost::any &value, const std::string &switchKey) const /*override*/ {                          \
+        virtual void save(const boost::any &value, const std::string &switchKey) /*override*/ {                                \
             T typed = boost::any_cast<T>(value);                                                                               \
             storage_.INSERT_METHOD(std::make_pair(switchKey, typed));                                                          \
         }                                                                                                                      \
@@ -1300,7 +1300,7 @@ public:
      *  characters. Users will most likely want to use the @ref listParser factory instead, which takes the same arguments
      *  but requires less typing. */
     static Ptr instance(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe="[,;:]\\s*") {
-        return Ptr(new ListParser(firstElmtType, separatorRe)); 
+        return Ptr(new ListParser(firstElmtType, separatorRe));
     }
 
     /** Specifies element type and separator.
@@ -1330,7 +1330,7 @@ private:
 
 /** @defgroup sawyer_parser_factories Command line parser factories
  *  @ingroup sawyer
- *  
+ *
  *  Factories for creating instances of Sawyer::CommandLine::ValueParser subclasses.
  *
  *  A factory function is a more terse and convenient way of calling the @c instance allocating constructors for the various
@@ -1710,6 +1710,38 @@ protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
 
+/** Function to configure diagnostics to quiet mode.
+ *
+ *  @code
+ *   generic.insert(Switch("quiet", 'q')
+ *                  .action(configureDiagnosticsQuiet(Sawyer::Message::mfacilities))
+ *                  .doc("Turn off all diagnostic output except error and fatal levels."));
+ *  @endcode */
+class SAWYER_EXPORT ConfigureDiagnosticsQuiet: public SwitchAction {
+#include <Sawyer/WarningsOff.h>
+    Message::Facilities &facilities_;
+#include <Sawyer/WarningsRestore.h>
+protected:
+    ConfigureDiagnosticsQuiet(Message::Facilities &facilities)
+        : facilities_(facilities) {
+    }
+
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<ConfigureDiagnosticsQuiet> Ptr;
+
+    /** Allocating constructor. Returns a pointer to a new ConfigureDiagnosticsQuiet object. Users will most likely want to use
+     * the @ref configureDiagnosticsQuiet factory instead, which requires less typing.
+     *
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
+    static Ptr instance(Message::Facilities &facilities) {
+        return Ptr(new ConfigureDiagnosticsQuiet(facilities));
+    }
+
+protected:
+    virtual void operator()(const ParserResult&) /*override*/;
+};
+
 /** Wrapper around a user functor.  User code doesn't often use reference counting smart pointers for functors, but more often
  *  creates functors in global data or on the stack.  The purpose of UserAction is to be a wrapper around these functors, to
  *  be a bridge between the world of reference counting pointers and objects or object references.  For example, say the
@@ -1785,6 +1817,8 @@ SAWYER_EXPORT ShowHelp::Ptr showHelp();
 SAWYER_EXPORT ShowHelpAndExit::Ptr showHelpAndExit(int exitStatus);
 
 SAWYER_EXPORT ConfigureDiagnostics::Ptr configureDiagnostics(const std::string&, Message::Facilities&, bool exitOnHelp=true);
+
+SAWYER_EXPORT ConfigureDiagnosticsQuiet::Ptr configureDiagnosticsQuiet(Message::Facilities&);
 
 template<class Functor>
 typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
@@ -1981,7 +2015,7 @@ public:
     /** Constructs a switch declaration.  Every switch must have either a long or short name (or both), neither of which should
      *  include prefix characters such as hyphens. The best practice is to provide a long name for every switch and short names
      *  only for the most commonly used switches.
-     *  
+     *
      *  Additional names can be specified with the @ref longName and @ref shortName methods, but the constructor should be
      *  provided the canonical names.  The canonical names will be used to create the initial value for the @ref key property,
      *  and will be used for organizing parsed values by switch. They also appear in some error messages when command-line text
@@ -2050,7 +2084,7 @@ public:
      *  This library handles that situation by attaching the documentation to a single switch, say "branches", and hiding
      *  documentation for the other two switches.  But this also requires that the synopsis for "branches" be changed from
      *  its library-generated vesion:
-     * 
+     *
      * @code
      *  Switch("branches")
      *         .doc("@s{branches} [@v{pattern}]; @s{tags} [@v{pattern}]; @s{remotes} [@v{pattern}]")
@@ -2112,7 +2146,7 @@ public:
     Switch& docKey(const std::string &s) { documentationKey_ = s; return *this; }
     const std::string &docKey() const { return documentationKey_; }
     /** @} */
-    
+
     /** Property: whether this switch appears in documentation. A hidden switch still participates when parsing command lines,
      *  but will not show up in documentation.  This is ofen used for a switch when that switch is documented as part of some
      *  other switch.
@@ -2654,6 +2688,7 @@ public:
 
 private:
     friend class Parser;
+    bool removeByPointer(const void*);
 };
 
 /** Subset of switches grouped by their switch groups. */
@@ -2695,7 +2730,7 @@ class SAWYER_EXPORT Parser {
     SortOrder switchGroupOrder_;                        /**< Order of switch groups in the documentation. */
     bool reportingAmbiguities_;                         /**< Whether to report ambiguous switches. */
 #include <Sawyer/WarningsRestore.h>
-    
+
 public:
     /** Default constructor.  The default constructor sets up a new parser with defaults suitable for the operating
      *  system. The switch declarations need to be added (via @ref with) before the parser is useful. */
@@ -2723,10 +2758,37 @@ public:
     }
     /** @} */
 
-    /** List of all switch groups. */
+    /** List of all switch groups.
+     *
+     * @{ */
     const std::vector<SwitchGroup>& switchGroups() const {
         return switchGroups_;
     }
+    std::vector<SwitchGroup>& switchGroups() {
+        return switchGroups_;
+    }
+    /** @} */
+
+    /** Predicate to determine whether a switch group exists.
+     *
+     *  Searches this parser for a switch group having the specified name and returns true if it exists. */
+    bool switchGroupExists(const std::string &name) const;
+
+    /** Switch group having specified name.
+     *
+     *  Searches this parser and returns the first switch group having the specified name. Throws a @ref
+     *  Sawyer::Exception::NotFound error if no such @ref SwitchGroup exists in this parser.
+     *
+     * @{ */
+    const SwitchGroup& switchGroup(const std::string &name) const;
+    SwitchGroup& switchGroup(const std::string &name);
+    /** @} */
+
+    /** Remove switch group from parser.
+     *
+     *  Removes the first switch group having the specified name from this parser. Returns true if a switch group
+     *  was removed, false if nothing was removed. */
+    bool eraseSwitchGroup(const std::string &name);
 
     /** Property: Whether to report ambiguities.
      *
@@ -3093,6 +3155,21 @@ public:
      *  Return an index containing all switches that are ambiguous and which cannot be made unambiguous by qualifying them. */
     NamedSwitches findUnresolvableAmbiguities() const;
 
+    /** Remove the switch by matching parse sentence.
+     *
+     *  Removes from this parser whichever switch is able to parse the specified command-line. The input should be either a
+     *  single command line argument string (like "--debug-level=5") or a vector of strings (like {"--debug-level", "5"}). Only
+     *  long-name switches (not single-letter switches) can be removed this way.  Only the first matched switch is removed from
+     *  the parser.
+     *
+     *  Returns either nothing, or a copy of the switch parser that was removed.  Since the switch parser is returned, it can
+     *  then be modified and added back to the same parser or to a different parser.
+     *
+     * @{ */
+    Sawyer::Optional<Switch> removeMatchingSwitch(const std::string &arg);
+    Sawyer::Optional<Switch> removeMatchingSwitch(const std::vector<std::string> &args);
+    /** @} */
+
 public:
     // Used internally
     const ParsingProperties& properties() const { return properties_; }
@@ -3200,7 +3277,7 @@ class SAWYER_EXPORT ParserResult {
     SkippedIndex terminators_;
 
     /** Switch actions to be called by @ref apply. We save one action per key. */
-    Container::Map<std::string, SwitchAction::Ptr> actions_; 
+    Container::Map<std::string, SwitchAction::Ptr> actions_;
 #include <Sawyer/WarningsRestore.h>
 
 private:

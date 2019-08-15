@@ -9,9 +9,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # search path for .m4 macros
 #ACLOCAL_AMFLAGS = -I ./config
 
-AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
+# header is not included in rose.h
+# we have to specify the path to ai_measurement.h here.
 
-SUBDIRS = src . 
+Midend_Analysis_SOURCE_PATH=$(top_srcdir)/src/midend/programAnalysis/arithmeticIntensity
+
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(Midend_Analysis_SOURCE_PATH) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
+
+#SUBDIRS = src . 
 
 bin_PROGRAMS = measureTool codeInstrumentor
 measureTool_SOURCES = measureTool.cpp 
@@ -21,7 +26,7 @@ $(builddir)/src/libarithemeticMeasurement.a:
 	make -C $(builddir)/src
 
 #LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-measureTool_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(builddir)/src/libarithemeticMeasurement.a 
+measureTool_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) #$(builddir)/src/libarithemeticMeasurement.a 
 codeInstrumentor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 ## Test input testcode with manual instrumentation already
@@ -79,23 +84,23 @@ check_PROGRAM = ${C_TESTCODE_RESULTS:.c=.out}
 #nestedloops.out:rose_nestedloops.c
 #	gcc -O3 rose_nestedloops.c -o nestedloops.out -lm
 
-$(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
-	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
+$(C_Analysis_TESTCODE_RESULTS): ./measureTool 
+	./measureTool -c -static-counting-only -use-algorithm-v2 -annot $(Midend_Analysis_SOURCE_PATH)/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
-$(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
-	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
+$(C_TESTCODE_RESULTS):./measureTool 
+	./measureTool -c -annot $(Midend_Analysis_SOURCE_PATH)/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
-$(F_TESTCODE_RESULTS):measureTool $(srcdir)/test/fortran/$(@:rose_%=%) 
-	./measureTool -c -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/fortran/$(@:rose_%=%)
+$(F_TESTCODE_RESULTS):./measureTool
+	./measureTool -c -annot $(Midend_Analysis_SOURCE_PATH)/functionSideEffect.annot -I. $(srcdir)/test/fortran/$(@:rose_%=%)
 
 # test for RAJA loop support, static counting mode
-rose_rajaloop.cpp:measureTool $(srcdir)/test/rajaloop.cpp 
-	./measureTool -c -static-counting-only -support_raja_loops -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/rajaloop.cpp
+rose_rajaloop.cpp:./measureTool 
+	./measureTool -c -static-counting-only -support_raja_loops -annot $(Midend_Analysis_SOURCE_PATH)/functionSideEffect.annot -I. $(srcdir)/test/rajaloop.cpp
 
 # test for code instrumentor---------------------
 #Generate the loop count info. file , using the translator's loop_counting mode
-instrumentor_lib.o: $(srcdir)/src/instrumentor_lib.c
+instrumentor_lib.o: $(Midend_Analysis_SOURCE_PATH)/instrumentor_lib.c
 	gcc -c -o $@ $^
 instrumentor_lib.a: instrumentor_lib.o
 	ar r $@ $^
@@ -111,6 +116,8 @@ rose_bt_single.out: rose_bt_single.c instrumentor_lib.a
 bt-iter-count.log:rose_bt_single.out
 	./rose_bt_single.out
 ftest: $(F_TESTCODE_RESULTS)
+
+check-static: $(C_Analysis_TESTCODE_RESULTS)
 
 check: rose_rajaloop.cpp $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS) bt-iter-count.log
 clean:

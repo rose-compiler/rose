@@ -1,0 +1,132 @@
+include_rules
+
+########################################################################################################################
+# ROSE library
+########################################################################################################################
+
+# ROSE shared library
+: | $(ROSE)/<librose> \
+  |> ^ librose LINK %o^ \
+     $(librose_CXX) $(librose_CXXFLAGS) -shared -Wl,--whole-archive %<librose> -Wl,--no-whole-archive \
+     -o %o $(librose_LDFLAGS_SHARED) \
+  |> librose.so $(ROSE)/install-staging/lib/<staging>
+
+# ROSE static library
+: | $(ROSE)/<librose> \
+  |> ^ librose LINK %o^ \
+     ( \
+         echo "create %o"; \
+         echo %<librose> |tr ' ' '\n' |sed 's/^/addlib /'; \
+         echo "save"; \
+         echo "end"; \
+    ) |ar -M \
+  |> librose.a $(ROSE)/install-staging/lib/<staging>
+
+run $(public_header) rose.h roseInternal.h rose_msvc.h msvc_stdint.h
+
+########################################################################################################################
+# ROSE configuration information for use by other tools.
+########################################################################################################################
+run $(tool_compile_linkexe) rose-config.C -DLIBDIR='"@(INSTALLATION_PREFIX)/lib"' --install
+
+# This is the old input file for the rose-config tool. See also, rose-{installed,build}-make.cfg which is an easier
+# way for projects to get this same information.
+: rose-config |> ^ GEN %o^ \
+    ( \
+        echo "# Things that the 'rose-config' tool can report"; \
+        echo "ROSE_CC       = $(tool_CC)"; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CPPFLAGS = -I@(INSTALLATION_PREFIX)/include/rose $(CPPFLAGS)" ; \
+        echo "ROSE_CFLAGS   = $(CFLAGS)"; \
+        echo "ROSE_CXXFLAGS = $(CXXFLAGS)"; \
+        echo "ROSE_LDFLAGS  = -Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED)"; \
+	echo "ROSE_LDFLAGS_SHARED = \${ROSE_LDFLAGS}"; \
+        echo "ROSE_LIBDIRS  = \$(echo $(tool_LDFLAGS) |tr ' ' '\n' |grep '^-L' |tr '\n' ' ')"; \
+        echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
+	echo "# Additional items useful to include in Makefiels"; \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
+	echo "ROSE_LINK_RPATHS ="; \
+    ) |$(ROSE)/scripts/absolute-paths >%o \
+  |> rose-config.cfg
+
+run $(public_header) --language=shell -o lib rose-config.cfg
+
+# Makefile variables for using an installed version of ROSE. This rule generates a file that can be included into the
+# makefiles of other software that wants to use an installed version of ROSE. The syntax should be valid for GNU Make
+# and Tup. I.e., "VAR = VALUE" with no quotes around the value. Try to avoid dollar signs in the values.
+ROSE_INSTALLED_LDFLAGS_STATIC=-L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_STATIC) @(TOOL_LDFLAGS_STATIC)
+ROSE_INSTALLED_LDFLAGS_SHARED=-Wl,-rpath,@(INSTALLATION_PREFIX)/lib -L@(INSTALLATION_PREFIX)/lib -lrose $(LDFLAGS_SHARED) @(TOOL_LDFLAGS_SHARED)
+
+export SPOCK_EMPLOYED
+
+: ../rose_config.h |> ^ GEN %o^ \
+    ( \
+        echo "# Software versions used to compile ROSE:"; $(ROSE)/scripts/tup/show-versions; echo; \
+        eval `cd $(ROSE) && ./scripts/tup/vars-from-configure`; \
+        echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
+        echo "ROSE_PREFIX   = @(INSTALLATION_PREFIX)"; \
+        echo "ROSE_SOURCE   = `readlink -f @(ROSE_SOURCE)`"; \
+        echo "ROSE_BUILD    = `readlink -f $(ROSE)`"; \
+        echo "ROSE_CC       = $(tool_CC)" ; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CPPFLAGS = $(CPPFLAGS) -I@(INSTALLATION_PREFIX)/include @(LIBROSE_CPPFLAGS) @(TOOL_CPPFLAGS)"; \
+        echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
+        echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
+        echo "ROSE_LINKAGE  = @(LINKAGE)"; \
+        [ "@(LINKAGE)" = "static" ] && echo "ROSE_LDFLAGS = $(ROSE_INSTALLED_LDFLAGS_STATIC)"; \
+        [ "@(LINKAGE)" != "static" ] && echo "ROSE_LDFLAGS = $(ROSE_INSTALLED_LDFLAGS_SHARED)"; \
+        echo "ROSE_LDFLAGS_STATIC = $(ROSE_INSTALLED_LDFLAGS_STATIC)"; \
+        echo "ROSE_LDFLAGS_SHARED = $(ROSE_INSTALLED_LDFLAGS_SHARED)"; \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
+    ) |$(ROSE)/scripts/absolute-paths >%o \
+  |> rose-installed-make.cfg
+
+run $(public_header) --language=shell -o include rose-installed-make.cfg
+
+# Makefile variables for using a version of ROSE directly from the ROSE build tree. This rule generates a file that can
+# be included into makefiles of other software that wants to use an version of ROSE that's still sitting in the ROSE
+# build tree.  The syntax should be valid for GNU Make and Tup. I.e., "VAR = VALUE" with no quotes around the value.
+# Try to avoid dollar signs in the values. NOTE THAT THIS FILE SHOULD NOT BE INSTALLED (it would be pointless to do so).
+
+: ../rose_config.h |> ^ GEN %o^ \
+    ( \
+        echo "# Software versions used to compile ROSE:"; $(ROSE)/scripts/tup/show-versions; echo; \
+        eval `cd $(ROSE) && ./scripts/tup/vars-from-configure`; \
+        echo "ROSE_VERSION  = ${ROSE_VERSION}"; \
+        : no ROSE_PREFIX necessary for in-tree builds; \
+        echo "ROSE_CC       = $(tool_CC)"; \
+	echo "ROSE_CC_INFO  = @(C_VENDOR):@(C_LANGUAGE):@(C_VERSION)"; \
+        echo "ROSE_CXX      = $(tool_CXX)"; \
+	echo "ROSE_CXX_INFO = @(CXX_VENDOR):@(CXX_LANGUAGE):@(CXX_VERSION)"; \
+        echo "ROSE_CPPFLAGS = $(tool_CPPFLAGS)"; \
+        echo "ROSE_CFLAGS   = $(tool_CFLAGS)"; \
+        echo "ROSE_CXXFLAGS = $(tool_CXXFLAGS)"; \
+        echo "ROSE_LINKAGE  = @(LINKAGE)"; \
+        echo "ROSE_LDFLAGS  = $(ROSE_BUILD_LDFLAGS_DEFAULT)"; \
+        [ "@(LINKAGE)" = "static" ] && echo "ROSE_LDFLAGS = $(tool_LDFLAGS_STATIC)"; \
+        [ "@(LINKAGE)" != "static" ] && echo "ROSE_LDFLAGS = $(tool_LDFLAGS_SHARED)"; \
+        echo "ROSE_LDFLAGS_STATIC  = $(tool_LDFLAGS_STATIC)"; \
+        echo "ROSE_LDFLAGS_SHARED  = $(tool_LDFLAGS_SHARED)"; \
+        echo "ROSE_RPATHS   = $(ALL_LIBDIRS)"; \
+    ) |$(ROSE)/scripts/tup/prepend-comment --language=shell $(ROSE)/LicenseInformation/ROSE_BSD_License.txt >%o \
+  |> rose-build-make.cfg
+
+# Like the rose-installed-make.cfg above, but as a shell script.
+: rose-installed-make.cfg |> ^ GEN %o^ $(ROSE)/scripts/tup/makevars2shellvars <%f >%o |> rose-installed-shell.cfg
+: rose-build-make.cfg     |> ^ GEN %o^ $(ROSE)/scripts/tup/makevars2shellvars <%f >%o |> rose-build-shell.cfg
+run $(public_header) --language=shell -o include rose-installed-shell.cfg
+
+########################################################################################################################
+# A couple very basic tests that the library works
+########################################################################################################################
+run $(tool_compile_linkexe) testRoseLib.C
+run $(test) testRoseLib ./testRoseLib --version
+
+ifneq (@(LINKAGE),static)
+    run $(test) $(ROSE)/scripts/check_boost_linkage.sh -i librose.so -i testRoseLib \
+        $(ROSE)/scripts/check_boost_linkage.sh testRoseLib
+endif

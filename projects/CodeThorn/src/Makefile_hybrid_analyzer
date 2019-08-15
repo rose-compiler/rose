@@ -1,0 +1,57 @@
+# MS: makefile for building hybrid analyzers
+
+# required environment variables:
+
+# ROSE_SRC_DIR=${PRIV_ROSE}
+# ROSE_BUILD_TREE=${PRIV_ROSE}/build_tree
+# ROSE_INSTALL_LIB=${PRIV_ROSE}/install_tree/lib
+# SPOT_PREFIX=..
+# EXTRA_INCLUDES=..
+# Z3_LIBRARY_INSTALL_PATH=... (library name: 
+
+# OBJECT_FILES_REMOTE
+# HYBRID_DIR (target directory)
+# PROBLEM
+
+# Z3_LIBRARY_INSTALL_PATH
+
+TOOLNAME3 = codethorn
+
+MYDATE = `date +%Y_%m_%d`
+
+CC                    = gcc
+CXX                   = g++
+BISON                 = bison
+FLEX                  = flex
+CPPFLAGS              = -O2 -w -march=native -ftree-vectorize $(EXTRA_INCLUDES) -fopenmp -I.
+#CXXCPPFLAGS           = @CXXCPPFLAGS@
+CXXFLAGS              = -Wno-deprecated -std=c++11
+LDFLAGS               = 
+YACC                  = bison
+
+ROSE_INSTALLED = $(shell rose-config prefix)
+CXX      = $(shell $(ROSE_INSTALLED)/bin/rose-config cxx)
+CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags) -I. $(EXTRA_INCLUDES) -fopenmp -w
+CXXFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cxxflags)
+LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags) -L.
+LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
+
+# ROSE_INSTALL_LIB is environment variable referring to installed libs dir (-lquadmath necessary for GCC 7.3)
+ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose -lquadmath
+
+# Default make rule to use
+all: RERS_BINARY
+
+.PHONY: check dist viz clean distclean bsps docs
+
+# build_tree necessary for rose_config.h
+%.o: %.C
+	$(CXX) $(ROSE_INCLUDE_OPTIONS) -I$(ROSE_BUILD_DIR) $(CXXFLAGS)  $(CPPFLAGS) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
+
+# Create a specialized hybrid analyzer for the given RERS problem.
+# Called by "generate_rers_hybrid_analyzer" script.
+$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS_OPTIONS) $(BOOST_CPPFLAGS) -L$(BOOST_HOME)/lib -lspray -lcodethorn -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) $(Z3_LINK_OPTIONS)
+	@echo "Linked hybrid analyzer $(TOOLNAME3)_$(PROBLEM)."
+
+# -L $(Z3_PREFIX)/lib

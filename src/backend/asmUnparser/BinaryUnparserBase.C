@@ -1,18 +1,41 @@
 #include <sage3basic.h>
+#include <BaseSemantics2.h>
+#include <BinaryReachability.h>
 #include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 #include <Diagnostics.h>
+#include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Partitioner.h>
+#include <Sawyer/ProgressBar.h>
+#include <stringify.h>
+#include <TraceSemantics2.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/variant.hpp>
+#include <ctype.h>
 #include <sstream>
 
+using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
+
+Sawyer::Message::Facility mlog;
+
+// class method
+void initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Unparser");
+        mlog.comment("generating assembly listings (vers 2)");
+    }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      State
@@ -21,7 +44,12 @@ namespace Unparser {
 State::State(const P2::Partitioner &p, const Settings &settings, const Base &frontUnparser)
     : partitioner_(p), registerNames_(p.instructionProvider().registerDictionary()), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
-        cg_ = p.functionCallGraph(false);
+        cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
+    intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
+    cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
 }
 
 State::~State() {}
@@ -34,6 +62,64 @@ State::partitioner() const {
 const P2::FunctionCallGraph&
 State::cg() const {
     return cg_;
+}
+
+const std::vector<Reachability::ReasonFlags>
+State::cfgVertexReachability() const {
+    return cfgVertexReachability_;
+}
+
+void
+State::cfgVertexReachability(const std::vector<Reachability::ReasonFlags> &reachability) {
+    cfgVertexReachability_ = reachability;
+}
+
+Reachability::ReasonFlags
+State::isCfgVertexReachable(size_t vertexId) const {
+    return vertexId < cfgVertexReachability_.size() ? cfgVertexReachability_[vertexId] : Reachability::ASSUMED;
+}
+
+void
+State::reachabilityName(Reachability::Reason value, const std::string &name) {
+    if (name.empty()) {
+        reachabilityNames_.erase(value);
+    } else {
+        reachabilityNames_.insert(value, name);
+    }
+}
+
+std::string
+State::reachabilityName(Reachability::ReasonFlags value) const {
+    std::string s;
+    if (reachabilityNames_.getOptional(value.vector()).assignTo(s))
+        return s;
+
+    std::vector<std::string> names;
+    for (size_t i = 0; i < 8*sizeof(Reachability::ReasonFlags::Vector); ++i) {
+        Reachability::ReasonFlags bit(1U << i);
+        if (value.isAllSet(bit)) {
+            if (reachabilityNames_.getOptional(bit.vector()).assignTo(s)) {
+                // void
+            } else if (bit.vector() >= Reachability::USER_DEFINED_0) {
+                s = "user-defined";
+                for (size_t j=0; j < 8*sizeof(Reachability::ReasonFlags::Vector); j++) {
+                    if (bit.vector() >> j == Reachability::USER_DEFINED_0) {
+                        s += "-" + StringUtility::numberToString(j);
+                        break;
+                    }
+                }
+            } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit.vector())) {
+                s = cs;
+                BOOST_FOREACH (char &ch, s)
+                    ch = tolower(ch);
+            } else {
+                s = StringUtility::toHex2(bit.vector(), 8*sizeof(Reachability::ReasonFlags::Vector), false, false);
+            }
+            names.push_back(s);
+        }
+    }
+
+    return StringUtility::join(", ", names);
 }
 
 P2::Function::Ptr
@@ -91,6 +177,22 @@ State::frontUnparser() const {
     return frontUnparser_;
 }
 
+void
+State::thisIsBasicBlockFirstInstruction() {
+    if (cfgArrowsPointToInsns())
+        intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
+    intraFunctionBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
+    globalBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
+}
+
+void
+State::thisIsBasicBlockLastInstruction() {
+    if (cfgArrowsPointToInsns())
+        intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
+    intraFunctionBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
+    globalBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
+}
+
 class FunctionGuard {
     State &state;
     Partitioner2::FunctionPtr prev;
@@ -120,6 +222,50 @@ public:
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// State::Margin
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+ArrowMargin::render(Sawyer::Optional<EdgeArrows::VertexId> currentEntity) {
+    // Arrow output only starts after we've seen a START or END and we have our first pointable entity ID
+    if (currentEntity && (flags.isSet(POINTABLE_ENTITY_START) || flags.isSet(POINTABLE_ENTITY_END)))
+        latestEntity = *currentEntity;
+
+    // Generate output if we've seen any pointable entities, even if we're not currently in a pointable entity.
+    if (latestEntity) {
+        if (flags.isSet(POINTABLE_ENTITY_START) && flags.isSet(POINTABLE_ENTITY_END)) {
+            // The caller wants to show the arrow sources and targets both on the same line. We can't render that, so
+            // do just one and delay the other until the next line.
+            flags.clear(POINTABLE_ENTITY_START);
+            if (arrows.nTargets(*latestEntity) > 0) {
+                flags.set(POINTABLE_ENTITY_INSIDE);
+                return arrows.render(*latestEntity, EdgeArrows::FIRST_LINE);
+            } else {
+                flags.clear(POINTABLE_ENTITY_END);
+                flags.clear(POINTABLE_ENTITY_INSIDE);
+                return arrows.render(*latestEntity, EdgeArrows::LAST_LINE);
+            }
+
+        } else if (flags.testAndClear(POINTABLE_ENTITY_START)) {
+            flags.set(POINTABLE_ENTITY_INSIDE);
+            return arrows.render(*latestEntity, EdgeArrows::FIRST_LINE);
+
+        } else if (flags.testAndClear(POINTABLE_ENTITY_END)) {
+            flags.clear(POINTABLE_ENTITY_INSIDE);
+            return arrows.render(*latestEntity, EdgeArrows::LAST_LINE);
+
+        } else if (flags.isSet(POINTABLE_ENTITY_INSIDE)) {
+            return arrows.render(*latestEntity, EdgeArrows::MIDDLE_LINE);
+
+        } else {
+            return arrows.render(*latestEntity, EdgeArrows::INTER_LINE);
+        }
+    } else if (flags.isSet(ALWAYS_RENDER)) {
+        return arrows.renderBlank();
+    }
+    return "";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Constructors, etc.
@@ -195,6 +341,8 @@ Settings::Settings() {
     bblock.cfg.showingPredecessors = true;
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
+    bblock.cfg.showingArrows = false;
+    bblock.reach.showingReachability = true;
 
     insn.address.showing = true;
     insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
@@ -204,12 +352,20 @@ Settings::Settings() {
     insn.stackDelta.showing = true;
     insn.stackDelta.fieldWidth = 2;
     insn.mnemonic.fieldWidth = 8;
+    insn.mnemonic.semanticFailureMarker = "[!]";
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
+    insn.operands.showingWidth = false;
     insn.comment.showing = true;
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
     insn.comment.fieldWidth = 1;
+    insn.semantics.showing = false;                     // not usually desired, and somewhat slow
+    insn.semantics.tracing = false;                     // not usually desired even for full output
+    insn.semantics.formatter.set_show_latest_writers(false);
+    insn.semantics.formatter.set_line_prefix("        ;; state: ");
+
+    arrow.style = EdgeArrows::UNICODE_2;
 }
 
 // class method
@@ -233,15 +389,23 @@ Settings::minimal() {
     s.bblock.cfg.showingPredecessors = false;
     s.bblock.cfg.showingSuccessors = false;
     s.bblock.cfg.showingSharing = false;
+    s.bblock.cfg.showingArrows = false;
+    s.bblock.reach.showingReachability = false;
 
     s.insn.address.showing = false;
     s.insn.address.fieldWidth = 8;
     s.insn.bytes.showing = false;
     s.insn.stackDelta.showing = false;
     s.insn.mnemonic.fieldWidth = 8;
+    s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
+    s.insn.operands.showingWidth = false;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
+    s.insn.semantics.showing = false;
+    s.insn.semantics.tracing = false;
+
+    s.arrow.style = EdgeArrows::UNICODE_2;
 
     return s;
 }
@@ -250,9 +414,10 @@ Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using namespace CommandlineProcessing;
+    using namespace Rose::CommandLine;
 
     SwitchGroup sg("Unparsing switches");
-    sg.name("out");
+    sg.name("unparse");
     sg.doc("These switches control the formats used when converting the internal representation of instructions, basic "
            "blocks, data blocks, and functions to a textual representation.");
 
@@ -304,9 +469,20 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "bb-cfg-successors", settings.bblock.cfg.showingSuccessors,
                         "For each basic block, show its control flow graph successors.");
 
+    insertBooleanSwitch(sg, "bb-cfg-arrows", settings.bblock.cfg.showingArrows,
+                        "Show control flow arrows. Only arrows corresponding to CFG edges where both endpoints are within "
+                        "the current function are shown; arrows for things like function calls (unless the call is to "
+                        "the current function) are not shownn because they would end up needing a very wide margin for "
+                        "most real-life programs.");
+
     insertBooleanSwitch(sg, "bb-cfg-sharing", settings.bblock.cfg.showingSharing,
                         "For each basic block, emit the list of functions that own the block in addition to the function "
                         "in which the block is listed.");
+
+    insertBooleanSwitch(sg, "bb-reachability", settings.bblock.reach.showingReachability,
+                        "For each basic block, emit information about whether the block is reachable according to the "
+                        "reachability analysis. If the unparser wasn't given any reachability analysis results then "
+                        "nothing is shown.");
 
     //----- Data blocks -----
 
@@ -359,6 +535,11 @@ commandLineSwitches(Settings &settings) {
               .doc("Minimum size of the instruction operands field in characters. The default is " +
                    boost::lexical_cast<std::string>(settings.insn.operands.fieldWidth) + "."));
 
+    insertBooleanSwitch(sg, "insn-operand-size", settings.insn.operands.showingWidth,
+                        "Show the width in bits of each term in an operand expression. The width is shown in square brackets "
+                        "after the term, similar to how it's shown for symbolic expressions. Although memory dereferences are "
+                        "also shown in square brackets, they are formatted different.");
+
     insertBooleanSwitch(sg, "insn-comment", settings.insn.comment.showing,
                         "Show comments for instructions that have them. The comments are shown to the right of each "
                         "instruction.");
@@ -367,6 +548,45 @@ commandLineSwitches(Settings &settings) {
                         "If comments are being shown and an instruction has an empty comment, then use the instruction "
                         "description instead.  This is especially useful for users that aren't familiar with the "
                         "instruction mnemonics for this architecture.");
+
+    insertBooleanSwitch(sg, "insn-semantics", settings.insn.semantics.showing,
+                        "Run each instruction on a clean semantic state and show the results. This is useful if you want "
+                        "to see the effect of each instruction.");
+
+    insertBooleanSwitch(sg, "insn-semantics-trace", settings.insn.semantics.tracing,
+                        "Show a trace of the individual semantic operations when showing semantics rather than just showing the "
+                        "net effect.");
+
+    sg.insert(Switch("insn-semantic-failure")
+              .argument("string", anyParser(settings.insn.mnemonic.semanticFailureMarker))
+              .doc("String to append to instruction mnemonic when the instruction is the cause of a semantic failure. The default "
+                   "is \"" + StringUtility::cEscape(settings.insn.mnemonic.semanticFailureMarker) + "\"."));
+
+    //----- Arrows -----
+    sg.insert(Switch("arrow-style")
+              .argument("preset", enumParser<EdgeArrows::ArrowStylePreset>(settings.arrow.style)
+                        ->with("unicode-1", EdgeArrows::UNICODE_1)
+                        ->with("unicode-2", EdgeArrows::UNICODE_2)
+                        ->with("ascii-1", EdgeArrows::ASCII_1)
+                        ->with("ascii-2", EdgeArrows::ASCII_2)
+                        ->with("ascii-3", EdgeArrows::ASCII_3))
+              .doc("Style of the left-margin arrows used for things like control flow, call graphs, model checking "
+                   "paths, etc.  The choices are:"
+
+                   "@named{unicode-1}{Arrows use single-column Unicode characters." +
+                   std::string(EdgeArrows::UNICODE_1==settings.arrow.style ? " This is the default.":"") + "}"
+
+                   "@named{unicode-2}{Arrows use double-column Unicode characters." +
+                   std::string(EdgeArrows::UNICODE_2==settings.arrow.style ? " This is the default.":"") + "}"
+
+                   "@named{ascii-1}{Arrows use single-column ASCII-art." +
+                   std::string(EdgeArrows::ASCII_1==settings.arrow.style ? " This is the default.":"") + "}"
+
+                   "@named{ascii-2}{Arrows use double-column ASCII-art." +
+                   std::string(EdgeArrows::ASCII_2==settings.arrow.style ? " This is the default.":"") + "}"
+
+                   "@named{ascii-3}{Arrows use triple-column ASCII-art." +
+                   std::string(EdgeArrows::ASCII_3==settings.arrow.style ? " This is the default.":"") + "}"));
 
     return sg;
 }
@@ -377,9 +597,9 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-Base::unparse(const P2::Partitioner &p) const {
+Base::unparse(const P2::Partitioner &p, const Progress::Ptr &progress) const {
     std::ostringstream ss;
-    unparse(ss, p);
+    unparse(ss, p, progress);
     return ss.str();
 }
 
@@ -412,33 +632,44 @@ Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) co
 }
 
 void
-Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p) const {
+Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p, const Progress::Ptr &progress) const {
+    Sawyer::ProgressBar<size_t> progressBar(p.nFunctions(), mlog[MARCH], "unparse");
+    progressBar.suffix(" functions");
     State state(p, settings(), *this);
-    BOOST_FOREACH (P2::Function::Ptr f, p.functions())
+    initializeState(state);
+    BOOST_FOREACH (P2::Function::Ptr f, p.functions()) {
+        ++progressBar;
+        if (progress)
+            progress->update(Progress::Report("unparse", progressBar.ratio()));
         emitFunction(out, f, state);
+    }
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner &p, SgAsmInstruction *insn) const {
     State state(p, settings(), *this);
+    initializeState(state);
     emitInstruction(out, insn, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::BasicBlock::Ptr &bb) const {
     State state(p, settings(), *this);
+    initializeState(state);
     emitBasicBlock(out, bb, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::DataBlock::Ptr &db) const {
     State state(p, settings(), *this);
+    initializeState(state);
     emitDataBlock(out, db, state);
 }
 
 void
 Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::Function::Ptr &f) const {
     State state(p, settings(), *this);
+    initializeState(state);
     emitFunction(out, f, state);
 }
 
@@ -450,11 +681,31 @@ Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::Function::P
 void
 Base::emitFunction(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     FunctionGuard push(state, function);
+
     if (nextUnparser()) {
         nextUnparser()->emitFunction(out, function, state);
     } else {
         state.frontUnparser().emitFunctionPrologue(out, function, state);
+
+        // Update intra-function CFG arrow object for this function.
+        if (settings().bblock.cfg.showingArrows) {
+            state.intraFunctionCfgArrows().reset();
+            if (state.cfgArrowsPointToInsns()) {
+                state.intraFunctionCfgArrows().arrows.computeCfgBlockLayout(state.partitioner(), function);
+            } else {
+                state.intraFunctionCfgArrows().arrows.computeCfgEdgeLayout(state.partitioner(), function);
+            }
+        }
+
+        // Update user-defined intra-function arrows for this function.
+        state.intraFunctionBlockArrows().reset();
+        state.frontUnparser().updateIntraFunctionArrows(state);
+
         state.frontUnparser().emitFunctionBody(out, function, state);
+
+        state.intraFunctionCfgArrows().reset();
+        state.intraFunctionBlockArrows().reset();
+
         state.frontUnparser().emitFunctionEpilogue(out, function, state);
     }
 }
@@ -464,15 +715,23 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
     if (nextUnparser()) {
         nextUnparser()->emitFunctionPrologue(out, function, state);
     } else {
+        state.frontUnparser().emitLinePrefix(out, state);
         out <<std::string(120, ';') <<"\n";
+
         if (settings().function.showingDemangled) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; " <<function->printableName() <<"\n";
-            if (function->demangledName() != function->name())
+            if (function->demangledName() != function->name()) {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; mangled name is \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+            }
         } else {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; function " <<StringUtility::addrToString(function->address());
-            if (!function->name().empty())
+            if (!function->name().empty()) {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"";
+            }
             out <<"\n";
         }
         state.frontUnparser().emitFunctionComment(out, function, state);
@@ -493,6 +752,69 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
     }
 }
 
+typedef boost::variant<P2::BasicBlock::Ptr, P2::DataBlock::Ptr> InsnsOrData;
+
+struct AddressVisitor: public boost::static_visitor<rose_addr_t> {
+    template<class T>
+    rose_addr_t operator()(const T& a) const {
+        return a->address();
+    }
+};
+
+static bool
+increasingAddress(const InsnsOrData &a, const InsnsOrData &b) {
+    rose_addr_t aVa = boost::apply_visitor(AddressVisitor(), a);
+    rose_addr_t bVa = boost::apply_visitor(AddressVisitor(), b);
+    return aVa < bVa;
+}
+
+struct EmitBlockVisitor: public boost::static_visitor<> {
+    std::ostream &out;
+    P2::Function::Ptr function;
+    rose_addr_t &nextBlockVa;
+    State &state;
+
+    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, rose_addr_t &nextBlockVa, State &state)
+        : out(out), function(function), nextBlockVa(nextBlockVa), state(state) {}
+
+    void operator()(const P2::BasicBlock::Ptr &bb) const {
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
+        if (bb->address() != *function->basicBlockAddresses().begin()) {
+            if (bb->address() > nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip forward " <<StringUtility::plural(bb->address() - nextBlockVa, "bytes") <<"\n";
+            } else if (bb->address() < nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bb->address(), "bytes") <<"\n";
+            }
+        }
+        state.frontUnparser().emitBasicBlock(out, bb, state);
+        if (bb->nInstructions() > 0) {
+            nextBlockVa = bb->fallthroughVa();
+        } else {
+            nextBlockVa = bb->address();
+        }
+    }
+
+    void operator()(const P2::DataBlock::Ptr &db) const {
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
+        if (db->address() != *function->basicBlockAddresses().begin()) {
+            if (db->address() > nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip forward " <<StringUtility::plural(db->address() - nextBlockVa, "bytes") <<"\n";
+            } else if (db->address() < nextBlockVa) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - db->address(), "bytes") <<"\n";
+            }
+        }
+        state.frontUnparser().emitDataBlock(out, db, state);
+        nextBlockVa = db->address() + db->size();
+    }
+};
+
+
 void
 Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     if (nextUnparser()) {
@@ -507,29 +829,27 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
             }
         }
 
-        rose_addr_t nextBlockVa = 0;
+        // Get all the basic blocks and data blocks and sort them by starting address. Be careful because data blocks might
+        // appear more than once since they can be owned by both the function and by multiple basic blocks.
+        std::set<P2::DataBlock::Ptr> dblocks;
+        std::vector<InsnsOrData> blocks;
+        blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
         BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
-            out <<"\n";
             if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
-                if (bbVa != *function->basicBlockAddresses().begin()) {
-                    if (bbVa > nextBlockVa) {
-                        out <<";;; skip forward " <<StringUtility::plural(bbVa - nextBlockVa, "bytes") <<"\n";
-                    } else if (bbVa < nextBlockVa) {
-                        out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bbVa, "bytes") <<"\n";
-                    }
-                }
-                state.frontUnparser().emitBasicBlock(out, bb, state);
-                if (bb->nInstructions() > 0) {
-                    nextBlockVa = bb->fallthroughVa();
-                } else {
-                    nextBlockVa = bb->address();
-                }
+                blocks.push_back(bb);
+                BOOST_FOREACH (const P2::DataBlock::Ptr db, bb->dataBlocks())
+                    dblocks.insert(db);
             }
         }
-        BOOST_FOREACH (P2::DataBlock::Ptr db, function->dataBlocks()) {
-            out <<"\n";
-            state.frontUnparser().emitDataBlock(out, db, state);
-        }
+        BOOST_FOREACH (const P2::DataBlock::Ptr &db, function->dataBlocks())
+            dblocks.insert(db);
+        blocks.insert(blocks.end(), dblocks.begin(), dblocks.end());
+        std::sort(blocks.begin(), blocks.end(), increasingAddress);
+
+        // Emit each basic- or data-block
+        rose_addr_t nextBlockVa = function->address();
+        BOOST_FOREACH (const InsnsOrData &block, blocks)
+            boost::apply_visitor(EmitBlockVisitor(out, function, nextBlockVa, state), block);
     }
 }
 
@@ -538,7 +858,10 @@ Base::emitFunctionEpilogue(std::ostream &out, const P2::Function::Ptr &function,
     if (nextUnparser()) {
         nextUnparser()->emitFunctionEpilogue(out, function, state);
     } else {
-        out <<"\n\n";
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\n";
     }
 }
 
@@ -561,6 +884,7 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_ENTRY_POINT,  "program entry point");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_IMPORT,       "import");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK,        "thunk");
+        addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK_TARGET, "thunk target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_EXPORT,       "export");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_TARGET,  "function call target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_INSN,    "possible function call target");
@@ -575,13 +899,47 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_LEFTOVERS,    "provisional");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_INTRABLOCK,   "possibly unreached (intra)");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_USERDEF,      "user defined");
+
+        if (flags & 0xff) {
+            switch (flags & 0xff) {
+                case SgAsmFunction::FUNC_INTERPADFUNC:
+                    strings.push_back("interpadfunc");
+                    break;
+                case SgAsmFunction::FUNC_PESCRAMBLER_DISPATCH:
+                    strings.push_back("pescrambler dispatch");
+                    break;
+                case SgAsmFunction::FUNC_CONFIGURED:
+                    strings.push_back("configuration");
+                    break;
+                case SgAsmFunction::FUNC_CMDLINE:
+                    strings.push_back("command-line");
+                    break;
+                case SgAsmFunction::FUNC_SCAN_RO_DATA:
+                    strings.push_back("scanned read-only ptr");
+                    break;
+                case SgAsmFunction::FUNC_INSN_RO_DATA:
+                    strings.push_back("referenced read-only ptr");
+                    break;
+                default:
+                    strings.push_back("miscellaneous(" + StringUtility::numberToString(flags & 0xff) + ")");
+                    break;
+            }
+            flags &= ~0xff;
+        }
+
         if (flags != 0) {
             char buf[64];
             sprintf(buf, "0x%08x", flags);
             strings.push_back("other (" + std::string(buf));
         }
-        if (!strings.empty())
+        if (!strings.empty()) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; reasons for function: " <<boost::join(strings, ", ") <<"\n";
+        }
+        if (!function->reasonComment().empty()) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<";;; reason comment: " <<function->reasonComment() <<"\n";
+        }
     }
 }
 
@@ -593,6 +951,7 @@ Base::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, 
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
             BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->inEdges()) {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; ";
                 switch (edge.value().type()) {
                     case P2::E_FUNCTION_CALL:
@@ -622,6 +981,7 @@ Base::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, 
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
             BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->outEdges()) {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; ";
                 switch (edge.value().type()) {
                     case P2::E_FUNCTION_CALL:
@@ -650,8 +1010,10 @@ Base::emitFunctionComment(std::ostream &out, const P2::Function::Ptr &function, 
     } else {
         std::string s = boost::trim_copy(function->comment());
         if (!s.empty()) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;;\n";
             state.frontUnparser().emitCommentBlock(out, s, state, ";;; ");
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;;\n";
         }
     }
@@ -664,9 +1026,12 @@ Base::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &functio
     } else {
         if (settings().function.stackDelta.concrete) {
             int64_t delta = function->stackDeltaConcrete();
-            if (delta != SgAsmInstruction::INVALID_STACK_DELTA)
+            if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; function stack delta is " <<StringUtility::toHex2(delta, 64) <<"\n";
+            }
         } else if (S2::BaseSemantics::SValuePtr delta = function->stackDelta()) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; function stack delta is " <<*delta <<"\n";
         }
     }
@@ -697,6 +1062,7 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 }
                 state.frontUnparser().emitCommentBlock(out, s, state);
             } else {
+                state.frontUnparser().emitLinePrefix(out, state);
                 out <<";;; calling convention analysis did not converge\n";
             }
         }
@@ -708,8 +1074,10 @@ Base::emitFunctionNoopAnalysis(std::ostream &out, const P2::Function::Ptr &funct
     if (nextUnparser()) {
         nextUnparser()->emitFunctionNoopAnalysis(out, function, state);
     } else {
-        if (function->isNoop().getOptional().orElse(false))
+        if (function->isNoop().getOptional().orElse(false)) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; this function is a no-op\n";
+        }
     }
 }
 
@@ -718,8 +1086,10 @@ Base::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function
     if (nextUnparser()) {
         nextUnparser()->emitFunctionMayReturn(out, function, state);
     } else {
-        if (!state.partitioner().functionOptionalMayReturn(function).orElse(true))
+        if (!state.partitioner().functionOptionalMayReturn(function).orElse(true)) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<";;; this function does not return to its caller\n";
+        }
     }
 }
 
@@ -750,10 +1120,13 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             state.frontUnparser().emitBasicBlockSharing(out, bb, state);
         if (settings().bblock.cfg.showingPredecessors)
             state.frontUnparser().emitBasicBlockPredecessors(out, bb, state);
+        if (settings().bblock.reach.showingReachability)
+            state.frontUnparser().emitBasicBlockReachability(out, bb, state);
 
         // Comment warning about block not being the function entry point.
         if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
             bb->address() != state.currentFunction()->address()) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<"\t;; this is not the function entry point; entry point is ";
             if (settings().insn.address.showing) {
                 out <<StringUtility::addrToString(state.currentFunction()->address()) <<"\n";
@@ -772,10 +1145,16 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         nextUnparser()->emitBasicBlockBody(out, bb, state);
     } else {
         if (0 == bb->nInstructions()) {
-            out <<"no instructions";
+            state.thisIsBasicBlockFirstInstruction();
+            state.thisIsBasicBlockLastInstruction();
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<StringUtility::addrToString(bb->address()) <<": no instructions\n";
         } else {
+            state.thisIsBasicBlockFirstInstruction();
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                if (insn == bb->instructions().back())
+                    state.thisIsBasicBlockLastInstruction();
                 state.frontUnparser().emitInstruction(out, insn, state);
                 out <<"\n";
                 state.nextInsnLabel("");
@@ -789,8 +1168,10 @@ Base::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockEpilogue(out, bb, state);
     } else {
-        BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks())
-            state.frontUnparser().emitDataBlock(out, db, state);
+        BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks()) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<"\t;; related " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+        }
         if (settings().bblock.cfg.showingSuccessors)
             state.frontUnparser().emitBasicBlockSuccessors(out, bb, state);
     }
@@ -818,9 +1199,19 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
             std::find(functions.begin(), functions.end(), state.currentFunction());
         if (current != functions.end())
             functions.erase(current);
-        BOOST_FOREACH (P2::Function::Ptr function, functions)
-            out <<"\t;; block owned by " <<function->printableName() <<"\n";
+        BOOST_FOREACH (P2::Function::Ptr function, functions) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<"\t;; block also owned by " <<function->printableName() <<"\n";
+        }
     }
+}
+
+static std::string
+edgeTypeName(const P2::EdgeType &edgeType) {
+    std::string retval = stringifyBinaryAnalysisPartitioner2EdgeType(edgeType, "E_");
+    BOOST_FOREACH (char &ch, retval)
+        ch = '_' == ch ? ' ' : tolower(ch);
+    return retval;
 }
 
 void
@@ -829,29 +1220,36 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockPredecessors(out, bb, state);
     } else {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
-        ASSERT_require(state.partitioner().cfg().isValidVertex(vertex));
+        std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockPredecessors(state.partitioner(), bb);
+        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator edge, edges) {
 
-        Sawyer::Container::Map<rose_addr_t, std::string> preds;
-        BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->inEdges()) {
-            P2::ControlFlowGraph::ConstVertexIterator pred = edge.source();
+            if (!state.cfgArrowsPointToInsns()) {
+                // The line were about to emit is the sharp end of the arrow--the arrow's target, and we're emitting arrows
+                // that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to the
+                // instructions of a basic block are handled elsewhere.
+                state.currentPredSuccId(EdgeArrows::cfgEdgeTargetEndpoint(edge->id()));
+                state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START); // point end of arrow
+            }
+
+            // Emit the "predecessor:" line
+            std::string s = edgeTypeName(edge->value().type()) + " edge";
+            P2::ControlFlowGraph::ConstVertexIterator pred = edge->source();
             switch (pred->value().type()) {
-                case P2::V_BASIC_BLOCK:
+                case P2::V_BASIC_BLOCK: {
+                    std::ostringstream fromAddrSs;
+                    state.frontUnparser().emitAddress(fromAddrSs, *pred->value().optionalLastAddress(), state);
                     if (pred->value().bblock()->nInstructions() > 1) {
-                        rose_addr_t insnVa = pred->value().bblock()->instructions().back()->get_address();
-                        std::string s = "instruction " + StringUtility::addrToString(insnVa) +
-                                        " from " + pred->value().bblock()->printableName();
-                        preds.insert(insnVa, s);
+                        s = " from instruction " + fromAddrSs.str() + " from " + pred->value().bblock()->printableName();
                     } else {
-                        std::ostringstream ss;
-                        state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                        preds.insert(pred->value().address(), ss.str());
+                        s = " from " + fromAddrSs.str();
                     }
                     break;
+                }
+
                 case P2::V_USER_DEFINED: {
-                    std::ostringstream ss;
-                    state.frontUnparser().emitAddress(ss, pred->value().address(), state);
-                    preds.insert(pred->value().address(), ss.str());
+                    std::ostringstream fromAddrSs;
+                    state.frontUnparser().emitAddress(fromAddrSs, *pred->value().optionalLastAddress(), state);
+                    s = " from " + fromAddrSs.str();
                     break;
                 }
                 case P2::V_NONEXISTING:
@@ -861,10 +1259,10 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
                 default:
                     ASSERT_not_implemented("cfg vertex type");
             }
-        }
 
-        BOOST_FOREACH (const std::string &s, preds.values())
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<"\t;; predecessor: " <<s <<"\n";
+        }
     }
 }
 
@@ -873,56 +1271,107 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockSuccessors(out, bb, state);
     } else {
-        const P2::BasicBlock::Successors &succs = state.partitioner().basicBlockSuccessors(bb);
-        std::vector<std::string> strings;
+        // Get the CFG edges in the order they should be displayed even though we actually emit the basicBlockSuccessors
+        std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockSuccessors(state.partitioner(), bb);
+        P2::BasicBlock::Successors successors = state.partitioner().basicBlockSuccessors(bb);
+        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator edge, edges) {
+            Sawyer::Optional<rose_addr_t> targetVa = edge->target()->value().optionalAddress();
 
-        // Real successors
-        BOOST_FOREACH (const P2::BasicBlock::Successor &succ, succs) {
-            std::string s;
-            switch (succ.type()) {
-                case P2::E_CALL_RETURN:     s = "call return to ";  break;
-                case P2::E_FUNCTION_CALL:   s = "call to ";         break;
-                case P2::E_FUNCTION_XFER:   s = "xfer to ";         break;
-                case P2::E_FUNCTION_RETURN: s = "return to ";       break;
-                case P2::E_NORMAL:                                  break;
-                case P2::E_USER_DEFINED:    s = "user-defined to "; break;
-                default: ASSERT_not_implemented("basic block successor type");
+            if (!state.cfgArrowsPointToInsns()) {
+                // The line we're about to emit is the nock end of the arrow--the arrow's origin, and we're emitting
+                // arrows that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to
+                // the instructions of a basic block are handled elsewhere.
+                state.currentPredSuccId(EdgeArrows::cfgEdgeSourceEndpoint(edge->id()));
+                state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);// nock end of arrow
             }
-            ASSERT_not_null(succ.expr());
-            SymbolicExpr::Ptr expr = succ.expr()->get_expression();
+
+            // Find a matching successor that we haven't emitted yet
+            bool emitted = false;
+            for (size_t i=0; i<successors.size(); ++i) {
+                ASSERT_not_null(successors[i].expr());
+                SymbolicExpr::Ptr expr = successors[i].expr()->get_expression();
+
+                if (targetVa && expr->isNumber() && expr->nBits() <= 64 && expr->toInt() == *targetVa) {
+                    // Edge to concrete node
+                    state.frontUnparser().emitLinePrefix(out, state);
+                    out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
+                    state.frontUnparser().emitAddress(out, *targetVa, state);
+                    out <<"\n";
+                    successors.erase(successors.begin()+i);
+                    emitted = true;
+                    break;
+
+                } else if (!targetVa && !expr->isNumber()) {
+                    // Edge to computed address
+                    state.frontUnparser().emitLinePrefix(out, state);
+                    out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to " <<*expr <<"\n";
+                    successors.erase(successors.begin()+i);
+                    emitted = true;
+                    break;
+                }
+            }
+
+            // When this CFG edge has no matching successor. Not sure whether this can happen. [Robb Matzke 2018-12-05]
+            if (!emitted) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; successor: (only in CFG) " <<edgeTypeName(edge->value().type()) <<" edge to ";
+                if (targetVa) {
+                    state.frontUnparser().emitAddress(out, *targetVa, state);
+                    out <<"\n";
+                } else {
+                    out <<"unknown\n";
+                }
+            }
+        }
+
+        // Emit the basic block successors that don't correspond to any CFG edge. Can this happen? [Robb Matzke 2018-12-05]
+        BOOST_FOREACH (const P2::BasicBlock::Successor &successor, successors) {
+            ASSERT_not_null(successor.expr());
+            SymbolicExpr::Ptr expr = successor.expr()->get_expression();
             if (expr->isNumber() && expr->nBits() <= 64) {
-                std::ostringstream ss;
-                state.frontUnparser().emitAddress(ss, expr->toInt(), state);
-                s += ss.str();
+                // Edge to concrete node
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to ";
+                state.frontUnparser().emitAddress(out, expr->toInt(), state);
+                out <<"\n";
             } else if (expr->isLeafNode()) {
-                s += "unknown";
+                // What?
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to unknown\n";
             } else {
-                std::ostringstream ss;
-                ss <<*expr;
-                s += ss.str();
+                // Edge to computed address
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to " <<*expr <<"\n";
             }
-
-            if (std::find(strings.begin(), strings.end(), s) == strings.end())
-                strings.push_back(s);
         }
 
         // Ghost successors due to opaque predicates
         if (bb->ghostSuccessors().isCached()) {
             BOOST_FOREACH (rose_addr_t va, bb->ghostSuccessors().get()) {
-                std::ostringstream ss;
-                state.frontUnparser().emitAddress(ss, va, state);
-                if (std::find(strings.begin(), strings.end(), ss.str()) == strings.end() &&
-                    std::find(strings.begin(), strings.end(), ss.str() + " (ghost)") == strings.end())
-                    strings.push_back(ss.str() + " (ghost)");
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; successor: (ghost) ";
+                state.frontUnparser().emitAddress(out, va, state);
+                out <<"\n";
             }
         }
+    }
+}
 
-        // Output
-        if (strings.empty()) {
-            out <<"\t;; successor: none\n";
-        } else {
-            BOOST_FOREACH (const std::string &s, strings)
-                out <<"\t;; successor: " <<s <<"\n";
+void
+Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+    if (nextUnparser()) {
+        nextUnparser()->emitBasicBlockReachability(out, bb, state);
+    } else if (!state.cfgVertexReachability().empty()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
+        if (vertex != state.partitioner().cfg().vertices().end()) {
+            Reachability::ReasonFlags reachable = state.isCfgVertexReachable(vertex->id());
+            if (reachable.isAnySet()) {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; reachable from: " <<state.reachabilityName(reachable) <<"\n";
+            } else {
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\t;; not reachable\n";
+            }
         }
     }
 }
@@ -947,6 +1396,24 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockPrologue(out, db, state);
     } else {
+        if (!db->comment().empty())
+            state.frontUnparser().emitCommentBlock(out, db->comment(), state, "\t;; ");
+
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes") <<"\n";
+        if (P2::Function::Ptr function = state.currentFunction()) {
+            BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+                if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
+                    if (bb->dataBlockExists(db)) {
+                        state.frontUnparser().emitLinePrefix(out, state);
+                        out <<"\t;; referenced by " <<bb->printableName() <<"\n";
+                    }
+                }
+            }
+        }
+
+        state.frontUnparser().emitLinePrefix(out, state);
+        out <<"\t;; block type is " <<db->type()->toString() <<"\n";
     }
 }
 
@@ -954,8 +1421,29 @@ void
 Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockBody(out, db, state);
-    } else {
-        out <<"data blocks not implemented yet";
+    } else if (AddressInterval where = db->extent()) {
+        if (MemoryMap::Ptr map = state.partitioner().memoryMap()) {
+            // hexdump format
+            std::ostringstream prefix;
+            state.frontUnparser().emitLinePrefix(prefix, state);
+            HexdumpFormat fmt;
+            fmt.prefix = prefix.str();
+            fmt.multiline = true;
+
+            // Read the data in chunks and produce a hexdump
+            while (where) {
+                uint8_t buf[8192];                      // multiple of 16
+                size_t maxSize = std::min(where.size(), (rose_addr_t)(sizeof buf));
+                AddressInterval read = state.partitioner().memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
+                SgAsmExecutableFileFormat::hexdump(out, read.least(), buf, read.size(), fmt);
+                if (read.greatest() == where.greatest())
+                    break;                              // avoid possible overflow
+                where = AddressInterval::hull(read.greatest()+1, where.greatest());
+            }
+        } else {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<";;; no memory map from which to obtain the static block data\n";
+        }
     }
 }
 
@@ -1054,7 +1542,6 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
         }
         fieldWidths.push_back(settings().insn.mnemonic.fieldWidth);
 
-
         // Operands
         if (insn) {
             std::ostringstream ss;
@@ -1073,7 +1560,12 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             fieldWidths.push_back(settings().insn.comment.fieldWidth);
         }
 
-        out <<juxtaposeColumns(parts, fieldWidths);
+        std::string full = juxtaposeColumns(parts, fieldWidths);
+        std::vector<std::string> lines = StringUtility::split('\n', full);
+        BOOST_FOREACH (const std::string &line, lines) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<line;
+        }
     }
 }
 
@@ -1082,6 +1574,7 @@ Base::emitInstructionEpilogue(std::ostream &out, SgAsmInstruction *insn, State &
     if (nextUnparser()) {
         nextUnparser()->emitInstructionEpilogue(out, insn, state);
     } else {
+        state.frontUnparser().emitInstructionSemantics(out, insn, state);
     }
 }
 
@@ -1152,6 +1645,8 @@ Base::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn, State &
         nextUnparser()->emitInstructionMnemonic(out, insn, state);
     } else {
         out <<insn->get_mnemonic();
+        if (insn->semanticFailure() > 0)
+            out <<settings().insn.mnemonic.semanticFailureMarker;
     }
 }
 
@@ -1182,6 +1677,27 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
             comment = insn->description();
         if (!comment.empty())
             out <<"; " <<StringUtility::cEscape(comment);
+    }
+}
+
+void
+Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
+    ASSERT_not_null(insn);
+    if (settings().insn.semantics.showing) {
+        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        if (settings().insn.semantics.tracing)
+            ops = S2::TraceSemantics::RiscOperators::instance(ops);
+
+        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+            try {
+                cpu->processInstruction(insn);
+                S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
+                std::ostringstream ss;
+                ss <<"\n" <<(*cpu->currentState()->registerState() + fmt) <<(*cpu->currentState()->memoryState() + fmt);
+                out <<StringUtility::trim(ss.str(), "\n", false, true);
+            } catch (...) {
+            }
+        }
     }
 }
 
@@ -1274,7 +1790,7 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().get_nbits() &&
+        if (bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
         } else if (bv.isEqualToZero()) {
@@ -1297,6 +1813,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
                     comments.push_back(boost::lexical_cast<std::string>(si));
             }
         }
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<bv.size() <<"]";
         return comments;
     }
 }
@@ -1325,6 +1843,8 @@ Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) cons
         nextUnparser()->emitRegister(out, reg, state);
     } else {
         out <<state.registerNames()(reg);
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<reg.nBits() <<"]";
     }
 }
 
@@ -1334,8 +1854,10 @@ Base::emitCommentBlock(std::ostream &out, const std::string &comment, State &sta
         nextUnparser()->emitCommentBlock(out, comment, state, prefix);
     } else {
         std::vector<std::string> lines = StringUtility::split('\n', comment);
-        BOOST_FOREACH (const std::string &line, lines)
+        BOOST_FOREACH (const std::string &line, lines) {
+            state.frontUnparser().emitLinePrefix(out, state);
             out <<prefix <<line <<"\n";
+        }
     }
 }
 
@@ -1358,12 +1880,121 @@ Base::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
         } else if (SgAsmFloatType *ft = isSgAsmFloatType(type)) {
             out <<"f" <<ft->get_nBits();
 
+        } else if (SgAsmVectorType *vt = isSgAsmVectorType(type)) {
+            out <<"vector(" <<vt->get_nElmts() <<" * ";
+            if (SgAsmType *subtype = vt->get_elmtType()) {
+                emitTypeName(out, subtype, state);
+            } else {
+                out <<"unknown";
+            }
+            out <<")";
+
         } else {
             ASSERT_not_implemented(type->toString());
         }
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Line control
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Base::emitLinePrefix(std::ostream &out, State &state) const {
+    if (nextUnparser()) {
+        nextUnparser()->emitLinePrefix(out, state);
+    } else {
+        // Generate intra-function arrows that point to basic blocks. I.e., basic blocks are the pointable entities,
+        // and we're only drawing arrows that both originate and terminate within the current function.
+        Sawyer::Optional<EdgeArrows::VertexId> arrowVertexId;
+        if (state.currentBasicBlock())
+            arrowVertexId = state.currentBasicBlock()->address();
+        out <<state.globalBlockArrows().render(arrowVertexId);
+        out <<state.intraFunctionBlockArrows().render(arrowVertexId);
+
+        // CFG arrows point to either the basic bocks or to the "predecessor:" and "successor:" lines.
+        if (settings().bblock.cfg.showingArrows) {
+            if (state.cfgArrowsPointToInsns()) {
+                out <<state.intraFunctionCfgArrows().render(arrowVertexId);
+            } else {
+                out <<state.intraFunctionCfgArrows().render(state.currentPredSuccId());
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Non-emitting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Base::initializeState(State &state) const {
+    if (nextUnparser())
+        nextUnparser()->initializeState(state);
+}
+
+void
+Base::updateIntraFunctionArrows(State &state) const {
+    if (nextUnparser())
+        nextUnparser()->updateIntraFunctionArrows(state);
+}
+
+
+// class method
+bool
+Base::ascendingSourceAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::ControlFlowGraph::ConstEdgeIterator b) {
+    Sawyer::Optional<rose_addr_t> aVa = a->source()->value().optionalLastAddress();
+    Sawyer::Optional<rose_addr_t> bVa = b->source()->value().optionalLastAddress();
+
+    if (aVa && bVa) {
+        return *aVa < *bVa;
+    } else if (aVa) {
+        return true;                                    // addresses before non-addresses
+    } else {
+        return false;
+    }
+}
+
+// class method
+bool
+Base::ascendingTargetAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::ControlFlowGraph::ConstEdgeIterator b) {
+    Sawyer::Optional<rose_addr_t> aVa = a->source()->value().optionalAddress();
+    Sawyer::Optional<rose_addr_t> bVa = b->source()->value().optionalAddress();
+
+    if (aVa && bVa) {
+        return *aVa < *bVa;
+    } else if (aVa) {
+        return true;                                    // addresses before non-addresses
+    } else {
+        return false;
+    }
+}
+
+// class method
+std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
+Base::orderedBlockPredecessors(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bb->address());
+    std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
+    retval.reserve(vertex->nInEdges());
+    for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->inEdges().begin(); edge != vertex->inEdges().end(); ++edge)
+        retval.push_back(edge);
+    std::sort(retval.begin(), retval.end(), ascendingSourceAddress);
+    return retval;
+}
+
+// class method
+std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
+Base::orderedBlockSuccessors(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bb->address());
+    std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
+    retval.reserve(vertex->nOutEdges());
+    for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->outEdges().begin(); edge != vertex->outEdges().end(); ++edge)
+        retval.push_back(edge);
+    std::sort(retval.begin(), retval.end(), ascendingTargetAddress);
+    return retval;
+}
 
 } // namespace
 } // namespace

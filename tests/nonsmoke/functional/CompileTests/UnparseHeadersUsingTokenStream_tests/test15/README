@@ -1,0 +1,5 @@
+This test checks that ROSE can correctly detect and unparse
+preprocessor directives (or comments) that appear in a chain (linked
+via includes) of header files that do not contain any other located IR
+nodes except their own bodies, but have multiple includes of other
+header files.

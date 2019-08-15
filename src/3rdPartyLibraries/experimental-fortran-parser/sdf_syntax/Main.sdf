@@ -262,7 +262,7 @@ sorts
   ValueStmt                           %% R558
   VolatileStmt                        %% R559
 
-  ArrayNameSpec DataStmtSetList NoList
+  ArrayNameSpec ParensArraySpec DataStmtSetList NoList
   NoDataStmtRepeat
 
 %% 5.5 Implicit statement
@@ -342,8 +342,8 @@ sorts
 
 %% 6.6 Image selectors
 
-%%ImageSelector                       %% R624, replace by R624-F2015-N2007
-  Cosubscript                         %% R625
+%%ImageSelector                       %% R624, replaced by R924-F2018-N2146
+%%Cosubscript                         %% R625, replaced by R925-F2018-N2146
 
   OptImageSelector
 
@@ -411,6 +411,7 @@ sorts
   LogicalExpr                         %% R724
   DefaultCharExpr                     %% R725
   IntExpr                             %% R726
+  ScalarIntExpr                       %% TODO - use this in 2008 grammar portion as well
   NumericExpr                         %% R727
   SpecificationExpr                   %% R728
   ConstantExpr                        %% R729
@@ -436,7 +437,6 @@ sorts
   EndWhereStmt                        %% R749
   ForallConstruct                     %% R750
   ForallConstructStmt                 %% R751
-  ForallHeader                        %% R752
   ForallTripletSpec                   %% R753
   ForallLimit                         %% R754
   ForallStep                          %% R755
@@ -514,7 +514,7 @@ sorts
   EndSelectTypeStmt                   %% R849
   ExitStmt                            %% R850
 
-  CaseStmtAndBlock ElseIfStmtAndBlock
+  CaseStmtAndBlock ElseIfStmtAndBlock ElseIfStmtAndBlockList
   ElseStmtAndBlock OptElseStmtAndBlock
   TypeGuardStmtAndBlock OptLoopControl NoLow NoHigh
 
@@ -548,7 +548,7 @@ sorts
   UnlockStmt                          %% R865
   LockVariable                        %% R866
 
-  OptLockStatList NoSyncStatList OptSyncStatList
+  OptLockStatList NoSyncStatList OptSyncStatList CommaOptSyncStatList
 
 %% Deleted features
 
@@ -762,31 +762,43 @@ sorts
 %% WG5/N2007 - 12th March 2014 9:46
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  ChangeTeamConstruct                 %% R501-F2015-N2007
-  ChangeTeamStmt                      %% R502-F2015-N2007
-  CoarrayAssociation                  %% R503-F2015-N2007
-%%Coselector                          %% R504-F2015-N2007 (not used)
-  EndChangeTeamStmt                   %% R505-F2015-N2007
-  TeamVariable                        %% R506-F2015-N2007
+  ChangeTeamConstruct                 %% R1111-F2018-N2146
+  ChangeTeamStmt                      %% R1112-F2018-N2146
+  CoarrayAssociation                  %% R1113-F2018-N2146
+  EndChangeTeamStmt                   %% R1114-F2018-N2146
+  TeamValue                           %% R1115-F2018-N2146
 
-  ImageSelector                       %% R624, R624-F2015-N2007
+  ConcurrentHeader                    %% R1125-F2025-N2146
+  ConcurrentControl                   %% R1126-F2025-N2146
+  ConcurrentLimit                     %% R1127-F2025-N2146
+  ConcurrentLocality                  %% R1129-F2025-N2146
+  LocalitySpec                        %% R1130-F2025-N2146
 
-  FormTeamStmt                        %% R507-F2015-N2007
-  TeamId                              %% R508-F2015-N2007
-  FormTeamSpec                        %% R509-F2015-N2007
+  OptConcurrentStep
+
+  ImageSelector                       %% R924-F2018-N2146, R624
+  Cosubscript                         %% R925-F2018-N2146
+  ImageSelectorSpec                   %% R926-F2018-N2146
+
+  FormTeamStmt                        %% R1175-F2018-N2146
+  TeamNumber                          %% R1176-F2018-N2146
+  TeamVariable                        %% R1177-F2018-N2146
+  FormTeamSpec                        %% R1178-F2018-N2146
+
   SyncTeamStmt                        %% R510-F2015-N2007
   FailImageStmt                       %% R511-F2015-N2007
 
-  EventPostStmt                       %% R601-F2015-N2007
-  EventVariable                       %% R602-F2015-N2007
-  EventWaitStmt                       %% R603-F2015-N2007
-%%WaitSpec                            %% R604-F2015-N2007
+  EventPostStmt                       %% R1170-F2018-N2146
+  EventVariable                       %% R1171-F2018-N2146
+  EventWaitStmt                       %% R1172-F2018-N2146
+  EventWaitSpec                       %% R1173-F2018-N2146
+  UntilSpec                           %% R1174-F2018-N2146
 
-  ScalarIntExpr                       %% TODO - use this in 2008 grammar portion as well
   ScalarVariable                      %% TODO - use this in 2008 grammar portion as well
 
-  OptWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
-  OptTeamId OptTeamVariable CoselectorName OptTeamConstructName OptTeamConstructNameCOLON
+  OptEventWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
+  OptTeamVariable OptTeamConstructName OptTeamConstructNameCOLON
+  OptImageSelectorSpecList
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1595,7 +1607,8 @@ context-free syntax
   OptLabel 'DIMENSION' '::' {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
   OptLabel 'DIMENSION'      {ArrayNameSpec ','}+        EOS -> DimensionStmt     {cons("DimensionStmt")}
 
-  ArrayName '(' ArraySpec ')'                               -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  ArrayName ParensArraySpec                                 -> ArrayNameSpec     {cons("ArrayNameSpec")}
+  '(' ArraySpec ')'                                         -> ParensArraySpec   {cons("ArraySpec")}
   Ident                                                     -> ArrayName
 
 %%R546
@@ -1898,17 +1911,12 @@ context-free syntax
 %% 6.6 Image selectors
 %%
 
-%%R624 - Replaced by R624-F2015-N2007
+%%R624 - Replaced by R924-F2018-N2146
 %%
 %%'[' {Cosubscript ','}+ ']'                             -> ImageSelector        {cons("ImageSelector")}
 %%ImageSelector                                          -> OptImageSelector
 %%ImageSelector '(' SubstringRange ')'                   -> OptImageSelector     {cons("substring-section-range")}
 %%% empty %                                              -> OptImageSelector     {cons("no-image-selector")}
-
-%%625
-%%      int-expr substituted for scalar-int-expr
-%%
-  IntExpr                                                -> Cosubscript
 
 
 %% 6.7 Dynamic association
@@ -2328,26 +2336,6 @@ context-free syntax
   OptLabel 'END' 'WHERE' WhereConstructName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
   OptLabel 'END' 'WHERE'             NoName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
 
-%%R750
-  ForallConstructStmt
-    ForallBodyConstruct*
-  EndForallStmt                                    -> ForallConstruct     {cons("ForallConstruct")}
-
-%%R751
-  OptLabel ForallConstructName ':'
-          'FORALL' ForallHeader                EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
-  OptLabel              NoName
-          'FORALL' ForallHeader                EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
-
-  Ident                                            -> ForallConstructName
-
-%%752
-%%       mask-expr substituted for scalar-mask-expr
-%%
-  '('
-     OptTypeSpec {ForallTripletSpec ','}+ OptMaskExpr
-  ')'                                              -> ForallHeader        {cons("ForallHeader")}
-
   TypeSpec '::'                                    -> OptTypeSpec         {cons("type-spec-colon")}
   % empty %                                        -> OptTypeSpec         {cons("no-type-spec")}
 
@@ -2387,9 +2375,6 @@ context-free syntax
 %%758
   OptLabel 'END' 'FORALL' ForallConstructName     EOS -> EndForallStmt     {cons("EndForallStmt")}
   OptLabel 'END' 'FORALL'              NoName     EOS -> EndForallStmt     {cons("EndForallStmt")}
-
-%%759
-  OptLabel 'FORALL' ForallHeader ForallAssignmentStmt -> ForallStmt        {cons("ForallStmt")}
 
 %%TODO - what with the following
 %%
@@ -2540,8 +2525,6 @@ context-free syntax
   ',' DoVariable '=' Expr ',' Expr OptExpr              -> LoopControl    {cons("LoopControl")}
       'WHILE' '(' Expr ')'                              -> LoopControl    {cons("LoopWhileControl")}
   ',' 'WHILE' '(' Expr ')'                              -> LoopControl    {cons("LoopWhileControl")}
-      'CONCURRENT' ForallHeader                         -> LoopControl    {cons("LoopConcurrentControl")}
-  ',' 'CONCURRENT' ForallHeader                         -> LoopControl    {cons("LoopConcurrentControl")}
 
   LoopControl                                           -> OptLoopControl
   % empty %                                             -> OptLoopControl {cons("no-loop-control")}
@@ -2603,15 +2586,17 @@ context-free syntax
 
 %%R832
   IfThenStmt Block
-  ElseIfStmtAndBlock* 
+  ElseIfStmtAndBlockList
   OptElseStmtAndBlock
-  EndIfStmt                                             -> IfConstruct         {cons("IfConstruct")}
+  EndIfStmt                                        -> IfConstruct            {cons("IfConstruct")}
 
-  ElseIfStmt Block                                      -> ElseIfStmtAndBlock  {cons("ElseIfStmtBlock")}
-  ElseStmt   Block                                      -> ElseStmtAndBlock    {cons("ElseStmtBlock")}
+  ElseIfStmt Block                                 -> ElseIfStmtAndBlock     {cons("ElseIfStmtBlock")}
+  ElseStmt   Block                                 -> ElseStmtAndBlock       {cons("ElseStmtBlock")}
 
-  ElseStmtAndBlock                                      -> OptElseStmtAndBlock
-  % empty %                                             -> OptElseStmtAndBlock {cons("no-else-stmt")}
+  ElseStmtAndBlock                                 -> OptElseStmtAndBlock
+  % empty %                                        -> OptElseStmtAndBlock    {cons("no-else-stmt")}
+
+  ElseIfStmtAndBlock*                              -> ElseIfStmtAndBlockList {cons("ElseIfStmtList")}
 
 %%R833
 %%       logical-expr substituted for scalar-logical-expr
@@ -2766,54 +2751,6 @@ context-free syntax
 
   StopCode                                              -> OptStopCode
   % empty %                                             -> OptStopCode          {cons("no-stop-code")}
-
-
-%% 8.5 Image execution control
-%%
-
-%%R858
-  OptLabel 'SYNC' 'ALL' '(' {SyncStat ','}* ')'     EOS -> SyncAllStmt          {cons("SyncAllStmt")}
-  OptLabel 'SYNC' 'ALL'    NoSyncStatList           EOS -> SyncAllStmt          {cons("SyncAllStmt")}
-
-%%R859
-  'STAT'   '=' StatVariable                             -> SyncStat             {cons("STAT")}
-  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("ERRMSG")}
-
-  ',' {SyncStat ','}+                                   -> OptSyncStatList      {cons("comma-list")}
-  % empty %                                             -> OptSyncStatList      {cons("no-list")}
-  % empty %                                             ->  NoSyncStatList      {cons("no-list")}
-
-%%R860
-  OptLabel 'SYNC' 'IMAGES'
-         '(' ImageSet OptSyncStatList ')'           EOS -> SyncImagesStmt       {cons("SyncImagesStmt")}
-
-%%R861
-  IntExpr                                               -> ImageSet
-  '*'                                                   -> ImageSet             {cons("STAR")}
-
-%%R862
-  OptLabel 'SYNC' 'MEMORY' '(' {SyncStat ','}* ')'  EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
-  OptLabel 'SYNC' 'MEMORY'    NoSyncStatList        EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
-
-%%R863
-  OptLabel 'LOCK' '(' LockVariable
-                      OptLockStatList ')'           EOS -> LockStmt             {cons("LockStmt")}
-
-%%R864
-  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("ACQUIRED_LOCK")}
-  SyncStat                                              -> LockStat
-
-  ',' {LockStat ','}+                                   -> OptLockStatList      {cons("comma-list")}
-  % empty %                                             -> OptLockStatList      {cons("no-list")}
-
-%%R865
-  OptLabel 'UNLOCK' '(' LockVariable
-                        OptSyncStatList ')'         EOS -> UnlockStmt           {cons("UnlockStmt")}
-
-%%R866
-%%          variable substituted for scalar-variable
-%%
-  Variable                                              -> LockVariable
 
 
 %%%%%%%%%%
@@ -3389,19 +3326,18 @@ context-free syntax
   ContinueStmt                           -> ActionStmt
   CycleStmt                              -> ActionStmt
   DeallocateStmt                         -> ActionStmt
-  EndFunctionStmt                        -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "FUNCTION"
-  EndMpSubprogramStmt                    -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROCEDURE"
-  EndProgramStmt                         -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROGRAM"
-  EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
+%%EndFunctionStmt                        -> ActionStmt  %% not in F2018-N2146
+%%EndMpSubprogramStmt                    -> ActionStmt  %% not in F2018-N2146
+%%EndProgramStmt                         -> ActionStmt  %% not in F2018-N2146
+%%EndSubroutineStmt                      -> ActionStmt  %% not in F2018-N2146
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
-  EventPostStmt                          -> ActionStmt  %% R601-F2015-N2007
-  EventWaitStmt                          -> ActionStmt  %% R603-F2015-N2007
-  FailImageStmt                          -> ActionStmt  %% R511-F2015-N2007
-  FormTeamStmt                           -> ActionStmt  %% R507-F2015-N2007
+  EventPostStmt                          -> ActionStmt  %% R1170-F2018-N2146
+  EventWaitStmt                          -> ActionStmt  %% R1172-F2018-N2146
   ExitStmt                               -> ActionStmt
+  FailImageStmt                          -> ActionStmt  %% R1163-F2018-N2146
   FlushStmt                              -> ActionStmt
-  ForallStmt                             -> ActionStmt
+  FormTeamStmt                           -> ActionStmt  %% R1175-F2018-N2146
   GotoStmt                               -> ActionStmt
   IfStmt                                 -> ActionStmt
   InquireStmt                            -> ActionStmt
@@ -3423,8 +3359,9 @@ context-free syntax
   WaitStmt                               -> ActionStmt
   WhereStmt                              -> ActionStmt
   WriteStmt                              -> ActionStmt
-  ArithmeticIfStmt                       -> ActionStmt
   ComputedGotoStmt                       -> ActionStmt
+  ForallStmt                             -> ActionStmt  %% deprecated F2018-N2146
+  ArithmeticIfStmt                       -> ActionStmt
 %% Following added as replacement for DoConstruct (because ambiguous)
   LabelDoStmt                            -> ActionStmt
   NonlabelDoStmt                         -> ActionStmt
@@ -3905,22 +3842,98 @@ context-free syntax
 %% 5.2 TEAM_TYPE
 %% -------------
 
-%% 5.3 CHANGE TEAM construct
-%% -------------------------
 
-%%R501-F2015-N2007
-%%
-  ChangeTeamStmt Block EndChangeTeamStmt                -> ChangeTeamConstruct  {cons("ChangeTeamConstruct")}
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 9 Use of data objects
+%% -----------------------------
+%%%%%%%%%%
 
-%%R502-F2015-N2007
+%% 9.1 Designator
+%% -------------------
+
+
+%% 9.6 Image selectors
+%% -------------------
+
+%% R924-F2018-N2146
 %%
-  OptLabel OptTeamConstructNameCOLON
-  'CHANGE' 'TEAM'
-    '('
-        TeamVariable
-        OptCoarrayAssociationList
-	OptSyncStatList
-    ')'                                             EOS -> ChangeTeamStmt            {cons("ChangeTeamStmt")}
+  '['
+      {Cosubscript ','}+
+      OptImageSelectorSpecList
+  ']'                                              -> ImageSelector        {cons("ImageSelector")}
+
+  ImageSelector                                    -> OptImageSelector
+  ImageSelector '(' SubstringRange ')'             -> OptImageSelector     {cons("substring-section-range")}
+  % empty %                                        -> OptImageSelector     {cons("no-image-selector")}
+
+%% R925-F2018-N2146
+  ScalarIntExpr                                    -> Cosubscript
+
+%% R926-F2018-N2146
+  'STAT'        '=' StatVariable                   -> ImageSelectorSpec    {cons("STAT")}
+  'TEAM'        '=' TeamValue                      -> ImageSelectorSpec    {cons("TEAM")}
+  'TEAM_NUMBER' '=' ScalarIntExpr                  -> ImageSelectorSpec    {cons("TEAM_NUMBER")}
+
+  {ImageSelectorSpec ','}+                         -> OptImageSelectorSpecList  {cons("OptImageSelectorSpecList")}
+  % empty %                                        -> OptImageSelectorSpecList  {cons("no-list")}
+
+  TeamVariable '::'                                -> OptTeamVariable      {cons("TeamVariable")}
+  % empty %                                        -> OptTeamVariable      {cons("no-team-variable")}
+
+
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 10 Expressions and assignment
+%% -------------------------------------
+%%%%%%%%%%
+
+%% 10.2.4.1 Form of the FORALL Construct
+%% -------------------------------------
+
+%% R1050-F2018-N2146
+  ForallConstructStmt
+    ForallBodyConstruct*
+  EndForallStmt                                    -> ForallConstruct     {cons("ForallConstruct")}
+
+%% R1051-F2018-N2146
+  OptLabel ForallConstructName ':'
+          'FORALL' ConcurrentHeader            EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
+  OptLabel              NoName
+          'FORALL' ConcurrentHeader            EOS -> ForallConstructStmt {cons("ForallConstructStmt")}
+
+  Ident                                            -> ForallConstructName
+
+%% 10.2.4.3 The FORALL statement
+%% -----------------------------
+
+%% R1055-F2018-N2146
+  OptLabel 'FORALL' ConcurrentHeader
+                    ForallAssignmentStmt           -> ForallStmt          {cons("ForallStmt")}
+
+
+%%%%%%%%%%
+%% Fortran ISO/IECJTC1-SC22-WG5 N2146
+%% Section 11 Execution control
+%% ----------------------------
+%%%%%%%%%%
+
+%% 11.1.5 CHANGE TEAM construct
+%% ----------------------------
+
+%% R1111-F2018-N2146
+%%
+  ChangeTeamStmt
+    Block
+  EndChangeTeamStmt                                     -> ChangeTeamConstruct   {cons("ChangeTeamConstruct")}
+
+%% R1112-F2018-N2146
+%%
+  OptLabel OptTeamConstructNameCOLON 'CHANGE' 'TEAM'
+  '('
+      TeamValue
+      OptCoarrayAssociationList OptSyncStatList
+  ')'                                               EOS -> ChangeTeamStmt        {cons("ChangeTeamStmt")}
 
   Ident ':'                                             -> OptTeamConstructNameCOLON {cons("Name")}
   % empty %                                             -> OptTeamConstructNameCOLON {cons("no-name")}
@@ -3928,126 +3941,220 @@ context-free syntax
   ',' { CoarrayAssociation ','}+                        -> OptCoarrayAssociationList {cons("comma-list")}
   % empty %                                             -> OptCoarrayAssociationList {cons("no-list")}
 
-%%R503-F2015-N2007
+%% R1113-F2018-N2146
 %%
-  CodimensionDecl '=>' CoselectorName                   -> CoarrayAssociation   {cons("CoarrayAssociation")}
+  CodimensionDecl '=>' Selector                         -> CoarrayAssociation    {cons("CoarrayAssociation")}
 
-  Ident                                                 -> CoselectorName
-
-%%R504-F2015-N2007
-%% Note: not used
-%%
-%%Coarray                                               -> Coselector
-
-%%R505-F2015-N2007
+%% R1114-F2018-N2146
 %%
   OptLabel 'END' 'TEAM'
   OptParensSyncStatList OptTeamConstructName        EOS -> EndChangeTeamStmt     {cons("EndChangeTeamStmt")}
 
-  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("paren-list")}
+  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("image-ctrl-stat-list")}
+  '('                  ')'                              -> OptParensSyncStatList {cons("no-list")}
   % empty %                                             -> OptParensSyncStatList {cons("no-list")}
 
   Ident                                                 -> OptTeamConstructName  {cons("Name")}
   % empty %                                             -> OptTeamConstructName  {cons("no-name")}
 
-%%R506-F2015-N2007
+%% R1114-F2018-N2146
 %%
-  ScalarVariable                                        -> TeamVariable
-  Variable                                              -> ScalarVariable
 
-%% 5.4 Image selectors
-%% -------------------
-
-%%R624-F2015-N2007
+%% R1115-F2018-N2146
 %%
-  '['
-      OptTeamVariable {Cosubscript ','}+
-      OptTeamId
-  ']'                                                   -> ImageSelector        {cons("ImageSelector")}
-
-  ImageSelector                                         -> OptImageSelector
-  ImageSelector '(' SubstringRange ')'                  -> OptImageSelector     {cons("substring-section-range")}
-  % empty %                                             -> OptImageSelector     {cons("no-image-selector")}
-
-  TeamVariable '::'                                     -> OptTeamVariable      {cons("TeamVariable")}
-  % empty %                                             -> OptTeamVariable      {cons("no-team-variable")}
-
-  'TEAM_ID' '=' ScalarIntExpr                           -> OptTeamId            {cons("TeamId")}
-  % empty %                                             -> OptTeamId            {cons("no-team-id")}
+  ScalarIntExpr                                         -> TeamValue
 
   Expr                                                  -> ScalarIntExpr
 
-%% 5.5 FORM TEAM statement
-%% -----------------------
 
-%% R507-F2015-N2007
+%% 11.1.7.2 Form of the DO construct
+%% ---------------------------------
+
+%% R1123-F2018-N2146
 %%
-  OptLabel 'FORM' 'TEAM'
+      'CONCURRENT' ConcurrentHeader ConcurrentLocality  -> LoopControl       {cons("LoopConcurrentControl")}
+  ',' 'CONCURRENT' ConcurrentHeader ConcurrentLocality  -> LoopControl       {cons("LoopConcurrentControl")}
+
+%% R1125-F2018-N2146
+%%
   '('
-      TeamId ',' TeamVariable OptFormTeamSpecList
-  ')'                                              EOS -> FormTeamStmt          {cons("FormTeamStmt")}
+      OptTypeSpec {ConcurrentControl ','}+ OptMaskExpr
+   ')'                                                  -> ConcurrentHeader  {cons("ConcurrentHeader")}
 
-  ',' { FormTeamSpec ','}+                             -> OptFormTeamSpecList   {cons("comma-list")}
-  % empty %                                            -> OptFormTeamSpecList   {cons("no-list")}
-
-%% R508-F2015-N2007
+%% R1126-F2018-N2146
 %%
-  ScalarIntExpr                                        -> TeamId
+  Name '=' ConcurrentLimit ':' ConcurrentLimit
+                               OptConcurrentStep        -> ConcurrentControl {cons("ConcurrentControl")}
 
-%% R509-F2015-N2007
+%% R1127-F2018-N2146
 %%
-  'NEW_INDEX' '=' ScalarIntExpr                        -> FormTeamSpec          {cons("FormTeamSpec")}
-  SyncStat                                             -> FormTeamSpec
+  ScalarIntExpr                                         -> ConcurrentLimit
 
-%% 5.6 SYNC TEAM statement
-%% -----------------------
-
-%% R510-F2015-N2007
+%% R1128-F2018-N2146
 %%
-  OptLabel 'SYNC' 'TEAM'
-  '('
-      TeamVariable OptSyncStatList
-  ')'                                              EOS -> SyncTeamStmt          {cons("SyncTeamStmt")}
+  ':' ScalarIntExpr                                     -> OptConcurrentStep {cons("ConcurrentStep")}
+  % empty %                                             -> OptConcurrentStep {cons("no-concurrent-step")}
 
-%% 5.7 FAIL IMAGE statement
-%% ------------------------
+%% R1129-F2018-N2146
+%%
+  {LocalitySpec ','}*                                   -> ConcurrentLocality {cons("ConcurrentLocality")}
 
-%% R511-F2015-N2007
+%% R1130-F2018-N2146
+%%
+  'LOCAL'      '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecLOCAL")}
+  'LOCAL_INIT' '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecLOCAL_INIT")}
+  'SHARED'     '(' {VariableName ','}+ ')'              -> LocalitySpec      {cons("LocalitySpecSHARED")}
+  'DEFAULT'    '(' 'NONE' ')'                           -> LocalitySpec      {cons("LocalitySpecDEFAULT")}
+
+
+%% 11.5 FAIL IMAGE statement
+%% -------------------------
+
+%% R1163-F2018-N2146
 %%
   OptLabel 'FAIL' 'IMAGE' OptStopCode              EOS -> FailImageStmt         {cons("FailImageStmt")}
 
 
-%% 6 Events
-%% --------
+%% 11.6 Image execution control
+%% ----------------------------
 
-%% 6.1 EVENT_TYPE
-%% --------------
+%% 11.6.1 Image control statements
+%% -------------------------------
 
-%% 6.2 EVENT POST statement
-%% ------------------------
+%% 11.6.3 SYNC ALL statement
+%% -------------------------
 
-%% R601-F2015-N2007
+%% R1164-F2018-N2146
+%%
+  OptLabel 'SYNC' 'ALL' '(' OptSyncStatList ')'     EOS -> SyncAllStmt          {cons("SyncAllStmt")}
+  OptLabel 'SYNC' 'ALL'      NoSyncStatList         EOS -> SyncAllStmt          {cons("SyncAllStmt")}
+
+%% R1165-F2018-N2146
+%%
+  'STAT'   '=' StatVariable                             -> SyncStat             {cons("STAT")}
+  'ERRMSG' '=' ErrmsgVariable                           -> SyncStat             {cons("ERRMSG")}
+
+  {SyncStat ','}*                                       -> OptSyncStatList      {cons("image-ctrl-stat-list")}
+  % empty %                                             ->  NoSyncStatList      {cons("no-list")}
+
+%% 11.6.4 SYNC IMAGES statement
+%% ----------------------------
+
+%% R1166-F2018-N2146
+%%
+  OptLabel 'SYNC' 'IMAGES'
+         '(' ImageSet CommaOptSyncStatList ')'      EOS -> SyncImagesStmt       {cons("SyncImagesStmt")}
+
+  ',' {SyncStat ','}+                                   -> CommaOptSyncStatList {cons("image-ctrl-stat-list")}
+  % empty %                                             -> CommaOptSyncStatList {cons("no-list")}
+
+%% R1167-F2018-N2146
+  IntExpr                                               -> ImageSet
+  '*'                                                   -> ImageSet             {cons("STAR")}
+
+%% 11.6.5 SYNC MEMORY statement
+%% ----------------------------
+
+%% R1168-F2018-N2146
+%%
+  OptLabel 'SYNC' 'MEMORY' '(' OptSyncStatList ')'  EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
+  OptLabel 'SYNC' 'MEMORY'      NoSyncStatList      EOS -> SyncMemoryStmt       {cons("SyncMemoryStmt")}
+
+%% 11.6.6 SYNC TEAM statement
+%% --------------------------
+
+%% R1169-F2018-N2146
+%%
+  OptLabel 'SYNC' 'TEAM'
+  '('
+      TeamValue CommaOptSyncStatList
+  ')'                                              EOS -> SyncTeamStmt          {cons("SyncTeamStmt")}
+
+
+%% 11.6.7 EVENT POST statement
+%% ---------------------------
+
+%% R1170-F2018-N2146
 %%
   OptLabel 'EVENT' 'POST'
   '('
-      EventVariable OptSyncStatList
+      EventVariable CommaOptSyncStatList
   ')'                                             EOS -> EventPostStmt          {cons("EventPostStmt")}
 
-%% R602-F2015-N2007
+%% R1171-F2018-N2146
 %%
   ScalarVariable                                      -> EventVariable
 
-%% R603-F2015-N2007
+%% 11.6.8 EVENT WAIT statement
+%% ---------------------------
+
+%% R1172-F2018-N2146
 %%
   OptLabel 'EVENT' 'WAIT'
   '('
-      EventVariable OptWaitSpecList
+      EventVariable OptEventWaitSpecList
   ')'                                             EOS -> EventWaitStmt          {cons("EventWaitStmt")}
 
-  ',' { WaitSpec ','}+                                -> OptWaitSpecList       {cons("comma-list")}
-  % empty %                                           -> OptWaitSpecList       {cons("no-list")}
+  ',' { EventWaitSpec ','}+                           -> OptEventWaitSpecList   {cons("image-ctrl-stat-list")}
+  % empty %                                           -> OptEventWaitSpecList   {cons("no-list")}
 
-%% R604-F2015-N2007
+%% R1173-F2018-N2146
 %%
-  'UNTIL_COUNT' '=' ScalarIntExpr                     -> WaitSpec              {cons("UNTIL_COUNT")}
-  SyncStat                                            -> WaitSpec
+  UntilSpec                                           -> EventWaitSpec
+  SyncStat                                            -> EventWaitSpec
+
+%% R1174-F2018-N2146
+%%
+  'UNTIL_COUNT' '=' ScalarIntExpr                     -> UntilSpec              {cons("UNTIL_COUNT")}
+
+
+%% 11.6.9 FORM TEAM statement
+%% --------------------------
+
+%% R1175-F2018-N2146
+%%
+  OptLabel 'FORM' 'TEAM'
+  '('
+      TeamNumber ',' TeamVariable OptFormTeamSpecList
+  ')'                                              EOS  -> FormTeamStmt          {cons("FormTeamStmt")}
+
+%% R1176-F2018-N2146
+%%
+  ScalarIntExpr                                         -> TeamNumber
+
+%% R1177-F2018-N2146
+%%
+  ScalarVariable                                        -> TeamVariable
+  Variable                                              -> ScalarVariable
+
+%% R1178-F2018-N2146
+%%
+  'NEW_INDEX' '=' ScalarIntExpr                         -> FormTeamSpec          {cons("FormTeamSpec")}
+  SyncStat                                              -> FormTeamSpec
+
+  ',' { FormTeamSpec ','}+                              -> OptFormTeamSpecList   {cons("image-ctrl-stat-list")}
+  % empty %                                             -> OptFormTeamSpecList   {cons("no-list")}
+
+
+%% 11.6.10 LOCK and UNLOCK statements
+%% ----------------------------------
+
+%% R1179-F2018-N2146
+  OptLabel 'LOCK' '(' LockVariable
+                      OptLockStatList ')'           EOS -> LockStmt             {cons("LockStmt")}
+
+%% R1180-F2018-N2146
+  'ACQUIRED_LOCK' '=' LogicalVariable                   -> LockStat             {cons("ACQUIRED_LOCK")}
+  SyncStat                                              -> LockStat
+
+  ',' {LockStat ','}+                                   -> OptLockStatList      {cons("image-ctrl-stat-list")}
+  % empty %                                             -> OptLockStatList      {cons("no-list")}
+
+%% R1181-F2018-N2146
+  OptLabel 'UNLOCK' '(' LockVariable
+                        CommaOptSyncStatList ')'    EOS -> UnlockStmt           {cons("UnlockStmt")}
+
+%% R1182-F2018-N2146
+%%          variable substituted for scalar-variable
+%%
+  Variable                                              -> LockVariable

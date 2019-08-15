@@ -1,24 +1,29 @@
 #include "rose.h"
 #include "autoParSupport.h"
-
+#include "keep_going.h"
 #include <iterator> // ostream_iterator
 #include <algorithm> // for set union, intersection etc.
 #include <fstream>
 #include <iostream>
 #include <map>
 #include "RoseAst.h"
+#include "ai_measurement.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
+using namespace ArithmeticIntensityMeasurement;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
   bool enable_debug;
+  bool enable_verbose;
   bool enable_patch;
   bool keep_going;
   bool enable_diff;
+  bool enable_modeling = false;
   bool b_unique_indirect_index;
   bool enable_distance;
   bool no_aliasing=false; // assuming no pointer aliasing
@@ -33,13 +38,27 @@ namespace AutoParallelization
   {
     if (project == NULL)
       project = SageInterface::getProject();
+
+    if (enable_modeling)
+    {
+      // Prepare for cost modeling analysis, loading hardware feature file first
+      //TODO: support installed path of hardware file
+      string src_path(ROSE_SOURCE_TREE_PATH); 
+      string install_path(ROSE_INSTALLATION_PATH); 
+
+      // TODO: support user specified file? 
+      CSVReader reader1 (src_path+"/projects/autoParallelization/annot/GPU-hardware-features.csv");
+      std::vector <std::vector <std::string> >  csv_table = reader1.getResult();
+      cout<<"degug: loaded hardware csv file..."<<endl;
+      //reader1.prettyPrintResult();
+    }
+
     // Prepare def-use analysis
     if (defuse==NULL) 
     { 
       ROSE_ASSERT(project != NULL);
       defuse = new DefUseAnalysis(project);
     }
-
 
     ROSE_ASSERT(defuse != NULL);
     // int result = ;
@@ -1004,6 +1023,35 @@ namespace AutoParallelization
     result.erase(new_end,result.end());
   }
 
+  //! Check if a reference is an array reference of statically declared arrays
+  // SgPntrArrRefExp -> lhs_operand_i() → SgVarRefExp -> SgVariableSymbol -> SgInitializedName → typeptr → SgArrayType 
+  static bool isStaticArrayRef (SgNode* ref)
+  {
+    bool ret = false; 
+    ROSE_ASSERT (ref !=NULL);
+    
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(ref))
+    {
+      // for multidimensional array references, getting the nested child SgPntrArrRef
+      if (SgPntrArrRefExp* nestRef = isSgPntrArrRefExp(aref->get_lhs_operand_i()))
+        return isStaticArrayRef (nestRef);
+
+      SgVarRefExp* lhs = isSgVarRefExp (aref->get_lhs_operand_i());
+      if (lhs != NULL)
+      {
+        SgVariableSymbol * varSym = isSgVariableSymbol (lhs->get_symbol());
+        if (varSym!=NULL)
+        {
+          SgInitializedName * iname = varSym->get_declaration();
+          if (isSgArrayType (iname->get_type()))
+            ret = true; 
+        }
+      }
+    }
+
+    return ret;
+  }
+
   // Algorithm, eliminate the following dependencies
   // *  caused by locally declared variables: already private to each iteration
   // *  commonlevel ==0, no common enclosing loops
@@ -1037,8 +1085,9 @@ namespace AutoParallelization
         for (; !edges.ReachEnd(); ++edges) 
         { 
           LoopTreeDepGraph::Edge *e= *edges;
-          // cout<<"Debug: dependence edge: "<<e->toString()<<endl;
           DepInfo info =e->GetInfo();
+          if (enable_debug)
+           cout<<"-------------->>> Considering a new dependence edge's info:\n"<<info.toString()<<endl;
 
           SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
           SgScopeStatement* varscope =NULL;
@@ -1047,6 +1096,7 @@ namespace AutoParallelization
           // two variables will be set if source or snk nodes are variable references nodes
           SgVarRefExp* src_var_ref = NULL; 
           SgVarRefExp* snk_var_ref = NULL; 
+
           // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
@@ -1096,6 +1146,9 @@ namespace AutoParallelization
             } //end if(var_ref)
           } // end if (snk_node)
 #endif
+          if (enable_debug)
+            cout<<"Neither source nor sink node is locally decalared variables."<<endl;
+
           //x. Eliminate a dependence if it is empty entry
           // -----------------------------------------------
           // Ignore possible empty depInfo entry
@@ -1108,6 +1161,9 @@ namespace AutoParallelization
             }
             continue;
           }
+
+          if (enable_debug)
+            cout<<"Neither source nor sink node is empty entry."<<endl;
 
 #if 1
           //x. Eliminate a dependence if scalar type dependence involving array references.
@@ -1134,6 +1190,7 @@ namespace AutoParallelization
             LoopTransformInterface::set_astInterface(fa);
             LoopTransformInterface::set_arrayInfo(array_interface);
             LoopTransformInterface::set_sideEffectInfo(annot);
+
             isArray1= LoopTransformInterface::IsArrayAccess(info.SrcRef());
             isArray2= LoopTransformInterface::IsArrayAccess(info.SnkRef());
           }
@@ -1146,10 +1203,17 @@ namespace AutoParallelization
           //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
           if (isArray1 || isArray2)
           {
+            if (enable_debug)
+              cout<<"Either source or sink reference is an array reference..."<<endl;
+
             if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
             {
+              if (enable_debug)
+                cout<<"\t Dep type is scalar or backscalar "<<endl;
               if (src_var_ref || snk_var_ref) // at least one is a scalar: we have scalar vs. array
               {
+               if (enable_debug)
+                 cout<<"Either source or sink reference is a scalar reference..."<<endl;
                 // we have to check the type of the scalar: 
                 //  integer type? skip
                 //  pointer type, skip if no-aliasing is specified
@@ -1172,6 +1236,8 @@ namespace AutoParallelization
               }
               else // both are arrays
               {
+                if (enable_debug)
+                  cout<<"\t both are arrray references "<<endl;
                 if (AutoParallelization::no_aliasing) 
                 {
                   if (enable_debug)
@@ -1181,10 +1247,21 @@ namespace AutoParallelization
                   }
                   continue;
                 }
-              }  
+                // both are arrays and both are statically allocated ones
+                else if (isStaticArrayRef (src_node) && isStaticArrayRef (snk_node))
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Eliminating a dep relation due to both references are references to static allocated arrays "<<endl; 
+                    info.Dump();
+                  }
+                  continue; 
+                }
+              } // end both are arrays  
             }
           }
 #endif
+
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1281,6 +1358,8 @@ namespace AutoParallelization
             continue;
           }
           // Save the rest dependences which can not be ruled out 
+          if (enable_debug)
+            cout<<"\t this dep relation cannot be eliminated. saved into remaining depedence set."<<endl;
           remainings.push_back(info); 
         } //end iterator edges for a node
       } // end if has edge
@@ -1553,6 +1632,41 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 
     int dep_dist = 999999; // the minimum dependence distance of all dependence relations for a loop. 
 
+    
+    // tentatively connect the cost model here
+    // TODO: better integration to guide conditional CPU vs. GPU selection
+    // a flag to control the debugging info. 
+    // hardware info. has already been loaded by initialize_analysis()
+    if (enable_modeling)
+    {
+        // Which GPU to target? we pick Pascal P100 as the default target GPU
+        // TODO: enable users to pick a target GPU later
+        Hardware_Info * hinfo = new Hardware_Info();
+        string peak_dp = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak FP64 (DP)"];
+        hinfo->peak_flops_dp = atof (peak_dp.c_str());
+
+        string peak_band_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth specified"];
+        string peak_band_measured_str = AutoParallelization::CSVReader::hardwareDataBase["Tesla P100-SXM2-16GB"]["Peak Global Memory Bandwidth measured cuda-stream"];
+        hinfo->main_mem_bandwidth = atof (peak_band_str.c_str());
+        hinfo->main_mem_bandwidth_measured = atof (peak_band_measured_str.c_str()); 
+        //ROSE_ASSERT (fabs(hinfo->main_mem_bandwidth -732.16)/732.16 <0.01) ;
+        ROSE_ASSERT (hinfo->main_mem_bandwidth !=0.0 ) ;
+        ROSE_ASSERT (hinfo->peak_flops_dp!=0.0);
+
+        // TODO: add CPU hardware info. later
+        //
+        // call loop analysis to extract loop information
+        SgStatement* lbody = isSgForStatement(loop)->get_loop_body();
+        FPCounters* fp_counters = calculateArithmeticIntensity(lbody);
+//        cout<< fp_counters->toString() <<endl;
+        Loop_Info * linfo = new Loop_Info();
+        linfo->arithmetic_intensity = fp_counters->getIntensity();
+        linfo->iteration_count = 200*200; // TODO: better way to obtain iteration count, through profiling??
+        linfo->flops_per_iteration =  fp_counters->getTotalCount(); 
+        cout<< "debug: estimated execution time in seconds:"<<rooflineModeling (linfo, hinfo)<<endl;
+    }
+
+
     // collect array references with indirect indexing within a loop, save the result in a lookup table
     // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
     std::map<SgNode*, bool> indirect_array_table;
@@ -1562,6 +1676,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
       collectIndirectIndexedArrayReferences (loop, indirect_array_table);
     }
+
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
@@ -1577,7 +1692,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     // dependencies associated with the autoscoped variabled can be
     // eliminated.
     //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
-    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
+    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(OmpSupport::e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
 
 #if 0
@@ -1601,13 +1716,25 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     //X. Eliminate irrelevant dependence relations.
     vector<DepInfo>  remainingDependences;
     DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute, indirect_array_table,  array_interface, annot);
+    SgSourceFile* file = getEnclosingSourceFile(sg_node);
+    string  filename = sg_node->get_file_info()->get_filename(); 
+    int lineno= sg_node->get_file_info()->get_line(); 
+    int colno= sg_node->get_file_info()->get_col(); 
+
     if (remainingDependences.size()>0)
     {
+      // write log entries for failed attempts
       isParallelizable = false;
-      if (!enable_diff|| enable_debug) // diff user vs. autopar  needs cleaner output
+      ostringstream oss;
+      oss<<"Unparallelizable loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff|| enable_debug) // diff user vs. autopar needs cleaner output
+      if (enable_debug||enable_verbose) // diff user vs. autopar needs cleaner output
       {
+
         cout<<"====================================================="<<endl;
-        cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
+        cout<<"Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
           " due to the following dependencies:"<<endl;
         for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
             iter != remainingDependences.end(); iter ++ )
@@ -1630,10 +1757,16 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     else
     {
-      if (!enable_diff || enable_debug)
+      // write log entries for success
+      ostringstream oss;
+      oss<<"Auto parallelized a loop@" <<filename <<":" <<lineno<< ":" <<colno<<endl; 
+      Rose::KeepGoing::File2StringMap[file]+= oss.str();
+
+      //if (!enable_diff || enable_debug)
+      if (enable_debug || enable_verbose)
       {
-       cout<<"====================================================="<<endl;
-       cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
+        cout<<"====================================================="<<endl;
+        cout<<"Automatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
       }
     }
 
@@ -1649,6 +1782,10 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         cout<<" at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
       }
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
+
+      // Output patch text to the log also
+      Rose::KeepGoing::File2StringMap[file]+= OmpSupport::generateDiffTextFromOmpAttribute (sg_node);
+
       // 6. Generate and insert #pragma omp parallel for 
       // Liao, 2/12/2010
       // In the enable_diff mode, we don't want to generate pragmas from compiler-generated OmpAttribute.
@@ -1656,7 +1793,7 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       if (! enable_diff) 
         OmpSupport::generatePragmaFromOmpAttribute(sg_node);
     }
-    else
+    else // Not parallelizable, release resources.
     {
       delete omp_attribute;
     }
@@ -2063,5 +2200,138 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     }
     return retval;
   }
+
+  //------------------------ this section supports cost modeling of loops
+  /* baseline roofline modeling
+   *
+   */
+  double rooflineModeling(Loop_Info *l, Hardware_Info *h)
+  {
+    double ret = 0.0; 
+    ROSE_ASSERT (l!=NULL);
+    ROSE_ASSERT (h!=NULL);
+
+    // we use the theoretical peak for now. TODO: Measured peak is a better choice. 
+    float peak_loop_gflops = min (h->peak_flops_dp, l->arithmetic_intensity * h->main_mem_bandwidth);
+    cout<<"\tdebug: peak_flops_dp:"<< h->peak_flops_dp<<endl;
+    cout<<"\tdebug: arithmetic intensity:"<< l->arithmetic_intensity<<endl;
+    cout<<"\tdebug: mem bandwidth:"<< h->main_mem_bandwidth<<endl;
+
+    ret = ((double)(l->iteration_count * l->flops_per_iteration))/ ((double) (peak_loop_gflops*1000000000));
+    return ret; 
+  }
+
+  // implement the functions for CSVReader
+  // Read and parse a line of a CSV stream
+  // Store cells into a vector of strings: 
+  //std::vector<std::string> readNextRow(std::istream istr)
+  std::istream& CSVReader::readNextRow(std::istream& istr, std::vector<std::string> & result)
+  {
+    std::string  line;
+    std::string  cell;
+
+    result.clear(); // Must clear result each time this function is called.
+    // extract a line from the input stream
+    std::getline(istr,line);
+
+    // Process the line
+    std::stringstream lineStream(line);
+
+    // extract comma separated fields
+    while(std::getline(lineStream, cell, ','))
+    {
+      result.push_back(cell);
+    }
+
+    // This checks for a trailing comma with no data after it: add an empty element
+    if (!lineStream && cell.empty())
+    {
+      result.push_back("");
+    }
+
+    return istr;
+  }
+
+  void CSVReader::outputVectorElement(std::string s)
+  {
+    if (cell_counter!=0)
+      std::cout <<"," <<s ;
+    else  // first cell? no leading , 
+    {
+      std::cout <<s ;
+      cell_counter ++;
+    }
+  }
+
+  void CSVReader::outputVector(std::vector <std::string> str_vec )
+  {
+    cell_counter =0; //reset the cell counter for each row
+    for_each (str_vec.begin(), str_vec.end(), outputVectorElement);
+    cout<<endl;
+  }
+
+  CSVReader::CSVReader (std::string fname):file_name(fname)
+  {
+    csv_table = readCSVFile (file_name);
+    // fill in the table model_name-> key-> value
+    /*
+       we assume a format for the hardware features
+       CSV file: https://docs.google.com/spreadsheets/d/1tDwUiJVXsBmoXri4T8fpY9Adt0oPiBR8-099F6cGPqs/edit#gid=0
+       Name  Measurement Units       Tesla K40m      Tesla P100-SXM2-16GB
+       Cluster Name    text    Surface Ray  
+       Compute Capability      float   3.5
+       Shared Memory Bandwidth, GB/s,  3360
+       */ 
+    int model_count = csv_table[0].size()-2 ; // how many gpus are represented in the table
+    // for each model
+    for (int i=0; i< model_count; i++)
+    {
+      string model_name = csv_table[0][2+i]; // first row: starting from 3rd column, stores gpu model names
+      //     cout<<"debug: store info. for the gpu model_name "<< model_name <<endl;
+      // skip the first row: it stores the captions for all columns
+      for (size_t j=1; j< csv_table.size(); j++)  
+      {
+        std::vector <std::string> row = csv_table[j]; 
+        // some rows are section names only, with only one column
+        if (row.size()>=2)
+        {
+          //         cout<<"debug: store key:"<< row[0] << ": value: " << row[2+i] <<endl;
+          // Must trim leading and trailing spaces to avoid ambiguity
+          boost::trim(model_name);
+          string key= row[0]; 
+          boost::trim(key);
+          string value = row[2+i];
+          boost::trim(value);
+          //hardwareDataBase[model_name][row[0]]= row[2+i];
+          hardwareDataBase[model_name][key]= value;
+        }
+      }
+    }
+  }
+
+  void CSVReader::prettyPrintResult()
+  {
+    std::cout<<"csv file line count="<< csv_table.size()<<std::endl;
+    for_each (csv_table.begin(), csv_table.end(), outputVector);
+  }
+
+  // read one entire CSV file, return vector of vectors of strings.
+  std::vector <std::vector <std::string> > CSVReader::readCSVFile (std::string filename)
+  {
+    std::vector <std::vector <std::string> >  all_results;
+    std::ifstream ifile (filename.c_str());
+    //error checking
+    std::vector<std::string> row_result;
+    while ( readNextRow ( ifile, row_result ))
+    {
+      all_results.push_back (row_result);
+    }
+    return all_results;
+  }
+
+  int CSVReader::cell_counter;
+  std::map < std::string,  std::map <std::string, string>  > CSVReader::hardwareDataBase;
+
+  //-----------------------------end of cost modeling cost -----------------------
 
 } // end namespace

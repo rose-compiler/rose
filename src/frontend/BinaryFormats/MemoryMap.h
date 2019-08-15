@@ -1,7 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
-#include "ByteOrder.h"
+#include <ByteOrder.h>
+#include <Combinatorics.h>
+#include <RoseException.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -12,28 +14,39 @@
 #include <Sawyer/StaticBuffer.h>
 
 #include <boost/config.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/type_traits/is_integral.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
- *  Returns the largest multiple of alignment which is less than or equal to address. */
-template<typename T>
-T alignUp(T address, T alignment) {
-    return ((address + alignment - 1) / alignment) * alignment;
+ *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the same
+ *  type as the address before any calculations are performed. Both arguments must be integral types. An alignment less than
+ *  one has undefined behavior. */
+template<typename T, typename U>
+typename boost::enable_if_c<boost::is_integral<T>::value && boost::is_integral<U>::value, T>::type
+alignUp(T address, U alignment) {
+    ASSERT_require(alignment > 0);
+    T almt = static_cast<T>(alignment);
+    return ((address + almt - 1) / almt) * almt;
 }
 
 /** Align address upward to boundary.
  *
- *  Returns the smallest multiple of alignment which is greater than or equal to address. Returns zero if no such value can be
- *  returned due to overflow. */
-template<typename T>
-T alignDown(T address, T alignment) {
-    return (address / alignment) * alignment;
+ *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the
+ *  same type as the address before any calculations are performed. Both arguments must be integral types. An alignment less
+ *  than one has undefined behavior. Returns zero if no such value can be returned due to overflow. */
+template<typename T, typename U>
+typename boost::enable_if_c<boost::is_integral<T>::value && boost::is_integral<U>::value, T>::type
+alignDown(T address, U alignment) {
+    ASSERT_require(alignment > 0);
+    T almt = static_cast<T>(alignment);
+    return (address / almt) * almt;
 }
 
 /** An efficient mapping from an address space to stored data.
@@ -62,7 +75,7 @@ T alignDown(T address, T alignment) {
  *
  * @code
  *  using namespace Sawyer::Container;
- * 
+ *
  *  // Create and initialize the overlay data
  *  myData_size = 8192;
  *  uint8_t *myData = new uint8_t[myDataSize];
@@ -124,7 +137,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s.template register_type<AllocatingBuffer>();
         s.template register_type<MappedBuffer>();
         s.template register_type<NullBuffer>();
@@ -156,7 +169,7 @@ public:
     static const unsigned WRITABLE      = Sawyer::Access::WRITABLE;
     static const unsigned EXECUTABLE    = Sawyer::Access::EXECUTABLE;
     static const unsigned IMMUTABLE     = Sawyer::Access::IMMUTABLE;
-    static const unsigned PRIVATE       = 0x00000100;
+    static const unsigned PRIVATE       = Sawyer::Access::PRIVATE;
     static const unsigned INITIALIZED   = 0x00000200;   // Partitioner2: initialized memory even if writable
 
     // Aggregate accessibility flags
@@ -166,13 +179,13 @@ public:
 
     // These bits are reserved for use in ROSE
     static const unsigned RESERVED_ACCESS_BITS = 0x0000ffff;
-    
+
 
 public:
     /** Exception for MemoryMap operations. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &mesg, const MemoryMap::Ptr map): std::runtime_error(mesg), map(map) {}
+        Exception(const std::string &mesg, const MemoryMap::Ptr map): Rose::Exception(mesg), map(map) {}
         virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
@@ -249,7 +262,7 @@ public:
     Ptr shallowCopy() {
         return Ptr(new MemoryMap(*this));
     }
-    
+
     /** Property: byte order.
      *
      *  Every map has a default byte order property which can be used by functions that read and write multi-byte values when
@@ -261,11 +274,26 @@ public:
     void byteOrder(ByteOrder::Endianness order) { endianness_ = order; }
      /** @} */
 
+    // Note that the order of the enum members is for backward compatibility with an older version of insertFile whose third
+    // argument was "bool writable = false" (MAP_RDONLY, but now intended to be MAP_PRIVATE) and when it was true was the same
+    // as MAP_READWRITE.
+    // 
+    /** Mapping mode for insertFile. */
+    enum InsertFileMapMode {
+        MAP_PRIVATE = 0,                                /**< File is mapped privately. Writing to the memory map is allowed,
+                                                         *   but the changes will not show up in the file. */
+        MAP_READWRITE = 1,                              /**< File is mapped with read and write permission. Changes to the
+                                                         *   memory map will also cause the file to change. */
+        MAP_RDONLY = 2                                  /**< File is mapped with read-only permission. Any attempt to modify
+                                                         *   the file will likely result in a segmentation fault. */
+    };
+    
     /** Insert file contents into memory map.
      *
      *  Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
      *  creates a new MappedBuffer and inserts it into the mapping. Returns the size of the file mapping. */
-    size_t insertFile(const std::string &fileName, rose_addr_t va, bool writable=false, std::string segmentName="");
+    size_t insertFile(const std::string &fileName, rose_addr_t va, InsertFileMapMode mode = MAP_PRIVATE,
+                      std::string segmentName = "");
 
     /** Insert file contents into memory map.
      *
@@ -347,6 +375,38 @@ public:
     /** Documentation string for @ref insertFile. */
     static std::string insertFileDocumentation();
 
+    /** Insert data into a memory map.
+     *
+     *  This is intended for insert small pieces of data parsed from the locator string.  The locator string has the form:
+     *
+     * @verbatim
+     *  :[ADDR][+VMSIZE][=PERM]::DATA
+     * @endverbatim
+     *
+     *  The fields between the first and second colon are parameters for virtual memory; the fields between the second and
+     *  third colon are parameters for the data (none currently defined). Their meanings are:
+     *
+     *  @li @c ADDR: The virtual address where the first byte of data is mapped. This can be specified in decimal, octal, or
+     *      hexadecimal using the usual C syntax. If no address is specified then the data is mapped at the lowest unmapped
+     *      region which is large enough to hold it.
+     *
+     *  @li @c VMSIZE: Size in bytes of the virtual memory to map.  If VMSIZE is not specified then it is the same as the
+     *      number of bytes of DATA. If VMSIZE is smaller than DATA then the DATA will be truncated; if VMSIZE is larger than
+     *      DATA then DATA is zero-padded. If the resulting memory are size is zero then no change is made to the memory map.
+     *
+     *  @li @c PERM: Accessibility for the mapped segment. If present, it should be any of the letters "r", "w", and/or "x" in
+     *      that order to indicate readable, writable, and/or executable. If not present, then the new memory is readable,
+     *      writable, and executable.
+     *
+     *  @li @c DATA: The byte values in ascending address order. The values should be separated from one another by white space
+     *      and all values must be in the range 0 through 255, inclusive.  Values can be specified in hexadecimal (leading
+     *      "0x"), binary (leading "0b"), octal (leading "0"), or decimal. */
+    AddressInterval insertData(const std::string &locatorString);
+
+    /** Documentation string for @ref insertData. */
+    static std::string insertDataDocumentation();
+    
+
 #ifdef BOOST_WINDOWS
     void insertProcess(int pid, Attach::Boolean attach);
 #else
@@ -381,7 +441,7 @@ public:
     size_t readQuick(void *buf, rose_addr_t startVa, size_t desired) const {
         return at(startVa).limit(desired).require(READABLE).read((uint8_t*)buf).size();
     }
-    
+
     /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
      *  continuing until one of the following conditions is met:
      *
@@ -397,6 +457,20 @@ public:
     std::string readString(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
                            unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0, char terminator='\0') const;
 
+    /** Read an unsigned value.
+     *
+     *  Reads an unsigned value from memory and converts it from the memory byte order to the host byte order.  If the entire
+     *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
+     *  present. */
+    template<typename U>
+    Sawyer::Optional<U> readUnsigned(rose_addr_t startVa) const {
+        U val = 0;
+        if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
+            return Sawyer::Nothing();
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        return val;
+    }
+
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
 
@@ -404,7 +478,7 @@ public:
     size_t writeQuick(const void *buf, rose_addr_t startVa, size_t desired) {
         return at(startVa).limit(desired).require(WRITABLE).write((const uint8_t*)buf).size();
     }
-    
+
     /** Search for any byte.
      *
      *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
@@ -432,6 +506,22 @@ public:
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
     /** @} */
+
+    /** Compute a hash of the entire memory contents.
+     *
+     *  This hashes the memory contents. Segment information (names, addresses, permissions, etc) are not included in the hash;
+     *  only the bytes stored in the map.  The user should supply a hasher whose @c append method will be called to add memory
+     *  map contents to the hash.  For instance, here's one way to hash the contents of a file without having to read the
+     *  entire file into memory first:
+     *
+     * @code
+     *  MemoryMap::Ptr file = MemoryMap::instance();
+     *  file->insertFile("/name/of/the/file", 0);
+     *  HasherSha1 hasher;
+     *  file->hash(hasher);
+     *  std::cout <<"file SHA1 hash is " <<hash <<"\n";
+     * @endcode */
+    Combinatorics::Hasher& hash(Combinatorics::Hasher&) const;
 
     /** Title of a segment when printing the map. */
     static std::string segmentTitle(const Segment&);

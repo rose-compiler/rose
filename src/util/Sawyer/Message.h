@@ -386,7 +386,7 @@ struct SAWYER_EXPORT ColorSpec {
     ColorSpec(AnsiColor fg, AnsiColor bg, bool bold): foreground(fg), background(bg), bold(bold) {}
 
     /** Returns true if this object is in its default-constructed state. */
-    bool isDefault() const { return COLOR_DEFAULT==foreground && COLOR_DEFAULT==background && !bold; }
+    bool isDefault() const { return COLOR_DEFAULT==foreground && COLOR_DEFAULT==background && !bold ? true : false; }
 };
 
 /** Colors to use for each message importance.
@@ -1581,7 +1581,7 @@ class SAWYER_EXPORT Facility {
     unsigned constructed_;
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 #include <Sawyer/WarningsOff.h>
-    std::string name_;
+    std::string name_, comment_;
     std::vector<SProxy> streams_;
 #include <Sawyer/WarningsRestore.h>
 
@@ -1603,15 +1603,6 @@ public:
      *  The destination facility will point to the same streams as the source facility. */
     Facility& operator=(const Facility &src);
 
-    /** Create a named facility with default destinations.  All streams are enabled and all output goes to file descriptor
-     *  2 (standard error) via unbuffered system calls.  Facilities initialized to this state can typically be used before the
-     *  C++ runtime is fully initialized and before @ref Sawyer::initializeLibrary is called. */
-    explicit Facility(const std::string &name): constructed_(CONSTRUCTED_MAGIC), name_(name) {
-        //initializeLibrary() //delay until later
-        initStreams(FdSink::instance(2));
-    }
-
-    /** Creates streams of all importance levels. */
     Facility(const std::string &name, const DestinationPtr &destination): constructed_(CONSTRUCTED_MAGIC), name_(name) {
         initStreams(destination);
     }
@@ -1619,6 +1610,14 @@ public:
     ~Facility() {
         constructed_ = 0;
     }
+
+    /** Initializes this facility with default destinations.
+     *
+     *  All streams are enabled and all output goes to file descriptor 2 (standard error) via unbuffered system calls. */
+    Facility& initialize(const std::string &name);
+
+    /** Initialize all streams with specified destination. */
+    Facility& initialize(const std::string &name, const DestinationPtr &destination);
 
     /** Returns true if called on an object that has been constructed.
      *
@@ -1655,6 +1654,18 @@ public:
      *
      *  Thread safety: This method is thread-safe. */
     std::string name() const;
+
+    /** Property: Comment associated with facility.
+     *
+     *  The comment should be a single-line string without terminating punctuation (for consistency, although not
+     *  enforced). The comment is printed as part of the output when listing the facility names.
+     *
+     *  Thread safety: This method is thread-safe.
+     *
+     * @{ */
+    std::string comment() const;
+    Facility& comment(const std::string&);
+    /** @} */
 
     /** Renames all the facility streams.
      *

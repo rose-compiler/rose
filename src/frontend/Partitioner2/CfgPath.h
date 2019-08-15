@@ -20,25 +20,42 @@ public:
     /** Stack of vertices. */
     typedef std::vector<ControlFlowGraph::ConstVertexIterator> Vertices;
 
+    /** Stores user-defined attributes. */
+    typedef Sawyer::Attribute::Storage<Sawyer::SingleThreadedTag> Attributes;
+
 private:
     Sawyer::Optional<ControlFlowGraph::ConstVertexIterator> frontVertex_;
     Edges edges_;
+
+    // Optional edge ordering information. This vector parallels, "edges_", although it can be smaller if default ordering is
+    // used. Assuming the vectors are the same size, then edgeOrder_[i] contains the back-tracking information for
+    // edges_[i]. If edges_[i] is popped during backtracking and edgeOrder_[i] exists and is not empty, then edges_[i] will be
+    // replaced by edgeOrders_[i].back() and that edge is popped from edgeOrders_[i].
+    std::vector<Edges> edgeOrders_;
+
+    // Attributes stored at each vertex and edge
+    std::vector<Attributes> vertexAttributes_;
+    std::vector<Attributes> edgeAttributes_;
 
 public:
     /** Construct an empty path. */
     CfgPath() {}
 
     /** Construct a path having only a starting vertex. */
-    explicit CfgPath(const ControlFlowGraph::ConstVertexIterator &vertex): frontVertex_(vertex) {}
+    explicit CfgPath(const ControlFlowGraph::ConstVertexIterator &vertex)
+        : frontVertex_(vertex), vertexAttributes_(1, Attributes()) {}
 
     /** Construct a path given an initial edge. */
     explicit CfgPath(const ControlFlowGraph::ConstEdgeIterator &edge)
-        : frontVertex_(edge->source()), edges_(1, edge) {}
+        : frontVertex_(edge->source()), edges_(1, edge), vertexAttributes_(2, Attributes()), edgeAttributes_(1, Attributes()) {}
 
     /** Makes this path empty. */
     void clear() {
         frontVertex_ = Sawyer::Nothing();
         edges_.clear();
+        edgeOrders_.clear();
+        vertexAttributes_.clear();
+        edgeAttributes_.clear();
     }
 
     /** Determine if a path is empty. */
@@ -94,19 +111,37 @@ public:
      *  The list of vertices is not stored explicitly by this path object and must be recomputed for each call. Vertices are
      *  not necessarily unique within a path since they can be reached sometimes by multiple edges. */
     Vertices vertices() const;
-    
+
     /** Append a new edge to the end of the path.
      *
-     *  If the path is not empty then the source vertex for the new edge must be equal to the  @ref backVertex. */
-    void pushBack(const ControlFlowGraph::ConstEdgeIterator &edge);
+     *  If the path is not empty then the source vertex for the new edge must be equal to the @ref backVertex. The specified
+     *  edge is pushed onto the path and the path is configured to visit the sibling edges during the @ref backtrack operation
+     *  in order by incrementing the given iterator. */
+    void pushBack(ControlFlowGraph::ConstEdgeIterator edge);
 
-    /** Append a new edge to the front of the path.
+    /** Append a new edge to the end of the path.
      *
-     *  If the path is not empty, then the target vertex for the new edge must be equal to the @ref frontVertex.
+     *  The argument is a list of edges all originating from the same vertex. If the path is non-empty, then the originating
+     *  vertex must be equal to the @ref backVertex.  The argument specifies the order in which the @ref backtrack operation
+     *  will visit the edges, and only the first edge of this list is actually appended to the path. */
+    void pushBack(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges);
+
+    /** Insert a new edge to the front of the path.
+     *
+     *  If the path is not empty, then the target vertex for the new edge must be equal to the @ref frontVertex. The specified
+     *  edge is inserted at the front of the path and the path is configured to visit the sibling edges during the @ref
+     *  backtrack operation in order by incrementing the given iterator.
      *
      *  Pushing edges onto the front of a path is not efficient; it requires moving all previous edges, taking time linearly
      *  proportional to the length of the path. */
-    void pushFront(const ControlFlowGraph::ConstEdgeIterator &edge);
+    void pushFront(ControlFlowGraph::ConstEdgeIterator edge);
+
+    /** Insert a new edge to the front of the path.
+     *
+     *  The argument is a list of edges all pointing to the same vertex. If the path is non-empty, then the pointed to vertex
+     *  must be equal to @ref frontVertex.  The argument specifies the order in which the @ref backtrack operation will visit
+     *  the edges, and only the first edge of this list is actually inserted at the front of the path. */
+    void pushFront(const std::vector<ControlFlowGraph::ConstEdgeIterator> &edges);
 
     /** Erase the final edge from a path.
      *
@@ -124,6 +159,30 @@ public:
      *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
      *  the path is at the front of the returned vector. */
     std::vector<ControlFlowGraph::ConstEdgeIterator>  backtrack();
+
+    /** User-defined attributes for the nth vertex.
+     *
+     *  Each vertex in the path has a corresponding attribute storage system. The attribute storage lifetime is the same as
+     *  that of the vertex to which it corresponds; when the path through the vertex index changes, the storage is reset. Note
+     *  that there is always one more vertex than edge (except when the path is completely empty). Edge number @em i
+     *  has two endpoints that are vertices @em i and @em i+1.
+     *
+     * @{ */
+    Attributes& vertexAttributes(size_t);
+    const Attributes& vertexAttributes(size_t) const;
+    /** @} */
+
+    /** User-defined attributes for the nth edge.
+     *
+     *  Each edge in the path has a corresponding attribute storage system. The attribute storage lifetime is the same as
+     *  that of the edge to which it corresponds; when the path through the edge index changes, the storage is reset. Note
+     *  that there is always one more vertex than edge (except when the path is completely empty). Edge number @em i
+     *  has two endpoints that are vertices @em i and @em i+1.
+     *
+     * @{ */
+    Attributes& edgeAttributes(size_t);
+    const Attributes& edgeAttributes(size_t) const;
+    /** @} */
 
     /** Number of times vertex appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstVertexIterator &vertex) const;
@@ -272,8 +331,9 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *  edge(s) but does not need any @ref E_FUNCTION_CALL edges.  The @p cfgCallSite is the vertex in the @p cfg corresponding to
  *  the @p pathsCallSite in the paths graph and provides information about which functions are called.
  *
- *  There are two versions of this function: one takes a specific function call edge and inlines only that single call. The
- *  other takes a call site vertex and inlines all functions called at that vertex.
+ *  There are two similar functions: one inlines all the functions called from a particular call site in the CFG, the other
+ *  inlines one specific function specified by its entry vertex.  In the latter case, the CFG doesn't actually need to have an
+ *  edge to the called function.
  *
  *  Usually, @p cfgCallSite has one outgoing @ref E_FUNCTION_CALL edge and @p pathsCallSite (and @p cfgCallSite) has one
  *  outgoing @ref E_CALL_RETURN edge. If the @p pathsCallSite has no @ref E_CALL_RETURN edge, or the called function has no
@@ -294,17 +354,16 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *
  * @{ */
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
+inlineMultipleCallees(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                      const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
+                      const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                      const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                      std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 bool
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
-                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
+inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallTarget,
+                const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices = NULL);
 /** @} */
 
 /** Binary inliner.
@@ -386,7 +445,7 @@ public:
     /** Property: inline predicate.
      *
      *  User predicate that controls whether a particular function should be inlined.  If null, then all function calls are
-     *  inlined. 
+     *  inlined.
      *
      * @{ */
     ShouldInline::Ptr shouldInline() const { return shouldInline_; }
@@ -439,9 +498,6 @@ private:
     // Convert global CFG vertices to paths graph vertices. */
     static CfgConstVertexSet cfgToPaths(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap);
 };
-
-
-    
 
 std::ostream& operator<<(std::ostream &out, const CfgPath &path);
 

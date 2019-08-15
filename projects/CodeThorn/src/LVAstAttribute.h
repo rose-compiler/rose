@@ -9,7 +9,7 @@
 #include "LVLattice.h"
 #include <string>
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class LVAstAttribute : public LVAstAttributeInterface {
  public:

@@ -235,6 +235,14 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgEndfileStatement:           unparseEndfileStatement(stmt, info);      break;
           case V_SgWaitStatement:              unparseWaitStatement(stmt, info);         break;
 
+       // Rasmussen (9/21/2018): These are derived from SgImageControlStatement
+          case V_SgSyncAllStatement:           unparseSyncAllStatement(stmt, info);      break;
+          case V_SgSyncImagesStatement:        unparseSyncImagesStatement(stmt, info);   break;
+          case V_SgSyncMemoryStatement:        unparseSyncMemoryStatement(stmt, info);   break;
+          case V_SgSyncTeamStatement:          unparseSyncTeamStatement(stmt, info);     break;
+          case V_SgLockStatement:              unparseLockStatement(stmt, info);         break;
+          case V_SgUnlockStatement:            unparseUnlockStatement(stmt, info);       break;
+
        // DQ (11/30/2007): Added support for associate statement (F2003)
           case V_SgAssociateStatement:         unparseAssociateStatement(stmt, info);    break;
 
@@ -291,6 +299,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
 
+       // Rasmussen (10/02/2018): This is temporary fix (actual ForAllStatements aren't created)
           case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
 
           case V_SgContainsStatement:          unparseContainsStatement(stmt, info); break;
@@ -303,7 +312,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgDeallocateStatement:        unparseDeallocateStatement(stmt, info); break;
 
-          case V_SgCAFWithTeamStatement:           unparseWithTeamStatement(stmt, info); break;
+          case V_SgCAFWithTeamStatement:       unparseWithTeamStatement(stmt, info); break;
 
        // Language independent code generation (placed in base class)
        // scope
@@ -802,8 +811,8 @@ bool
 unparseDimensionStatement(SgStatement* stmt)
    {
   // DQ (12/9/2007): If the dimension statement is what declares a variable (array) then we need it,
-  // else it is redendant (and an error) when used with the dementioning specification in the variable 
-  // declaration (which will be built from the type inforamtion in the variable declaration.
+  // else it is redundant (and an error) when used with the dimensioning specification in the variable
+  // declaration (which will be built from the type information in the variable declaration.
 
      SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(stmt);
 
@@ -874,12 +883,11 @@ unparseDimensionStatement(SgStatement* stmt)
      SgExpressionPtrList::iterator i = parameterList.begin();
 
   // Loop over the array variables and see if there is an explicit declaration for it.
-  // If so then the demention information will be output in the associated SgVariableDeclaration.
+  // If so then the dimension information will be output in the associated SgVariableDeclaration.
      while (i != parameterList.end())
         {
           SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(*i);
           ROSE_ASSERT(arrayReference != NULL);
-
           bool unparseForArrayVariable = unparseDimensionStatementForArrayVariable(arrayReference);
        // printf ("unparseForArrayVariable = %s \n",unparseForArrayVariable ? "true" : "false");
 
@@ -903,20 +911,20 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
 
      if (attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_dimensionStatement)
         {
-       // The dimention statement will have changed the type and the original declaration will have been 
+       // The dimension statement will have changed the type and the original declaration will have been
        // output with the dimension computed as part of the type. The only exception is that there may 
-       // have been no explicit declaration (only an implicit declaration from teh dimension statement).
+       // have been no explicit declaration (only an implicit declaration from the dimension statement).
 
        // DQ (12/9/2007):
-       // This test checks if we will need a dimension statement, we stil might not want all entries in 
+       // This test checks if we will need a dimension statement, we still might not want all entries in
        // the dimension statement to be unparsed (because some, but not all, might have appeared in an 
-       // exlicit declaration previously. I hate this part of Fortran!
+       // explicit declaration previously. I hate this part of Fortran!
 
        // printf ("This is a dimension statement \n");
           if (unparseDimensionStatement(stmt) == false)
              {
-            // Output the new line so that we leave a hole where the dimension statement was and done 
-            // screwup the formatting of the lables (in columns 1-6)
+            // Output the new line so that we leave a hole where the dimension statement was and don't
+            // screwup the formatting of the labels (in columns 1-6)
             // curprint("! Skipping output of dimension statement (handled in declaration)");
                unp->cur.insert_newline(1);
                return;
@@ -2117,7 +2125,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
 void
 FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt \n");
+  // printf ("In FortranCodeGeneration_locatedNode::unparseBasicBlockStmt %p\n", stmt);
 
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
@@ -2136,8 +2144,12 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
+         // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
          if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
-                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgUseStatement
+                 || (*p)->variantT()==V_SgImplicitStatement
+                 || (*p)->variantT()==V_SgDerivedTypeStatement)
              unparseStatement((*p), info);
      }
 
@@ -2154,6 +2166,20 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
    }
 
 
+bool
+hasCStyleElseIfConstruction(SgIfStmt* parentIfStatement)
+   {
+  // Rasmussen(7/17/2018): Check for C style AST else-if construction.
+  // The C style else-if AST doesn't have an SgBasicBlock immediately
+  // preceding the SgIfStmt representing the else-if clause; the SgIfStmt
+  // itself is the false branch.
+  //
+     SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
+
+     return (else_if_stmt != NULL);
+   }
+
+
 SgIfStmt*
 getElseIfStatement ( SgIfStmt* parentIfStatement )
    {
@@ -2161,31 +2187,36 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 
      SgIfStmt* childIfStatement = NULL;
 
-     bool ifStatementInFalseBody = false;
-     SgBasicBlock* falseBlock   = isSgBasicBlock(parentIfStatement->get_false_body());
-  // printf ("falseBlock = %p \n",falseBlock);
+     SgBasicBlock* falseBlock = isSgBasicBlock(parentIfStatement->get_false_body());
+
+  // Rasmussen (7/23/2018): Simplification of logic allowed because usage of is_else_if_statement
+  // was fixed in frontend.  Previously is_else_if_statement was not used in the unparser and
+  // this confused users at NCAR when attempting transformations.
+  //
      if (falseBlock != NULL)
         {
-       // The last case of a chain of "if else if else if endif" has an empty false block!
           if (falseBlock->get_statements().empty() == false)
              {
                childIfStatement = isSgIfStmt(*(falseBlock->get_statements().begin()));
-            // printf ("Test first statement in false block is SgIfStmt: childIfStatement = %p \n",childIfStatement);
                if (childIfStatement != NULL)
                   {
-                 // A properly formed elseif has only a single statement in the false block AND was marked as NOT having an associated "END IF"
-                 // DXN (02/13/2011): and marked as using the THEN keyword
-                    ifStatementInFalseBody = (falseBlock->get_statements().size() == 1)
-                                && (childIfStatement->get_has_end_statement() == false)
-                                && childIfStatement->get_use_then_keyword();
-
-                    if (ifStatementInFalseBody == false)
-                         childIfStatement = NULL;
+                     if (childIfStatement->get_is_else_if_statement() == false)
+                        {
+                           childIfStatement = NULL;
+                        }
                   }
              }
         }
 
-  // printf ("(getElseIfStatement) ifStatementInFalseBody = %s childIfStatement = %p \n",ifStatementInFalseBody ? "true" : "false",childIfStatement);
+  // Rasmussen (7/23/2018): This branch added for the experimental Fortran parser where
+  // the AST was designed to follow the C if statement.  For the new design there is no
+  // SgBasicBlock immediately preceding the SgIfStmt (the SgIfStmt is the false branch).
+  //
+     SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
+     if (else_if_stmt != NULL)
+        {
+           childIfStatement = else_if_stmt;
+        }
 
      return childIfStatement;
    }
@@ -2194,30 +2225,34 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
 void 
 FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // Sage node corresponds to Fortran 'if'
+  // Sage node corresponding to Fortran 'if'
   //
-  // Assume: If nodes always have a true and false body which are
-  // possibly empty basic block nodes.
 
-  // printf ("In FortranCodeGeneration_locatedNode::unparseIfStmt \n");
-
+  // Rasmussen(7/23/2018): Modified much of the unparsing of if statements and if
+  // constructs because:
+  //   1. The AST was modified to follow the C-style AST for the experimental branch.
+  //   2. Original Fortran frontend AST construction also moved towards C by using NULL for false body.
+  //   3. ELSE was not unparsed if the else-block was empty (no reason not to unparse it).
+  //   4. A bug was fixed in unparsing the if-construct label name (label_string).
+  //
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      ROSE_ASSERT(if_stmt != NULL);
      ROSE_ASSERT(if_stmt->get_conditional());
+     ROSE_ASSERT(if_stmt->get_true_body());
 
-     if (if_stmt->get_string_label().empty() == false)
+  // Output the if-construct-name string (if present) if this is an else-if branch
+     if (if_stmt->get_string_label().empty() == false && if_stmt->get_is_else_if_statement() == false)
         {
-       // Output the string label
           curprint(if_stmt->get_string_label() + ": ");
         }
 
-  // condition
+  // IF keyword and conditional
+  //
      curprint("IF (");
      info.set_inConditional();
 
-  // DQ (8/15/2007): In C the condiion is a statment, and in Fortran the condition is an expression!
+  // DQ (8/15/2007): In C the condition is a statement, and in Fortran the condition is an expression!
   // We might want to fix this by having an IR node to represent the Fortran "if" statement.
-  // unparseStatement(if_stmt->get_conditional(), info);
      SgExprStatement* expressionStatement = isSgExprStatement(if_stmt->get_conditional());
      unparseExpression(expressionStatement->get_expression(), info);
 
@@ -2225,103 +2260,59 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
      curprint(") ");
 
   // DQ (12/26/2007): handling cases where endif is not in the source code and not required (stmt vs. construct)
+  // This is also (primarily) used to keep else-if-stmt from printing extra END IF.
      bool output_endif = if_stmt->get_has_end_statement();
-  // printf ("In unparseIfStmt(): output_endif = %s \n",output_endif ? "true" : "false");
-
-  // true body
-     ROSE_ASSERT(if_stmt->get_true_body());
 
      SgIfStmt* elseIfStatement = getElseIfStatement ( if_stmt );
 
 #if 0
-     printf ("\nIn unparseIfStmt(): line = %d \n",if_stmt->get_file_info()->get_line());
+     printf ("\nIn unparseIfStmt(): if_stmt = %p line = %d \n", if_stmt, if_stmt->get_file_info()->get_line());
      printf ("In unparseIfStmt(): if_stmt->get_use_then_keyword()     = %s \n",if_stmt->get_use_then_keyword() ? "true" : "false");
      printf ("In unparseIfStmt(): if_stmt->get_is_else_if_statement() = %s \n",if_stmt->get_is_else_if_statement() ? "true" : "false");
      printf ("In unparseIfStmt(): if_stmt->get_has_end_statement()    = %s \n",if_stmt->get_has_end_statement() ? "true" : "false");
-     printf ("In unparseIfStmt(): elseIfStatement = %p \n",elseIfStatement);
+     printf ("In unparseIfStmt(): if_stmt->get_string_label()         = %s \n",if_stmt->get_string_label().c_str());
+     printf ("In unparseIfStmt(): elseIfStatement                     = %p \n", elseIfStatement);
 #endif
 
-#if 0
-     bool ifStatementInFalseBody = false;
+// Rasmussen(7/23/2018): Removed several lines of dead code containing logic that
+// apparently conflicts with the Fortran standard.
 
-#if 1
-  // This code detects if this is an else-if statement.
-     SgBasicBlock* parentBlock   = isSgBasicBlock(if_stmt->get_parent());
-  // printf ("parentBlock = %p \n",parentBlock);
-     if (parentBlock != NULL)
-        {
-          SgIfStmt* parentIfStatement = isSgIfStmt(parentBlock->get_parent());
-       // printf ("parentIfStatement = %p \n",parentIfStatement);
-          if (parentIfStatement != NULL)
-             {
-               ROSE_ASSERT (isSgBasicBlock(parentIfStatement->get_false_body()));
-               SgStatementPtrList & statementList = isSgBasicBlock(parentIfStatement->get_false_body())->get_statements();
-
-            // Added code to make sure that the if is a part of an else and is the only statement inside the false block.
-            // if (statementList.size() > 1)
-                  {
-                    ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
-                  }
-             }
-        }
-#endif
-
-     printf ("In unparseIfStmt(): ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-
-#if 0
-     SgBasicBlock* trueBlock  = isSgBasicBlock(if_stmt->get_true_body());
-     SgBasicBlock* falseBlock = isSgBasicBlock(if_stmt->get_false_body());
-
-     int numberOfStatementsInIfStatementTrueBody  = (trueBlock  == NULL) ? 0 : trueBlock->get_statements().size();
-     int numberOfStatementsInIfStatementFalseBody = (falseBlock == NULL) ? 0 : falseBlock->get_statements().size();
-  // int numberOfStatementsInIfStatement          = numberOfStatementsInIfStatementTrueBody + numberOfStatementsInIfStatementFalseBody;
-
-     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementTrueBody  = %d \n",numberOfStatementsInIfStatementTrueBody);
-     printf ("In unparseIfStmt(): numberOfStatementsInIfStatementFalseBody = %d \n",numberOfStatementsInIfStatementFalseBody);
-
-     bool tooManyStatementsForIfWithoutThen = (numberOfStatementsInIfStatementTrueBody > 1);
-#endif
-
-  // printf ("(if then case) ifStatementInFalseBody = %s \n",ifStatementInFalseBody ? "true" : "false");
-  // bool output_as_elseif = ifStatementInFalseBody;
-  // bool output_as_elseif = ifStatementInFalseBody && !tooManyStatementsForIfWithoutThen;
-  // bool output_as_elseif = ifStatementInFalseBody && output_endif;
-  // bool output_as_elseif = ifStatementInFalseBody;
-#endif
-
-  // printf ("Handling THEN case for if_stmt = %p \n",if_stmt);
+  // THEN keyword
+  //
   // DQ (12/26/2007): If this is an elseif statement then output the "THEN" even though we will not output an "ENDIF"
-  // if (output_endif == true || output_as_elseif == true)
      if (output_endif == true)
         {
+       // IF THEN statement branch
+       //
           ROSE_ASSERT(if_stmt->get_use_then_keyword() == true);
-
+       // This branch taken for an if-then-stmt.
+       // Note that the string label if output before "IF", not after "THEN"
           curprint("THEN");
-       // curprint("THEN ! Output as endif");
-       // if (output_as_elseif == true) info.set_SkipFormatting();// curprint("\n      ");
           unparseStatement(if_stmt->get_true_body(), info);
-       // if (output_as_elseif == true) info.unset_SkipFormatting();// curprint("\n      ");
-       // if (output_as_elseif == true) curprint("      ");
         }
        else
         {
-       // curprint("!output on same line!");
-       // if (output_as_elseif == true)
           if (if_stmt->get_use_then_keyword() == true)
              {
+            // ELSE IF statement branch (uses if_stmt to unparse the "IF")
+            //
+            // This branch taken for an else-if-stmt.
+            // Note that the string label if output after "THEN"
                curprint("THEN");
-            // curprint("THEN ! Output as elseif");
+            // Output the if-construct-name string after THEN if needed
+               if (if_stmt->get_string_label().empty() == false) curprint(" " + if_stmt->get_string_label());
                unparseStatement(if_stmt->get_true_body(),info);
              }
             else
              {
+            // IF statement branch (not if-construct)
+            //
             // "THEN" is not output for the case of "IF (C) B = 0"
                ROSE_ASSERT (isSgBasicBlock(if_stmt->get_true_body()));
                SgStatementPtrList & statementList = isSgBasicBlock(if_stmt->get_true_body())->get_statements();
                ROSE_ASSERT(statementList.size() == 1);
                SgStatement* statement = *(statementList.begin());
                ROSE_ASSERT(statement != NULL);
-            // printf ("Output true statement = %p = %s \n",statement,statement->class_name().c_str());
 
             // Fixed format code includes a call to insert 6 spaces (or numeric label if available), we want to suppress this.
                SgUnparse_Info info_without_formating(info);
@@ -2330,66 +2321,48 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
              }
         }
 
-  // printf ("Handling ELSE case for if_stmt = %p \n",if_stmt);
-  // false body: unparse only if non-empty basic block
+  // ELSE and ELSE IF statements
+  //
+  // Rasmussen(7/23/2018): Added unparsing of C style else-if AST construction.  The C
+  // AST does not use an SgBasicBlock to precede an SgIfStmt representing the else-if-stmt.
+  // Also simplified the logic somewhat, now allowed because the false_body is NULL
+  // if no else-stmt (changed in the frontend to follow C AST).
+  //
      SgBasicBlock* fbb = isSgBasicBlock(if_stmt->get_false_body());
-     if (fbb && fbb->get_statements().size() > 0)
-        {
-       // The else statement might just need its own numeric label
-       // unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
 
-          if (output_endif == true && elseIfStatement == NULL)
+     if (fbb || hasCStyleElseIfConstruction(if_stmt))
+        {
+       // The else statement might have its own numeric label
+          unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
+          curprint("ELSE");
+
+       // However, currently there is no information on else if-construct name in
+       // SgIfStmt so we won't try to unparse it.  NOTE, output could be different from input.
+
+          if (elseIfStatement != NULL)
              {
-            // The else statement might just need its own numeric label
-               unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
-               curprint("ELSE");
-               unparseStatement(if_stmt->get_false_body(), info);
+             // ELSE IF statement branch
+                ROSE_ASSERT(elseIfStatement->get_is_else_if_statement() == true);
+
+             // Call the associated unparse function directly to avoid formatting
+                curprint(" ");
+                unparseIfStmt(elseIfStatement, info);
              }
             else
              {
-               unparseStatementNumbersSupport(if_stmt->get_else_numeric_label(),info);
-               curprint("ELSE ");
-
-            // if (output_as_elseif == true) curprint("      ");
-               if (elseIfStatement != NULL)
-                  {
-                 // Call the associated unparse function directly to avoid formatting
-                    unparseIfStmt(elseIfStatement, info);
-                  }
-                 else
-                  {
-#if 0
-                 // Output the statement on the same line as the "else" as in: "if (c) a = 0 else "
-                    SgStatementPtrList & statementList = if_stmt->get_false_body()->get_statements();
-                    if (statementList.size() != 1)
-                       {
-                         printf ("statementList.size() = %" PRIuPTR " \n",statementList.size());
-                         if_stmt->get_file_info()->display("statementList.size() != 1");
-                       }
-                    ROSE_ASSERT(statementList.size() == 1);
-                    SgStatement* statement = *(statementList.begin());
-                    ROSE_ASSERT(statement != NULL);
-                 // printf ("Output false statement = %p = %s \n",statement,statement->class_name().c_str());
-
-                    unparseLanguageSpecificStatement(statement, info);
-                 // if (output_as_elseif == true) curprint("      ");
-#else
-                    unparseStatement(if_stmt->get_false_body(), info);
-#endif
-                  }
+             // ELSE statement branch
+                unparseStatement(if_stmt->get_false_body(), info);
              }
         }
 
-  // printf ("Handling ENDIF case for if_stmt = %p \n",if_stmt);
+  // END IF statement
+  //
      if (output_endif == true)
         {
           unparseStatementNumbersSupport(if_stmt->get_end_numeric_label(),info);
           curprint("END IF");
-          if (if_stmt->get_string_label().empty() == false)
-             {
-            // Output the string label
-               curprint(" " + if_stmt->get_string_label());
-             }
+       // Output the if-construct-name string if present
+          if (if_stmt->get_string_label().empty() == false) curprint(" " + if_stmt->get_string_label());
         }
 
      ROSE_ASSERT(unp != NULL);
@@ -2402,6 +2375,19 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
    {
      SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
      ROSE_ASSERT(forAllStatement != NULL);
+
+  // The FORALL statement has been deprecated and replaced by a DO CONCURRENT construct.
+  // Since they are very similar they share the same Sage node and are distinguished by an enum.
+  //
+     if (forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_do_concurrent_statement)
+        {
+           unparseDoConcurrentStatement(stmt, info);
+           return;
+        }
+
+  // Note the return in the preceding for DO CONCURRENT.  What follows unparses a FORALL construct.
+  //
+     ROSE_ASSERT(forAllStatement->get_forall_statement_kind() == SgForAllStatement::e_forall_statement);
 
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);
@@ -2441,12 +2427,76 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
    }
 
 
+void
+FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgForAllStatement* forAllStatement = isSgForAllStatement(stmt);
+     ROSE_ASSERT(forAllStatement != NULL);
+
+     SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
+     ROSE_ASSERT(forAllHeader != NULL);
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+
+  // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
+     ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
+     int num_vars = forAllHeader->get_expressions().size() / 2;
+
+     curprint("DO CONCURRENT (");
+
+     for (int i = 0; i <= num_vars; i += 2)
+        {
+           if (i != 0) curprint(", ");
+
+        // variable
+           unparseExpression(header[i],  info);
+           curprint("=");
+        // subscripts
+           unparseExpression(header[i+1],info);
+        }
+
+     curprint(")");
+
+  // Unparse the body
+     SgStatement* statement = NULL;
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          statement = forAllStatement->get_body();
+          ROSE_ASSERT(statement != NULL);
+
+          unparseStatement(statement,info);
+        }
+       else
+        {
+          SgBasicBlock* body = isSgBasicBlock(forAllStatement->get_body());
+          ROSE_ASSERT(body != NULL);
+
+          SgStatementPtrList & statementList = body->get_statements();
+          ROSE_ASSERT(statementList.size() == 1);
+          statement = *(statementList.begin());
+          ROSE_ASSERT(statement != NULL);
+
+          unparseLanguageSpecificStatement(statement,info);
+        }
+
+     unp->cur.insert_newline(1);
+
+  // Unparse the end statement
+     if (forAllStatement->get_has_end_statement() == true)
+        {
+          unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
+          curprint("END DO");
+          unp->cur.insert_newline(1);
+        }
+   }
+
+
 void 
 FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // Sage node corresponds to Fortran 'do'
 
-  // This is a Fortran specific IR node and it stores it' condition and increment differently 
+  // This is a Fortran specific IR node and it stores its condition and increment differently 
   // (since Fortran uses only values to represent the bound and the stride instead of 
   // expressions that include the index variable).
 
@@ -3271,20 +3321,24 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
           curprint("(");
           unparse_IO_Support(readStatement,false,info);
 
-       // printf ("In unparseReadStatement(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
+       // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-          unparse_IO_Control_Support("FMT",readStatement->get_format(),false,info);
-          unparse_IO_Control_Support("REC",readStatement->get_rec(),false,info);
-          unparse_IO_Control_Support("END",readStatement->get_end(),false,info);
-
-       // F90 specific
-          unparse_IO_Control_Support("NML",readStatement->get_namelist(),false,info);
-          unparse_IO_Control_Support("ADVANCE",readStatement->get_advance(),false,info);
-          unparse_IO_Control_Support("EOR",readStatement->get_eor(),false,info);
-          unparse_IO_Control_Support("SIZE",readStatement->get_size(),false,info);
-
-       // F2003 specific
+          unparse_IO_Control_Support("FMT",         readStatement->get_format(),      false,info);
+          unparse_IO_Control_Support("NML",         readStatement->get_namelist(),    false,info);
+          unparse_IO_Control_Support("ADVANCE",     readStatement->get_advance(),     false,info);
           unparse_IO_Control_Support("ASYNCHRONOUS",readStatement->get_asynchronous(),false,info);
+          unparse_IO_Control_Support("BLANK",       readStatement->get_blank(),       false,info);
+          unparse_IO_Control_Support("DECIMAL",     readStatement->get_decimal(),     false,info);
+          unparse_IO_Control_Support("DELIM",       readStatement->get_delim(),       false,info);
+          unparse_IO_Control_Support("END",         readStatement->get_end(),         false,info);
+          unparse_IO_Control_Support("EOR",         readStatement->get_eor(),         false,info);
+          unparse_IO_Control_Support("ID",          readStatement->get_id(),          false,info);
+          unparse_IO_Control_Support("PAD",         readStatement->get_pad(),         false,info);
+          unparse_IO_Control_Support("POS",         readStatement->get_pos(),         false,info);
+          unparse_IO_Control_Support("REC",         readStatement->get_rec(),         false,info);
+          unparse_IO_Control_Support("ROUND",       readStatement->get_round(),       false,info);
+          unparse_IO_Control_Support("SIGN",        readStatement->get_sign(),        false,info);
+          unparse_IO_Control_Support("SIZE",        readStatement->get_size(),        false,info);
 
           curprint(") ");
         }
@@ -3307,13 +3361,24 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
-     unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
-     unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
+  // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-  // F2003 specific
+     unparse_IO_Control_Support("FMT",         writeStatement->get_format(),      false,info);
+     unparse_IO_Control_Support("NML",         writeStatement->get_namelist(),    false,info);
+     unparse_IO_Control_Support("ADVANCE",     writeStatement->get_advance(),     false,info);
      unparse_IO_Control_Support("ASYNCHRONOUS",writeStatement->get_asynchronous(),false,info);
+     unparse_IO_Control_Support("BLANK",       writeStatement->get_blank(),       false,info);
+     unparse_IO_Control_Support("DECIMAL",     writeStatement->get_decimal(),     false,info);
+     unparse_IO_Control_Support("DELIM",       writeStatement->get_delim(),       false,info);
+     unparse_IO_Control_Support("END",         writeStatement->get_end(),         false,info);
+     unparse_IO_Control_Support("EOR",         writeStatement->get_eor(),         false,info);
+     unparse_IO_Control_Support("ID",          writeStatement->get_id(),          false,info);
+     unparse_IO_Control_Support("PAD",         writeStatement->get_pad(),         false,info);
+     unparse_IO_Control_Support("POS",         writeStatement->get_pos(),         false,info);
+     unparse_IO_Control_Support("REC",         writeStatement->get_rec(),         false,info);
+     unparse_IO_Control_Support("ROUND",       writeStatement->get_round(),       false,info);
+     unparse_IO_Control_Support("SIGN",        writeStatement->get_sign(),        false,info);
+     unparse_IO_Control_Support("SIZE",        writeStatement->get_size(),        false,info);
 
      curprint(") ");
 
@@ -3531,7 +3596,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
 FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3555,7 +3620,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
 FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3579,7 +3644,186 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
      unp->cur.insert_newline(1); 
    }
 
-void 
+void
+FortranCodeGeneration_locatedNode::unparse_Image_Ctrl_Stmt_Support(SgImageControlStatement* stmt, bool print_comma, SgUnparse_Info& info)
+   {
+      ROSE_ASSERT(stmt);
+
+      if (stmt->get_stat())
+        {
+           if (print_comma) curprint(", "); else print_comma = true;
+           curprint("STAT=");
+           unparseExpression(stmt->get_stat(), info);
+        }
+     if (stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(stmt->get_err_msg(), info);
+        }
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncAllStatement* sync_stmt = isSgSyncAllStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_initial_comma = false;
+
+     curprint("SYNC ALL (");
+
+     unparse_Image_Ctrl_Stmt_Support(sync_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncImagesStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncImagesStatement* sync_stmt = isSgSyncImagesStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     SgExpression* image_set = sync_stmt->get_image_set();
+     ROSE_ASSERT(image_set);
+
+     bool print_comma = true;
+
+     curprint("SYNC IMAGES (");
+
+  // unparse the image set
+     if (isSgNullExpression(image_set))
+        {
+        // A null expression is used to indicate lack of an actual/"real" expression
+           curprint("*");
+        }
+     else
+        {
+           unparseExpression(sync_stmt->get_image_set(), info);
+        }
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncMemoryStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncMemoryStatement* sync_stmt = isSgSyncMemoryStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = false;
+
+     curprint("SYNC MEMORY (");
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseSyncTeamStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgSyncTeamStatement* sync_stmt = isSgSyncTeamStatement(stmt);
+     ROSE_ASSERT(sync_stmt);
+
+     bool print_comma = true;
+
+     curprint("SYNC TEAM (");
+
+  // unparse the team value
+     unparseExpression(sync_stmt->get_team_value(), info);
+
+     if (sync_stmt->get_stat())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("STAT=");
+          unparseExpression(sync_stmt->get_stat(), info);
+        }
+     if (sync_stmt->get_err_msg())
+        {
+          if (print_comma) curprint(", "); else print_comma = true;
+          curprint("ERRMSG=");
+          unparseExpression(sync_stmt->get_err_msg(), info);
+        }
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseLockStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgLockStatement* lock_stmt = isSgLockStatement(stmt);
+     ROSE_ASSERT(lock_stmt);
+
+     bool print_initial_comma = true;
+
+     curprint("LOCK (");
+
+  // unparse the lock variable
+     unparseExpression(lock_stmt->get_lock_variable(), info);
+
+     if (lock_stmt->get_acquired_lock())
+        {
+          curprint(", ");
+          curprint("ACQUIRED_LOCK=");
+          unparseExpression(lock_stmt->get_acquired_lock(), info);
+        }
+     unparse_Image_Ctrl_Stmt_Support(lock_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseUnlockStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnlockStatement* unlock_stmt = isSgUnlockStatement(stmt);
+     ROSE_ASSERT(unlock_stmt);
+
+     bool print_initial_comma = true;
+
+     curprint("UNLOCK (");
+
+  // unparse the lock variable
+     unparseExpression(unlock_stmt->get_lock_variable(), info);
+
+     unparse_Image_Ctrl_Stmt_Support(unlock_stmt, print_initial_comma, info);
+
+     curprint(")");
+     unp->cur.insert_newline(1);
+   }
+
+void
 FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3588,15 +3832,30 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 
      curprint("ASSOCIATE (");
 
-     SgVariableDeclaration* variableDeclaration = associateStatement->get_variable_declaration();
-     ROSE_ASSERT(variableDeclaration != NULL);
-     SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
-     ROSE_ASSERT(variable != NULL);
+     // Pei-Hung (07/24/2019) unparse SgDeclarationStatementPtrList for multiple associates
+     SgDeclarationStatementPtrList::iterator pp = associateStatement->get_associates().begin();
+     while ( pp != associateStatement->get_associates().end() )
+        {
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*pp);
+          ROSE_ASSERT(variableDeclaration != NULL);
 
-     curprint(variable->get_name());
-     curprint(" => ");
-     unparseExpression(variable->get_initializer(),info);
-     curprint(") ");
+          SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
+          ROSE_ASSERT(variable != NULL);
+
+          curprint(variable->get_name());
+          curprint(" => ");
+          unparseExpression(variable->get_initializer(),info);
+          pp++;
+          if(pp != associateStatement->get_associates().end())
+            curprint(", ");
+          
+        }
+        curprint(") ");
+
+
+
+
+
   // unp->cur.insert_newline(1);
 
      ROSE_ASSERT(associateStatement->get_body() != NULL);
@@ -3611,7 +3870,7 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
    }
 
 #if 0
-void 
+void
 FortranCodeGeneration_locatedNode::unparseIOFileControlStatement(SgStatement* stmt, SgUnparse_Info& info) 
    {
   // Sage node corresponds to Fortran input/output statement
@@ -3936,6 +4195,38 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   curprint("EXTERNAL");
                else 
                curprint(", EXTERNAL");
+             }
+
+       // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous() == true)
+             {
+               curprint(", CONTIGUOUS");
+             }
+
+       // Rasmussen (02/06/2018): Fortran CUDA support
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory() == true)
+             {
+               curprint(", device");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaManaged() == true)
+             {
+               curprint(", managed");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaConstant() == true)
+             {
+               curprint(", constant");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaShared() == true)
+             {
+               curprint(", shared");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaPinned() == true)
+             {
+               curprint(", pinned");
+             }
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaTexture() == true)
+             {
+               curprint(", texture");
              }
 
        // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
@@ -4306,6 +4597,25 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
           if (procedureHeader->get_functionModifier().isRecursive() == true)
              {
                curprint("RECURSIVE ");
+             }
+
+       // Rasmussen (02/06/2018): CUDA function modifiers (prefix)
+
+          if (procedureHeader->get_functionModifier().isCudaHost() == true)
+             {
+               curprint("attributes(host) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGlobalFunction() == true)
+             {
+               curprint("attributes(global) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaDevice() == true)
+             {
+               curprint("attributes(device) ");
+             }
+          if (procedureHeader->get_functionModifier().isCudaGridGlobal() == true)
+             {
+               curprint("attributes(grid_global) ");
              }
 
        // Output the forward declaration only
@@ -5030,7 +5340,6 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
 void
 FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      SgDerivedTypeStatement* classdecl_stmt = isSgDerivedTypeStatement(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
@@ -5047,9 +5356,8 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
   // info.display("Inside of unparseClassDeclStmt");
 
-  // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
-
 #if 0
+     printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
@@ -5095,9 +5403,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           curprint ("TYPE ");
 
-       // SgName nm = classdecl_stmt->get_name();
-
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
              {
             // The PUBLIC keyword is only permitted within Modules
@@ -5111,7 +5417,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
              {
             // The PRIVATE keyword is only permitted within Modules
@@ -5125,7 +5431,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
              {
             // The BIND keyword is only permitted within Modules
@@ -5140,7 +5446,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
              {
             // The EXTENDS keyword is only permitted within Modules
@@ -5154,7 +5460,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
              {
             // The ABSTRACT keyword is only permitted within Modules

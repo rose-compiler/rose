@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class PointerAnalysisInterface {
   public:
@@ -14,6 +14,7 @@ namespace SPRAY {
     virtual VariableIdSet getModByPointer()=0;
     virtual ~PointerAnalysisInterface();
     bool hasDereferenceOperation(SgExpression* exp);
+    bool hasAddressOfOperation(SgExpression* exp);
   };
   
   class PointerAnalysisEmptyImplementation : public PointerAnalysisInterface {

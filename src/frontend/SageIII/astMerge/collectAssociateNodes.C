@@ -91,8 +91,25 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             // have been visited from somewhere else then the typedefDeclaration).
                nodeList.insert(typedefDeclaration);
 
+
             // Can this cause recursion?
-               addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+            // addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+
+            // DQ (6/30/2018): Detect a break cycles in typedefs (debugging test2018_118.C).
+               static std::set<SgTypedefDeclaration*> typedefDeclarationSet;
+               if (typedefDeclarationSet.find(typedefDeclaration) == typedefDeclarationSet.end())
+                  {
+                    typedefDeclarationSet.insert(typedefDeclaration);
+
+                 // Can this cause recursion?
+                    addAssociatedNodes(typedefDeclaration->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In addAssociatedNodes: typedefDeclaration was previously seen: typedefDeclaration = %p = %s \n",typedefDeclaration,typedefDeclaration->class_name().c_str());
+#endif
+                  }
 
             // DQ (6/23/2010): We need to include the type defined by the typedef as well.
             // addAssociatedNodes(typedefDeclaration->get_type(),nodeList,markMemberNodesDefinedToBeDeleted);
@@ -309,9 +326,6 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
           case V_SgQualifiedNameType:
        // case V_SgTemplateType:
-#ifndef ROSE_USE_NEW_EDG_INTERFACE 
-          case V_SgPartialFunctionType:
-#endif
           case V_SgPartialFunctionModifierType:
           // case V_SgUnknownMemberFunctionType:
              {
@@ -323,6 +337,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
        // DQ (9/6/2016): Added support for new type now referenced as a result of using new automated generation of builtin functions for ROSE.
           case V_SgTypeSigned128bitInteger:
+          case V_SgTypeUnsigned128bitInteger:
 
        // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
           case V_SgTypeLabel:
@@ -342,6 +357,11 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
        // DQ (3/29/2015): Added support for GNU C language extension typeof.
           case V_SgTypeOfType:
+
+       // DQ (1/21/2018): Added support for C++11 language type.
+          case V_SgRvalueReferenceType:
+
+          case V_SgJovialTableType:
 
        // These are primative types
           case V_SgJavaWildcardType:
@@ -373,10 +393,11 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeVoid:
           case V_SgTypeWchar:
           case V_SgTypeCAFTeam:
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:
-#endif
+       // TV (04/16/2018): Ignore non-real type for now
+          case V_SgNonrealType:
+          case V_SgAutoType:
              {
             // Ignore these cases (they contain no base types)...
                nodeList.insert(type);
@@ -1261,6 +1282,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
        // DQ (2/10/2007): Added case for SgTemplateInstantiationDecl
           case V_SgTemplateInstantiationDecl:
              {
@@ -1857,8 +1879,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                ROSE_ASSERT(baseClass->get_base_class() != NULL);
                nodeList.insert(baseClass->get_base_class());
 
+            // DQ (1/21/2019): I think we don't want the reference to the pointer.
             // The modifer access function returns by reference but this is non-uniform handling of IR nodes within ROSE.
-               nodeList.insert( &(baseClass->get_baseClassModifier()) );
+            // nodeList.insert( &(baseClass->get_baseClassModifier()) );
+               ROSE_ASSERT(baseClass->get_baseClassModifier() != NULL);
+               nodeList.insert(baseClass->get_baseClassModifier());
                break;
              }
 
@@ -2020,6 +2045,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (1/21/2018): Added C++11 support
+          case V_SgStaticAssertionDeclaration:
+
        // DQ (8/22/2007): Added Fortran support
           case V_SgImplicitStatement:
           case V_SgWhereStatement:
@@ -2137,10 +2165,21 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+       // Rasmussen (08/02/2019): Added support for Jovial
+          case V_SgJovialCompoolStatement:
+          case V_SgJovialDirectiveStatement:
+          case V_SgJovialDefineDeclaration:
+
+       // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
+          case V_SgJovialForThenStatement:
+
           case V_SgMatlabForStatement:
 
        // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
           case V_SgDeclarationScope:
+
+       // DQ (3/26/2018): Added support for new C++11 IR node.
+          case V_SgRangeBasedForStatement:
 
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
@@ -2203,6 +2242,13 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (8/2/2018): Added support for token based unparsing to the unparse header file support.
+          case V_SgHeaderFileBody:
+            {
+              printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+              break;
+            }
+
        // Ignore these SgType cases since we handle types directly, via the addAssociatedNodes() function
           case V_SgJavaWildcardType:
           case V_SgFunctionType:
@@ -2250,8 +2296,16 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
-       // DQ (11/23/2008): Added cases for CPP directives...
+       // DQ (9/25/2018): Specialized the support for the case of header file unparsing.
           case V_SgIncludeDirectiveStatement:
+            {
+           // DQ (9/25/2018): This is now seen when using the header file unparsing, but can be ignored.
+              break;
+            }
+
+       // DQ (11/23/2008): Added cases for CPP directives...
+       // DQ (9/25/2018): Handling this case above.
+       // case V_SgIncludeDirectiveStatement:
           case V_SgDefineDirectiveStatement:
           case V_SgUndefDirectiveStatement:
           case V_SgIfdefDirectiveStatement:
@@ -2295,10 +2349,76 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            }
 #endif
 
+           case V_SgTemplateParameter:
+             {
+               SgTemplateParameter * tpl_param = isSgTemplateParameter(node);
+               ROSE_ASSERT(tpl_param != NULL);
+               if (tpl_param->get_type() != NULL) {
+                 addAssociatedNodes(tpl_param->get_type(), nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+               if (tpl_param->get_defaultTypeParameter() != NULL) {
+                 addAssociatedNodes(tpl_param->get_defaultTypeParameter(), nodeList, markMemberNodesDefinedToBeDeleted);
+               }
+               break;
+             }
+           case V_SgNonrealDecl:
+             {
+               SgNonrealDecl * nrdecl = isSgNonrealDecl(node);
+               ROSE_ASSERT(nrdecl != NULL);
+               nodeList.insert(nrdecl);
+
+//             SgDeclarationScope * nrscope = nrdecl->get_nonreal_decl_scope();
+//             if (nrscope != NULL)
+//               addAssociatedNodes(nrscope,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgNonrealType * nrtype = nrdecl->get_type();
+               if (nrtype != NULL)
+                 addAssociatedNodes(nrtype,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               SgTemplateArgumentPtrList & tpl_args = nrdecl->get_tpl_args();
+               for (SgTemplateArgumentPtrList::iterator it = tpl_args.begin(); it != tpl_args.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               SgTemplateParameterPtrList & tpl_params = nrdecl->get_tpl_params();
+               for (SgTemplateParameterPtrList::iterator it = tpl_params.begin(); it != tpl_params.end(); it ++) {
+                 addAssociatedNodes(*it,nodeList,markMemberNodesDefinedToBeDeleted);
+               }
+
+               break;
+             }
+           case V_SgNonrealType:
+             {
+               SgType* type = isSgType(node);
+               ROSE_ASSERT(type != NULL);
+               addAssociatedNodes(type,nodeList,markMemberNodesDefinedToBeDeleted);
+
+               break;
+             }
+           case V_SgNonrealSymbol:
+             {
+               SgNonrealSymbol * symbol = isSgNonrealSymbol(node);
+               ROSE_ASSERT(symbol != NULL);
+
+               break;
+             }
+
+        // DQ (3/27/2019): Added case for new IR node.
+           case V_SgEmptyDeclaration:
+             {
+               SgEmptyDeclaration * emptyDeclaration = isSgEmptyDeclaration(node);
+               ROSE_ASSERT(emptyDeclaration != NULL);
+               break;
+             }
+
        // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
        // parsing Fortran as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
+          case V_SgUntypedExprListExpression:
+          case V_SgUntypedNullExpression:
+          case V_SgUntypedSubscriptExpression:
+          case V_SgUntypedValueExpression:
              {
                break;
              }

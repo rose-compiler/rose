@@ -49,7 +49,13 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
     const string file_name = s->get_file_info()->get_filename();
     if (fileHeaderMap[file_name]!=true)
     {
-      SageInterface::insertHeader(AUTOTUNING_LIB_HEADER,PreprocessingInfo::after, false, s->get_scope());
+   // DQ (3/19/2019): Suppress the output of the #include "autotuning_lib.h" since some tools will want 
+   // to define there own supporting libraries and header files. The original behavior is the default.
+   // SageInterface::insertHeader(AUTOTUNING_LIB_HEADER,PreprocessingInfo::after, false, s->get_scope());
+      if (suppress_autotuning_header == false)
+         {
+           SageInterface::insertHeader(AUTOTUNING_LIB_HEADER,PreprocessingInfo::after, false, s->get_scope());
+         }
       fileHeaderMap[file_name]=true;
     }
   }  

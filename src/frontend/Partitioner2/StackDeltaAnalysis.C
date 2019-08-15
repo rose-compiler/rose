@@ -3,6 +3,7 @@
 #include <AsmUnparser_compat.h>
 #include <BinaryDataFlow.h>
 #include <BinaryStackDelta.h>
+#include <CommandLine.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -54,7 +55,7 @@ BaseSemantics::SValuePtr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     BaseSemantics::SValuePtr retval;
-    size_t bitsPerWord = instructionProvider().stackPointerRegister().get_nbits();
+    size_t bitsPerWord = instructionProvider().stackPointerRegister().nBits();
 
     // If a stack delta is defined for this function then use it
     BaseSemantics::RiscOperatorsPtr ops = newOperators();
@@ -157,10 +158,11 @@ struct StackDeltaWorker {
 // so that callees are before callers.
 void
 Partitioner::allFunctionStackDelta() const {
-    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
-    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
+    FunctionCallGraph::Graph cg = functionCallGraph(AllowParallelEdges::NO).graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "stack-delta analysis");
+    progress.suffix(" functions");
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         Rose::BinaryAnalysis::StackDelta::mlog[MARCH].disable();

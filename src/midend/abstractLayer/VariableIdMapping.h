@@ -14,7 +14,7 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class VariableId;
 typedef std::string VariableName;
@@ -78,6 +78,8 @@ class VariableIdMapping {
   bool hasReferenceType(VariableId varId);
   // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
   bool hasIntegerType(VariableId varId);
+  // returns true if this variable has type bool. This also include the C type _Bool.
+  bool hasBoolType(VariableId varId);
   // returns true if this variable has any floating-point type (float,double,longdouble)
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
@@ -100,15 +102,14 @@ class VariableIdMapping {
   size_t getElementSize(VariableId variableId);
 
   SgSymbol* createAndRegisterNewSymbol(std::string name);
-  SPRAY::VariableId createAndRegisterNewVariableId(std::string name);
-  SPRAY::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
+  CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
+  CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);
   void generateDot(std::string filename,SgNode* astRoot);
 
   VariableIdSet getVariableIdSet();
-
   VariableIdSet determineVariableIdsOfVariableDeclarations(std::set<SgVariableDeclaration*> varDecls);
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
   VariableIdSet variableIdsOfAstSubTree(SgNode* node);
@@ -117,14 +118,33 @@ class VariableIdMapping {
      e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
      this mode must be set before the mapping is computed with computeVariableSymbolMapping
   */
-  void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
-  bool getModeVariableIdForEachArrayElement() { return modeVariableIdForEachArrayElement; }
+  void setModeVariableIdForEachArrayElement(bool active);
+  bool getModeVariableIdForEachArrayElement();
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
   size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
   size_t getArrayElementCount(SgArrayType* t);
   size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
   VariableId idForArrayRef(SgPntrArrRefExp* ref);
+  
+  // memory locations of string literals
+  VariableId getStringLiteralVariableId(SgStringVal* sval);
+  void registerStringLiterals(SgNode* root);
+  int numberOfRegisteredStringLiterals();
+  bool isStringLiteralAddress(VariableId stringVarId);
+  // returns true if the variable is a formal parameter in a function definition
+  bool isFunctionParameter(VariableId varId);
+  std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+  // determines for struct/class/union's data member if its
+  // SgInitializeName defines an anonymous bitfield (e.g. struct S {
+  // int :0; }). Anonymous bitfields in the same struct are mapped
+  // to the same SgSymbol. This function is used to handle this
+  // special case.
+  static bool isAnonymousBitfield(SgInitializedName* initName);
+
  private:
+  std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
+  std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
+
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   std::string generateDotSgSymbol(SgSymbol* sym);
   typedef std::pair<std::string,SgSymbol*> MapPair;
@@ -184,5 +204,8 @@ bool operator!=(VariableId id1, VariableId id2);
 VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
 
 }
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif

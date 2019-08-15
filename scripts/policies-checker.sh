@@ -7,7 +7,7 @@
 
 # DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
 # Additional rules to enforce:
-#    2) Finding link dependences in Makefile.am files:
+#    2) Finding link dependencies in Makefile.am files:
 #       find -name Makefile.am -exec grep -nPH "^[ \t]*[a-zA-Z]*[_]?LDADD[ \t]*" {} \;
 
 # Find the directory containing the scripts that enforce individual policies
@@ -54,6 +54,7 @@ for script in "$policies_dir"/*; do
     else
 	nwarnings=$[nwarnings + 1]
     fi
+    echo
 done
 
 # Final report and exit

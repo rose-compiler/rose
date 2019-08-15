@@ -27,14 +27,16 @@ libPartitioner_la_SOURCES =			\
 	MayReturnAnalysis.C			\
 	Modules.C				\
 	ModulesElf.C				\
+	ModulesLinux.C				\
 	ModulesM68k.C				\
 	ModulesPe.C				\
+	ModulesPowerpc.C			\
 	ModulesX86.C				\
-	OwnedDataBlock.C			\
 	Partitioner.C				\
 	Reference.C				\
 	Semantics.C				\
 	StackDeltaAnalysis.C			\
+	Thunk.C					\
 	Utility.C
 else
 libPartitioner_la_SOURCES = dummyPartitioner2.C

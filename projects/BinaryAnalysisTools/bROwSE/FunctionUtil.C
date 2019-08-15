@@ -114,8 +114,12 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         graphViz.emitFunctionGraph(out, function);
         out.close();
         std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
-        system(dotCmd.c_str());
+        if (system(dotCmd.c_str())) {
+            std::ofstream o(fileName.string().c_str());   // on failure, make sure file exists
+            o <<"digraph {\n1 [ label=\"failure\" ];\n}\n";
+        }
         function->setAttribute(ATTR_CfgGraphVizFile, fileName);
+
     }
     return fileName;
 }
@@ -245,7 +249,7 @@ P2::FunctionCallGraph*
 functionCallGraph(P2::Partitioner &partitioner) {
     P2::FunctionCallGraph *cg = NULL;
     if (!partitioner.optionalAttribute<P2::FunctionCallGraph*>(ATTR_CallGraph).assignTo(cg)) {
-        cg = new P2::FunctionCallGraph(partitioner.functionCallGraph());
+        cg = new P2::FunctionCallGraph(partitioner.functionCallGraph(P2::AllowParallelEdges::YES));
         partitioner.setAttribute(ATTR_CallGraph, cg);
     }
     return cg;

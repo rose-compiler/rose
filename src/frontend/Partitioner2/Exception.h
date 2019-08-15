@@ -4,6 +4,7 @@
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
+#include <RoseException.h>
 
 #include <stdexcept>
 #include <string>
@@ -12,11 +13,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    Exception(const std::string &mesg): Rose::Exception(mesg) {}
     ~Exception() throw() {}
-
 };
 
 class PlaceholderError: public Exception {
@@ -53,6 +53,13 @@ public:
         : Exception(mesg), function_(function) {}
     ~FunctionError() throw() {}
     Function::Ptr function() const { return function_; }
+};
+
+class FileError: public Exception {
+public:
+    FileError(const std::string &mesg)
+        : Exception(mesg) {}
+    ~FileError() throw() {}
 };
 
 } // namespace

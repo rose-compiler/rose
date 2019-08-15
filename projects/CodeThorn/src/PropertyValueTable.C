@@ -214,7 +214,7 @@ string PropertyValueTable::reachToString(PropertyValue num) {
   case PROPERTY_VALUE_YES: return "yes"; //,9";
   case PROPERTY_VALUE_NO: return "no"; //,9";
   default: {
-    cerr<<"Error: unkown reachability information.";
+    cerr<<"Error: unknown reachability information.";
     assert(0);
   }
   }
@@ -226,12 +226,13 @@ void PropertyValueTable::finished() {
 }
 
 void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
+  cout<<"STATUS: reachability finished: isPrecise: "<<isPrecise<<" isComplete: "<<isComplete<<endl;
   if(isPrecise&&isComplete) {
     convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_NO);
     return;
   }
   if(isPrecise&&!isComplete) {
-    // yes remains yes and unkown remains unknown (no cannot exist)
+    // yes remains yes and unknown remains unknown (no cannot exist)
     return;
   }
   if(!isPrecise&&isComplete) {
@@ -432,7 +433,7 @@ void PropertyValueTable::shuffle() {
   }
   for (unsigned int i = 1; i <= size(); ++i) {
     // randomly select a property that has not been copied yet
-    int indexNotCopied = SPRAY::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
+    int indexNotCopied = CodeThorn::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
     map<size_t, string>::iterator iter = _formulas.begin();
     int indexNotCopiedIter = 0;
     while (indexNotCopiedIter < indexNotCopied || copied[(*iter).first]) {

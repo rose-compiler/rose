@@ -49,6 +49,7 @@ bool SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>
 bool SgAsmInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 unsigned SgAsmInstruction::get_anyKind() const { return 0; }
+std::string SgAsmInstruction::toString() const { return ""; }
 
 std::set<rose_addr_t>
 SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
@@ -59,6 +60,15 @@ std::vector<std::pair<size_t,size_t> >
 SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
     return std::vector<std::pair<size_t,size_t> >();
 }
+
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    return std::set<rose_addr_t>();
+}
+
+size_t SgAsmInstruction::semanticFailure() const { abort(); }
+void SgAsmInstruction::semanticFailure(size_t) { abort(); }
+void SgAsmInstruction::incrementSemanticFailure() { abort(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
@@ -110,6 +120,10 @@ bool SgAsmPowerpcInstruction::isUnknown() const { return false; }
 std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 unsigned SgAsmPowerpcInstruction::get_anyKind() const { return 0; }
 std::string SgAsmPowerpcInstruction::description() const { return 0; }
+bool SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmPowerpcInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmPowerpcInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmX86Instruction
@@ -196,9 +210,13 @@ SgAsmBlock::has_instructions() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RegisterDescriptor
+namespace Rose {
+namespace BinaryAnalysis {
 void RegisterDescriptor::majorNumber(unsigned) { abort(); }
 void RegisterDescriptor::minorNumber(unsigned) { abort(); }
 void RegisterDescriptor::offset(size_t) { abort(); }
 void RegisterDescriptor::nBits(size_t) { abort(); }
 void RegisterDescriptor::setOffsetWidth(size_t, size_t) { abort(); }
-std::iostream& operator<<(std::ostream, RegisterDescriptor) { abort(); }
+std::ostream& operator<<(std::ostream&, RegisterDescriptor) { abort(); }
+} // namespace
+} // namespace

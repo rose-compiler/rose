@@ -1009,6 +1009,12 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgNonrealDecl:
+                  {
+                    const SgNonrealDecl * nrdecl = isSgNonrealDecl(statement);
+                    key = nrdecl->get_mangled_name();
+                    break;
+                  }
 
             // DQ (5/6/2007): Added more cases
                case V_SgDefaultOptionStmt:
@@ -1166,6 +1172,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgTemplateVariableSymbol:
+                  {
+                    const SgTemplateVariableSymbol* valiableSymbol = isSgTemplateVariableSymbol(symbol);
+                    SgInitializedName* initializedName = valiableSymbol->get_declaration();
+                 // key = initializedName->get_mangled_name();
+                    key = generateUniqueName(initializedName,false);
+                    additionalSuffix = "__template_variable_symbol";
+                    break;
+                  }
+
                case V_SgClassSymbol:
                   {
                     const SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
@@ -1305,6 +1321,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     const SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(symbol);
                     key = templateClassSymbol->get_name();
                     additionalSuffix = "__template_class_symbol";
+                    break;
+                  }
+
+               case V_SgNonrealSymbol:
+                  {
+                    const SgNonrealSymbol* nrSymbol = isSgNonrealSymbol(symbol);
+                    key = nrSymbol->get_name();
+                    additionalSuffix = "__nonreal_symbol";
                     break;
                   }
 
@@ -1690,6 +1714,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // TV (09/12/2018)
+               case V_SgNonrealBaseClass:
+                  {
+                    const SgNonrealBaseClass* baseClass = isSgNonrealBaseClass(node);
+                    key = "__nonreal_base_class_";
+                    ROSE_ASSERT(baseClass->get_base_class_nonreal() != NULL);
+                    key = key + generateUniqueName(baseClass->get_base_class_nonreal(),false);
+                    break;
+                  }
+
                case V_SgPragma:
                   {
                     const SgPragma* pragma = isSgPragma(node);
@@ -1731,6 +1765,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgTemplateParameter:
                   {
                     key = "__template_parameter_";
+                 // Make the key unique for each SgTemplateParameter object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
+            // DQ (10/31/2018): previously unhandled case ...this implementation makes each IR node unique (we might not want that later).
+               case V_SgIncludeFile:
+                  {
+                    key = "__include_file_";
                  // Make the key unique for each SgTemplateParameter object!
                     key = key + StringUtility::numberToString(node);
                     break;

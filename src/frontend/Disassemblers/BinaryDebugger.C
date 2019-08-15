@@ -428,7 +428,8 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
         if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
             // errno is set, but no way to access it in an async-signal-safe way
             const char *mesg= "Rose::BinaryDebugger::attach: ptrace_traceme failed\n";
-            write(2, mesg, strlen(mesg));
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
             _Exit(1);                                   // avoid calling C++ destructors from child
         }
 
@@ -436,10 +437,13 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
 
         // If failure, we must still call only async signal-safe functions.
         const char *mesg = "Rose::BinaryDebugger::attach: exec failed: ";
-        write(2, mesg, strlen(mesg));
+        if (write(2, mesg, strlen(mesg)) == -1)
+            abort();
         mesg = strerror(errno);
-        write(2, mesg, strlen(mesg));
-        write(2, "\n", 1);
+        if (write(2, mesg, strlen(mesg)) == -1)
+            abort();
+        if (write(2, "\n", 1) == -1)
+            abort();
         _Exit(1);
     }
 
@@ -512,7 +516,7 @@ BinaryDebugger::readRegister(RegisterDescriptor desc) {
     using namespace Sawyer::Container;
 
     // Lookup register according to kernel word size rather than the actual size of the register.
-    RegisterDescriptor base(desc.get_major(), desc.get_minor(), 0, kernelWordSize());
+    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
     size_t userOffset = 0;
     if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
         if (regsPageStatus_ != REGPAGE_REGS) {
@@ -529,15 +533,15 @@ BinaryDebugger::readRegister(RegisterDescriptor desc) {
     }
 
     // Extract the necessary data members from the struct. Assume that memory is little endian.
-    size_t nUserBytes = (desc.get_offset() + desc.get_nbits() + 7) / 8;
+    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
     ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
     BitVector bits(8 * nUserBytes);
     for (size_t i=0; i<nUserBytes; ++i)
         bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regsPage_[userOffset+i]);
 
     // Adjust the data to return only the bits we want.
-    bits.shiftRight(desc.get_offset());
-    bits.resize(desc.get_nbits());
+    bits.shiftRight(desc.offset());
+    bits.resize(desc.nBits());
     return bits;
 }
 
