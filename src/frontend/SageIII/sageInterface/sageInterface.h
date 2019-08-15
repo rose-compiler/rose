@@ -2015,7 +2015,7 @@ ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
  to get the work done. Users should call fixVariableReference() when AST is complete and all
  variable declarations are in place.
 */
-ROSE_DLL_API int fixVariableReferences(SgNode* root);
+ROSE_DLL_API int fixVariableReferences(SgNode* root,  bool cleanUnusedSymbol=true);
 
 //!Patch up symbol, scope, and parent information when a SgVariableDeclaration's scope is known.
 /*!
