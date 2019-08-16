@@ -8023,6 +8023,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      setOneSourcePositionForTransformation(varRef);
      ROSE_ASSERT(varRef != NULL);
 
+     ROSE_ASSERT (isSgVariableSymbol(varRef->get_symbol())->get_declaration()!=NULL);
 #if 0
      printf ("In SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope = %p): varRef = %p \n",scope,varRef);
 #endif

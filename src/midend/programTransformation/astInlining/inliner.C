@@ -247,6 +247,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
       // also check if it is compiler generated, mostly template instantiations. They are not from user code.
       if (funcall->get_file_info()->isCompilerGenerated() )
         return false; 
+      // check if the file is within include-staging/ header directories
+      if (insideSystemHeader(funcall))
+        return false;
     }
 
      SgExpression* funname = funcall->get_function();

@@ -78,6 +78,9 @@ C_TESTCODES_REQUIRED_TO_PASS =			\
 	 moreTest8.c				\
 	 zeroParameter.c
 
+# This is not ready
+#         variables_in_header.c
+
 CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
