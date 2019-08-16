@@ -13916,7 +13916,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         }
    }
 
-int SageInterface::fixVariableReferences(SgNode* root)
+int SageInterface::fixVariableReferences(SgNode* root, bool cleanUnusedSymbols/*=true*/)
 {
   ROSE_ASSERT(root);
   int counter=0;
@@ -14065,7 +14065,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
     }
   } // end for
   // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
-  clearUnusedVariableSymbols(root); 
+  if (cleanUnusedSymbols)
+    clearUnusedVariableSymbols(root); 
   return counter;
 }
 
@@ -19488,16 +19489,29 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       // Reset the scopes on any SgInitializedName objects.
                          SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
                          SgInitializedNamePtrList & l = varDecl->get_variables();
-                         for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
-                            {
+                         for (SgInitializedNamePtrList::iterator ii = l.begin(); ii != l.end(); ii++)
+                         {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
                            // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
-                              ROSE_ASSERT((*i)->get_scope() == sourceBlock);
 
-                              (*i)->set_scope(targetBlock);
-                            }
+                           SgInitializedName * init_name = (*ii);
+//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock);
+                           
+                           // Must also move the symbol into the new scope, Liao 2019/8/14
+                           SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
+                           ROSE_ASSERT (var_sym);
+                           SgScopeStatement * old_scope = var_sym -> get_scope();
+                           if (old_scope != targetBlock)
+                           {
+                             old_scope->remove_symbol (var_sym);
+                             targetBlock ->insert_symbol(init_name->get_name(), var_sym);
+                           }
+
+                           init_name->set_scope(targetBlock);
+
+                         }
                          break;
                        }
                      case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
